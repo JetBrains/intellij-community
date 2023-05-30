@@ -116,6 +116,9 @@ public abstract class IdeFrameDecorator {
         }
         Component toFocus = frame.getMostRecentFocusOwner();
         Rectangle defaultBounds = device.getDefaultConfiguration().getBounds();
+        if (state) {
+          frame.setScreenBounds(defaultBounds);
+        }
         try {
           frame.togglingFullScreenInProgress = true;
           rootPane.putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);

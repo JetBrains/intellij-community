@@ -51,6 +51,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   var reusedFullScreenState = false
 
   var normalBounds: Rectangle? = null
+  var screenBounds: Rectangle? = null
 
   // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
   @JvmField
@@ -91,6 +92,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
     // do not load FrameInfoHelper class
     if (LoadingState.COMPONENTS_REGISTERED.isOccurred && extendedState == NORMAL && isMaximized(state)) {
       normalBounds = bounds
+      screenBounds = graphicsConfiguration?.bounds
     }
     super.setExtendedState(state)
   }

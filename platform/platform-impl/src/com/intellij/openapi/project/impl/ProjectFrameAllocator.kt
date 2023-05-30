@@ -474,6 +474,7 @@ internal fun createNewProjectFrame(frameInfo: FrameInfo?): ProjectFrameProducer 
         hideSplashBeforeShow(frame)
         if (isMaximized && frame.extendedState == Frame.NORMAL && boundsAndDevice != null) {
           frame.normalBounds = boundsAndDevice.first
+          frame.screenBounds = ScreenUtil.getScreenDevice(boundsAndDevice.first)?.defaultConfiguration?.bounds
         }
         applyBoundsOrDefault(frame, boundsAndDevice?.first)
         frame.extendedState = state

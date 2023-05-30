@@ -308,6 +308,18 @@ public final class ScreenUtil {
     size.setSize(size.width * kw, size.height * kh);
   }
 
+  public static void moveAndScale(@NotNull Rectangle bounds, @NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    checkScreensNonEmpty(fromScreen, toScreen);
+    double kw = toScreen.getWidth() / fromScreen.getWidth();
+    double kh = toScreen.getHeight() / fromScreen.getHeight();
+    bounds.setRect(
+      toScreen.x + (bounds.x - fromScreen.x) * kw,
+      toScreen.y + (bounds.y - fromScreen.y) * kh,
+      bounds.width * kw,
+      bounds.height * kh
+    );
+  }
+
   private static void checkScreensNonEmpty(@NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
     if (fromScreen.isEmpty()) {
       throw new IllegalArgumentException("Can't move from an empty screen: " + fromScreen);

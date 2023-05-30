@@ -456,8 +456,29 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
 
     val extendedState = frame.extendedState
     val bounds = frame.bounds
-    if (extendedState == Frame.NORMAL && rootPane != null) {
-      frame.normalBounds = bounds
+    var normalBoundsOnCurrentScreen: Rectangle? = null
+    if (rootPane != null) {
+      val oldScreen = frame.screenBounds
+      val newScreen = frame.graphicsConfiguration?.bounds
+      if (extendedState == Frame.NORMAL) {
+        frame.normalBounds = bounds
+        frame.screenBounds = newScreen
+      }
+      else if (isMaximized(extendedState)) {
+        val normalBounds = frame.normalBounds
+        if (normalBounds != null) {
+          normalBoundsOnCurrentScreen = normalBounds
+          if (
+            oldScreen != null && !oldScreen.isEmpty &&
+            newScreen != null && !newScreen.isEmpty &&
+            newScreen != oldScreen
+          ) {
+            // The frame was moved to another screen after it had been maximized, move/scale its "normal" bounds accordingly.
+            normalBoundsOnCurrentScreen = Rectangle(normalBoundsOnCurrentScreen)
+            ScreenUtil.moveAndScale(normalBoundsOnCurrentScreen, oldScreen, newScreen)
+          }
+        }
+      }
     }
 
     val frameHelper = frame.frameHelper?.helper as? ProjectFrameHelper ?: return
@@ -471,7 +492,7 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
       defaultFrameInfoHelper.updateFrameInfo(frameHelper, frame)
     }
     else if (!project.isDisposed) {
-      ProjectFrameBounds.getInstance(project).markDirty(if (isMaximized(extendedState)) null else bounds)
+      ProjectFrameBounds.getInstance(project).markDirty(if (isMaximized(extendedState)) normalBoundsOnCurrentScreen else bounds)
     }
   }
 }
