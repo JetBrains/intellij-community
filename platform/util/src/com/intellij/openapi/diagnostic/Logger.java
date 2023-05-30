@@ -3,6 +3,7 @@ package com.intellij.openapi.diagnostic;
 
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.Contract;
@@ -89,8 +90,10 @@ public abstract class Logger {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void logFactoryChanged(Class<? extends Factory> factory) {
-    System.out.println("Changing log factory from " + ourFactory.getClass().getCanonicalName() +
-                       " to " + factory.getCanonicalName() + '\n' + ExceptionUtil.getThrowableText(new Throwable()));
+    if (SystemProperties.getBooleanProperty("idea.log.logger.factory.changed", false)) {
+      System.out.println("Changing log factory from " + ourFactory.getClass().getCanonicalName() +
+                         " to " + factory.getCanonicalName() + '\n' + ExceptionUtil.getThrowableText(new Throwable()));
+    }
   }
 
   public static Factory getFactory() {
