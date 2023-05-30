@@ -151,7 +151,7 @@ data class NotRoamableUiOptions(
   @JvmField @OptionTag val editorAAType: AntialiasingType = if (AntialiasingType.canUseSubpixelAAForEditor()) AntialiasingType.SUBPIXEL else AntialiasingType.GREYSCALE,
 
   @JvmField
-  @field:Property(filter = FontFilter::class)
+  @field:Property
   val fontFace: String? = null,
 
   @JvmField
