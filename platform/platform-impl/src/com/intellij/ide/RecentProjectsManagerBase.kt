@@ -230,12 +230,6 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return RecentProjectListActionProvider.getInstance().getActions(addClearListItem = addClearListItem).toTypedArray()
   }
 
-  @Suppress("OVERRIDE_DEPRECATION")
-  override fun getRecentProjectsActions(addClearListItem: Boolean, useGroups: Boolean): Array<AnAction> {
-    return RecentProjectListActionProvider.getInstance().getActions(addClearListItem = addClearListItem,
-                                                                    useGroups = useGroups).toTypedArray()
-  }
-
   fun markPathRecent(path: String, project: Project): RecentProjectMetaInfo {
     synchronized(stateLock) {
       for (group in state.groups) {

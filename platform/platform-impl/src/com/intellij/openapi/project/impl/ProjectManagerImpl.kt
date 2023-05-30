@@ -716,8 +716,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (!app.isUnitTestMode) {
       val openTimestamp = System.currentTimeMillis()
       @Suppress("DEPRECATION")
-      project.coroutineScope?.launch {
-        notifyRecentManager(project, openTimestamp)
+      project.coroutineScope.launch {
+        (RecentProjectsManager.getInstance() as? RecentProjectsManagerBase)?.projectOpened(project, openTimestamp)
+        dispatchEarlyNotifications()
       }
     }
 
@@ -730,11 +731,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     jpsMetrics.endSpan("project.opening")
     return project
-  }
-
-  private suspend fun notifyRecentManager(project: Project, openTimestamp: Long) {
-    (RecentProjectsManager.getInstance() as? RecentProjectsManagerBase)?.projectOpened(project, openTimestamp)
-    dispatchEarlyNotifications()
   }
 
   private suspend fun failedToOpenProject(frameAllocator: ProjectFrameAllocator, exception: Throwable?, options: OpenProjectTask) {

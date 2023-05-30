@@ -40,11 +40,6 @@ interface RecentProjectsManager {
   @Deprecated("Use {@link RecentProjectListActionProvider#getActions}")
   fun getRecentProjectsActions(addClearListItem: Boolean): Array<AnAction>
 
-  @Deprecated("Use {@link RecentProjectListActionProvider#getActions}")
-  fun getRecentProjectsActions(addClearListItem: Boolean, useGroups: Boolean): Array<AnAction> {
-    return getRecentProjectsActions(addClearListItem)
-  }
-
   val groups: List<ProjectGroup>
     get() = emptyList()
 
