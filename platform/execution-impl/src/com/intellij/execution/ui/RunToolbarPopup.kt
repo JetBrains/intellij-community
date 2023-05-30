@@ -138,11 +138,11 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
   PopupFactoryImpl.ActionGroupPopup(null, actionGroup, dataContext, false, false, true, false,
                                     disposeCallback, 30, null, null, PresentationFactory(), false) {
 
-  private val dragRange: IntRange = 0 until RunConfigurationStartHistory.getInstance(project).pinned().size + 1
+  private val pinnedSize = RunConfigurationStartHistory.getInstance(project).pinned().size
 
   init {
     list.setExpandableItemsEnabled(false)
-    if (!dragRange.isEmpty()) {
+    if (pinnedSize != 0) {
       val dndManager = DnDManager.getInstance()
       dndManager.registerSource(MyDnDSource(), list, this)
       dndManager.registerTarget(MyDnDTarget(), list, this)
@@ -169,10 +169,6 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
     return super.getList() as JBList<*>
   }
 
-  private fun isPossibleToDragItem(index: Int): Boolean {
-    return dragRange.contains(index)
-  }
-
   private data class DraggedIndex(val from: Int)
 
   private inner class MyDnDTarget : DnDTarget {
@@ -180,7 +176,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
       val from = (aEvent.attachedObject as? DraggedIndex)?.from
       if (from is Int) {
         val targetIndex: Int = list.locationToIndex(aEvent.point)
-        val possible: Boolean = isPossibleToDragItem(targetIndex)
+        val possible: Boolean = (0 until pinnedSize + 1).contains(targetIndex)
         list.setDropTargetIndex(if (possible && wouldActuallyMove(from, targetIndex)) targetIndex else -1)
         aEvent.isDropPossible = possible
       }
@@ -212,7 +208,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
 
   private inner class MyDnDSource : DnDSource {
     override fun canStartDragging(action: DnDAction, dragOrigin: Point): Boolean {
-      return isPossibleToDragItem(list.locationToIndex(dragOrigin))
+      return (0 until pinnedSize).contains(list.locationToIndex(dragOrigin))
     }
 
     override fun startDragging(action: DnDAction, dragOrigin: Point): DnDDragStartBean? {
