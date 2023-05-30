@@ -1025,20 +1025,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return result;
   }
 
-
-  @TestOnly
-  public void scheduleImportInTests(List<VirtualFile> projectFiles) {
-    List<Pair<MavenProject, MavenProjectChanges>> toImport = new ArrayList<>();
-    for (VirtualFile each : projectFiles) {
-      MavenProject project = findProject(each);
-      if (project != null) {
-        toImport.add(Pair.create(project, MavenProjectChanges.ALL));
-      }
-    }
-    scheduleForNextImport(toImport);
-    scheduleImportChangedProjects();
-  }
-
   private void scheduleForNextImport(Collection<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
     for (Pair<MavenProject, MavenProjectChanges> each : projectsWithChanges) {
       myProjectsToImport.compute(each.first, (__, previousChanges) ->

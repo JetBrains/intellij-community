@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.utils.MavenImportingTestCaseKt;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -483,8 +484,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     importProject();
     assertModules("project", "m1", "m2");
 
-    myProjectsManager.scheduleImportInTests(myProjectsManager.getProjectsFiles());
-    myProjectsManager.importMavenProjectsSync(new IdeModifiableModelsProviderImpl(myProject) {
+    IdeModifiableModelsProviderImpl modelsProvider = new IdeModifiableModelsProviderImpl(myProject) {
       @Override
       public void commit() {
         ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
@@ -493,7 +493,9 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
         model.commit();
         super.commit();
       }
-    });
+    };
+
+    MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager, modelsProvider, myProjectsManager.getProjectsFiles());
   }
 
 }
