@@ -80,6 +80,13 @@ val Module.testSourceInfo: ModuleTestSourceInfo?
         return if (hasTestRoots) ModuleTestSourceInfo(this) else null
     }
 
+fun Module.asSourceInfo(sourceRootType: KotlinSourceRootType?): ModuleSourceInfoWithExpectedBy? =
+    when (sourceRootType) {
+        SourceKotlinRootType -> ModuleProductionSourceInfo(this)
+        TestSourceKotlinRootType -> ModuleTestSourceInfo(this)
+        else -> null
+    }
+
 val Module.sourceModuleInfos: List<ModuleSourceInfo>
     get() = listOfNotNull(testSourceInfo, productionSourceInfo)
 
