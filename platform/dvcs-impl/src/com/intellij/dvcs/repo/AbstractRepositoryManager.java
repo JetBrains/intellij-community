@@ -3,7 +3,6 @@ package com.intellij.dvcs.repo;
 
 import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -25,7 +24,6 @@ public abstract class AbstractRepositoryManager<T extends Repository>
 
   private final @NotNull Project myProject;
   private final @NotNull VcsKey myVcsKey;
-  private final @NotNull String myRepoDirName;
   private final @NotNull VcsRepositoryManager myGlobalRepositoryManager;
 
   protected AbstractRepositoryManager(@NotNull Project project,
@@ -34,7 +32,6 @@ public abstract class AbstractRepositoryManager<T extends Repository>
     myGlobalRepositoryManager = VcsRepositoryManager.getInstance(project);
     myProject = project;
     myVcsKey = vcsKey;
-    myRepoDirName = repoDirName;
   }
 
   @Override
@@ -127,18 +124,14 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   }
 
   private @Nullable T validateAndGetRepository(@Nullable Repository repository) {
-    if (repository == null || !myVcsKey.equals(repository.getVcs().getKeyInstanceMethod())) {
+    if (repository == null ||
+        !myVcsKey.equals(repository.getVcs().getKeyInstanceMethod()) ||
+        !repository.getRoot().isValid()) {
       return null;
     }
-    return ReadAction.compute(() -> {
-      VirtualFile root = repository.getRoot();
-      if (root.isValid()) {
-        VirtualFile vcsDir = root.findChild(myRepoDirName);
-        //noinspection unchecked
-        return vcsDir != null && vcsDir.exists() ? (T)repository : null;
-      }
-      return null;
-    });
+
+    //noinspection unchecked
+    return (T)repository;
   }
 
   @Override
