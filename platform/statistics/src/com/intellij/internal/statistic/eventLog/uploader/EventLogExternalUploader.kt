@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.uploader
 
-import com.google.gson.Gson
+import com.fasterxml.jackson.annotation.JsonView
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
@@ -21,6 +24,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.reflect.full.IllegalCallableAccessException
 
 object EventLogExternalUploader {
   private val LOG = Logger.getInstance(EventLogExternalUploader.javaClass)
@@ -111,7 +115,11 @@ object EventLogExternalUploader {
     val libPaths = setOf(
       findLibraryByClass(kotlin.coroutines.Continuation::class.java), // add kotlin-std to classpath
       findLibraryByClass(NotNull::class.java), // annotations
-      findLibraryByClass(Gson::class.java), // serializer library
+      findLibraryByClass(JsonParser::class.java), //add jackson-core
+      findLibraryByClass(JsonNode::class.java), //add jackson-databind
+      findLibraryByClass(JsonView::class.java), //add jackson-annotations
+      findLibraryByClass(KotlinFeature::class.java), // add jackson-kotlin-module
+      findLibraryByClass(IllegalCallableAccessException::class.java), // add kotlin-reflect
       findLibraryByClass(EventGroupsFilterRules::class.java), // validation library
       findLibraryByClass(EventGroupRemoteDescriptors::class.java) // model library
     )

@@ -1,17 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events.scheme
 
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonElement
-import com.google.gson.JsonSerializationContext
-import com.google.gson.JsonSerializer
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.internal.statistic.config.SerializationHelper
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import java.io.File
-import java.lang.reflect.Type
 import kotlin.system.exitProcess
+
 
 private const val outputFileParameter = "--outputFile="
 private const val pluginsFileParameter = "--pluginsFile="
@@ -56,11 +53,8 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
     val eventsScheme = EventsScheme(System.getenv("INSTALLER_LAST_COMMIT_HASH"),
                                     System.getenv("IDEA_BUILD_NUMBER"),
                                     groups.filter { errors[it]?.isEmpty() ?: true })
-    val text = GsonBuilder()
-      .registerTypeAdapter(FieldDataType::class.java, FieldDataTypeSerializer)
-      .setPrettyPrinting()
-      .create()
-      .toJson(eventsScheme)
+
+    val text = SerializationHelper.serialize(eventsScheme)
     logEnabledPlugins(pluginsFile)
     if (outputFile != null) {
       FileUtil.writeToFile(File(outputFile), text)
@@ -92,14 +86,5 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
     val skipGenerationOfBrokenPlugins = System.getenv("SKIP_GENERATION_OF_BROKEN_PLUGINS")
     if (skipGenerationOfBrokenPlugins == null) return emptySet()
     return skipGenerationOfBrokenPlugins.split(",").toSet()
-  }
-
-  object FieldDataTypeSerializer : JsonSerializer<FieldDataType> {
-    override fun serialize(src: FieldDataType?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
-      if (src == FieldDataType.PRIMITIVE || src == null) {
-        return context!!.serialize(null)
-      }
-      return context!!.serialize(src.name)
-    }
   }
 }
