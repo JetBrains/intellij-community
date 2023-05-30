@@ -1169,10 +1169,13 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  public boolean isUnversioned(VirtualFile file) {
+  public boolean isUnversioned(@NotNull VirtualFile file) {
+    VcsRoot vcsRoot = ProjectLevelVcsManager.getInstance(myProject).getVcsRootObjectFor(file);
+    if (vcsRoot == null) return false;
+
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
-        return myComposite.getUnversionedFileHolder().containsFile(VcsUtil.getFilePath(file));
+        return myComposite.getUnversionedFileHolder().containsFile(VcsUtil.getFilePath(file), vcsRoot);
       }
     });
   }
@@ -1191,11 +1194,15 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   @NotNull
   private FileStatus getStatus(@NotNull FilePath path, @Nullable VirtualFile file) {
+    VcsRoot vcsRoot = file != null ? ProjectLevelVcsManager.getInstance(myProject).getVcsRootObjectFor(file)
+                                   : ProjectLevelVcsManager.getInstance(myProject).getVcsRootObjectFor(path);
+    if (vcsRoot == null) return FileStatus.NOT_CHANGED;
+
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
-        if (myComposite.getUnversionedFileHolder().containsFile(path)) return FileStatus.UNKNOWN;
+        if (myComposite.getUnversionedFileHolder().containsFile(path, vcsRoot)) return FileStatus.UNKNOWN;
         if (file != null && myComposite.getModifiedWithoutEditingFileHolder().containsFile(file)) return FileStatus.HIJACKED;
-        if (myComposite.getIgnoredFileHolder().containsFile(path)) return FileStatus.IGNORED;
+        if (myComposite.getIgnoredFileHolder().containsFile(path, vcsRoot)) return FileStatus.IGNORED;
 
         FileStatus status = ObjectUtils.notNull(myWorker.getStatus(path), FileStatus.NOT_CHANGED);
 
@@ -1364,9 +1371,12 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   @Override
   public boolean isIgnoredFile(@NotNull FilePath file) {
+    VcsRoot vcsRoot = ProjectLevelVcsManager.getInstance(myProject).getVcsRootObjectFor(file);
+    if (vcsRoot == null) return false;
+
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
-        return myComposite.getIgnoredFileHolder().containsFile(file);
+        return myComposite.getIgnoredFileHolder().containsFile(file, vcsRoot);
       }
     });
   }
