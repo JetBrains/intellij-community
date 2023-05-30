@@ -18,26 +18,27 @@ import com.intellij.psi.util.PsiEditorUtil
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.inspections.ExtensionUtil
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringEventListener
-import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
 import org.jetbrains.kotlin.idea.refactoring.move.MoveDeclarationsDescriptor
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
+import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAbstract
-import org.jetbrains.kotlin.types.typeUtil.supertypes
 
 class CompanionObjectInExtensionInspection : LocalInspectionTool() {
 
@@ -78,10 +79,24 @@ class CompanionObjectInExtensionInspection : LocalInspectionTool() {
 
 private fun KtDeclaration.isAllowedInsideACompanionObject() = this is KtProperty && (this.isConstVal || this.isLoggerInstance)
 
+private val LOGGER_CLASS_ID = Logger::class.qualifiedName?.let { ClassId.topLevel(FqName(it)) }
+                              ?: error("Logger class must have qualified name")
+
+/**
+ * This property can be called from the EDT by [CreateObjectAndMoveProhibitedDeclarationsQuickFix],
+ * so we have to resort to [allowAnalysisOnEdt].
+ */
+@OptIn(KtAllowAnalysisOnEdt::class)
 private val KtProperty.isLoggerInstance: Boolean
-  get() {
-    val ktType = (this.resolveToDescriptorIfAny() as? PropertyDescriptor)?.type ?: return false
-    return ktType.supertypes().plus(ktType).any { it.fqName.toString() == Logger::class.qualifiedName }
+  get() = allowAnalysisOnEdt {
+    val property = this
+
+    analyze(property) {
+      val propertyReturnType = property.getReturnKtType().expandedClassSymbol ?: return false
+      val loggerType = getClassOrObjectSymbolByClassId(LOGGER_CLASS_ID) ?: return false
+
+      propertyReturnType.isSubClassOf(loggerType)
+    }
   }
 
 private val KtProperty.isConstVal: Boolean
