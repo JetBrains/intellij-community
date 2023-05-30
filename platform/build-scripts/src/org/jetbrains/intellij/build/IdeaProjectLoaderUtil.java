@@ -20,6 +20,10 @@ public final class IdeaProjectLoaderUtil {
       if (Files.exists(home.resolve(ULTIMATE_REPO_MARKER_FILE))) {
         return home;
       }
+      // Handle Rider layout case
+      if (Files.exists(home.resolve("ultimate").resolve(ULTIMATE_REPO_MARKER_FILE))) {
+        return home.resolve("ultimate");
+      }
 
       home = home.getParent();
     }
@@ -39,6 +43,11 @@ public final class IdeaProjectLoaderUtil {
 
       if (Files.exists(home.resolve("community").resolve(COMMUNITY_REPO_MARKER_FILE))) {
         return new BuildDependenciesCommunityRoot(home.resolve("community"));
+      }
+
+      // Handle Rider layout case
+      if (Files.exists(home.resolve("ultimate").resolve("community").resolve(COMMUNITY_REPO_MARKER_FILE))) {
+        return new BuildDependenciesCommunityRoot(home.resolve("ultimate").resolve("community"));
       }
 
       home = home.getParent();
