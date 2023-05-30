@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
+import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -31,7 +32,11 @@ internal class ModuleVcsDetector(private val project: Project) {
     if (vcsManager.needAutodetectMappings() &&
         vcsManager.haveDefaultMapping() == null &&
         VcsUtil.shouldDetectVcsMappingsFor(project)) {
-      queue.queue(DisposableUpdate.createDisposable(queue, "initial scan") { autoDetectDefaultRoots() })
+      queue.queue(DisposableUpdate.createDisposable(queue, "initial scan") {
+        runActivity("ModuleVcsDetector.autoDetectDefaultRoots") {
+          autoDetectDefaultRoots()
+        }
+      })
     }
   }
 
@@ -63,8 +68,8 @@ internal class ModuleVcsDetector(private val project: Project) {
 
       usedVcses.add(vcs)
       for (file in detectedMappings) {
-          detectedRoots.add(Pair(file, vcs))
-        }
+        detectedRoots.add(Pair(file, vcs))
+      }
     }
 
     if (detectedRoots.isEmpty()) return
