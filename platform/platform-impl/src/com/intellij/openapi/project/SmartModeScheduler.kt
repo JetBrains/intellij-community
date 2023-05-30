@@ -18,7 +18,6 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Async
 import java.util.*
@@ -37,7 +36,6 @@ import java.util.function.Consumer
  * It is important to note that while dumb mode cannot start without write action, scanning can start without write action, so by the
  * moment when runnable executes scanning can run, but it is guaranteed that initial scanning on project open has finished.
  */
-@Experimental
 @Internal
 @Service(Service.Level.PROJECT)
 class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Disposable {
