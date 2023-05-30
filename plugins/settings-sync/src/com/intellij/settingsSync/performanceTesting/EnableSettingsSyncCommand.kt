@@ -70,7 +70,7 @@ class EnableSettingsSyncCommand(text: @NonNls String, line: Int) : PlaybackComma
       if (isCrossIdeSync) {
         SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled = true
         SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.CrossIdeSyncStateChanged(true))
-        //there is no event that cross ide sync was enabled so we need to check that file appears and wait a bit :(
+        //there is no event that cross-ide sync was enabled, so we need to check that file appears and wait a bit :(
         Waiter.checkCondition { CloudConfigServerCommunicator().isFileExists(CROSS_IDE_SYNC_MARKER_FILE) }
         delay(5000L)
       }

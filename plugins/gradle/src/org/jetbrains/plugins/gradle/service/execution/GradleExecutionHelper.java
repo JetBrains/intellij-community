@@ -11,6 +11,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -276,7 +277,9 @@ public class GradleExecutionHelper {
         // if autoimport is active, it should be notified of new files creation as early as possible,
         // to avoid triggering unnecessary re-imports (caused by creation of wrapper)
         VfsUtil.markDirtyAndRefresh(false, true, true, Path.of(projectPath, "gradle").toFile());
-      } catch (IllegalPathStateException ignore) {}
+      }
+      catch (IllegalPathStateException ignore) {
+      }
     }
   }
 
@@ -534,17 +537,18 @@ public class GradleExecutionHelper {
 
     if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))
         && gradleLogLevel != null) {
-          try {
-            LogLevel logLevel = LogLevel.valueOf(gradleLogLevel.toUpperCase());
-            switch (logLevel) {
-              case DEBUG -> settings.withArgument("-d");
-              case INFO -> settings.withArgument("-i");
-              case WARN -> settings.withArgument("-w");
-              case QUIET -> settings.withArgument("-q");
-            }
-          } catch (IllegalArgumentException e) {
-            LOG.warn("org.gradle.logging.level must be one of quiet, warn, lifecycle, info, or debug");
-          }
+      try {
+        LogLevel logLevel = LogLevel.valueOf(gradleLogLevel.toUpperCase());
+        switch (logLevel) {
+          case DEBUG -> settings.withArgument("-d");
+          case INFO -> settings.withArgument("-i");
+          case WARN -> settings.withArgument("-w");
+          case QUIET -> settings.withArgument("-q");
+        }
+      }
+      catch (IllegalArgumentException e) {
+        LOG.warn("org.gradle.logging.level must be one of quiet, warn, lifecycle, info, or debug");
+      }
     }
 
     // Default logging level for integration tests
@@ -559,7 +563,8 @@ public class GradleExecutionHelper {
   private static boolean isRootDirAvailable(@NotNull BuildEnvironment environment) {
     try {
       environment.getBuildIdentifier().getRootDir();
-    } catch (UnsupportedMethodException e) {
+    }
+    catch (UnsupportedMethodException e) {
       return false;
     }
     return true;
@@ -828,9 +833,10 @@ public class GradleExecutionHelper {
         }
         if (FileUtil.normalize(path).endsWith("lib/app.jar")) {
           final String message = "Attempting to pass whole IDEA app [" + path + "] into Gradle Daemon for class [" + aClass + "]";
-          if (Boolean.parseBoolean(System.getProperty("idea.is.integration.test"))) {
+          if (ApplicationManagerEx.isInIntegrationTest()) {
             LOG.error(message);
-          } else {
+          }
+          else {
             LOG.warn(message);
           }
         }
