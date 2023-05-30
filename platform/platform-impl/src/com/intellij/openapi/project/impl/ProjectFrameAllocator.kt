@@ -42,6 +42,7 @@ import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.problems.WolfTheProblemSolver
+import com.intellij.psi.PsiManager
 import com.intellij.toolWindow.computeToolWindowBeans
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.TimeoutUtil
@@ -306,7 +307,11 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
   coroutineScope {
     // only after FileEditorManager.init - DaemonCodeAnalyzer uses FileEditorManager
     launch {
+      // WolfTheProblemSolver uses PsiManager
+      project.serviceAsync<PsiManager>()
       project.serviceAsync<WolfTheProblemSolver>()
+    }
+    launch {
       project.serviceAsync<DaemonCodeAnalyzer>()
     }
 
