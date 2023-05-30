@@ -60,5 +60,6 @@
     <orderEntry type="library" exported="" name="kotlin-gradle-plugin-idea" level="project" />
     <orderEntry type="module" module-name="kotlin.base.resources" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.obsolete-compat" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.indices" scope="TEST" />
   </component>
 </module>
