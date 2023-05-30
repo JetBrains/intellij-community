@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.util.indexing.hints.BaseFileTypeInputFilter.FileTypeStrategy.BEFORE_SUBSTITUTION;
+
 public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, String> {
   public static final ID<String, String> INDEX_ID = ID.create("json.file.root.values");
   private static final int VERSION = 5;
@@ -70,7 +72,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new FileTypeInputFilterPredicate(fileType -> fileType instanceof JsonFileType);
+    return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> fileType instanceof JsonFileType);
   }
 
   @Override

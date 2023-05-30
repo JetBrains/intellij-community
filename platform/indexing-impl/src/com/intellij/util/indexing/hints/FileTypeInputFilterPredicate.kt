@@ -11,7 +11,16 @@ import org.jetbrains.annotations.ApiStatus
  * Returns `YES` or `NO` for given filetype predicate. Never returns `UNSURE`, therefore `acceptInput` is never invoked.
  */
 @ApiStatus.Experimental
-class FileTypeInputFilterPredicate(private val predicate: (filetype: FileType) -> Boolean) : BaseFileTypeInputFilter() {
+class FileTypeInputFilterPredicate : BaseFileTypeInputFilter {
+  private val predicate: (filetype: FileType) -> Boolean
+
+  constructor(predicate: (filetype: FileType) -> Boolean) : super() {
+    this.predicate = predicate
+  }
+
+  constructor(fileTypeStrategy: FileTypeStrategy, predicate: (filetype: FileType) -> Boolean) : super(fileTypeStrategy) {
+    this.predicate = predicate
+  }
 
   constructor(vararg fileTypes: FileType) : this({ fileType -> fileTypes.contains(fileType) })
 
