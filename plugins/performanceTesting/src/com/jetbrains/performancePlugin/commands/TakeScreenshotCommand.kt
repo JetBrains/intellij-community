@@ -1,28 +1,30 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.openapi.ui.playback.commands.AbstractCommand
+import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.ui.ImageUtil
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.awt.AWTException
+import java.awt.Rectangle
 import java.awt.Robot
 import java.awt.Toolkit
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.IOException
-import java.nio.file.Paths
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
+import java.nio.file.Path
 import javax.imageio.ImageIO
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG: Logger
   get() = logger<TakeScreenshotCommand>()
@@ -36,23 +38,19 @@ private val LOG: Logger
  * Syntax: %takeScreenshot <fullPathToFile>
  * Example: %takeScreenshot ./myScreenshot.jpg
 </fullPathToFile> */
-class TakeScreenshotCommand(text: String, line: Int) : AbstractCommand(text, line) {
+class TakeScreenshotCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
-    const val PREFIX = CMD_PREFIX + "takeScreenshot"
+    const val PREFIX: String = CMD_PREFIX + "takeScreenshot"
   }
 
-  public override fun _execute(context: PlaybackContext): Promise<Any> {
-    val result = AsyncPromise<Any>()
-    val arguments = extractCommandArgument(PREFIX)
-    val fullPathToFile = if (!arguments.isEmpty()) arguments
-    else Paths.get(PathManager.getLogPath()).resolve("screenshot_before_exit.png").toString()
-    ApplicationManager.getApplication().executeOnPooledThread { takeScreenshotOfFrame(fullPathToFile) }
-    result.setResult(null)
-    return result
+  override suspend fun doExecute(context: PlaybackContext) {
+    takeScreenshotOfFrame(extractCommandArgument(PREFIX).ifEmpty {
+      Path.of(PathManager.getLogPath()).resolve("screenshot_before_exit.png").toString()
+    })
   }
 }
 
-private fun takeScreenshotWithAwtRobot(fullPathToFile: String) {
+fun takeScreenshotWithAwtRobot(fullPathToFile: String) {
   val rectangle = Rectangle(Toolkit.getDefaultToolkit().screenSize)
   var robot: Robot? = null
   try {
@@ -77,46 +75,35 @@ private fun takeScreenshotWithAwtRobot(fullPathToFile: String) {
   }
 }
 
-private fun takeScreenshotOfFrame(fileName: String) {
+suspend fun takeScreenshotOfFrame(fileName: String) {
   val projects = ProjectManager.getInstance().openProjects
   for (project in projects) {
-    val result = CompletableFuture<Boolean>()
-    ApplicationManager.getApplication().invokeLater {
-      val frame = WindowManager.getInstance().getIdeFrame(project)
-      if (frame != null) {
-        val component = frame.component
-        val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
-        component.printAll(img.createGraphics())
-        val prefix = if (projects.size == 1) "" else project.name + "_"
-        ApplicationManager.getApplication().executeOnPooledThread {
-          try {
-            result.complete(ImageIO.write(img, "png", File(prefix + fileName)))
+    try {
+      withTimeout(30.seconds) {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          val frame = WindowManager.getInstance().getIdeFrame(project)
+          if (frame == null) {
+            LOG.info("Frame was empty when takeScreenshot was called")
           }
-          catch (e: IOException) {
-            LOG.info(e)
+          else {
+            val component = frame.component
+            val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
+            component.printAll(img.createGraphics())
+            val prefix = if (projects.size == 1) "" else project.name + "_"
+            withContext(Dispatchers.IO) {
+              try {
+                ImageIO.write(img, "png", File(prefix + fileName))
+                LOG.info("Screenshot is saved at: $fileName")
+              }
+              catch (e: IOException) {
+                LOG.info(e)
+              }
+            }
           }
         }
       }
-      else {
-        LOG.info("Frame was empty when takeScreenshot was called")
-      }
     }
-    try {
-      val fileCreated = result[30, TimeUnit.SECONDS]
-      if (fileCreated) {
-        LOG.info("Screenshot is saved at: $fileName")
-      }
-      else {
-        LOG.info("No writers are found for screenshot")
-      }
-    }
-    catch (e: InterruptedException) {
-      LOG.info(e)
-    }
-    catch (e: ExecutionException) {
-      LOG.info(e)
-    }
-    catch (e: TimeoutException) {
+    catch (e: TimeoutCancellationException) {
       LOG.info(e)
     }
   }
