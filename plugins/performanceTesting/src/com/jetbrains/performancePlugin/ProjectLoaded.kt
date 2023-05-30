@@ -46,7 +46,6 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.sql.Timestamp
 import java.util.*
-import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 import kotlin.math.min
@@ -260,18 +259,8 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
     fun runScript(project: Project?, script: String?, mustExitOnFailure: Boolean) {
       val playback: PlaybackRunner = PlaybackRunnerExtended(script, CommandLogger(), project!!)
       val scriptCallback = playback.run()
-      val future = CompletableFuture<Any>()
-      scriptCallback.doWhenDone { future.complete(null) }
-      scriptCallback.doWhenRejected { s: String? ->
-        if (s.isNullOrEmpty()) {
-          future.cancel(false)
-        }
-        else {
-          future.completeExceptionally(CancellationException(s))
-        }
-      }
-      CommandsRunner.setActionCallback(future)
-      registerOnFinishRunnables(future, mustExitOnFailure)
+      CommandsRunner.setActionCallback(scriptCallback)
+      registerOnFinishRunnables(scriptCallback, mustExitOnFailure)
     }
   }
 }
@@ -359,19 +348,8 @@ private fun runScriptFromFile(project: Project) {
     playback.setCommandStartStopProcessor(ReporterCommandAsTelemetrySpan())
   }
   val scriptCallback = playback.run()
-
-  val future = CompletableFuture<Any>()
-  scriptCallback.doWhenDone { future.complete(null) }
-  scriptCallback.doWhenRejected { s ->
-    if (s.isNullOrEmpty()) {
-      future.cancel(false)
-    }
-    else {
-      future.completeExceptionally(CancellationException(s))
-    }
-  }
-  CommandsRunner.setActionCallback(future)
-  registerOnFinishRunnables(future = future, mustExitOnFailure = true)
+  CommandsRunner.setActionCallback(scriptCallback)
+  registerOnFinishRunnables(future = scriptCallback, mustExitOnFailure = true)
 }
 
 private fun encodeStringForTC(line: String): String {

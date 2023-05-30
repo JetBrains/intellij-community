@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback;
 
 import com.intellij.ide.IdeEventQueue;
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.commands.*;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -30,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
@@ -44,7 +44,7 @@ public class PlaybackRunner {
   private final StatusCallback myCallback;
 
   private final List<CommandDescriptor> myCommands = new ArrayList<>();
-  private ActionCallback myActionCallback;
+  private CompletableFuture<?> actionCallback;
   private boolean myStopRequested;
 
   private final boolean myUseDirectActionCall;
@@ -85,7 +85,7 @@ public class PlaybackRunner {
     };
   }
 
-  public ActionCallback run() {
+  public CompletableFuture<?> run() {
     myCommandStartStopProcessor.startOfScript(getProject());
     myStopRequested = false;
 
@@ -103,24 +103,29 @@ public class PlaybackRunner {
       onStop();
     });
 
-    myActionCallback = new ActionCallback();
-    myActionCallback
-      .doWhenRejected(() -> {
-        myCommandStartStopProcessor.scriptCanceled();
-      })
-      .doWhenProcessed(() -> {
+    actionCallback = new CompletableFuture<>();
+    actionCallback.handle((o, throwable) -> {
+      try {
+        if (throwable != null) {
+          myCommandStartStopProcessor.scriptCanceled();
+        }
+      }
+      finally {
         Disposer.dispose(myOnStop);
 
         SwingUtilities.invokeLater(() -> {
           activityMonitor.setActive(false);
           restoreRegistryValues();
         });
-      });
+      }
+      return null;
+    });
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       try {
         myRobot = new Robot();
-      } catch (AWTException e){
+      }
+      catch (AWTException e) {
         LOG.info(e);
       }
     }
@@ -131,8 +136,8 @@ public class PlaybackRunner {
     catch (Exception e) {
       String message = "Failed to parse script commands: " + myScript;
       LOG.error(message, e);
-      myActionCallback.reject(message + ": " + e.getMessage());
-      return myActionCallback;
+      actionCallback.completeExceptionally(new RuntimeException(message + ": " + e.getMessage()));
+      return actionCallback;
     }
 
     new Thread(null, Context.current().wrap(() -> {
@@ -144,7 +149,7 @@ public class PlaybackRunner {
       }
     }), "playback runner").start();
 
-    return myActionCallback;
+    return actionCallback;
   }
 
   private void restoreRegistryValues() {
@@ -160,7 +165,7 @@ public class PlaybackRunner {
       final PlaybackCommand cmd = createCommand(commandDescriptor.fullLine, commandDescriptor.line, commandDescriptor.scriptDir);
       if (myStopRequested || cmd == null) {
         myCallback.message(null, "Stopped", StatusCallback.Type.message);
-        myActionCallback.setRejected();
+        actionCallback.cancel(false);
         return;
       }
       @SuppressWarnings("unchecked")
@@ -177,7 +182,7 @@ public class PlaybackRunner {
 
           @Override
           public StageInfo popStage() {
-            if (myCurrentStageDepth.size() > 0) {
+            if (!myCurrentStageDepth.isEmpty()) {
               return myCurrentStageDepth.remove(myCurrentStageDepth.size() - 1);
             }
 
@@ -216,7 +221,8 @@ public class PlaybackRunner {
           public Project getProject() {
             Project project = myRunner.getProject();
             if (project == null) {
-              throw new IllegalStateException("Project is null. Use a project-aware runner and check if its project has been set up properly");
+              throw new IllegalStateException(
+                "Project is null. Use a project-aware runner and check if its project has been set up properly");
             }
             return project;
           }
@@ -229,7 +235,7 @@ public class PlaybackRunner {
       cmdCallback
         .onSuccess(it -> {
           myCommandStartStopProcessor.endOfCommand(null);
-          try(Scope ignored = initialContext.makeCurrent()) {
+          try (Scope ignored = initialContext.makeCurrent()) {
             if (cmd.canGoFurther()) {
               int delay = getDelay(cmd);
               if (delay > 0) {
@@ -251,7 +257,7 @@ public class PlaybackRunner {
             }
             else {
               myCallback.message(null, "Stopped: cannot go further", StatusCallback.Type.message);
-              myActionCallback.setDone();
+              actionCallback.complete(null);
             }
           }
         })
@@ -259,16 +265,17 @@ public class PlaybackRunner {
           myCommandStartStopProcessor.endOfCommand(error.getMessage());
           myCallback.message(null, "Stopped: " + error, StatusCallback.Type.message);
           LOG.warn("Callback step stopped with error: " + error, error);
-          myActionCallback.reject(error.getMessage());
+          actionCallback.completeExceptionally(error);
         });
     }
     else {
       myCallback.message(null, "Finished OK " + myPassedStages.size() + " tests", StatusCallback.Type.message);
-      myActionCallback.setDone();
+      actionCallback.complete(null);
     }
   }
 
   public int getDelay(@NotNull PlaybackCommand command) {
+    //noinspection SpellCheckingInspection
     return command instanceof TypeCommand ? Registry.intValue("actionSystem.playback.typecommand.delay") : 0;
   }
 
@@ -327,7 +334,7 @@ public class PlaybackRunner {
           commands.add(new CommandDescriptor(PrintCommand.PREFIX + " " + eachLine, line++, scriptDir));
         }
         catch (ClassNotFoundException e) {
-          throw new RuntimeException("Cannot find class at line " + line +": " + className);
+          throw new RuntimeException("Cannot find class at line " + line + ": " + className);
         }
       }
       else {
@@ -392,7 +399,7 @@ public class PlaybackRunner {
       cmd = new PrintCommand(string.substring(PrintCommand.PREFIX.length() + 1), line);
     }
     else {
-      if(string.startsWith(AbstractCommand.CMD_PREFIX)){
+      if (string.startsWith(AbstractCommand.CMD_PREFIX)) {
         cmd = null;
         LOG.error("Command " + string + " is not found");
       }
