@@ -1,9 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.TaskCancellation
 import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
@@ -19,6 +18,7 @@ import com.intellij.vcs.log.util.PersistentUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.GitIndexUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Path
@@ -35,25 +35,26 @@ internal object GitLogIndexDataUtils {
     val tempLogDataPath = logCache.resolve(logIndexDirName + "_temp")
     val logDataBackupPath = logCache.resolve(logIndexDirName + "_backup")
 
-    object : Task.Backgroundable(project, GitBundle.message("vcs.log.status.bar.extracting.log.index.data")) {
-      override fun run(indicator: ProgressIndicator) {
-        try {
-          FileUtil.delete(tempLogDataPath)
-          ZipUtil.extract(virtualFile.toNioPath(), tempLogDataPath, null, true)
-          // TODO: add versions validation
-        }
-        catch (e: IOException) {
-          LOG.error("Unable to extract log index data from " + virtualFile.name, e)
+    VcsProjectLog.getInstance(project).coroutineScope.launch {
+      withBackgroundProgress(project, GitBundle.message("vcs.log.status.bar.extracting.log.index.data")) {
+        withContext(Dispatchers.IO) {
+          try {
+            FileUtil.delete(tempLogDataPath)
+            ZipUtil.extract(virtualFile.toNioPath(), tempLogDataPath, null, true)
+            // TODO: add versions validation
+          }
+          catch (e: IOException) {
+            LOG.error("Unable to extract log index data from " + virtualFile.name, e)
+          }
         }
       }
-
-      override fun onSuccess() {
+      withContext(Dispatchers.EDT) {
         val vcsProjectLog = VcsProjectLog.getInstance(project)
         val data = vcsProjectLog.dataManager
         val isDataPackFull = data?.dataPack?.isFull ?: false
         if (isDataPackFull && indexingFinished(data)) {
           LOG.info("Shared log index data wasn't applied because local indexing completed faster")
-          return
+          return@withContext
         }
 
         vcsProjectLog.runOnDisposedLog {
@@ -64,7 +65,7 @@ internal object GitLogIndexDataUtils {
           }
         }
       }
-    }.queue()
+    }
   }
 
   internal fun createArchiveWithLogData(project: Project, outputArchiveDir: Path) {
