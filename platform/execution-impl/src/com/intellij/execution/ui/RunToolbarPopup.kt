@@ -524,7 +524,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
         it.remove(element)
       }
       else {
-        it.add(0, element)
+        it.add(element)
       }
     }.toMutableSet()
     _state = State(_state.history, newPinned, _state.allConfigurationsExpanded)
