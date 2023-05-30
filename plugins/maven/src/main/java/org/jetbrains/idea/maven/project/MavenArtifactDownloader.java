@@ -2,11 +2,13 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenArtifactResolutionRequest;
@@ -24,7 +26,7 @@ public final class MavenArtifactDownloader {
   private final Project myProject;
   private final MavenProjectsTree myProjectsTree;
   private final Collection<MavenArtifact> myArtifacts;
-  private final MavenProgressIndicator myProgress;
+  private final ProgressIndicator myIndicator;
 
   public static DownloadResult download(@NotNull Project project,
                                         MavenProjectsTree projectsTree,
@@ -33,19 +35,22 @@ public final class MavenArtifactDownloader {
                                         boolean downloadSources,
                                         boolean downloadDocs,
                                         MavenEmbedderWrapper embedder,
-                                        MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-    return new MavenArtifactDownloader(project, projectsTree, artifacts, indicator)
+                                        MavenProgressIndicator progressIndicator) throws MavenProcessCanceledException {
+    var indicator = null == progressIndicator ? null : progressIndicator.getIndicator();
+    var syncConsole = null == progressIndicator ? null : progressIndicator.getSyncConsole();
+    return new MavenArtifactDownloader(project, projectsTree, artifacts, indicator, syncConsole)
       .download(mavenProjects, embedder, downloadSources, downloadDocs, null);
   }
 
   public MavenArtifactDownloader(@NotNull Project project,
                                  MavenProjectsTree projectsTree,
                                  Collection<MavenArtifact> artifacts,
-                                 MavenProgressIndicator progressIndicator) {
+                                 ProgressIndicator indicator,
+                                 MavenSyncConsole syncConsole) {
     myProject = project;
     myProjectsTree = projectsTree;
     myArtifacts = artifacts == null ? null : new HashSet<>(artifacts);
-    myProgress = progressIndicator;
+    myIndicator = indicator;
   }
 
   public @NotNull DownloadResult downloadSourcesAndJavadocs(Collection<MavenProject> mavenProjects,
@@ -96,7 +101,7 @@ public final class MavenArtifactDownloader {
                        : (downloadSources
                           ? MavenProjectBundle.message("maven.downloading.sources")
                           : MavenProjectBundle.message("maven.downloading.docs"));
-      myProgress.setText(caption);
+      myIndicator.setText(caption);
 
       Map<MavenId, DownloadData> artifacts = collectArtifactsToDownload(mavenProjects, types, console);
       return download(embedder, artifacts, downloadedFiles, console);
@@ -174,7 +179,7 @@ public final class MavenArtifactDownloader {
 
     var requests = new ArrayList<MavenArtifactResolutionRequest>();
     for (Map.Entry<MavenId, DownloadData> eachEntry : toDownload.entrySet()) {
-      myProgress.checkCanceled();
+      myIndicator.checkCanceled();
 
       DownloadData data = eachEntry.getValue();
       MavenId id = eachEntry.getKey();
@@ -186,7 +191,7 @@ public final class MavenArtifactDownloader {
       }
     }
 
-    var artifacts = embedder.resolveArtifacts(requests, myProgress, console);
+    var artifacts = embedder.resolveArtifacts(requests, myIndicator, null, console);
     for (var artifact : artifacts) {
       File file = artifact.getFile();
       if (file.exists()) {

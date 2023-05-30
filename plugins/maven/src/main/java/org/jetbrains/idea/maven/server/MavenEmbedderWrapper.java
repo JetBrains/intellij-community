@@ -108,15 +108,15 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   @NotNull
   public MavenArtifact resolve(@NotNull MavenArtifactInfo info,
                                @NotNull List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
-    return resolveArtifacts(List.of(new MavenArtifactResolutionRequest(info, remoteRepositories)), null, null).get(0);
+    var requests = List.of(new MavenArtifactResolutionRequest(info, remoteRepositories));
+    return resolveArtifacts(requests, null, null, null).get(0);
   }
 
   @NotNull
   public List<MavenArtifact> resolveArtifacts(@NotNull Collection<MavenArtifactResolutionRequest> requests,
-                                              @Nullable MavenProgressIndicator progressIndicator,
+                                              @Nullable ProgressIndicator indicator,
+                                              @Nullable MavenSyncConsole syncConsole,
                                               @Nullable MavenConsole console) throws MavenProcessCanceledException {
-    var indicator = null == progressIndicator ? null : progressIndicator.getIndicator();
-    var syncConsole = null == progressIndicator ? null : progressIndicator.getSyncConsole();
     return runLongRunningTask(
       (embedder, taskId) -> embedder.resolveArtifacts(taskId, requests, ourToken), indicator, syncConsole, console
     );
