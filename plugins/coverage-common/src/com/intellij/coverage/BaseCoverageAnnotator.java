@@ -54,6 +54,7 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
 
         @Override
         public void onSuccess() {
+          if (project.isDisposed()) return;
           final CoverageView coverageView = CoverageViewManager.getInstance(project).getToolwindow(suite);
           if (coverageView != null) {
             coverageView.resetView();
@@ -63,6 +64,7 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
         @Override
         public void onCancel() {
           super.onCancel();
+          if (project.isDisposed()) return;
           CoverageDataManager.getInstance(project).chooseSuitesBundle(null);
         }
       });
