@@ -80,6 +80,10 @@ class KtInsertCancellationCheckFixTest : CancellationCheckInLoopsInspectionTestB
     doTest(fixName)
   }
 
+  fun testSuspendingLambdaForEachLoop() {
+    doTest(fixName)
+  }
+
   fun testSuspendingWhileLoop() {
     doTest(fixName)
   }

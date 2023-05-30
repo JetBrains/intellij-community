@@ -6,8 +6,6 @@ import org.jetbrains.idea.devkit.inspections.CancellationCheckProvider
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.builtins.isSuspendFunctionType
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -15,8 +13,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 
 private const val PROGRESS_MANAGER_CHECKED_CANCELED = "com.intellij.openapi.progress.ProgressManager.checkCanceled"
@@ -61,11 +57,12 @@ class KtCancellationCheckProvider : CancellationCheckProvider {
     val containingArgument = containingLambda.getParentOfType<KtValueArgument>(true, KtCallableDeclaration::class.java)
     if (containingArgument != null) {
       val callExpression = containingArgument.getStrictParentOfType<KtCallExpression>() ?: return Context.BLOCKING
-      val resolvedCall = callExpression.resolveToCall(BodyResolveMode.PARTIAL) ?: return Context.BLOCKING
+      analyze(callExpression) {
+        val functionCall = callExpression.resolveCall().singleFunctionCallOrNull() ?: return Context.BLOCKING
+        val lambdaArgumentType = functionCall.argumentMapping[containingLambda]?.returnType ?: return Context.BLOCKING
 
-      val parameterForArgument = resolvedCall.getParameterForArgument(containingArgument) ?: return Context.BLOCKING
-      val type = parameterForArgument.returnType ?: return Context.BLOCKING
-      return if (type.isSuspendFunctionType) Context.SUSPENDING else Context.BLOCKING
+        return if (lambdaArgumentType.isSuspendFunctionType) Context.SUSPENDING else Context.BLOCKING
+      }
     }
 
     // otherwise, check if it's a property or a function
