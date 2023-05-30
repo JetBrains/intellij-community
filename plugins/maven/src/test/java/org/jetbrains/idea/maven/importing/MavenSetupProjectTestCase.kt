@@ -108,7 +108,7 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
     else {
       withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
         projectManager.waitForReadingCompletion()
-        projectManager.performScheduledImportInTests()
+        //projectManager.performScheduledImportInTests()
         projectManager.waitForImportCompletion()
       }
     }

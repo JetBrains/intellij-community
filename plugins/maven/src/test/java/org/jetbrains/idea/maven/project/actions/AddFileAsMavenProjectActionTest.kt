@@ -35,7 +35,7 @@ class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
     AddFileAsMavenProjectAction().actionPerformed(event)
 
     val promise = myProjectsManager.waitForImportCompletion()
-    myProjectsManager.performScheduledImportInTests()
+    //myProjectsManager.performScheduledImportInTests()
     waitForImportCompletion()
     assertTrue("Import did not succeed", promise.isSucceeded)
     assertModules("project-new")

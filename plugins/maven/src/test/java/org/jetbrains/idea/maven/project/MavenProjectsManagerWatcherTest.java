@@ -147,7 +147,7 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
     if(!isNewImportingProcess) {
       MavenUtil.invokeAndWait(myProject, () -> {
         // Do not save documents here, MavenProjectAware should do this before import
-        myProjectsManager.performScheduledImportInTests();
+        //myProjectsManager.performScheduledImportInTests();
       });
     }
 
@@ -162,7 +162,7 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
     myProjectsManager.addManagedFiles(Collections.singletonList(pom));
     waitForImportCompletion();
     if (!isNewImportingProcess) {
-      myProjectsManager.performScheduledImportInTests();
+      //myProjectsManager.performScheduledImportInTests();
     }
   }
 

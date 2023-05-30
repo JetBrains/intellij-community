@@ -860,7 +860,7 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
       importViaNewFlow(Collections.singletonList(myProjectPom), true, Collections.emptyList());
     }
     else {
-      myProjectsManager.performScheduledImportInTests();
+      //myProjectsManager.performScheduledImportInTests();
     }
 
     assertModuleGroupPath("module2", "module1 and modules");

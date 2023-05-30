@@ -180,7 +180,7 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
                     </modules>
                     """);
 
-    myProjectsManager.performScheduledImportInTests();
+    //myProjectsManager.performScheduledImportInTests();
     if (!isNewImportingProcess) {
       assertFalse(myProjectsManager.hasScheduledImportsInTests());
     }
