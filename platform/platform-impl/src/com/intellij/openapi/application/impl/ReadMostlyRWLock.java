@@ -100,8 +100,9 @@ final class ReadMostlyRWLock {
 
   boolean isReadLockedByThisThread() {
     // If implicit read lock is disabled, don't check for write thread, check for true read lock
-    if (allowImplicitRead)
+    if (allowImplicitRead) {
       checkReadThreadAccess();
+    }
     Reader status = R.get();
     return status.readRequested;
   }
@@ -144,10 +145,12 @@ final class ReadMostlyRWLock {
 
   void endRead(Reader status) {
     // If implicit read lock is disabled, don't check for write thread, check for true read lock
-    if (allowImplicitRead)
+    if (allowImplicitRead) {
       checkReadThreadAccess();
-    if (status != null)
+    }
+    if (status != null) {
       status.readRequested = false;
+    }
     if (isWriteRequested()) {
       LockSupport.unpark(writeThread);  // parked by writeLock()
     }
@@ -188,8 +191,9 @@ final class ReadMostlyRWLock {
    */
   void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
     // If implicit read lock is disabled, don't check for write thread, check for true read lock
-    if (allowImplicitRead)
+    if (allowImplicitRead) {
       checkReadThreadAccess();
+    }
     Reader status = R.get();
     boolean old = status.impatientReads;
     try {
@@ -354,7 +358,7 @@ final class ReadMostlyRWLock {
     return allowImplicitRead;
   }
 
-  void setImplicitReadAllowance(boolean enable) {
+  void setAllowImplicitRead(boolean enable) {
     allowImplicitRead = enable;
   }
 

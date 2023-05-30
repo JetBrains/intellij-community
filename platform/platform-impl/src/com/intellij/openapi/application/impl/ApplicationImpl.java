@@ -1503,7 +1503,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   @Override
-  public void withoutImplicitRead(@NotNull Runnable runnable) {
+  public void runWithoutImplicitRead(@NotNull Runnable runnable) {
     if (!StartupUtil.isImplicitReadOnEDTDisabled()) {
       runnable.run();
       return;
@@ -1515,11 +1515,11 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     // This method is used to allow easily find stack traces which violate disabled ImplicitRead
     boolean oldVal = myLock.isImplicitReadAllowed();
     try {
-      myLock.setImplicitReadAllowance(false);
+      myLock.setAllowImplicitRead(false);
       runnable.run();
     }
     finally {
-      myLock.setImplicitReadAllowance(oldVal);
+      myLock.setAllowImplicitRead(oldVal);
     }
   }
 }

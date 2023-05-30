@@ -560,11 +560,6 @@ public interface Application extends ComponentManager {
 
   boolean isEAP();
 
-  @ApiStatus.Internal
-  default void withoutImplicitRead(@NotNull Runnable runnable) {
-    runnable.run();
-  }
-
   //<editor-fold desc="Deprecated stuff">
 
   /**

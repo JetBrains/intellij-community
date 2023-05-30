@@ -579,14 +579,14 @@ class IdeEventQueue private constructor() : EventQueue() {
       return
     }
 
-    val application = ApplicationManager.getApplication()
+    val application = ApplicationManagerEx.getApplicationEx()
     if (e is ComponentEvent && appIsLoaded && !application.isHeadlessEnvironment) {
       (application.serviceIfCreated<WindowManager>() as WindowManagerEx?)?.dispatchComponentEvent(e)
     }
     when (e) {
       is KeyEvent -> dispatchKeyEvent(e)
       is MouseEvent -> dispatchMouseEvent(e)
-      else -> application.withoutImplicitRead { defaultDispatchEvent(e) }
+      else -> application.runWithoutImplicitRead { defaultDispatchEvent(e) }
     }
   }
 
