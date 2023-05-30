@@ -310,4 +310,33 @@ class ClassDiagramTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test namespace`() {
+    val content = """
+    classDiagram
+      namespace BaseShapes {
+        class Triangle
+        class Rectangle {
+          double width
+          double height
+        }
+      }
+    """.trimIndent()
+    doTest(content)
+  }
+
+  fun `test namespace after class`() {
+    val content = """
+    classDiagram
+      class A
+      namespace BaseShapes {
+        class Triangle
+        class Rectangle {
+          double width
+          double height
+        }
+      }
+    """.trimIndent()
+    doTest(content)
+  }
 }

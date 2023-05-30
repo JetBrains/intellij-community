@@ -158,6 +158,16 @@ class MermaidCompletionContributor : CompletionContributor() {
       ),
       ClassDiagramAnnotationCompletionProvider()
     )
+    extend(
+      CompletionType.BASIC,
+      psiElement().atTopLevelOfDiagram(psiElement().isClassDiagramHeader()),
+      ClassDiagramLiveTemplateCompletionProvider("namespace")
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().insideBlock(psiElement(MermaidTokens.ClassDiagram.NAMESPACE)),
+      MermaidSimpleCompletionProvider(listOf("class"))
+    )
     //endregion
 
     //region State Diagram

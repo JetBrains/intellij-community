@@ -58,7 +58,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states sequence, sequence_id, sequence_alias, sequence_message, sequence_control_id, sequence_links, sequence_links_values, autonumbers
 
-%states class_diagram, struct, generic, simple_direction_value, annotation, class_name, class_relation_line, class_relation_start, class_relation_end, class_in_relation, description, class_style_id, class_member
+%states class_diagram, struct, generic, simple_direction_value, annotation, class_relation_line, class_relation_start, class_relation_end, class_in_relation, description, class_style_id, class_member, namespace_body
 
 %states state_diagram, state_statement, note_statement, note_content, simple_note_content, state_class_def, state_class_def_id, state_class, state_class_style, state_scale
 
@@ -132,21 +132,21 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\s]+ { return Frontmatter.FRONTMATTER_VALUE; }
 }
 
-<pie, journey, flowchart, flowchart_body, sequence, class_diagram, class_name, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, directive, timeline> {
+<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, directive, timeline> {
   "%%{" { yypushstate(directive); return OPEN_DIRECTIVE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
   %%([^{][^\n\r]*)? { return LINE_COMMENT; }
 }
-<pie, journey, flowchart, flowchart_body, sequence, class_diagram, class_name, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, timeline> {
+<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, timeline> {
   "accTitle" { yypushstate(acc_title); return ACC_TITLE; }
   "accDescr" { yypushstate(acc_descr); return ACC_DESCR; }
 }
-<pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, class_name, struct, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element, gitgraph, c4, mindmap, timeline> {
+<pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, struct, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element, gitgraph, c4, mindmap, timeline> {
   [\n\r] { return EOL; }
   ";" { return SEMICOLON; }
 }
 
-<flowchart_body, gantt, class_diagram, class_name> {
+<flowchart_body, gantt, class_diagram> {
   "click" { yypushstate(click); return CLICK; }
 }
 
@@ -468,21 +468,28 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "o" { yybegin(class_in_relation); return ClassDiagram.AGGREGATION; }
   "()" { yybegin(class_in_relation); return ClassDiagram.LOLLIPOP; }
 }
-<class_diagram> {
+<class_diagram, namespace_body> {
   "link" { yypushstate(click); return LINK; }
   "callback" { yypushstate(click); return CALLBACK; }
   ":::" { yypushstate(class_style_id); return STYLE_SEPARATOR; }
   "note for" { return ClassDiagram.NOTE_FOR; }
   "note" { return NOTE; }
-  "class"/[^\S\n\r]+.* { return CLASS; }
+  "class"/[^\S\n\r]+.* { yybegin(class_diagram); return CLASS; }
   "direction" { yypushstate(direction_value); return DIRECTION; }
+  "namespace" { yybegin(namespace_body); return ClassDiagram.NAMESPACE; }
 
   [\w_-]+/[^\S\n\r]*[o|O]("--"|"..")[^\S\n\r]*[\w_-]+ { yybegin(class_relation_start); return ClassDiagram.CLASS_ID; }
   [\w_-]+/[^\S\n\r]*"--"[^\S\n\r]*[\w_-]+ { yybegin(class_relation_line); return ClassDiagram.CLASS_ID; }
   [\w_-]+/[^\S\n\r]*"--" { yybegin(class_relation_line); return ClassDiagram.CLASS_ID; }
   [\w_-]+ { return ClassDiagram.CLASS_ID; }
-
+}
+<class_diagram> {
   "{" { yybegin(struct); return OPEN_CURLY; }
+  "}" { return CLOSE_CURLY; }
+}
+<struct, namespace_body> {
+  "{" { return OPEN_CURLY; }
+  "}" { yybegin(class_diagram); return CLOSE_CURLY; }
 }
 <class_in_relation> {
   [\w_-]+ { return ClassDiagram.CLASS_ID; }
@@ -491,10 +498,6 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 <class_style_id> {
   [\w_]+ { yypopstate(); return ID; }
-}
-<struct> {
-  "{" { return OPEN_CURLY; }
-  "}" { yybegin(class_diagram); return CLOSE_CURLY; }
 }
 <struct, class_member> {
   [^\"\.<>{}()\[\]~\+\-#*$,:;\s]+ { return ATTRIBUTE_WORD; }
@@ -505,7 +508,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "{" { return OPEN_CURLY; }
   "}" { return CLOSE_CURLY; }
 }
-<class_diagram, struct, class_name, class_member, class_in_relation> {
+<class_diagram, struct, class_member, class_in_relation> {
   [~] { yypushstate(generic); return TILDA; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   [`] { yypushstate(back_quoted_string); return BACK_QUOTE; }

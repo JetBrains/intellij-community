@@ -19,6 +19,7 @@ object MermaidTokenTypeSets {
     MermaidElements.ACTOR_STATEMENT,
     MermaidElements.CLASS_DIAGRAM_STATEMENT,
     MermaidElements.CLASS_MEMBER_STATEMENT,
+    MermaidElements.CLASS_STATEMENT,
     MermaidElements.STATE_DIAGRAM_STATEMENT,
     MermaidElements.DIVIDER_STATEMENT,
     MermaidElements.SIMPLE_NOTE_CONTENT,

@@ -264,6 +264,7 @@ private classLine ::= classDiagramStatement [EOL] | EOL
 classDiagramStatement ::= directionStatement
   | classStatement
   | relationStatement
+  | namespaceStatement
   | memberStatement
   | annotationStatement
   | classDiagramNoteStatement
@@ -271,7 +272,7 @@ classDiagramStatement ::= directionStatement
   | classDiagramClickStatement
   | accStatement
 
-classDiagramIdentifier ::= CLASS_ID | BACK_QUOTE quotedClassIdentifier BACK_QUOTE {
+classDiagramIdentifier ::= CLASS_ID+ | BACK_QUOTE quotedClassIdentifier BACK_QUOTE {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 quotedClassIdentifier ::= STRING_VALUE {
@@ -320,6 +321,14 @@ generic ::= TILDA genericTypeId [generic] TILDA
 genericTypeId ::= GENERIC_TYPE {
     mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
+
+namespaceStatement ::= namespaceHeader [namespaceBlock]
+namespaceHeader ::= NAMESPACE namespaceIdentifier
+namespaceIdentifier ::= CLASS_ID+ { mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement" }
+namespaceBlock ::= OPEN_CURLY EOL* namespaceStatements? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private namespaceStatements ::= namespaceLines
+private namespaceLines ::= namespaceLine [namespaceLines]
+private namespaceLine ::= classStatement [EOL] | EOL
 
 relation ::= [cardinality] [relationTypeLeft] lineType [relationTypeRight] [cardinality]
 cardinality ::= maybeEmptyString

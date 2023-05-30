@@ -110,7 +110,12 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
     private fun addClassDiagramHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
       holder[MermaidTokens.ClassDiagram.CLASS_DIAGRAM] = MermaidTextAttributes.diagram_name
       holder[MermaidTokens.ClassDiagram.CLASS_ID] = MermaidTextAttributes.identifier
-      holder[MermaidTokens.ClassDiagram.NOTE_FOR] = MermaidTextAttributes.keyword
+      fillMap(
+        holder,
+        MermaidTextAttributes.keyword,
+        MermaidTokens.ClassDiagram.NOTE_FOR,
+        MermaidTokens.ClassDiagram.NAMESPACE
+      )
       holder[MermaidTokens.ClassDiagram.GENERIC_TYPE] = MermaidTextAttributes.generic
 
       fillMap(

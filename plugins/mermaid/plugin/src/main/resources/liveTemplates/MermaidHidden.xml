@@ -301,4 +301,15 @@
     </context>
   </template>
 
+  <template id="mermaid_namespace" name="mermaid_namespace"
+            value="namespace $ID$ {&#10;$INDENT$$END$$SELECTION$&#10;}"
+            description="class namespace"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="ID" expression="" defaultValue="&quot;ns&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
 </templateSet>

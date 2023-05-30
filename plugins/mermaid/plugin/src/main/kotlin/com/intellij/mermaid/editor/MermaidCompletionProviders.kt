@@ -134,9 +134,25 @@ class ClassDiagramSimpleCompletionProvider : MermaidSimpleCompletionProvider(lis
 class ClassDiagramAnnotationCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("interface", "abstract", "service", "enumeration"))
 
+class ClassDiagramLiveTemplateCompletionProvider(private val keyword: String) :
+  MermaidLiveTemplateCompletionProvider() {
+  override fun addCompletions(
+    parameters: CompletionParameters,
+    context: ProcessingContext,
+    result: CompletionResultSet
+  ) {
+    val project = parameters.originalFile.project
+    result.addElement(createKeywordLookupElement(project, keyword))
+  }
+}
+
 class StateDiagramLiveTemplateCompletionProvider(private val keyword: String) :
   MermaidLiveTemplateCompletionProvider() {
-  override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+  override fun addCompletions(
+    parameters: CompletionParameters,
+    context: ProcessingContext,
+    result: CompletionResultSet
+  ) {
     val project = parameters.originalFile.project
     result.addElement(createKeywordLookupElement(project, keyword))
   }

@@ -4,6 +4,7 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 
 object MermaidTokens {
+  //region General
   @JvmField
   val OPEN_DIRECTIVE = MermaidToken("OPEN_DIRECTIVE")
 
@@ -228,6 +229,7 @@ object MermaidTokens {
 
   @JvmField
   val CLASS_DEF = MermaidToken("CLASS_DEF")
+  //endregion
 
   object Frontmatter {
     @JvmField
@@ -485,6 +487,9 @@ object MermaidTokens {
 
     @JvmField
     val NOTE_FOR = MermaidToken("ClassDiagram.NOTE_FOR")
+
+    @JvmField
+    val NAMESPACE = MermaidToken("ClassDiagram.NAMESPACE")
   }
 
   object StateDiagram {

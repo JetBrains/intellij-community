@@ -158,6 +158,7 @@ internal object MermaidSpacingBuilder {
       .between(MermaidElements.CLASS_DIAGRAM_IDENTIFIER, MermaidElements.CLASS_DIAGRAM_NOTE_TEXT).spaces(1)
       .after(MermaidElements.CLASS_DIAGRAM_IDENTIFIER).spaces(1)
       .after(MermaidElements.CLASS_HEADER).spaces(1)
+      .around(MermaidElements.NAMESPACE_IDENTIFIER).spaces(1)
       // State diagram
       .after(MermaidTokens.StateDiagram.STATE).spaces(1)
       .after(MermaidElements.SPECIAL_STATE).spaces(1)
