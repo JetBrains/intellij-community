@@ -107,9 +107,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private inner class MavenProjectsManagerImporter(private val modelsProvider: IdeModifiableModelsProvider,
                                                    private val projectsToImport: Map<MavenProject, MavenProjectChanges>,
                                                    private val importModuleGroupsRequired: Boolean) {
-    private val importingTitle = MavenProjectBundle.message("maven.project.importing")
-    private val postProcessingTitle = MavenProjectBundle.message("maven.post.processing")
-
     @RequiresBlockingContext
     fun importMavenProjectsBlocking(): List<Module> {
       if (ApplicationManager.getApplication().isDispatchThread) {
@@ -139,7 +136,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
     @RequiresBackgroundThread
     suspend fun importMavenProjectsBg(): List<Module> {
-      val importResult = withBackgroundProgress(project, importingTitle, false) {
+      val importResult = withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
         val importResult = doImport()
         val fm = VirtualFileManager.getInstance()
         val noBackgroundMode = MavenUtil.isNoBackgroundMode()
@@ -154,7 +151,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         }
         return@withBackgroundProgress importResult
       }
-      withBackgroundProgress(project, postProcessingTitle, true) {
+      withBackgroundProgress(project, MavenProjectBundle.message("maven.post.processing"), true) {
         performPostImportTasks(importResult.postTasks)
       }
       return importResult.createdModules
