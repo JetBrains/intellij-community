@@ -31,7 +31,7 @@ private const val ALPHA = (255 * 0.6).toInt()
 internal class ExpandableMenu(private val headerContent: JComponent) {
 
   val ideMenu = IdeMenuBar.createMenuBar()
-  private val ideMenuHelper = IdeMenuHelper(ideMenu)
+  private val ideMenuHelper = IdeMenuHelper(ideMenu, null)
   private var expandedMenuBar: JPanel? = null
   private var headerColorfulPanel: HeaderColorfulPanel? = null
   private val shadowComponent = ShadowComponent()

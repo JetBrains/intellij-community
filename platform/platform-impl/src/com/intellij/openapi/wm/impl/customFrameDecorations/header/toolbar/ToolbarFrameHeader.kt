@@ -44,7 +44,7 @@ private enum class ShowMode {
 
 internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val myMenuBar = IdeMenuBar.createMenuBar()
-  private val ideMenuHelper = IdeMenuHelper(myMenuBar)
+  private val ideMenuHelper = IdeMenuHelper(myMenuBar, this)
   private val menuBarHeaderTitle = SimpleCustomDecorationPath(frame, true).apply {
     isOpaque = false
   }
