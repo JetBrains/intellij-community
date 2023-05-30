@@ -653,4 +653,28 @@ public final class FileManagerImpl implements FileManager {
     PsiFile original = file.getOriginalFile();
     return original == file || original.isValid();
   }
+
+  /**
+   * Find PsiFile for the supplied VirtualFile similar to {@link #getCachedPsiFile(VirtualFile)},
+   * but without any attempts to resurrect the temporary invalidated file (see {@link #shouldResurrect(FileViewProvider, VirtualFile)}) or check its validity.
+   * Useful for retrieving the PsiFile in EDT where expensive PSI operations are prohibited.
+   * Do not use, since this is an extremely fragile and low-level API which can return surprising results. Use {@link #getCachedPsiFile(VirtualFile)} instead.
+   */
+  @ApiStatus.Internal
+  public PsiFile getFastCachedPsiFile(@NotNull VirtualFile vFile) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (!vFile.isValid()) {
+      throw new InvalidVirtualFileAccessException(vFile);
+    }
+    Project project = myManager.getProject();
+    if (project.isDisposed()) {
+      LOG.error("Project is already disposed: " + project);
+    }
+    dispatchPendingEvents();
+    FileViewProvider viewProvider = getRawCachedViewProvider(vFile);
+    if (viewProvider == null || viewProvider.getUserData(IN_COMA) != null) {
+      return null;
+    }
+    return ((AbstractFileViewProvider)viewProvider).getCachedPsi(viewProvider.getBaseLanguage());
+  }
 }
