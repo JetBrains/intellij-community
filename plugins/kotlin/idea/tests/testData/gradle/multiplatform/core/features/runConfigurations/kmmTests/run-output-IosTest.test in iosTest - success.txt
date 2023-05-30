@@ -1,0 +1,3 @@
+<time>: Execution finished ':cleanIosSimulatorArm64Test :iosSimulatorArm64Test --tests "IosTest.test in iosTest - success"'.
+
+<exitCode: 0>

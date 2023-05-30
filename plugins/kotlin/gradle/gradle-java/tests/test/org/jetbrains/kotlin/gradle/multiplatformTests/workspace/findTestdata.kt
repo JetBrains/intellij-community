@@ -2,11 +2,23 @@
 
 package org.jetbrains.kotlin.gradle.multiplatformTests.workspace
 
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.io.File
+
+internal fun KotlinMppTestsContext.findMostSpecificExistingFileOrNewDefault(
+    checkerClassifier: String
+) = findMostSpecificExistingFileOrNewDefault(
+    checkerClassifier = checkerClassifier,
+    testDataDir = testDataDirectory,
+    kgpVersion = kgpVersion,
+    gradleClassifier = gradleVersion.version,
+    agpClassifier = agpVersion,
+    testConfiguration = testConfiguration
+)
 
 internal fun findMostSpecificExistingFileOrNewDefault(
     checkerClassifier: String,

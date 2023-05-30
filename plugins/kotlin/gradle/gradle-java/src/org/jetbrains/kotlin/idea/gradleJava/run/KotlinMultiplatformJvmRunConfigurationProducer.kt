@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinTargetData
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.cast
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.tooling.core.withClosure
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -57,7 +59,8 @@ class KotlinMultiplatformJvmRunConfigurationProducer : LazyRunConfigurationProdu
     override fun isConfigurationFromContext(configuration: GradleRunConfiguration, context: ConfigurationContext): Boolean {
         val module = context.module.asJvmModule() ?: return false
         val location = context.location ?: return false
-        val function = location.psiElement.parentOfType<KtFunction>() ?: return false
+        val function = location.psiElement.parentOfType<KtNamedFunction>() ?: return false
+        if (!KotlinMainFunctionDetector.getInstance().isMain(function)) return false
         val runTask = findSuitableKotlinJvmRunTask(module) ?: return false
         if (runTask.taskName !in configuration.settings.taskNames) return false
         return mainClassScriptParameter(function) in configuration.settings.scriptParameters
