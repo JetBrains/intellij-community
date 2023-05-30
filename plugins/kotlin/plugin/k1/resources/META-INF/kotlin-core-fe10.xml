@@ -17,6 +17,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.K1PluginStartupActivity"/>
+
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10ShortenReferencesFacility"/>

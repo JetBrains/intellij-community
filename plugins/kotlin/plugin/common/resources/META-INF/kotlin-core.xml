@@ -124,7 +124,6 @@
 
     <projectPathMacroContributor implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"/>
 
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.update.KotlinPluginUpdateCheckerStartActivity"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$MyStartupActivity"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledRefresher"/>
