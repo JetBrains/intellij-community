@@ -708,45 +708,30 @@ public abstract class IndyLambdaKotlinEvaluateExpressionTestGenerated extends Ab
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/evaluation/singleBreakpoint/implicitClassReceiver")
-        public static class ImplicitClassReceiver extends AbstractIndyLambdaKotlinEvaluateExpressionTest {
+        @TestMetadata("testData/evaluation/singleBreakpoint/funWithDefaultParam")
+        public static class FunWithDefaultParam extends AbstractIndyLambdaKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
-            @TestMetadata("localClass.kt")
-            public void testLocalClass() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/implicitClassReceiver/localClass.kt");
+            @TestMetadata("classWithExtensionFun.kt")
+            public void testClassWithExtensionFun() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/funWithDefaultParam/classWithExtensionFun.kt");
             }
 
-            @TestMetadata("localClass2.kt")
-            public void testLocalClass2() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/implicitClassReceiver/localClass2.kt");
+            @TestMetadata("classWithExtensionFun2.kt")
+            public void testClassWithExtensionFun2() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/funWithDefaultParam/classWithExtensionFun2.kt");
             }
 
-            @TestMetadata("localClass3.kt")
-            public void testLocalClass3() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/implicitClassReceiver/localClass3.kt");
+            @TestMetadata("methodInClass.kt")
+            public void testMethodInClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/funWithDefaultParam/methodInClass.kt");
             }
 
-            @TestMetadata("localObject.kt")
-            public void testLocalObject() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/implicitClassReceiver/localObject.kt");
-            }
-
-            @TestMetadata("localObject2.kt")
-            public void testLocalObject2() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/implicitClassReceiver/localObject2.kt");
-            }
-
-            @TestMetadata("localObject3.kt")
-            public void testLocalObject3() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/implicitClassReceiver/localObject3.kt");
-            }
-
-            @TestMetadata("localObjectInFunArguments.kt")
-            public void testLocalObjectInFunArguments() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/implicitClassReceiver/localObjectInFunArguments.kt");
+            @TestMetadata("methodInClass2.kt")
+            public void testMethodInClass2() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/funWithDefaultParam/methodInClass2.kt");
             }
         }
 

@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.lombok.LombokComponentRegistrar
 import org.jetbrains.kotlin.noarg.NoArgComponentRegistrar
 import org.jetbrains.kotlin.parcelize.ParcelizeComponentRegistrar
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverComponentRegistrar
+import org.jetbrains.kotlin.scripting.compiler.plugin.FirScriptingCompilerExtensionRegistrar
+import org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingK2CompilerPluginRegistrar
 import org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationComponentRegistrar
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -66,6 +68,10 @@ enum class KotlinK2BundledCompilerPlugins(
 
     PARCELIZE_COMPILER_PLUGIN(
         ParcelizeComponentRegistrar::class
+    ),
+
+    SCRIPTING_COMPILER_PLUGIN(
+        ScriptingK2CompilerPluginRegistrar::class,
     );
 
     private val registrarClassName: String =

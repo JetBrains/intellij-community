@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion.context
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -335,10 +336,22 @@ internal object FirPositionCompletionContextDetector {
             is FirImportDirectivePositionContext,
             is FirPackageDirectivePositionContext,
             is FirTypeConstraintNameInWhereClausePositionContext,
-            is FirIncorrectPositionContext,
-            is FirSimpleParameterPositionContext,
-            is FirClassifierNamePositionContext -> {
+            is FirIncorrectPositionContext -> {
                 analyze(basicContext.originalKtFile, action = action)
+            }
+
+            is FirSimpleParameterPositionContext -> {
+                analyze(basicContext.originalKtFile) {
+                    recordOriginalDeclaration(basicContext.originalKtFile, positionContext.ktParameter)
+                    action()
+                }
+            }
+
+            is FirClassifierNamePositionContext -> {
+                analyze(basicContext.originalKtFile) {
+                    recordOriginalDeclaration(basicContext.originalKtFile, positionContext.classLikeDeclaration)
+                    action()
+                }
             }
 
             is FirNameReferencePositionContext -> analyzeInDependedAnalysisSession(
@@ -358,6 +371,14 @@ internal object FirPositionCompletionContextDetector {
                 positionContext.ktParameter,
                 action = action
             )
+        }
+    }
+    
+    private fun KtAnalysisSession.recordOriginalDeclaration(originalFile: KtFile, declaration: KtDeclaration) {
+        try {
+            declaration.recordOriginalDeclaration(PsiTreeUtil.findSameElementInCopy(declaration, originalFile))
+        } catch (ignore: IllegalStateException) {
+            //declaration is written at empty space
         }
     }
 }

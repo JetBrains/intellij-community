@@ -79,7 +79,7 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
      */
     private fun KtAnalysisSession.findMethod(
         classSymbol: KtClassOrObjectSymbol, methodName: Name, condition: (KtCallableSymbol) -> Boolean
-    ): KtCallableSymbol? = classSymbol.getMemberScope().getCallableSymbols { name -> name == methodName }.filter(condition).singleOrNull()
+    ): KtCallableSymbol? = classSymbol.getMemberScope().getCallableSymbols(methodName).filter(condition).singleOrNull()
 
     private fun KtAnalysisSession.findEqualsMethodForClass(classSymbol: KtClassOrObjectSymbol): KtCallableSymbol? =
         findMethod(classSymbol, EQUALS) { callableSymbol ->

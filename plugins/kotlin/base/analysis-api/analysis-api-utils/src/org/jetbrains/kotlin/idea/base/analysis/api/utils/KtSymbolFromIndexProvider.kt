@@ -39,7 +39,7 @@ class KtSymbolFromIndexProvider(private val project: Project) {
                 value.getNamedClassOrObjectSymbol()?.let { yield(it) }
             }
             yieldAll(
-                getResolveExtensionScopeWithTopLevelDeclarations().getClassifierSymbols { it == name }.filterIsInstance<KtNamedClassOrObjectSymbol>()
+                getResolveExtensionScopeWithTopLevelDeclarations().getClassifierSymbols(name).filterIsInstance<KtNamedClassOrObjectSymbol>()
             )
         }
     }
@@ -129,7 +129,7 @@ class KtSymbolFromIndexProvider(private val project: Project) {
                 callableDeclaration.getSymbolOfTypeSafe<KtCallableSymbol>()?.let { yield(it) }
             }
             yieldAll(
-                getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols { it == name }
+                getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols(name)
             )
         }
     }

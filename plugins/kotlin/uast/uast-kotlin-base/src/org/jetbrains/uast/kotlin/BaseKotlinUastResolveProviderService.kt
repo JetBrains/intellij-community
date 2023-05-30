@@ -8,8 +8,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 
 interface BaseKotlinUastResolveProviderService {
-    fun isJvmElement(psiElement: PsiElement): Boolean
-
     val languagePlugin: UastLanguagePlugin
 
     // ----------
