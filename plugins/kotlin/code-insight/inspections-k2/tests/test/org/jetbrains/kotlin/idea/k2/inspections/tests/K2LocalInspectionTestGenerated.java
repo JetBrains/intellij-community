@@ -352,6 +352,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/customValuesFunction.kt");
         }
 
+        @TestMetadata("enumFromStdlib.kt")
+        public void testEnumFromStdlib() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/enumFromStdlib.kt");
+        }
+
         @TestMetadata("equalsCheck.kt")
         public void testEqualsCheck() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/equalsCheck.kt");
@@ -400,6 +405,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("functionWithoutOverrideForList.kt")
         public void testFunctionWithoutOverrideForList() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/functionWithoutOverrideForList.kt");
+        }
+
+        @TestMetadata("lambdaReturnType.kt")
+        public void testLambdaReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate/lambdaReturnType.kt");
         }
 
         @TestMetadata("listOfCallOnArray.kt")

@@ -4967,6 +4967,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/customValuesFunction.kt");
         }
 
+        @TestMetadata("enumFromStdlib.kt")
+        public void testEnumFromStdlib() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/enumFromStdlib.kt");
+        }
+
         @TestMetadata("equalsCheck.kt")
         public void testEqualsCheck() throws Exception {
             runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/equalsCheck.kt");
@@ -5015,6 +5020,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("functionWithoutOverrideForList.kt")
         public void testFunctionWithoutOverrideForList() throws Exception {
             runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/functionWithoutOverrideForList.kt");
+        }
+
+        @TestMetadata("lambdaReturnType.kt")
+        public void testLambdaReturnType() throws Exception {
+            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/lambdaReturnType.kt");
         }
 
         @TestMetadata("listOfCallOnArray.kt")
@@ -10417,19 +10427,29 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("asInitializer.kt")
-        public void testAsInitializer() throws Exception {
-            runTest("testData/inspectionsLocal/redundantWith/asInitializer.kt");
-        }
-
-        @TestMetadata("asInitializerWithSingleReturn.kt")
-        public void testAsInitializerWithSingleReturn() throws Exception {
-            runTest("testData/inspectionsLocal/redundantWith/asInitializerWithSingleReturn.kt");
-        }
-
         @TestMetadata("emptyExpressionInReturn.kt")
         public void testEmptyExpressionInReturn() throws Exception {
             runTest("testData/inspectionsLocal/redundantWith/emptyExpressionInReturn.kt");
+        }
+
+        @TestMetadata("functionBody.kt")
+        public void testFunctionBody() throws Exception {
+            runTest("testData/inspectionsLocal/redundantWith/functionBody.kt");
+        }
+
+        @TestMetadata("functionBodyWithMultiStatement.kt")
+        public void testFunctionBodyWithMultiStatement() throws Exception {
+            runTest("testData/inspectionsLocal/redundantWith/functionBodyWithMultiStatement.kt");
+        }
+
+        @TestMetadata("functionBodyWithMultiStatementAndReturn.kt")
+        public void testFunctionBodyWithMultiStatementAndReturn() throws Exception {
+            runTest("testData/inspectionsLocal/redundantWith/functionBodyWithMultiStatementAndReturn.kt");
+        }
+
+        @TestMetadata("functionBodyWithReturn.kt")
+        public void testFunctionBodyWithReturn() throws Exception {
+            runTest("testData/inspectionsLocal/redundantWith/functionBodyWithReturn.kt");
         }
 
         @TestMetadata("nested.kt")
@@ -10475,11 +10495,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("notApplicable_inBinaryExpression.kt")
         public void testNotApplicable_inBinaryExpression() throws Exception {
             runTest("testData/inspectionsLocal/redundantWith/notApplicable_inBinaryExpression.kt");
-        }
-
-        @TestMetadata("notApplicable_inFunctionBody.kt")
-        public void testNotApplicable_inFunctionBody() throws Exception {
-            runTest("testData/inspectionsLocal/redundantWith/notApplicable_inFunctionBody.kt");
         }
 
         @TestMetadata("notApplicable_inProperty.kt")
@@ -12513,6 +12528,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/math/atan2.kt");
             }
 
+            @TestMetadata("cbrt.kt")
+            public void testCbrt() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/math/cbrt.kt");
+            }
+
+            @TestMetadata("cbrt17apiVersion.kt")
+            public void testCbrt17apiVersion() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/math/cbrt17apiVersion.kt");
+            }
+
             @TestMetadata("ceil.kt")
             public void testCeil() throws Exception {
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/math/ceil.kt");
@@ -12727,6 +12752,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("intToString2.kt")
             public void testIntToString2() throws Exception {
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/toString/intToString2.kt");
+            }
+
+            @TestMetadata("intToStringWithInvalidLiteralRadix.kt")
+            public void testIntToStringWithInvalidLiteralRadix() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/toString/intToStringWithInvalidLiteralRadix.kt");
+            }
+
+            @TestMetadata("intToStringWithLiteralRadix.kt")
+            public void testIntToStringWithLiteralRadix() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/toString/intToStringWithLiteralRadix.kt");
             }
 
             @TestMetadata("longToString.kt")
@@ -13918,6 +13953,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("validSubtraction.kt")
         public void testValidSubtraction() throws Exception {
             runTest("testData/inspectionsLocal/replaceWithOperatorAssignment/validSubtraction.kt");
+        }
+
+        @TestMetadata("withReceiver.kt")
+        public void testWithReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithOperatorAssignment/withReceiver.kt");
         }
     }
 
