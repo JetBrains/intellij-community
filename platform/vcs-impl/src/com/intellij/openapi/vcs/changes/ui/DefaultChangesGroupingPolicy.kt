@@ -8,7 +8,9 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import javax.swing.tree.DefaultTreeModel
 
 object NoneChangesGroupingPolicy : ChangesGroupingPolicy {
-  override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? = null
+  override fun getParentNodeFor(nodePath: StaticFilePath,
+                                node: ChangesBrowserNode<*>,
+                                subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? = null
 }
 
 object NoneChangesGroupingFactory : ChangesGroupingPolicyFactory() {
@@ -18,7 +20,9 @@ object NoneChangesGroupingFactory : ChangesGroupingPolicyFactory() {
 }
 
 class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
-  override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
+  override fun getParentNodeFor(nodePath: StaticFilePath,
+                                node: ChangesBrowserNode<*>,
+                                subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
     val vFile = nodePath.resolve() ?: return null
     val status = ChangeListManager.getInstance(project).getStatus(vFile)
     if (status == FileStatus.MERGED_WITH_CONFLICTS) {

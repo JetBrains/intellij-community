@@ -13,9 +13,11 @@ import javax.swing.tree.DefaultTreeModel
 class ModuleChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
   private val myIndex = ProjectFileIndex.getInstance(project)
 
-  override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
+  override fun getParentNodeFor(nodePath: StaticFilePath,
+                                node: ChangesBrowserNode<*>,
+                                subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
     val file = resolveVirtualFile(nodePath)
-    val nextPolicyParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot)
+    val nextPolicyParent = nextPolicy?.getParentNodeFor(nodePath, node, subtreeRoot)
 
     file?.let { myIndex.getModuleForFile(file, HIDE_EXCLUDED_FILES) }?.let { module ->
       if (ModuleType.isInternal(module)) return nextPolicyParent

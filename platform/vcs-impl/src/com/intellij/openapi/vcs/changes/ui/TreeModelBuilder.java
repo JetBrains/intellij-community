@@ -426,7 +426,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
     StaticFilePath pathKey = getKey(change);
     ChangesBrowserNode<?> parentNode = ReadAction.compute(
-      () -> notNull(GROUPING_POLICY.getRequired(subtreeRoot).getParentNodeFor(pathKey, subtreeRoot), subtreeRoot));
+      () -> notNull(GROUPING_POLICY.getRequired(subtreeRoot).getParentNodeFor(pathKey, node, subtreeRoot), subtreeRoot));
     ChangesBrowserNode<?> cachingRoot = BaseChangesGroupingPolicy.getCachingRoot(parentNode, subtreeRoot);
 
     myModel.insertNodeInto(node, parentNode, myModel.getChildCount(parentNode));

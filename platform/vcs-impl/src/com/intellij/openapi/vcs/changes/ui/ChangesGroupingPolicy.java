@@ -6,7 +6,9 @@ import org.jetbrains.annotations.Nullable;
 
 public interface ChangesGroupingPolicy {
   @Nullable
-  ChangesBrowserNode getParentNodeFor(@NotNull StaticFilePath nodePath, @NotNull ChangesBrowserNode subtreeRoot);
+  ChangesBrowserNode<?> getParentNodeFor(@NotNull StaticFilePath nodePath,
+                                         @NotNull ChangesBrowserNode<?> node,
+                                         @NotNull ChangesBrowserNode<?> subtreeRoot);
 
   default void setNextGroupingPolicy(@Nullable ChangesGroupingPolicy policy) {
   }
