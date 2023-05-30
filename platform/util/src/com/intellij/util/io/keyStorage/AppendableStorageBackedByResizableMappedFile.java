@@ -91,9 +91,18 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
 
   @Override
   public boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException {
-    if (isDirty()) {
-      throw new IllegalStateException("Must be .force()-ed first");
-    }
+    //TODO RC: processAll requires storage to by flushed first -- but in multithreaded environment it is
+    //         impossible to satisfy this requirement without excessive locking: one needs writeLock to
+    //         do flush, and also at least a readLock for .processAll(). But there shouldn't be any
+    //         locking gap between flush() and.processAll(), which is impossible with regular ReadWriteLock
+    //         (readLock can't be upgraded to writeLock), hence exclusive lock needed for the whole
+    //         (flush+processAll) call.
+    //         Hence right now it is easier to relax the semantics of processAll so that it doesn't guarantee
+    //         strict consistency -- items added after last flush but before .processAll() could be not listed
+    //
+    //if (isDirty()) {
+    //  throw new IllegalStateException("Must be .force()-ed first");
+    //}
     if (fileLength == 0) {
       return true;
     }
