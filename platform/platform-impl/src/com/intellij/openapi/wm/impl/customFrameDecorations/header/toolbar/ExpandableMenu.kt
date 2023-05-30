@@ -37,7 +37,6 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
   private val shadowComponent = ShadowComponent()
   private val rootPane: JRootPane?
     get() = SwingUtilities.getRootPane(headerContent)
-  private val hoverListeners = mutableMapOf<JMenu, MouseListener>()
   private var hideMenu = false
 
   init {
@@ -129,35 +128,12 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
     }
 
     val subElements = menu.popupMenu.subElements
-    if (action == null || subElements.isEmpty()) {
+    if (subElements.isEmpty()) {
       MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu)
-      installHoverListeners()
     }
     else {
       MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu, menu.popupMenu, subElements[0])
     }
-  }
-
-  private fun installHoverListeners() {
-    uninstallHoverListeners()
-    for (i in 0..ideMenu.menuCount - 1) {
-      val menu = ideMenu.getMenu(i)
-      val listener = object : MouseAdapter() {
-        override fun mouseEntered(e: MouseEvent?) {
-          MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu, menu.popupMenu)
-          uninstallHoverListeners()
-        }
-      }
-      menu.addMouseListener(listener)
-      hoverListeners[menu] = listener
-    }
-  }
-
-  private fun uninstallHoverListeners() {
-    for (entry in hoverListeners.entries) {
-      entry.key.removeMouseListener(entry.value)
-    }
-    hoverListeners.clear()
   }
 
   fun updateColor() {
@@ -187,7 +163,6 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
       rootPane?.layeredPane?.remove(expandedMenuBar)
       expandedMenuBar = null
       headerColorfulPanel = null
-      uninstallHoverListeners()
 
       rootPane?.repaint()
     }
