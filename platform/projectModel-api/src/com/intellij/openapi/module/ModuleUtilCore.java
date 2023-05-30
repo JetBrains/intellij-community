@@ -105,22 +105,31 @@ public class ModuleUtilCore {
           return element.getUserData(KEY_MODULE);
         }
       }
+
       if (fileIndex.isInLibrary(vFile)) {
         List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
         if (orderEntries.isEmpty()) {
           return null;
         }
+
         if (orderEntries.size() == 1) {
           return orderEntries.get(0).getOwnerModule();
         }
-        Set<Module> modules = new HashSet<>();
-        for (OrderEntry orderEntry : orderEntries) {
-          modules.add(orderEntry.getOwnerModule());
+
+        Comparator<Module> comparator = ModuleManager.getInstance(project).moduleDependencyComparator();
+        Iterator<OrderEntry> iterator = orderEntries.iterator();
+        Module candidate = iterator.next().getOwnerModule();
+
+        while (iterator.hasNext()) {
+          Module next = iterator.next().getOwnerModule();
+          if (comparator.compare(next, candidate) < 0) {
+            candidate = next;
+          }
         }
-        Module[] candidates = modules.toArray(Module.EMPTY_ARRAY);
-        Arrays.sort(candidates, ModuleManager.getInstance(project).moduleDependencyComparator());
-        return candidates[0];
+
+        return candidate;
       }
+
       return fileIndex.getModuleForFile(vFile);
     }
     if (containingFile != null) {
