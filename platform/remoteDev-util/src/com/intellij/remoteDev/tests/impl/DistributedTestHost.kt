@@ -3,7 +3,6 @@ package com.intellij.remoteDev.tests.impl
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.diagnostic.DebugLogManager
-import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.IdeEventQueue
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -30,8 +29,6 @@ import java.awt.image.BufferedImage
 import java.io.File
 import java.io.IOException
 import java.net.InetAddress
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
@@ -200,15 +197,6 @@ class DistributedTestHost {
         session.shutdown.advise(lifetime) {
           logger.info("Shutdown application...")
           application.exit(true, true, false)
-        }
-
-        session.dumpThreads.adviseOn(lifetime, DistributedTestInplaceScheduler) {
-          logger.info("Dump threads...")
-          val threadDump = ThreadDumper.dumpThreadsToString()
-          val threadDumpStamp = LocalTime.now().format(DateTimeFormatter.ofPattern("HH_mm_ss_SSS"))
-          val threadDumpFileName = "${AgentConstants.threadDumpFilePrefix}_$threadDumpStamp.log"
-          val threadDumpFile = File(PathManager.getLogPath()).resolve(threadDumpFileName)
-          threadDumpFile.writeText(threadDump)
         }
 
         session.makeScreenshot.set { fileName ->

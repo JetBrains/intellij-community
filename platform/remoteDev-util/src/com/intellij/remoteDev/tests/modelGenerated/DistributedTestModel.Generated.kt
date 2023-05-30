@@ -53,7 +53,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 8072597128546658912L
+        const val serializationHash = 492600752699924361L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -193,7 +193,6 @@ class RdTestSession private constructor(
     private val _ready: RdProperty<Boolean?>,
     private val _sendException: RdSignal<RdTestSessionException>,
     private val _shutdown: RdSignal<Unit>,
-    private val _dumpThreads: RdSignal<Unit>,
     private val _closeProject: RdCall<Unit, Boolean>,
     private val _closeProjectIfOpened: RdCall<Unit, Boolean>,
     private val _runNextAction: RdCall<Unit, Boolean>,
@@ -214,12 +213,11 @@ class RdTestSession private constructor(
             val _ready = RdProperty.read(ctx, buffer, __BoolNullableSerializer)
             val _sendException = RdSignal.read(ctx, buffer, RdTestSessionException)
             val _shutdown = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
-            val _dumpThreads = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
             val _closeProject = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _closeProjectIfOpened = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _runNextAction = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
-            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _dumpThreads, _closeProject, _closeProjectIfOpened, _runNextAction, _makeScreenshot).withId(_id)
+            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _closeProject, _closeProjectIfOpened, _runNextAction, _makeScreenshot).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
@@ -231,7 +229,6 @@ class RdTestSession private constructor(
             RdProperty.write(ctx, buffer, value._ready)
             RdSignal.write(ctx, buffer, value._sendException)
             RdSignal.write(ctx, buffer, value._shutdown)
-            RdSignal.write(ctx, buffer, value._dumpThreads)
             RdCall.write(ctx, buffer, value._closeProject)
             RdCall.write(ctx, buffer, value._closeProjectIfOpened)
             RdCall.write(ctx, buffer, value._runNextAction)
@@ -245,7 +242,6 @@ class RdTestSession private constructor(
     val ready: IProperty<Boolean?> get() = _ready
     val sendException: IAsyncSignal<RdTestSessionException> get() = _sendException
     val shutdown: ISignal<Unit> get() = _shutdown
-    val dumpThreads: IAsyncSignal<Unit> get() = _dumpThreads
     val closeProject: RdCall<Unit, Boolean> get() = _closeProject
     val closeProjectIfOpened: RdCall<Unit, Boolean> get() = _closeProjectIfOpened
     val runNextAction: RdCall<Unit, Boolean> get() = _runNextAction
@@ -258,14 +254,12 @@ class RdTestSession private constructor(
     
     init {
         _sendException.async = true
-        _dumpThreads.async = true
     }
     
     init {
         bindableChildren.add("ready" to _ready)
         bindableChildren.add("sendException" to _sendException)
         bindableChildren.add("shutdown" to _shutdown)
-        bindableChildren.add("dumpThreads" to _dumpThreads)
         bindableChildren.add("closeProject" to _closeProject)
         bindableChildren.add("closeProjectIfOpened" to _closeProjectIfOpened)
         bindableChildren.add("runNextAction" to _runNextAction)
@@ -286,7 +280,6 @@ class RdTestSession private constructor(
         RdProperty<Boolean?>(null, __BoolNullableSerializer),
         RdSignal<RdTestSessionException>(RdTestSessionException),
         RdSignal<Unit>(FrameworkMarshallers.Void),
-        RdSignal<Unit>(FrameworkMarshallers.Void),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
@@ -306,7 +299,6 @@ class RdTestSession private constructor(
             print("ready = "); _ready.print(printer); println()
             print("sendException = "); _sendException.print(printer); println()
             print("shutdown = "); _shutdown.print(printer); println()
-            print("dumpThreads = "); _dumpThreads.print(printer); println()
             print("closeProject = "); _closeProject.print(printer); println()
             print("closeProjectIfOpened = "); _closeProjectIfOpened.print(printer); println()
             print("runNextAction = "); _runNextAction.print(printer); println()
@@ -324,7 +316,6 @@ class RdTestSession private constructor(
             _ready.deepClonePolymorphic(),
             _sendException.deepClonePolymorphic(),
             _shutdown.deepClonePolymorphic(),
-            _dumpThreads.deepClonePolymorphic(),
             _closeProject.deepClonePolymorphic(),
             _closeProjectIfOpened.deepClonePolymorphic(),
             _runNextAction.deepClonePolymorphic(),
