@@ -24,8 +24,8 @@ public class MockFileManager implements FileManager {
 
   @Override
   @NotNull
-  public FileViewProvider createFileViewProvider(@NotNull VirtualFile file, boolean eventSystemEnabled) {
-    return new SingleRootFileViewProvider(myManager, file, eventSystemEnabled);
+  public FileViewProvider createFileViewProvider(@NotNull VirtualFile vFile, boolean eventSystemEnabled) {
+    return new SingleRootFileViewProvider(myManager, vFile, eventSystemEnabled);
   }
 
   public MockFileManager(PsiManagerEx manager) {
@@ -46,7 +46,7 @@ public class MockFileManager implements FileManager {
   }
 
   @Override
-  public void reloadFromDisk(@NotNull PsiFile file) //Q: move to PsiFile(Impl)?
+  public void reloadFromDisk(@NotNull PsiFile psiFile) //Q: move to PsiFile(Impl)?
   {
     throw new UnsupportedOperationException("Method reloadFromDisk is not yet implemented in " + getClass().getName());
   }
@@ -64,18 +64,18 @@ public class MockFileManager implements FileManager {
   }
 
   @Override
-  public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
+  public FileViewProvider findViewProvider(@NotNull VirtualFile vFile) {
     throw new UnsupportedOperationException("Method findViewProvider is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  public FileViewProvider findCachedViewProvider(@NotNull VirtualFile file) {
-    return myViewProviders.get(file);
+  public FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile) {
+    return myViewProviders.get(vFile);
   }
 
   @Override
-  public void setViewProvider(@NotNull VirtualFile virtualFile, FileViewProvider fileViewProvider) {
-    myViewProviders.put(virtualFile, fileViewProvider);
+  public void setViewProvider(@NotNull VirtualFile vFile, FileViewProvider viewProvider) {
+    myViewProviders.put(vFile, viewProvider);
   }
 
   @Override
