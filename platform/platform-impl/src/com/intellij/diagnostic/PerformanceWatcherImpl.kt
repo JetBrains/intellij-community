@@ -14,6 +14,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.SystemInfo
@@ -22,7 +23,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
@@ -46,7 +47,8 @@ import kotlin.io.path.name
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-private val LOG = logger<PerformanceWatcherImpl>()
+private val LOG: Logger
+  get() = logger<PerformanceWatcherImpl>()
 private const val TOLERABLE_LATENCY = 100L
 private const val THREAD_DUMPS_PREFIX = "threadDumps-"
 private const val DURATION_FILE_NAME = ".duration"
@@ -427,7 +429,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
 
       if (!stacktraceCommonPart.isNullOrEmpty()) {
         val element = stacktraceCommonPart[0]
-        return "-${sanitizeFileName(StringUtil.getShortName(element.className))}.${sanitizeFileName(element.methodName)}"
+        return "-${sanitizeFileName(StringUtilRt.getShortName(element.className))}.${sanitizeFileName(element.methodName)}"
       }
       return ""
     }
@@ -503,7 +505,7 @@ private fun reportCrashesIfAny() {
             extraAttachment.isIncluded = true
             attachments.add(extraAttachment)
           }
-          val message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------")
+          val message = content.substringBefore("---------------  P R O C E S S  ---------------")
           val event = LogMessage.eventOf(JBRCrash(), message, attachments)
           IdeaFreezeReporter.setAppInfo(event, Files.readString(appInfoFile))
           IdeaFreezeReporter.report(event)
