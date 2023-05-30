@@ -58,7 +58,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
                                       priority: Int): SearchEverywhereFoundElementInfo {
     val foundElementInfoWithoutMl = SearchEverywhereFoundElementInfoWithMl.withoutMl(element, priority, contributor)
 
-    if (!isEnabled() || contributor.isSemantic) return foundElementInfoWithoutMl
+    if (!isEnabled()) return foundElementInfoWithoutMl
 
     val session = getCurrentSession() ?: return foundElementInfoWithoutMl
     val state = session.getCurrentSearchState() ?: return foundElementInfoWithoutMl
@@ -79,7 +79,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
       null
     }
 
-    return if (isShowDiff()) {
+    return if (isShowDiff() || contributor.isSemantic) {
       SearchEverywhereFoundElementInfoBeforeDiff(element, priority, contributor, mlWeight, mlElementInfo.features)
     }
     else {
