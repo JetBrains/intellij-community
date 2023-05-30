@@ -37,12 +37,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.zip.ZipException;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * This is an attempt to convert FSRecords into a self-containing _object_, not a set of static
@@ -142,20 +144,25 @@ public final class FSRecordsImpl {
   private static int calculateVersion() {
     //bumped main version (59 -> 60) because of VfsDependentEnumerator removal, and filenames change
     final int mainVFSFormatVersion = 60;
-    return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
-           nextMask(USE_CONTENT_HASHES,
-           nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
-           nextMask(false, // feel free to re-use
-           nextMask(INLINE_ATTRIBUTES,
-           nextMask(SystemProperties.getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
-           nextMask(false, // feel free to re-use
-           nextMask(USE_SMALL_ATTR_TABLE,
-           nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
-           nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
-           nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
-           nextMask(USE_FAST_NAMES_IMPLEMENTATION,
-           nextMask(USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION,
-           0)))))))))))));
+    return nextMask(mainVFSFormatVersion +
+                    (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
+                    nextMask(USE_CONTENT_HASHES,
+                             nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
+                                      nextMask(false, // feel free to re-use
+                                               nextMask(INLINE_ATTRIBUTES,
+                                                        nextMask(SystemProperties.getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER,
+                                                                                                     false),
+                                                                 nextMask(false, // feel free to re-use
+                                                                          nextMask(USE_SMALL_ATTR_TABLE,
+                                                                                   nextMask(
+                                                                                     PersistentHashMapValueStorage.COMPRESSION_ENABLED,
+                                                                                     nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
+                                                                                              nextMask(
+                                                                                                ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
+                                                                                                nextMask(USE_FAST_NAMES_IMPLEMENTATION,
+                                                                                                         nextMask(
+                                                                                                           USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION,
+                                                                                                           0)))))))))))));
   }
 
 
@@ -294,6 +301,10 @@ public final class FSRecordsImpl {
 
   boolean wasCreatedANew() {
     return initializationResult.storagesCreatedAnew;
+  }
+
+  long totalInitializationDuration(@NotNull TimeUnit unit) {
+    return unit.convert(initializationResult.totalInitializationDurationNs, NANOSECONDS);
   }
 
 

@@ -31,6 +31,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
 
@@ -134,6 +135,10 @@ public final class FSRecords {
   /** Were VFS storages created anew this run, or we read already filled */
   public static boolean wasCreateANew(){
     return implOrFail().wasCreatedANew();
+  }
+
+  public static long totalInitializationDuration(@NotNull TimeUnit unit){
+    return implOrFail().totalInitializationDuration(unit);
   }
 
   //========== modifications counters: ========================================

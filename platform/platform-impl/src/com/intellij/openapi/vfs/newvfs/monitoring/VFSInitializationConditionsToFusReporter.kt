@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.VFSNeedsRebuildException
 import com.intellij.openapi.vfs.newvfs.persistent.VFSNeedsRebuildException.RebuildCause.INITIAL
 import com.intellij.openapi.vfs.newvfs.persistent.VFSNeedsRebuildException.RebuildCause.NONE
+import java.util.concurrent.TimeUnit.MILLISECONDS
 
 /**
  * Reports VFS initialization conditions to FUS -- once, on app start.
@@ -20,6 +21,7 @@ class VFSInitializationConditionsToFusReporter : ProjectActivity {
     val initializationFailures = FSRecords.initializationFailures()
     val wasCreateANew = FSRecords.wasCreateANew()
     val creationTimestamp = FSRecords.getCreationTimestamp()
+    val totalInitializationDurationMs = FSRecords.totalInitializationDuration(MILLISECONDS)
 
     val rebuildCause = initializationFailures
                          .filterIsInstance<VFSNeedsRebuildException>()
@@ -30,7 +32,8 @@ class VFSInitializationConditionsToFusReporter : ProjectActivity {
       vfsImplementationVersion,
       creationTimestamp,
       initializationFailures.size + 1,
-      rebuildCause
+      rebuildCause,
+      totalInitializationDurationMs
     )
   }
 }

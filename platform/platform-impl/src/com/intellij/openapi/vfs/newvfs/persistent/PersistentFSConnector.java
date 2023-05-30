@@ -93,6 +93,7 @@ final class PersistentFSConnector {
                                                                           @NotNull /*OutParam*/ InvertedNameIndex invertedNameIndexToFill,
                                                                           List<ConnectionInterceptor> interceptors) {
     List<Throwable> attemptsFailures = new ArrayList<>();
+    long initializationStartedNs = System.nanoTime();
     for (int attempt = 0; attempt < MAX_INITIALIZATION_ATTEMPTS; attempt++) {
       try {
         PersistentFSConnection connection = tryInit(
@@ -108,7 +109,8 @@ final class PersistentFSConnector {
         return new InitializationResult(
           connection,
           justCreated,
-          attemptsFailures
+          attemptsFailures,
+          System.nanoTime() - initializationStartedNs
         );
       }
       catch (Exception e) {
@@ -483,7 +485,7 @@ final class PersistentFSConnector {
             catch (IOException e) {
               throw new UncheckedIOException("file[#" + fileId + "].nameId(=" + nameId + ") failed resolution in namesEnumerator", e);
             }
-          }
+          }                                           
 
           if (contentHashesEnumerator != null
               && contentId != DataEnumeratorEx.NULL_ID) {
@@ -570,13 +572,16 @@ final class PersistentFSConnector {
     public final boolean storagesCreatedAnew;
     public final @NotNull List<Throwable> attemptsFailures;
     public final @NotNull PersistentFSConnection connection;
+    public final long totalInitializationDurationNs;
 
     private InitializationResult(@NotNull PersistentFSConnection connection,
                                  boolean createdAnew,
-                                 @NotNull List<Throwable> attemptsFailures) {
+                                 @NotNull List<Throwable> attemptsFailures,
+                                 long totalInitializationDurationNs) {
       this.connection = connection;
       this.storagesCreatedAnew = createdAnew;
       this.attemptsFailures = attemptsFailures;
+      this.totalInitializationDurationNs = totalInitializationDurationNs;
     }
   }
 }
