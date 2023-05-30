@@ -101,6 +101,10 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
   }
 
   @Override
+  public void reloadFromDisk(@NotNull Document document, @Nullable Project project) {
+  }
+
+  @Override
   public void reloadFiles(final VirtualFile @NotNull ... files) {
   }
 

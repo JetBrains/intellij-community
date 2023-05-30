@@ -711,7 +711,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @Override
-  public void reloadFromDisk(@NotNull Document document) {
+  public void reloadFromDisk(@NotNull Document document, @Nullable Project project) {
     try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
       ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -723,7 +723,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         return;
       }
 
-      Project project = ProjectLocator.getInstance().guessProjectForFile(file);
       boolean[] isReloadable = {isReloadable(file, document, project)};
       if (isReloadable[0]) {
         CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
