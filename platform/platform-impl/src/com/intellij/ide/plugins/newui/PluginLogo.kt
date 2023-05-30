@@ -327,7 +327,7 @@ private fun getOrLoadIcon(descriptor: IdeaPluginDescriptor): Pair<PluginLogoIcon
 
 private fun putIcon(idPlugin: String, lazyIcon: LazyPluginLogoIcon, light: PluginLogoIconProvider?, dark: PluginLogoIconProvider?) {
   if (light == null && dark == null) {
-    iconCache.put(idPlugin, Pair(PluginLogo.getDefault(), null))
+    iconCache.put(idPlugin, Pair(PluginLogo.getDefault(), PluginLogo.getDefault()))
     return
   }
 
