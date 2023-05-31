@@ -11,8 +11,12 @@ import org.jetbrains.kotlin.analysis.api.components.ShortenOption.Companion.defa
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.base.psi.imports.addImport
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 
 /**
@@ -48,4 +52,41 @@ fun shortenReferencesInRange(
         }
     }
     shortenCommand.invokeShortening()
+}
+
+
+/**
+ * Shortens the references specified in [ShortenCommand] and inserts needed imports
+ */
+fun ShortenCommand.invokeShortening(): List<KtElement> {
+    // if the file has been invalidated, there's nothing we can shorten
+    val targetFile = targetFile.element ?: return emptyList()
+
+    for (nameToImport in importsToAdd) {
+        targetFile.addImport(nameToImport)
+    }
+
+    for (nameToImport in starImportsToAdd) {
+        targetFile.addImport(nameToImport, allUnder = true)
+    }
+
+    val shorteningResults = mutableListOf<KtElement>()
+    //todo
+    //        PostprocessReformattingAspect.getInstance(targetFile.project).disablePostprocessFormattingInside {
+    for (typePointer in typesToShorten) {
+        val type = typePointer.element ?: continue
+        type.deleteQualifier()
+        shorteningResults.add(type)
+    }
+
+    for (callPointer in qualifiersToShorten) {
+        val call = callPointer.element ?: continue
+        call.deleteQualifier()?.let { shorteningResults.add(it) }
+    }
+    //        }
+    return shorteningResults
+}
+private fun KtDotQualifiedExpression.deleteQualifier(): KtExpression? {
+    val selectorExpression = selectorExpression ?: return null
+    return this.replace(selectorExpression) as KtExpression
 }
