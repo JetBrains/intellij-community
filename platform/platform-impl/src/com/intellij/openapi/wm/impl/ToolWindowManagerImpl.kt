@@ -1157,6 +1157,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   private fun removeDecoratorWithoutUpdatingState(entry: ToolWindowEntry, state: WindowInfoImpl, dirtyMode: Boolean) {
+    removeExternalDecorators(entry)
+    removeInternalDecorator(entry, state, dirtyMode)
+  }
+
+  private fun removeExternalDecorators(entry: ToolWindowEntry) {
     entry.windowedDecorator?.let {
       entry.windowedDecorator = null
       Disposer.dispose(it)
@@ -1168,7 +1173,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       it.dispose()
       return
     }
+  }
 
+  private fun removeInternalDecorator(entry: ToolWindowEntry, state: WindowInfoImpl, dirtyMode: Boolean) {
     entry.toolWindow.decoratorComponent?.let {
       val toolWindowPane = getToolWindowPane(state.safeToolWindowPaneId)
       toolWindowPane.removeDecorator(state, it, dirtyMode, this)
