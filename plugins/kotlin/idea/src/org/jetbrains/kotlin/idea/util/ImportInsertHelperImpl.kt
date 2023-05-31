@@ -11,7 +11,6 @@ import com.intellij.psi.util.nextLeaf
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
-import org.jetbrains.kotlin.idea.base.psi.imports.KotlinImportPathComparator
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -38,13 +37,13 @@ import org.jetbrains.kotlin.resolve.scopes.utils.*
 import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.idea.base.psi.imports.addImport as _addImport
 
 class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper() {
     private fun getCodeStyleSettings(contextFile: KtFile): KotlinCodeStyleSettings = contextFile.kotlinCustomSettings
 
-    override fun getImportSortComparator(contextFile: KtFile): Comparator<ImportPath> =
-        KotlinImportPathComparator.create(contextFile)
+    override fun getImportSortComparator(contextFile: KtFile): Comparator<ImportPath> = ImportPathComparator(
+        getCodeStyleSettings(contextFile).PACKAGES_IMPORT_LAYOUT
+    )
 
     override fun isImportedWithDefault(importPath: ImportPath, contextFile: KtFile): Boolean =
         isInDefaultImports(importPath, contextFile)
@@ -473,18 +472,61 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
                 val scriptDependencies = ScriptDependenciesProvider.getInstance(ktFile.project)
                     ?.getScriptConfiguration(ktFile.originalFile as KtFile)
                 scriptDependencies?.defaultImports?.map { ImportPath.fromString(it) }
-                scriptDependencies?.defaultImports?.map { ImportPath.fromString(it) }
             }.orEmpty()
 
             return (allDefaultImports + scriptExtraImports) to analyzerServices.excludedImports
         }
 
-        @Deprecated(
-            "Please use `org.jetbrains.kotlin.idea.base.psi.addImport`",
-            replaceWith = ReplaceWith("this.addImport", "org.jetbrains.kotlin.idea.base.psi.imports.addImport")
-        )
         fun addImport(project: Project, file: KtFile, fqName: FqName, allUnder: Boolean = false, alias: Name? = null): KtImportDirective {
-            return _addImport(project, file, fqName, allUnder, alias)
+            val importPath = ImportPath(fqName, allUnder, alias)
+
+            val psiFactory = KtPsiFactory(project)
+            if (file is KtCodeFragment) {
+                val newDirective = psiFactory.createImportDirective(importPath)
+                file.addImportsFromString(newDirective.text)
+                return newDirective
+            }
+
+            val importList = file.importList
+            if (importList != null) {
+                val newDirective = psiFactory.createImportDirective(importPath)
+                val imports = importList.imports
+                return if (imports.isEmpty()) {
+                    val packageDirective = file.packageDirective?.takeIf { it.packageKeyword != null }
+                    packageDirective?.let {
+                        file.addAfter(psiFactory.createNewLine(2), it)
+                    }
+
+                    (importList.add(newDirective) as KtImportDirective).also {
+                        if (packageDirective == null) {
+                            val whiteSpace = importList.nextLeaf(true)
+                            if (whiteSpace is PsiWhiteSpace) {
+                                val newLineBreak = if (whiteSpace.isMultiLine()) {
+                                    psiFactory.createWhiteSpace("\n" + whiteSpace.text)
+                                } else {
+                                    psiFactory.createWhiteSpace("\n\n" + whiteSpace.text)
+                                }
+
+                                whiteSpace.replace(newLineBreak)
+                            } else {
+                                file.addAfter(psiFactory.createNewLine(2), importList)
+                            }
+                        }
+                    }
+                } else {
+                    val importPathComparator = ImportInsertHelperImpl(project).getImportSortComparator(file)
+                    val insertAfter = imports.lastOrNull {
+                        val directivePath = it.importPath
+                        directivePath != null && importPathComparator.compare(directivePath, importPath) <= 0
+                    }
+
+                    (importList.addAfter(newDirective, insertAfter) as KtImportDirective).also {
+                        importList.addBefore(psiFactory.createNewLine(1), it)
+                    }
+                }
+            } else {
+                error("Trying to insert import $fqName into a file ${file.name} of type ${file::class.java} with no import list.")
+            }
         }
     }
 }
