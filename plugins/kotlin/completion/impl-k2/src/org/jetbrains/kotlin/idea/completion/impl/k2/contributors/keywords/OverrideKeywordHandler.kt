@@ -21,8 +21,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
@@ -138,7 +136,14 @@ internal class OverrideKeywordHandler(
                 generateMemberInNewAnalysisSession(classOrObjectPointer.element!!, member, project)
             },
             shortenReferences = { element ->
-                shortenReferencesInRange(element.containingKtFile, element.textRange)
+                val shortenings = allowAnalysisOnEdt {
+                    analyze(element) {
+                        collectPossibleReferenceShortenings(element.containingKtFile, element.textRange)
+                    }
+                }
+                runWriteAction {
+                    shortenings.invokeShortening()
+                }
             }
         )
     }
