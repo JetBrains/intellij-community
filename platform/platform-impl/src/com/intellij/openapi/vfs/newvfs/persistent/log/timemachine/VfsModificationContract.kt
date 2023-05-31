@@ -50,11 +50,9 @@ object VfsModificationContract {
   }
 
   val nameId = PropertyOverwriteRule(
-    VfsOperationTagsMask(REC_ALLOC, REC_SET_NAME_ID, REC_FILL_RECORD,
-                         REC_CLEAN_RECORD)
+    VfsOperationTagsMask(REC_SET_NAME_ID, REC_FILL_RECORD, REC_CLEAN_RECORD)
   ) { setValue ->
     when (this) {
-      is RecordsOperation.AllocateRecord -> setValue(0)
       is RecordsOperation.SetNameId -> setValue(nameId)
       is RecordsOperation.FillRecord -> setValue(nameId)
       is RecordsOperation.CleanRecord -> setValue(0)
@@ -63,11 +61,9 @@ object VfsModificationContract {
   }
 
   val parentId = PropertyOverwriteRule(
-    VfsOperationTagsMask(REC_ALLOC, REC_SET_PARENT, REC_FILL_RECORD,
-                         REC_CLEAN_RECORD)
+    VfsOperationTagsMask(REC_SET_PARENT, REC_FILL_RECORD, REC_CLEAN_RECORD)
   ) { setValue ->
     when (this) {
-      is RecordsOperation.AllocateRecord -> setValue(0)
       is RecordsOperation.SetParent -> setValue(parentId)
       is RecordsOperation.FillRecord -> setValue(parentId)
       is RecordsOperation.CleanRecord -> setValue(0)
@@ -76,11 +72,9 @@ object VfsModificationContract {
   }
 
   val length = PropertyOverwriteRule(
-    VfsOperationTagsMask(REC_ALLOC, REC_SET_LENGTH, REC_FILL_RECORD,
-                         REC_CLEAN_RECORD)
+    VfsOperationTagsMask(REC_SET_LENGTH, REC_FILL_RECORD, REC_CLEAN_RECORD)
   ) { setValue ->
     when (this) {
-      is RecordsOperation.AllocateRecord -> setValue(0L)
       is RecordsOperation.SetLength -> setValue(length)
       is RecordsOperation.FillRecord -> setValue(length)
       is RecordsOperation.CleanRecord -> setValue(0L)
@@ -89,11 +83,9 @@ object VfsModificationContract {
   }
 
   val timestamp = PropertyOverwriteRule(
-    VfsOperationTagsMask(REC_ALLOC, REC_SET_TIMESTAMP, REC_FILL_RECORD,
-                         REC_CLEAN_RECORD)
+    VfsOperationTagsMask(REC_SET_TIMESTAMP, REC_FILL_RECORD, REC_CLEAN_RECORD)
   ) { setValue ->
     when (this) {
-      is RecordsOperation.AllocateRecord -> setValue(0L)
       is RecordsOperation.SetTimestamp -> setValue(timestamp)
       is RecordsOperation.FillRecord -> setValue(timestamp)
       is RecordsOperation.CleanRecord -> setValue(0L)
@@ -102,11 +94,9 @@ object VfsModificationContract {
   }
 
   val flags = PropertyOverwriteRule(
-    VfsOperationTagsMask(REC_ALLOC, REC_SET_FLAGS, REC_FILL_RECORD,
-                         REC_CLEAN_RECORD)
+    VfsOperationTagsMask(REC_SET_FLAGS, REC_FILL_RECORD, REC_CLEAN_RECORD)
   ) { setValue ->
     when (this) {
-      is RecordsOperation.AllocateRecord -> setValue(0)
       is RecordsOperation.SetFlags -> setValue(flags)
       is RecordsOperation.FillRecord -> setValue(flags)
       is RecordsOperation.CleanRecord -> setValue(0)
@@ -115,11 +105,10 @@ object VfsModificationContract {
   }
 
   val contentRecordId = PropertyOverwriteRule(
-    VfsOperationTagsMask(REC_ALLOC, REC_SET_CONTENT_RECORD_ID, REC_FILL_RECORD,
+    VfsOperationTagsMask(REC_SET_CONTENT_RECORD_ID, REC_FILL_RECORD,
                          REC_CLEAN_RECORD)
   ) { setValue ->
     when (this) {
-      is RecordsOperation.AllocateRecord -> setValue(0)
       is RecordsOperation.SetContentRecordId -> setValue(recordId)
       // it is not written explicitly in the code, because fillRecord is only used in two places where contentRecordId has no effect anyway,
       // but semantically it should be treated like contentRecordId=0
@@ -130,11 +119,9 @@ object VfsModificationContract {
   }
 
   val attributeRecordId = PropertyOverwriteRule(
-    VfsOperationTagsMask(REC_ALLOC, REC_SET_ATTR_REC_ID, REC_FILL_RECORD,
-                         REC_CLEAN_RECORD)
+    VfsOperationTagsMask(REC_SET_ATTR_REC_ID, REC_FILL_RECORD, REC_CLEAN_RECORD)
   ) { setValue ->
     when (this) {
-      is RecordsOperation.AllocateRecord -> setValue(0)
       is RecordsOperation.SetAttributeRecordId -> setValue(recordId)
       is RecordsOperation.FillRecord -> if (overwriteAttrRef) setValue(0)
       is RecordsOperation.CleanRecord -> setValue(0)
