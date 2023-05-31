@@ -54,6 +54,7 @@ private val nullSerializer = object : Serializer<Nothing> {
   private val msg = "tried to access NULL descriptor serializer"
   override val valueSizeBytes
     get() = throw IllegalAccessException(msg)
+
   override fun InputStream.deserialize(enumerator: DataEnumerator<String>) = throw IllegalAccessException(msg)
   override fun OutputStream.serialize(operation: Nothing, enumerator: DataEnumerator<String>) = throw IllegalAccessException(msg)
 }
@@ -77,11 +78,23 @@ value class VfsOperationTagsMask(val mask: Long) {
      * @see [IteratorUtils.nextIncomplete]
      */
     val EMPTY: VfsOperationTagsMask = VfsOperationTagsMask(0L)
-    val RecordsMask: VfsOperationTagsMask = VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isRecordOperation }.toTypedArray())
-    val AttributesMask: VfsOperationTagsMask = VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isAttributeOperation }.toTypedArray())
-    val ContentsMask: VfsOperationTagsMask = VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isContentOperation }.toTypedArray())
-    val VFileEventsStartMask: VfsOperationTagsMask = VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isVFileEventStartOperation }.toTypedArray())
-    val VFileEventsMask: VfsOperationTagsMask = VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isVFileEventOperation }.toTypedArray())
+    val ALL: VfsOperationTagsMask = VfsOperationTagsMask(*VfsOperationTag.values())
+    val RecordsMask: VfsOperationTagsMask =
+      VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isRecordOperation }.toTypedArray())
+    val AttributesMask: VfsOperationTagsMask =
+      VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isAttributeOperation }.toTypedArray())
+    val ContentsMask: VfsOperationTagsMask =
+      VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isContentOperation }.toTypedArray())
+    val VFileEventsMask: VfsOperationTagsMask =
+      VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isVFileEventOperation }.toTypedArray())
+    val VFileEventsStartMask: VfsOperationTagsMask =
+      VfsOperationTagsMask(*VfsOperationTag.values().filter { it.isVFileEventStartOperation }.toTypedArray())
     val VFileEventEndMask: VfsOperationTagsMask = VfsOperationTagsMask(VfsOperationTag.VFILE_EVENT_END)
+
+    fun List<VfsOperationTagsMask>.intersection(): VfsOperationTagsMask =
+      VfsOperationTagsMask(map { it.mask }.foldRight(ALL.mask, Long::and))
+
+    fun List<VfsOperationTagsMask>.union(): VfsOperationTagsMask =
+      VfsOperationTagsMask(map { it.mask }.foldRight(0L, Long::or))
   }
 }
