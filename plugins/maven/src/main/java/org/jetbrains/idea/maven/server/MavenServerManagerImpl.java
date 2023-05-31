@@ -377,6 +377,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
     MavenServerSettings result = new MavenServerSettings();
     result.setLoggingLevel(settings.getOutputLevel().getLevel());
     result.setOffline(settings.isWorkOffline());
+    result.setSnapshotUpdatePolicy(settings.isAlwaysUpdateSnapshots()? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
     File mavenHome = settings.getEffectiveMavenHome();
     if (mavenHome != null) {
       String remotePath = transformer.toRemotePath(mavenHome.toPath().toAbsolutePath().toString());
