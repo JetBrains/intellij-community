@@ -34,7 +34,6 @@ declare -ar BUILD_PROPERTIES=(
   "-Dbuild.number=${AS_BUILD_NUMBER}"
   "-Dkotlin.plugin.kind=AS"
   "-Dintellij.build.dev.mode=false"
-  "-Dintellij.build.run.steps.in.parallel=false"
   "-Dcompile.parallel=true"
   "-Dintellij.build.dmg.with.bundled.jre=false"
   "-Dintellij.build.dmg.without.bundled.jre=true"
