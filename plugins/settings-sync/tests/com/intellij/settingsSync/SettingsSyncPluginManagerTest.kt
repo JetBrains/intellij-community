@@ -2,10 +2,12 @@ package com.intellij.settingsSync
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Assert
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
 
   @Test
@@ -111,6 +113,8 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     }
 
     testPluginManager.disablePlugin(git4idea.pluginId)
+    // PluginEnabledStateListener.invoke is called in coroutine scope, so we'll have to wait a bit until it's ready
+    testScheduler.runCurrent()
 
     assertPluginManagerState {
       quickJump(enabled = true)
@@ -118,9 +122,11 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       git4idea(enabled = false)
     }
 
+    // here we test concurrency, because PluginEnabledStateListener processes only plugins that were affected
     testPluginManager.disablePlugin(typengo.pluginId)
     testPluginManager.enablePlugin(git4idea.pluginId)
 
+    testScheduler.runCurrent()
     assertPluginManagerState {
       quickJump(enabled = true)
       typengo(enabled = false)

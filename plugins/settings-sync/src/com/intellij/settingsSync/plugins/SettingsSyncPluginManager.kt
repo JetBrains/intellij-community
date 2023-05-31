@@ -10,10 +10,13 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.settingsSync.*
 import com.intellij.settingsSync.config.BUNDLED_PLUGINS_ID
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.PluginData
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import java.time.Instant
 
-internal class SettingsSyncPluginManager : Disposable {
+internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Disposable {
 
   private val pluginInstallationStateListener = PluginInstallationStateListener()
   private val pluginEnabledStateListener = PluginEnabledStateListener()
@@ -26,7 +29,7 @@ internal class SettingsSyncPluginManager : Disposable {
 
   init {
     PluginStateManager.addStateListener(pluginInstallationStateListener)
-    PluginManagerProxy.getInstance().addDisablePluginListener(pluginEnabledStateListener, this)
+    PluginManagerProxy.getInstance().addPluginStateChangedListener(pluginEnabledStateListener, this)
   }
 
   internal fun updateStateFromIdeOnStart(lastSavedPluginsState: SettingsSyncPluginsState?): SettingsSyncPluginsState {
@@ -184,7 +187,6 @@ internal class SettingsSyncPluginManager : Disposable {
 
     invokeAndWaitIfNeeded {
       val actionName = if (enable) "enabling" else "disabling"
-      val notUpdatedPlugins = mutableListOf<String>()
       try {
         LOG.info("$actionName plugins: $plugins")
         if (enable)
@@ -194,18 +196,6 @@ internal class SettingsSyncPluginManager : Disposable {
       }
       catch (ex: Exception) {
         LOG.warn("An exception occurred while processing $actionName plugins: $plugins", ex)
-      }
-      finally {
-        for (pluginId in plugins) {
-          val plugin = PluginManagerCore.getPlugin(pluginId) ?: continue
-          if (plugin.isEnabled != enable) {
-            notUpdatedPlugins.add(plugin.name)
-          }
-        }
-        if (notUpdatedPlugins.size > 0) {
-          //TODO show a popup that restart is required
-          LOG.warn("A restart may be required to finish $actionName the following plugins: $notUpdatedPlugins")
-        }
       }
     }
   }
@@ -243,6 +233,7 @@ internal class SettingsSyncPluginManager : Disposable {
 
   override fun dispose() {
     PluginStateManager.removeStateListener(pluginInstallationStateListener)
+    cs.cancel()
   }
 
   @TestOnly
@@ -278,50 +269,40 @@ internal class SettingsSyncPluginManager : Disposable {
     }
   }
 
-  private inner class PluginEnabledStateListener : Runnable {
+  private inner class PluginEnabledStateListener : PluginEnableStateChangedListener {
     // this listener is called when some plugin or plugins change their enabled state
-    override fun run() {
-      val oldPlugins = state.plugins
-      val newPlugins = oldPlugins.toMutableMap()
-      val disabledIds = PluginManagerProxy.getInstance().getDisabledPluginIds()
-      synchronized(LOCK) {
-        for (disabledPluginId in disabledIds) {
-          LOG.info("Plugin ${disabledPluginId.idString} is disabled.")
-          if (!newPlugins.containsKey(
-              disabledPluginId)) { // otherwise we'll handle this known plugin below while iterating through oldPlugins
-            val disabledPlugin = PluginManagerProxy.getInstance().findPlugin(disabledPluginId)
-            if (disabledPlugin != null) {
-              newPlugins[disabledPluginId] = getPluginData(disabledPlugin, explicitEnabled = false)
-            }
-          }
-        }
 
-        for (id in oldPlugins.keys) {
-          val plugin = PluginManagerProxy.getInstance().findPlugin(id)
-          // iterate through all installed plugins and update their state according to the known disabled plugin ids
-          // if plugin is not installed, we don't modify its state:
-          // if it got uninstalled, the separate PluginInstallationStateListener will handle it or already has handled it.
-          if (plugin != null && isPluginSyncEnabled(plugin)) {
-            if (disabledIds.contains(id)) {
-              newPlugins[id] = getPluginData(plugin, explicitEnabled = false)
-              LOG.info("Plugin '$id' changed state to disabled")
+    private fun ed(b: Boolean) = if (b) "enable" else "disable"
+
+    override fun stateChanged(pluginDescriptors: Collection<IdeaPluginDescriptor>, enable: Boolean) {
+      println("Will call ${ed(enable)} for $pluginDescriptors")
+      cs.launch {
+        synchronized(LOCK) {
+          val oldPlugins = state.plugins
+          val newPlugins = oldPlugins.toMutableMap()
+          for (pluginDescriptor in pluginDescriptors) {
+            val plugin = PluginManagerProxy.getInstance().findPlugin(pluginDescriptor.pluginId)
+            if (plugin == null) {
+              LOG.warn("got ${ed(enable)} info about non-existing plugin ${pluginDescriptor.pluginId}")
+              continue
+            }
+            if (plugin.isEnabled != enable) {
+              LOG.info("State of plugin ${pluginDescriptor.pluginId} is inconsistent: received ${ed(enable)} event, " +
+                       "but plugin is ${ed(plugin.isEnabled)}d. Probably, a restart is required.")
+            }
+            if (plugin.isBundled && enable) {
+              newPlugins.remove(pluginDescriptor.pluginId)
+              LOG.info("Bundled plugin ${pluginDescriptor.pluginId} is ${ed(enable)}d. Will remove its info from plugins.json")
             }
             else {
-              if (plugin.isBundled) { // enabled bundled plugin is default => don't store in state
-                newPlugins.remove(id)
-                LOG.info("Removed plugin data for '$id'")
-              }
-              else {
-                newPlugins[id] = getPluginData(plugin, explicitEnabled = true)
-                LOG.info("Plugin '$id' changed state to enabled")
-              }
+              newPlugins[pluginDescriptor.pluginId] = getPluginData(pluginDescriptor, enable)
+              LOG.info("${if (plugin.isBundled) "Bundled " else ""}Plugin ${pluginDescriptor.pluginId} is ${ed(enable)}d")
             }
           }
-        }
-
-        state = SettingsSyncPluginsState(newPlugins.toMap())
-        if (oldPlugins != newPlugins) {
-          firePluginsStateChangeEvent(state)
+          if (oldPlugins != newPlugins) {
+            state = SettingsSyncPluginsState(newPlugins.toMap())
+            firePluginsStateChangeEvent(state)
+          }
         }
       }
     }

@@ -1,6 +1,7 @@
 package com.intellij.settingsSync.plugins
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginEnableStateChangedListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
@@ -17,7 +18,7 @@ interface PluginManagerProxy {
 
   fun createInstaller(notifyErrors: Boolean = false): SettingsSyncPluginInstaller
 
-  fun addDisablePluginListener(disabledListener: Runnable, parentDisposable: Disposable)
+  fun addPluginStateChangedListener(listener: PluginEnableStateChangedListener, parentDisposable: Disposable)
   fun getDisabledPluginIds(): Set<PluginId>
 
   fun isEssential(pluginId: PluginId): Boolean
