@@ -81,7 +81,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
         GradleProjectsPublishingTestsFeature,
         LinkedProjectPathsTestsFeature,
         NoErrorEventsDuringImportFeature,
-        CustomImportChecker, // NB: Disabled by default in most suites to not pollute the DSL
+        CustomImportChecker, // NB: Corresponding DSL is not implemented by default in most suites to not pollute the DSL
         CustomGradlePropertiesTestFeature,
 
         ContentRootsChecker,
