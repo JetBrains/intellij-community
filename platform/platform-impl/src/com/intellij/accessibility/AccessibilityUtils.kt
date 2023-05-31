@@ -19,7 +19,7 @@ import javax.accessibility.AccessibleRole
 
 object AccessibilityUtils {
   @JvmField
-  val GROUPED_ELEMENTS: AccessibleRole = if (SystemInfo.isMac) AccessibleRole.GROUP_BOX else AccessibleRole.PANEL
+  val GROUPED_ELEMENTS: AccessibleRole = if (SystemInfo.isMac) AccessibleRole.AWT_COMPONENT else AccessibleRole.PANEL
 
   fun enableScreenReaderSupportIfNecessary() {
     if (GeneralSettings.isSupportScreenReadersOverridden()) {

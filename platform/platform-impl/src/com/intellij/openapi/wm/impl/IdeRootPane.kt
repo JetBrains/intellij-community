@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.wm.impl
 
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.UISettings
@@ -270,7 +271,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
         // We need to turn IdeRootPane into an accessible group in order to make notifications announcing working
         accessibleContext = object : AccessibleJRootPane() {
           override fun getAccessibleRole(): AccessibleRole {
-            return AccessibleRole.GROUP_BOX
+            return AccessibilityUtils.GROUPED_ELEMENTS
           }
 
           override fun getAccessibleName(): String {
