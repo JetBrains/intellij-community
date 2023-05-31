@@ -81,10 +81,10 @@ public class ModuleUtilCore {
   }
 
   /**
-   * @return module where containing file of the {@code element} is located. 
-   * 
+   * Return module where containing file of the {@code element} is located. 
+   * <br>
    * For {@link com.intellij.psi.PsiDirectory}, corresponding virtual file is checked directly.
-   * If this virtual file belongs to a library and this library is attached to the exactly one module, then this module will be returned.
+   * If this virtual file belongs to a library or SDK and this library/SDK is attached to exactly one module, then this module will be returned.
    */
   @Nullable
   public static Module findModuleForPsiElement(@NotNull PsiElement element) {
