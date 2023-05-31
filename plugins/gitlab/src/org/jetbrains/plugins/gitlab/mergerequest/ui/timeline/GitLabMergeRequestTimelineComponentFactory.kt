@@ -16,12 +16,16 @@ import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.swingAction
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI.Borders
@@ -35,6 +39,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
@@ -53,6 +58,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
              accountVm: GitLabAccountViewModel,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
+    val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
     val timelineWrapper = Wrapper()
     val timelineComponents = Wrapper()
     val loadedTimelinePanel = VerticalListPanel(0).apply {
@@ -80,6 +86,13 @@ internal object GitLabMergeRequestTimelineComponentFactory {
             timelineComponents.apply {
               setContent(content)
               repaint()
+            }
+            PopupHandler.installPopupMenu(loadedTimelinePanel, actionGroup, "GitLabMergeRequestTimelinePopup")
+            DataManager.registerDataProvider(loadedTimelinePanel) { dataId ->
+              when {
+                GitLabMergeRequestsActionKeys.MERGE_REQUEST.`is`(dataId) -> state.mr
+                else -> null
+              }
             }
             loadedTimelinePanel
           }
