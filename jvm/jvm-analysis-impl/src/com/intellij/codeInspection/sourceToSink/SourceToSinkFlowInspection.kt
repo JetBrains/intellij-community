@@ -35,10 +35,10 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
   private val myUntaintedMethodMatcher: MethodMatcher = MethodMatcher().finishDefault()
 
   @JvmField
-  val myUntaintedFieldClasses: MutableList<String?> = mutableListOf()
+  var myUntaintedFieldClasses: MutableList<String?> = mutableListOf()
 
   @JvmField
-  val myUntaintedFieldNames: MutableList<String?> = mutableListOf()
+  var myUntaintedFieldNames: MutableList<String?> = mutableListOf()
 
   @JvmField
   var processOuterMethodAsQualifierAndArguments: Boolean = true
