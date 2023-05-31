@@ -34,6 +34,7 @@
               implementationClass="org.jetbrains.plugins.gradle.config.GradleFileType" fieldName="INSTANCE"/>
     <resolveScopeEnlarger implementation="org.jetbrains.plugins.gradle.config.GradleBuildClasspathResolveScopeEnlarger"/>
     <useScopeEnlarger implementation="org.jetbrains.plugins.gradle.config.GradleUseScopeEnlarger"/>
+    <useScopeEnlarger implementation="org.jetbrains.plugins.gradle.service.toml.GradleTomlUseScopeEnlarger"/>
     <implicitUsageProvider implementation="org.jetbrains.plugins.gradle.config.GradleImplicitUsageProvider"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
     <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
