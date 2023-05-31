@@ -85,6 +85,7 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.*;
 import com.intellij.util.animation.AlphaAnimationContext;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBValue.JBValueGroup;
@@ -913,6 +914,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     updateSize(false, false);
   }
 
+  @RequiresEdt
   void updateSize(boolean onLayout, boolean canShrink) {
     int prevHash = sizeHash();
 
