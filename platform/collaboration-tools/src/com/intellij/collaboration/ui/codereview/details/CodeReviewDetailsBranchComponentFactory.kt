@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.ui.details
+package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
@@ -32,7 +32,7 @@ import java.awt.Cursor
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 
-internal object GitLabMergeRequestDetailsBranchComponentFactory {
+object CodeReviewDetailsBranchComponentFactory {
   fun create(scope: CoroutineScope, branchesVm: CodeReviewBranchesViewModel, checkoutAction: AnAction, dataContext: DataContext): JComponent {
     val sourceBranch = JBLabel(CollaborationToolsIcons.Review.Branch).apply {
       border = JBUI.Borders.empty(1, 2, 1, 4)

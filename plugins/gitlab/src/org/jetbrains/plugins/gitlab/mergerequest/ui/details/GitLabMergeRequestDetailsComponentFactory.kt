@@ -97,7 +97,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       add(CodeReviewDetailsCommitsComponentFactory.create(cs, changesVm) { commit: GitLabCommitDTO? ->
         createCommitsPopupPresenter(commit, changesVm.reviewCommits.value.size)
       })
-      add(GitLabMergeRequestDetailsBranchComponentFactory.create(
+      add(CodeReviewDetailsBranchComponentFactory.create(
         cs, branchesVm,
         checkoutAction = ActionManager.getInstance().getAction("GitLab.Merge.Request.Branch.Checkout.Remote"),
         dataContext = SimpleDataContext.builder()
