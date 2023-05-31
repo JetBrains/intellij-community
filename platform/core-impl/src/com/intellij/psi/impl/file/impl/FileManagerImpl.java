@@ -567,7 +567,7 @@ public final class FileManagerImpl implements FileManager {
 
     Document document = FileDocumentManager.getInstance().getCachedDocument(vFile);
     if (document != null) {
-      FileDocumentManager.getInstance().reloadFromDisk(document, file.getProject());
+      FileDocumentManager.getInstance().reloadFromDisk(document, psiFile.getProject());
     }
     else {
       reloadPsiAfterTextChange(psiFile.getViewProvider(), vFile);
