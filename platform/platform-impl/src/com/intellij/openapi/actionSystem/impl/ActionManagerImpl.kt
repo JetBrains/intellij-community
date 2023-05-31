@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -47,6 +48,7 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ArrayUtilRt
@@ -129,10 +131,14 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
 
   companion object {
     internal fun convertStub(stub: ActionStub): AnAction? {
-      val anAction = instantiate(stubClassName = stub.className, pluginDescriptor = stub.plugin, expectedClass = AnAction::class.java)
+      val componentManager = ApplicationManager.getApplication() ?: throw AlreadyDisposedException("Application is already disposed")
+      val anAction = instantiate(stubClassName = stub.className,
+                                 pluginDescriptor = stub.plugin,
+                                 expectedClass = AnAction::class.java,
+                                 componentManager = componentManager)
                      ?: return null
       stub.initAction(anAction)
-      updateIconFromStub(stub = stub, anAction = anAction)
+      updateIconFromStub(stub = stub, anAction = anAction, componentManager = componentManager)
       return anAction
     }
 
@@ -1386,9 +1392,12 @@ private fun managerPublisher(): ActionManagerListener {
   return ApplicationManager.getApplication().messageBus.syncPublisher(ActionManagerListener.TOPIC)
 }
 
-private fun <T> instantiate(stubClassName: String, pluginDescriptor: PluginDescriptor, expectedClass: Class<T>): T? {
+private fun <T> instantiate(stubClassName: String,
+                            pluginDescriptor: PluginDescriptor,
+                            expectedClass: Class<T>,
+                            componentManager: ComponentManager): T? {
   val obj = try {
-    ApplicationManager.getApplication().instantiateClass<Any>(stubClassName, pluginDescriptor)
+    componentManager.instantiateClass<Any>(stubClassName, pluginDescriptor)
   }
   catch (e: CancellationException) {
     throw e
@@ -1413,14 +1422,14 @@ private fun <T> instantiate(stubClassName: String, pluginDescriptor: PluginDescr
   return null
 }
 
-private fun updateIconFromStub(stub: ActionStubBase, anAction: AnAction) {
+private fun updateIconFromStub(stub: ActionStubBase, anAction: AnAction, componentManager: ComponentManager) {
   val iconPath = stub.iconPath
   if (iconPath != null) {
     val icon = loadIcon(module = stub.plugin, iconPath = iconPath, requestor = anAction.javaClass.name)
     anAction.templatePresentation.icon = icon
   }
 
-  val customActionsSchema = ApplicationManager.getApplication().serviceIfCreated<CustomActionsSchema>()
+  val customActionsSchema = componentManager.serviceIfCreated<CustomActionsSchema>()
   if (customActionsSchema != null && !customActionsSchema.getIconPath(stub.id).isEmpty()) {
     RecursionManager.doPreventingRecursion<Any?>(stub.id, false) {
       customActionsSchema.initActionIcon(anAction = anAction, actionId = stub.id, actionManager = ActionManager.getInstance())
@@ -1430,10 +1439,14 @@ private fun updateIconFromStub(stub: ActionStubBase, anAction: AnAction) {
 }
 
 private fun convertGroupStub(stub: ActionGroupStub, actionManager: ActionManager): ActionGroup? {
-  val group = instantiate(stubClassName = stub.actionClass, pluginDescriptor = stub.plugin, expectedClass = ActionGroup::class.java)
+  val componentManager = ApplicationManager.getApplication()
+  val group = instantiate(stubClassName = stub.actionClass,
+                          pluginDescriptor = stub.plugin,
+                          expectedClass = ActionGroup::class.java,
+                          componentManager = componentManager)
               ?: return null
   stub.initGroup(group, actionManager)
-  updateIconFromStub(stub = stub, anAction = group)
+  updateIconFromStub(stub = stub, anAction = group, componentManager = componentManager)
   return group
 }
 
