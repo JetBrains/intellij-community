@@ -1065,7 +1065,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @Nullable
-  public static PsiElement getFirstElementOnTheLine(PsiLambdaExpression lambda, Document document, int line) {
+  public static PsiElement getFirstElementOnTheLine(@NotNull PsiLambdaExpression lambda, Document document, int line) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
     if (!intersects(lineRange, lambda)) return null;

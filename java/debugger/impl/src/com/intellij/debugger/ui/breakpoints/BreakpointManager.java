@@ -57,6 +57,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
@@ -188,18 +189,24 @@ public class BreakpointManager {
   }
 
   @Nullable
-  public LineBreakpoint addLineBreakpoint(Document document, int lineIndex) {
+  public LineBreakpoint<?> addLineBreakpoint(Document document, int lineIndex, Consumer<JavaBreakpointProperties<?>> setupAction) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!LineBreakpoint.canAddLineBreakpoint(myProject, document, lineIndex)) {
       return null;
     }
-    XLineBreakpoint xLineBreakpoint = addXLineBreakpoint(JavaLineBreakpointType.class, document, lineIndex);
-    Breakpoint breakpoint = getJavaBreakpoint(xLineBreakpoint);
-    if (breakpoint instanceof LineBreakpoint) {
+    var xLineBreakpoint = addXLineBreakpoint(JavaLineBreakpointType.class, document, lineIndex);
+    var breakpoint = getJavaBreakpoint(xLineBreakpoint);
+    if (breakpoint instanceof LineBreakpoint<?> lineBreakpoint) {
+      setupAction.accept(lineBreakpoint.getProperties());
       addBreakpoint(breakpoint);
-      return ((LineBreakpoint)breakpoint);
+      return lineBreakpoint;
     }
     return null;
+  }
+
+  @Nullable
+  public LineBreakpoint<?> addLineBreakpoint(Document document, int lineIndex) {
+    return addLineBreakpoint(document, lineIndex, p -> {});
   }
 
   @Nullable
@@ -490,11 +497,11 @@ public class BreakpointManager {
   }
 
   @Nullable
-  public static Breakpoint getJavaBreakpoint(@Nullable final XBreakpoint xBreakpoint) {
+  public static Breakpoint<?> getJavaBreakpoint(@Nullable final XBreakpoint<?> xBreakpoint) {
     if (xBreakpoint == null) {
       return null;
     }
-    Breakpoint breakpoint = xBreakpoint.getUserData(Breakpoint.DATA_KEY);
+    Breakpoint<?> breakpoint = xBreakpoint.getUserData(Breakpoint.DATA_KEY);
     if (breakpoint == null && xBreakpoint.getType() instanceof JavaBreakpointType) {
       Project project = ((XBreakpointBase<?, ?, ?>)xBreakpoint).getProject();
       breakpoint = ((JavaBreakpointType)xBreakpoint.getType()).createJavaBreakpoint(project, xBreakpoint);

@@ -34,6 +34,7 @@ import com.intellij.util.ui.UIUtil;
 import com.sun.jdi.Method;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import javax.swing.*;
@@ -410,6 +411,15 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
               exceptionBreakpoint.setCatchClassFilters(filters.first);
               exceptionBreakpoint.setCatchClassExclusionFilters(filters.second);
               systemPrintln("Catch class filters = " + catchClassFiltersStr);
+            }
+          }
+          case "ConditionalReturn" -> {
+            breakpoint = breakpointManager.addLineBreakpoint(document, commentLine + 1, p -> {
+              // Note that we don't support `return` inside of lambda in unit tests.
+              ((JavaLineBreakpointProperties)p).setEncodedInlinePosition(JavaLineBreakpointProperties.COND_RET_CODE);
+            });
+            if (breakpoint != null) {
+              systemPrintln("ConditionalReturnBreakpoint created at " + breakpointLocation);
             }
           }
           case "Line" -> {

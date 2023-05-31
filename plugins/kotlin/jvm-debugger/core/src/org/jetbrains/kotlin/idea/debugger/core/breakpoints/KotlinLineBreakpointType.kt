@@ -46,7 +46,7 @@ class KotlinLineBreakpointType :
     inner class LineKotlinBreakpointVariant(
         position: XSourcePosition,
         element: PsiElement?,
-        lambdaOrdinal: Int?
+        lambdaOrdinal: Int
     ) : LineJavaBreakpointVariant(position, element, lambdaOrdinal) {
         override fun getText(): String =
             KotlinDebuggerCoreBundle.message("line.breakpoint")

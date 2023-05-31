@@ -222,7 +222,7 @@ internal class BreakpointCreator(
         val xBreakpoint = runWriteAction {
             val properties = breakpointType.createBreakpointProperties(virtualFile, lineIndex)
             if (properties is JavaLineBreakpointProperties) {
-                properties.lambdaOrdinal = lambdaOrdinal
+                properties.encodedInlinePosition = lambdaOrdinal
             }
 
             breakpointManager.addLineBreakpoint(
