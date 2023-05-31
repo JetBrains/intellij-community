@@ -14,9 +14,12 @@ import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
-import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.projectStructure.kotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
+import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.idea.base.facet.implementingModules as implementingModulesNew
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
@@ -82,7 +85,12 @@ val ModuleDescriptor.implementingDescriptors: List<ModuleDescriptor>
 val ModuleDescriptor.allImplementingDescriptors: Collection<ModuleDescriptor>
     get() = implementingDescriptors.closure(preserveOrder = true) { it.implementingDescriptors }
 
-fun Module.getModuleInfo(sourceRootType: KotlinSourceRootType): ModuleSourceInfo? = asSourceInfo(sourceRootType)
+fun Module.getModuleInfo(sourceRootType: KotlinSourceRootType): ModuleSourceInfo? {
+    return when (sourceRootType) {
+        SourceKotlinRootType -> productionSourceInfo
+        TestSourceKotlinRootType -> testSourceInfo
+    }
+}
 
 /**
  * This function returns immediate parents in dependsOn graph
