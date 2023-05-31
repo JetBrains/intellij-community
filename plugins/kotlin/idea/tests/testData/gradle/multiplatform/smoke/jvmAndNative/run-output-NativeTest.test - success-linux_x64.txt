@@ -1,0 +1,3 @@
+14:16:50: Execution finished ':cleanLinuxX64Test :linuxX64Test --tests "NativeTest.test - success"'.
+
+<exitCode: 0>
