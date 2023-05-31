@@ -70,11 +70,7 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
                                @NotNull PyCondaFlavorData flavorData,
                                @Nullable TargetEnvironmentConfiguration targetConfig) {
     var condaPath = flavorData.getEnv().getFullCondaPathOnTarget();
-    boolean executable = isFileExecutable(condaPath, targetConfig);
-    if (! executable) {
-      Logger.getInstance(CondaEnvSdkFlavor.class).warn("file not executable on conda flavor: "  + condaPath);
-    }
-    return executable;
+    return isFileExecutable(condaPath, targetConfig);
   }
 
   @Override
