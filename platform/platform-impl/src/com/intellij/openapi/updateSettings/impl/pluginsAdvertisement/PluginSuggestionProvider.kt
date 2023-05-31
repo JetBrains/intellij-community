@@ -5,8 +5,10 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
+@ApiStatus.Internal
 interface PluginSuggestionProvider {
   fun getSuggestion(project: Project, file: VirtualFile): Function<FileEditor, EditorNotificationPanel?>?
 }
