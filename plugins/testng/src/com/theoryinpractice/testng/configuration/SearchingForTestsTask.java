@@ -57,7 +57,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
 
   @Override
   protected void onFound() {
-    if (myClasses.size() > 0) {
+    if (!myClasses.isEmpty()) {
       composeTestSuiteFromClasses();
     }
     else if (TestType.SUITE.getType().equals(myData.TEST_OBJECT)) {

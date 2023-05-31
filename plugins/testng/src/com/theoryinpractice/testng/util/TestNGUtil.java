@@ -334,7 +334,7 @@ public final class TestNGUtil {
       String[] groups = matcher.group(1).split("[,\\s]");
       for (String group : groups) {
         final String trimmed = group.trim();
-        if (trimmed.length() > 0) {
+        if (!trimmed.isEmpty()) {
           results.add(trimmed);
         }
       }

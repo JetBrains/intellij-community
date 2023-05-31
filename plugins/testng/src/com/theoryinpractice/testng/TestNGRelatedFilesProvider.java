@@ -36,8 +36,8 @@ public class TestNGRelatedFilesProvider extends GotoRelatedProvider {
           final String packageQName = ((PsiJavaFile)psiClass.getContainingFile()).getPackageName();
           final String packageName = StringUtil.getShortName(packageQName);
           final String[] names;
-          if (packageQName.length() > 0) {
-            final String pName = packageName.length() > 0 ? packageName : packageQName;
+          if (!packageQName.isEmpty()) {
+            final String pName = !packageName.isEmpty() ? packageName : packageQName;
             names = new String[]{qName, pName};
           }
           else {

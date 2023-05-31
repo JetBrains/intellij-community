@@ -60,7 +60,7 @@ public class TestNGTestPackage extends TestNGTestObject {
       TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
       List<PsiClass> testClasses = ContainerUtil.filter(getAllClasses(psiPackage, filter.getScope()), clazz -> filter.isAccepted(clazz));
       calculateDependencies(null, classes, getSearchScope(), testClasses.toArray(PsiClass.EMPTY_ARRAY));
-      if (classes.size() == 0) {
+      if (classes.isEmpty()) {
         throw new CantRunException(TestngBundle.message("dialog.message.no.tests.found.in.package", packageName));
       }
     }
@@ -86,14 +86,14 @@ public class TestNGTestPackage extends TestNGTestObject {
   @Override
   public String getGeneratedName() {
     final String packageName = myConfig.getPersistantData().getPackageName();
-    return packageName.length() == 0 ? TestRunnerBundle.message("default.package.presentable.name") : packageName;
+    return packageName.isEmpty() ? TestRunnerBundle.message("default.package.presentable.name") : packageName;
   }
 
   @Override
   public String getActionName() {
     String s = myConfig.getName();
     if (!myConfig.isGeneratedName()) return '\"' + s + '\"';
-    if (myConfig.getPersistantData().getPackageName().trim().length() > 0) {
+    if (!myConfig.getPersistantData().getPackageName().trim().isEmpty()) {
       return TestngBundle.message("action.text.tests.in.package", myConfig.getPersistantData().getPackageName());
     }
     else {
