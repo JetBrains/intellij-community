@@ -113,8 +113,6 @@ object VfsChronicle {
       stopIf
     )
 
-  private class RecoveredChildrenIdsImpl(val ids: List<Int>, override val isComplete: Boolean) : RecoveredChildrenIds, List<Int> by ids
-
   fun restoreChildrenIds(iterator: OperationLogStorage.Iterator, fileId: Int): RecoveredChildrenIds {
     val childrenIds = mutableSetOf<Int>()
     val seenDifferentSetParent = mutableSetOf<Int>()
@@ -125,7 +123,7 @@ object VfsChronicle {
         is RecordsOperation.AllocateRecord -> {
           if (it.result.hasValue) {
             val id = it.result.value
-            if (fileId == id) return RecoveredChildrenIdsImpl(childrenIds.toList(), true)
+            if (fileId == id) return RecoveredChildrenIds.of(childrenIds.toList(), true)
             seenDifferentSetParent.add(id)
           }
         }
@@ -151,7 +149,7 @@ object VfsChronicle {
         else -> throw IllegalStateException("filtered read is broken")
       }
     }
-    return RecoveredChildrenIdsImpl(childrenIds.toList(), false)
+    return RecoveredChildrenIds.of(childrenIds.toList(), false)
   }
 
   /**

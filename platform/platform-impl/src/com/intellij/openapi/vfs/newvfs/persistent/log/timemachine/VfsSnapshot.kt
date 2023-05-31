@@ -45,6 +45,12 @@ interface VfsSnapshot {
        * which are not actually children).
        */
       val isComplete: Boolean
+
+      companion object {
+        private class RecoveredChildrenIdsImpl(val ids: List<Int>, override val isComplete: Boolean) : RecoveredChildrenIds, List<Int> by ids
+
+        fun of(ids: List<Int>, isComplete: Boolean): RecoveredChildrenIds = RecoveredChildrenIdsImpl(ids, isComplete)
+      }
     }
 
     abstract class Property<T> {
