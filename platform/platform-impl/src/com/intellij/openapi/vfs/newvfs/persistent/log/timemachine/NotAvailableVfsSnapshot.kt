@@ -5,31 +5,36 @@ import com.intellij.openapi.vfs.newvfs.AttributeInputStream
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.RecoveredChildrenIds
 
 
 class NotAvailableVfsSnapshot(point: OperationLogStorage.Iterator) : VfsSnapshot {
   override val point: () -> OperationLogStorage.Iterator = point.constCopier()
 
-  override fun getFileById(fileId: Int): VfsSnapshot.VirtualFileSnapshot {
+  override fun getFileById(fileId: Int): VirtualFileSnapshot {
     return NotAvailableVirtualFileSnapshot(fileId)
   }
 
-  class NotAvailableVirtualFileSnapshot(override val fileId: Int) : VfsSnapshot.VirtualFileSnapshot {
-    override val nameId: VfsSnapshot.VirtualFileSnapshot.Property<Int> = NotAvailableProp()
-    override val parentId: VfsSnapshot.VirtualFileSnapshot.Property<Int> = NotAvailableProp()
-    override val length: VfsSnapshot.VirtualFileSnapshot.Property<Long> = NotAvailableProp()
-    override val timestamp: VfsSnapshot.VirtualFileSnapshot.Property<Long> = NotAvailableProp()
-    override val flags: VfsSnapshot.VirtualFileSnapshot.Property<Int> = NotAvailableProp()
-    override val contentRecordId: VfsSnapshot.VirtualFileSnapshot.Property<Int> = NotAvailableProp()
-    override val attributesRecordId: VfsSnapshot.VirtualFileSnapshot.Property<Int> = NotAvailableProp()
-    override val name: VfsSnapshot.VirtualFileSnapshot.Property<String> = NotAvailableProp()
-    override val parent: VfsSnapshot.VirtualFileSnapshot.Property<VfsSnapshot.VirtualFileSnapshot?> = NotAvailableProp()
-    override fun getContent(): VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState<ByteArray> = VfsSnapshot.VirtualFileSnapshot.Property.State.NotAvailable()
-    override fun readAttribute(fileAttribute: FileAttribute): VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState<AttributeInputStream?> = VfsSnapshot.VirtualFileSnapshot.Property.State.NotAvailable()
-    override fun getChildrenIds(): VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState<VfsSnapshot.VirtualFileSnapshot.RecoveredChildrenIds> = VfsSnapshot.VirtualFileSnapshot.Property.State.NotAvailable()
+  class NotAvailableVirtualFileSnapshot(override val fileId: Int) : VirtualFileSnapshot {
+    override val nameId: Property<Int> = NotAvailableProp()
+    override val parentId: Property<Int> = NotAvailableProp()
+    override val length: Property<Long> = NotAvailableProp()
+    override val timestamp: Property<Long> = NotAvailableProp()
+    override val flags: Property<Int> = NotAvailableProp()
+    override val contentRecordId: Property<Int> = NotAvailableProp()
+    override val attributesRecordId: Property<Int> = NotAvailableProp()
+    override val name: Property<String> = NotAvailableProp()
+    override val parent: Property<VirtualFileSnapshot?> = NotAvailableProp()
+    override fun getContent(): DefinedState<ByteArray> = State.NotAvailable()
+    override fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?> = State.NotAvailable()
+    override fun getChildrenIds(): DefinedState<RecoveredChildrenIds> = State.NotAvailable()
 
-    class NotAvailableProp<T> : VfsSnapshot.VirtualFileSnapshot.Property<T>() {
-      override fun compute(): State.DefinedState<T> = State.NotAvailable()
+    class NotAvailableProp<T> : Property<T>() {
+      override fun compute(): DefinedState<T> = State.NotAvailable()
     }
   }
 }
