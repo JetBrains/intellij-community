@@ -199,7 +199,7 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
 
     if(!mavenProjectCandidate.hasReadingProblems()) {
       if (null != nativeMavenProject) {
-        projectsWithUnresolvedPlugins.add(new MavenProjectWithHolder(mavenProjectCandidate, nativeMavenProject));
+        projectsWithUnresolvedPlugins.add(new MavenProjectWithHolder(mavenProjectCandidate, nativeMavenProject, changes));
       } else {
         MavenLog.LOG.error("Native maven project is null for " + mavenProjectCandidate);
       }
