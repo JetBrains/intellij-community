@@ -28,7 +28,7 @@ abstract class WorkspaceEntityBase : WorkspaceEntity, Any() {
     var connectionId = mySnapshot.refs.findConnectionId(getEntityInterface(), entityClass)
     if (connectionId != null) {
       val entitiesSequence = when (connectionId.connectionType) {
-        ConnectionId.ConnectionType.ONE_TO_MANY -> mySnapshot.extractOneToManyChildren(connectionId, id)
+        ConnectionId.ConnectionType.ONE_TO_MANY -> mySnapshot.extractOneToManyChildren(connectionId, this)
         ConnectionId.ConnectionType.ONE_TO_ONE -> mySnapshot.extractOneToOneChild<R>(connectionId, id)
           ?.let { sequenceOf(it) }
           ?: emptySequence()

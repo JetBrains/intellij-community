@@ -1017,6 +1017,36 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
     return this.entityDataById(reference.id)?.createEntity(this) as? T
   }
 
+  override fun <Child : WorkspaceEntity> extractOneToAbstractOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): Child? {
+    val parentId = parent.asBase().id
+    val childId = refs.getAbstractOneToOneChildren(connectionId, parentId.asParent())?.id
+    return childId?.let {
+      @Suppress("UNCHECKED_CAST")
+      entityDataByIdOrDie(it).createEntity(this) as Child
+    }
+  }
+
+  override fun <Child : WorkspaceEntity> extractOneToManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<Child> {
+    val parentId = parent.asBase().id
+    val entitiesList = entitiesByType[connectionId.childClass] ?: return emptySequence()
+    return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map {
+      val entityData = entitiesList[it]
+      if (entityData == null) {
+        if (!brokenConsistency) {
+          error(
+            """Cannot resolve entity.
+          |Connection id: $connectionId
+          |Unresolved array id: $it
+          |All child array ids: ${refs.getOneToManyChildren(connectionId, parentId.arrayId)?.toArray()}
+        """.trimMargin()
+          )
+        }
+        null
+      }
+      else entityData.createEntity(this)
+    }?.filterNotNull() as? Sequence<Child> ?: emptySequence()
+  }
+
   companion object {
     val LOG = logger<AbstractEntityStorage>()
 

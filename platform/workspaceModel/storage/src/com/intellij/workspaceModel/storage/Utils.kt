@@ -6,6 +6,7 @@ import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.createEntityId
 import com.intellij.workspaceModel.storage.impl.findWorkspaceEntity
+import com.intellij.workspaceModel.storage.instrumentation.EntityStorageInstrumentation
 
 // Just a wrapper for entity id in THIS store
 @JvmInline
@@ -55,3 +56,8 @@ internal fun checkCircularDependency(childId: EntityId, parentId: EntityId, stor
         """.trimMargin())
   }
 }
+
+internal fun WorkspaceEntity.asBase(): WorkspaceEntityBase = this as WorkspaceEntityBase
+
+internal val EntityStorage.instrumentation: EntityStorageInstrumentation
+  get() = this as EntityStorageInstrumentation
