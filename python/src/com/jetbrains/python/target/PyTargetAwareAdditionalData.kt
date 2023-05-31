@@ -13,6 +13,7 @@ import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.*
 
@@ -49,8 +50,8 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
   override var targetEnvironmentConfiguration: TargetEnvironmentConfiguration?
     get() = _targetEnvironmentConfiguration
     set(value) {
-      targetState = value?.let { ContributedConfigurationsList.ContributedStateBase().apply { loadFromConfiguration(value) } }
       _targetEnvironmentConfiguration = value
+      notifyTargetEnvironmentConfigurationChanged()
     }
 
   constructor(flavorAndData: PyFlavorAndData<*, *>, targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) : this(
@@ -94,6 +95,23 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     targetState = loadedState
     _targetEnvironmentConfiguration = loadedConfiguration
 
+  }
+
+  /**
+   * Updates [targetState] from [targetEnvironmentConfiguration].
+   *
+   * [TargetEnvironmentConfiguration] might have mutable fields and [targetState] should be properly updated on commit/apply actions.
+   *
+   * @see com.jetbrains.python.configuration.PythonTargetInterpreterDetailsConfigurable.apply
+   * @see com.intellij.docker.remote.compose.target.DockerComposeTargetEnvironmentConfiguration
+   */
+  @ApiStatus.Internal
+  fun notifyTargetEnvironmentConfigurationChanged() {
+    targetState = targetEnvironmentConfiguration?.let { notNullTargetEnvironmentConfiguration ->
+      ContributedConfigurationsList.ContributedStateBase().apply {
+        loadFromConfiguration(notNullTargetEnvironmentConfiguration)
+      }
+    }
   }
 
   /**
