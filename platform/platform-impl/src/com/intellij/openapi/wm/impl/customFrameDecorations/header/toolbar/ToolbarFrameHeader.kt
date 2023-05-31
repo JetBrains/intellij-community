@@ -144,7 +144,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
 
     val toolbar = MainToolbar()
     toolbar.layoutCallBack = { updateCustomTitleBar() }
-    toolbar.init(toolbarActionGroups)
+    toolbar.init(toolbarActionGroups, customTitleBar)
     toolbar.isOpaque = false
     toolbar.addComponentListener(contentResizeListener)
     this.toolbar = toolbar

@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.headertoolbar
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -29,7 +30,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
+import com.jetbrains.WindowDecorations
 import java.awt.*
+import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
@@ -89,7 +92,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
   // as part of EDT task scheduled in a start-up activity, do fill it. That's to avoid flickering due to resizing.
   @RequiresEdt
-  fun init(actionGroups: List<Pair<ActionGroup, String>>) {
+  fun init(actionGroups: List<Pair<ActionGroup, String>>, customTitleBar: WindowDecorations.CustomTitleBar? = null) {
     removeAll()
 
     mainMenuButton?.let {
@@ -101,6 +104,35 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     for ((actionGroup, position) in actionGroups) {
       addWidget(widget = createActionBar(actionGroup, customizationGroup), position = position)
     }
+
+    customizationGroup
+      ?.let { CustomizationUtil.createToolbarCustomizationHandler(customizationGroup, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR) }
+      ?.let { installClickListener(it, customTitleBar) }
+    }
+
+  private fun installClickListener(popupHandler: PopupHandler, customTitleBar: WindowDecorations.CustomTitleBar?) {
+    if (customTitleBar == null) {
+      addMouseListener(popupHandler)
+      return
+    }
+
+    val listener = object : HeaderClickTransparentListener(customTitleBar) {
+      private fun handlePopup(e: MouseEvent) {
+        if (e.isPopupTrigger) {
+          popupHandler.invokePopup(e.component, e.x, e.y)
+          e.consume()
+        }
+        else {
+          hit()
+        }
+      }
+
+      override fun mouseClicked(e: MouseEvent) = handlePopup(e)
+      override fun mousePressed(e: MouseEvent) = handlePopup(e)
+      override fun mouseReleased(e: MouseEvent) = handlePopup(e)
+    }
+    addMouseListener(listener)
+    addMouseMotionListener(listener)
   }
 
   override fun addNotify() {

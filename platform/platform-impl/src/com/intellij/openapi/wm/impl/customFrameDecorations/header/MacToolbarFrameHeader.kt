@@ -106,7 +106,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
   }
 
   override fun initToolbar(toolbarActionGroups: List<Pair<ActionGroup, String>>) {
-    toolbar?.init(toolbarActionGroups)
+    toolbar?.init(toolbarActionGroups, customTitleBar)
     updateToolbarHasNoActions(toolbarActionGroups)
   }
 
@@ -116,7 +116,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     toolbar = createToolBar()
     this.toolbar = toolbar
     val actionGroups = MainToolbar.computeActionGroups(CustomActionsSchema.getInstance())
-    toolbar.init(actionGroups)
+    toolbar.init(actionGroups, customTitleBar)
 
     revalidate()
     updateCustomTitleBar()
