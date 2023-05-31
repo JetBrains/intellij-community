@@ -7,8 +7,10 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import org.jetbrains.annotations.ApiStatus
@@ -28,6 +30,17 @@ fun <T> runBlockingCancellableUnderIndicator(action: suspend CoroutineScope.() -
     }
   }
   return ProgressManager.getInstance().runProcess(process, EmptyProgressIndicator())
+}
+
+@RequiresEdt
+@RequiresBackgroundThread
+@ApiStatus.Experimental
+fun performInBackground(action: suspend () -> Unit) {
+  AppExecutorUtil.getAppExecutorService().execute {
+    runBlockingCancellableUnderIndicator {
+      action()
+    }
+  }
 }
 
 /**

@@ -4,14 +4,12 @@ import com.intellij.lang.xml.XMLLanguage
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileFactory
-import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenEffectivePomEvaluator
@@ -20,7 +18,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil
-import org.jetbrains.idea.maven.utils.runBlockingCancellableUnderIndicator
+import org.jetbrains.idea.maven.utils.performInBackground
 import java.io.IOException
 
 class MavenShowEffectivePom : AnAction(), DumbAware {
@@ -41,27 +39,6 @@ class MavenShowEffectivePom : AnAction(), DumbAware {
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
-  }
-
-  /**
-   * TODO: investigate.
-   * For some reason, the action is sometimes called in EDT, despite [getActionUpdateThread] being BGT.
-   */
-  private fun performInBackground(action: suspend () -> Unit) {
-    if (ApplicationManager.getApplication().isDispatchThread) {
-      AppExecutorUtil.getAppExecutorService().execute {
-        doPerform(action)
-      }
-    }
-    else {
-      doPerform(action)
-    }
-  }
-
-  private fun doPerform(action: suspend () -> Unit) {
-    runBlockingCancellableUnderIndicator {
-      action()
-    }
   }
 
   companion object {

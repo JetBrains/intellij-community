@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.project.actions
 
 import org.jetbrains.idea.maven.project.MavenFolderResolver
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.performInBackground
 
 class UpdateFoldersAction : MavenProjectsManagerAction() {
   override fun perform(manager: MavenProjectsManager) {
