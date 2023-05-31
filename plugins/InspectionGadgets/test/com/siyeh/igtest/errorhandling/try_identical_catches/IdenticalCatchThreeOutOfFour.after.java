@@ -17,7 +17,7 @@ class Main {
         }
         catch(Ex3 ignored) {
         }
-        catch(RuntimeException | Ex2 | Ex1 ex) {
+        catch(RuntimeException | Ex1 | Ex2 ex) {
             ex.printStackTrace();
         } catch(Error e) {
             return;

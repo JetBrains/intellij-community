@@ -2,16 +2,11 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
-import com.intellij.psi.PsiCatchSection;
-import com.intellij.psi.PsiTryStatement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.InspectionGadgetsBundle;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String PATH = "com/siyeh/igtest/errorhandling/try_identical_catches/";
@@ -75,12 +70,15 @@ public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTest
   public void testMoreCommonCatchPreserved() {
     doTest();
   }
+
   public void testMoreCommonCatchPreservedWithOneLine() {
     doTest();
   }
+
   public void testPreservedNewLine() {
     doTest();
   }
+
   public void doTest() {
     doTest(false, false, false);
   }
@@ -88,25 +86,17 @@ public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTest
   private void doTest(boolean processAll, boolean checkInfos, boolean strictComments) {
     highlightTest(checkInfos, strictComments);
     String name = getTestName(false);
+    IntentionAction intention;
     if (processAll) {
-      PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiTryStatement.class);
-      assertNotNull("tryStatement", tryStatement);
-      PsiCatchSection[] catchSections = tryStatement.getCatchSections();
-      List<IntentionAction> intentions = new ArrayList<>();
-      for (PsiCatchSection section : catchSections) {
-        getEditor().getCaretModel().moveToOffset(section.getTextOffset());
-        intentions.addAll(myFixture.filterAvailableIntentions(InspectionGadgetsBundle.message("try.with.identical.catches.quickfix")));
-      }
-      assertFalse("intentions.isEmpty", intentions.isEmpty());
-      for (IntentionAction intention : intentions) {
-        myFixture.launchAction(intention);
-      }
+      intention = myFixture.findSingleIntention(
+        InspectionsBundle.message("fix.all.inspection.problems.in.file",
+                                  InspectionGadgetsBundle.message("try.with.identical.catches.display.name")));
     }
     else {
-      IntentionAction intention = myFixture.findSingleIntention(InspectionGadgetsBundle.message("try.with.identical.catches.quickfix"));
-      assertNotNull(intention);
-      myFixture.launchAction(intention);
+      intention = myFixture.findSingleIntention(InspectionGadgetsBundle.message("try.with.identical.catches.quickfix"));
     }
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(PATH + name + ".after.java");
   }

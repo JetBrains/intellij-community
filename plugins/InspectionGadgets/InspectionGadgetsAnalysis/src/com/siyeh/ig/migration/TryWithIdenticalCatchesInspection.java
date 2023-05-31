@@ -2,7 +2,10 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
@@ -24,7 +27,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -433,7 +435,6 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       // so we need to re-calculate everything based on what exists at this point
       final PsiCatchSection catchSection = (PsiCatchSection)startElement;
       final PsiTryStatement tryStatement = (PsiTryStatement)catchSection.getParent();
-
       final CatchSectionWrapper[] sections = CatchSectionWrapper.createWrappers(tryStatement);
       if (sections == null) return;
 
