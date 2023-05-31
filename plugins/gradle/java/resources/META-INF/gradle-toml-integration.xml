@@ -2,6 +2,7 @@
 
 <extensions defaultExtensionNs="com.intellij">
   <elementDescriptionProvider implementation="org.jetbrains.plugins.gradle.toml.navigation.VersionCatalogDescriptionProvider"/>
+  <useScopeEnlarger implementation="org.jetbrains.plugins.gradle.service.toml.GradleTomlUseScopeEnlarger"/>
   <findUsagesHandlerFactory implementation="org.jetbrains.plugins.gradle.toml.findUsages.GradleVersionCatalogFindUsagesFactory"/>
   <psi.referenceContributor language="TOML"
                             implementation="org.jetbrains.plugins.gradle.toml.navigation.VersionCatalogReferenceContributor"/>
