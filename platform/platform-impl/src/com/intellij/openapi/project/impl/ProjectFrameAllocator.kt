@@ -475,6 +475,9 @@ internal fun createNewProjectFrame(frameInfo: FrameInfo?): ProjectFrameProducer 
         if (isMaximized && frame.extendedState == Frame.NORMAL && boundsAndDevice != null) {
           frame.normalBounds = boundsAndDevice.first
           frame.screenBounds = ScreenUtil.getScreenDevice(boundsAndDevice.first)?.defaultConfiguration?.bounds
+          if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+            IDE_FRAME_EVENT_LOG.debug("Loaded saved normal bounds ${frame.normalBounds} for the screen ${frame.screenBounds}")
+          }
         }
         applyBoundsOrDefault(frame, boundsAndDevice?.first)
         frame.extendedState = state

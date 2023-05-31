@@ -13,6 +13,7 @@ import com.intellij.openapi.components.PersistentStateComponentWithModificationT
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -44,6 +45,8 @@ import javax.swing.JOptionPane
 import javax.swing.JWindow
 
 private val LOG = logger<WindowManagerImpl>()
+@JvmField
+internal val IDE_FRAME_EVENT_LOG = Logger.getInstance("ide.frame.events")
 
 @NonNls
 private const val FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow"
@@ -464,6 +467,9 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
       if (extendedState == Frame.NORMAL) {
         frame.normalBounds = bounds
         frame.screenBounds = newScreen
+        if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+          IDE_FRAME_EVENT_LOG.debug("Updated bounds for IDE frame ${frame.normalBounds} and screen ${frame.screenBounds} after moving/resizing")
+        }
       }
       else if (isMaximized(extendedState)) {
         val normalBounds = frame.normalBounds
@@ -477,6 +483,9 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
             // The frame was moved to another screen after it had been maximized, move/scale its "normal" bounds accordingly.
             normalBoundsOnCurrentScreen = Rectangle(normalBoundsOnCurrentScreen)
             ScreenUtil.moveAndScale(normalBoundsOnCurrentScreen, oldScreen, newScreen)
+            if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+              IDE_FRAME_EVENT_LOG.debug("Updated bounds for IDE frame ${normalBoundsOnCurrentScreen} after moving from $oldScreen to $newScreen")
+            }
           }
         }
       }

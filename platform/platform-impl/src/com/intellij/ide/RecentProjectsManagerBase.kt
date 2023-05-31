@@ -658,6 +658,9 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       else {
         if (info.frame !== frameInfo) {
           info.frame = frameInfo
+          if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+            IDE_FRAME_EVENT_LOG.debug("Saved updated frame info ${info.frame} for project '${project.name}'")
+          }
         }
         info.displayName = getProjectDisplayName(project)
         info.projectWorkspaceId = workspaceId

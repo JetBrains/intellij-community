@@ -39,9 +39,8 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   }
 
   init {
-    val log = Logger.getInstance("ide.frame.events")
-    if (log.isDebugEnabled) {
-      addComponentListener(EventLogger(frame = this, log = log))
+    if (IDE_FRAME_EVENT_LOG.isDebugEnabled) {
+      addComponentListener(EventLogger(frame = this, log = IDE_FRAME_EVENT_LOG))
     }
   }
 
@@ -93,6 +92,9 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
     if (LoadingState.COMPONENTS_REGISTERED.isOccurred && extendedState == NORMAL && isMaximized(state)) {
       normalBounds = bounds
       screenBounds = graphicsConfiguration?.bounds
+      if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+        IDE_FRAME_EVENT_LOG.debug("Saved bounds for IDE frame ${normalBounds} and screen ${screenBounds} before maximizing")
+      }
     }
     super.setExtendedState(state)
   }

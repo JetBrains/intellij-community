@@ -26,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isDisableAutoRequestFocus;
+import static com.intellij.openapi.wm.impl.WindowManagerImplKt.IDE_FRAME_EVENT_LOG;
 
 public abstract class IdeFrameDecorator {
   static final String FULL_SCREEN = "ide.frame.full.screen";
@@ -108,6 +109,9 @@ public abstract class IdeFrameDecorator {
         JRootPane rootPane = frame.getRootPane();
         if (state && extendedState == Frame.NORMAL) {
           frame.setNormalBounds(bounds);
+          if (IDE_FRAME_EVENT_LOG.isDebugEnabled()) { // avoid unnecessary concatenation
+            IDE_FRAME_EVENT_LOG.debug("Saved normal bounds of the frame before entering full screen: " + frame.getNormalBounds());
+          }
         }
         GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
         if (device == null) {
@@ -118,6 +122,9 @@ public abstract class IdeFrameDecorator {
         Rectangle defaultBounds = device.getDefaultConfiguration().getBounds();
         if (state) {
           frame.setScreenBounds(defaultBounds);
+          if (IDE_FRAME_EVENT_LOG.isDebugEnabled()) { // avoid unnecessary concatenation
+            IDE_FRAME_EVENT_LOG.debug("Saved screen bounds of the frame before entering full screen: " + frame.getScreenBounds());
+          }
         }
         try {
           frame.togglingFullScreenInProgress = true;
