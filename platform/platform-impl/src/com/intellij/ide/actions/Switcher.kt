@@ -82,7 +82,7 @@ import kotlin.math.min
  * @author Konstantin Bulenkov
  */
 object Switcher : BaseSwitcherAction(null) {
-  val SWITCHER_KEY = Key.create<SwitcherPanel>("SWITCHER_KEY")
+  val SWITCHER_KEY: Key<SwitcherPanel> = Key.create<SwitcherPanel>("SWITCHER_KEY")
 
   @Deprecated("Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, boolean, boolean)}")
   @JvmStatic
@@ -103,7 +103,7 @@ object Switcher : BaseSwitcherAction(null) {
     val toolWindows: JBList<SwitcherListItem>
     val files: JBList<SwitcherVirtualFile>
     val cbShowOnlyEditedFiles: JCheckBox?
-    val pathLabel = HintUtil.createAdComponent(
+    val pathLabel: JLabel = HintUtil.createAdComponent(
       " ",
       if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Advertiser.border()
       else JBUI.Borders.compound(
@@ -644,7 +644,7 @@ object Switcher : BaseSwitcherAction(null) {
     }
 
     companion object {
-      const val SWITCHER_ELEMENTS_LIMIT = 30
+      const val SWITCHER_ELEMENTS_LIMIT: Int = 30
       private fun collectFiles(project: Project, onlyEdited: Boolean): List<VirtualFile> {
         return if (onlyEdited) IdeDocumentHistory.getInstance(project).changedFiles else getRecentFiles(project)
       }

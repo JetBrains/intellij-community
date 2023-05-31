@@ -22,7 +22,7 @@ class KeyBindingsParser(private val settings: Settings) {
     private const val KEY = "key"
   }
 
-  fun process(file: File) = try {
+  fun process(file: File): Unit = try {
     logger.info("Processing a file: $file")
 
     val root = ObjectMapper().enable(JsonParser.Feature.ALLOW_COMMENTS).readTree(file) as? ArrayNode

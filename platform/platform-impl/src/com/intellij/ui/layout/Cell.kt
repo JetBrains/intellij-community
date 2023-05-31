@@ -248,12 +248,12 @@ fun <T : AbstractButton> CellBuilder<T>.withSelectedBinding(modelBinding: Proper
 @get:Deprecated("Use Kotlin UI DSL Version 2")
 @get:ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
-val CellBuilder<AbstractButton>.selected
+val CellBuilder<AbstractButton>.selected: ComponentPredicate
   get() = component.selected
 
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
-internal const val UNBOUND_RADIO_BUTTON = "unbound.radio.button"
+internal const val UNBOUND_RADIO_BUTTON: String = "unbound.radio.button"
 
 // separate class to avoid row related methods in the `cell { } `
 @CellMarker
@@ -267,33 +267,33 @@ abstract class Cell : BaseBuilder {
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  val growX = CCFlags.growX
+  val growX: CCFlags = CCFlags.growX
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  val growY = CCFlags.growY
+  val growY: CCFlags = CCFlags.growY
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  val grow = CCFlags.grow
+  val grow: CCFlags = CCFlags.grow
 
   /**
    * Makes the column that the component is residing in grow with `weight`.
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  val pushX = CCFlags.pushX
+  val pushX: CCFlags = CCFlags.pushX
 
   /**
    * Makes the row that the component is residing in grow with `weight`.
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  val pushY = CCFlags.pushY
+  val pushY: CCFlags = CCFlags.pushY
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  val push = CCFlags.push
+  val push: CCFlags = CCFlags.push
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -469,7 +469,7 @@ abstract class Cell : BaseBuilder {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null) = textField(PropertyBinding(getter, setter), columns)
+  fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null): CellBuilder<JBTextField> = textField(PropertyBinding(getter, setter), columns)
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -490,7 +490,7 @@ abstract class Cell : BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   @ApiStatus.Internal
-  fun scrollableTextArea(getter: () -> String, setter: (String) -> Unit, rows: Int? = null) = scrollableTextArea(PropertyBinding(getter, setter), rows)
+  fun scrollableTextArea(getter: () -> String, setter: (String) -> Unit, rows: Int? = null): CellBuilder<JBTextArea> = scrollableTextArea(PropertyBinding(getter, setter), rows)
 
   @Deprecated("Use Kotlin UI DSL Version 2")
   private fun scrollableTextArea(binding: PropertyBinding<String>, rows: Int? = null): CellBuilder<JBTextArea> {

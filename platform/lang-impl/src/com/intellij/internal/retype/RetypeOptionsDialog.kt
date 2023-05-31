@@ -18,7 +18,7 @@ class RetypeOptions(val project: Project) {
   var fileCount: Int by propComponentProperty(project, 10)
   var retypeExtension: String by propComponentProperty(project, "")
   var restoreOriginalText: Boolean by propComponentProperty(project, true)
-  var retypeCurrentFile = false
+  var retypeCurrentFile: Boolean = false
 }
 
 class RetypeOptionsDialog(project: Project, private val retypeOptions: RetypeOptions, private val editor: Editor?) : DialogWrapper(project) {

@@ -16,16 +16,16 @@ import java.nio.file.Paths
 private val logger = logger<VSMacTransferSettingsProvider>()
 
 class VSMacTransferSettingsProvider : TransferSettingsProvider {
-  override val name = "Visual Studio for Mac"
+  override val name: String = "Visual Studio for Mac"
 
-  override fun isAvailable() = SystemInfoRt.isMac
+  override fun isAvailable(): Boolean = SystemInfoRt.isMac
 
-  override fun getIdeVersions(skipIds: List<String>) = when (val version = detectVSForMacVersion()) {
+  override fun getIdeVersions(skipIds: List<String>): SmartList<IdeVersion> = when (val version = detectVSForMacVersion()) {
     null -> SmartList()
     else -> SmartList(getIdeVersion(version))
   }
 
-  override fun getImportPerformer(ideVersion: IdeVersion) = DefaultImportPerformer()
+  override fun getImportPerformer(ideVersion: IdeVersion): DefaultImportPerformer = DefaultImportPerformer()
 
   private fun getIdeVersion(version: String) = IdeVersion(
     name = "Visual Studio for Mac",

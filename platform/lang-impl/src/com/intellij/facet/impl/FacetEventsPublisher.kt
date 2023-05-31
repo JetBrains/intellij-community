@@ -40,7 +40,7 @@ internal class FacetEventsPublisher(private val project: Project) {
     fun getInstance(project: Project): FacetEventsPublisher = project.service()
 
     @JvmField
-    internal val LISTENER_EP = ExtensionPointName<ProjectFacetListenerEP>("com.intellij.projectFacetListener")
+    internal val LISTENER_EP: ExtensionPointName<ProjectFacetListenerEP> = ExtensionPointName<ProjectFacetListenerEP>("com.intellij.projectFacetListener")
     private val LISTENER_EP_CACHE_KEY = java.util.function.Function<ProjectFacetListenerEP, String?> { it.facetTypeId }
     private const val ANY_TYPE = "any"
   }

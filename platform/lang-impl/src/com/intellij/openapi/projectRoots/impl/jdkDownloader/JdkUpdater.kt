@@ -70,7 +70,7 @@ private class JdkUpdatesCollectorQueue : UnknownSdkCollectorQueue(7_000)
 internal class JdkUpdatesCollector(
   private val project: Project
 ) : Disposable {
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   init {
     schedule()

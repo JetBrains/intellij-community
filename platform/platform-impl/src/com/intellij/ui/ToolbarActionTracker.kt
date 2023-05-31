@@ -89,12 +89,12 @@ abstract class ToolbarActionTracker<T : PositionTracker.Client<*>> : Disposable 
   abstract fun show(component: JComponent, pointProvider: (Component, T) -> Point)
 
   companion object {
-    const val PROPERTY_PREFIX = "toolbar.tracker"
-    val PRESENTATION_GOT_IT_KEY = Key<ToolbarActionTracker<PositionTracker.Client<Any>>>("${PROPERTY_PREFIX}.gotit.presentation")
-    val PRESENTATION_POPUP_KEY = Key<ToolbarActionTracker<PositionTracker.Client<Any>>>("${PROPERTY_PREFIX}.popup.presentation")
+    const val PROPERTY_PREFIX: String = "toolbar.tracker"
+    val PRESENTATION_GOT_IT_KEY: Key<ToolbarActionTracker<PositionTracker.Client<Any>>> = Key<ToolbarActionTracker<PositionTracker.Client<Any>>>("${PROPERTY_PREFIX}.gotit.presentation")
+    val PRESENTATION_POPUP_KEY: Key<ToolbarActionTracker<PositionTracker.Client<Any>>> = Key<ToolbarActionTracker<PositionTracker.Client<Any>>>("${PROPERTY_PREFIX}.popup.presentation")
 
     @JvmField
-    val ARROW_SHIFT = JBUIScale.scale(20) + Registry.intValue("ide.balloon.shadow.size") + BalloonImpl.ARC.get()
+    val ARROW_SHIFT: Int = JBUIScale.scale(20) + Registry.intValue("ide.balloon.shadow.size") + BalloonImpl.ARC.get()
 
     /**
      * Use this method for following an ActionToolbar component.

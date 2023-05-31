@@ -29,8 +29,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
 class FacetManagerBridge(module: Module) : FacetManagerBase() {
-  internal val module = module as ModuleBridge
-  internal val model = FacetModelBridge(this.module)
+  internal val module: ModuleBridge = module as ModuleBridge
+  internal val model: FacetModelBridge = FacetModelBridge(this.module)
 
   private fun isThisModule(moduleEntity: ModuleEntity) = moduleEntity.name == module.name
 

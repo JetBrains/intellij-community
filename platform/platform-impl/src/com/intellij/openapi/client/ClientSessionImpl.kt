@@ -38,8 +38,8 @@ abstract class ClientSessionImpl(
   setExtensionsRootArea = false,
 ), ClientSession {
 
-  override val isLightServiceSupported = false
-  override val isMessageBusSupported = false
+  override val isLightServiceSupported: Boolean = false
+  override val isMessageBusSupported: Boolean = false
 
   init {
     @Suppress("LeakingThis")

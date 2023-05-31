@@ -63,7 +63,7 @@ internal class FormatterStarter : ApplicationStarter {
 
 }
 
-fun createFormatter(args: List<String>, messageOutput: MessageOutput = StdIoMessageOutput) =
+fun createFormatter(args: List<String>, messageOutput: MessageOutput = StdIoMessageOutput): FileSetCodeStyleProcessor =
   CodeStyleProcessorBuilder(messageOutput)
     .apply {
       if (args.size < 2) throw ShowUsageException()

@@ -18,7 +18,7 @@ import javax.swing.JFrame
  * @author Alexander Lobas
  */
 object MacFullScreenControlsManager {
-  fun enabled() = Registry.`is`("apple.awt.newFullScreeControls", true)
+  fun enabled(): Boolean = Registry.`is`("apple.awt.newFullScreeControls", true)
 
   fun configureEnable(parentDisposable: Disposable, block: () -> Unit) {
     val rKey = Registry.get("apple.awt.newFullScreeControls")

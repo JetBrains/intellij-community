@@ -43,15 +43,15 @@ internal class NextBookmarkService(private val project: Project) : BookmarksList
     cache.get() ?: bookmarks.also { cache.set(it) }
   }
 
-  override fun bookmarkAdded(group: BookmarkGroup, bookmark: Bookmark) = bookmarksChanged(bookmark)
-  override fun bookmarkRemoved(group: BookmarkGroup, bookmark: Bookmark) = bookmarksChanged(bookmark)
+  override fun bookmarkAdded(group: BookmarkGroup, bookmark: Bookmark): Unit = bookmarksChanged(bookmark)
+  override fun bookmarkRemoved(group: BookmarkGroup, bookmark: Bookmark): Unit = bookmarksChanged(bookmark)
   private fun bookmarksChanged(bookmark: Bookmark) {
     if (bookmark is LineBookmark) cache.set(null)
   }
 
   private fun compareFiles(bookmark1: LineBookmark, bookmark2: LineBookmark) = bookmark1.file.path.compareTo(bookmark2.file.path)
   private fun compareLines(bookmark1: LineBookmark, bookmark2: LineBookmark) = bookmark1.line.compareTo(bookmark2.line)
-  override fun compare(bookmark1: LineBookmark, bookmark2: LineBookmark) = when (val result = compareFiles(bookmark1, bookmark2)) {
+  override fun compare(bookmark1: LineBookmark, bookmark2: LineBookmark): Int = when (val result = compareFiles(bookmark1, bookmark2)) {
     0 -> compareLines(bookmark1, bookmark2)
     else -> result
   }

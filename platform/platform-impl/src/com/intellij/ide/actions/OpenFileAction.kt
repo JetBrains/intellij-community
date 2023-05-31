@@ -119,7 +119,7 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible {
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
 private class ProjectOnlyFileChooserDescriptor : OpenProjectFileChooserDescriptor(true) {

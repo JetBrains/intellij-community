@@ -4,6 +4,7 @@ package com.intellij.ide.bookmark.ui.tree
 import com.intellij.ide.bookmark.FileBookmark
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -12,7 +13,7 @@ class FileNode(project: Project, bookmark: FileBookmark) : BookmarkNode<FileBook
   private val nodes = mutableListOf<AbstractTreeNode<*>>()
   private val grouped = AtomicBoolean()
 
-  fun grouped() = when (grouped.getAndSet(true)) {
+  fun grouped(): FileNode? = when (grouped.getAndSet(true)) {
     true -> null
     else -> this
   }
@@ -27,7 +28,7 @@ class FileNode(project: Project, bookmark: FileBookmark) : BookmarkNode<FileBook
     nodes.clear()
   }
 
-  override fun getChildren() = nodes.toList()
+  override fun getChildren(): List<AbstractTreeNode<*>> = nodes.toList()
 
-  override fun getVirtualFile() = value.file
+  override fun getVirtualFile(): VirtualFile = value.file
 }

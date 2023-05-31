@@ -15,7 +15,7 @@ import javax.swing.SwingUtilities
 private val LOG = logger<FocusTask>()
 
 internal class FocusTask(private val toolWindow: ToolWindowImpl) : Runnable {
-  var startTime = System.currentTimeMillis()
+  var startTime: Long = System.currentTimeMillis()
 
   override fun run() {
     if (System.currentTimeMillis() - startTime > 10000) {

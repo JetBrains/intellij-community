@@ -9,4 +9,4 @@ import com.intellij.openapi.observable.util.whenItemSelected as whenItemSelected
 
 @Deprecated("Use function from platform API", ReplaceWith("whenItemSelected(listener)", "com.intellij.openapi.observable.util.whenItemSelected"))
 @ApiStatus.ScheduledForRemoval
-fun <E> ComboBox<E>.whenItemSelected(listener: (E) -> Unit) = whenItemSelectedImpl(listener = listener)
+fun <E> ComboBox<E>.whenItemSelected(listener: (E) -> Unit): Unit = whenItemSelectedImpl(listener = listener)

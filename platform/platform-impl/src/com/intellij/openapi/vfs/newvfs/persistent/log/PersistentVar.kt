@@ -55,7 +55,7 @@ abstract class PersistentVar<T>(
   }
 
   companion object {
-    fun integer(path: Path) = object : PersistentVar<Int>(
+    fun integer(path: Path): PersistentVar<Int> = object : PersistentVar<Int>(
       path,
       readValue = {
         try {
@@ -68,7 +68,7 @@ abstract class PersistentVar<T>(
       writeValue = { writeInt(it) }
     ) {}
 
-    fun long(path: Path) = object : PersistentVar<Long>(
+    fun long(path: Path): PersistentVar<Long> = object : PersistentVar<Long>(
       path,
       readValue = {
         try {

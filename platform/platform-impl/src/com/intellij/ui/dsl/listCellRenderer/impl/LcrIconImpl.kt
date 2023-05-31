@@ -10,7 +10,7 @@ import javax.swing.JList
 @ApiStatus.Internal
 internal class LcrIconImpl : LcrCellBaseImpl(), LcrIcon {
 
-  override val component = JLabel()
+  override val component: JLabel = JLabel()
 
   override fun init(list: JList<*>, isSelected: Boolean, cellHasFocus: Boolean) {
     super.init(list, isSelected, cellHasFocus)

@@ -11,13 +11,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
 
-  var horizontalAlign = HorizontalAlign.LEFT
+  var horizontalAlign: HorizontalAlign = HorizontalAlign.LEFT
     private set
 
-  var verticalAlign = VerticalAlign.CENTER
+  var verticalAlign: VerticalAlign = VerticalAlign.CENTER
     private set
 
-  var resizableColumn = false
+  var resizableColumn: Boolean = false
     private set
 
   var rightGap: RightGap? = null

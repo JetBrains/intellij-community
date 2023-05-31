@@ -21,7 +21,7 @@ class SdkComboBoxModel private constructor(
   val modelBuilder: SdkListModelBuilder
 ) : ComboBoxModel<SdkListItem>, ListModel<SdkListItem> by listModel, ComboBoxPopupState<SdkListItem> by listModel {
 
-  override fun getSelectedItem() = selectedItem
+  override fun getSelectedItem(): SdkListItem = selectedItem
 
   override fun setSelectedItem(anItem: Any?) {
     selectedItem = when (anItem) {

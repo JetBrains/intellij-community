@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.suggested
 
+import com.intellij.openapi.command.undo.DocumentReference
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoableAction
 import com.intellij.openapi.editor.Document
@@ -32,9 +33,9 @@ class SuggestedRefactoringUndoableAction private constructor(
 
   private val documentReference = DocumentReferenceManager.getInstance().create(document)
 
-  override fun getAffectedDocuments() = arrayOf(documentReference)
+  override fun getAffectedDocuments(): Array<DocumentReference> = arrayOf(documentReference)
 
-  override fun isGlobal() = false
+  override fun isGlobal(): Boolean = false
 
   override fun undo() {
     val document = documentReference.document ?: return

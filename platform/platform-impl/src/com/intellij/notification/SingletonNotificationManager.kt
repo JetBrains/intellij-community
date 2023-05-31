@@ -12,7 +12,7 @@ class SingletonNotificationManager(groupId: String, private val type: Notificati
   private val group = NotificationGroupManager.getInstance().getNotificationGroup(groupId)
   private val notification = AtomicReference<Notification>()
 
-  fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project?) =
+  fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project?): Unit =
     notify(title, content, project) { }
 
   fun notify(@NotificationTitle title: String,

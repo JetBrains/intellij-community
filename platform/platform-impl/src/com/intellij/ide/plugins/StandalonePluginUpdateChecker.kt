@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
 
 sealed class PluginUpdateStatus {
-  val timestamp = System.currentTimeMillis()
+  val timestamp: Long = System.currentTimeMillis()
 
   object LatestVersionInstalled : PluginUpdateStatus()
 
@@ -332,12 +332,12 @@ open class StandalonePluginUpdateChecker(
       .notify(null)
   }
 
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   companion object {
     private const val INITIAL_UPDATE_DELAY = 2000L
     @JvmStatic
-    protected val CACHED_REQUEST_DELAY = TimeUnit.DAYS.toMillis(1)
+    protected val CACHED_REQUEST_DELAY: Long = TimeUnit.DAYS.toMillis(1)
     private val LOG = Logger.getInstance(StandalonePluginUpdateChecker::class.java)
   }
 }

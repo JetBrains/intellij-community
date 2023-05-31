@@ -57,8 +57,8 @@ class HeapDumpSnapshotRunnable(
   private val analysisOption: AnalysisOption) : Runnable {
 
   companion object {
-    const val MINIMUM_USED_MEMORY_TO_CAPTURE_HEAP_DUMP_IN_MB = 800
-    const val NEXT_CHECK_TIMESTAMP_KEY = "heap.dump.snapshot.next.check.timestamp"
+    const val MINIMUM_USED_MEMORY_TO_CAPTURE_HEAP_DUMP_IN_MB: Int = 800
+    const val NEXT_CHECK_TIMESTAMP_KEY: String = "heap.dump.snapshot.next.check.timestamp"
     private val LOG = Logger.getInstance(HeapDumpSnapshotRunnable::class.java)
   }
 

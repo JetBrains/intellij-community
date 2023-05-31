@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -47,7 +48,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
   override fun actionPerformed(e: AnActionEvent) {
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
@@ -84,7 +85,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
     presentation.icon = icon
   }
 
-  override fun createCustomComponent(presentation: Presentation, place: String) = JBLabel().apply {
+  override fun createCustomComponent(presentation: Presentation, place: String): JBLabel = JBLabel().apply {
     isOpaque = false
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     object : ClickListener() {
@@ -130,7 +131,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
       return FileStatusManager.getInstance(project).getStatus(value).color
     }
 
-    override fun getTextFor(value: VirtualFile?) = value?.presentableName ?: ""
+    override fun getTextFor(value: VirtualFile?): @NlsSafe String = value?.presentableName ?: ""
 
     override fun onChosen(selectedValue: VirtualFile?, finalChoice: Boolean): PopupStep<*>? {
       if (selectedValue != null && finalChoice) FileEditorManager.getInstance(project).openFile(selectedValue, true)

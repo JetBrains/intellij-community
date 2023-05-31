@@ -20,7 +20,7 @@ import javax.swing.text.StyleConstants
  * could be limited as well by setting maximumWidth.
  */
 class HeightLimitedPane(text: String, private val relativeFontSize: Int, val fontColor: JBColor, private val isBold: Boolean = false, private val maximumWidth: Int? = null) : JTextPane() {
-  val style = SimpleAttributeSet()
+  val style: SimpleAttributeSet = SimpleAttributeSet()
 
   init {
     border = JBUI.Borders.empty()

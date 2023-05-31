@@ -8,6 +8,6 @@ import com.intellij.openapi.project.Project
 open class PerformFixesTask(project: Project, descriptors: List<CommonProblemDescriptor>, quickFixClass: Class<*>?) :
   AbstractPerformFixesTask(project, descriptors.toTypedArray(), quickFixClass) {
 
-  override fun <D : CommonProblemDescriptor> collectFix(fix: QuickFix<D>, descriptor: D, project: Project) =
+  override fun <D : CommonProblemDescriptor> collectFix(fix: QuickFix<D>, descriptor: D, project: Project): Unit =
     fix.applyFix(project, descriptor)
 }

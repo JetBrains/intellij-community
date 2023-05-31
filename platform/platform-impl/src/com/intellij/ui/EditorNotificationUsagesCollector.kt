@@ -64,5 +64,5 @@ internal fun logHandlerInvoked(
 @Internal
 internal class EditorNotificationUsagesCollector : CounterUsagesCollector() {
 
-  override fun getGroup() = GROUP
+  override fun getGroup(): EventLogGroup = GROUP
 }

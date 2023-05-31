@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 
 interface StoreReloadManager {
   companion object {
-    fun getInstance(project: Project) = project.service<StoreReloadManager>()
+    fun getInstance(project: Project): StoreReloadManager = project.service<StoreReloadManager>()
   }
 
   fun reloadProject()

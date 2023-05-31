@@ -155,7 +155,7 @@ private val EP_NAME = ExtensionPointName<GeneralEditorOptionsProviderEP>("com.in
 
 class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(message("title.editor"), ID), WithEpDependencies {
   companion object {
-    const val ID = "preferences.editor"
+    const val ID: String = "preferences.editor"
 
     private fun clearAllIdentifierHighlighters() {
       for (project in ProjectManager.getInstance().openProjects) {

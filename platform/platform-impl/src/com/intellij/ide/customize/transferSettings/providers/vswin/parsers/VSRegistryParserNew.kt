@@ -51,12 +51,12 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
 
   private val detourFile: File? = if (isRegistryDetourRequired()) detourFileInit() else null
 
-  val envPath by lazy { envPathInit() }
-  val settingsFile by lazy { settingsFileInit() }
-  val vsLocation by lazy { vsLocationInit() }
-  val recentProjects by lazy { recentProjectsInit() ?: mutableListOf() }
-  val extensions by lazy { extensionsListInit() }
-  val theme by lazy { themeInit() }
+  val envPath: Pair<Path?, File?> by lazy { envPathInit() }
+  val settingsFile: File? by lazy { settingsFileInit() }
+  val vsLocation: String? by lazy { vsLocationInit() }
+  val recentProjects: MutableList<RecentPathInfo> by lazy { recentProjectsInit() ?: mutableListOf() }
+  val extensions: MutableList<FeatureInfo>? by lazy { extensionsListInit() }
+  val theme: ILookAndFeel? by lazy { themeInit() }
 
   private val registryRootKey = if (isRegistryDetourRequired()) {
     requireNotNull(detourFile)

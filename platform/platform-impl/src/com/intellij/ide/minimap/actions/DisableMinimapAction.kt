@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
 class DisableMinimapAction : AnAction(MiniMessagesBundle.message("action.disable")) {
-  override fun isDumbAware() = true
+  override fun isDumbAware(): Boolean = true
   override fun actionPerformed(e: AnActionEvent) {
     val settings = MinimapSettings.getInstance()
     settings.state.enabled = false

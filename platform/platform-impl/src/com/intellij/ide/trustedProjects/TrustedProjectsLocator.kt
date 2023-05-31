@@ -47,7 +47,7 @@ interface TrustedProjectsLocator {
 
   companion object {
 
-    val EP_NAME = ExtensionPointName<TrustedProjectsLocator>("com.intellij.trustedProjectsLocator")
+    val EP_NAME: ExtensionPointName<TrustedProjectsLocator> = ExtensionPointName<TrustedProjectsLocator>("com.intellij.trustedProjectsLocator")
 
     fun locateProject(projectRoot: Path, project: Project?): LocatedProject {
       return locateProject(project) { getProjectRoots(projectRoot, project) }

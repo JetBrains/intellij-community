@@ -18,7 +18,7 @@ import javax.swing.JTextArea
 
 internal class CompareKeymapsAction : AnAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     val allKeymaps = (KeymapManager.getInstance() as KeymapManagerEx).allKeymaps

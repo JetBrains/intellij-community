@@ -171,7 +171,7 @@ internal open class SelectedEditorFilePath(frame: JFrame) {
       installListeners()
     }
 
-  var multipleSameNamed = false
+  var multipleSameNamed: Boolean = false
     set(value) {
       if (field == value) {
         return
@@ -181,7 +181,7 @@ internal open class SelectedEditorFilePath(frame: JFrame) {
       updateProjectPath()
     }
 
-  var classPathNeeded = false
+  var classPathNeeded: Boolean = false
     set(value) {
       if (field == value) {
         return
@@ -348,7 +348,7 @@ internal open class SelectedEditorFilePath(frame: JFrame) {
   open fun getCustomTitle(): String? = null
 
   private var isClipped = false
-  var titleString = ""
+  var titleString: String = ""
 
   data class Pattern(val preferredWidth: Int, val createTitle: () -> String)
 

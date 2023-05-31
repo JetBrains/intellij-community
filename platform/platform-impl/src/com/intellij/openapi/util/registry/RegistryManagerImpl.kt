@@ -11,6 +11,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ArrayUtilRt
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -51,9 +52,9 @@ internal class RegistryManagerImpl : PersistentStateComponent<Element>, Registry
     return Registry._getWithoutStateCheck(key).asBoolean()
   }
 
-  override fun intValue(key: String) = Registry._getWithoutStateCheck(key).asInteger()
+  override fun intValue(key: String): Int = Registry._getWithoutStateCheck(key).asInteger()
 
-  override fun stringValue(key: String) = Registry._getWithoutStateCheck(key).asString()
+  override fun stringValue(key: String): @NlsSafe String = Registry._getWithoutStateCheck(key).asString()
 
   override fun intValue(key: String, defaultValue: Int): Int {
     return try {
@@ -64,9 +65,9 @@ internal class RegistryManagerImpl : PersistentStateComponent<Element>, Registry
     }
   }
 
-  override fun get(key: String) = Registry._getWithoutStateCheck(key)
+  override fun get(key: String): RegistryValue = Registry._getWithoutStateCheck(key)
 
-  override fun getState() = Registry.getInstance().state
+  override fun getState(): Element = Registry.getInstance().state
 
   override fun noStateLoaded() {
     Registry.loadState(/* state = */ null, /* earlyAccess = */ EarlyAccessRegistryManager.getOrLoadMap())

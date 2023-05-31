@@ -36,7 +36,7 @@ open class DescriptionEditorPane : JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML) {
   override fun getBackground(): Color = JBColor.PanelBackground
 
   companion object {
-    const val EMPTY_HTML = "<html><body></body></html>"
+    const val EMPTY_HTML: String = "<html><body></body></html>"
   }
 
 }

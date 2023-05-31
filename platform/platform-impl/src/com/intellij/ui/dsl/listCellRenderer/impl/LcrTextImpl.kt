@@ -15,7 +15,7 @@ import javax.swing.UIManager
 @ApiStatus.Internal
 internal class LcrTextImpl(private val initParams: LcrTextInitParamsImpl) : LcrCellBaseImpl(), LcrText {
 
-  override val component = JLabel()
+  override val component: JLabel = JLabel()
 
   override fun init(list: JList<*>, isSelected: Boolean, cellHasFocus: Boolean) {
     super.init(list, isSelected, cellHasFocus)

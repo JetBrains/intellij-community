@@ -471,11 +471,11 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   companion object {
     @JvmField
-    val REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY = ExtensionPointName<RequiredForSmartMode>(
+    val REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY: ExtensionPointName<RequiredForSmartMode> = ExtensionPointName<RequiredForSmartMode>(
       "com.intellij.requiredForSmartModeStartupActivity")
 
     @JvmField
-    val ALWAYS_SMART = SystemProperties.getBooleanProperty("idea.no.dumb.mode", false)
+    val ALWAYS_SMART: Boolean = SystemProperties.getBooleanProperty("idea.no.dumb.mode", false)
 
     private val LOG = Logger.getInstance(DumbServiceImpl::class.java)
 
@@ -504,7 +504,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
                !java.lang.Boolean.parseBoolean(System.getProperty(IDEA_FORCE_DUMB_QUEUE_TASKS, "false"))
       }
 
-    const val IDEA_FORCE_DUMB_QUEUE_TASKS = "idea.force.dumb.queue.tasks"
+    const val IDEA_FORCE_DUMB_QUEUE_TASKS: String = "idea.force.dumb.queue.tasks"
 
     private val isSynchronousHeadlessApplication: Boolean
       get() = application.isHeadlessEnvironment && !java.lang.Boolean.getBoolean("ide.async.headless.mode")

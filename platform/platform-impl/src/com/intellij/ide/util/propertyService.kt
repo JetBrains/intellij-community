@@ -29,7 +29,7 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   private val keyToString = ConcurrentHashMap<String, String>()
   private val keyToStringList = ConcurrentHashMap<String, List<String>>()
 
-  override fun getStateModificationCount() = tracker.modificationCount
+  override fun getStateModificationCount(): Long = tracker.modificationCount
 
   fun removeIf(predicate: Predicate<String>) {
     keyToString.keys.removeIf(predicate)
@@ -45,7 +45,7 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
     }
   }
 
-  override fun getState() = MyState(TreeMap(keyToString), TreeMap(keyToStringList))
+  override fun getState(): MyState = MyState(TreeMap(keyToString), TreeMap(keyToStringList))
 
   override fun loadState(state: MyState) {
     keyToString.clear()
@@ -113,9 +113,9 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
     }
   }
 
-  override fun isValueSet(name: String) = keyToString.containsKey(name)
+  override fun isValueSet(name: String): Boolean = keyToString.containsKey(name)
 
-  override fun getValues(name: @NonNls String) = getList(name)?.toTypedArray()
+  override fun getValues(name: @NonNls String): Array<String>? = getList(name)?.toTypedArray()
 
   override fun setValues(name: @NonNls String, values: Array<String>?) {
     if (values == null) {
@@ -127,7 +127,7 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
     }
   }
 
-  override fun getList(name: String) = keyToStringList.get(name)
+  override fun getList(name: String): List<String>? = keyToStringList.get(name)
 
   override fun setList(name: String, values: MutableCollection<String>?) {
     if (values == null) {

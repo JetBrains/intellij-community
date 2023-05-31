@@ -97,7 +97,7 @@ class ActionsCollectorImpl : ActionsCollector() {
   }
 
   companion object {
-    const val DEFAULT_ID = "third.party"
+    const val DEFAULT_ID: String = "third.party"
     private val ourAllowedList = ActionsBuiltInAllowedlist.getInstance()
     private val ourStats: MutableMap<AnActionEvent, Stats> = WeakHashMap()
 

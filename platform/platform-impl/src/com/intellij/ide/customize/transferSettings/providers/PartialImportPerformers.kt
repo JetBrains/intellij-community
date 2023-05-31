@@ -27,7 +27,7 @@ interface PartialImportPerformer {
 }
 
 class LookAndFeelImportPerformer : PartialImportPerformer {
-  override fun willPerform(settings: Settings) = settings.preferences[SettingsPreferencesKind.Laf] && settings.laf != null
+  override fun willPerform(settings: Settings): Boolean = settings.preferences[SettingsPreferencesKind.Laf] && settings.laf != null
 
   override fun collectAllRequiredPlugins(settings: Settings): Set<PluginId> {
     (settings.laf as? PluginLookAndFeel)?.let {
@@ -62,7 +62,7 @@ class LookAndFeelImportPerformer : PartialImportPerformer {
 }
 
 class SyntaxSchemeImportPerformer : PartialImportPerformer {
-  override fun willPerform(settings: Settings) = settings.preferences[SettingsPreferencesKind.SyntaxScheme] && settings.syntaxScheme != null
+  override fun willPerform(settings: Settings): Boolean = settings.preferences[SettingsPreferencesKind.SyntaxScheme] && settings.syntaxScheme != null
 
   override fun collectAllRequiredPlugins(settings: Settings): Set<PluginId> {
     (settings.syntaxScheme as? PluginEditorColorScheme)?.let {
@@ -100,7 +100,7 @@ class SyntaxSchemeImportPerformer : PartialImportPerformer {
 }
 
 class KeymapSchemeImportPerformer : PartialImportPerformer {
-  override fun willPerform(settings: Settings) = settings.preferences[SettingsPreferencesKind.Keymap] && settings.keymap != null
+  override fun willPerform(settings: Settings): Boolean = settings.preferences[SettingsPreferencesKind.Keymap] && settings.keymap != null
   override fun collectAllRequiredPlugins(settings: Settings): Set<PluginId> {
     (settings.keymap as? PluginKeymap)?.let {
       return setOf(PluginId.getId(it.pluginId))
@@ -186,11 +186,11 @@ class KeymapSchemeImportPerformer : PartialImportPerformer {
 }
 
 class RecentProjectsImportPerformer : PartialImportPerformer {
-  override fun willPerform(settings: Settings) = settings.preferences[SettingsPreferencesKind.RecentProjects] && settings.recentProjects.isNotEmpty()
+  override fun willPerform(settings: Settings): Boolean = settings.preferences[SettingsPreferencesKind.RecentProjects] && settings.recentProjects.isNotEmpty()
 
   override fun collectAllRequiredPlugins(settings: Settings): Set<PluginId> = emptySet()
 
-  override fun patchSettingsAfterPluginInstallation(settings: Settings, pluginIds: Set<String>) = settings
+  override fun patchSettingsAfterPluginInstallation(settings: Settings, pluginIds: Set<String>): Settings = settings
 
   override fun perform(project: Project, settings: Settings, pi: ProgressIndicator) {}
 

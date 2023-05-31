@@ -14,7 +14,7 @@ class TransferSettingsDataProvider(private val providers: List<TransferSettingsP
   private val ideVersions = mutableListOf<IdeVersion>()
   private val failedIdeVersions = mutableListOf<FailedIdeVersion>()
 
-  val orderedIdeVersions get() = ideVersions + failedIdeVersions
+  val orderedIdeVersions: List<BaseIdeVersion> get() = ideVersions + failedIdeVersions
 
   constructor(vararg providers: TransferSettingsProvider) : this(providers.toList())
 

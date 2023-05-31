@@ -40,7 +40,7 @@ open class PsiAwareFileEditorManagerImpl(project: Project, coroutineScope: Corou
     connection.subscribe(ProblemListener.TOPIC, MyProblemListener())
   }
 
-  override fun isProblem(file: VirtualFile) = problemSolver.isProblemFile(file)
+  override fun isProblem(file: VirtualFile): Boolean = problemSolver.isProblemFile(file)
 
   override fun getFileTooltipText(file: VirtualFile, window: EditorWindow): String {
     val tooltipText: @NlsSafe StringBuilder = StringBuilder()

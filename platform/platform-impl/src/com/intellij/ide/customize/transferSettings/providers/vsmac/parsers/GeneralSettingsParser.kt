@@ -28,7 +28,7 @@ class GeneralSettingsParser(private val settings: Settings) {
     KnownLafs.Darcula to KnownColorSchemes.Darcula
   )
 
-  fun process(file: File) = try {
+  fun process(file: File): Unit = try {
     logger.info("Processing a file: $file")
 
     val root = JDOMUtil.load(file)

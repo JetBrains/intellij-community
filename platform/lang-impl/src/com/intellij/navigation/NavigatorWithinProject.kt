@@ -40,11 +40,11 @@ import java.io.File
 import java.nio.file.Path
 import java.util.regex.Pattern
 
-const val NAVIGATE_COMMAND = "navigate"
-const val REFERENCE_TARGET = "reference"
-const val PROJECT_NAME_KEY = "project"
-const val ORIGIN_URL_KEY = "origin"
-const val SELECTION = "selection"
+const val NAVIGATE_COMMAND: String = "navigate"
+const val REFERENCE_TARGET: String = "reference"
+const val PROJECT_NAME_KEY: String = "project"
+const val ORIGIN_URL_KEY: String = "origin"
+const val SELECTION: String = "selection"
 
 suspend fun openProject(parameters: Map<String, String?>): ProtocolOpenProjectResult {
   val projectName = parameters.get(PROJECT_NAME_KEY)?.nullize(nullizeSpaces = true)
@@ -127,7 +127,7 @@ class NavigatorWithinProject(val project: Project, val parameters: Map<String, S
     FQN("fqn"),
     PATH("path");
 
-    override fun toString() = prefix
+    override fun toString(): String = prefix
   }
 
   private val navigatorByKeyPrefix = mapOf(

@@ -105,7 +105,7 @@ class VfsLog(
     )
   }
 
-  val vFileEventApplicationListener = if (readOnly) {
+  val vFileEventApplicationListener: VFileEventApplicationListener = if (readOnly) {
     object : VFileEventApplicationListener {} // no op
   } else {
     VFileEventApplicationLogListener(context)
@@ -114,10 +114,10 @@ class VfsLog(
   companion object {
     private val LOG = Logger.getInstance(VfsLog::class.java)
 
-    const val VERSION = -48
+    const val VERSION: Int = -48
 
     @JvmField
-    val LOG_VFS_OPERATIONS_ENABLED = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled", false)
+    val LOG_VFS_OPERATIONS_ENABLED: Boolean = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled", false)
     private val WORKER_THREADS_COUNT = SystemProperties.getIntProperty("idea.vfs.log-vfs-operations.workers", 4)
     // TODO: compaction & its options
   }

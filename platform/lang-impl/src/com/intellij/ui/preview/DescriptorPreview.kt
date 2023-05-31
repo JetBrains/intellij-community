@@ -19,8 +19,8 @@ import kotlin.properties.Delegates.observable
 
 class DescriptorPreview(val splitter: Splitter, val editable: Boolean, val id: ClientId?) {
 
-  fun editor() = editor
-  fun close() = open(null)
+  fun editor(): Editor? = editor
+  fun close(): Unit = open(null)
   fun open(descriptor: OpenFileDescriptor?) {
     this.descriptor = descriptor
   }

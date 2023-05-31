@@ -29,7 +29,7 @@ import javax.swing.JComponent
 private val LOG = logger<JdkDownloader>()
 
 
-internal val JDK_DOWNLOADER_EXT = DataKey.create<JdkDownloaderDialogHostExtension>("jdk-downloader-extension")
+internal val JDK_DOWNLOADER_EXT: DataKey<JdkDownloaderDialogHostExtension> = DataKey.create<JdkDownloaderDialogHostExtension>("jdk-downloader-extension")
 
 internal interface JdkDownloaderDialogHostExtension {
   fun allowWsl() : Boolean = true

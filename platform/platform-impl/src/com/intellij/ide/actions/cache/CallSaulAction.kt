@@ -10,7 +10,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.SystemProperties
 
 internal class CallSaulAction : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) = service<Saul>().sortThingsOut(RecoveryScope.createInstance(e))
+  override fun actionPerformed(e: AnActionEvent): Unit = service<Saul>().sortThingsOut(RecoveryScope.createInstance(e))
 
   override fun update(e: AnActionEvent) {
     val isEnabled = e.project != null

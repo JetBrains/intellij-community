@@ -54,7 +54,7 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
       updateEditorPaneText()
     }
 
-  var limitPreferredSize = false
+  var limitPreferredSize: Boolean = false
 
   @Nls
   private var userText: String? = null

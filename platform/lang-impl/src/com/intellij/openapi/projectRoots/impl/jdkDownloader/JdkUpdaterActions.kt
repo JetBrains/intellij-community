@@ -21,7 +21,7 @@ class JdkUpdaterNotifications : Disposable {
   private var pendingActionsCopy = listOf<JdkUpdateNotification.JdkUpdateSuggestionAction>()
 
   private val alarm = MergingUpdateQueue("jdk-update-actions", 500, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD).usePassThroughInUnitTestMode()
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   private fun scheduleUpdate() {
     alarm.queue(object: Update(this) {
@@ -73,5 +73,5 @@ class JdkUpdaterNotifications : Disposable {
 }
 
 class JdkSettingsActionRegistryActionProvider : SettingsEntryPointAction.ActionProvider {
-  override fun getUpdateActions(context: DataContext) = service<JdkUpdaterNotifications>().getActions()
+  override fun getUpdateActions(context: DataContext): List<JdkUpdateNotification.JdkUpdateSuggestionAction> = service<JdkUpdaterNotifications>().getActions()
 }

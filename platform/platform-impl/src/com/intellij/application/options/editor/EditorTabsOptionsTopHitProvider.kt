@@ -2,11 +2,12 @@
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.OptionsSearchTopHitProvider
+import com.intellij.ide.ui.search.BooleanOptionDescription
 
 class EditorTabsOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
-  override fun getId() = EDITOR_TABS_OPTIONS_ID
+  override fun getId(): String = EDITOR_TABS_OPTIONS_ID
 
-  override fun getOptions() = listOf(
+  override fun getOptions(): List<BooleanOptionDescription> = listOf(
     showDirectoryForNonUniqueFilenames
     , markModifiedTabsWithAsterisk
     , showTabsTooltips

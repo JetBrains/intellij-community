@@ -10,6 +10,8 @@ import com.intellij.ide.projectView.impl.PsiFileUrl
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId1
+import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
@@ -90,11 +92,11 @@ class BookmarkCounterCollector : CounterUsagesCollector() {
     private val group: EventLogGroup = EventLogGroup("bookmarks.counters", 2)
 
     @JvmField
-    val favoritesNavigate = group.registerEvent("favorites.navigate", EventFields.Class("navigatable"))
+    val favoritesNavigate: EventId1<Class<*>?> = group.registerEvent("favorites.navigate", EventFields.Class("navigatable"))
     @JvmField
-    val bookmarkNavigate = group.registerEvent("bookmark.navigate",
-                                               EventFields.Enum("mnemonicType", MnemonicType::class.java),
-                                               EventFields.Boolean("withLine"))
+    val bookmarkNavigate: EventId2<MnemonicType, Boolean> = group.registerEvent("bookmark.navigate",
+                                                                                EventFields.Enum("mnemonicType", MnemonicType::class.java),
+                                                                                EventFields.Boolean("withLine"))
   }
 
   override fun getGroup(): EventLogGroup = Companion.group

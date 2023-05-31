@@ -120,5 +120,5 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
     myDoNotAskConfigurableUi.apply()
   }
 
-  override fun getComponent() = ui
+  override fun getComponent(): DialogPanel = ui
 }

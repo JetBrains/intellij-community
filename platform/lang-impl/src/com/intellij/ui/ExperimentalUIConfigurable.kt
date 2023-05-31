@@ -15,6 +15,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.Nls
 
 /**
  * @author Konstantin Bulenkov
@@ -26,7 +27,7 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
     val EP_NAME: ExtensionPointName<ExperimentalUIConfigurable> = ExtensionPointName.create("com.intellij.newUIConfigurable")
   }
 
-  open fun isEnabled() = true
+  open fun isEnabled(): Boolean = true
 
   private fun getFirstEnabledConfigurable() = EP_NAME.extensions.firstOrNull { it.isEnabled() }
 
@@ -77,9 +78,9 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
     }
   }
 
-  open fun getMainChangesAndKnownIssuesUrl() = "https://youtrack.jetbrains.com/articles/IDEA-A-156/Main-changes-and-known-issues"
-  open fun getMainChangesAndKnowIssuesLabel() = IdeBundle.message("new.ui.blog.changes.and.issues")
-  open fun onSubmitFeedback() = NewUIFeedbackDialog(null, false).show()
+  open fun getMainChangesAndKnownIssuesUrl(): String = "https://youtrack.jetbrains.com/articles/IDEA-A-156/Main-changes-and-known-issues"
+  open fun getMainChangesAndKnowIssuesLabel(): @Nls String = IdeBundle.message("new.ui.blog.changes.and.issues")
+  open fun onSubmitFeedback(): Unit = NewUIFeedbackDialog(null, false).show()
   open fun getRedefinedHelpTopic(): String? = null
   open fun onApply() {}
 

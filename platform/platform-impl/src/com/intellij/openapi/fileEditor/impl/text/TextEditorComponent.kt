@@ -67,7 +67,7 @@ open class TextEditorComponent(
   private val editorHighlighterUpdater: EditorHighlighterUpdater
 
   @Volatile
-  var isDisposed = false
+  var isDisposed: Boolean = false
     private set
 
   private var coverComponent: JComponent?

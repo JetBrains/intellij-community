@@ -31,7 +31,7 @@ internal class CreateFieldAction(target: PsiClass, request: CreateFieldRequest) 
                                            request.fieldName, getNameForClass(target, false))
 }
 
-internal val constantModifiers = setOf(
+internal val constantModifiers: Set<JvmModifier> = setOf(
   JvmModifier.STATIC,
   JvmModifier.FINAL
 )

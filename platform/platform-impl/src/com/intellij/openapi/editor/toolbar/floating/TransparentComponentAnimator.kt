@@ -35,7 +35,7 @@ class TransparentComponentAnimator(
     }
   }
 
-  fun scheduleShow() = executor.executeOrSkip {
+  fun scheduleShow(): Unit = executor.executeOrSkip {
     updateState(::nextShowingState)
   }
 

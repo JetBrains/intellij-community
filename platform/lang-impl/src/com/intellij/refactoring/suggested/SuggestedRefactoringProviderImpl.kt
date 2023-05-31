@@ -14,7 +14,7 @@ class SuggestedRefactoringProviderImpl(project: Project) : SuggestedRefactoringP
     }
   }
 
-  val availabilityIndicator = SuggestedRefactoringAvailabilityIndicator(project)
+  val availabilityIndicator: SuggestedRefactoringAvailabilityIndicator = SuggestedRefactoringAvailabilityIndicator(project)
   private val changeCollector = SuggestedRefactoringChangeCollector(availabilityIndicator)
   private val listener: SuggestedRefactoringChangeListener
 

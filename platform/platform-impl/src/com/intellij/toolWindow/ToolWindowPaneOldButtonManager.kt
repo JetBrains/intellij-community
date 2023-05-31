@@ -111,7 +111,7 @@ internal class ToolWindowPaneOldButtonManager(paneId: String) : ToolWindowButton
     }
   }
 
-  override fun getBottomHeight() = if (bottomStripe.isVisible) bottomStripe.height else 0
+  override fun getBottomHeight(): Int = if (bottomStripe.isVisible) bottomStripe.height else 0
 
   override fun getStripeFor(anchor: ToolWindowAnchor, isSplit: Boolean?): Stripe {
     return when(anchor) {

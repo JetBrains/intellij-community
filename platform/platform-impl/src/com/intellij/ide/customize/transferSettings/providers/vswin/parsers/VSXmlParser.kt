@@ -16,19 +16,19 @@ class VSXmlParserException(message: String) : Exception(message)
 
 class VSXmlParser(settingsFile: File, private val hive: VSHive? = null) {
   companion object {
-    const val applicationIdentity = "ApplicationIdentity"
-    const val toolsOptions = "ToolsOptions"
-    const val category = "Category"
-    const val envGroup = "Environment_Group"
-    const val nameAttr = "name"
-    const val versionAttr = "version"
+    const val applicationIdentity: String = "ApplicationIdentity"
+    const val toolsOptions: String = "ToolsOptions"
+    const val category: String = "Category"
+    const val envGroup: String = "Environment_Group"
+    const val nameAttr: String = "name"
+    const val versionAttr: String = "version"
 
     private val logger = logger<VSXmlParser>()
   }
 
   private val document: Document
 
-  val allSettings = Settings(
+  val allSettings: Settings = Settings(
     keymap = KnownKeymaps.VisualStudio2022
   )
   val ver: Version2

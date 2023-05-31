@@ -11,7 +11,7 @@ internal class ToolWindowPaneState {
   private val idToSplitProportion = Object2FloatOpenHashMap<String>()
   var maximizedProportion: Pair<ToolWindow, Int>? = null
 
-  var isStripesOverlaid = false
+  var isStripesOverlaid: Boolean = false
 
   fun getPreferredSplitProportion(id: String?, defaultValue: Float): Float {
     val f = idToSplitProportion.getFloat(id)

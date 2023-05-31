@@ -92,7 +92,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
   private val mySingleTaskExecutor: SingleTaskExecutor
   private val mySuspended = AtomicBoolean()
   private val myListener: ExecutorStateListener
-  protected val guiSuspender = MergingQueueGuiSuspender()
+  protected val guiSuspender: MergingQueueGuiSuspender = MergingQueueGuiSuspender()
   private val myProgressTitle: @ProgressTitle String
   private val mySuspendedText: @ProgressText String
   private val backgroundTasksSubmitted = AtomicInteger(0)

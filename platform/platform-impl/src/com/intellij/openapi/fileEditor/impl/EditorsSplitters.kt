@@ -94,7 +94,7 @@ open class EditorsSplitters internal constructor(
       }
     }
 
-    internal fun isOpenedInBulk(file: VirtualFile) = file.getUserData(OPENED_IN_BULK) != null
+    internal fun isOpenedInBulk(file: VirtualFile): Boolean = file.getUserData(OPENED_IN_BULK) != null
 
     @JvmStatic
     fun findDefaultComponentInSplitters(project: Project?): JComponent? {

@@ -414,27 +414,27 @@ object DynamicPlugins {
       this.isUpdate = isUpdate
     }
 
-    fun withWaitForClassloaderUnload(waitForClassloaderUnload: Boolean) = also {
+    fun withWaitForClassloaderUnload(waitForClassloaderUnload: Boolean): UnloadPluginOptions = also {
       this.waitForClassloaderUnload = waitForClassloaderUnload
     }
 
-    fun withDisable(disable: Boolean) = also {
+    fun withDisable(disable: Boolean): UnloadPluginOptions = also {
       this.disable = disable
     }
 
-    fun withRequireMemorySnapshot(requireMemorySnapshot: Boolean) = also {
+    fun withRequireMemorySnapshot(requireMemorySnapshot: Boolean): UnloadPluginOptions = also {
       this.requireMemorySnapshot = requireMemorySnapshot
     }
 
-    fun withUnloadWaitTimeout(unloadWaitTimeout: Int) = also {
+    fun withUnloadWaitTimeout(unloadWaitTimeout: Int): UnloadPluginOptions = also {
       this.unloadWaitTimeout = unloadWaitTimeout
     }
 
-    fun withSave(save: Boolean) = also {
+    fun withSave(save: Boolean): UnloadPluginOptions = also {
       this.save = save
     }
 
-    fun withCheckImplementationDetailDependencies(checkImplementationDetailDependencies: Boolean) = also {
+    fun withCheckImplementationDetailDependencies(checkImplementationDetailDependencies: Boolean): UnloadPluginOptions = also {
       this.checkImplementationDetailDependencies = checkImplementationDetailDependencies
     }
   }

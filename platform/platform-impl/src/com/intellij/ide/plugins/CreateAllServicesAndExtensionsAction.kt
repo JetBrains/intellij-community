@@ -114,7 +114,7 @@ fun performAction() {
 }
 
 // external usage in [src/com/jetbrains/performancePlugin/commands/chain/generalCommandChain.kt]
-const val ACTION_ID = "CreateAllServicesAndExtensions"
+const val ACTION_ID: String = "CreateAllServicesAndExtensions"
 
 /**
  * If service instance is obtained on Event Dispatch Thread only, it may expect that its constructor is called on EDT as well, so we must

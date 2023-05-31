@@ -33,7 +33,7 @@ import javax.swing.JTextArea
  */
 internal class ShowUpdateInfoDialogAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null

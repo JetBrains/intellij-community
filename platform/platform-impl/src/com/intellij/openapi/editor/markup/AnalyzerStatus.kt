@@ -64,7 +64,7 @@ class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:
            && passes == other.passes
   }
 
-  fun isEmpty() = this == EMPTY
+  fun isEmpty(): Boolean = this == EMPTY
 
   companion object {
     /**
@@ -76,6 +76,6 @@ class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:
     @JvmStatic
     @Internal
     @Deprecated("use UIController.EMPTY")
-    val EmptyController = UIController.EMPTY
+    val EmptyController: UIController = UIController.EMPTY
   }
 }

@@ -91,19 +91,19 @@ enum class FUSEventSource {
   }
 
   @JvmOverloads
-  fun logConfigurePlugins(project: Project? = null) = CONFIGURE_PLUGINS_EVENT.log(project, this)
+  fun logConfigurePlugins(project: Project? = null): Unit = CONFIGURE_PLUGINS_EVENT.log(project, this)
 
   @JvmOverloads
   fun logEnablePlugins(
     plugins: List<String>,
     project: Project? = null,
-  ) = ENABLE_PLUGINS_EVENT.log(project, plugins, this)
+  ): Unit = ENABLE_PLUGINS_EVENT.log(project, plugins, this)
 
   @JvmOverloads
   fun logInstallPlugins(
     plugins: List<String>,
     project: Project? = null,
-  ) = INSTALL_PLUGINS_EVENT.log(project, plugins, this)
+  ): Unit = INSTALL_PLUGINS_EVENT.log(project, plugins, this)
 
   @JvmOverloads
   fun openDownloadPageAndLog(project: Project? = null, url: String, pluginId: PluginId? = null) {
@@ -118,8 +118,8 @@ enum class FUSEventSource {
   }
 
   @JvmOverloads
-  fun logIgnoreExtension(project: Project? = null) = IGNORE_EXTENSIONS_EVENT.log(project, this)
+  fun logIgnoreExtension(project: Project? = null): Unit = IGNORE_EXTENSIONS_EVENT.log(project, this)
 
   @JvmOverloads
-  fun logIgnoreUnknownFeatures(project: Project? = null) = IGNORE_UNKNOWN_FEATURES_EVENT.log(project, this)
+  fun logIgnoreUnknownFeatures(project: Project? = null): Unit = IGNORE_UNKNOWN_FEATURES_EVENT.log(project, this)
 }

@@ -26,7 +26,7 @@ sealed class TopHitCache : Disposable {
   }
 
   @JvmField
-  protected val map = ConcurrentHashMap<Class<*>, Collection<OptionDescription>>()
+  protected val map: ConcurrentHashMap<Class<*>, Collection<OptionDescription>> = ConcurrentHashMap<Class<*>, Collection<OptionDescription>>()
 
   override fun dispose() {
   }

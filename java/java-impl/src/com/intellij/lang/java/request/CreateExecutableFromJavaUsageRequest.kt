@@ -23,13 +23,13 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
   private val callPointer: SmartPsiElementPointer<T> = call.createSmartPointer(project)
   internal val call: T get() = callPointer.element ?: error("dead pointer")
 
-  override fun isValid() = callPointer.element != null
+  override fun isValid(): Boolean = callPointer.element != null
 
-  override fun getAnnotations() = emptyList<AnnotationRequest>()
+  override fun getAnnotations(): List<AnnotationRequest> = emptyList<AnnotationRequest>()
 
-  override fun getModifiers() = modifiers
+  override fun getModifiers(): Collection<JvmModifier> = modifiers
 
-  override fun getTargetSubstitutor() = PsiJvmSubstitutor(project, getTargetSubstitutor(call))
+  override fun getTargetSubstitutor(): PsiJvmSubstitutor = PsiJvmSubstitutor(project, getTargetSubstitutor(call))
 
   override fun getExpectedParameters(): List<ExpectedParameter> {
     val argumentList = call.argumentList ?: return emptyList()
@@ -44,5 +44,5 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
     }
   }
 
-  val context get() = call.parentOfTypes(PsiMethod::class, PsiClass::class)
+  val context: PsiElement? get() = call.parentOfTypes(PsiMethod::class, PsiClass::class)
 }

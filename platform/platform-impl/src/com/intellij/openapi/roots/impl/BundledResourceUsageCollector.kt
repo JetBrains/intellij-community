@@ -6,10 +6,13 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId1
+import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ReadAction
@@ -33,19 +36,19 @@ import kotlin.io.path.exists
  */
 internal class BundledResourceUsageCollector : ProjectUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("bundled.resource.reference", 1)
+    val GROUP: EventLogGroup = EventLogGroup("bundled.resource.reference", 1)
 
     /**
      * Records path to a file located under 'lib' subdirectory of IDE installation directory and referenced from a library.
      */
     @JvmField
-    val IDE_FILE = GROUP.registerEvent("ide.file", EventFields.StringValidatedByCustomRule<BundledResourcePathValidationRule>("path"))
+    val IDE_FILE: EventId1<String?> = GROUP.registerEvent("ide.file", EventFields.StringValidatedByCustomRule<BundledResourcePathValidationRule>("path"))
 
     /**
      * Records path to a file located in an installation directory for a plugin and referenced from a library.
      */
     @JvmField
-    val PLUGIN_FILE = GROUP.registerEvent("plugin.file", EventFields.PluginInfo, EventFields.StringValidatedByCustomRule<BundledResourcePathValidationRule>("path"))
+    val PLUGIN_FILE: EventId2<PluginInfo?, String?> = GROUP.registerEvent("plugin.file", EventFields.PluginInfo, EventFields.StringValidatedByCustomRule<BundledResourcePathValidationRule>("path"))
   }
 
   override fun getGroup(): EventLogGroup = GROUP

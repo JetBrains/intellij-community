@@ -16,9 +16,9 @@ internal class SuggestedRefactoringFeatureUsage : CounterUsagesCollector() {
     private const val RENAME = "rename."
     private const val CHANGE_SIGNATURE = "changeSignature."
     private const val SUGGESTED = "suggested"
-    const val POPUP_SHOWN = "popup.shown"
-    const val POPUP_CANCELED = "popup.canceled"
-    const val PERFORMED = "performed"
+    const val POPUP_SHOWN: String = "popup.shown"
+    const val POPUP_CANCELED: String = "popup.canceled"
+    const val PERFORMED: String = "performed"
 
     private val PLACE = EventFields.ActionPlace
     private val ID = EventFields.Int("id")

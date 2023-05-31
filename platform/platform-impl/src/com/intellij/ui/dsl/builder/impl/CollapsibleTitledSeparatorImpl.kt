@@ -17,8 +17,8 @@ import kotlin.math.max
 // todo move to components package, rename into CollapsibleTitledSeparator, make internal
 @ApiStatus.Internal
 class CollapsibleTitledSeparatorImpl(@NlsContexts.Separator title: String) : TitledSeparator(title) {
-  val expandedProperty = AtomicBooleanProperty(true)
-  var expanded by expandedProperty
+  val expandedProperty: AtomicBooleanProperty = AtomicBooleanProperty(true)
+  var expanded: Boolean by expandedProperty
 
   init {
     updateIcon()

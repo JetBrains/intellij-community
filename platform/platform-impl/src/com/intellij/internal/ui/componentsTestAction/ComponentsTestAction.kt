@@ -12,7 +12,7 @@ import javax.swing.JComponent
 
 internal class ComponentsTestAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     ComponentsTestDialog(e.project).show()

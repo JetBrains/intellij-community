@@ -92,7 +92,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 internal class UILatencyLogger : CounterUsagesCollector() {
   companion object {
     private val GROUP = EventLogGroup("performance", 66)
-    internal val SYSTEM_CPU_LOAD = Int("system_cpu_load")
+    internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
     internal val SWAP_LOAD: IntEventField = Int("swap_load")
     internal val CPU_TIME: IntEventField = Int("cpu_time_ms")
     internal val GC_TIME: IntEventField = Int("gc_time_ms")

@@ -396,7 +396,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return true
   }
 
-  override fun closeAndDispose(project: Project) = closeProject(project, checkCanClose = true)
+  override fun closeAndDispose(project: Project): Boolean = closeProject(project, checkCanClose = true)
 
   @Suppress("removal")
   override fun addProjectManagerListener(listener: ProjectManagerListener) {

@@ -59,7 +59,7 @@ internal class SelectFileAction : DumbAwareAction() {
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private data class Selector(val target: SelectInTarget, val context: SelectInContext)
 

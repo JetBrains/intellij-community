@@ -34,7 +34,7 @@ import javax.swing.tree.DefaultTreeCellRenderer
 
 internal class TestTooltipsAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     val panel = panel {

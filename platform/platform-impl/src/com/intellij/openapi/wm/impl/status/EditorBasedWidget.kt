@@ -59,7 +59,7 @@ abstract class EditorBasedWidget protected constructor(
   protected val myConnection: MessageBusConnection
 
   @Volatile
-  protected var isDisposed = false
+  protected var isDisposed: Boolean = false
     private set
 
   @Suppress("DEPRECATION")

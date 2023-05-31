@@ -62,7 +62,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
     e.presentation.icon = selectedContext!!.icon
   }
 
-  override  fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override  fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
@@ -141,7 +141,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
       e.presentation.icon = context.icon
     }
 
-    override  fun getActionUpdateThread() = ActionUpdateThread.BGT
+    override  fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun actionPerformed(e: AnActionEvent) {
       selectedContext = context

@@ -23,7 +23,7 @@ import java.util.concurrent.CancellationException
 import kotlin.io.path.div
 import kotlin.io.path.exists
 
-const val PER_PROJECT_INSTANCE_TEST_SCRIPT = "test_script.txt"
+const val PER_PROJECT_INSTANCE_TEST_SCRIPT: String = "test_script.txt"
 
 internal suspend fun checkChildProcess(projectStoreBaseDir: Path, activity: Activity): Boolean {
   if (shouldOpenInChildProcess(projectStoreBaseDir)) {

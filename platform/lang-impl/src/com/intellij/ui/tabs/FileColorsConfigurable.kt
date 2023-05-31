@@ -50,9 +50,9 @@ import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
 
 internal class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScroll {
-  override fun getId() = "reference.settings.ide.settings.file-colors"
-  override fun getDisplayName() = message("configurable.file.colors")
-  override fun getHelpTopic() = id
+  override fun getId(): String = "reference.settings.ide.settings.file-colors"
+  override fun getDisplayName(): @Nls String = message("configurable.file.colors")
+  override fun getHelpTopic(): String = id
 
   private val enabledFileColors = object : CheckBoxConfigurable() {
     override fun createCheckBox(): JCheckBox {
@@ -143,10 +143,10 @@ internal class FileColorsConfigurable(project: Project) : SearchableConfigurable
     return panel
   }
 
-  override fun isModified() = configurables.any { it.isModified }
-  override fun apply() = configurables.forEach { it.apply() }
-  override fun reset() = configurables.forEach { it.reset() }
-  override fun disposeUIResources() = configurables.forEach { it.disposeUIResources() }
+  override fun isModified(): Boolean = configurables.any { it.isModified }
+  override fun apply(): Unit = configurables.forEach { it.apply() }
+  override fun reset(): Unit = configurables.forEach { it.reset() }
+  override fun disposeUIResources(): Unit = configurables.forEach { it.disposeUIResources() }
 }
 
 // table support

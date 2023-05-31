@@ -162,7 +162,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
       .map { Pair(getElementRect(it), CustomWindowDecoration.MENU_BAR) }
   }
 
-  override fun updateMenuActions(forceRebuild: Boolean) = ideMenu.updateMenuActions(forceRebuild)
+  override fun updateMenuActions(forceRebuild: Boolean): Unit = ideMenu.updateMenuActions(forceRebuild)
 
   override fun getComponent(): JComponent = this
 

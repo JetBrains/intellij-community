@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.guessE
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix.hasVoidInArgumentList
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.psi.util.parents
@@ -16,13 +17,13 @@ internal class CreateMethodFromJavaUsageRequest(
   modifiers: Collection<JvmModifier>
 ) : CreateExecutableFromJavaUsageRequest<PsiMethodCallExpression>(methodCall, modifiers), CreateMethodRequest {
 
-  override fun isValid() = super.isValid() && call.let {
+  override fun isValid(): Boolean = super.isValid() && call.let {
     it.methodExpression.referenceName != null && !hasVoidInArgumentList(it)
   }
 
-  override fun getMethodName() = call.methodExpression.referenceName!!
+  override fun getMethodName(): @NlsSafe String = call.methodExpression.referenceName!!
 
-  override fun getReturnType() = guessExpectedTypes(call, ExpressionUtils.isVoidContext(call)).map(::ExpectedJavaType)
+  override fun getReturnType(): List<ExpectedJavaType> = guessExpectedTypes(call, ExpressionUtils.isVoidContext(call)).map(::ExpectedJavaType)
 
   fun getAnchor(targetClass: PsiClass): PsiElement? {
     val enclosingMember = call.parentOfTypes(PsiMethod::class, PsiField::class, PsiClassInitializer::class) ?: return null

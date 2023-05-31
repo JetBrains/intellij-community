@@ -3,10 +3,7 @@ package com.intellij.toolWindow
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.Queryable
@@ -28,6 +25,7 @@ import com.intellij.openapi.wm.impl.isInternal
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
+import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
@@ -56,15 +54,15 @@ class InternalDecoratorImpl internal constructor(
   private val myDecoratorChild: JComponent
 ) : InternalDecorator(), Queryable, DataProvider, ComponentWithMnemonics {
   companion object {
-    val SHARED_ACCESS_KEY = Key.create<Boolean>("sharedAccess")
+    val SHARED_ACCESS_KEY: Key<Boolean> = Key.create<Boolean>("sharedAccess")
 
-    internal val HIDE_COMMON_TOOLWINDOW_BUTTONS = Key.create<Boolean>("HideCommonToolWindowButtons")
-    internal val INACTIVE_LOOK = Key.create<Boolean>("InactiveLook")
+    internal val HIDE_COMMON_TOOLWINDOW_BUTTONS: Key<Boolean> = Key.create<Boolean>("HideCommonToolWindowButtons")
+    internal val INACTIVE_LOOK: Key<Boolean> = Key.create<Boolean>("InactiveLook")
 
     /**
      * Catches all event from tool window and modifies decorator's appearance.
      */
-    internal const val HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow"
+    internal const val HIDE_ACTIVE_WINDOW_ACTION_ID: String = "HideActiveWindow"
 
     private fun moveContent(content: Content, source: InternalDecoratorImpl, target: InternalDecoratorImpl) {
       val targetContentManager = target.contentManager
@@ -357,9 +355,9 @@ class InternalDecoratorImpl internal constructor(
 
   override fun isSplitUnsplitInProgress(): Boolean = isSplitUnsplitInProgress
 
-  override fun getContentManager() = contentUi.contentManager
+  override fun getContentManager(): ContentManager = contentUi.contentManager
 
-  override fun getHeaderToolbar() = header.getToolbar()
+  override fun getHeaderToolbar(): ActionToolbar = header.getToolbar()
 
   val headerToolbarActions: ActionGroup
     get() = header.getToolbarActions()

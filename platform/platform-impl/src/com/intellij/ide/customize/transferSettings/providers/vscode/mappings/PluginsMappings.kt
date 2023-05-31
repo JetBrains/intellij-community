@@ -1,6 +1,7 @@
 package com.intellij.ide.customize.transferSettings.providers.vscode.mappings
 
 import com.intellij.ide.customize.transferSettings.db.KnownPlugins
+import com.intellij.ide.customize.transferSettings.models.FeatureInfo
 
 object PluginsMappings {
   private val theMap = mapOf(
@@ -41,13 +42,13 @@ object PluginsMappings {
     "mtxr.sqltools" to KnownPlugins.DatabaseSupport
   )
 
-  fun pluginIdMap(pluginId: String) = theMap[pluginId]
+  fun pluginIdMap(pluginId: String): FeatureInfo? = theMap[pluginId]
 
   fun idsList(): Collection<String> {
     return theMap.keys
   }
 
-  fun originalPluginNameOverride(pluginId: String) = when (pluginId) {
+  fun originalPluginNameOverride(pluginId: String): Nothing? = when (pluginId) {
     //"emilast.logfilehighlighter" to "Log File Highlighter"
     else -> null
   }

@@ -372,7 +372,7 @@ private const val MESSAGE_FILE_NAME = ".message"
 private const val THROWABLE_FILE_NAME = ".throwable"
 
 @Suppress("SpellCheckingInspection")
-internal const val APP_INFO_FILE_NAME = ".appinfo"
+internal const val APP_INFO_FILE_NAME: String = ".appinfo"
 
 // common sub-stack contains more than the specified % samples
 private const val COMMON_SUB_STACK_WEIGHT = 0.25

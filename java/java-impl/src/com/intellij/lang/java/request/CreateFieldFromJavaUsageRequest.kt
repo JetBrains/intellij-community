@@ -7,6 +7,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmValue
 import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.CreateFieldRequest
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiReferenceExpression
@@ -21,21 +22,21 @@ internal class CreateFieldFromJavaUsageRequest(
 
   private val myReference = reference.createSmartPointer()
 
-  override fun isValid() = myReference.element?.referenceName != null
+  override fun isValid(): Boolean = myReference.element?.referenceName != null
 
-  val reference get() = myReference.element!!
+  val reference: PsiReferenceExpression get() = myReference.element!!
 
   val anchor: PsiElement? get() = if (useAnchor) reference else null
 
   override fun getAnnotations(): Collection<AnnotationRequest> = emptyList()
 
-  override fun getModifiers() = modifiers
+  override fun getModifiers(): Collection<JvmModifier> = modifiers
 
-  override fun getFieldName() = reference.referenceName!!
+  override fun getFieldName(): @NlsSafe String = reference.referenceName!!
 
-  override fun getFieldType() = guessExpectedTypes(reference, false).map(::ExpectedJavaType)
+  override fun getFieldType(): List<ExpectedJavaType> = guessExpectedTypes(reference, false).map(::ExpectedJavaType)
 
-  override fun getTargetSubstitutor() = PsiJvmSubstitutor(reference.project, getTargetSubstitutor(reference))
+  override fun getTargetSubstitutor(): PsiJvmSubstitutor = PsiJvmSubstitutor(reference.project, getTargetSubstitutor(reference))
 
   override fun isConstant(): Boolean = isConstant
 

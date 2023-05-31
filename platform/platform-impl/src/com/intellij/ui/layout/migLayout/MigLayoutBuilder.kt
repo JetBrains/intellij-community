@@ -55,7 +55,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
    * Map of component to constraints shared among rows (since components are unique)
    */
   internal val componentConstraints: MutableMap<Component, CC> = CollectionFactory.createWeakIdentityMap(4, 0.8f)
-  override val rootRow = MigLayoutRow(parent = null, builder = this, indent = 0)
+  override val rootRow: MigLayoutRow = MigLayoutRow(parent = null, builder = this, indent = 0)
 
   private val buttonGroupStack: MutableList<ButtonGroup> = mutableListOf()
   override var preferredFocusedComponent: JComponent? = null
@@ -69,7 +69,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   internal val topButtonGroup: ButtonGroup?
     get() = buttonGroupStack.lastOrNull()
 
-  internal var hideableRowNestingLevel = 0
+  internal var hideableRowNestingLevel: Int = 0
 
   override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
     buttonGroupStack.add(buttonGroup)
@@ -102,11 +102,11 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   }
 
 
-  internal val defaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
+  internal val defaultComponentConstraintCreator: DefaultComponentConstraintCreator = DefaultComponentConstraintCreator(spacing)
 
   // keep in mind - MigLayout always creates one more than need column constraints (i.e. for 2 will be 3)
   // it doesn't lead to any issue.
-  internal val columnConstraints = AC()
+  internal val columnConstraints: AC = AC()
 
   // MigLayout in any case always creates CC, so, create instance even if it is not required
   private val Component.constraints: CC

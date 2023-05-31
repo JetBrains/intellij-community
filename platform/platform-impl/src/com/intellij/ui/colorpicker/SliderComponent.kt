@@ -45,10 +45,10 @@ private const val ACTION_SLIDE_RIGHT_STEP = "actionSlideRightStep"
 
 abstract class SliderComponent<T: Number>(initialValue: T) : JComponent() {
 
-  protected val leftPadding = DEFAULT_HORIZONTAL_PADDING
-  protected val rightPadding = DEFAULT_HORIZONTAL_PADDING
-  protected val topPadding = DEFAULT_VERTICAL_PADDING
-  protected val bottomPadding = DEFAULT_VERTICAL_PADDING
+  protected val leftPadding: Int = DEFAULT_HORIZONTAL_PADDING
+  protected val rightPadding: Int = DEFAULT_HORIZONTAL_PADDING
+  protected val topPadding: Int = DEFAULT_VERTICAL_PADDING
+  protected val bottomPadding: Int = DEFAULT_VERTICAL_PADDING
 
   private var _knobPosition: Int = 0
   private var knobPosition: Int
@@ -73,7 +73,7 @@ abstract class SliderComponent<T: Number>(initialValue: T) : JComponent() {
   /**
    * @return size of slider, must be positive value or zero.
    */
-  val sliderWidth get() = max(0, width - leftPadding - rightPadding)
+  val sliderWidth: Int get() = max(0, width - leftPadding - rightPadding)
 
   init {
     this.addMouseMotionListener(object : MouseAdapter() {
@@ -177,9 +177,9 @@ abstract class SliderComponent<T: Number>(initialValue: T) : JComponent() {
 
   override fun getMaximumSize(): Dimension = Dimension(Integer.MAX_VALUE, preferredSize.height)
 
-  override fun isFocusable() = true
+  override fun isFocusable(): Boolean = true
 
-  override fun setToolTipText(text: String) = Unit
+  override fun setToolTipText(text: String): Unit = Unit
 
   override fun paintComponent(g: Graphics) {
     val g2d = g as Graphics2D

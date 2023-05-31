@@ -20,5 +20,5 @@ internal class CheckSuggestedPluginsAction : DumbAwareAction() {
     e.presentation.isEnabledAndVisible = e.project != null
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

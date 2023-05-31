@@ -3,12 +3,14 @@ package com.intellij.ide.bookmark.ui.tree
 
 import com.intellij.ide.bookmark.FileBookmark
 import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 
 class FolderNode(project: Project, bookmark: FileBookmark) : BookmarkNode<FileBookmark>(project, bookmark) {
 
-  override fun getVirtualFile() = value?.file
-  override fun getChildren() = computeDirectoryChildren()
+  override fun getVirtualFile(): VirtualFile? = value?.file
+  override fun getChildren(): Collection<AbstractTreeNode<*>> = computeDirectoryChildren()
 
   override fun update(presentation: PresentationData) {
     val file = virtualFile ?: return

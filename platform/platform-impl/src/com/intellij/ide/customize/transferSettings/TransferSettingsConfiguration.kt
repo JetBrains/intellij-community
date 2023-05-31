@@ -22,7 +22,7 @@ open class DefaultTransferSettingsConfiguration(
   override val dataProvider: TransferSettingsDataProvider,
   override val shouldDisplayFailedVersions: Boolean
 ) : TransferSettingsConfiguration {
-  override val controller = TransferSettingsControllerImpl()
+  override val controller: TransferSettingsControllerImpl = TransferSettingsControllerImpl()
   override fun getSectionsFactory(): (IdeVersion) -> List<TransferSettingsSection> {
     return {
       listOf(

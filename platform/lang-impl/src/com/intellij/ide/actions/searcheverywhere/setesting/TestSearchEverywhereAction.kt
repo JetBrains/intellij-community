@@ -17,7 +17,7 @@ private const val LOCATION_SETTINGS_KEY = "se.contributors.test.dialog"
 
 class TestSearchEverywhereAction: AnAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     val content = SETestingPanel(collectContributors(e))

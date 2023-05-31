@@ -62,9 +62,9 @@ internal object TrustedProjects {
     }
   }
 
-  fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
-                                 ApplicationManager.getApplication().isHeadlessEnvironment ||
-                                 java.lang.Boolean.getBoolean("idea.trust.all.projects")
+  fun isTrustedCheckDisabled(): Boolean = ApplicationManager.getApplication().isUnitTestMode ||
+                                          ApplicationManager.getApplication().isHeadlessEnvironment ||
+                                          java.lang.Boolean.getBoolean("idea.trust.all.projects")
 
   private fun isTrustedCheckDisabledForProduct(): Boolean = java.lang.Boolean.getBoolean("idea.trust.disabled")
 

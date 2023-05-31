@@ -173,7 +173,7 @@ data class PluginReviewComment(
   val author: ReviewCommentAuthor = ReviewCommentAuthor(),
   val plugin: ReviewCommentPlugin = ReviewCommentPlugin()
 ) {
-  fun getDate() = parseLong(cdate, 0)
+  fun getDate(): Long = parseLong(cdate, 0)
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)

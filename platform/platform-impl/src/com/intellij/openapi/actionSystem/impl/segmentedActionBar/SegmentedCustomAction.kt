@@ -16,7 +16,7 @@ import javax.swing.JPanel
 
 abstract class SegmentedCustomAction : DumbAwareAction(), CustomComponentAction {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun createCustomComponent(presentation: Presentation, place: String): SegmentedCustomPanel {
     return SegmentedCustomPanel(presentation)

@@ -13,7 +13,7 @@ import javax.swing.ScrollPaneConstants
 import javax.swing.event.ListSelectionEvent
 
 class TransferSettingsLeftPanel(listModel: ListModel<BaseIdeVersion>) : JBScrollPane(JList(listModel)) {
-  val list get() = (viewport.view as JList<BaseIdeVersion>)
+  val list: JList<BaseIdeVersion> get() = (viewport.view as JList<BaseIdeVersion>)
   private var previousSelectedIndex = -1
 
   init {

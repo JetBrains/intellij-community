@@ -5,6 +5,7 @@ import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.StartupManagerEx
@@ -58,10 +59,10 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     private val LOG = logger<ProjectImpl>()
 
     @Internal
-    val RUN_START_UP_ACTIVITIES = Key.create<Boolean>("RUN_START_UP_ACTIVITIES")
+    val RUN_START_UP_ACTIVITIES: Key<Boolean> = Key.create<Boolean>("RUN_START_UP_ACTIVITIES")
 
     @JvmField
-    val CREATION_TIME = Key.create<Long>("ProjectImpl.CREATION_TIME")
+    val CREATION_TIME: Key<Long> = Key.create<Long>("ProjectImpl.CREATION_TIME")
 
     @TestOnly
     const val LIGHT_PROJECT_NAME: @NonNls String = "light_temp"
@@ -70,11 +71,11 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
     @TestOnly
     @JvmField
-    val CREATION_TEST_NAME = Key.create<String>("ProjectImpl.CREATION_TEST_NAME")
+    val CREATION_TEST_NAME: Key<String> = Key.create<String>("ProjectImpl.CREATION_TEST_NAME")
 
     @TestOnly
     @JvmField
-    val USED_TEST_NAMES = Key.create<String>("ProjectImpl.USED_TEST_NAMES")
+    val USED_TEST_NAMES: Key<String> = Key.create<String>("ProjectImpl.USED_TEST_NAMES")
 
     // for light projects, preload only services that are essential
     // ("await" means "project component loading activity is completed only when all such services are completed")
@@ -90,12 +91,12 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   // used by Rider
   @Internal
   @JvmField
-  val asyncPreloadServiceScope = coroutineScope.childScope()
+  val asyncPreloadServiceScope: CoroutineScope = coroutineScope.childScope()
 
   private val earlyDisposable = AtomicReference(Disposer.newDisposable())
 
   @Volatile
-  var isTemporarilyDisposed = false
+  var isTemporarilyDisposed: Boolean = false
     private set
 
   private val isLight: Boolean
@@ -174,7 +175,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
       componentStoreValue.value = value
     }
 
-  final override fun getProjectFilePath() = componentStore.projectFilePath.systemIndependentPath
+  final override fun getProjectFilePath(): String = componentStore.projectFilePath.systemIndependentPath
 
   final override fun getProjectFile(): VirtualFile? {
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectFilePath)
@@ -186,9 +187,9 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.projectBasePath)
   }
 
-  final override fun getBasePath() = componentStore.projectBasePath.systemIndependentPath
+  final override fun getBasePath(): String = componentStore.projectBasePath.systemIndependentPath
 
-  final override fun getPresentableUrl() = componentStore.presentableUrl
+  final override fun getPresentableUrl(): String = componentStore.presentableUrl
 
   override fun getLocationHash(): String {
     val store = componentStore
@@ -210,10 +211,10 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     return LocalFileSystem.getInstance().findFileByNioFile(componentStore.workspacePath)
   }
 
-  final override fun isLight() = isLight
+  final override fun isLight(): Boolean = isLight
 
   @Internal
-  final override fun activityNamePrefix() = "project "
+  final override fun activityNamePrefix(): String = "project "
 
   @TestOnly
   fun setTemporarilyDisposed(value: Boolean) {
@@ -273,7 +274,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
                                  "}---end of dispose trace---\n")
   }
 
-  final override fun isDisposed() = super.isDisposed() || isTemporarilyDisposed
+  final override fun isDisposed(): Boolean = super.isDisposed() || isTemporarilyDisposed
 
   @Synchronized
   final override fun dispose() {
@@ -336,7 +337,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     return projectManager != null && projectManager.isProjectOpened(this)
   }
 
-  override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl) = pluginDescriptor.projectContainerDescriptor
+  override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor = pluginDescriptor.projectContainerDescriptor
 
   override fun scheduleSave() {
     SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(project = this))

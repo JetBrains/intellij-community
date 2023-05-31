@@ -11,6 +11,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
@@ -34,11 +35,11 @@ import java.nio.file.Path
 import kotlin.io.path.name
 
 class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent), NewProjectWizardBaseData {
-  override val nameProperty = propertyGraph.lazyProperty(::suggestName)
-  override val pathProperty = propertyGraph.lazyProperty { suggestLocation().toCanonicalPath() }
+  override val nameProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestName)
+  override val pathProperty: GraphProperty<String> = propertyGraph.lazyProperty { suggestLocation().toCanonicalPath() }
 
-  override var name by nameProperty
-  override var path by pathProperty
+  override var name: String by nameProperty
+  override var path: String by pathProperty
 
   internal var bottomGap: Boolean = true
 

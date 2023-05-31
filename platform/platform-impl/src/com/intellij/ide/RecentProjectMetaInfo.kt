@@ -14,33 +14,33 @@ import java.awt.Rectangle
 
 class RecentProjectMetaInfo : BaseState() {
   @get:Attribute
-  var opened by property(false)
+  var opened: Boolean by property(false)
 
   /**
    * If true, the project will not be reopened on startup and not displayed in the recent projects list.
    * Suitable for internal projects, that should not be accessed by usual ways of opening projects.
    */
   @get:Attribute
-  var hidden by property(false)
+  var hidden: Boolean by property(false)
 
   @get:Attribute
-  var displayName by string()
+  var displayName: String? by string()
 
   // to set frame title as early as possible
   @get:Attribute
-  var frameTitle by string()
+  var frameTitle: String? by string()
 
-  var build by string()
-  var productionCode by string()
-  var eap by property(false)
-  var binFolder by string()
-  var projectOpenTimestamp by property(0L)
-  var buildTimestamp by property(0L)
-  var activationTimestamp by property(0L)
-  var metadata by string()
+  var build: String? by string()
+  var productionCode: String? by string()
+  var eap: Boolean by property(false)
+  var binFolder: String? by string()
+  var projectOpenTimestamp: Long by property(0L)
+  var buildTimestamp: Long by property(0L)
+  var activationTimestamp: Long by property(0L)
+  var metadata: String? by string()
 
   @get:Attribute
-  var projectWorkspaceId by string()
+  var projectWorkspaceId: String? by string()
 
   @get:Property(surroundWithTag = false)
   internal var frame: FrameInfo? by property()
@@ -52,19 +52,19 @@ class RecentProjectMetaInfo : BaseState() {
 class RecentProjectManagerState : BaseState() {
   @Deprecated("")
   @get:OptionTag
-  val recentPaths by list<String>()
+  val recentPaths: MutableList<String> by list<String>()
 
   @get:OptionTag
-  val groups by list<ProjectGroup>()
-  var pid by string()
+  val groups: MutableList<ProjectGroup> by list<ProjectGroup>()
+  var pid: String? by string()
 
   @get:OptionTag
   @get:MapAnnotation(sortBeforeSave = false)
-  val additionalInfo by linkedMap<String, RecentProjectMetaInfo>()
+  val additionalInfo: MutableMap<String, RecentProjectMetaInfo> by linkedMap<String, RecentProjectMetaInfo>()
 
-  var lastProjectLocation by string()
+  var lastProjectLocation: String? by string()
 
-  var lastOpenedProject by string()
+  var lastOpenedProject: String? by string()
 
-  var forceReopenProjects by property(false)
+  var forceReopenProjects: Boolean by property(false)
 }

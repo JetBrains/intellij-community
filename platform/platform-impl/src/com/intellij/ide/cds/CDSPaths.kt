@@ -13,13 +13,13 @@ import java.time.LocalDateTime
 class CDSPaths private constructor(val baseDir: File,
                                    val dumpOutputFile: File,
                                    val cdsClassesHash: String) {
-  val classesErrorMarkerFile = File(baseDir, "${cdsClassesHash}.error")
-  val classesListFile = File(baseDir, "${cdsClassesHash}.txt")
-  val classesPathFile = File(baseDir, "${cdsClassesHash}.classpath")
-  val classesArchiveFile = File(baseDir, "${cdsClassesHash}.jsa")
+  val classesErrorMarkerFile: File = File(baseDir, "${cdsClassesHash}.error")
+  val classesListFile: File = File(baseDir, "${cdsClassesHash}.txt")
+  val classesPathFile: File = File(baseDir, "${cdsClassesHash}.classpath")
+  val classesArchiveFile: File = File(baseDir, "${cdsClassesHash}.jsa")
 
-  fun isSame(jsaFile: File?) = jsaFile != null && jsaFile == classesArchiveFile && jsaFile.isFile
-  fun isOurFile(file: File?) = file == classesErrorMarkerFile || file == classesListFile || file == classesPathFile || file == classesArchiveFile
+  fun isSame(jsaFile: File?): Boolean = jsaFile != null && jsaFile == classesArchiveFile && jsaFile.isFile
+  fun isOurFile(file: File?): Boolean = file == classesErrorMarkerFile || file == classesListFile || file == classesPathFile || file == classesArchiveFile
 
   fun mkdirs() {
     baseDir.mkdirs()
@@ -31,12 +31,12 @@ class CDSPaths private constructor(val baseDir: File,
   }
 
   // re-compute installed plugins cache and see if there plugins were not changed
-  fun hasSameEnvironmentToBuildCDSArchive() = computePaths().cdsClassesHash == current.cdsClassesHash
+  fun hasSameEnvironmentToBuildCDSArchive(): Boolean = computePaths().cdsClassesHash == current.cdsClassesHash
 
   companion object {
     private val systemDir get() = File(PathManager.getSystemPath())
 
-    val freeSpaceForCDS get() = systemDir.freeSpace
+    val freeSpaceForCDS: Long get() = systemDir.freeSpace
 
     val current: CDSPaths by lazy { computePaths() }
 

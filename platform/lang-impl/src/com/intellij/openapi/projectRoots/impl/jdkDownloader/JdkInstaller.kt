@@ -77,7 +77,7 @@ interface JdkInstallerListener {
 class JdkInstaller : JdkInstallerBase() {
   companion object {
     @JvmStatic
-    fun getInstance() = service<JdkInstaller>()
+    fun getInstance(): JdkInstaller = service<JdkInstaller>()
   }
 
   override fun findHistoryRoots(feedItem: JdkItem): List<Path> = service<JdkInstallerStore>().findInstallations(feedItem)
@@ -152,7 +152,7 @@ interface WSLDistributionForJdkInstaller {
 
 abstract class JdkInstallerBase {
   @Suppress("PropertyName", "SSBasedInspection")
-  protected val LOG = Logger.getInstance(javaClass)
+  protected val LOG: Logger = Logger.getInstance(javaClass)
 
   abstract fun defaultInstallDir() : Path
   open fun defaultInstallDir(wslDistribution: WSLDistributionForJdkInstaller?) : Path = defaultInstallDir()
@@ -517,11 +517,11 @@ private data class LocallyFoundJdk(
 
 @Tag("installed-jdk")
 class JdkInstallerStateEntry : BaseState() {
-  var fullText by string()
-  var versionText by string()
-  var url by string()
-  var sha256 by string()
-  var installDir by string()
+  var fullText: String? by string()
+  var versionText: String? by string()
+  var url: String? by string()
+  var sha256: String? by string()
+  var installDir: String? by string()
   private var javaHomeDir by string()
 
   fun copyForm(item: JdkItem, targetPath: Path) {
@@ -533,8 +533,8 @@ class JdkInstallerStateEntry : BaseState() {
     javaHomeDir = item.resolveJavaHome(targetPath).toAbsolutePath().toString()
   }
 
-  val installPath get() = installDir?.let { Paths.get(it) }
-  val javaHomePath get() = javaHomeDir?.let { Paths.get(it) }
+  val installPath: Path? get() = installDir?.let { Paths.get(it) }
+  val javaHomePath: Path? get() = javaHomeDir?.let { Paths.get(it) }
 
   fun matches(item: JdkItem) : Boolean {
     if (fullText != item.fullPresentationText) return false
@@ -547,7 +547,7 @@ class JdkInstallerStateEntry : BaseState() {
 
 class JdkInstallerState : BaseState() {
   @get:XCollection
-  var installedItems by list<JdkInstallerStateEntry>()
+  var installedItems: MutableList<JdkInstallerStateEntry> by list<JdkInstallerStateEntry>()
 }
 
 @State(name = "JdkInstallerHistory", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)], allowLoadInTests = true)
@@ -555,11 +555,11 @@ class JdkInstallerState : BaseState() {
 class JdkInstallerStore : SimplePersistentStateComponent<JdkInstallerState>(JdkInstallerState()) {
   private val lock = ReentrantLock()
 
-  override fun loadState(state: JdkInstallerState) = lock.withLock {
+  override fun loadState(state: JdkInstallerState): Unit = lock.withLock {
     super.loadState(state)
   }
 
-  fun registerInstall(jdkItem: JdkItem, targetPath: Path) = lock.withLock {
+  fun registerInstall(jdkItem: JdkItem, targetPath: Path): Unit = lock.withLock {
     state.installedItems.removeIf { it.installPath?.isDirectory() != null || it.matches(jdkItem) }
     state.installedItems.add(JdkInstallerStateEntry().apply { copyForm(jdkItem, targetPath) })
     state.intIncrementModificationCount()
@@ -575,6 +575,6 @@ class JdkInstallerStore : SimplePersistentStateComponent<JdkInstallerState>(JdkI
 
   companion object {
     @JvmStatic
-    fun getInstance() = service<JdkInstallerStore>()
+    fun getInstance(): JdkInstallerStore = service<JdkInstallerStore>()
   }
 }

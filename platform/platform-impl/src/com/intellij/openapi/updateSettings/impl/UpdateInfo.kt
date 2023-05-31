@@ -76,7 +76,7 @@ class BuildInfo internal constructor(node: Element, productCode: String) {
 
 class PatchInfo internal constructor(node: Element) {
   companion object {
-    val OS_SUFFIX = if (SystemInfo.isWindows) "win" else if (SystemInfo.isMac) "mac" else if (SystemInfo.isUnix) "unix" else "unknown"
+    val OS_SUFFIX: String = if (SystemInfo.isWindows) "win" else if (SystemInfo.isMac) "mac" else if (SystemInfo.isUnix) "unix" else "unknown"
   }
 
   val fromBuild: BuildNumber = BuildNumber.fromString(node.getMandatoryAttributeValue("fullFrom", "from"))!!

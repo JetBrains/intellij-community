@@ -23,10 +23,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore.findFileSystemItem
 import javax.swing.Icon
 
-internal val Any.asAbstractTreeNode
+internal val Any.asAbstractTreeNode: AbstractTreeNode<*>?
   get() = this as? AbstractTreeNode<*>
 
-internal val AbstractTreeNode<*>.bookmarksManager
+internal val AbstractTreeNode<*>.bookmarksManager: BookmarksManager?
   get() = BookmarksManager.getInstance(project)
 
 internal val AbstractTreeNode<*>.parentRootNode: RootNode?
@@ -35,7 +35,7 @@ internal val AbstractTreeNode<*>.parentRootNode: RootNode?
 internal val AbstractTreeNode<*>.parentFolderNode: FolderNode?
   get() = this as? FolderNode ?: parent?.parentFolderNode
 
-internal fun ProjectViewNode<*>.findFileIcon() = findIcon(findFileSystemItem(project, virtualFile), 0)
+internal fun ProjectViewNode<*>.findFileIcon(): Icon? = findIcon(findFileSystemItem(project, virtualFile), 0)
 
 internal fun ProjectViewNode<*>.computeExternalLocation(file: VirtualFile): @NlsSafe String? {
   return computeScratchPresentation(file)?.first ?: FileUtil.getLocationRelativeToUserHome(file.presentableUrl)

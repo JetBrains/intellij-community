@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 class ReaderModeStatsCollector : CounterUsagesCollector() {
-  override fun getGroup() = GROUP
+  override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
     private val GROUP = EventLogGroup("reader.mode", 2)

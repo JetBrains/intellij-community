@@ -2,6 +2,7 @@
 package com.intellij.packageDependencies.actions
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.panel
@@ -11,7 +12,7 @@ internal class AnalyzeDependenciesAdditionalUi {
   lateinit var transitiveCB: JBCheckBox
   lateinit var borderChooser: JBIntSpinner
 
-  val panel = panel {
+  val panel: DialogPanel = panel {
     group(CodeInsightBundle.message("analysis.options")) {
       row {
         transitiveCB = checkBox(CodeInsightBundle.message("analyze.dependencies.transitive.dependencies.checkbox"))

@@ -104,10 +104,10 @@ open class IdeStatusBarImpl internal constructor(
   private val listeners = EventDispatcher.create(StatusBarListener::class.java)
 
   companion object {
-    internal val HOVERED_WIDGET_ID = DataKey.create<String>("HOVERED_WIDGET_ID")
-    internal val WIDGET_EFFECT_KEY = Key.create<WidgetEffect>("TextPanel.widgetEffect")
+    internal val HOVERED_WIDGET_ID: DataKey<String> = DataKey.create<String>("HOVERED_WIDGET_ID")
+    internal val WIDGET_EFFECT_KEY: Key<WidgetEffect> = Key.create<WidgetEffect>("TextPanel.widgetEffect")
 
-    const val NAVBAR_WIDGET_KEY = "NavBar"
+    const val NAVBAR_WIDGET_KEY: String = "NavBar"
   }
 
   override fun findChild(c: Component): StatusBar {

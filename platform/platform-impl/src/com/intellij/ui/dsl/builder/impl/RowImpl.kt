@@ -51,10 +51,10 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                             private val parent: PanelImpl,
                             rowLayout: RowLayout) : Row {
 
-  var rowLayout = rowLayout
+  var rowLayout: RowLayout = rowLayout
     private set
 
-  var resizableRow = false
+  var resizableRow: Boolean = false
     private set
 
   var rowComment: DslLabel? = null
@@ -66,7 +66,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   /**
    * Used if topGap is not set, skipped for first row
    */
-  var internalTopGap = 0
+  var internalTopGap: Int = 0
 
   var bottomGap: BottomGap? = null
     private set
@@ -74,9 +74,9 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   /**
    * Used if bottomGap is not set, skipped for last row
    */
-  var internalBottomGap = 0
+  var internalBottomGap: Int = 0
 
-  val cells = mutableListOf<CellBaseImpl<*>?>()
+  val cells: MutableList<CellBaseImpl<*>?> = mutableListOf<CellBaseImpl<*>?>()
 
   private var visible = true
   private var enabled = true

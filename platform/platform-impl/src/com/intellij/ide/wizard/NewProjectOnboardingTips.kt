@@ -14,6 +14,6 @@ interface NewProjectOnboardingTips {
 
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName<NewProjectOnboardingTips>("com.intellij.newProject.onboarding.tips")
+    val EP_NAME: ExtensionPointName<NewProjectOnboardingTips> = ExtensionPointName<NewProjectOnboardingTips>("com.intellij.newProject.onboarding.tips")
   }
 }

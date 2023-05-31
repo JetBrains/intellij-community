@@ -54,7 +54,7 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
   private var frame: Window? = null
   private var isDisposing = false
 
-  var isDisposed = false
+  var isDisposed: Boolean = false
     private set
 
   protected var statusBar: StatusBar? = null

@@ -3,38 +3,38 @@ package com.intellij.ide.projectWizard
 
 object NewProjectWizardConstants {
   object Language {
-    const val JAVA = "Java"
-    const val KOTLIN = "Kotlin"
-    const val GROOVY = "Groovy"
-    const val JAVASCRIPT = "JavaScript"
-    const val HTML = "HTML"
-    const val PYTHON = "Python"
-    const val PHP = "PHP"
-    const val RUBY = "Ruby"
-    const val GO = "Go"
-    const val SCALA = "Scala"
-    const val RUST = "Rust"
+    const val JAVA: String = "Java"
+    const val KOTLIN: String = "Kotlin"
+    const val GROOVY: String = "Groovy"
+    const val JAVASCRIPT: String = "JavaScript"
+    const val HTML: String = "HTML"
+    const val PYTHON: String = "Python"
+    const val PHP: String = "PHP"
+    const val RUBY: String = "Ruby"
+    const val GO: String = "Go"
+    const val SCALA: String = "Scala"
+    const val RUST: String = "Rust"
   }
 
   object BuildSystem {
-    const val INTELLIJ = "IntelliJ"
-    const val GRADLE = "Gradle"
-    const val MAVEN = "Maven"
-    const val SBT = "SBT"
+    const val INTELLIJ: String = "IntelliJ"
+    const val GRADLE: String = "Gradle"
+    const val MAVEN: String = "Maven"
+    const val SBT: String = "SBT"
   }
 
   object Generators {
-    const val EMPTY_PROJECT = "empty-project"
-    const val EMPTY_WEB_PROJECT = "empty-web-project"
-    const val SIMPLE_PROJECT = "simple-project"
-    const val SIMPLE_MODULE = "simple-module"
+    const val EMPTY_PROJECT: String = "empty-project"
+    const val EMPTY_WEB_PROJECT: String = "empty-web-project"
+    const val SIMPLE_PROJECT: String = "simple-project"
+    const val SIMPLE_MODULE: String = "simple-module"
   }
 
   object GroovySdk {
-    const val MAVEN = "Maven"
-    const val LOCAL = "Local"
-    const val NONE = "None"
+    const val MAVEN: String = "Maven"
+    const val LOCAL: String = "Local"
+    const val NONE: String = "None"
   }
 
-  const val OTHER = "other"
+  const val OTHER: String = "other"
 }

@@ -166,5 +166,5 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
 
 class LoadedModulesListStorage : BaseState() {
   @get:XCollection(elementName = "module", valueAttributeName = "name", propertyElementName = "loaded-modules")
-  val modules by list<String>()
+  val modules: MutableList<String> by list<String>()
 }

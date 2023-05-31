@@ -38,7 +38,7 @@ internal class FrameInfoHelper {
     private set
 
   @Volatile
-  var isDirty = false
+  var isDirty: Boolean = false
 
   fun updateFrameInfo(frameHelper: ProjectFrameHelper, frame: JFrame) {
     info = updateFrameInfo(frameHelper, frame, null, info)

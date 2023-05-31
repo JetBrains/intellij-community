@@ -55,10 +55,10 @@ private val LOG = logger<EditorWindow>()
 class EditorWindow internal constructor(val owner: EditorsSplitters, private val coroutineScope: CoroutineScope) {
   companion object {
     @JvmField
-    val DATA_KEY = DataKey.create<EditorWindow>("editorWindow")
+    val DATA_KEY: DataKey<EditorWindow> = DataKey.create<EditorWindow>("editorWindow")
 
     @JvmField
-    val HIDE_TABS = Key.create<Boolean>("HIDE_TABS")
+    val HIDE_TABS: Key<Boolean> = Key.create<Boolean>("HIDE_TABS")
 
     // Metadata to support editor tab drag&drop process: initial index
     internal val DRAG_START_INDEX_KEY: Key<Int> = KeyWithDefaultValue.create("drag start editor index", -1)
@@ -67,7 +67,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     internal val DRAG_START_LOCATION_HASH_KEY: Key<Int> = KeyWithDefaultValue.create("drag start editor location hash", 0)
 
     // Metadata to support editor tab drag&drop process: initial 'pinned' state
-    internal val DRAG_START_PINNED_KEY = Key.create<Boolean>("drag start editor pinned state")
+    internal val DRAG_START_PINNED_KEY: Key<Boolean> = Key.create<Boolean>("drag start editor pinned state")
 
     @JvmStatic
     val tabLimit: Int

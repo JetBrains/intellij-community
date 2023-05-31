@@ -15,10 +15,10 @@ import javax.swing.JFrame
 internal class ProjectFrameBounds {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<ProjectFrameBounds>()
+    fun getInstance(project: Project): ProjectFrameBounds = project.service<ProjectFrameBounds>()
   }
 
-  internal val frameInfoHelper = FrameInfoHelper()
+  internal val frameInfoHelper: FrameInfoHelper = FrameInfoHelper()
   private var pendingBounds: Rectangle? = null
 
   fun getActualFrameInfoInDeviceSpace(frameHelper: ProjectFrameHelper, frame: JFrame, windowManager: WindowManagerImpl): FrameInfo {
@@ -37,8 +37,8 @@ internal class ProjectFrameBounds {
 @Property(style = Property.Style.ATTRIBUTE)
 internal class FrameInfo : BaseState() {
   @get:Property(flat = true, style = Property.Style.ATTRIBUTE)
-  var bounds by property<Rectangle?>(null) { it == null || (it.width == 0 && it.height == 0 && it.x == 0 && it.y == 0) }
+  var bounds: Rectangle? by property<Rectangle?>(null) { it == null || (it.width == 0 && it.height == 0 && it.x == 0 && it.y == 0) }
 
-  var extendedState by property(Frame.NORMAL)
-  var fullScreen by property(false)
+  var extendedState: Int by property(Frame.NORMAL)
+  var fullScreen: Boolean by property(false)
 }

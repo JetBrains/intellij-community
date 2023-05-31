@@ -24,7 +24,7 @@ class RatingComponent : JComponent() {
   private val myMaxRating = 5
   private val myMinRating = 1
   private var myFocusRating = 1
-  var myRating = 0
+  var myRating: Int = 0
     private set
 
   init {
@@ -257,6 +257,6 @@ class RatingComponent : JComponent() {
 
   companion object {
     @Nls
-    const val RATING_PROPERTY = "rating" //NON-NLS
+    const val RATING_PROPERTY: String = "rating" //NON-NLS
   }
 }

@@ -97,7 +97,7 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
   }
 }
 
-internal val LOG = Logger.getInstance("#com.intellij.platform.ide.navigation.impl")
+internal val LOG: Logger = Logger.getInstance("#com.intellij.platform.ide.navigation.impl")
 
 /**
  * Navigates to all sources from [requests], or navigates to first non-source request.

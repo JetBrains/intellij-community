@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 
 class FolderNodeComparator(project: Project) : GroupByTypeComparator(project, ID) {
 
-  override fun compare(descriptor1: NodeDescriptor<*>?, descriptor2: NodeDescriptor<*>?) = when {
+  override fun compare(descriptor1: NodeDescriptor<*>?, descriptor2: NodeDescriptor<*>?): Int = when {
     (descriptor1 as? ProjectViewNode<*>)?.parent?.parentFolderNode == null -> 0
     (descriptor2 as? ProjectViewNode<*>)?.parent?.parentFolderNode == null -> 0
     else -> super.compare(descriptor1, descriptor2)

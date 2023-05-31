@@ -299,7 +299,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
   }
 
   @Deprecated(message = "Every update/rebuild is async now, use scheduleRebuild() to do rebuild at earliest possible time")
-  fun rebuild() = scheduleRebuild()
+  fun rebuild(): Unit = scheduleRebuild()
 
   private fun scheduleRebuild(delay: RebuildDelay, why: String) {
     LOG.debug("request to rebuild a structure view $delay: $why")
@@ -465,12 +465,12 @@ class StructureViewWrapperImpl(private val myProject: Project,
 
   companion object {
     @JvmField
-    val STRUCTURE_CHANGED = Topic("structure view changed", Runnable::class.java,
-                                  Topic.BroadcastDirection.NONE)
+    val STRUCTURE_CHANGED: Topic<Runnable> = Topic("structure view changed", Runnable::class.java,
+                                                   Topic.BroadcastDirection.NONE)
 
     @ApiStatus.Experimental
     @JvmField
-    val STRUCTURE_VIEW_TARGET_FILE_KEY = DataKey.create<Optional<VirtualFile?>>("STRUCTURE_VIEW_TARGET_FILE_KEY")
+    val STRUCTURE_VIEW_TARGET_FILE_KEY: DataKey<Optional<VirtualFile?>> = DataKey.create<Optional<VirtualFile?>>("STRUCTURE_VIEW_TARGET_FILE_KEY")
 
     private val LOG = Logger.getInstance(StructureViewWrapperImpl::class.java)
     private val WRAPPER_DATA_KEY = DataKey.create<StructureViewWrapper>("WRAPPER_DATA_KEY")

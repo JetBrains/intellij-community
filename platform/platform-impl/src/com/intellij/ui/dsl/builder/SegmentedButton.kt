@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   companion object {
-    const val DEFAULT_MAX_BUTTONS_COUNT = 6
+    const val DEFAULT_MAX_BUTTONS_COUNT: Int = 6
   }
 
   override fun visible(isVisible: Boolean): SegmentedButton<T>

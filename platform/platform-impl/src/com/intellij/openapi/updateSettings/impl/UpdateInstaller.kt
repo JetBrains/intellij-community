@@ -27,7 +27,7 @@ import java.util.zip.ZipFile
 import javax.swing.UIManager
 
 internal object UpdateInstaller {
-  const val UPDATER_MAIN_CLASS = "com.intellij.updater.Runner"
+  const val UPDATER_MAIN_CLASS: String = "com.intellij.updater.Runner"
 
   private val LOG = logger<UpdateInstaller>()
 

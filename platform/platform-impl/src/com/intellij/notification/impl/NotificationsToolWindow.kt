@@ -65,10 +65,10 @@ import javax.swing.text.JTextComponent
 
 internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   companion object {
-    const val ID = "Notifications"
-    internal const val CLEAR_ACTION_ID = "ClearAllNotifications"
+    const val ID: String = "Notifications"
+    internal const val CLEAR_ACTION_ID: String = "ClearAllNotifications"
 
-    internal val myModel = ApplicationNotificationModel()
+    internal val myModel: ApplicationNotificationModel = ApplicationNotificationModel()
 
     fun addNotification(project: Project?, notification: Notification) {
       if (notification.canShowFor(project) && NotificationsConfigurationImpl.getSettings(notification.groupId).isShouldLog) {
@@ -292,11 +292,11 @@ internal class NotificationContent(val project: Project,
     updateIcon()
   }
 
-  fun getStateNotifications() = ArrayList(myIconNotifications)
+  fun getStateNotifications(): ArrayList<Notification> = ArrayList(myIconNotifications)
 
-  fun getNotifications() = ArrayList(myNotifications)
+  fun getNotifications(): ArrayList<Notification> = ArrayList(myNotifications)
 
-  fun isEmpty() = suggestions.isEmpty() && timeline.isEmpty()
+  fun isEmpty(): Boolean = suggestions.isEmpty() && timeline.isEmpty()
 
   fun expire(notification: Notification?) {
     if (notification == null) {

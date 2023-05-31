@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log.io
 
 class ByteCountingOutputStream : OutputStreamWithValidation() {
-  var written = 0L
+  var written: Long = 0L
     private set
   override fun write(b: Int) {
     written++

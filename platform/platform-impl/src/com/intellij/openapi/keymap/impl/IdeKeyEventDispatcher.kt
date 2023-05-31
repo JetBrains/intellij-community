@@ -87,7 +87,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
    * instead of event dispatching, then we have to consume all the following KEY_RELEASED and
    * KEY_TYPED event because they are not valid.
    */
-  var isPressedWasProcessed = false
+  var isPressedWasProcessed: Boolean = false
     private set
 
   private var ignoreNextKeyTypedEvent = false

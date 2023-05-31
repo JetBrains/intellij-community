@@ -26,7 +26,7 @@ import java.io.IOException
 private const val IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition"
 
 @get:JvmName("getLog")
-internal val LOG = Logger.getInstance("#PluginsAdvertiser")
+internal val LOG: Logger = Logger.getInstance("#PluginsAdvertiser")
 
 private val propertiesComponent
   get() = PropertiesComponent.getInstance()
@@ -54,7 +54,7 @@ fun installAndEnablePlugins(
 fun installAndEnable(
   pluginIds: Set<PluginId>,
   onSuccess: Runnable,
-) = installAndEnable(null, pluginIds, true, false, null, onSuccess)
+): Unit = installAndEnable(null, pluginIds, true, false, null, onSuccess)
 
 @JvmOverloads
 fun installAndEnable(

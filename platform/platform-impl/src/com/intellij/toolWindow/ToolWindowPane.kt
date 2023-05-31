@@ -64,7 +64,7 @@ class ToolWindowPane internal constructor(
   @field:JvmField internal val buttonManager: ToolWindowButtonManager,
 ) : JBLayeredPane(), UISettingsListener {
   companion object {
-    const val TEMPORARY_ADDED = "TEMPORARY_ADDED"
+    const val TEMPORARY_ADDED: String = "TEMPORARY_ADDED"
 
     // the size of topmost 'resize' area when toolwindow caption is used for both resize and drag
     internal val headerResizeArea: Int
@@ -416,7 +416,7 @@ class ToolWindowPane internal constructor(
     }
   }
 
-  fun isMaximized(window: ToolWindow) = state.isMaximized(window)
+  fun isMaximized(window: ToolWindow): Boolean = state.isMaximized(window)
 
   fun setMaximized(toolWindow: ToolWindow, maximized: Boolean) {
     val resizerAndComponent = findResizerAndComponent(toolWindow) ?: return

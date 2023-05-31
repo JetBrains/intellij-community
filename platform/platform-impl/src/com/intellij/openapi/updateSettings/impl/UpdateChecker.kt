@@ -63,8 +63,8 @@ object UpdateChecker {
   private const val DISABLED_UPDATE = "disabled_update.txt"
   private const val DISABLED_PLUGIN_UPDATE = "plugin_disabled_updates.txt"
   private const val PRODUCT_DATA_TTL_MIN = 5L
-  const val MACHINE_ID_DISABLED_PROPERTY = "machine.id.disabled"
-  const val MACHINE_ID_PARAMETER = "mid"
+  const val MACHINE_ID_DISABLED_PROPERTY: String = "machine.id.disabled"
+  const val MACHINE_ID_PARAMETER: String = "mid"
 
   private enum class NotificationKind { PLATFORM, PLUGINS, EXTERNAL }
 
@@ -806,7 +806,7 @@ object UpdateChecker {
   @Deprecated(level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("getNotificationGroup()"), message = "Use getNotificationGroup()")
   @Suppress("DEPRECATION", "unused")
   @JvmField
-  val NOTIFICATIONS = NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
+  val NOTIFICATIONS: NotificationGroup = NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
 
   @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated(message = "Use disabledToUpdate", replaceWith = ReplaceWith("disabledToUpdate"))

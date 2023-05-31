@@ -27,7 +27,7 @@ import javax.swing.*
 
 private val logger = logger<VSWinTransferSettingsProvider>()
 class VSWinTransferSettingsProvider : TransferSettingsProvider {
-  override val name = "Visual Studio"
+  override val name: String = "Visual Studio"
 
   private val defaultAdvice: @Nls String = IdeBundle.message("transfersettings.vs.quit.advise")
   val failureReason: @Nls String = IdeBundle.message("transfersettings.vs.failureReason", defaultAdvice)
@@ -162,9 +162,9 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
     return accessibleVSInstallations + badVersions
   }
 
-  override fun isAvailable() = SystemInfoRt.isWindows
+  override fun isAvailable(): Boolean = SystemInfoRt.isWindows
 
-  override fun getImportPerformer(ideVersion: IdeVersion) = DefaultImportPerformer()
+  override fun getImportPerformer(ideVersion: IdeVersion): DefaultImportPerformer = DefaultImportPerformer()
 
   private fun timeFn() = System.nanoTime()
   private fun convertTimeFn(time: Long): Long = time / 1_000_000

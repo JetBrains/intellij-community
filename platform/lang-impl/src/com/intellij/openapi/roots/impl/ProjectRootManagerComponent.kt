@@ -404,7 +404,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   override fun dispose() {}
 
   @TestOnly
-  fun disposeVirtualFilePointersAfterTest() = rootWatchLock.withLock {
+  fun disposeVirtualFilePointersAfterTest(): Unit = rootWatchLock.withLock {
     Disposer.dispose(rootPointersDisposable)
   }
 

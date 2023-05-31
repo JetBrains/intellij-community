@@ -76,7 +76,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
   private val extGroupIds = HashSet<String>()
   private val actions = ArrayList<ActionUrl>()
   private var isFirstLoadState = true
-  var modificationStamp = 0
+  var modificationStamp: Int = 0
     private set
 
   @NonInjectable

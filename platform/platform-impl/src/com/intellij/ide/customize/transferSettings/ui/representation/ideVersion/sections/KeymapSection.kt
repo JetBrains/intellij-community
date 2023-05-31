@@ -26,10 +26,10 @@ import javax.swing.KeyStroke
 import javax.swing.border.CompoundBorder
 
 class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settings.preferences, SettingsPreferencesKind.Keymap, AllIcons.Plugins.PluginLogo) {
-  override val name = "Keymap"
-  override val disabledCheckboxText = "Default IntelliJ keymap will be used"
+  override val name: String = "Keymap"
+  override val disabledCheckboxText: String = "Default IntelliJ keymap will be used"
 
-  override fun worthShowing() = ideVersion.settings.keymap != null
+  override fun worthShowing(): Boolean = ideVersion.settings.keymap != null
 
   override fun getContent(): JComponent {
     val keymap = ideVersion.settings.keymap ?: error("Keymap is null, this is very wrong")

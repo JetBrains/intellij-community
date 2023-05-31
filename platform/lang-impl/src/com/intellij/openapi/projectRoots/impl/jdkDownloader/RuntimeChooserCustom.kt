@@ -27,15 +27,15 @@ data class RuntimeChooserCustomItem(
 object RuntimeChooserAddCustomItem : RuntimeChooserItem()
 
 object RuntimeChooserCustom {
-  val sdkType
+  val sdkType: SdkType?
     get() = SdkType
       .getAllTypes()
       .singleOrNull(SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType()::value)
 
-  val isActionAvailable
+  val isActionAvailable: Boolean
     get() = sdkType != null
 
-  val jdkDownloaderExtensionProvider = DataProvider { dataId ->
+  val jdkDownloaderExtensionProvider: DataProvider = DataProvider { dataId ->
     when {
       JDK_DOWNLOADER_EXT.`is`(dataId) -> jdkDownloaderExtension
       else -> null

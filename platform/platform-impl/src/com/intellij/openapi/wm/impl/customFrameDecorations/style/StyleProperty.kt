@@ -64,7 +64,7 @@ sealed class StyleProperty(
     AbstractButton::class.java
   )
 
-  protected val log = Logger.getInstance(StyleProperty::class.java)
+  protected val log: Logger = Logger.getInstance(StyleProperty::class.java)
   private fun checkTypes(component: JComponent, value: Any?): Boolean {
     if (!componentType.isInstance(component)) {
       log.warn(

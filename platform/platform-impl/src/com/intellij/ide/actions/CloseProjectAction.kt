@@ -16,9 +16,9 @@ class CloseProjectAction : CloseProjectsActionBase() {
     templatePresentation.setDescription(uiCustomization.projectMessagePointer("action.close.project.description"))
   }
 
-  override fun canClose(project: Project, currentProject: Project) = project === currentProject
+  override fun canClose(project: Project, currentProject: Project): Boolean = project === currentProject
 
-  override fun shouldShow(e: AnActionEvent) = e.project != null
+  override fun shouldShow(e: AnActionEvent): Boolean = e.project != null
 
   override fun update(e: AnActionEvent) {
     super.update(e)
@@ -32,5 +32,5 @@ class CloseProjectAction : CloseProjectsActionBase() {
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

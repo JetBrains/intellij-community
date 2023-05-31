@@ -74,7 +74,7 @@ open class IdeMenuBar internal constructor() : JMenuBar(), IdeEventQueue.EventDi
   private val timerListener = MyTimerListener()
 
   @Suppress("DEPRECATION")
-  protected val coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
+  protected val coroutineScope: CoroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
 
   private var clockPanel: ClockPanel? = null
   private var button: MyExitFullScreenButton? = null

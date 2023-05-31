@@ -2,7 +2,9 @@
 package com.intellij.refactoring.actions
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.ClassEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 class RefactoringUsageCollector : CounterUsagesCollector() {
@@ -10,14 +12,14 @@ class RefactoringUsageCollector : CounterUsagesCollector() {
     private val GROUP = EventLogGroup("refactoring", 2)
 
     @JvmField
-    val HANDLER = EventFields.Class("handler")
+    val HANDLER: ClassEventField = EventFields.Class("handler")
 
     @JvmField
-    val ELEMENT = EventFields.Class("element")
+    val ELEMENT: ClassEventField = EventFields.Class("element")
 
     @JvmField
-    val HANDLER_INVOKED = GROUP.registerVarargEvent("handler.invoked", EventFields.Language,
-                                                    HANDLER, ELEMENT)
+    val HANDLER_INVOKED: VarargEventId = GROUP.registerVarargEvent("handler.invoked", EventFields.Language,
+                                                                   HANDLER, ELEMENT)
 
   }
 

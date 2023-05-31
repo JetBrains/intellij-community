@@ -1,9 +1,10 @@
 package com.intellij.ide.customize.transferSettings.providers.vscode.mappings
 
 import com.intellij.ide.customize.transferSettings.db.KnownLafs
+import com.intellij.ide.customize.transferSettings.models.BundledLookAndFeel
 
 object ThemesMappings {
-  fun themeMap(theme: String) = when (theme) {
+  fun themeMap(theme: String): BundledLookAndFeel = when (theme) {
     "vs" -> KnownLafs.Light
     "vs-dark" -> KnownLafs.Darcula
     "hc-black" -> KnownLafs.HighContrast

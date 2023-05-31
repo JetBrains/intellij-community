@@ -64,9 +64,9 @@ class CompilerModuleExtensionBridge(
 
   override fun getModifiableModel(writable: Boolean): ModuleExtension = throw UnsupportedOperationException()
 
-  override fun commit() = Unit
+  override fun commit(): Unit = Unit
   override fun isChanged(): Boolean = changed
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   private fun updateJavaSettings(updater: JavaModuleSettingsEntity.Builder.() -> Unit) {
     if (diff == null) {

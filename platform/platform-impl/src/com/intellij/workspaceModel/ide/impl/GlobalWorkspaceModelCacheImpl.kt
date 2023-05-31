@@ -70,7 +70,7 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
 
   companion object {
     private val LOG = logger<GlobalWorkspaceModelCache>()
-    internal const val DATA_DIR_NAME = "global-model-cache"
+    internal const val DATA_DIR_NAME: String = "global-model-cache"
 
     private val cachesInvalidated = AtomicBoolean(false)
     private val invalidateCachesMarkerFile by lazy { PathManager.getConfigDir().resolve("$DATA_DIR_NAME/.invalidate") }

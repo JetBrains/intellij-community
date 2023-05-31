@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -45,7 +46,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
   : SimpleToolWindowPanel(true, true), DataProvider {
 
   companion object {
-    internal val LOG = logger<MeetNewUiToolWindow>()
+    internal val LOG: Logger = logger<MeetNewUiToolWindow>()
 
     private const val CUSTOM_THEME_INDEX = 0
 

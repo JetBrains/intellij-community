@@ -29,7 +29,7 @@ class NewUiPromoter : BannerStartPagePromoter() {
            !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_PROMO_BANNER_DISABLED_PROPERTY)
   }
 
-  override fun getPriorityLevel() = PRIORITY_LEVEL_HIGH
+  override fun getPriorityLevel(): Int = PRIORITY_LEVEL_HIGH
 
   override val headerLabel: String
     get() = IdeBundle.message("welcome.expUi.promo.header")

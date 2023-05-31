@@ -18,10 +18,10 @@ import javax.swing.plaf.LabelUI
 
 open class InteractiveCoursePanel(protected val data: InteractiveCourseData, private val contentEnabled: Boolean = true) : JPanel() {
 
-  val startLearningButton = JButton()
+  val startLearningButton: JButton = JButton()
 
   // needed to align panel with button border without selection
-  protected val leftMargin = 3
+  protected val leftMargin: Int = 3
 
   private val newContentMarker = data.newContentMarker()
   private val nameLine: JPanel? = if (data.newContentMarker() != null) JPanel() else null
@@ -74,7 +74,7 @@ open class InteractiveCoursePanel(protected val data: InteractiveCourseData, pri
     }
   }
 
-  protected open fun createSouthPanel() = createButtonPanel(data.getAction())
+  protected open fun createSouthPanel(): JPanel = createButtonPanel(data.getAction())
 
   protected fun createButtonPanel(action: Action): JPanel {
     startLearningButton.action = action

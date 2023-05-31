@@ -31,7 +31,7 @@ import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
 
-@NonNls const val NOTIFICATION_GROUP_ID = "Load Error"
+@NonNls const val NOTIFICATION_GROUP_ID: String = "Load Error"
 
 @TestOnly
 @NonNls

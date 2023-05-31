@@ -65,11 +65,11 @@ interface ColorPipette {
      * Called when hovered color is changed but not really be picked.<br>
      * [updatedColor] is the color of current hovered pixel.
      */
-    fun update(updatedColor: Color) = Unit
+    fun update(updatedColor: Color): Unit = Unit
 
     /**
      * Called when the picking is canceled.
      */
-    fun cancel() = Unit
+    fun cancel(): Unit = Unit
   }
 }

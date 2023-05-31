@@ -30,7 +30,7 @@ import java.util.function.Supplier
 import kotlin.math.max
 
 private val LOG = logger<SettingsImpl>()
-internal const val EDITOR_SHOW_SPECIAL_CHARS = "editor.show.special.chars"
+internal const val EDITOR_SHOW_SPECIAL_CHARS: String = "editor.show.special.chars"
 
 class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: EditorKind?) : EditorSettings {
   private var languageSupplier: (() -> Language?)? = null

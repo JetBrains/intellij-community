@@ -46,7 +46,7 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
 
   open fun hideByOtherHints(): Boolean = false
 
-  fun isShown() = hint != null
+  fun isShown(): Boolean = hint != null
 
   fun hideIfShown() {
     hint?.hide()

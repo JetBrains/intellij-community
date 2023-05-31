@@ -30,7 +30,7 @@ class RuntimeChooserPaths {
 
   fun installCustomJdk(@NlsSafe jdkName: String,
                        resolveSuggestedHome: (ProgressIndicator) -> Path?
-  ) = runWithProgress { indicator, jdkFile ->
+  ): Unit = runWithProgress { indicator, jdkFile ->
     val sdkHome = try {
       resolveSuggestedHome(indicator)
     }
@@ -57,7 +57,7 @@ class RuntimeChooserPaths {
     jdkName
   }
 
-  fun resetCustomJdk() = runWithProgress { _, jdkFile ->
+  fun resetCustomJdk(): Unit = runWithProgress { _, jdkFile ->
     jdkFile.delete()
     LOG.warn("Removed custom boot runtime from the $jdkFile. Bundled runtime will be used")
     LangBundle.message("dialog.message.choose.ide.runtime.is.set.to.param.default")

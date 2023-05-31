@@ -212,7 +212,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   override val isInSplitter: Boolean
     get() = false
 
-  override fun hasOpenedFile() = false
+  override fun hasOpenedFile(): Boolean = false
 
   override val currentFile: VirtualFile?
     get() {
@@ -242,7 +242,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     }
   }
 
-  override fun isChanged(editor: EditorComposite) = false
+  override fun isChanged(editor: EditorComposite): Boolean = false
 
   override fun getNextWindow(window: EditorWindow): EditorWindow? = null
 
@@ -473,7 +473,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     return openFileInCommand(descriptor).allEditors
   }
 
-  override fun getProject() = project
+  override fun getProject(): Project = project
 
   override val preferredFocusedComponent: JComponent?
     get() = null
@@ -495,7 +495,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   override val windowSplitCount: Int
     get() = 0
 
-  override fun hasSplitOrUndockedWindows() = false
+  override fun hasSplitOrUndockedWindows(): Boolean = false
 
   override val splitters: EditorsSplitters
     get() = throw IncorrectOperationException()

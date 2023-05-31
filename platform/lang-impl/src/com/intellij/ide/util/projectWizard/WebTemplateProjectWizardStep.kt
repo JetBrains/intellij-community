@@ -5,6 +5,8 @@ import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseStep
 import com.intellij.openapi.module.WebModuleBuilder
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NotNullLazyValue
+import com.intellij.platform.ProjectGeneratorPeer
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
@@ -12,7 +14,7 @@ import javax.swing.JLabel
 
 class WebTemplateProjectWizardStep<T>(val parent: NewProjectWizardBaseStep,
                                    val template: WebProjectTemplate<T>) : AbstractNewProjectWizardStep(parent) {
-  val peer = template.createLazyPeer()
+  val peer: NotNullLazyValue<ProjectGeneratorPeer<T>> = template.createLazyPeer()
 
   override fun setupUI(builder: Panel) {
     peer.value.buildUI(PanelBuilderSettingsStep(parent.context, builder, parent))

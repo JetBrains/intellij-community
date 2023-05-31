@@ -20,7 +20,7 @@ abstract class PlaybackCommandCoroutineAdapter(protected val text: @NonNls Strin
     return if (text.startsWith(prefix)) text.substring(prefix.length).trim { it <= ' ' } else text
   }
 
-  override fun canGoFurther() = true
+  override fun canGoFurther(): Boolean = true
 
   override fun execute(context: PlaybackContext): Promise<Any> {
     context.code(text, line)

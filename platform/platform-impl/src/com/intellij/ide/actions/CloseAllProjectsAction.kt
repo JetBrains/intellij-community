@@ -17,9 +17,9 @@ class CloseAllProjectsAction : CloseProjectsActionBase() {
     templatePresentation.setDescription(uiCustomization.projectMessage("action.close.all.projects.description"))
   }
 
-  override fun canClose(project: Project, currentProject: Project) = true
+  override fun canClose(project: Project, currentProject: Project): Boolean = true
 
-  override fun shouldShow(e: AnActionEvent) = ProjectManager.getInstance().openProjects.size > 1
+  override fun shouldShow(e: AnActionEvent): Boolean = ProjectManager.getInstance().openProjects.size > 1
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT

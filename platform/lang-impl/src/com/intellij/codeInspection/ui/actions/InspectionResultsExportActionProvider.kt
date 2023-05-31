@@ -32,7 +32,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-val LOG = Logger.getInstance(InspectionResultsExportActionProvider::class.java)
+val LOG: Logger = Logger.getInstance(InspectionResultsExportActionProvider::class.java)
 
 /**
  * Extension point to add actions in the inspection results export popup.
@@ -43,10 +43,10 @@ abstract class InspectionResultsExportActionProvider(text: Supplier<String?>,
 
   companion object {
     val EP_NAME: ExtensionPointName<InspectionResultsExportActionProvider> = ExtensionPointName.create("com.intellij.inspectionResultsExportActionProvider")
-    const val LOCATION_KEY = "com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider.location"
+    const val LOCATION_KEY: String = "com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider.location"
   }
 
-  val propertyGraph = PropertyGraph()
+  val propertyGraph: PropertyGraph = PropertyGraph()
 
   abstract val progressTitle: @ProgressTitle String
 
@@ -107,7 +107,7 @@ abstract class InspectionResultsExportActionProvider(text: Supplier<String?>,
 
   inner class ExportDialog(val view: InspectionResultsView) : DialogWrapper(view.project, true) {
     private val locationProperty = propertyGraph.property("")
-    var location by locationProperty
+    var location: String by locationProperty
 
     init {
       setOKButtonText(InspectionsBundle.message("inspection.export.save.button"))

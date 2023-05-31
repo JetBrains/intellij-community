@@ -10,7 +10,7 @@ class ContentsLogInterceptor(
   private val context: VfsLogContext
 ) : ContentsInterceptor {
 
-  override fun onWriteBytes(underlying: (record: Int, bytes: ByteArraySequence, fixedSize: Boolean) -> Unit) =
+  override fun onWriteBytes(underlying: (record: Int, bytes: ByteArraySequence, fixedSize: Boolean) -> Unit): (Int, ByteArraySequence, Boolean) -> Unit =
     { record: Int, bytes: ByteArraySequence, fixedSize: Boolean ->
       { underlying(record, bytes, fixedSize) } catchResult { result ->
         val data = bytes.toBytes()

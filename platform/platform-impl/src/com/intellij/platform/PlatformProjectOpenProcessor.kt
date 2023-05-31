@@ -361,11 +361,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     }
   }
 
-  override fun canOpenProject(file: VirtualFile) = file.isDirectory
+  override fun canOpenProject(file: VirtualFile): Boolean = file.isDirectory
 
-  override fun isProjectFile(file: VirtualFile) = false
+  override fun isProjectFile(file: VirtualFile): Boolean = false
 
-  override fun lookForProjectsInDirectory() = false
+  override fun lookForProjectsInDirectory(): Boolean = false
 
   override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()

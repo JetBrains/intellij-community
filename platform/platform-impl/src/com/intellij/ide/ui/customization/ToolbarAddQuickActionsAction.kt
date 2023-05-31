@@ -29,5 +29,5 @@ abstract class ToolbarAddQuickActionsAction(protected val actionIds: List<String
     e.presentation.isEnabledAndVisible = actionIds.none { id -> groupContainsAction(rootGroupID, id, schema)}
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

@@ -25,7 +25,7 @@ abstract class FileSetProcessor(
   private val topEntries = arrayListOf<File>()
   private val fileMasks = arrayListOf<Regex>()
 
-  protected val statistics = FileSetProcessingStatistics()
+  protected val statistics: FileSetProcessingStatistics = FileSetProcessingStatistics()
 
   val total: Int
     get() = statistics.getTotal()
@@ -36,15 +36,15 @@ abstract class FileSetProcessor(
   val succeeded: Int
     get() = statistics.getValid()
 
-  fun addEntry(filePath: String) = addEntry(File(filePath))
+  fun addEntry(filePath: String): Boolean = addEntry(File(filePath))
 
-  fun addEntry(file: File) =
+  fun addEntry(file: File): Boolean =
     file
       .takeIf { it.exists() }
       ?.let { topEntries.add(it) }
     ?: throw IOException("File $file not found.")
 
-  fun addFileMask(mask: Regex) = fileMasks.add(mask)
+  fun addFileMask(mask: Regex): Boolean = fileMasks.add(mask)
 
   private fun File.matchesFileMask() =
     fileMasks.isEmpty() || fileMasks.any { mask -> mask.matches(name) }
@@ -52,7 +52,7 @@ abstract class FileSetProcessor(
   private fun File.toVirtualFile() =
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(this) ?: throw IOException("Can not find $path")
 
-  fun processFiles() = topEntries.forEach { entry ->
+  fun processFiles(): Unit = topEntries.forEach { entry ->
 
     val outerProjectSettings = findCodeStyleSettings(entry.getOuterProject())
 
@@ -94,8 +94,8 @@ abstract class FileSetProcessor(
 
   abstract fun processVirtualFile(virtualFile: VirtualFile, projectSettings: CodeStyleSettings?)
 
-  fun getFileMasks() = fileMasks.toList()
-  fun getEntries() = topEntries.toList()
+  fun getFileMasks(): List<Regex> = fileMasks.toList()
+  fun getEntries(): List<File> = topEntries.toList()
 
 }
 

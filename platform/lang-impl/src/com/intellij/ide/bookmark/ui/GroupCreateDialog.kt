@@ -11,7 +11,7 @@ import javax.swing.JTextField
 class GroupCreateDialog(project: Project?, parent: Component?, val manager: BookmarksManager)
   : GroupInputDialog<JTextField>(project, parent) {
 
-  override val component = JTextField(30)
+  override val component: JTextField = JTextField(30)
 
   fun showAndGetGroup(addBookmark: Boolean): BookmarkGroup? {
     GroupInputValidator(manager, emptyList())

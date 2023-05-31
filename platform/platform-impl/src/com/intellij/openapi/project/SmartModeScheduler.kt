@@ -80,9 +80,9 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
   }
 
   private fun onFilesScanningChanged() = onStateChanged { }
-  internal fun onProjectOpened() = onStateChanged { projectOpening.set(false) }
-  internal fun onEnteredDumbMode() = onStateChanged { projectDumb.set(true) }
-  internal fun onExitDumbMode() = onStateChanged { projectDumb.set(false) }
+  internal fun onProjectOpened(): Unit = onStateChanged { projectOpening.set(false) }
+  internal fun onEnteredDumbMode(): Unit = onStateChanged { projectDumb.set(true) }
+  internal fun onExitDumbMode(): Unit = onStateChanged { projectDumb.set(false) }
 
   private fun onStateChanged(updateState: () -> Unit) {
     updateState()
@@ -159,14 +159,14 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
   }
 
   class SmartModeSchedulerDumbModeListener(private val project: Project) : DumbService.DumbModeListener {
-    override fun enteredDumbMode() = project.service<SmartModeScheduler>().onEnteredDumbMode()
-    override fun exitDumbMode() = project.service<SmartModeScheduler>().onExitDumbMode()
+    override fun enteredDumbMode(): Unit = project.service<SmartModeScheduler>().onEnteredDumbMode()
+    override fun exitDumbMode(): Unit = project.service<SmartModeScheduler>().onExitDumbMode()
   }
 
   companion object {
     val LOG: Logger = logger<SmartModeScheduler>()
-    const val SCANNING = 1
-    const val DUMB = 1.shl(1)
-    const val OPENING = 1.shl(2)
+    const val SCANNING: Int = 1
+    const val DUMB: Int = 1.shl(1)
+    const val OPENING: Int = 1.shl(2)
   }
 }

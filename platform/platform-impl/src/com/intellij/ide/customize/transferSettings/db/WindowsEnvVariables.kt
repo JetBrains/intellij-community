@@ -8,16 +8,16 @@ object WindowsEnvVariables {
   /*
  * Some widely used env vars.
  */
-  val applicationData = get("APPDATA").toString()
-  val localApplicationData = get("LOCALAPPDATA").toString()
-  val userProfile = get("USERPROFILE").toString()
+  val applicationData: String = get("APPDATA").toString()
+  val localApplicationData: String = get("LOCALAPPDATA").toString()
+  val userProfile: String = get("USERPROFILE").toString()
 
   /**
    * Function to get one Windows env var.
    *
    * Use without %%. Example: get("APPDATA")
    */
-  fun get(variable: String) = System.getenv()[variable] ?: System.getenv()[variable.uppercase(Locale.getDefault())]
+  fun get(variable: String): String? = System.getenv()[variable] ?: System.getenv()[variable.uppercase(Locale.getDefault())]
 
-  fun expandPath(path: String) = RunConfigurationEnvironmentUtils.expandVariables("%", "%", path, WindowsEnvVariables::get, false, null)
+  fun expandPath(path: String): String? = RunConfigurationEnvironmentUtils.expandVariables("%", "%", path, WindowsEnvVariables::get, false, null)
 }

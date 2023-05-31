@@ -45,13 +45,13 @@ object IdeKeyboardFocusManagerPeer: KeyboardFocusManagerPeerImpl() {
     focusedWindow = win
   }
 
-  override fun getCurrentFocusedWindow() = focusedWindow
+  override fun getCurrentFocusedWindow(): Window? = focusedWindow
 
   override fun setCurrentFocusOwner(component: Component?) {
     focusOwner = component
   }
 
-  override fun getCurrentFocusOwner() = focusOwner
+  override fun getCurrentFocusOwner(): Component? = focusOwner
 
   fun deliverFocus(
     current: Component?,

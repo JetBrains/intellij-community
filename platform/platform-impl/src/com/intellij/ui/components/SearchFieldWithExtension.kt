@@ -59,7 +59,7 @@ class SearchFieldWithExtension(
 
   override fun requestFocus(): Unit = textField.requestFocus()
 
-  override fun setBackground(bg: Color?) = super.setBackground(UIUtil.getTextFieldBackground())
+  override fun setBackground(bg: Color?): Unit = super.setBackground(UIUtil.getTextFieldBackground())
 
   override fun hasFocus(): Boolean = textField.hasFocus()
 
@@ -85,7 +85,7 @@ class DarculaSearchFieldWithExtensionUI : PanelUI() {
   companion object {
     @JvmStatic
     @Suppress("UNUSED_PARAMETER")
-    fun createUI(c: JComponent?) = DarculaSearchFieldWithExtensionUI()
+    fun createUI(c: JComponent?): DarculaSearchFieldWithExtensionUI = DarculaSearchFieldWithExtensionUI()
   }
 
   override fun installUI(c: JComponent?) {

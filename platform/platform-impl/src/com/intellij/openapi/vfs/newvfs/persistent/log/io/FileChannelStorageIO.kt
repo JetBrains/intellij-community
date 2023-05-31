@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.io
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 
-fun FileChannel.asStorageIO() = FileChannelStorageIO(this)
+fun FileChannel.asStorageIO(): FileChannelStorageIO = FileChannelStorageIO(this)
 
 class FileChannelStorageIO(private val fc: FileChannel) : StorageIO {
   override fun write(position: Long, buf: ByteBuffer, offset: Int, length: Int) {
@@ -25,7 +25,7 @@ class FileChannelStorageIO(private val fc: FileChannel) : StorageIO {
     fc.close()
   }
 
-  override fun offsetOutputStream(startPosition: Long) = OffsetOutputStream(fc, startPosition)
+  override fun offsetOutputStream(startPosition: Long): OffsetOutputStream = OffsetOutputStream(fc, startPosition)
 
   class OffsetOutputStream(
     private val fileChannel: FileChannel,

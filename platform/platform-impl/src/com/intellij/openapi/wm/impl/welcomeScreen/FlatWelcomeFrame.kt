@@ -77,11 +77,11 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 
   companion object {
     @JvmField
-    var USE_TABBED_WELCOME_SCREEN = java.lang.Boolean.parseBoolean(System.getProperty("use.tabbed.welcome.screen", "true"))
-    const val BOTTOM_PANEL = "BOTTOM_PANEL"
+    var USE_TABBED_WELCOME_SCREEN: Boolean = java.lang.Boolean.parseBoolean(System.getProperty("use.tabbed.welcome.screen", "true"))
+    const val BOTTOM_PANEL: String = "BOTTOM_PANEL"
     @JvmField
-    val DEFAULT_HEIGHT = if (USE_TABBED_WELCOME_SCREEN) 650 else 460
-    const val MAX_DEFAULT_WIDTH = 800
+    val DEFAULT_HEIGHT: Int = if (USE_TABBED_WELCOME_SCREEN) 650 else 460
+    const val MAX_DEFAULT_WIDTH: Int = 800
 
     private fun saveSizeAndLocation(location: Rectangle) {
       val middle = Point(location.x + location.width / 2, location.y + location.height / 2)

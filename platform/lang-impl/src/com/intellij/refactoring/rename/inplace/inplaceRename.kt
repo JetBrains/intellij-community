@@ -182,8 +182,8 @@ private data class SegmentData(
 )
 
 private const val usageVariablePrefix = "inplace_usage_"
-internal const val commentStringUsageVariablePrefix = "comment_string_usage_"
-internal const val plainTextUsageVariablePrefix = "plain_text_usage_"
+internal const val commentStringUsageVariablePrefix: String = "comment_string_usage_"
+internal const val plainTextUsageVariablePrefix: String = "plain_text_usage_"
 
 private fun prepareTemplate(
   hostDocument: Document,

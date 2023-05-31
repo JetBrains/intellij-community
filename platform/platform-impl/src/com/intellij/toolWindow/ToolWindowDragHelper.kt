@@ -56,7 +56,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   private var dropTooltipPopup: JBPopup? = null
 
   companion object {
-    const val THUMB_OPACITY = .85f
+    const val THUMB_OPACITY: Float = .85f
 
     /**
      * Create a potentially scaled image of the component to use as a drag image

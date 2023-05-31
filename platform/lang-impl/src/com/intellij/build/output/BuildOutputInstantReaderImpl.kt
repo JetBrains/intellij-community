@@ -99,7 +99,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
     }
   }
 
-  override fun getParentEventId() = parentEventId
+  override fun getParentEventId(): Any = parentEventId
 
   override fun append(csq: CharSequence): BuildOutputInstantReaderImpl {
     appendedLineProcessor.append(csq)
@@ -151,7 +151,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
     return line
   }
 
-  override fun pushBack() = pushBack(1)
+  override fun pushBack(): Unit = pushBack(1)
 
   override fun pushBack(numberOfLines: Int) {
     readLinesBufferPosition += numberOfLines

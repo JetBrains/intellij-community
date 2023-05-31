@@ -12,6 +12,6 @@ class IdeScriptEngineUsageCollector: CounterUsagesCollector() {
     private val GROUP = EventLogGroup("ide.script.engine", 3)
     private val USED = GROUP.registerEvent("used", EventFields.Class("factory"))
 
-    @JvmStatic fun logUsageEvent(clazz: Class<*>) = USED.log(clazz)
+    @JvmStatic fun logUsageEvent(clazz: Class<*>): Unit = USED.log(clazz)
   }
 }

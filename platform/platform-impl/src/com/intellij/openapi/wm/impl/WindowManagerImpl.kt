@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
@@ -54,7 +55,7 @@ private const val FRAME_ELEMENT = "frame"
 ])
 class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModificationTracker<Element> {
   private var alphaModeSupported: Boolean? = null
-  internal val windowWatcher = WindowWatcher()
+  internal val windowWatcher: WindowWatcher = WindowWatcher()
 
   internal var oldLayout: DesktopLayout? = null
     private set
@@ -71,7 +72,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   // read from any thread, write from EDT
   private val frameToReuse = AtomicReference<IdeFrameImpl?>()
 
-  internal val defaultFrameInfoHelper = FrameInfoHelper()
+  internal val defaultFrameInfoHelper: FrameInfoHelper = FrameInfoHelper()
 
   private var frameReuseEnabled = false
 
@@ -101,17 +102,17 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     })
   }
 
-  override fun getAllProjectFrames() = projectToFrame.values.map { it.frameHelper }.toTypedArray()
+  override fun getAllProjectFrames(): Array<ProjectFrameHelper> = projectToFrame.values.map { it.frameHelper }.toTypedArray()
 
-  override fun getProjectFrameHelpers() = projectToFrame.values.map { it.frameHelper }
+  override fun getProjectFrameHelpers(): List<ProjectFrameHelper> = projectToFrame.values.map { it.frameHelper }
 
   override fun findVisibleFrame(): JFrame? {
     return projectToFrame.values.firstOrNull()?.frameHelper?.frame ?: WelcomeFrame.getInstance() as? JFrame
   }
 
-  override fun findFirstVisibleFrameHelper() = projectToFrame.values.asSequence().map { it.frameHelper }.firstOrNull()
+  override fun findFirstVisibleFrameHelper(): ProjectFrameHelper? = projectToFrame.values.asSequence().map { it.frameHelper }.firstOrNull()
 
-  override fun getScreenBounds() = ScreenUtil.getAllScreensRectangle()
+  override fun getScreenBounds(): Rectangle = ScreenUtil.getAllScreensRectangle()
 
   override fun getScreenBounds(project: Project): Rectangle? {
     val onScreen = getFrame(project)!!.locationOnScreen
@@ -204,9 +205,9 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     windowWatcher.dispatchComponentEvent(e)
   }
 
-  override fun suggestParentWindow(project: Project?) = windowWatcher.suggestParentWindow(project, this)
+  override fun suggestParentWindow(project: Project?): Window? = windowWatcher.suggestParentWindow(project, this)
 
-  override fun getStatusBar(project: Project) = getFrameHelper(project)?.statusBar
+  override fun getStatusBar(project: Project): IdeStatusBarImpl? = getFrameHelper(project)?.statusBar
 
   override fun getStatusBar(component: Component, project: Project?): StatusBar? {
     var parent: Component? = component
@@ -234,7 +235,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   @ApiStatus.Internal
-  override fun getFrameHelper(project: Project?) = projectToFrame.get(project)?.frameHelper
+  override fun getFrameHelper(project: Project?): ProjectFrameHelper? = projectToFrame.get(project)?.frameHelper
 
   override fun findFrameHelper(project: Project?): ProjectFrameHelper? {
     return getFrameHelper(project ?: IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: return null)
@@ -318,11 +319,11 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     return AutoCloseable { frameReuseEnabled = oldValue }
   }
 
-  override fun getMostRecentFocusedWindow() = windowWatcher.focusedWindow
+  override fun getMostRecentFocusedWindow(): Window? = windowWatcher.focusedWindow
 
-  override fun getFocusedComponent(window: Window) = windowWatcher.getFocusedComponent(window)
+  override fun getFocusedComponent(window: Window): Component? = windowWatcher.getFocusedComponent(window)
 
-  override fun getFocusedComponent(project: Project?) = windowWatcher.getFocusedComponent(project)
+  override fun getFocusedComponent(project: Project?): Component? = windowWatcher.getFocusedComponent(project)
 
   override fun loadState(state: Element) {
     val frameElement = state.getChild(FRAME_ELEMENT)
@@ -354,7 +355,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     return state
   }
 
-  override fun isFullScreenSupportedInCurrentOS() = isFullScreenSupportedInCurrentOs()
+  override fun isFullScreenSupportedInCurrentOS(): Boolean = isFullScreenSupportedInCurrentOs()
 
   override fun updateDefaultFrameInfoOnProjectClose(project: Project) {
     val frameHelper = getFrameHelper(project) ?: return

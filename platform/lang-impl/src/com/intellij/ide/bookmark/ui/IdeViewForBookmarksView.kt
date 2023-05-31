@@ -11,7 +11,7 @@ import com.intellij.util.ui.tree.TreeUtil
 
 internal class IdeViewForBookmarksView(private val view: BookmarksView) : IdeView {
 
-  override fun getOrChooseDirectory() = DirectoryChooserUtil.getOrChooseDirectory(this)
+  override fun getOrChooseDirectory(): PsiDirectory? = DirectoryChooserUtil.getOrChooseDirectory(this)
 
   override fun getDirectories(): Array<PsiDirectory> {
     val paths = TreeUtil.getSelectedPathsIfAll(view.tree) { it.findFolderNode != null } ?: return PsiDirectory.EMPTY_ARRAY

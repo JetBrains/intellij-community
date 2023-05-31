@@ -33,7 +33,7 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction, Dumb
   override fun actionPerformed(e: AnActionEvent) {
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = actionGroup != null

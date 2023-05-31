@@ -56,7 +56,7 @@ open class FilterToggleAction constructor(@NlsContexts.Command text: String,
     return filterable.contains(filter)
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state) {

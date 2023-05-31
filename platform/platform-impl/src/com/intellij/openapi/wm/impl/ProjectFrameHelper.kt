@@ -299,7 +299,7 @@ open class ProjectFrameHelper internal constructor(
     }
   }
 
-  override fun getProject() = project
+  override fun getProject(): Project? = project
 
   @RequiresEdt
   fun setProject(project: Project) {
@@ -432,7 +432,7 @@ open class ProjectFrameHelper internal constructor(
   internal val isTabbedWindow: Boolean
     get() = frameDecorator?.isTabbedWindow ?: false
 
-  internal fun getDecorator() = frameDecorator
+  internal fun getDecorator(): IdeFrameDecorator? = frameDecorator
 
   open fun windowClosing(project: Project) {
     CloseProjectWindowHelper().windowClosing(project)

@@ -12,8 +12,8 @@ import org.jetbrains.annotations.Nls
 import java.io.IOException
 import javax.swing.Icon
 
-internal val NONE = ActionIconInfo(null, IdeBundle.message("default.icons.none.text"), "", null)
-internal val SEPARATOR = ActionIconInfo(null, "", "", null)
+internal val NONE: ActionIconInfo = ActionIconInfo(null, IdeBundle.message("default.icons.none.text"), "", null)
+internal val SEPARATOR: ActionIconInfo = ActionIconInfo(null, "", "", null)
 
 /**
  * @param actionId id of the action that uses this icon.

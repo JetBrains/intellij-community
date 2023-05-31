@@ -17,7 +17,7 @@ import javax.swing.JPanel
 class MinimapService : Disposable {
 
   companion object {
-    fun getInstance() = service<MinimapService>()
+    fun getInstance(): MinimapService = service<MinimapService>()
     private val MINI_MAP_PANEL_KEY: Key<MinimapPanel> = Key.create("com.intellij.ide.minimap.panel")
   }
 

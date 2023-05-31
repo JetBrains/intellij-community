@@ -59,7 +59,7 @@ internal open class SquareStripeButton(action: SquareAnActionButton, val toolWin
   AbstractSquareStripeButton(action, createPresentation(toolWindow)) {
   constructor(toolWindow: ToolWindowImpl) : this(SquareAnActionButton(toolWindow), toolWindow)
   companion object {
-    fun createMoveGroup() = ToolWindowMoveAction.Group()
+    fun createMoveGroup(): ToolWindowMoveAction.Group = ToolWindowMoveAction.Group()
   }
 
   init {
@@ -82,11 +82,11 @@ internal open class SquareStripeButton(action: SquareAnActionButton, val toolWin
     scaleIcon(myPresentation)
   }
 
-  fun isHovered() = myRollover
+  fun isHovered(): Boolean = myRollover
 
-  open fun isFocused() = toolWindow.isActive
+  open fun isFocused(): Boolean = toolWindow.isActive
 
-  fun resetDrop() = resetMouseState()
+  fun resetDrop(): Unit = resetMouseState()
 
   override fun updateToolTipText() {
     @Suppress("DialogTitleCapitalization")

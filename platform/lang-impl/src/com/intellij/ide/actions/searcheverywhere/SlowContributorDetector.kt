@@ -19,19 +19,19 @@ class SlowContributorDetector: SearchListener {
   private val contributorsWithEvents = HashSet<String>()
 
   override fun searchStarted(pattern: String,
-                             contributors: Collection<SearchEverywhereContributor<*>>) = restart()
+                             contributors: Collection<SearchEverywhereContributor<*>>): Unit = restart()
 
-  override fun elementsAdded(list: List<SearchEverywhereFoundElementInfo>) = updateContributorsWithEvents(list)
+  override fun elementsAdded(list: List<SearchEverywhereFoundElementInfo>): Unit = updateContributorsWithEvents(list)
 
-  override fun elementsRemoved(list: List<SearchEverywhereFoundElementInfo>) = updateContributorsWithEvents(list)
+  override fun elementsRemoved(list: List<SearchEverywhereFoundElementInfo>): Unit = updateContributorsWithEvents(list)
 
   private fun updateContributorsWithEvents(list: Collection<SearchEverywhereFoundElementInfo>) {
     list.mapNotNull { it.contributor?.searchProviderId }.let { contributorsWithEvents.addAll(it) }
   }
 
-  override fun contributorWaits(contributor: SearchEverywhereContributor<*>) = logContributorFinished(contributor)
+  override fun contributorWaits(contributor: SearchEverywhereContributor<*>): Unit = logContributorFinished(contributor)
 
-  override fun contributorFinished(contributor: SearchEverywhereContributor<*>, hasMore: Boolean) = logContributorFinished(contributor)
+  override fun contributorFinished(contributor: SearchEverywhereContributor<*>, hasMore: Boolean): Unit = logContributorFinished(contributor)
 
   override fun searchFinished(hasMoreContributors: Map<SearchEverywhereContributor<*>, Boolean>) {
     hasMoreContributors.forEach { (contributor, _) -> logContributorFinished(contributor) }

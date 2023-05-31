@@ -13,10 +13,10 @@ interface RandomAccessWriteBuffer {
   /**
    * writes data from [buf] range [[offset]..[offset]+[length]) to this buffer starting from [position]
    */
-  fun write(position: Long, buf: ByteArray, offset: Int, length: Int) = write(position, ByteBuffer.wrap(buf), offset, length)
+  fun write(position: Long, buf: ByteArray, offset: Int, length: Int): Unit = write(position, ByteBuffer.wrap(buf), offset, length)
 
   /**
    * writes data from [buf] to this buffer starting from [position]
    */
-  fun write(position: Long, buf: ByteArray) = write(position, ByteBuffer.wrap(buf), 0, buf.size)
+  fun write(position: Long, buf: ByteArray): Unit = write(position, ByteBuffer.wrap(buf), 0, buf.size)
 }

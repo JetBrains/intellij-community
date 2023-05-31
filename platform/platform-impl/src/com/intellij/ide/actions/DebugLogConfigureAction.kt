@@ -31,7 +31,7 @@ internal class DebugLogConfigureAction : DumbAwareAction() {
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
 private const val TRACE_SUFFIX = ":trace"

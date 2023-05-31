@@ -78,7 +78,7 @@ open class SplitLineIntention : SplitJoinIntention() {
   override fun getIntentionText(splitJoinContext: ListSplitJoinContext, data: ListWithElements): String =
     splitJoinContext.getSplitText(data)
 
-  override fun getReplacements(splitJoinContext: ListSplitJoinContext, data: ListWithElements) =
+  override fun getReplacements(splitJoinContext: ListSplitJoinContext, data: ListWithElements): List<Pair<TextRange, String>> =
     splitJoinContext.getReplacementsForSplitting(data)
 }
 
@@ -89,6 +89,6 @@ open class JoinLinesIntention : SplitJoinIntention() {
   override fun getIntentionText(splitJoinContext: ListSplitJoinContext, data: ListWithElements): String =
     splitJoinContext.getJoinText(data)
 
-  override fun getReplacements(splitJoinContext: ListSplitJoinContext, data: ListWithElements) =
+  override fun getReplacements(splitJoinContext: ListSplitJoinContext, data: ListWithElements): List<Pair<TextRange, String>> =
     splitJoinContext.getReplacementsForJoining(data)
 }

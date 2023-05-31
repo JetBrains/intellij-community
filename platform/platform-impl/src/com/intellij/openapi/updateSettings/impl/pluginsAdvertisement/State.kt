@@ -50,7 +50,7 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
     private val LOG = logger<PluginAdvertiserExtensionsStateService>()
 
     @JvmStatic
-    val instance
+    val instance: PluginAdvertiserExtensionsStateService
       get() = service<PluginAdvertiserExtensionsStateService>()
 
     @JvmStatic
@@ -116,7 +116,7 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
     .expireAfterWrite(1, TimeUnit.HOURS)
     .build<String, PluginAdvertiserExtensionsData>()
 
-  fun createExtensionDataProvider(project: Project) = ExtensionDataProvider(project)
+  fun createExtensionDataProvider(project: Project): ExtensionDataProvider = ExtensionDataProvider(project)
 
   fun registerLocalPlugin(matcher: FileNameMatcher, descriptor: PluginDescriptor) {
     updateState { oldState ->

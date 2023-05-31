@@ -22,9 +22,9 @@ class ResultsGraph(private val contributorName: String, private val resultTiming
     border = JBUI.Borders.customLine(JBColor.gray)
   }
 
-  override fun getPreferredSize() = Dimension(300, 200)
+  override fun getPreferredSize(): Dimension = Dimension(300, 200)
 
-  override fun getMinimumSize() = Dimension(150, 100)
+  override fun getMinimumSize(): Dimension = Dimension(150, 100)
 
   fun setGroupingInterval(interval: Int) {
     groupingInterval = interval

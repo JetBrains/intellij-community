@@ -59,7 +59,7 @@ class JdkVersionVendorItem(
   val item: JdkItem
 ) {
   var parent: JdkVersionItem? = null
-  val selectItem get() = parent?.includedItems?.find { it.item == item } ?: this
+  val selectItem: JdkVersionVendorItem get() = parent?.includedItems?.find { it.item == item } ?: this
 
   val canBeSelected: Boolean get() = parent == null
 }
@@ -203,7 +203,7 @@ internal class JdkDownloaderMergedModel(
   val wslDistributions: List<WSLDistribution>,
   val projectWSLDistribution: WSLDistribution?
 ) {
-  val hasWsl get() = wslModel != null
+  val hasWsl: Boolean get() = wslModel != null
 
   fun selectModel(wsl: Boolean): JdkDownloaderModel = when {
     wsl && wslModel != null -> wslModel

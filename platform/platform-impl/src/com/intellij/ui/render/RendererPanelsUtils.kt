@@ -41,7 +41,7 @@ import kotlin.math.max
 class RendererPanelsUtils {
 
   companion object {
-    internal const val iconTextUnscaledGap = 4
+    internal const val iconTextUnscaledGap: Int = 4
 
     /**
      * Gap between icon and related text. Can be extracted into a separate UI constant later if needed
@@ -98,8 +98,8 @@ open class IconPanel : SelectablePanel() {
   /**
    * Content panel allows to trim components that could go outside of selection
    */
-  protected val content = JPanel(GridLayout())
-  protected val iconLabel = JLabel()
+  protected val content: JPanel = JPanel(GridLayout())
+  protected val iconLabel: JLabel = JLabel()
 
   init {
     stripHorizontalInsets(iconLabel)

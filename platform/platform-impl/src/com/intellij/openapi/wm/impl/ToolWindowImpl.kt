@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.*
@@ -71,11 +72,11 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   var windowInfoDuringInit: WindowInfoImpl? = null
 
   private val focusTask by lazy { FocusTask(this) }
-  val focusAlarm by lazy { SingleAlarm(focusTask, 0, disposable) }
+  val focusAlarm: SingleAlarm by lazy { SingleAlarm(focusTask, 0, disposable) }
 
-  override fun getId() = id
+  override fun getId(): String = id
 
-  override fun getProject() = toolWindowManager.project
+  override fun getProject(): Project = toolWindowManager.project
 
   override fun getDecoration(): ToolWindowEx.ToolWindowDecoration {
     return ToolWindowEx.ToolWindowDecoration(icon, additionalGearActions)
@@ -90,7 +91,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     private set
 
   private var hideOnEmptyContent = false
-  var isPlaceholderMode = false
+  var isPlaceholderMode: Boolean = false
 
   private var pendingContentManagerListeners: MutableList<ContentManagerListener>? = null
 
@@ -243,7 +244,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     return null
   }
 
-  override fun getDisposable() = parentDisposable
+  override fun getDisposable(): Disposable = parentDisposable
 
   override fun remove() {
     @Suppress("DEPRECATION")
@@ -283,9 +284,9 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     callLater(runnable)
   }
 
-  override fun isVisible() = windowInfo.isVisible
+  override fun isVisible(): Boolean = windowInfo.isVisible
 
-  override fun getAnchor() = windowInfo.anchor
+  override fun getAnchor(): ToolWindowAnchor = windowInfo.anchor
 
   override fun setAnchor(anchor: ToolWindowAnchor, runnable: Runnable?) {
     EDT.assertIsEdt()
@@ -293,7 +294,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     callLater(runnable)
   }
 
-  override fun isSplitMode() = windowInfo.isSplit
+  override fun isSplitMode(): Boolean = windowInfo.isSplit
 
   override fun setContentUiType(type: ToolWindowContentUiType, runnable: Runnable?) {
     EDT.assertIsEdt()
@@ -305,7 +306,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     toolWindowManager.setDefaultContentUiType(this, type)
   }
 
-  override fun getContentUiType() = windowInfo.contentUiType
+  override fun getContentUiType(): ToolWindowContentUiType = windowInfo.contentUiType
 
   override fun setSplitMode(isSideTool: Boolean, runnable: Runnable?) {
     EDT.assertIsEdt()
@@ -321,9 +322,9 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     toolWindowManager.setToolWindowAutoHide(id, value)
   }
 
-  override fun isAutoHide() = windowInfo.isAutoHide
+  override fun isAutoHide(): Boolean = windowInfo.isAutoHide
 
-  override fun getType() = windowInfo.type
+  override fun getType(): ToolWindowType = windowInfo.type
 
   override fun setType(type: ToolWindowType, runnable: Runnable?) {
     EDT.assertIsEdt()
@@ -331,7 +332,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     callLater(runnable)
   }
 
-  override fun getInternalType() = windowInfo.internalType
+  override fun getInternalType(): ToolWindowType = windowInfo.internalType
 
   override fun stretchWidth(value: Int) {
     toolWindowManager.stretchWidth(this, value)
@@ -398,7 +399,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     ContentManagerWatcher.watchContentManager(this, contentManager)
   }
 
-  override fun isAvailable() = isAvailable
+  override fun isAvailable(): Boolean = isAvailable
 
   override fun getComponent(): JComponent {
     if (toolWindowManager.project.isDisposed) {
@@ -434,13 +435,13 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  override fun canCloseContents() = canCloseContent
+  override fun canCloseContents(): Boolean = canCloseContent
 
-  override fun getIcon() = icon
+  override fun getIcon(): ToolWindowIcon? = icon
 
   override fun getTitle(): String? = contentManager.value.selectedContent?.displayName
 
-  override fun getStripeTitle() = stripeTitle
+  override fun getStripeTitle(): String = stripeTitle
 
   override fun setIcon(newIcon: Icon) {
     EDT.assertIsEdt()
@@ -501,7 +502,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     hideOnEmptyContent = value
   }
 
-  fun isToHideOnEmptyContent() = hideOnEmptyContent
+  fun isToHideOnEmptyContent(): Boolean = hideOnEmptyContent
 
   override fun setShowStripeButton(value: Boolean) {
     val windowInfoDuringInit = windowInfoDuringInit
@@ -513,9 +514,9 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  override fun isShowStripeButton() = windowInfo.isShowStripeButton
+  override fun isShowStripeButton(): Boolean = windowInfo.isShowStripeButton
 
-  override fun isDisposed() = contentManager.isInitialized() && contentManager.value.isDisposed
+  override fun isDisposed(): Boolean = contentManager.isInitialized() && contentManager.value.isDisposed
 
   private fun ensureContentManagerInitialized() {
     contentManager.value
@@ -553,7 +554,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  override fun getHelpId() = helpId
+  override fun getHelpId(): String? = helpId
 
   override fun setHelpId(value: String) {
     helpId = value

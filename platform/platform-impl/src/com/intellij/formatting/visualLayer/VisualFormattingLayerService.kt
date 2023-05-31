@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.CodeStyleSettings
 
-val visualFormattingElementKey = Key.create<Boolean>("visual.formatting.element")
+val visualFormattingElementKey: Key<Boolean> = Key.create<Boolean>("visual.formatting.element")
 
 abstract class VisualFormattingLayerService {
   private val EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS = Key.create<CodeStyleSettings>("visual.formatting.layer.info")
@@ -22,7 +22,7 @@ abstract class VisualFormattingLayerService {
     get() = getUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS)
     private set(value) = putUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS, value)
 
-  fun enabledForEditor(editor: Editor) = editor.visualFormattingLayerEnabled
+  fun enabledForEditor(editor: Editor): Boolean = editor.visualFormattingLayerEnabled
 
   fun enableForEditor(editor: Editor, codeStyleSettings: CodeStyleSettings) {
     editor.visualFormattingLayerCodeStyleSettings = codeStyleSettings
@@ -40,7 +40,7 @@ abstract class VisualFormattingLayerService {
     private const val removeZombieFoldingsRegistryKey = "editor.readerMode.vfmt.removeZombies"
 
     @JvmStatic
-    fun shouldRemoveZombieFoldings() = Registry.`is`(removeZombieFoldingsRegistryKey)
+    fun shouldRemoveZombieFoldings(): Boolean = Registry.`is`(removeZombieFoldingsRegistryKey)
 
     @JvmStatic
     fun getInstance(): VisualFormattingLayerService =
@@ -97,10 +97,10 @@ data class InlayPresentation(val editor: Editor,
     editor.contentComponent.getFontMetrics(editorFont)
   }
 
-  override fun calcWidthInPixels(inlay: Inlay<*>) =
+  override fun calcWidthInPixels(inlay: Inlay<*>): Int =
     if (vertical) 0 else editorFontMetrics.stringWidth(" ".repeat(fillerLength))
 
-  override fun calcHeightInPixels(inlay: Inlay<*>) =
+  override fun calcHeightInPixels(inlay: Inlay<*>): Int =
     (if (vertical) fillerLength else 1) * editorFontMetrics.height
 
 }

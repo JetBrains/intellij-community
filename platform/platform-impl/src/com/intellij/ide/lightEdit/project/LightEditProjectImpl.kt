@@ -81,11 +81,11 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) :
     throw IllegalStateException()
   }
 
-  override fun getName() = NAME
+  override fun getName(): String = NAME
 
-  override fun getLocationHash() = name
+  override fun getLocationHash(): String = name
 
-  override fun isOpen() = true
+  override fun isOpen(): Boolean = true
 
-  override fun isInitialized() = true
+  override fun isInitialized(): Boolean = true
 }

@@ -21,19 +21,19 @@ internal class ToolWindowIcon(private val icon: Icon,
     return ToolWindowIcon(replacer.replaceIcon(icon), toolWindowId)
   }
 
-  override fun retrieveIcon() = icon
+  override fun retrieveIcon(): Icon = icon
 
-  override fun getMenuBarIcon(isDark: Boolean) = ToolWindowIcon(icon = getMenuBarIcon(icon, isDark), toolWindowId = toolWindowId)
+  override fun getMenuBarIcon(isDark: Boolean): ToolWindowIcon = ToolWindowIcon(icon = getMenuBarIcon(icon, isDark), toolWindowId = toolWindowId)
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     icon.paintIcon(c, g, x, y)
   }
 
-  override fun getIconWidth() = icon.iconWidth
+  override fun getIconWidth(): Int = icon.iconWidth
 
-  override fun getIconHeight() = icon.iconHeight
+  override fun getIconHeight(): Int = icon.iconHeight
 
-  override fun getScale() = if (icon is ScalableIcon) icon.scale else 1f
+  override fun getScale(): Float = if (icon is ScalableIcon) icon.scale else 1f
 
-  override fun scale(scaleFactor: Float) = ToolWindowIcon(scaleIconOrLoadCustomVersion(icon = icon, scale = scaleFactor), toolWindowId)
+  override fun scale(scaleFactor: Float): ToolWindowIcon = ToolWindowIcon(scaleIconOrLoadCustomVersion(icon = icon, scale = scaleFactor), toolWindowId)
 }

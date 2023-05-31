@@ -34,7 +34,7 @@ import javax.swing.text.*
 
 @Service(Service.Level.APP)
 class GotItTooltipService {
-  val isFirstRun = checkFirstRun()
+  val isFirstRun: Boolean = checkFirstRun()
 
   private fun checkFirstRun(): Boolean {
     val prevRunBuild = PropertiesComponent.getInstance().getValue("gotit.previous.run")
@@ -430,7 +430,7 @@ class GotItTooltip(@NonNls val id: String,
     return balloon
   }
 
-  fun gotIt() = gotIt("$PROPERTY_PREFIX.$id")
+  fun gotIt(): Unit = gotIt("$PROPERTY_PREFIX.$id")
 
   private fun scheduleNext(tooltip: GotItTooltip, show: () -> Unit) {
     nextToShow = tooltip
@@ -490,7 +490,7 @@ class GotItTooltip(@NonNls val id: String,
   }
 
   companion object {
-    const val PROPERTY_PREFIX = "got.it.tooltip"
+    const val PROPERTY_PREFIX: String = "got.it.tooltip"
 
     private val BALLOON_PROPERTY = Key<Balloon>("$PROPERTY_PREFIX.balloon")
 

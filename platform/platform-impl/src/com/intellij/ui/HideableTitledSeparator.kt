@@ -18,9 +18,9 @@ class HideableTitledSeparator(@NlsContexts.Separator title: String) : TitledSepa
 
   lateinit var row: Row
 
-  fun expand() = update(true)
+  fun expand(): Unit = update(true)
 
-  fun collapse() = update(false)
+  fun collapse(): Unit = update(false)
 
   private fun update(expand: Boolean) {
     isExpanded = expand

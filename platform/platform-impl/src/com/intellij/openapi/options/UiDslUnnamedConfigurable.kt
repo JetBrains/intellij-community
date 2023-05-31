@@ -21,7 +21,7 @@ interface UiDslUnnamedConfigurable : UnnamedConfigurable {
    */
   abstract class Simple : DslConfigurableBase(), UiDslUnnamedConfigurable {
 
-     protected val uiDslDisposable = object : ClearableLazyValue<Disposable>() {
+     protected val uiDslDisposable: ClearableLazyValue<Disposable> = object : ClearableLazyValue<Disposable>() {
        override fun compute(): Disposable {
          return Disposer.newDisposable()
        }
@@ -33,9 +33,9 @@ interface UiDslUnnamedConfigurable : UnnamedConfigurable {
       }
     }
 
-    final override fun isModified() = super.isModified()
-    final override fun reset() = super<DslConfigurableBase>.reset()
-    final override fun apply() = super.apply()
+    final override fun isModified(): Boolean = super.isModified()
+    final override fun reset(): Unit = super<DslConfigurableBase>.reset()
+    final override fun apply(): Unit = super.apply()
     final override fun disposeUIResources() {
       if (uiDslDisposable.isCached) {
         Disposer.dispose(uiDslDisposable.value)

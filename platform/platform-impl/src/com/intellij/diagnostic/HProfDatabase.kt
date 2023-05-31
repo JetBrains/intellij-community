@@ -70,4 +70,4 @@ class HProfDatabase(tmpDirectory: Path) {
   }
 }
 
-val hprofDatabase = HProfDatabase(Paths.get(PathManager.getTempPath()))
+val hprofDatabase: HProfDatabase = HProfDatabase(Paths.get(PathManager.getTempPath()))

@@ -49,7 +49,7 @@ sealed interface PluginAdvertiserService {
     fun getIde(ideCode: String?): SuggestedIde? = ides[ideCode]
 
     @Suppress("HardCodedStringLiteral")
-    val ideaUltimate = SuggestedIde("IntelliJ IDEA Ultimate", "https://www.jetbrains.com/idea/download/")
+    val ideaUltimate: SuggestedIde = SuggestedIde("IntelliJ IDEA Ultimate", "https://www.jetbrains.com/idea/download/")
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
     private val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")

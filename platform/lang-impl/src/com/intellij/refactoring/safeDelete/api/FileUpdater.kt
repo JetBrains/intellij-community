@@ -7,6 +7,6 @@ interface FileUpdater {
   fun prepareFileUpdate(): Collection<FileOperation> = emptyList()
   
   companion object {
-    val EMPTY = object : FileUpdater {}
+    val EMPTY: FileUpdater = object : FileUpdater {}
   }
 }

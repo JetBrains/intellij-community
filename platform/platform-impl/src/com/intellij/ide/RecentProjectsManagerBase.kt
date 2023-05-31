@@ -120,7 +120,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
-  final override fun getState() = state
+  final override fun getState(): RecentProjectManagerState = state
 
   fun getProjectMetaInfo(projectStoreBaseDir: Path): RecentProjectMetaInfo? {
     val path = getProjectPath(projectStoreBaseDir) ?: return null
@@ -330,11 +330,11 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     modCounter.increment()
   }
 
-  fun getLastOpenedProject() = state.lastOpenedProject
+  fun getLastOpenedProject(): String? = state.lastOpenedProject
 
   @Internal
   class MyFrameStateListener : FrameStateListener {
-    override fun onFrameActivated(frame: IdeFrame) = frame.notifyProjectActivation()
+    override fun onFrameActivated(frame: IdeFrame): Unit = frame.notifyProjectActivation()
   }
 
   @Internal
@@ -496,7 +496,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
-  override fun suggestNewProjectLocation() = ProjectUtil.getBaseDir()
+  override fun suggestNewProjectLocation(): String = ProjectUtil.getBaseDir()
 
   // open for Rider
   @Suppress("MemberVisibilityCanBePrivate")

@@ -28,7 +28,7 @@ interface ClientFileEditorManager {
 
     @JvmStatic
     @ApiStatus.Internal
-    fun assignClientId(fileEditor: FileEditor, clientId: ClientId?) = CLIENT_ID.set(fileEditor, clientId)
+    fun assignClientId(fileEditor: FileEditor, clientId: ClientId?): Unit = CLIENT_ID.set(fileEditor, clientId)
 
     private val CLIENT_ID = Key.create<ClientId>("CLIENT_ID")
   }

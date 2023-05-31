@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.Messages
 
 internal class DumpLibraryUsageStatisticsAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null

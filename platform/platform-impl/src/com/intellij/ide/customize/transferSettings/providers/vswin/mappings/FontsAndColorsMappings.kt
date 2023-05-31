@@ -1,6 +1,7 @@
 package com.intellij.ide.customize.transferSettings.providers.vswin.mappings
 
 import com.intellij.ide.customize.transferSettings.db.KnownLafs
+import com.intellij.ide.customize.transferSettings.models.BundledLookAndFeel
 
 
 object FontsAndColorsMappings {
@@ -22,7 +23,7 @@ object FontsAndColorsMappings {
       }
     }
 
-    fun toRiderTheme() = when (this) {
+    fun toRiderTheme(): BundledLookAndFeel = when (this) {
       Dark -> KnownLafs.Darcula
       Light -> KnownLafs.Light
       Blue -> KnownLafs.Light
@@ -31,7 +32,7 @@ object FontsAndColorsMappings {
     }
 
     companion object {
-      fun fromString(value: String) = values().firstOrNull { it.themeUuid == value } ?: Dark
+      fun fromString(value: String): VsTheme = values().firstOrNull { it.themeUuid == value } ?: Dark
     }
   }
 

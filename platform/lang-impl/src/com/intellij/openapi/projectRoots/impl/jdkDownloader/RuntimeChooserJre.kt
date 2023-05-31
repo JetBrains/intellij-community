@@ -43,8 +43,8 @@ object RuntimeChooserJreValidator {
     return item.jdkMajorVersion >= minJdkFeatureVersion && item.os == JdkPredicate.currentOS && item.arch == JdkPredicate.currentArch
   }
 
-  fun isSupportedSdkItem(sdk: Sdk) = isSupportedSdkItem({ sdk.versionString }, { sdk.homePath })
-  fun isSupportedSdkItem(sdk: SdkPopupBuilder.SuggestedSdk) = isSupportedSdkItem({ sdk.versionString }, { sdk.homePath })
+  fun isSupportedSdkItem(sdk: Sdk): Boolean = isSupportedSdkItem({ sdk.versionString }, { sdk.homePath })
+  fun isSupportedSdkItem(sdk: SdkPopupBuilder.SuggestedSdk): Boolean = isSupportedSdkItem({ sdk.versionString }, { sdk.homePath })
 
   private inline fun isSupportedSdkItem(versionString: () -> String?, homePath: () -> String?): Boolean = runCatching {
     val version = versionString() ?: return false

@@ -29,7 +29,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @OptIn(FlowPreview::class)
 @ApiStatus.Internal
 class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: CoroutineScope) : WorkspaceModelCache {
-  override val enabled = forceEnableCaching || !ApplicationManager.getApplication().isUnitTestMode
+  override val enabled: Boolean = forceEnableCaching || !ApplicationManager.getApplication().isUnitTestMode
   private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val cacheFile by lazy { initCacheFile() }
@@ -121,14 +121,14 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
 
   companion object {
     private val LOG = logger<WorkspaceModelCacheImpl>()
-    internal const val DATA_DIR_NAME = "project-model-cache"
+    internal const val DATA_DIR_NAME: String = "project-model-cache"
     private var forceEnableCaching = false
 
     @TestOnly
     var testCacheFile: Path? = null
 
     private val cachesInvalidated = AtomicBoolean(false)
-    internal val invalidateCachesMarkerFile = projectsDataDir.resolve(".invalidate")
+    internal val invalidateCachesMarkerFile: Path = projectsDataDir.resolve(".invalidate")
 
     fun invalidateCaches() {
       LOG.info("Invalidating caches by creating $invalidateCachesMarkerFile")

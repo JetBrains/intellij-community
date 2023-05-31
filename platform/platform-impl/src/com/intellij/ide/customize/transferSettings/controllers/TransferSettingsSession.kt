@@ -6,9 +6,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 
 class TransferSettingsSession(private val controller: TransferSettingsController) {
-  var isSuccess = false
+  var isSuccess: Boolean = false
     private set
-  var isFinished = false
+  var isFinished: Boolean = false
     private set
 
   fun performImport(project: Project, ideVersion: IdeVersion, withPlugins: Boolean, pi: ProgressIndicator) {

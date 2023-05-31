@@ -48,7 +48,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   var frameHelper: FrameHelper? = null
     private set
 
-  var reusedFullScreenState = false
+  var reusedFullScreenState: Boolean = false
 
   var normalBounds: Rectangle? = null
   var screenBounds: Rectangle? = null

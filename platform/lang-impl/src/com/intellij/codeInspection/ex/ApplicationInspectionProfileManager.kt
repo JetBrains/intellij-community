@@ -43,7 +43,7 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
 
   companion object {
     @JvmStatic
-    fun getInstanceImpl() = service<InspectionProfileManager>() as ApplicationInspectionProfileManager
+    fun getInstanceImpl(): ApplicationInspectionProfileManager = service<InspectionProfileManager>() as ApplicationInspectionProfileManager
 
     private fun registerProvidedSeverities() {
       val map = HashMap<String, HighlightInfoType>()

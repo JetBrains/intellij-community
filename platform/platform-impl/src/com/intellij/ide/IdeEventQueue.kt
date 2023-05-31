@@ -91,7 +91,7 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   @VisibleForTesting
   @JvmField
-  val keyboardEventDispatched = AtomicInteger()
+  val keyboardEventDispatched: AtomicInteger = AtomicInteger()
 
   private var isInInputEvent = false
   var trueCurrentEvent: AWTEvent = InvocationEvent(this, EmptyRunnable.getInstance())

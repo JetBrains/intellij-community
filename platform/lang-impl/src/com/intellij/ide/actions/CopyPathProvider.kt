@@ -27,7 +27,7 @@ abstract class CopyPathProvider : AnAction() {
     @JvmField val QUALIFIED_NAME : Key<@NlsSafe String> = Key.create("QUALIFIED_NAME");
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val project = e.project ?: run {
@@ -106,7 +106,7 @@ abstract class CopyPathProvider : AnAction() {
 abstract class DumbAwareCopyPathProvider : CopyPathProvider(), DumbAware
 
 class CopyAbsolutePathProvider : DumbAwareCopyPathProvider() {
-  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?) = virtualFile?.presentableUrl
+  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): @NlsSafe String? = virtualFile?.presentableUrl
 }
 
 class CopyContentRootPathProvider : DumbAwareCopyPathProvider() {
@@ -130,7 +130,7 @@ class CopyFileWithLineNumberPathProvider : DumbAwareCopyPathProvider() {
 }
 
 class CopySourceRootPathProvider : DumbAwareCopyPathProvider() {
-  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?) =
+  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): @NlsSafe String? =
     virtualFile?.let {
       VfsUtilCore.getRelativePath(virtualFile, ProjectFileIndex.getInstance(project).getSourceRootForFile(virtualFile) ?: return null)
     }

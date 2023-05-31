@@ -165,18 +165,18 @@ object IteratorUtils {
    * Never reads contents of an operation, only tags.
    * Can produce only [OperationLogStorage.OperationReadResult.Incomplete] or [OperationLogStorage.OperationReadResult.Invalid].
    */
-  fun OperationLogStorage.Iterator.nextIncomplete() = nextFiltered(VfsOperationTagsMask.EMPTY)
+  fun OperationLogStorage.Iterator.nextIncomplete(): OperationReadResult = nextFiltered(VfsOperationTagsMask.EMPTY)
 
   /**
    * @see [OperationLogStorage.Iterator.nextIncomplete]
    */
-  fun OperationLogStorage.Iterator.previousIncomplete() = previousFiltered(VfsOperationTagsMask.EMPTY)
+  fun OperationLogStorage.Iterator.previousIncomplete(): OperationReadResult = previousFiltered(VfsOperationTagsMask.EMPTY)
 
   /**
    * Skips next record efficiently, assumes that the read must succeed
    * @throws IllegalStateException in case [OperationLogStorage.OperationReadResult.Invalid] was read
    */
-  fun OperationLogStorage.Iterator.skipNext() = this.also {
+  fun OperationLogStorage.Iterator.skipNext(): OperationLogStorage.Iterator = this.also {
     nextIncomplete().onInvalid {
       throw IllegalStateException("failed to skip next record", it.cause)
     }
@@ -186,7 +186,7 @@ object IteratorUtils {
    * Skips previous record efficiently, assumes that the read must succeed
    * @throws IllegalStateException in case [OperationLogStorage.OperationReadResult.Invalid] was read
    */
-  fun OperationLogStorage.Iterator.skipPrevious() = this.also {
+  fun OperationLogStorage.Iterator.skipPrevious(): OperationLogStorage.Iterator = this.also {
     previousIncomplete().onInvalid {
       throw IllegalStateException("failed to skip previous record", it.cause)
     }
@@ -201,19 +201,19 @@ object IteratorUtils {
     return { snapshot.copy() }
   }
 
-  fun OperationLogStorage.Iterator.move(direction: TraverseDirection) =
+  fun OperationLogStorage.Iterator.move(direction: TraverseDirection): OperationReadResult =
     when (direction) {
       TraverseDirection.REWIND -> previous()
       TraverseDirection.PLAY -> next()
     }
 
-  fun OperationLogStorage.Iterator.moveFiltered(direction: TraverseDirection, toReadMask: VfsOperationTagsMask) =
+  fun OperationLogStorage.Iterator.moveFiltered(direction: TraverseDirection, toReadMask: VfsOperationTagsMask): OperationReadResult =
     when (direction) {
       TraverseDirection.REWIND -> previousFiltered(toReadMask)
       TraverseDirection.PLAY -> nextFiltered(toReadMask)
     }
 
-  fun OperationLogStorage.Iterator.movableIn(direction: TraverseDirection) =
+  fun OperationLogStorage.Iterator.movableIn(direction: TraverseDirection): Boolean =
     when (direction) {
       TraverseDirection.REWIND -> hasPrevious()
       TraverseDirection.PLAY -> hasNext()

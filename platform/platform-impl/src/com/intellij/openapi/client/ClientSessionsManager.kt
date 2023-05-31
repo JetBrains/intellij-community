@@ -88,10 +88,10 @@ sealed class ClientSessionsManager<T : ClientSession> {
     }
 
     @ApiStatus.Internal
-    fun getInstance() = service<ClientSessionsManager<*>>() as ClientAppSessionsManager
+    fun getInstance(): ClientAppSessionsManager = service<ClientSessionsManager<*>>() as ClientAppSessionsManager
 
     @ApiStatus.Internal
-    fun getInstance(project: Project) = project.service<ClientSessionsManager<*>>() as ClientProjectSessionsManager
+    fun getInstance(project: Project): ClientProjectSessionsManager = project.service<ClientSessionsManager<*>>() as ClientProjectSessionsManager
   }
 
   private val sessions = ConcurrentHashMap<ClientId, T>()

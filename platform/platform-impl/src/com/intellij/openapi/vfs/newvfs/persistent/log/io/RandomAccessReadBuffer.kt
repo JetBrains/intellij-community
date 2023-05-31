@@ -10,5 +10,5 @@ interface RandomAccessReadBuffer {
   /**
    * reads `buf.size` bytes from this buffer starting from [position] into [buf]
    */
-  fun read(position: Long, buf: ByteArray) = read(position, buf, 0, buf.size)
+  fun read(position: Long, buf: ByteArray): Unit = read(position, buf, 0, buf.size)
 }

@@ -16,7 +16,7 @@ import java.awt.GraphicsEnvironment
  */
 internal class ConfigureCustomSizeAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     val centerPanel = panel {
@@ -42,7 +42,7 @@ internal class ConfigureCustomSizeAction : DumbAwareAction() {
   private fun maxWindowBounds() = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
 
   object CustomSizeModel {
-    var width by propComponentProperty(defaultValue = 640)
-    var height by propComponentProperty(defaultValue = 300)
+    var width: Int by propComponentProperty(defaultValue = 640)
+    var height: Int by propComponentProperty(defaultValue = 300)
   }
 }

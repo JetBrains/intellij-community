@@ -11,18 +11,18 @@ import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty
 
 
-val Insets.width get() = left + right
-val Insets.height get() = top + bottom
+val Insets.width: Int get() = left + right
+val Insets.height: Int get() = top + bottom
 
-var JBPopup.width by dimensionProperty(JBPopup::getSize, JBPopup::setSize, Dimension::width)
-var JBPopup.height by dimensionProperty(JBPopup::getSize, JBPopup::setSize, Dimension::height)
+var JBPopup.width: Int by dimensionProperty(JBPopup::getSize, JBPopup::setSize, Dimension::width)
+var JBPopup.height: Int by dimensionProperty(JBPopup::getSize, JBPopup::setSize, Dimension::height)
 
-var JComponent.minimumWidth by dimensionProperty(JComponent::getMinimumSize, JComponent::setMinimumSize, Dimension::width)
-var JComponent.minimumHeight by dimensionProperty(JComponent::getMinimumSize, JComponent::setMinimumSize, Dimension::height)
-var JComponent.preferredWidth by dimensionProperty(JComponent::getPreferredSize, JComponent::setPreferredSize, Dimension::width)
-var JComponent.preferredHeight by dimensionProperty(JComponent::getPreferredSize, JComponent::setPreferredSize, Dimension::height)
-var JComponent.maximumWidth by dimensionProperty(JComponent::getMaximumSize, JComponent::setMaximumSize, Dimension::width)
-var JComponent.maximumHeight by dimensionProperty(JComponent::getMaximumSize, JComponent::setMaximumSize, Dimension::height)
+var JComponent.minimumWidth: Int by dimensionProperty(JComponent::getMinimumSize, JComponent::setMinimumSize, Dimension::width)
+var JComponent.minimumHeight: Int by dimensionProperty(JComponent::getMinimumSize, JComponent::setMinimumSize, Dimension::height)
+var JComponent.preferredWidth: Int by dimensionProperty(JComponent::getPreferredSize, JComponent::setPreferredSize, Dimension::width)
+var JComponent.preferredHeight: Int by dimensionProperty(JComponent::getPreferredSize, JComponent::setPreferredSize, Dimension::height)
+var JComponent.maximumWidth: Int by dimensionProperty(JComponent::getMaximumSize, JComponent::setMaximumSize, Dimension::width)
+var JComponent.maximumHeight: Int by dimensionProperty(JComponent::getMaximumSize, JComponent::setMaximumSize, Dimension::height)
 
 private fun <Receiver> dimensionProperty(
   getSize: Receiver.() -> Dimension,

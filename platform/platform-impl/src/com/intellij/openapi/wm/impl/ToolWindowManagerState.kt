@@ -39,14 +39,14 @@ private const val MORE_BUTTON_TAG = "moreButton"
 class ToolWindowManagerStateImpl : ToolWindowManagerState {
   private val isNewUi = ExperimentalUI.isNewUI()
 
-  override var layout = DesktopLayout()
-  override var noStateLoaded = false
+  override var layout: DesktopLayout = DesktopLayout()
+  override var noStateLoaded: Boolean = false
     private set
   override var oldLayout: DesktopLayout? = null
     private set
   override var layoutToRestoreLater: DesktopLayout? = null
-  override val recentToolWindows = LinkedList<String>()
-  override val scheduledLayout = AtomicProperty<DesktopLayout?>(null)
+  override val recentToolWindows: LinkedList<String> = LinkedList<String>()
+  override val scheduledLayout: AtomicProperty<DesktopLayout?> = AtomicProperty<DesktopLayout?>(null)
 
   override val isEditorComponentActive: Boolean
     get() {
@@ -56,7 +56,7 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
 
   override var frame: ProjectFrameHelper? = null
 
-  override var moreButton = ToolWindowAnchor.LEFT
+  override var moreButton: ToolWindowAnchor = ToolWindowAnchor.LEFT
 
   override fun getState(): Element? {
     if (frame == null) {

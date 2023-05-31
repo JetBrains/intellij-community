@@ -65,7 +65,7 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
 class ProjectWindowCustomizerService : Disposable {
   companion object {
     @JvmStatic
-    fun getInstance() = service<ProjectWindowCustomizerService>()
+    fun getInstance(): ProjectWindowCustomizerService = service<ProjectWindowCustomizerService>()
   }
 
   private var wasGradientPainted = false
@@ -98,9 +98,9 @@ class ProjectWindowCustomizerService : Disposable {
     }
   }
 
-  fun isAvailable() = PlatformUtils.isRider() || Registry.`is`("ide.colorful.toolbar")
+  fun isAvailable(): Boolean = PlatformUtils.isRider() || Registry.`is`("ide.colorful.toolbar")
 
-  fun isActive() = wasGradientPainted && ourSettingsValue && isAvailable()
+  fun isActive(): Boolean = wasGradientPainted && ourSettingsValue && isAvailable()
 
   private var gotItShown
     get() = PropertiesComponent.getInstance().getBoolean("colorful.instances.gotIt.shown", false)
@@ -136,7 +136,7 @@ class ProjectWindowCustomizerService : Disposable {
     listeners.forEach { it(isActive()) }
   }
 
-  fun shouldShowGotIt() = !gotItShown
+  fun shouldShowGotIt(): Boolean = !gotItShown
 
   private fun recordGotItShown() {
     gotItShown = true

@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.CaretVisualAttributes
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.CheckBoxWithColorChooser
 import com.intellij.ui.EnumComboBoxModel
@@ -33,7 +34,7 @@ internal class SetCaretVisualAttributesAction : AnAction(), DumbAware {
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val presentation = e.presentation
@@ -58,7 +59,7 @@ class CaretVisualAttributesDialog(project: Project, attributes: CaretVisualAttri
   val attributes: CaretVisualAttributes
     get() = CaretVisualAttributes(colorChooser.color, weight, shape, thickness)
 
-  override fun createCenterPanel() = panel {
+  override fun createCenterPanel(): DialogPanel = panel {
     row("Colour:") { cell(colorChooser) }
     row("Weight:") {
       comboBox(EnumComboBoxModel(CaretVisualAttributes.Weight::class.java))

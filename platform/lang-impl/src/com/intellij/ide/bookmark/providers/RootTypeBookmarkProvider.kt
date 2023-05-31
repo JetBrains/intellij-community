@@ -8,8 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 
 internal class RootTypeBookmarkProvider(private val project: Project) : BookmarkProvider {
-  override fun getWeight() = 150
-  override fun getProject() = project
+  override fun getWeight(): Int = 150
+  override fun getProject(): Project = project
 
   override fun compare(bookmark1: Bookmark, bookmark2: Bookmark): Int {
     bookmark1 as RootTypeBookmark
@@ -22,7 +22,7 @@ internal class RootTypeBookmarkProvider(private val project: Project) : Bookmark
     return createBookmark(RootType.getAllRootTypes().firstOrNull { it.id == id })
   }
 
-  override fun createBookmark(context: Any?) = when (context) {
+  override fun createBookmark(context: Any?): RootTypeBookmark? = when (context) {
     is RootType -> RootTypeBookmark(this, context)
     else -> null
   }

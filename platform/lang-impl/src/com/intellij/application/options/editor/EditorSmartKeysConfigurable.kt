@@ -70,7 +70,7 @@ private val cbCloseBlockCommentOnEnter
 private val cbInsertJavadocStubOnEnter
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.javadoc.stub.after.slash.star.star"),
                              codeInsightSettings::JAVADOC_STUB_ON_ENTER)
-internal val cbHonorCamelHumpsWhenSelectingByClicking
+internal val cbHonorCamelHumpsWhenSelectingByClicking: CheckboxDescriptor
   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.honor.camelhumps.words.settings.on.double.click"),
                              editorSettings::isMouseClickSelectionHonorsCamelWords, editorSettings::setMouseClickSelectionHonorsCamelWords)
 
@@ -93,7 +93,7 @@ internal val editorSmartKeysOptionDescriptors: List<BooleanOptionDescription>
   ).map(CheckboxDescriptor::asUiOptionDescriptor)
 
 @NonNls
-internal const val ID = "editor.preferences.smartKeys"
+internal const val ID: String = "editor.preferences.smartKeys"
 
 private val EP_NAME = ExtensionPointName<EditorSmartKeysConfigurableEP>("com.intellij.editorSmartKeysConfigurable")
 
@@ -220,7 +220,7 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
     return allConfigurables.filterIsInstance<Configurable>().toTypedArray()
   }
 
-  override fun hasOwnContent() = true
+  override fun hasOwnContent(): Boolean = true
 
-  override fun getDependencies() = listOf(EP_NAME)
+  override fun getDependencies(): List<ExtensionPointName<EditorSmartKeysConfigurableEP>> = listOf(EP_NAME)
 }

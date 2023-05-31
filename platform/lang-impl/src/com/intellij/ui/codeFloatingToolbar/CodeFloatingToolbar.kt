@@ -29,7 +29,7 @@ class CodeFloatingToolbar(editor: Editor): FloatingToolbar(editor, "Floating.Cod
 
   override fun shouldReviveAfterClose(): Boolean = false
 
-  override fun shouldSurviveDocumentChange() = false
+  override fun shouldSurviveDocumentChange(): Boolean = false
 
   override fun hideByOtherHints(): Boolean = true
 

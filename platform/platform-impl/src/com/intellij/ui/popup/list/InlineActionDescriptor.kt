@@ -2,5 +2,5 @@
 package com.intellij.ui.popup.list
 
 class InlineActionDescriptor(private val runnable: Runnable, val closesPopup: Boolean) {
-  fun executeAction() = runnable.run()
+  fun executeAction(): Unit = runnable.run()
 }

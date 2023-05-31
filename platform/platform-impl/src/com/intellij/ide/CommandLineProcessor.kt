@@ -58,7 +58,7 @@ object CommandLineProcessor {
   val OK_FUTURE: Deferred<CliResult> = CompletableDeferred(value = CliResult.OK)
 
   @ApiStatus.Internal
-  const val SCHEME_INTERNAL = "!!!internal!!!"
+  const val SCHEME_INTERNAL: String = "!!!internal!!!"
 
   @VisibleForTesting
   @ApiStatus.Internal

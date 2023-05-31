@@ -13,7 +13,7 @@ import javax.swing.SwingUtilities
 
 class ComponentStyle<T : JComponent>private constructor(private val default: Properties, private val styleMap: Map<ComponentStyleState, Properties>) {
   companion object {
-    @NonNls const val ENABLED_PROPERTY = "enabled"
+    @NonNls const val ENABLED_PROPERTY: String = "enabled"
   }
 
   internal fun applyStyle(component: T) {
@@ -113,8 +113,8 @@ class ComponentStyle<T : JComponent>private constructor(private val default: Pro
   }
 
   class ComponentState(val base: Properties) {
-    var hovered = false
-    var pressed = false
+    var hovered: Boolean = false
+    var pressed: Boolean = false
   }
 
   class StyleComponentListener<T : JComponent>(val component: T,

@@ -45,5 +45,5 @@ internal fun logDescriptorUnload(
 @Internal
 internal class DynamicPluginsUsagesCollector : CounterUsagesCollector() {
 
-  override fun getGroup() = GROUP
+  override fun getGroup(): EventLogGroup = GROUP
 }

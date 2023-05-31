@@ -15,9 +15,10 @@
  */
 package com.intellij.diagnostic.hprof.util
 
+import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 
 object HeapDumpAnalysisNotificationGroup {
   @JvmField
-  val GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Heap Dump Analysis")
+  val GROUP: NotificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Heap Dump Analysis")
 }

@@ -3,19 +3,20 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde
 
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
+import java.awt.Color
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 
 object LearnIdeContentColorsAndFonts {
 
-  val ActiveInteractiveCoursesBorder = JBUI.CurrentTheme.Component.FOCUSED_BORDER_COLOR
-  val InactiveInteractiveCoursesBorder = JBColor.namedColor("Component.borderColor", JBColor(0xC4C4C4, 0x5E6060))
-  val HeaderColor = JBColor.namedColor("ParameterInfo.foreground", JBColor(0x1D1D1D, 0xBBBBBB))
-  val HoveredColor = JBColor.namedColor("Plugins.lightSelectionBackground", JBColor(0xEDF6FE, 0x464A4D))
-  val ModuleHeaderColor = JBColor.namedColor("link", JBColor(0x2470B3, 0x589DF6))
-  val ModuleDescriptionColor = JBColor.namedColor("infoPanelForeground", JBColor(0x808080, 0x8C8C8C))
+  val ActiveInteractiveCoursesBorder: Color? = JBUI.CurrentTheme.Component.FOCUSED_BORDER_COLOR
+  val InactiveInteractiveCoursesBorder: JBColor = JBColor.namedColor("Component.borderColor", JBColor(0xC4C4C4, 0x5E6060))
+  val HeaderColor: JBColor = JBColor.namedColor("ParameterInfo.foreground", JBColor(0x1D1D1D, 0xBBBBBB))
+  val HoveredColor: JBColor = JBColor.namedColor("Plugins.lightSelectionBackground", JBColor(0xEDF6FE, 0x464A4D))
+  val ModuleHeaderColor: JBColor = JBColor.namedColor("link", JBColor(0x2470B3, 0x589DF6))
+  val ModuleDescriptionColor: JBColor = JBColor.namedColor("infoPanelForeground", JBColor(0x808080, 0x8C8C8C))
 
-  val PARAGRAPH_STYLE = SimpleAttributeSet()
+  val PARAGRAPH_STYLE: SimpleAttributeSet = SimpleAttributeSet()
 
   init {
     applyZeroParagraphStyle(PARAGRAPH_STYLE)

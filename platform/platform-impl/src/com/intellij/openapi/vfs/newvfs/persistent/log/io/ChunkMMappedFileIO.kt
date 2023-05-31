@@ -98,7 +98,7 @@ class ChunkMMappedFileIO(
     fileChannel.close()
   }
 
-  override fun offsetOutputStream(startPosition: Long) = OffsetOutputStream(this, startPosition)
+  override fun offsetOutputStream(startPosition: Long): OffsetOutputStream = OffsetOutputStream(this, startPosition)
 
   class OffsetOutputStream(
     private val mmapIO: ChunkMMappedFileIO,
