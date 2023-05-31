@@ -33,7 +33,6 @@ fun <T> runBlockingCancellableUnderIndicator(action: suspend CoroutineScope.() -
 }
 
 @RequiresEdt
-@RequiresBackgroundThread
 @ApiStatus.Experimental
 fun performInBackground(action: suspend () -> Unit) {
   AppExecutorUtil.getAppExecutorService().execute {
