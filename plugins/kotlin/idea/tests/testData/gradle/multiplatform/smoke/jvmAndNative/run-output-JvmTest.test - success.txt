@@ -1,0 +1,3 @@
+14:09:12: Execution finished ':cleanJvmTest :jvmTest --tests "JvmTest.test - success"'.
+
+<exitCode: 0>
