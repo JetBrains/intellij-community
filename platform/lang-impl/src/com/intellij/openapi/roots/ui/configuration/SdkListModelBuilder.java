@@ -305,7 +305,7 @@ public final class SdkListModelBuilder {
         }
       });
 
-      JdkDownloaderLogger.INSTANCE.logDetected(JdkVersionDetector.getInstance().detectJdkVersionInfo(homePath));
+      JdkDownloaderLogger.Companion.logDetected(JdkVersionDetector.getInstance().detectJdkVersionInfo(homePath));
 
       mySdkModel.addSdk(suggestedItem.sdkType, homePath, onNewSdkAdded);
       return true;
