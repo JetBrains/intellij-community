@@ -60,6 +60,9 @@ private const val DEBUG: String = ToolWindowId.DEBUG
 
 private val recentLimit: Int get() = AdvancedSettings.getInt("max.recent.run.configurations")
 
+@ApiStatus.Internal
+val RUN_CONFIGURATION_KEY = DataKey.create<RunnerAndConfigurationSettings>("sub.popup.parent.action")
+
 internal fun createRunConfigurationsActionGroup(project: Project, e: AnActionEvent): ActionGroup {
   val actions = DefaultActionGroup()
   val registry = ExecutorRegistry.getInstance()
@@ -142,6 +145,14 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
 
   init {
     list.setExpandableItemsEnabled(false)
+    (step as ActionPopupStep).setSubStepContextAdjuster { context, action ->
+      if (action is SelectConfigAction) {
+        CustomizedDataContext.create(context) { dataId ->
+          if (RUN_CONFIGURATION_KEY.`is`(dataId)) action.configuration else null
+        }
+      }
+      else context
+    }
     if (pinnedSize != 0) {
       val dndManager = DnDManager.getInstance()
       dndManager.registerSource(MyDnDSource(), list, this)

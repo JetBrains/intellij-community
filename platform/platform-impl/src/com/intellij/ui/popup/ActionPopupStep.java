@@ -21,13 +21,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionItem>,
                                         MnemonicNavigationFilter<PopupFactoryImpl.ActionItem>,
                                         SpeedSearchFilter<PopupFactoryImpl.ActionItem> {
   private static final Logger LOG = Logger.getInstance(ActionPopupStep.class);
-  public static final DataKey<AnAction> SUB_POPUP_PARENT_ACTION = DataKey.create("sub.popup.parent.action");
 
   private final @NotNull List<PopupFactoryImpl.ActionItem> myItems;
   private final @NlsContexts.PopupTitle @Nullable String myTitle;
@@ -40,6 +40,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   private final boolean myShowDisabledActions;
   private Runnable myFinalRunnable;
   private final Condition<? super AnAction> myPreselectActionCondition;
+  private @NotNull BiFunction<DataContext, AnAction, DataContext> mySubStepContextAdjuster = (c, a) -> c;
 
   public ActionPopupStep(@NotNull List<PopupFactoryImpl.ActionItem> items,
                          @PopupTitle @Nullable String title,
@@ -210,6 +211,11 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return myTitle;
   }
 
+  @ApiStatus.Internal
+  public void setSubStepContextAdjuster(@NotNull BiFunction<DataContext, AnAction, DataContext>  subStepContextAdjuster) {
+    mySubStepContextAdjuster = subStepContextAdjuster;
+  }
+
   @Override
   public PopupStep<?> onChosen(PopupFactoryImpl.ActionItem actionChoice, boolean finalChoice) {
     return onChosen(actionChoice, finalChoice, null);
@@ -220,8 +226,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     if (!item.isEnabled()) return FINAL_CHOICE;
     AnAction action = item.getAction();
     if (action instanceof ActionGroup && (!finalChoice || !item.isPerformGroup())) {
-      DataContext dataContext = CustomizedDataContext.create(myContext.get(),
-                                                             dataId -> SUB_POPUP_PARENT_ACTION.is(dataId) ? action : null);
+      DataContext dataContext = mySubStepContextAdjuster.apply(myContext.get(), action);
       return getSubStep((ActionGroup)action, dataContext, myEnableMnemonics, true, myShowDisabledActions, null,
                         false, false, () -> dataContext, myActionPlace, myPreselectActionCondition, -1, myPresentationFactory);
     }
