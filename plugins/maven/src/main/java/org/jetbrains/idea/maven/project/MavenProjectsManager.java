@@ -10,7 +10,6 @@ import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
@@ -61,7 +60,6 @@ import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.project.importing.MavenProjectManagerListenerToBusBridge;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.*;
@@ -483,39 +481,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
         scheduleForNextImport(toImport);
         scheduleForNextResolve(toResolve);
-      }
-
-      @Override
-      public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                  @Nullable NativeMavenProjectHolder nativeMavenProject) {
-        forceUpdateSnapshots = false;
-        if (nativeMavenProject != null) {
-          var project = projectWithChanges.first;
-          if (shouldScheduleProject(projectWithChanges)) {
-            //scheduleForNextImport(List.of(projectWithChanges));
-
-            MavenImportingSettings importingSettings;
-
-            importingSettings = ReadAction.compute(() -> myProject.isDisposed() ? null : getImportingSettings());
-            if (importingSettings == null) return;
-
-            downloadArtifactsSync(Collections.singleton(project),
-                                  List.of(),
-                                  importingSettings.isDownloadSourcesAutomatically(),
-                                  importingSettings.isDownloadDocsAutomatically());
-          }
-        }
-      }
-
-/*      @Override
-      public void foldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-        if (shouldScheduleProject(projectWithChanges)) {
-          scheduleForNextImport(projectWithChanges);
-        }
-      }*/
-
-      private boolean shouldScheduleProject(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-        return !projectWithChanges.first.hasReadingProblems() && projectWithChanges.second.hasChanges();
       }
     }, this);
   }

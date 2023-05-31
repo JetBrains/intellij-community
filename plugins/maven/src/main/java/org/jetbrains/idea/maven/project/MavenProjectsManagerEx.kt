@@ -271,7 +271,12 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
     }
 
-    // TODO: plugins can be resolved in parallel with import
+    val projectsToImport = resolutionResult.mavenProjectMap.entries
+      .flatMap { it.value }
+      .filter { it.changes.hasChanges() }
+      .associateBy({ it.mavenProject }, { it.changes })
+
+    // TODO: plugins and artifacts can be resolved in parallel with import
     val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
     val pluginResolver = MavenPluginResolver(projectsTree)
     withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
@@ -285,11 +290,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         }
       }
     }
+    downloadArtifacts(projectsToImport.map { it.key },
+                      listOf(),
+                      importingSettings.isDownloadSourcesAutomatically,
+                      importingSettings.isDownloadDocsAutomatically)
 
-    val projectsToImport = resolutionResult.mavenProjectMap.entries
-      .flatMap { it.value }
-      .filter { it.changes.hasChanges() }
-      .associateBy({ it.mavenProject }, { it.changes })
     val createdModules = importMavenProjects(projectsToImport + myProjectsToImport)
     result.setResult(createdModules)
 
