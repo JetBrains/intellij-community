@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.workspace
 
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
+import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.io.File
 
@@ -35,6 +36,15 @@ internal fun findMostSpecificExistingFileOrNewDefault(
     agpClassifier: String?,
     testClassifier: String?
 ): File {
+    val hostType = when {
+        HostManager.hostIsMac -> "macos"
+        HostManager.hostIsLinux -> "linux"
+        HostManager.hostIsMingw -> "mingw"
+        else -> null
+    }
+
+    val hostName = HostManager.host.name
+
     val prioritisedClassifyingParts = sequenceOf(
         listOfNotNull(testClassifier),
         listOfNotNull(kotlinClassifier, gradleClassifier, agpClassifier),
@@ -44,7 +54,9 @@ internal fun findMostSpecificExistingFileOrNewDefault(
         listOfNotNull(kotlinClassifier),
         listOfNotNull(gradleClassifier),
         listOfNotNull(agpClassifier),
-    )
+    ).flatMap { parts ->
+        sequenceOf(parts, parts + listOfNotNull(hostType), parts + hostName)
+    }
 
     return prioritisedClassifyingParts
         .filter { it.isNotEmpty() }
