@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.tools.projectWizard.core.service.JvmTargetVersionsPr
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildFileIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.KotlinBuildSystemPluginIR
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.KotlinExtensionConfigurationIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.maven.MavenPropertyIR
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
@@ -160,22 +160,41 @@ object JvmSinglePlatformModuleConfigurator : JvmModuleConfigurator,
     ): List<BuildSystemIR> =
         buildList {
             +super<JvmModuleConfigurator>.createBuildFileIRs(reader, configurationData, module)
+            if (configurationData.buildSystemType == BuildSystemType.GradleKotlinDsl) {
+                +GradleImportIR("org.jetbrains.kotlin.gradle.tasks.KotlinCompile")
+            }
 
-            val targetVersion = inContextOfModuleConfigurator(module) {
+            val targetVersionValue = inContextOfModuleConfigurator(module) {
                 reader {
-                    JvmModuleConfigurator.targetJvmVersion.reference.settingValue
+                    JvmModuleConfigurator.targetJvmVersion.reference.settingValue.value
                 }
             }
             when (configurationData.buildSystemType) {
-                BuildSystemType.GradleKotlinDsl, BuildSystemType.GradleGroovyDsl -> {
-                    +KotlinExtensionConfigurationIR(targetVersion)
+                BuildSystemType.GradleKotlinDsl -> {
+                    +GradleConfigureTaskIR(
+                        GradleByClassTasksAccessIR("KotlinCompile"),
+                        irs = listOf(
+                            GradleAssignmentIR("kotlinOptions.jvmTarget", GradleStringConstIR(targetVersionValue))
+                        )
+                    )
+                }
+                BuildSystemType.GradleGroovyDsl -> {
+                    +jvmTargetSetup("compileKotlin", targetVersionValue)
+                    +jvmTargetSetup("compileTestKotlin", targetVersionValue)
                 }
                 BuildSystemType.Maven -> {
-                    +MavenPropertyIR("kotlin.compiler.jvmTarget", targetVersion.value)
+                    +MavenPropertyIR("kotlin.compiler.jvmTarget", targetVersionValue)
                 }
                 else -> {}
             }
         }
+
+    private fun jvmTargetSetup(taskName: String, targetVersion: String) = GradleSectionIR(
+        taskName,
+        irs = listOf(
+            GradleAssignmentIR("kotlinOptions.jvmTarget", GradleStringConstIR(targetVersion))
+        )
+    )
 }
 
 

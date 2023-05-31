@@ -14,7 +14,9 @@ repositories {
 
 kotlin {
     jvm {
-        jvmToolchain(8)
+        compilations.all {
+            kotlinOptions.jvmTarget = "1.8"
+        }
         withJava()
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
