@@ -251,26 +251,27 @@ fn layout_launcher(
     shared_env: &TestEnvironmentShared
 ) -> Result<(PathBuf, PathBuf)> {
     // .
-    // └── Contents
-    //     ├── bin/
-    //     │   └── remote-dev-server [::RemoteDev]
-    //     │   └── xplat.vmoptions
-    //     │   └── idea.properties
-    //     ├── MacOS/
-    //     │   └── xplat-launcher [::Standard]
-    //     ├── Resources/
-    //     │   └── product-info.json
-    //     ├── lib/
-    //     │   └── app.jar
-    //     │   └── boot-macos.jar
-    //     ├── jbr/
-    //     └── Info.plist
+    // └── XPlatLauncher.app
+    //     └── Contents
+    //         ├── bin/
+    //         │   └── remote-dev-server [::RemoteDev]
+    //         │   └── xplat.vmoptions
+    //         │   └── idea.properties
+    //         ├── MacOS/
+    //         │   └── xplat-launcher [::Standard]
+    //         ├── Resources/
+    //         │   └── product-info.json
+    //         ├── lib/
+    //         │   └── app.jar
+    //         │   └── boot-macos.jar
+    //         ├── jbr/
+    //         └── Info.plist
 
     let launcher_rel_path = match launcher_location {
         LauncherLocation::Standard => "MacOS/xplat-launcher",
         LauncherLocation::RemoteDev => "bin/remote-dev-server"
     };
-    let dist_root = target_dir.join("Contents");
+    let dist_root = target_dir.join("XPlatLauncher.app/Contents");
     let info_plist_path = shared_env.vm_options_path.parent_or_err()?.join("Info.plist");
 
     layout_launcher_impl(
