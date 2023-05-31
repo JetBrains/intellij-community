@@ -135,23 +135,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     Object cliRequest;
     try {
-      List<String> commandLineOptions = new ArrayList<>(serverSettings.getUserProperties().size());
-      for (Map.Entry<Object, Object> each : serverSettings.getUserProperties().entrySet()) {
-        commandLineOptions.add("-D" + each.getKey() + "=" + each.getValue());
-      }
-
-      if (serverSettings.getLoggingLevel() == MavenServerConsoleIndicator.LEVEL_DEBUG) {
-        commandLineOptions.add("-X");
-        commandLineOptions.add("-e");
-      }
-      else if (serverSettings.getLoggingLevel() == MavenServerConsoleIndicator.LEVEL_DISABLED) {
-        commandLineOptions.add("-q");
-      }
-
-      String mavenEmbedderCliOptions = System.getProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS);
-      if (mavenEmbedderCliOptions != null) {
-        commandLineOptions.addAll(StringUtilRt.splitHonorQuotes(mavenEmbedderCliOptions, ' '));
-      }
+      List<String> commandLineOptions = createCommandLineOptions(serverSettings);
       myAlwaysUpdateSnapshots = commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots");
 
       Constructor<?> constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
@@ -221,6 +205,48 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     myImporterSpy = importerSpy;
   }
 
+  @NotNull
+  private static List<String> createCommandLineOptions(MavenServerSettings serverSettings) {
+    List<String> commandLineOptions = new ArrayList<String>(serverSettings.getUserProperties().size());
+    for (Map.Entry<Object, Object> each : serverSettings.getUserProperties().entrySet()) {
+      commandLineOptions.add("-D" + each.getKey() + "=" + each.getValue());
+    }
+
+    if (serverSettings.getLocalRepositoryPath() != null) {
+      commandLineOptions.add("-Dmaven.repo.local=" + serverSettings.getLocalRepositoryPath());
+    }
+    if (serverSettings.isUpdateSnapshots()) {
+      commandLineOptions.add("-U");
+    }
+
+    if (serverSettings.getLoggingLevel() == MavenServerConsoleIndicator.LEVEL_DEBUG) {
+      commandLineOptions.add("-X");
+      commandLineOptions.add("-e");
+    }
+    else if (serverSettings.getLoggingLevel() == MavenServerConsoleIndicator.LEVEL_DISABLED) {
+      commandLineOptions.add("-q");
+    }
+
+    String mavenEmbedderCliOptions = System.getProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS);
+    if (mavenEmbedderCliOptions != null) {
+      commandLineOptions.addAll(StringUtilRt.splitHonorQuotes(mavenEmbedderCliOptions, ' '));
+    }
+
+    if (serverSettings.getGlobalSettingsPath() != null) {
+      commandLineOptions.add("-gs");
+      commandLineOptions.add(serverSettings.getGlobalSettingsPath());
+    }
+    if (serverSettings.getUserSettingsPath() != null) {
+      commandLineOptions.add("-s");
+      commandLineOptions.add(serverSettings.getUserSettingsPath());
+    }
+
+    if (serverSettings.isOffline()) {
+      commandLineOptions.add("-o");
+    }
+
+    return commandLineOptions;
+  }
   @NotNull
   @Override
   public Collection<MavenServerExecutionResult> resolveProjects(@NotNull String longRunningTaskId,

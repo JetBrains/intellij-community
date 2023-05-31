@@ -31,6 +31,8 @@ public class MavenServerSettings implements Serializable, Cloneable {
   @Nullable private String myGlobalSettingsFile;
   @Nullable private String myLocalRepository;
   @NotNull private Properties myUserProperties = new Properties();
+
+  private boolean updateSnapshots;
   private boolean isOffline;
 
   private String projectJdk;
@@ -103,6 +105,14 @@ public class MavenServerSettings implements Serializable, Cloneable {
 
   public void setOffline(boolean offline) {
     isOffline = offline;
+  }
+
+  public boolean isUpdateSnapshots() {
+    return updateSnapshots;
+  }
+
+  public void setUpdateSnapshots(boolean updateSnapshots) {
+    this.updateSnapshots = updateSnapshots;
   }
 
   @Override

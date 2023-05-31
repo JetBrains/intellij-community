@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenConsole;
@@ -209,6 +210,11 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     return perform(() -> getOrCreateWrappee().resolveAndGetArchetypeDescriptor(groupId, artifactId, version, repositories, url, ourToken));
   }
 
+
+  @TestOnly
+  public MavenServerEmbedder getEmbedder() throws RemoteException {
+    return getOrCreateWrappee();
+  }
   public void release() {
     MavenServerEmbedder w = getWrappee();
     if (w == null) return;
