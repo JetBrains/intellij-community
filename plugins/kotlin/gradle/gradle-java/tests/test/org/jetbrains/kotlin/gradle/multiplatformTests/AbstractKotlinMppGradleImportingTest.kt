@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.work
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
+import org.jetbrains.kotlin.idea.codeInsight.gradle.combineMultipleFailures
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -32,6 +33,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.Description
 import org.junit.runner.RunWith
+import org.junit.runners.model.MultipleFailureException
 import java.io.File
 import java.io.PrintStream
 import java.util.TreeSet
@@ -117,7 +119,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
     }
 
     private fun KotlinMppTestsContextImpl.doTest(runImport: Boolean) {
-        installedFeatures.forEach { feature -> with(feature) { context.beforeTestExecution() } }
+        installedFeatures.combineMultipleFailures { feature -> with(feature) { context.beforeTestExecution() } }
         createProjectSubFile(
             "local.properties",
             """
@@ -128,11 +130,11 @@ abstract class AbstractKotlinMppGradleImportingTest :
 
         configureByFiles()
 
-        installedFeatures.forEach { feature -> with(feature) { context.beforeImport() } }
+        installedFeatures.combineMultipleFailures { feature -> with(feature) { context.beforeImport() } }
 
         if (runImport) importProject()
 
-        installedFeatures.forEach { feature ->
+        installedFeatures.combineMultipleFailures { feature ->
             with(feature) {
                 if (feature !is AbstractTestChecker<*> || isCheckerEnabled(feature)) context.afterImport()
             }
