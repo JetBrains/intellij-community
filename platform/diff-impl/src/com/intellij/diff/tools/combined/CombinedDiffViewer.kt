@@ -18,16 +18,18 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.tools.util.side.OnesideTextDiffViewer
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
+import com.intellij.diff.util.DiffUtil
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.editor.impl.ScrollingModelImpl
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
@@ -47,16 +49,17 @@ import java.awt.Point
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.util.*
-import javax.swing.JComponent
-import javax.swing.JLayeredPane
-import javax.swing.JPanel
-import javax.swing.ScrollPaneConstants
+import javax.swing.*
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataProvider {
+class CombinedDiffViewer(
+  context: DiffContext
+) : DiffViewer,
+    CombinedDiffNavigation,
+    DataProvider {
   private val project = context.project!! // CombinedDiffContext expected
 
   private val stubPanelAfterBlock: JPanel = object : JPanel(null) {
@@ -114,7 +117,7 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
 
   private val diffBlocksPositions: BidirectionalMap<CombinedBlockId, Int> = BidirectionalMap()
 
-  internal val scrollSupport = CombinedDiffScrollSupport(project, this)
+  private val scrollSupport = CombinedDiffScrollSupport(project, this)
 
   private val focusListener = FocusListener(this)
 
@@ -123,6 +126,30 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
   private val diffInfo = object : DiffInfo() {
     override fun getContentTitles(): List<String?> {
       return getCurrentBlockId()?.let { blockId -> diffViewers[blockId] as? DiffViewerBase }?.request?.contentTitles ?: return emptyList()
+    }
+  }
+
+  private val blockNavigation = object : PrevNextDifferenceIterable {
+    var currentBlockIndex = 0
+      private set
+
+    override fun canGoNext(): Boolean = currentBlockIndex < getDiffBlocksCount() - 1
+
+    override fun canGoPrev(): Boolean = currentBlockIndex > 0
+
+    override fun goNext() {
+      currentBlockIndex++
+      selectDiffBlock(currentBlockIndex, ScrollPolicy.SCROLL_TO_BLOCK)
+
+    }
+
+    override fun goPrev() {
+      currentBlockIndex--
+      selectDiffBlock(currentBlockIndex, ScrollPolicy.SCROLL_TO_BLOCK)
+    }
+
+    fun setCurrentBlock(index: Int) {
+      this.currentBlockIndex = index
     }
   }
 
@@ -147,6 +174,11 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
       diffViewers[blockId] = newViewer
       block.updateBlockContent(newContent)
       newViewer.init()
+
+      diffInfo.update()
+      if (blockNavigation.currentBlockIndex == getBlockIndex(blockId)) {
+        requestFocusInDiffViewer(newViewer)
+      }
     }
   }
 
@@ -199,9 +231,12 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
 
   override fun dispose() {}
 
+  private val currentDiffIterable: CombinedDiffScrollSupport.CombinedDiffPrevNextDifferenceIterable
+    get() = scrollSupport.currentPrevNextIterable
+
   override fun getData(dataId: @NonNls String): Any? {
     if (CommonDataKeys.PROJECT.`is`(dataId)) return project
-    if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.`is`(dataId)) return scrollSupport.currentPrevNextIterable
+    if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.`is`(dataId)) return currentDiffIterable
     if (DiffDataKeys.NAVIGATABLE.`is`(dataId)) return getCurrentDataProvider()?.let(DiffDataKeys.NAVIGATABLE::getData)
     if (DiffDataKeys.DIFF_VIEWER.`is`(dataId)) return getCurrentDiffViewer()
     if (COMBINED_DIFF_VIEWER.`is`(dataId)) return this
@@ -221,47 +256,47 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     }
   }
 
-  fun isNavigationEnabled(): Boolean = diffBlocks.isNotEmpty()
+  override fun canGoNextDiff(): Boolean = isNavigationEnabled() && (currentDiffIterable.canGoNext() || canGoNextBlock())
+  override fun canGoPrevDiff(): Boolean = isNavigationEnabled() && (currentDiffIterable.canGoNext() || canGoPrevBlock())
 
-  fun hasNextChange(fromUpdate: Boolean): Boolean {
-    val curFilesIndex = scrollSupport.blockIterable.index
-    return curFilesIndex != -1 && curFilesIndex < getDiffBlocksCount() - 1
-  }
-
-  fun hasPrevChange(fromUpdate: Boolean): Boolean {
-    val curFilesIndex = scrollSupport.blockIterable.index
-    return curFilesIndex != -1 && curFilesIndex > 0
-  }
-
-  fun goToNextChange(fromDifferences: Boolean) {
-    goToChange(fromDifferences, true)
-  }
-
-  fun goToPrevChange(fromDifferences: Boolean) {
-    goToChange(fromDifferences, false)
-  }
-
-  private fun goToChange(fromDifferences: Boolean, next: Boolean) {
-    val differencesIterable = getDifferencesIterable()
-    val blocksIterable = getBlocksIterable()
-    val canGoToDifference = { if (next) differencesIterable?.canGoNext() == true else differencesIterable?.canGoPrev() == true }
-    val goToDifference = { if (next) differencesIterable?.goNext() else differencesIterable?.goPrev() }
-    val canGoToBlock = { if (next) blocksIterable.canGoNext() else blocksIterable.canGoPrev() }
-    val goToBlock = { if (next) blocksIterable.goNext() else blocksIterable.goPrev() }
-
+  override fun goNextDiff() {
     when {
-      fromDifferences && canGoToDifference() -> goToDifference()
-      fromDifferences && canGoToBlock() -> {
-        goToBlock()
-        selectDiffBlock(ScrollPolicy.DIFF_CHANGE)
+      currentDiffIterable.canGoNext() -> {
+        currentDiffIterable.goNext()
       }
-
-      canGoToBlock() -> {
-        goToBlock()
-        selectDiffBlock(ScrollPolicy.DIFF_BLOCK)
+      canGoNextBlock() -> {
+        blockNavigation.goNext()
+        currentDiffIterable.goFirst()
       }
     }
   }
+
+  override fun goPrevDiff() {
+    when {
+      currentDiffIterable.canGoPrev() -> {
+        currentDiffIterable.goPrev()
+      }
+      canGoPrevBlock() -> {
+        blockNavigation.goPrev()
+        currentDiffIterable.goLast()
+      }
+    }
+  }
+
+  override fun canGoNextBlock(): Boolean = isNavigationEnabled() && blockNavigation.canGoNext()
+  override fun canGoPrevBlock(): Boolean = isNavigationEnabled() && blockNavigation.canGoPrev()
+
+  override fun goNextBlock() {
+    if (!canGoNextBlock()) return
+    blockNavigation.goNext()
+  }
+
+  override fun goPrevBlock() {
+    if (!canGoPrevBlock()) return
+    blockNavigation.goPrev()
+  }
+
+  private fun isNavigationEnabled(): Boolean = diffBlocks.isNotEmpty()
 
   private fun notifyVisibleBlocksChanged() {
     val delta = CombinedDiffRegistry.getPreloadedBlocksCount()
@@ -378,59 +413,38 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
   fun getDiffBlocksCount(): Int = diffBlocks.size
 
   fun getCurrentBlockId(): CombinedBlockId? {
-    return getBlockId(scrollSupport.blockIterable.index)
+    return getBlockId(blockNavigation.currentBlockIndex)
   }
 
   fun getBlockIndex(id: CombinedBlockId): Int? {
     return diffBlocksPositions[id]
   }
 
-  internal fun getDifferencesIterable(): PrevNextDifferenceIterable? {
-    return getCurrentDataProvider()?.let(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE::getData)
-  }
+  private fun getCurrentDiffViewer(): DiffViewer? = getDiffViewerForIndex(blockNavigation.currentBlockIndex)
 
-  private fun getBlocksIterable(): PrevNextDifferenceIterable = scrollSupport.blockIterable
-
-  internal fun getCurrentDiffViewer(): DiffViewer? = getDiffViewerForIndex(scrollSupport.blockIterable.index)
-
-  internal fun getDiffViewerForIndex(index: Int): DiffViewer? {
+  private fun getDiffViewerForIndex(index: Int): DiffViewer? {
     return getBlockId(index)?.let { blockId -> getDiffViewerForId(blockId) }
   }
 
   internal fun getDiffViewerForId(id: CombinedBlockId): DiffViewer? = diffViewers[id]
 
-  fun selectDiffBlock(blockId: CombinedBlockId?, focusBlock: Boolean, onSelected: () -> Unit = {}) {
+  fun selectDiffBlock(blockId: CombinedBlockId?, focusBlock: Boolean) {
     blockId ?: return
     val index = getBlockIndex(blockId)
     if (index == null || index == -1) return
 
-    selectDiffBlock(index, ScrollPolicy.DIFF_BLOCK, focusBlock, onSelected)
-  }
-
-  private fun selectDiffBlock(scrollPolicy: ScrollPolicy) {
-    selectDiffBlock(scrollSupport.blockIterable.index, scrollPolicy)
-  }
-
-  private fun selectDiffBlock(index: Int = scrollSupport.blockIterable.index,
-                              scrollPolicy: ScrollPolicy,
-                              focusBlock: Boolean = true,
-                              onSelected: () -> Unit = {}) {
-    val blockId = getBlockId(index) ?: return
-    val block = getBlockForId(blockId) ?: return
-
-    selectDiffBlock(index, block, scrollPolicy, focusBlock, onSelected)
+    selectDiffBlock(index, ScrollPolicy.SCROLL_TO_BLOCK, focusBlock)
   }
 
   private fun selectDiffBlock(index: Int,
-                              block: CombinedDiffBlock<*>,
                               scrollPolicy: ScrollPolicy,
-                              focusBlock: Boolean,
-                              onSelected: () -> Unit) {
+                              focusBlock: Boolean = true) {
+    val blockId = getBlockId(index) ?: return
+    val block = getBlockForId(blockId) ?: return
     val viewer = getDiffViewerForId(block.id) ?: return
 
     val doSelect = {
-      onSelected()
-      scrollSupport.blockIterable.index = index
+      blockNavigation.setCurrentBlock(index)
       scrollSupport.scroll(index, block, scrollPolicy)
     }
 
@@ -438,20 +452,22 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
       doSelect()
       return
     }
+    requestFocusInDiffViewer(viewer)
+    IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(doSelect)
+  }
 
+  private fun requestFocusInDiffViewer(newViewer: DiffViewer) {
     val componentToFocus =
-      with(viewer) {
+      with(newViewer) {
         when {
           isEditorBased -> editor?.contentComponent
           preferredFocusedComponent != null -> preferredFocusedComponent
           else -> component
         }
-      } ?: return
+      }
     val focusManager = IdeFocusManager.getInstance(project)
-    if (focusManager.focusOwner == componentToFocus) return
-
-    focusManager.requestFocus(componentToFocus, true)
-    focusManager.doWhenFocusSettlesDown(doSelect)
+    if (focusManager.focusOwner != componentToFocus && componentToFocus != null)
+      focusManager.requestFocus(componentToFocus, true)
   }
 
   private fun createToolbarActions(): List<AnAction> {
@@ -495,25 +511,26 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
     }
 
     override fun focusGained(editor: Editor) {
-      val indexOfSelectedBlock =
-        diffViewers.entries.find { editor == it.value.editor }?.key?.let { blockId -> getBlockIndex(blockId) } ?: -1
-      if (indexOfSelectedBlock != -1) {
-        scrollSupport.blockIterable.index = indexOfSelectedBlock
-        diffInfo.update()
-      }
+      val blockId = diffViewers.entries.find { it.value.editors.contains(editor) }?.key ?: return
+
+      val blockIndex = getBlockIndex(blockId) ?: -1
+      if (blockIndex == -1) return
+
+      blockNavigation.setCurrentBlock(blockIndex)
+      diffInfo.update()
     }
 
     override fun focusGained(e: FocusEvent) {
-      val indexOfSelectedBlock =
-        diffViewers.entries.find {
-          val v = it.value
-          !v.isEditorBased && (v.preferredFocusedComponent == e.component || v.component == e.component)
-        }?.key?.let { blockId -> getBlockIndex(blockId) } ?: -1
+      val blockId = diffViewers.entries.find {
+        val diffViewer = it.value
+        !diffViewer.isEditorBased && (diffViewer.preferredFocusedComponent == e.component || diffViewer.component == e.component)
+      }?.key ?: return
 
-      if (indexOfSelectedBlock != -1) {
-        scrollSupport.blockIterable.index = indexOfSelectedBlock
-        diffInfo.update()
-      }
+      val blockIndex = getBlockIndex(blockId) ?: -1
+      if (blockIndex == -1) return
+
+      blockNavigation.setCurrentBlock(blockIndex)
+      diffInfo.update()
     }
 
     fun register(component: JComponent, disposable: Disposable) {
@@ -521,9 +538,112 @@ class CombinedDiffViewer(private val context: DiffContext) : DiffViewer, DataPro
       Disposer.register(disposable) { ListenerUtil.removeFocusListener(component, this) }
     }
   }
+
+  enum class ScrollPolicy {
+    SCROLL_TO_BLOCK,
+    SCROLL_TO_CARET
+  }
+
+  private class CombinedDiffScrollSupport(project: Project?, private val viewer: CombinedDiffViewer) {
+
+    val currentPrevNextIterable = CombinedDiffPrevNextDifferenceIterable()
+
+    private val combinedEditorsScrollingModel = ScrollingModelImpl(CombinedEditorsScrollingModelHelper(project, viewer))
+
+    fun scroll(index: Int, block: CombinedDiffBlock<*>, scrollPolicy: ScrollPolicy) {
+      val isEditorBased = viewer.getDiffViewerForId(block.id)?.isEditorBased ?: false
+      if (scrollPolicy == ScrollPolicy.SCROLL_TO_BLOCK || !isEditorBased) {
+        scrollToDiffBlock(index)
+      }
+      else if (scrollPolicy == ScrollPolicy.SCROLL_TO_CARET) {
+        scrollToDiffChangeWithCaret()
+      }
+    }
+
+    private fun scrollToDiffChangeWithCaret() {
+      if (viewer.getCurrentDiffViewer().isEditorBased) { //avoid scrolling for non editor based viewers
+        combinedEditorsScrollingModel.scrollToCaret(ScrollType.CENTER)
+      }
+    }
+
+    private fun scrollToDiffBlock(index: Int) {
+      if (viewer.getDiffViewerForIndex(index) != null) {
+        val bounds = viewer.blocksPanel.components.getOrNull(index)?.bounds ?: return
+        bounds.height = Int.MAX_VALUE
+        viewer.blocksPanel.scrollRectToVisible(bounds)
+      }
+    }
+
+    inner class CombinedDiffPrevNextDifferenceIterable : PrevNextDifferenceIterable {
+      private fun CombinedDiffViewer.getDifferencesIterable(): PrevNextDifferenceIterable? {
+        return getCurrentDataProvider()?.let(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE::getData)
+      }
+
+      override fun canGoNext(): Boolean {
+        return viewer.getDifferencesIterable()?.canGoNext() == true
+      }
+
+      override fun canGoPrev(): Boolean {
+        return viewer.getDifferencesIterable()?.canGoPrev() == true
+      }
+
+      override fun goNext() {
+        viewer.getDifferencesIterable()?.goNext()
+        scrollToDiffChangeWithCaret()
+      }
+
+      override fun goPrev() {
+        viewer.getDifferencesIterable()?.goPrev()
+        scrollToDiffChangeWithCaret()
+      }
+
+      fun goFirst() {
+        val diffIterable = viewer.getDifferencesIterable() ?: return
+        while (diffIterable.canGoPrev()) diffIterable.goPrev()
+        scrollToDiffChangeWithCaret()
+      }
+
+      fun goLast() {
+        val diffIterable = viewer.getDifferencesIterable() ?: return
+        while (diffIterable.canGoNext()) diffIterable.goNext()
+        scrollToDiffChangeWithCaret()
+      }
+    }
+
+    private inner class CombinedEditorsScrollingModelHelper(project: Project?, disposable: Disposable) :
+      ScrollingModel.Supplier, ScrollingModel.ScrollingHelper, Disposable {
+
+      private val dummyEditor: Editor //needed for ScrollingModelImpl initialization
+
+      init {
+        dummyEditor = DiffUtil.createEditor(EditorFactory.getInstance().createDocument(""), project, true, true)
+        Disposer.register(disposable, this)
+      }
+
+      override fun getEditor(): Editor = viewer.getCurrentDiffViewer()?.editor ?: dummyEditor
+
+      override fun getScrollPane(): JScrollPane = viewer.scrollPane
+
+      override fun getScrollingHelper(): ScrollingModel.ScrollingHelper = this
+
+      override fun calculateScrollingLocation(editor: Editor, pos: VisualPosition): Point {
+        val targetLocationInEditor = editor.visualPositionToXY(pos)
+        return SwingUtilities.convertPoint(editor.component, targetLocationInEditor, scrollPane.viewport.view)
+      }
+
+      override fun calculateScrollingLocation(editor: Editor, pos: LogicalPosition): Point {
+        val targetLocationInEditor = editor.logicalPositionToXY(pos)
+        return SwingUtilities.convertPoint(editor.component, targetLocationInEditor, scrollPane.viewport.view)
+      }
+
+      override fun dispose() {
+        EditorFactory.getInstance().releaseEditor(dummyEditor)
+      }
+    }
+  }
 }
 
-val DiffViewer.editor: EditorEx?
+private val DiffViewer.editor: EditorEx?
   get() = when (this) {
     is OnesideTextDiffViewer -> editor
     is TwosideTextDiffViewer -> currentEditor
@@ -541,7 +661,7 @@ val DiffViewer.editors: List<EditorEx>
     else -> emptyList()
   }
 
-internal val DiffViewer?.isEditorBased: Boolean
+private val DiffViewer?.isEditorBased: Boolean
   get() = this is DiffViewerBase &&
           this !is OnesideBinaryDiffViewer &&  //TODO simplify, introduce ability to distinguish editor and non-editor based DiffViewer
           this !is ThreesideBinaryDiffViewer &&

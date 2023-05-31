@@ -13,7 +13,6 @@ import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
 import com.intellij.diff.impl.ui.DiffToolChooser
 import com.intellij.diff.impl.ui.DifferencesLabel
 import com.intellij.diff.tools.util.DiffDataKeys
-import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.util.DiffUserDataKeys
@@ -30,7 +29,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.ui.GuiUtils
 import com.intellij.ui.JBColor
@@ -91,32 +89,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     override fun update(e: AnActionEvent) {
       super.update(e)
       e.presentation.isVisible = false
-    }
-  }
-
-  private val prevFileAction = object : CombinedPrevChangeAction(context) {
-    override fun update(e: AnActionEvent) {
-      super.update(e)
-      e.presentation.isVisible = false
-    }
-  }
-
-  private val nextFileAction = object : CombinedNextChangeAction(context) {
-    override fun update(e: AnActionEvent) {
-      super.update(e)
-      e.presentation.isVisible = false
-    }
-  }
-
-  private val prevDifferenceAction = object : CombinedPrevDifferenceAction(settings, context) {
-    override fun getDifferenceIterable(e: AnActionEvent): PrevNextDifferenceIterable? {
-      return combinedViewer?.scrollSupport?.currentPrevNextIterable ?: super.getDifferenceIterable(e)
-    }
-  }
-
-  private val nextDifferenceAction = object : CombinedNextDifferenceAction(settings, context) {
-    override fun getDifferenceIterable(e: AnActionEvent): PrevNextDifferenceIterable? {
-      return combinedViewer?.scrollSupport?.currentPrevNextIterable ?: super.getDifferenceIterable(e)
     }
   }
 
@@ -234,7 +206,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
 
   private fun collectToolbarActions(viewerActions: List<AnAction?>?) {
     leftToolbarGroup.removeAll()
-    val navigationActions= ArrayList<AnAction>(collectNavigationActions())
+    val navigationActions = ArrayList<AnAction>(collectNavigationActions())
 
     rightToolbarGroup.add(diffToolChooser)
 
@@ -244,22 +216,27 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     val contextActions = context.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS)
     DiffUtil.addActionBlock(leftToolbarGroup, contextActions)
 
-    if (SystemInfo.isMac) { // collect touchbar actions
-      touchbarActionGroup.removeAll()
-      touchbarActionGroup.addAll(CombinedPrevDifferenceAction(settings, context), CombinedNextDifferenceAction(settings, context),
-                                 OpenInEditorAction(),
-                                 Separator.getInstance(),
-                                 CombinedPrevChangeAction(context), CombinedNextChangeAction(context))
-      if (SHOW_VIEWER_ACTIONS_IN_TOUCHBAR && viewerActions != null) {
-        touchbarActionGroup.addAll(viewerActions)
-      }
-    }
+    //if (SystemInfo.isMac) { // collect touchbar actions
+    //  touchbarActionGroup.removeAll()
+    //  touchbarActionGroup.addAll(CombinedPrevDifferenceAction(settings, context), CombinedNextDifferenceAction(settings, context),
+    //                             OpenInEditorAction(),
+    //                             Separator.getInstance(),
+    //                             CombinedPrevChangeAction(context), CombinedNextChangeAction(context))
+    //  if (SHOW_VIEWER_ACTIONS_IN_TOUCHBAR && viewerActions != null) {
+    //    touchbarActionGroup.addAll(viewerActions)
+    //  }
+    //}
   }
 
   private fun collectNavigationActions(): List<AnAction> {
-
-    return listOfNotNull(prevDifferenceAction, nextDifferenceAction, differencesLabel,
-                         openInEditorAction, prevFileAction, nextFileAction)
+    return listOfNotNull(
+      CombinedPrevDifferenceAction(context),
+      CombinedNextDifferenceAction(context),
+      CombinedPrevBlockAction(context),
+      CombinedNextBlockAction(context),
+      differencesLabel,
+      openInEditorAction,
+    )
   }
 
   private fun buildTopPanel(): BorderLayoutPanel {

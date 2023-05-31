@@ -191,6 +191,7 @@ private class CombinedSimpleDiffBlock(project: Project,
     editors = viewer.editors
     body.setContent(viewer.component)
     header.setContent(if (viewer is CombinedDiffLoadingBlock) pathOnlyHeader else headerWithToolbar)
+    this.validate()
   }
 
   override fun getPreferredSize(): Dimension {
