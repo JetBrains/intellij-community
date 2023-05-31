@@ -1,0 +1,3 @@
+14:16:50: Execution finished ':cleanMacosX64Test :macosX64Test --tests "NativeTest.test - success"'.
+
+<exitCode: 0>

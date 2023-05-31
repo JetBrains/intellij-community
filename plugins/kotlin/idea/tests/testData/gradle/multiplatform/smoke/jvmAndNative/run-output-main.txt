@@ -1,0 +1,5 @@
+Running: CommonMain!
+
+<time>: Execution finished 'jvmRun -DmainClass=CommonMainKt --quiet'.
+
+<exitCode: 0>
