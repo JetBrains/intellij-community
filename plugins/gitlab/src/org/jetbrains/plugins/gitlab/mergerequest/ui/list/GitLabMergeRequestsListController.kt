@@ -28,14 +28,14 @@ internal class GitLabMergeRequestsListController(
 
   init {
     scope.launch {
-      listVm.errorState.collect { error ->
+      listVm.error.collect { error ->
         mainPanel.setContent(if (error != null) errorPanel else listPanel)
         mainPanel.repaint()
       }
     }
 
     scope.launch {
-      combineAndCollect(listVm.loadingState, listVm.filterVm.searchState) { isLoading, searchState ->
+      combineAndCollect(listVm.loading, listVm.filterVm.searchState) { isLoading, searchState ->
         updateEmptyText(isLoading, searchState, listVm.repository)
       }
     }
@@ -64,7 +64,7 @@ internal class GitLabMergeRequestsListController(
 
   private fun createErrorPanel(scope: CoroutineScope, accountVm: GitLabAccountViewModel): JComponent {
     val errorPresenter = GitLabMergeRequestErrorStatusPresenter(accountVm)
-    val errorPanel = ErrorStatusPanelFactory.create(scope, listVm.errorState, errorPresenter)
+    val errorPanel = ErrorStatusPanelFactory.create(scope, listVm.error, errorPresenter)
 
     return JPanel(SingleComponentCenteringLayout()).apply {
       add(errorPanel)

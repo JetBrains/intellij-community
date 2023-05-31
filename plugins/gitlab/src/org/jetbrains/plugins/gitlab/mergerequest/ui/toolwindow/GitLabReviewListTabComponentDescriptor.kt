@@ -6,7 +6,9 @@ import com.intellij.collaboration.ui.toolwindow.ReviewListTabComponentDescriptor
 import com.intellij.ide.DataManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
@@ -23,10 +25,12 @@ import javax.swing.JComponent
 
 internal class GitLabReviewListTabComponentDescriptor(
   project: Project,
-  cs: CoroutineScope,
+  parentCs: CoroutineScope,
   accountManager: GitLabAccountManager,
   ctx: GitLabProjectUIContext
 ) : ReviewListTabComponentDescriptor {
+
+  private val cs = parentCs.childScope(Dispatchers.Default)
 
   override val viewModel: GitLabMergeRequestsListViewModel
 
@@ -55,7 +59,7 @@ internal class GitLabReviewListTabComponentDescriptor(
       loaderSupplier = { filtersValue -> projectData.mergeRequests.getListLoader(filtersValue.toSearchQuery()) }
     )
 
-    component = GitLabMergeRequestsPanelFactory().create(cs, accountVm, viewModel).also {
+    component = GitLabMergeRequestsPanelFactory().create(cs.childScope(Dispatchers.Main), accountVm, viewModel).also {
       DataManager.registerDataProvider(it) { dataId ->
         when {
           GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> ctx.filesController
