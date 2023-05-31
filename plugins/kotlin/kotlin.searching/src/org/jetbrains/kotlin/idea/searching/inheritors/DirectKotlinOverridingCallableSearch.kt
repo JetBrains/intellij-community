@@ -77,7 +77,7 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
                         val superFunction = superDeclarationPointer.element ?: return@runReadAction false
 
                         (classOrObject.getSymbol() as KtSymbolWithMembers).getDeclaredMemberScope()
-                            .getCallableSymbols { it == ktCallableDeclarationName }
+                            .getCallableSymbols(ktCallableDeclarationName)
                             .all { overridingSymbol ->
                                 val function = overridingSymbol.psi
                                 if (function != null && overridingSymbol.getDirectlyOverriddenSymbols().any { it.psi == superFunction }) {

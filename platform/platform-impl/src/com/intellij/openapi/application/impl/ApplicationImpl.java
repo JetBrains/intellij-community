@@ -103,7 +103,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private final TransactionGuardImpl myTransactionGuard = new TransactionGuardImpl();
   private int myWriteStackBase;
 
-  private final ReadActionCacheIml myReadActionCacheIml = new ReadActionCacheIml();
+  private final ReadActionCacheImpl myReadActionCacheImpl = new ReadActionCacheImpl();
 
   private final long myStartTime = System.currentTimeMillis();
   private boolean mySaveAllowed;
@@ -172,7 +172,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     app.registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(),
                                 ComponentManagerImpl.fakeCorePluginDescriptor);
     app.registerServiceInstance(Application.class, app, ComponentManagerImpl.fakeCorePluginDescriptor);
-    app.registerServiceInstance(ReadActionCache.class, app.myReadActionCacheIml, ComponentManagerImpl.fakeCorePluginDescriptor);
+    app.registerServiceInstance(ReadActionCache.class, app.myReadActionCacheImpl, ComponentManagerImpl.fakeCorePluginDescriptor);
   }
 
   @ApiStatus.Internal
@@ -903,7 +903,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       action.run();
     }
     finally {
-      myReadActionCacheIml.clear();
+      myReadActionCacheImpl.clear();
       if (status != null) {
         myLock.endRead(status);
       }
@@ -917,7 +917,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       return computation.compute();
     }
     finally {
-      myReadActionCacheIml.clear();
+      myReadActionCacheImpl.clear();
       if (status != null) {
         myLock.endRead(status);
       }
@@ -931,7 +931,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       return computation.compute();
     }
     finally {
-      myReadActionCacheIml.clear();
+      myReadActionCacheImpl.clear();
       if (status != null) {
         myLock.endRead(status);
       }
@@ -1142,7 +1142,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       action.run();
     }
     finally {
-      myReadActionCacheIml.clear();
+      myReadActionCacheImpl.clear();
       if (status != null) {
         myLock.endRead(status);
       }
@@ -1316,7 +1316,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     @Override
     public void finish() {
-      myReadActionCacheIml.clear();
+      myReadActionCacheImpl.clear();
       myLock.endRead(myReader);
     }
   }

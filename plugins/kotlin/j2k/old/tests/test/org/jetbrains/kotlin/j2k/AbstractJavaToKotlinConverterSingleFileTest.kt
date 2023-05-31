@@ -85,10 +85,8 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             var actual = reformat(rawConverted, project, reformatInFun)
 
             if (prefix == "file") {
-                actual = createKotlinFile(actual)
-                    .dumpTextWithErrors(setOf(element = ErrorsJvm.INTERFACE_STATIC_METHOD_CALL_FROM_JAVA6_TARGET.errorFactory))
+                actual = createKotlinFile(actual).dumpTextWithErrors()
             }
-
 
             val expectedFile = provideExpectedFile(javaPath)
             compareResults(expectedFile, actual)

@@ -3,10 +3,9 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.project.structure.KtNotUnderContentRootModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
@@ -35,21 +34,8 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
         }
     }
 
-    private val PsiElement.isJvmElement: Boolean
-        get() {
-            val resolveProvider = project.getService(FirKotlinUastResolveProviderService::class.java)
-            return resolveProvider.isJvmElement(this)
-        }
-
     private val PsiElement.isSupportedElement: Boolean
-        get() {
-            if (!isJvmElement) {
-                return false
-            }
-
-            val containingFile = containingFile?.let(::unwrapFakeFileForLightClass) as? KtFile ?: return false
-            return containingFile.getKtModule(project) !is KtNotUnderContentRootModule
-        }
+        get() = project.service<FirKotlinUastResolveProviderService>().isSupportedElement(this)
 
     override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
         if (!element.isSupportedElement) return null

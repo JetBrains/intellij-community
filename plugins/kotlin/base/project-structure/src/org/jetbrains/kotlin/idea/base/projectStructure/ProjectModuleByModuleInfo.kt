@@ -87,27 +87,23 @@ open class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceInfo) 
 }
 
 @ApiStatus.Internal
-class KtSourceModuleByModuleInfoForNonUnderContentFile(
+class KtSourceModuleByModuleInfoForOutsider(
     val fakeVirtualFile: VirtualFile,
     val originalVirtualFile: VirtualFile,
     moduleInfo: ModuleSourceInfo,
 ) : KtSourceModuleByModuleInfo(moduleInfo) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is KtSourceModuleByModuleInfoForNonUnderContentFile || other.fakeVirtualFile != fakeVirtualFile) return false
+        if (other !is KtSourceModuleByModuleInfoForOutsider || other.fakeVirtualFile != fakeVirtualFile) return false
         return super.equals(other)
     }
 
     override fun hashCode(): Int = fakeVirtualFile.hashCode()
 
     override val contentScope: GlobalSearchScope
-        get() = replaceOriginalFileWithFakeInScope(super.contentScope)
-
-    fun replaceOriginalFileWithFakeInScope(originalScope: GlobalSearchScope): GlobalSearchScope {
-        return GlobalSearchScope.fileScope(project, fakeVirtualFile)
-            .uniteWith(originalScope)
+        get() = GlobalSearchScope.fileScope(project, fakeVirtualFile)
+            .uniteWith(super.contentScope)
             .intersectWith(GlobalSearchScope.fileScope(project, originalVirtualFile).not())
-    }
 }
 
 fun ModuleSourceInfo.collectDependencies(collectionMode: ModuleDependencyCollector.CollectionMode): List<KtModule> {

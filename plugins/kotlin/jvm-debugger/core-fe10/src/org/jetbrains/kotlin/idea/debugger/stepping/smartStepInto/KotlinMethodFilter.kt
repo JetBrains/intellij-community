@@ -10,7 +10,6 @@ import com.intellij.util.Range
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -19,9 +18,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
-import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
@@ -59,12 +56,6 @@ open class KotlinMethodFilter(
             return false
         }
 
-        // Element is lost. But we know that name matches, so stop.
-        val declaration = declarationPtr?.element ?: return true
-
-        if (currentDescriptor is ClassDescriptor) {
-            return currentDescriptor.hasDeclarationOverridenByDelegation(declaration)
-        }
         if (currentDescriptor !is CallableMemberDescriptor) return false
         if (currentDescriptor.kind != CallableMemberDescriptor.Kind.DECLARATION) return false
 
@@ -73,6 +64,9 @@ open class KotlinMethodFilter(
             // Descriptors can be not-equal, say when parameter has type `(T) -> T` and lambda is `Int.() -> Int`.
             return true
         }
+
+        // Element is lost. But we know that name matches, so stop.
+        val declaration = declarationPtr?.element ?: return true
 
         val psiManager = currentDeclaration.manager
         if (psiManager.areElementsEquivalent(currentDeclaration, declaration)) {
@@ -83,17 +77,6 @@ open class KotlinMethodFilter(
             val currentBaseDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(currentDeclaration.project, baseOfCurrent)
             psiManager.areElementsEquivalent(declaration, currentBaseDeclaration)
         }
-    }
-
-    private fun ClassDescriptor.hasDeclarationOverridenByDelegation(
-        originalDeclaration: KtDeclaration,
-    ): Boolean {
-        val originalName = Name.identifier(methodName)
-        return unsubstitutedMemberScope
-            .getContributedDescriptors { it == originalName }
-            .filterIsInstance<CallableMemberDescriptor>()
-            .filter { it.kind == CallableMemberDescriptor.Kind.DELEGATION }
-            .any { originalDeclaration.descriptor in it.overriddenDescriptors }
     }
 
     override fun getCallingExpressionLines(): Range<Int>? =

@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinResolutionScopeProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isKotlinBuiltins
 import org.jetbrains.kotlin.idea.stubindex.*
@@ -69,8 +69,8 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
         private fun getShortName(fqName: String) = Name.identifier(fqName.substringAfterLast('.'))
 
         fun createForPosition(position: PsiElement): HLIndexHelper {
-            val module = position.getKtModule()
-            val project = module.project
+            val project = position.project
+            val module = ProjectStructureProvider.getModule(project, position, null)
             val scope = KotlinResolutionScopeProvider.getInstance(project).getResolutionScope(module)
             return HLIndexHelper(project, scope)
         }

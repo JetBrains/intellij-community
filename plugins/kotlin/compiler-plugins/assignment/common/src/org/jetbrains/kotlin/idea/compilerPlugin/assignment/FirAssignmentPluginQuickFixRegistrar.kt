@@ -7,7 +7,8 @@ import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider.CompilerPluginType
-import org.jetbrains.kotlin.analysis.project.structure.getKtModuleOfType
+import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
@@ -44,6 +45,7 @@ private val FACTORY = diagnosticFixFactory(KtFirDiagnostic.UnresolvedReference::
     listOfNotNull(quickFix)
 }
 
-private fun isAssignmentPluginEnabled(project: Project, element: PsiElement): Boolean =
-    project.getService(KtCompilerPluginsProvider::class.java)
-        .isPluginOfTypeRegistered(element.getKtModuleOfType(project), CompilerPluginType.ASSIGNMENT)
+private fun isAssignmentPluginEnabled(project: Project, element: PsiElement): Boolean {
+    val module = ProjectStructureProvider.getModule(project, element, contextualModule = null) as? KtSourceModule ?: return false
+    return project.getService(KtCompilerPluginsProvider::class.java).isPluginOfTypeRegistered(module, CompilerPluginType.ASSIGNMENT)
+}
