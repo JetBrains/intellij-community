@@ -31,10 +31,10 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
-internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: EntityId) : EntityReference<E>() {
+internal data class EntityReferenceImpl<E : WorkspaceEntity>(internal val id: EntityId) : EntityReference<E>() {
   override fun resolve(storage: EntityStorage): E? {
-    @Suppress("UNCHECKED_CAST")
-    return (storage as AbstractEntityStorage).entityDataById(id)?.createEntity(storage) as? E
+    storage as EntityStorageInstrumentation
+    return storage.resolveReference(this)
   }
 
   override fun isReferenceTo(entity: WorkspaceEntity): Boolean {
@@ -976,8 +976,6 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
     return indexes.virtualFileIndex
   }
 
-  override fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E> = EntityReferenceImpl((e as WorkspaceEntityBase).id)
-
 
   override fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T = newInstance()
 
@@ -1011,6 +1009,12 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
     else {
       report()
     }
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun <T : WorkspaceEntity> resolveReference(reference: EntityReference<T>): T? {
+    reference as EntityReferenceImpl<T>
+    return this.entityDataById(reference.id)?.createEntity(this) as? T
   }
 
   companion object {

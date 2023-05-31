@@ -36,7 +36,6 @@ interface EntityStorage {
   fun <T> getExternalMapping(identifier: @NonNls String): ExternalEntityMapping<T>
   fun getVirtualFileUrlIndex(): VirtualFileUrlIndex
   fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
-  fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E>
   fun toSnapshot(): EntityStorageSnapshot
 }
 
