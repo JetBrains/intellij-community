@@ -116,18 +116,12 @@ public class ModuleUtilCore {
           return orderEntries.get(0).getOwnerModule();
         }
 
-        Comparator<Module> comparator = ModuleManager.getInstance(project).moduleDependencyComparator();
-        Iterator<OrderEntry> iterator = orderEntries.iterator();
-        Module candidate = iterator.next().getOwnerModule();
-
-        while (iterator.hasNext()) {
-          Module next = iterator.next().getOwnerModule();
-          if (comparator.compare(next, candidate) < 0) {
-            candidate = next;
-          }
-        }
-
-        return candidate;
+        return Collections.min(
+          orderEntries,
+          Comparator.comparing(
+            OrderEntry::getOwnerModule,
+            ModuleManager.getInstance(project).moduleDependencyComparator())
+        ).getOwnerModule();
       }
 
       return fileIndex.getModuleForFile(vFile);
