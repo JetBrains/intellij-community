@@ -16,7 +16,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
@@ -79,9 +78,6 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   @NotNull
   public abstract FileStatusMap getFileStatusMap();
 
-  @NotNull
-  @TestOnly
-  public abstract List<HighlightInfo> getFileLevelHighlights(@NotNull Project project, @NotNull PsiFile file);
   public abstract void cleanFileLevelHighlights(int group, @NotNull PsiFile psiFile);
   public abstract boolean hasFileLevelHighlights(int group, @NotNull PsiFile psiFile);
   public abstract void addFileLevelHighlight(int group, @NotNull HighlightInfo info, @NotNull PsiFile psiFile);

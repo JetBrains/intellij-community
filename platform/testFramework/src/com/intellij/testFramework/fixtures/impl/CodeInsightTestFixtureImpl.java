@@ -306,7 +306,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                    Processors.cancelableCollectProcessor(infos));
           }
         });
-        infos.addAll(DaemonCodeAnalyzerEx.getInstanceEx(project).getFileLevelHighlights(project, psiFile));
+        infos.addAll(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerEx.getInstanceEx(project)).getFileLevelHighlights(project, psiFile));
         return infos;
       }
       catch (ProcessCanceledException e) {
@@ -362,7 +362,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       result.addAll(entry.getValue());
     }
 
-    List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(file.getProject()).getFileLevelHighlights(file.getProject(), file);
+    List<HighlightInfo> infos = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerEx.getInstanceEx(file.getProject())).getFileLevelHighlights(file.getProject(), file);
     for (HighlightInfo info : infos) {
       info.findRegisteredQuickFix((descriptor, range) -> {
         if (descriptor.getAction().isAvailable(file.getProject(), editor, file)) {

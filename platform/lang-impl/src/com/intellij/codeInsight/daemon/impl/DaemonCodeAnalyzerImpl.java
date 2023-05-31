@@ -176,7 +176,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     return infos;
   }
 
-  @Override
   @TestOnly
   public @NotNull List<HighlightInfo> getFileLevelHighlights(@NotNull Project project, @NotNull PsiFile file) {
     assertMyFile(file.getProject(), file);
@@ -255,9 +254,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   @Override
-  public void addFileLevelHighlight(int group,
-                                    @NotNull HighlightInfo info,
-                                    @NotNull PsiFile psiFile) {
+  public void addFileLevelHighlight(int group, @NotNull HighlightInfo info, @NotNull PsiFile psiFile) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assertMyFile(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
@@ -286,9 +283,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   @Override
-  public @NotNull List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
-                                                    @NotNull Document document,
-                                                    @NotNull ProgressIndicator progress) {
+  public @NotNull List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile, @NotNull Document document, @NotNull ProgressIndicator progress) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (ApplicationManager.getApplication().isReadAccessAllowed()) {
       throw new IllegalStateException("Must run highlighting outside read action, external annotators do not support checkCanceled");
@@ -941,7 +936,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
   }
 
-  private static void runUpdate(Project project, @NotNull UpdateRunnable updateRunnable) {
+  private static void runUpdate(@Nullable Project project, @NotNull UpdateRunnable updateRunnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     DaemonCodeAnalyzerImpl dca;
     if (project == null ||
