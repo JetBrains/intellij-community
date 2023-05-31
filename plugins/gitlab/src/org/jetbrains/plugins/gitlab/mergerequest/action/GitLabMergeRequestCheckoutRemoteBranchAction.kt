@@ -55,7 +55,11 @@ class GitLabMergeRequestCheckoutRemoteBranchAction : DumbAwareAction(
     mergeRequest: GitLabMergeRequest,
     vcsNotifier: VcsNotifier
   ) {
-    object : Task.Backgroundable(project, "", true) {
+    object : Task.Backgroundable(
+      project,
+      CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description"),
+      true
+    ) {
       private val git = Git.getInstance()
 
       override fun run(indicator: ProgressIndicator) {
