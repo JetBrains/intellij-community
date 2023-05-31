@@ -52,7 +52,7 @@ private val LOG: Logger
 private val CLOSE_LOG_TIMEOUT = 10.seconds
 
 @Service(Service.Level.PROJECT)
-class VcsProjectLog(private val project: Project, val coroutineScope: CoroutineScope) {
+class VcsProjectLog(private val project: Project, internal val coroutineScope: CoroutineScope) {
   private val uiProperties = project.service<VcsLogProjectTabsProperties>()
   internal val tabManager = VcsLogTabsManager(project, uiProperties, coroutineScope)
   private val errorHandler = VcsProjectLogErrorHandler(this, coroutineScope)
