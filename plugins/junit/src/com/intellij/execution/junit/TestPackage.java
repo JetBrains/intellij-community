@@ -282,7 +282,7 @@ public class TestPackage extends TestObject {
   @Override
   public String suggestActionName() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
-    return data.getPackageName().trim().length() > 0
+    return !data.getPackageName().trim().isEmpty()
            ? ExecutionBundle.message("test.in.scope.presentable.text", data.getPackageName())
            : TestRunnerBundle.message("all.tests.scope.presentable.text");
   }

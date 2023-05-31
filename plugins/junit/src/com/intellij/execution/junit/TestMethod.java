@@ -117,7 +117,7 @@ public class TestMethod extends TestObject {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final String methodName = data.getMethodName();
     String methodNameWithSignature = data.getMethodNameWithSignature();
-    if (methodName == null || methodName.trim().length() == 0) {
+    if (methodName == null || methodName.trim().isEmpty()) {
       throw new RuntimeConfigurationError(JUnitBundle.message("method.name.not.specified.error.message"));
     }
     final JUnitUtil.TestMethodFilter filter = new JUnitUtil.TestMethodFilter(psiClass);

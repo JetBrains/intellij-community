@@ -56,7 +56,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   public void initializeIdSuffix(boolean forked) {
-    if (forked && myIdSuffix.length() == 0) {
+    if (forked && myIdSuffix.isEmpty()) {
       myIdSuffix = String.valueOf(System.currentTimeMillis());
     }
   }
