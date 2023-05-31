@@ -64,12 +64,41 @@ class RelativeLineHelperTests : AbstractEditorTest() {
     assertEquals(0, RelativeLineHelper.getRelativeLine(editor, 4, 4))
   }
 
+  fun `test new line folded`() {
+    initText("""
+      line 0
+      line 1
+      
+      
+      
+      line 5
+    """.trimIndent())
+    foldRegion(15, 16)
+    assertEquals(3, RelativeLineHelper.getRelativeLine(editor, 3, 0))
+    assertEquals(2, RelativeLineHelper.getRelativeLine(editor, 3, 1))
+    assertEquals(1, RelativeLineHelper.getRelativeLine(editor, 3, 2))
+    assertEquals(0, RelativeLineHelper.getRelativeLine(editor, 3, 3))
+    assertEquals(0, RelativeLineHelper.getRelativeLine(editor, 3, 4))
+    assertEquals(1, RelativeLineHelper.getRelativeLine(editor, 3, 5))
+
+    assertEquals(3, RelativeLineHelper.getRelativeLine(editor, 4, 0))
+    assertEquals(2, RelativeLineHelper.getRelativeLine(editor, 4, 1))
+    assertEquals(1, RelativeLineHelper.getRelativeLine(editor, 4, 2))
+    assertEquals(0, RelativeLineHelper.getRelativeLine(editor, 4, 3))
+    assertEquals(0, RelativeLineHelper.getRelativeLine(editor, 4, 4))
+    assertEquals(1, RelativeLineHelper.getRelativeLine(editor, 4, 5))
+  }
+
   /**
    * @param endLine is inclusive
    */
   private fun foldLines(startLine: Int, endLine: Int) {
     val startOffset = editor.document.getLineStartOffset(startLine)
     val endOffset = editor.document.getLineEndOffset(endLine)
+    foldRegion(startOffset, endOffset)
+  }
+
+  private fun foldRegion(startOffset: Int, endOffset: Int) {
     val foldingModel = editor.foldingModel
     foldingModel.runBatchFoldingOperation {
       val foldRegion = editor.foldingModel.addFoldRegion(startOffset, endOffset, "...")

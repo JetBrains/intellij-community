@@ -2,7 +2,7 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -36,7 +36,7 @@ object RelativeLineHelper {
       }
       ++relativeDistance
     }
-    // here return fold start line
+    // here fold start line is returned
     return getFoldBorderLine(editor, line, -1)
   }
 
@@ -50,8 +50,8 @@ object RelativeLineHelper {
   fun getHybridLine(editor: Editor, caretLine: Int, logicalLine: Int): Int {
     if (caretLine == logicalLine) return logicalLine + 1 // converted 0-based number to 1-based
 
-    val caretFoldLineRange = getFoldLineRangeForLine(editor, caretLine)
-    return if (caretFoldLineRange != null && logicalLine in caretFoldLineRange) {
+    val caretFoldLineRange = getLogicalLineRangeInVisualLine(editor, caretLine)
+    return if (logicalLine in caretFoldLineRange) {
       caretFoldLineRange.first + 1 // converted 0-based number to 1-based
     } else {
       getRelativeLine(editor, caretLine, logicalLine)
@@ -84,7 +84,6 @@ object RelativeLineHelper {
   }
 
   private fun checkIfShouldCheckForFolds(editor: Editor, caretLine: Int, step: Int): Boolean {
-    editor.settings
     val foldingModelImpl = editor.foldingModel as FoldingModelImpl
     val caretLineOffset = editor.document.getLineStartOffset(caretLine)
     val foldedLinesBeforeCaret = foldingModelImpl.getFoldedLinesCountBefore(caretLineOffset)
@@ -97,32 +96,31 @@ object RelativeLineHelper {
    *
    * @param line  The line within a fold for which the first or last line is to be retrieved.
    * @param step  The direction of retrieval.
-   * If step > 0, the first line of the fold is returned.
-   * If step < 0, the last line of the fold is returned.
+   * If `step > 0`, the first line of the fold is returned.
+   * If `step < 0`, the last line of the fold is returned.
    *
    * @return The first or last line of the fold containing the specified [line],
    * based on the [step] value.
    * If [line] is not part of a fold, the 'line' itself is returned.
    */
   private fun getFoldBorderLine(editor: Editor, line: Int, step: Int): Int {
-    val fold = getFoldLineRangeForLine(editor, line) ?: return line
+    val fold = getLogicalLineRangeInVisualLine(editor, line)
     return if (step < 0) fold.first else fold.last
   }
 
-  private fun getFoldLineRangeForLine(editor: Editor, line: Int): IntRange? {
-    if (line !in (0 until editor.document.lineCount)) return null
-    val startOffset = editor.document.getLineStartOffset(line)
-    var foldRegion = editor.foldingModel.getCollapsedRegionAtOffset(startOffset)?.toLineRange(editor)
-    if (foldRegion != null) return foldRegion
+  /**
+   * Gets a range of lines in one visual line without taking wraps into account
+   * @param editor the target editor
+   * @param line a logical line inside the visual line
+   */
+  private fun getLogicalLineRangeInVisualLine(editor: Editor, line: Int): IntRange {
+    val lineOffset = editor.document.getLineStartOffset(line)
+    val foldRegionStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, lineOffset)
+    val foldRegionEndOffset = EditorUtil.getNotFoldedLineEndOffset(editor, lineOffset)
 
-    val endOffset = editor.document.getLineEndOffset(line)
-    foldRegion = editor.foldingModel.getCollapsedRegionAtOffset(endOffset)?.toLineRange(editor)
-    return foldRegion
-  }
+    val firstLine = editor.offsetToLogicalPosition(foldRegionStartOffset).line
+    val lastLine = editor.offsetToLogicalPosition(foldRegionEndOffset).line
 
-  private fun FoldRegion.toLineRange(editor: Editor): IntRange {
-    val startLine = editor.offsetToLogicalPosition(this.startOffset).line
-    val endLine = editor.offsetToLogicalPosition(this.endOffset).line
-    return startLine .. endLine
+    return firstLine .. lastLine
   }
 }
