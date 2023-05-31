@@ -51,9 +51,10 @@ class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspecti
             ?.toTypedArray() ?: return
 
         val highlightType = if (replacements.any { it.mayChangeSemantics }) INFORMATION else GENERIC_ERROR_OR_WARNING
-        holder.registerProblem(
+        holder.registerProblemWithoutOfflineInformation(
             call,
             KotlinBundle.message("should.be.replaced.with.kotlin.function"),
+            isOnTheFly,
             highlightType,
             callee.textRangeIn(call),
             *replacements
