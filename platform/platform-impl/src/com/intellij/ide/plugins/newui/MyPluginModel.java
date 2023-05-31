@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.notification.impl.NotificationsAnnouncer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -632,7 +633,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
     info.indicator.cancel();
 
-    if (ScreenReader.isActive() && JBR.isAccessibleAnnouncerSupported()) {
+    if (NotificationsAnnouncer.isEnabled()) {
       JFrame frame = WindowManager.getInstance().findVisibleFrame();
       String key = success ? "plugins.configurable.plugin.installing.success" : "plugins.configurable.plugin.installing.failed";
       String message = IdeBundle.message(key, descriptor.getName());
