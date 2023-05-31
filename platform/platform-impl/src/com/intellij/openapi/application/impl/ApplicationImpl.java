@@ -125,7 +125,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
           CoroutineScopeKt.namedChildScope(GlobalScope.INSTANCE, ApplicationImpl.class.getName(), EmptyCoroutineContext.INSTANCE, true),
           true);
 
-    myLock = lockHolder.lock;
+    myLock = lockHolder.getLock$intellij_platform_ide_impl();
 
     registerFakeServices(this);
 
@@ -149,7 +149,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
                          @NotNull RwLockHolder lockHolder) {
     super(null, coroutineScope, true);
 
-    myLock = lockHolder.lock;
+    myLock = lockHolder.getLock$intellij_platform_ide_impl();
 
     registerFakeServices(this);
 

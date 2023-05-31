@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.ui.ComponentUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
@@ -123,27 +124,10 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   private var idleTracker: () -> Unit = {}
 
-
-  private var testMode: Boolean? = null
-
-  init {
-    assert(isDispatchThread()) { Thread.currentThread() }
-    val systemEventQueue = Toolkit.getDefaultToolkit().systemEventQueue
-    assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
-    systemEventQueue.push(this)
-    EDT.updateEdt()
-    replaceDefaultKeyboardFocusManager()
-    addDispatcher(WindowsAltSuppressor(), null)
-    if (SystemInfoRt.isWindows && java.lang.Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
-      // 'Windows+Up' shortcut would maximize active dialog under Win 7+
-      addDispatcher(WindowsUpMaximizer(), null)
-    }
-    addDispatcher(EditingCanceller(), null)
-    //addDispatcher(new UIMouseTracker(), null);
-    abracadabraDaberBoreh()
-    if (java.lang.Boolean.parseBoolean(System.getProperty("skip.move.resize.events", "true"))) {
-      postEventListeners.add { skipMoveResizeEvents(it) } // hot path, do not use method reference
-    }
+  @RequiresEdt
+  internal fun setIdleTracker(value: () -> Unit) {
+    EDT.assertIsEdt()
+    idleTracker = value
   }
 
   companion object {
@@ -157,12 +141,6 @@ class IdeEventQueue private constructor() : EventQueue() {
     fun applicationClose() {
       appIsLoaded = false
     }
-  }
-
-  @RequiresEdt
-  internal fun setIdleTracker(value: () -> Unit) {
-    EDT.assertIsEdt()
-    idleTracker = value
   }
 
   /**
@@ -843,6 +821,28 @@ class IdeEventQueue private constructor() : EventQueue() {
   fun flushDelayedKeyEvents() {
   }
 
+  private var testMode: Boolean? = null
+
+  init {
+    assert(isDispatchThread()) { Thread.currentThread() }
+    val systemEventQueue = Toolkit.getDefaultToolkit().systemEventQueue
+    assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
+    systemEventQueue.push(this)
+    EDT.updateEdt()
+    replaceDefaultKeyboardFocusManager()
+    addDispatcher(WindowsAltSuppressor(), null)
+    if (SystemInfoRt.isWindows && java.lang.Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
+      // 'Windows+Up' shortcut would maximize active dialog under Win 7+
+      addDispatcher(WindowsUpMaximizer(), null)
+    }
+    addDispatcher(EditingCanceller(), null)
+    //addDispatcher(new UIMouseTracker(), null);
+    abracadabraDaberBoreh()
+    if (SystemProperties.getBooleanProperty("skip.move.resize.events", true)) {
+      postEventListeners.add { skipMoveResizeEvents(it) } // hot path, do not use method reference
+    }
+  }
+
   private fun isTestMode(): Boolean {
     var testMode = testMode
     if (testMode != null) {
@@ -1160,7 +1160,7 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
     val uiSettings = UISettings.instanceOrNull
     if (uiSettings == null ||
         !SystemInfoRt.isWindows ||
-        !Registry.`is`("actionSystem.win.suppressAlt", true) ||
+        !Registry.`is`("actionSystem.win.suppressAlt") ||
         !(uiSettings.hideToolStripes || uiSettings.presentationMode)) {
       return false
     }
@@ -1176,7 +1176,7 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
         dispatch = false
       }
       else if (component != null) {
-        EventQueue.invokeLater {
+        SwingUtilities.invokeLater {
           try {
             val window = ComponentUtil.getWindow(component)
             if (window == null || !window.isActive) {

@@ -309,6 +309,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     val log = logDeferred.await()
 
+
     val preloadCriticalServicesJob = async {
       preInitApp(app = app,
                  asyncScope = asyncScope,
