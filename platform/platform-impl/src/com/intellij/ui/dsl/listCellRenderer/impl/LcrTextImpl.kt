@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.JLabel
 import javax.swing.JList
+import javax.swing.UIManager
 
 @ApiStatus.Internal
 internal class LcrTextImpl(private val initParams: LcrTextInitParamsImpl) : LcrCellBaseImpl(), LcrText {
@@ -19,6 +20,8 @@ internal class LcrTextImpl(private val initParams: LcrTextInitParamsImpl) : LcrC
   override fun init(list: JList<*>, isSelected: Boolean, cellHasFocus: Boolean) {
     super.init(list, isSelected, cellHasFocus)
 
+    // Restore default font, so IDE scaling is applied as well
+    component.font = UIManager.getFont("Label.font")
     text = null
     val defaultColor = if (isSelected) JBUI.CurrentTheme.List.Selection.foreground(cellHasFocus) else list.foreground
     color = when (initParams.style) {

@@ -39,16 +39,6 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
     selectablePanel.apply {
       layout = BorderLayout()
       add(content, BorderLayout.CENTER)
-
-      if (ExperimentalUI.isNewUI()) {
-        preferredHeight = JBUI.CurrentTheme.List.rowHeight()
-        selectionArc = 8
-        selectionInsets = JBInsets.create(0, 12)
-        border = JBUI.Borders.empty(0, 20)
-      }
-      else {
-        border = JBUI.Borders.empty(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding())
-      }
     }
     builder.resizableRow()
   }
@@ -115,13 +105,24 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
-    val background = if (isSelected) JBUI.CurrentTheme.List.Selection.background(cellHasFocus) else list.background
+    val bg = if (isSelected) JBUI.CurrentTheme.List.Selection.background(cellHasFocus) else list.background
     if (ExperimentalUI.isNewUI()) {
-      selectablePanel.background = list.background
-      selectablePanel.selectionColor = background
+      // Update height/insets every time, so IDE scaling is applied
+      selectablePanel.apply {
+        selectionArc = 8
+        selectionInsets = JBInsets.create(0, 12)
+        border = JBUI.Borders.empty(0, 20)
+        preferredHeight = JBUI.CurrentTheme.List.rowHeight()
+
+        background = list.background
+        selectionColor = bg
+      }
     }
     else {
-      selectablePanel.background = background
+      selectablePanel.apply {
+        background = bg
+        border = JBUI.Borders.empty(UIUtil.getListCellVPadding(), UIUtil.getListCellHPadding())
+      }
     }
 
     for (cell in cells) {
