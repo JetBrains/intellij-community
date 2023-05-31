@@ -9,9 +9,14 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsChronicle.LookupResult.Companion.toState
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.bind
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.fmap
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.RecoveredChildrenIds
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import com.intellij.util.io.UnsyncByteArrayInputStream
 import java.lang.ref.SoftReference
@@ -22,7 +27,7 @@ class PerPropertyCachingVfsTimeMachine(
   private val vfsLogContext: VfsLogContext,
   private val id2filename: (Int) -> String?,
   private val attributeEnumerator: SimpleStringPersistentEnumerator,
-  private val payloadReader: (PayloadRef) -> VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState<ByteArray>
+  private val payloadReader: (PayloadRef) -> DefinedState<ByteArray>
 ) : VfsTimeMachine {
   private val cache = sortedMapOf<Long, SoftReference<VfsSnapshot>>()
   private val zeroLayer = NotAvailableVfsSnapshot(
@@ -56,7 +61,7 @@ class CacheAwarePerPropertyVfsSnapshot(
   private val logContext: VfsLogContext,
   private val id2filename: (Int) -> String?,
   private val attributeEnumerator: SimpleStringPersistentEnumerator,
-  private val payloadReader: (PayloadRef) -> VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState<ByteArray>,
+  private val payloadReader: (PayloadRef) -> DefinedState<ByteArray>,
   private val getPrecedingCachedSnapshot: (point: OperationLogStorage.Iterator) -> VfsSnapshot?,
 ) : VfsSnapshot {
   override val point: () -> OperationLogStorage.Iterator = point.constCopier()
@@ -72,63 +77,55 @@ class CacheAwarePerPropertyVfsSnapshot(
       }
     }
 
-  private val fileCache: ConcurrentMap<Int, VfsSnapshot.VirtualFileSnapshot> = ConcurrentHashMap()
+  private val fileCache: ConcurrentMap<Int, VirtualFileSnapshot> = ConcurrentHashMap()
 
-  override fun getFileById(fileId: Int): VfsSnapshot.VirtualFileSnapshot = fileCache.computeIfAbsent(fileId) {
+  override fun getFileById(fileId: Int): VirtualFileSnapshot = fileCache.computeIfAbsent(fileId) {
     CacheAwareVirtualFileSnapshot(fileId)
   }
 
-  inner class CacheAwareVirtualFileSnapshot(override val fileId: Int) : VfsSnapshot.VirtualFileSnapshot {
-    override val nameId: VfsSnapshot.VirtualFileSnapshot.Property<Int> = CacheAwareProp(
-      VfsSnapshot.VirtualFileSnapshot::nameId) { stopIter, iter ->
+  inner class CacheAwareVirtualFileSnapshot(override val fileId: Int) : VirtualFileSnapshot {
+    override val nameId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::nameId) { stopIter, iter ->
       VfsChronicle.lookupNameId(iter, fileId, stopIf = { iter == stopIter }).toState()
     }
-    override val name: VfsSnapshot.VirtualFileSnapshot.Property<String> = nameId.bind {
-      id2filename(it)?.let(
-        VfsSnapshot.VirtualFileSnapshot.Property.State::Ready) ?: VfsSnapshot.VirtualFileSnapshot.Property.State.NotAvailable()
+    override val name: Property<String> = nameId.bind {
+      id2filename(it)?.let(State::Ready) ?: State.NotAvailable()
     }
 
-    override val parentId: VfsSnapshot.VirtualFileSnapshot.Property<Int> = CacheAwareProp(
-      VfsSnapshot.VirtualFileSnapshot::parentId) { stopIter, iter ->
+    override val parentId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::parentId) { stopIter, iter ->
       VfsChronicle.lookupParentId(iter, fileId, stopIf = { iter == stopIter }).toState()
     }
-    override val parent: VfsSnapshot.VirtualFileSnapshot.Property<VfsSnapshot.VirtualFileSnapshot?> = parentId.fmap { id ->
+    override val parent: Property<VirtualFileSnapshot?> = parentId.fmap { id ->
       if (id == 0) null
       else getFileById(id)
     }
 
-    override val length: VfsSnapshot.VirtualFileSnapshot.Property<Long> = CacheAwareProp(
-      VfsSnapshot.VirtualFileSnapshot::length) { stopIter, iter ->
+    override val length: Property<Long> = CacheAwareProp(VirtualFileSnapshot::length) { stopIter, iter ->
       VfsChronicle.lookupLength(iter, fileId, stopIf = { iter == stopIter }).toState()
     }
-    override val timestamp: VfsSnapshot.VirtualFileSnapshot.Property<Long> = CacheAwareProp(
-      VfsSnapshot.VirtualFileSnapshot::timestamp) { stopIter, iter ->
+    override val timestamp: Property<Long> = CacheAwareProp(VirtualFileSnapshot::timestamp) { stopIter, iter ->
       VfsChronicle.lookupTimestamp(iter, fileId, stopIf = { iter == stopIter }).toState()
     }
-    override val flags: VfsSnapshot.VirtualFileSnapshot.Property<Int> = CacheAwareProp(
-      VfsSnapshot.VirtualFileSnapshot::flags) { stopIter, iter ->
+    override val flags: Property<Int> = CacheAwareProp(VirtualFileSnapshot::flags) { stopIter, iter ->
       VfsChronicle.lookupFlags(iter, fileId, stopIf = { iter == stopIter }).toState()
     }
-    override val contentRecordId: VfsSnapshot.VirtualFileSnapshot.Property<Int> = CacheAwareProp(
-      VfsSnapshot.VirtualFileSnapshot::contentRecordId) { stopIter, iter ->
+    override val contentRecordId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::contentRecordId) { stopIter, iter ->
       VfsChronicle.lookupContentRecordId(iter, fileId, stopIf = { iter == stopIter }).toState()
     }
-    override val attributesRecordId: VfsSnapshot.VirtualFileSnapshot.Property<Int> = CacheAwareProp(
-      VfsSnapshot.VirtualFileSnapshot::attributesRecordId) { stopIter, iter ->
+    override val attributesRecordId: Property<Int> = CacheAwareProp(VirtualFileSnapshot::attributesRecordId) { stopIter, iter ->
       VfsChronicle.lookupAttributeRecordId(iter, fileId, stopIf = { iter == stopIter }).toState()
     }
 
-    override fun getContent(): VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState<ByteArray> =
+    override fun getContent(): DefinedState<ByteArray> =
       contentRecordId.bind {
         VfsChronicle.restoreContent(point(), it, payloadReader)
       }.observeState()
 
-    override fun readAttribute(fileAttribute: FileAttribute): VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState<AttributeInputStream?> {
+    override fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?> {
       val attrId = logContext.stringEnumerator.enumerate(fileAttribute.id)
       val attrData = VfsChronicle.lookupAttributeData(point(), fileId, attrId)
-      if (!attrData.found) return VfsSnapshot.VirtualFileSnapshot.Property.State.NotAvailable()
+      if (!attrData.found) return State.NotAvailable()
       val payloadRef = attrData.value
-      if (payloadRef == null) return VfsSnapshot.VirtualFileSnapshot.Property.State.Ready(null)
+      if (payloadRef == null) return State.Ready(null)
       return payloadReader(payloadRef).fmap {
         PersistentFSAttributeAccessor.validateAttributeVersion(
           fileAttribute,
@@ -137,15 +134,15 @@ class CacheAwarePerPropertyVfsSnapshot(
       }
     }
 
-    override fun getChildrenIds(): VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState<VfsSnapshot.VirtualFileSnapshot.RecoveredChildrenIds> {
-      return VfsChronicle.restoreChildrenIds(point(), fileId).let(VfsSnapshot.VirtualFileSnapshot.Property.State::Ready)
+    override fun getChildrenIds(): DefinedState<RecoveredChildrenIds> {
+      return VfsChronicle.restoreChildrenIds(point(), fileId).let(State::Ready)
     }
 
     private inner class CacheAwareProp<T>(
-      private val accessProp: VfsSnapshot.VirtualFileSnapshot.() -> VfsSnapshot.VirtualFileSnapshot.Property<T>,
-      private val queryLog: (stopIter: OperationLogStorage.Iterator?, iter: OperationLogStorage.Iterator) -> State.DefinedState<T>
-    ) : VfsSnapshot.VirtualFileSnapshot.Property<T>() {
-      override fun compute(): State.DefinedState<T> {
+      private val accessProp: VirtualFileSnapshot.() -> Property<T>,
+      private val queryLog: (stopIter: OperationLogStorage.Iterator?, iter: OperationLogStorage.Iterator) -> DefinedState<T>
+    ) : Property<T>() {
+      override fun compute(): DefinedState<T> {
         val precedingSnapshot = precedingSnapshot
         if (precedingSnapshot != null) {
           return when (val partialLookup = queryLog(precedingSnapshot.point(), point())) {
