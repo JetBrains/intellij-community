@@ -78,7 +78,7 @@ object RelativeLineHelper {
         line = getFoldBorderLine(editor, line, step)
       }
       line += step
-      ++relativeLineCount
+      relativeLineCount += step
     }
     return relativeLineCount
   }
