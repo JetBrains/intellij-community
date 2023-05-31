@@ -26,7 +26,7 @@ open class IndexingTestEntityImpl(val dataSource: IndexingTestEntityData) : Inde
   companion object {
 
 
-    val connections: List<ConnectionId> = listOf<ConnectionId>(
+    val connections = listOf<ConnectionId>(
     )
 
   }
