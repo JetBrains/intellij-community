@@ -290,4 +290,23 @@ mod tests {
         let content = fs::read_to_string(&crash_log_path).expect(&format!("Cannot read: {:?}", crash_log_path));
         assert!(content.contains(marker), "Marker message ('{}') is not in the crash log:\n{}", marker, content);
     }
+
+    #[test]
+    #[cfg(target_os = "macos")]
+    fn macos_adjusting_current_dir() {
+        let test = prepare_test_env(LauncherLocation::Standard);
+
+        let app_bundle_path_str = test.dist_root.parent().unwrap().to_str().unwrap();
+        let debug_mode_var = xplat_launcher::DEBUG_MODE_ENV_VAR.to_string() + "=1";
+        let stdout_path = test.project_dir.join("_stdout.txt");
+        let stdout_path_str = stdout_path.to_str().unwrap();
+        let args = vec!["-Wna", app_bundle_path_str, "--env", &debug_mode_var, "--stdout", stdout_path_str, "--args", "print-cwd"];
+        let open_res = std::process::Command::new("/usr/bin/open").args(&args)
+            .output().expect(&format!("Failed: 'open {:?}'", args));
+        assert!(open_res.status.success(), "Failed: 'open {:?}':\n{:?}", args, open_res);
+
+        let stdout = fs::read_to_string(&stdout_path).expect(&format!("Cannot read: {:?}", stdout_path));
+        let expected = format!("CWD={}", env::current_dir().unwrap().display());
+        assert!(stdout.contains(&expected), "'{}' is not in the output:\n{}", expected, stdout);
+    }
 }
