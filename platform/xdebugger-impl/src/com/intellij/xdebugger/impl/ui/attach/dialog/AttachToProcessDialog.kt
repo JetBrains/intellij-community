@@ -9,6 +9,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.ui.ValidationInfo
@@ -31,6 +32,7 @@ import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.attach.XAttachHostProvider
 import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase.AttachToProcessItem
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogUiInvisibleDebuggerProvider
+import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachToProcessViewProvider
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.getActionPresentation
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsListBase
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayoutService
@@ -98,10 +100,10 @@ open class AttachToProcessDialog(
 
   private val localAttachView = AttachToLocalProcessView(project, state, columnsLayout, attachDebuggerProviders)
   private val remoteAttachView = AttachToRemoteProcessView(project, state, columnsLayout, attachHostProviders, attachDebuggerProviders)
-  private val allViews = listOf(localAttachView, remoteAttachView)
+  private val allViews: List<AttachToProcessView>
   private var currentAttachView = AtomicLazyProperty<AttachToProcessView> { localAttachView }
 
-  private val viewsPanel = panel { row { segmentedButton(allViews) { it.getName() }.bind(currentAttachView) } }
+  private val viewsPanel: DialogPanel
 
   private val viewPanel = JPanel(MigLayout("ins 0, fill, gap 0, novisualpadding")).apply {
     minimumSize = Dimension(columnsLayout.getMinimumViewWidth(), JBUI.scale(400))
@@ -112,6 +114,10 @@ open class AttachToProcessDialog(
 
   init {
     title = XDebuggerBundle.message("xdebugger.attach.action").trimEnd('.')
+
+    val externalProcessViews = XAttachToProcessViewProvider.getProcessViews(project, state, columnsLayout, attachDebuggerProviders)
+    allViews = listOf(localAttachView, remoteAttachView) + externalProcessViews
+    viewsPanel = panel { row { segmentedButton(allViews) { it.getName() }.bind(currentAttachView) } }
 
     northToolbar = createNorthToolbar()
     viewPanel.add(filterTextField, "wrap, grow")

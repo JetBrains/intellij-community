@@ -6,5 +6,6 @@ import org.jetbrains.annotations.Nls
 
 enum class AttachDialogHostType(@Nls @NlsContexts.Button val displayText: String) {
   LOCAL(XDebuggerBundle.message("xdebugger.local.attach.button.name")),
-  REMOTE(XDebuggerBundle.message("xdebugger.remote.attach.button.name"))
+  REMOTE(XDebuggerBundle.message("xdebugger.remote.attach.button.name")),
+  DOCKER(XDebuggerBundle.message("xdebugger.docker.attach.button.name"))
 }

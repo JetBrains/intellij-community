@@ -38,7 +38,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
-internal abstract class AttachToProcessView(
+abstract class AttachToProcessView(
   private val project: Project,
   protected val state: AttachDialogState,
   private val columnsLayout: AttachDialogColumnsLayout,
