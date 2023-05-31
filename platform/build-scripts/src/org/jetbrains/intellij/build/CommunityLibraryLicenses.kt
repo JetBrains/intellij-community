@@ -486,8 +486,6 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/JetBrains/JetBrainsRuntime").apache(),
     LibraryLicense(name = "jetCheck", libraryName = "jetCheck", url = "https://github.com/JetBrains/jetCheck")
       .apache("https://github.com/JetBrains/jetCheck/blob/master/LICENSE"),
-    LibraryLicense(name = "JGit", libraryName = "JGit", license = "Eclipse Distribution License 1.0",
-                   licenseUrl = "https://www.eclipse.org/org/documents/edl-v10.php", url = "https://www.eclipse.org/jgit/"),
     LibraryLicense(name = "JGit (Settings Sync and SettingsRepo)", libraryName = "jetbrains.intellij.deps.eclipse.jgit",
                    license = "Eclipse Distribution License 1.0",
                    licenseUrl = "https://www.eclipse.org/org/documents/edl-v10.php", url = "https://www.eclipse.org/jgit/"),

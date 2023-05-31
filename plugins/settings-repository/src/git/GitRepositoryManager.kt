@@ -91,7 +91,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
   override fun isRepositoryExists(): Boolean {
     val repo = _repository
     if (repo == null) {
-      return Files.exists(dir) && FileRepositoryBuilder().setWorkTree(dir.toFile()).setUseSystemConfig(false).setUseUserConfig(false).setup().objectDirectory.exists()
+      return Files.exists(dir) && FileRepositoryBuilder().setWorkTree(dir.toFile()).setAutonomous(true).setup().objectDirectory.exists()
     }
     else {
       return repo.objectDatabase.exists()

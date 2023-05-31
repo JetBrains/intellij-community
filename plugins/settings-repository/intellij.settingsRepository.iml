@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module-library" exported="">
       <library name="jetbrains.intellij.deps.eclipse.jgit" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps:org.eclipse.jgit:6.5.0.202303070854-r-custom-3">
+        <properties maven-id="org.jetbrains.intellij.deps:org.eclipse.jgit:6.5.0.202303070854-r-custom-4">
           <exclude>
             <dependency maven-id="org.slf4j:slf4j-api" />
           </exclude>
@@ -21,15 +21,15 @@
           <root url="file://$MODULE_DIR$/lib" />
         </ANNOTATIONS>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.5.0.202303070854-r-custom-3/org.eclipse.jgit-6.5.0.202303070854-r-custom-3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.5.0.202303070854-r-custom-4/org.eclipse.jgit-6.5.0.202303070854-r-custom-4.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.1.13/JavaEWAH-1.1.13.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.5.0.202303070854-r-custom-3/org.eclipse.jgit-6.5.0.202303070854-r-custom-3-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.5.0.202303070854-r-custom-4/org.eclipse.jgit-6.5.0.202303070854-r-custom-4-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.1.13/JavaEWAH-1.1.13-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.5.0.202303070854-r-custom-3/org.eclipse.jgit-6.5.0.202303070854-r-custom-3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6.5.0.202303070854-r-custom-4/org.eclipse.jgit-6.5.0.202303070854-r-custom-4-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/javaewah/JavaEWAH/1.1.13/JavaEWAH-1.1.13-sources.jar!/" />
         </SOURCES>
       </library>

@@ -21,9 +21,11 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import java.util.*
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.div
 import kotlin.io.path.writeText
 
@@ -247,11 +249,14 @@ internal class GitSettingsLogTest {
 
   @Test
   fun `do not fail if unknown gpg option is written in global config`() {
-    val editorXml = (configDir / "options" / "editor.xml").createFile()
-    editorXml.writeText("editorContent")
-    val settingsLog = initializeGitSettingsLog(editorXml)
+    val userHomeDefault = System.getProperty("user.home")
+    try {
+      val userHome = Files.createTempDirectory("gitSettingsLogTest")
+      System.setProperty("user.home", userHome.absolutePathString())
 
-    (settingsSyncStorage / ".git" / "config").writeText("""
+      val editorXml = (configDir / "options" / "editor.xml").createFile()
+      editorXml.writeText("editorContent")
+      (userHome / ".gitconfig").writeText("""
       [commit]
           gpgsign = true
       [user]
@@ -260,14 +265,18 @@ internal class GitSettingsLogTest {
 	        format = ssh
       [gpg "ssh"]
         allowedSignersFile = ~/.config/git/allowed_signers""".trimIndent())
+      val settingsLog = initializeGitSettingsLog(editorXml)
 
-    settingsLog.forceWriteToMaster(
-      settingsSnapshot {
+      settingsLog.forceWriteToMaster(
+        settingsSnapshot {
+          fileState("options/editor.xml", "ideEditorContent")
+        }, "Local changes"
+      )
+      settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
         fileState("options/editor.xml", "ideEditorContent")
-      }, "Local changes"
-    )
-    settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
-      fileState("options/editor.xml", "ideEditorContent")
+      }
+    } finally {
+      System.setProperty("user.home", userHomeDefault)
     }
   }
 

@@ -62,7 +62,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     configureJGit()
 
     val dotGit = settingsSyncStorage.resolve(".git")
-    repository = FileRepositoryBuilder.create(dotGit.toFile())
+    repository = FileRepositoryBuilder().setGitDir(dotGit.toFile()).setAutonomous(true).readEnvironment().build()
     git = Git(repository)
 
     val newRepository = !dotGit.exists()
@@ -202,13 +202,11 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   private fun commit(message: String, dateCreated: Instant? = null, allowEmpty: Boolean) {
     try {
       // Don't allow empty commit: sometimes the stream provider can notify about changes but there are no actual changes on disk
-      val mockGpgConfig = GpgConfig("", GpgConfig.GpgFormat.OPENPGP, "")
       val commitData = git.commit()
         .setMessage(message)
         .setAllowEmpty(allowEmpty)
         .setNoVerify(true)
         .setSign(false)
-        .setGpgConfig(mockGpgConfig)
 
       userDataProvider()?.let {
         val personIdent = PersonIdent(it.loginName, it.email)
