@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import kotlin.coroutines.coroutineContext
 
 @ApiStatus.Internal
@@ -227,12 +228,13 @@ open class PluginAdvertiserServiceImpl(
 
     result.removeAll { localPluginIdMap[it.pluginId]?.isEnabled == true }
 
-    result.forEach { descriptor ->
+    for (descriptor in result) {
       val features = featuresMap[descriptor.pluginId]
       if (features.isNotEmpty()) {
-        val suggestedFeatures = features.filter { "dependency" == it.featureDisplayName }.map {
-          IdeBundle.message("plugins.configurable.suggested.features.dependency", it.implementationDisplayName)
-        }
+        val suggestedFeatures = features
+          .filter { "dependency" == it.featureDisplayName }
+          .map { getSuggestionReason(it) }
+
         if (suggestedFeatures.isNotEmpty()) {
           (descriptor as PluginNode).suggestedFeatures = suggestedFeatures
         }
@@ -240,6 +242,18 @@ open class PluginAdvertiserServiceImpl(
     }
 
     return result
+  }
+
+  private fun getSuggestionReason(it: UnknownFeature): @Nls String {
+    val kind = it.implementationName.substringBefore(":")
+    if (kind == "executable") {
+      val executableName = it.implementationName.substringAfter(":")
+      if (executableName.isNotBlank()) {
+        return IdeBundle.message("plugins.configurable.suggested.features.executable", executableName)
+      }
+    }
+
+    return IdeBundle.message("plugins.configurable.suggested.features.dependency", it.implementationDisplayName)
   }
 
   private fun convertToNode(descriptor: IdeaPluginDescriptor?): PluginNode? {
