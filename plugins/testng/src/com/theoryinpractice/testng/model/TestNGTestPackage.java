@@ -21,13 +21,16 @@ import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
-import com.theoryinpractice.testng.util.TestNGUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -40,8 +43,7 @@ public class TestNGTestPackage extends TestNGTestObject {
   @Override
   public void fillTestObjects(Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException {
     final String packageName = myConfig.getPersistantData().getPackageName();
-    PsiPackage psiPackage =
-      ReadAction.compute(() -> JavaPsiFacade.getInstance(myConfig.getProject()).findPackage(packageName));
+    PsiPackage psiPackage = ReadAction.compute(() -> JavaPsiFacade.getInstance(myConfig.getProject()).findPackage(packageName));
     if (psiPackage == null) {
       throw CantRunException.packageNotFound(packageName);
     }
@@ -49,14 +51,36 @@ public class TestNGTestPackage extends TestNGTestObject {
       TestSearchScope scope = myConfig.getPersistantData().getScope();
       //TODO we should narrow this down by module really, if that's what's specified
       SourceScope sourceScope = scope.getSourceScope(myConfig);
-      TestClassFilter projectFilter =
-        new TestClassFilter(sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.projectScope(myConfig.getProject()), myConfig.getProject(), true, true);
+      TestClassFilter projectFilter = new TestClassFilter(
+        sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.projectScope(myConfig.getProject()),
+        myConfig.getProject(),
+        true,
+        true
+      );
       TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
-      calculateDependencies(null, classes, getSearchScope(), TestNGUtil.getAllTestClasses(filter, false));
+      List<PsiClass> testClasses = ContainerUtil.filter(getAllClasses(psiPackage, filter.getScope()), clazz -> filter.isAccepted(clazz));
+      calculateDependencies(null, classes, getSearchScope(), testClasses.toArray(PsiClass.EMPTY_ARRAY));
       if (classes.size() == 0) {
         throw new CantRunException(TestngBundle.message("dialog.message.no.tests.found.in.package", packageName));
       }
     }
+  }
+
+  @NotNull
+  private static List<@NotNull PsiClass> getAllClasses(@NotNull PsiPackage pkg, @NotNull GlobalSearchScope scope) {
+    ProgressManager.checkCanceled();
+    return ReadAction.compute(() -> {
+      List<PsiClass> classes = ContainerUtil.flatMap(new SmartList<>(pkg.getClasses(scope)), cls -> {
+        List<PsiClass> allClasses = new SmartList<>(cls);
+        allClasses.addAll(new SmartList<>(cls.getAllInnerClasses()));
+        return allClasses;
+      });
+      List<PsiClass> subPkgClasses = ContainerUtil.flatMap(
+        new SmartList<>(pkg.getSubPackages(scope)),
+        subPkg -> getAllClasses(subPkg, scope)
+      );
+      return ContainerUtil.concat(classes, subPkgClasses);
+    });
   }
 
   @Override
