@@ -2,6 +2,7 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.waitForFullyLoaded
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.IdeFocusManager
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
 import com.sampullara.cli.Args
@@ -71,11 +73,23 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
 
     // focus window
     withContext(Dispatchers.EDT) {
-      ProjectUtil.focusProjectWindow(project)
+      ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
     }
 
-    FileEditorManagerEx.getInstanceEx(project).openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
-      .waitForFullyLoaded()
+    val editors = FileEditorManagerEx.getInstanceEx(project).openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
+    editors.waitForFullyLoaded()
+
+    // focus window
+    withContext(Dispatchers.EDT) {
+      ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
+      for (editor in editors.allEditors) {
+        if (editor is TextEditor) {
+          editor.preferredFocusedComponent?.let {
+            IdeFocusManager.getGlobalInstance().requestFocus(/* c = */ it, /* forced = */ true)
+          }
+        }
+      }
+    }
 
     job.onError {
       spanRef.get()?.setAttribute("timeout", "true")
