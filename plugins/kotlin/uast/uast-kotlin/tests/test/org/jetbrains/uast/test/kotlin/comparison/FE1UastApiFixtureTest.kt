@@ -75,4 +75,7 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkLambdaImplicitParameters(myFixture)
     }
 
+    fun testLambdaBodyAsParentOfDestructuringDeclaration() {
+        checkLambdaBodyAsParentOfDestructuringDeclaration(myFixture)
+    }
 }

@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -640,4 +642,25 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         })
     }
 
+    fun checkLambdaBodyAsParentOfDestructuringDeclaration(myFixture: JavaCodeInsightTestFixture) {
+        // KTIJ-24108
+        myFixture.configureByText(
+            "main.kt", """
+                fun fi(data: List<String>) =
+                    data.filter {
+                        va<caret>l (a, b)
+                    }
+            """.trimIndent()
+        )
+
+        val destructuringDeclaration =
+            myFixture.file.findElementAt(myFixture.caretOffset)
+                ?.getParentOfType<KtDestructuringDeclaration>(strict = true)
+                .orFail("Cannot find KtDestructuringDeclaration")
+
+        val uDestructuringDeclaration =
+            destructuringDeclaration.toUElement().orFail("Cannot convert to KotlinUDestructuringDeclarationExpression")
+
+        TestCase.assertNotNull(uDestructuringDeclaration.uastParent)
+    }
 }
