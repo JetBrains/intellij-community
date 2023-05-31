@@ -5,6 +5,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
 @TestMetadata("multiplatform/core/tier0")
@@ -14,6 +15,7 @@ class KotlinMppTierZeroCasesImportingTests : AbstractKotlinMppGradleImportingTes
     }
 
     @Test
+    @PluginTargetVersions(pluginVersion = "1.8.20+")
     fun testKmmApplication() {
         doTest()
     }
