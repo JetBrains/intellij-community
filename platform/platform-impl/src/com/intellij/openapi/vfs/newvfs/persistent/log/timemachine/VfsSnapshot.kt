@@ -48,6 +48,7 @@ interface VfsSnapshot {
     }
 
     abstract class Property<T> {
+      @Volatile
       var state: State = State.UnknownYet
         protected set
 
