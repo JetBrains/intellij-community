@@ -9,7 +9,7 @@ import com.intellij.refactoring.suggested.startOffset
 import kotlin.math.min
 
 
-interface CompletionGolfEvaluationVisitor : CompletionEvaluationVisitor
+interface CompletionGolfEvaluationVisitor : EvaluationVisitor
 
 
 interface CompletionGolfAllEvaluationVisitor : CompletionGolfEvaluationVisitor {
@@ -72,7 +72,8 @@ interface CompletionGolfAllEvaluationVisitor : CompletionGolfEvaluationVisitor {
   }
 
 
-  class Default(override val language: Language = Language.ANOTHER) : CompletionGolfAllEvaluationVisitor, PsiRecursiveElementVisitor() {
+  class Default(override val feature: String, override val language: Language = Language.ANOTHER)
+    : CompletionGolfAllEvaluationVisitor, PsiRecursiveElementVisitor() {
     override val processor = Processor()
     override fun visitComment(comment: PsiComment) {
       processor.skipElement(comment)

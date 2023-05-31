@@ -8,12 +8,17 @@ import com.github.ajalt.clikt.parameters.arguments.default
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.google.gson.GsonBuilder
+import com.intellij.cce.evaluable.EvaluableFeature
+import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluation.BackgroundStepFactory
 import com.intellij.cce.evaluation.EvaluationProcess
 import com.intellij.cce.evaluation.EvaluationRootInfo
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
 import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
+import com.intellij.cce.workspace.filter.SessionsFilter
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.project.Project
@@ -37,9 +42,12 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
   }
 
   abstract class EvaluationCommand(name: String, help: String) : CliktCommand(name = name, help = help) {
-    protected fun loadConfig(configPath: Path) = try {
+
+    protected val featureName by argument(name = "Feature name").default("rename")
+
+    protected fun<T : EvaluationStrategy> loadConfig(configPath: Path, strategySerializer: StrategySerializer<T>) = try {
       println("Load config: $configPath")
-      val config = ConfigFactory.load(configPath)
+      val config = ConfigFactory.load(configPath, strategySerializer)
       println("Config loaded!")
       config
     }
@@ -88,13 +96,15 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
   }
 
   abstract class EvaluationCommandBase(name: String, help: String) : EvaluationCommand(name, help) {
-    private val configPath by argument(name = "config-path", help = "Path to config").default(ConfigFactory.DEFAULT_CONFIG_NAME)
+
+    protected val configPath by argument(name = "config-path", help = "Path to config").default(ConfigFactory.DEFAULT_CONFIG_NAME)
 
     override fun run() {
-      val config = loadConfig(Paths.get(configPath))
+      val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
+      val config = loadConfig(Paths.get(configPath), feature.getStrategySerializer())
       val project = loadProject(config.projectPath)
       val workspace = EvaluationWorkspace.create(config)
-      val stepFactory = BackgroundStepFactory(config, project, true, null, EvaluationRootInfo(true))
+      val stepFactory = BackgroundStepFactory(feature, config, project, true, null, EvaluationRootInfo(true))
       EvaluationProcess.build({
                                 customize()
                                 shouldReorderElements = config.reorder.useReordering
@@ -121,36 +131,40 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
   }
 
   class CustomCommand : EvaluationCommand(name = "custom", help = "Start process from actions interpretation or report generation") {
+
     private val workspacePath by argument(name = "workspace", help = "Path to workspace")
     private val interpretActions by option(names = arrayOf("--interpret-actions", "-i"), help = "Interpret actions").flag()
     private val generateReport by option(names = arrayOf("--generate-report", "-r"), help = "Generate report").flag()
     private val reorderElements by option(names = arrayOf("--reorder-elements", "-e"), help = "Reorder elements").flag()
 
     override fun run() {
+      val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
       val workspace = EvaluationWorkspace.open(workspacePath)
-      val config = workspace.readConfig()
+      val config = workspace.readConfig(feature.getStrategySerializer())
       val project = loadProject(config.projectPath)
       val process = EvaluationProcess.build({
                                               shouldGenerateActions = false
                                               shouldInterpretActions = interpretActions
                                               shouldReorderElements = reorderElements
                                               shouldGenerateReports = generateReport
-                                            }, BackgroundStepFactory(config, project, true, null, EvaluationRootInfo(true)))
+                                            }, BackgroundStepFactory(feature, config, project, true, null, EvaluationRootInfo(true)))
       process.startAsync(workspace)
     }
   }
 
   abstract class MultipleEvaluationsBase(name: String, help: String) : EvaluationCommand(name, help) {
+
     abstract fun getWorkspaces(): List<String>
 
     override fun run() {
       val workspacesToCompare = getWorkspaces()
-      val config = workspacesToCompare.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig()
+      val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
+      val config = workspacesToCompare.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig(feature.getStrategySerializer())
       val outputWorkspace = EvaluationWorkspace.create(config)
       val project = loadProject(config.projectPath)
       val process = EvaluationProcess.build({
                                               shouldGenerateReports = true
-                                            }, BackgroundStepFactory(config, project, true, workspacesToCompare, EvaluationRootInfo(true)))
+                                            }, BackgroundStepFactory(feature, config, project, true, workspacesToCompare, EvaluationRootInfo(true)))
       process.startAsync(outputWorkspace)
     }
   }

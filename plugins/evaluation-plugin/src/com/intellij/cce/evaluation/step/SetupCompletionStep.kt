@@ -1,7 +1,8 @@
 package com.intellij.cce.evaluation.step
 
-import com.intellij.cce.actions.CompletionType
+
 import com.intellij.cce.core.Language
+import com.intellij.cce.evaluable.completion.CompletionType
 import com.intellij.cce.evaluation.UndoableEvaluationStep
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.codeInsight.CodeInsightSettings
@@ -13,7 +14,7 @@ import com.intellij.openapi.util.text.StringUtil
 import java.io.FileWriter
 
 class SetupCompletionStep(private val language: String,
-                          private val completionType: CompletionType) : UndoableEvaluationStep {
+                          private val completionType: CompletionType = CompletionType.BASIC) : UndoableEvaluationStep {
   companion object {
     private val LOG = logger<SetupCompletionStep>()
   }

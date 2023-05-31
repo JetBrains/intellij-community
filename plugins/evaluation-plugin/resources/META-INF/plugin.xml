@@ -25,7 +25,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.cce.completionEvaluationVisitor"
-                    interface="com.intellij.cce.visitor.CompletionEvaluationVisitor"
+                    interface="com.intellij.cce.visitor.EvaluationVisitor"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.cce.completionGolfVisitorFactory"
                     interface="com.intellij.cce.visitor.CompletionGolfVisitorFactory"
@@ -42,7 +42,17 @@
     <extensionPoint qualifiedName="com.intellij.cce.setupSdkStep" area="IDEA_PROJECT"
                     interface="com.intellij.cce.evaluation.SetupSdkStep"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.evaluableFeature"
+                    interface="com.intellij.cce.evaluable.EvaluableFeature"
+                    dynamic="true"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.cce">
+    <evaluableFeature implementation="com.intellij.cce.evaluable.rename.RenameFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.evaluable.completion.CompletionFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.evaluable.golf.LineCompletionGolfFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.evaluable.golf.LineCompletionFeature"/>
+  </extensions>
 
   <resource-bundle>messages.EvaluationPluginBundle</resource-bundle>
 
@@ -58,4 +68,5 @@
   <depends optional="true" config-file="evaluationPlugin-kotlin.xml">org.jetbrains.kotlin</depends>
   <depends optional="true" config-file="evaluationPlugin-statsCollector.xml">com.intellij.stats.completion</depends>
   <depends optional="true" config-file="evaluationPlugin-fullLine.xml">org.jetbrains.completion.full.line</depends>
+  <depends optional="true" config-file="evaluationPlugin-llm.xml">com.intellij.ml.llm</depends>
 </idea-plugin>

@@ -6,10 +6,11 @@ import com.intellij.cce.core.Session
 import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.util.ListSizeRestriction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 
-class DelegationCompletionInvoker(private val invoker: CompletionInvoker, project: Project) : CompletionInvoker {
+class DelegationActionsInvoker(private val invoker: ActionsInvoker, private val project: Project) : ActionsInvoker {
   private val applicationListenersRestriction = ListSizeRestriction.applicationListeners()
   private val dumbService = DumbService.getInstance(project)
 
@@ -17,14 +18,16 @@ class DelegationCompletionInvoker(private val invoker: CompletionInvoker, projec
     invoker.moveCaret(offset)
   }
 
-  override fun callCompletion(expectedText: String, prefix: String?): Lookup {
+  override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties): Session {
     return readActionWaitingForSize {
-      invoker.callCompletion(expectedText, prefix)
+      invoker.callFeature(expectedText, offset, properties)
     }
   }
 
-  override fun finishCompletion(expectedText: String, prefix: String) = readAction {
-    invoker.finishCompletion(expectedText, prefix)
+  override fun rename(text: String) {
+    return WriteCommandAction.runWriteCommandAction(project) {
+      invoker.rename(text)
+    }
   }
 
   override fun printText(text: String) = writeAction {
@@ -33,18 +36,6 @@ class DelegationCompletionInvoker(private val invoker: CompletionInvoker, projec
 
   override fun deleteRange(begin: Int, end: Int) = writeAction {
     invoker.deleteRange(begin, end)
-  }
-
-  override fun emulateUserSession(expectedText: String, nodeProperties: TokenProperties, offset: Int): Session {
-    return readActionWaitingForSize {
-      invoker.emulateUserSession(expectedText, nodeProperties, offset)
-    }
-  }
-
-  override fun emulateCompletionGolfSession(expectedLine: String, completableRanges: List<TextRange>, offset: Int): Session {
-    return readActionWaitingForSize {
-      invoker.emulateCompletionGolfSession(expectedLine, completableRanges, offset)
-    }
   }
 
   override fun openFile(file: String): String = readAction {

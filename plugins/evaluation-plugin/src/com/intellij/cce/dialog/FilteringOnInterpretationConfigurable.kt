@@ -17,7 +17,7 @@ class FilteringOnInterpretationConfigurable : EvaluationConfigurable {
       group(EvaluationPluginBundle.message("evaluation.settings.interpretation.title")) {
         row(EvaluationPluginBundle.message("evaluation.settings.interpretation.probability")) {
           probabilityTextField = textField().applyToComponent {
-            text = previousState.interpret.completeTokenProbability.toString()
+            text = previousState.interpret.sessionProbability.toString()
             document.addDocumentListener(object : DocumentAdapter() {
               override fun textChanged(e: DocumentEvent) {
                 val value = probabilityTextField.text.toDoubleOrNull()
@@ -29,9 +29,9 @@ class FilteringOnInterpretationConfigurable : EvaluationConfigurable {
         row(EvaluationPluginBundle.message("evaluation.settings.interpretation.seed")) {
           seedTextField = textField()
             .applyToComponent {
-              text = previousState.interpret.completeTokenSeed?.toString() ?: ""
-              isEnabled = 0 < previousState.interpret.completeTokenProbability &&
-                          previousState.interpret.completeTokenProbability < 1
+              text = previousState.interpret.sessionSeed?.toString() ?: ""
+              isEnabled = 0 < previousState.interpret.sessionProbability &&
+                          previousState.interpret.sessionProbability < 1
             }.component
         }
       }
@@ -39,7 +39,7 @@ class FilteringOnInterpretationConfigurable : EvaluationConfigurable {
   }
 
   override fun configure(builder: Config.Builder) {
-    builder.completeTokenProbability = probabilityTextField.text.toDoubleOrNull() ?: 1.0
-    builder.completeTokenSeed = seedTextField.text.toLongOrNull()
+    builder.sessionProbability = probabilityTextField.text.toDoubleOrNull() ?: 1.0
+    builder.sessionSeed = seedTextField.text.toLongOrNull()
   }
 }

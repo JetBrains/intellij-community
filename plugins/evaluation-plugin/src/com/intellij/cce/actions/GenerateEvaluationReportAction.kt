@@ -1,5 +1,7 @@
 package com.intellij.cce.actions
 
+import com.intellij.cce.evaluable.EvaluableFeature
+import com.intellij.cce.evaluable.rename.RenameStrategy
 import com.intellij.cce.evaluation.BackgroundStepFactory
 import com.intellij.cce.evaluation.EvaluationProcess
 import com.intellij.cce.evaluation.EvaluationRootInfo
@@ -11,13 +13,14 @@ import com.intellij.openapi.vfs.VirtualFile
 
 class GenerateEvaluationReportAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
+    val feature = EvaluableFeature.forFeature("rename") ?: return
     val project = e.project ?: return
     val dirs = getFiles(e)
-    val config = dirs.map { EvaluationWorkspace.open(it.path) }.buildMultipleEvaluationsConfig()
+    val config = dirs.map { EvaluationWorkspace.open(it.path) }.buildMultipleEvaluationsConfig(feature.getStrategySerializer())
     val outputWorkspace = EvaluationWorkspace.create(config)
     val process = EvaluationProcess.build({
                                             shouldGenerateReports = true
-                                          }, BackgroundStepFactory(config, project, false, dirs.map { it.path }, EvaluationRootInfo(true)))
+                                          }, BackgroundStepFactory(feature, config, project, false, dirs.map { it.path }, EvaluationRootInfo(true)))
     process.startAsync(outputWorkspace)
   }
 

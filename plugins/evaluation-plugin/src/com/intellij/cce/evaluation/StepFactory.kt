@@ -8,10 +8,8 @@ interface StepFactory {
   fun highlightTokensInIdeStep(): EvaluationStep
   fun generateReportStep(): EvaluationStep
   fun finishEvaluationStep(): EvaluationStep
-
-  fun setupCompletionStep(): EvaluationStep
   fun setupStatsCollectorStep(): EvaluationStep?
-  fun setupFullLineStep(): EvaluationStep
   fun setupSdkStep(): EvaluationStep?
   fun checkSdkConfiguredStep(): EvaluationStep
+  fun featureSpecificSteps() : List<EvaluationStep>
 }

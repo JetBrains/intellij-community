@@ -1,6 +1,6 @@
 package com.intellij.cce.evaluation.features
 
-import com.intellij.cce.interpreter.Interpreter.Companion.CCE_SESSION_UID
+import com.intellij.cce.evaluable.completion.CompletionActionsInvoker.Companion.CCE_SESSION_UID
 import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue

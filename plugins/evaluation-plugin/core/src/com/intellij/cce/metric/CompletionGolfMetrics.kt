@@ -1,13 +1,12 @@
 package com.intellij.cce.metric
 
-import com.intellij.cce.actions.selectedWithoutPrefix
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Bootstrap
 import com.intellij.cce.metric.util.Sample
 import org.apache.commons.lang.StringUtils
 
-internal fun createCompletionGolfMetrics(): List<Metric> =
+fun createCompletionGolfMetrics(): List<Metric> =
   listOf(
     MatchedRatio(),
     PrefixSimilarity(),
@@ -17,11 +16,15 @@ internal fun createCompletionGolfMetrics(): List<Metric> =
     NavigationsCount(),
     CompletionInvocationsCount(),
     MovesCountNormalised(),
-    PerfectLine(),
-    Precision(),
-    RecallAt(1),
-    RecallAt(5),
-    Recall()
+    PerfectLine(showByDefault = false)
+  )
+
+fun createBenchmarkMetrics(): List<Metric> =
+  listOf(
+    MatchedRatio(showByDefault = true),
+    PrefixSimilarity(showByDefault = true),
+    EditSimilarity(showByDefault = true),
+    PerfectLine(showByDefault = true)
   )
 
 internal abstract class CompletionGolfMetric<T : Number> : Metric {
@@ -142,136 +145,13 @@ internal class MovesCountNormalised : Metric {
   }
 }
 
-internal abstract class SimilarityMetric : Metric {
-  private var totalMatched: Double = 0.0
-  private var totalExpected: Double = 0.0
-  private var sample: MutableList<Pair<Double, Double>> = mutableListOf()
+internal class PerfectLine(showByDefault: Boolean) : SimilarityMetric(showByDefault) {
+  override val name = "Perfect Line"
 
-  override val valueType = MetricValueType.DOUBLE
-  override val showByDefault: Boolean = false
-  override val value: Double
-    get() = totalMatched / totalExpected
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double =
+    if (lookup.selectedWithoutPrefix()?.length == expectedText.length) 1.0 else 0.0
 
-  override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { values ->
-    values.sumOf { it.first } / values.sumOf { it.second }
-  }
-
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    var matched = 0.0
-    var expected = 0.0
-    for (session in sessions) {
-      for (lookup in session.lookups) {
-        val expectedText = session.expectedText.substring(lookup.offset)
-        expected += expectedText.length
-        val similarity = computeSimilarity(lookup, expectedText) ?: 0.0
-        matched += similarity
-        sample.add(Pair(similarity, expectedText.length.toDouble()))
-      }
-    }
-    totalMatched += matched
-    totalExpected += expected
-    return matched / expected
-  }
-
-  abstract fun computeSimilarity(lookup: Lookup, expectedText: String): Double?
-}
-
-internal class MatchedRatio : SimilarityMetric() {
-  override val name = "Matched Ratio"
-
-  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? =
-    lookup.selectedWithoutPrefix()?.length?.toDouble()
-}
-
-internal class PrefixSimilarity : SimilarityMetric() {
-  override val name = "Prefix Similarity"
-
-  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? =
-    lookup.suggestions.maxOfOrNull {
-      StringUtils.getCommonPrefix(arrayOf(it.text.drop(lookup.prefix.length), expectedText)).length
-    }?.toDouble()
-}
-
-internal class EditSimilarity : SimilarityMetric() {
-  override val name = "Edit Similarity"
-
-  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? =
-    lookup.suggestions.maxOfOrNull {
-      expectedText.length - StringUtils.getLevenshteinDistance(it.text.drop(lookup.prefix.length), expectedText)
-    }?.toDouble()
-}
-
-internal class PerfectLine : CompletionGolfMetric<Int>() {
-  override val name = NAME
-  override val valueType = MetricValueType.INT
-  override val value: Double
-    get() = sample.sum()
-
-  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int {
-    return sessions.count { it.success }
-  }
-
-  companion object {
-    const val NAME = "Perfect Line"
-  }
-}
-
-internal class Precision : Metric {
-  private val sample = mutableListOf<Double>()
-  override val name = "Precision"
-  override val valueType = MetricValueType.DOUBLE
-  override val value: Double
-    get() = sample.average()
-
-  override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { it.average() }
-
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    val fileSample = Sample()
-
-    for (lookup in sessions.flatMap { it.lookups }) {
-      for (i in lookup.suggestions.indices) {
-        if (i == lookup.selectedPosition) {
-          fileSample.add(1.0)
-          sample.add(1.0)
-        } else {
-          fileSample.add(0.0)
-          sample.add(0.0)
-        }
-      }
-    }
-    return fileSample.mean()
-  }
-}
-
-internal open class RecallAt(private val n: Int) : Metric {
-  private val sample = mutableListOf<Double>()
-  override val name = "RecallAt$n"
-  override val valueType = MetricValueType.DOUBLE
-  override val value: Double
-    get() = sample.average()
-
-  override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { it.average() }
-
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    val fileSample = Sample()
-
-    for (lookup in sessions.flatMap { it.lookups }) {
-      if (lookup.selectedPosition in 0 until n) {
-        fileSample.add(1.0)
-        sample.add(1.0)
-      }
-      else {
-        fileSample.add(0.0)
-        sample.add(0.0)
-      }
-    }
-    return fileSample.mean()
-  }
-}
-
-internal class Recall : RecallAt(Int.MAX_VALUE) {
-  override val name = "Recall"
-  override val showByDefault: Boolean = false
+  override fun computeExpected(lookup: Lookup, expectedText: String): Double = 1.0
 }
 
 private fun Session.expectedLength(): Int = expectedText.length - (lookups.firstOrNull()?.offset ?: 0)

@@ -4,11 +4,13 @@ import com.intellij.cce.core.CodeFragment
 import com.intellij.cce.core.Language
 import com.intellij.openapi.extensions.ExtensionPointName
 
-interface CompletionEvaluationVisitor {
+interface EvaluationVisitor {
   companion object {
-    val EP_NAME: ExtensionPointName<CompletionEvaluationVisitor> = ExtensionPointName.create("com.intellij.cce.completionEvaluationVisitor")
+    val EP_NAME: ExtensionPointName<EvaluationVisitor> = ExtensionPointName.create("com.intellij.cce.completionEvaluationVisitor")
   }
 
   val language: Language
+  val feature: String
+
   fun getFile(): CodeFragment
 }

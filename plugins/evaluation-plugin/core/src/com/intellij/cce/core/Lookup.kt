@@ -1,5 +1,7 @@
 package com.intellij.cce.core
 
+import com.intellij.cce.evaluable.golf.firstToken
+
 data class Lookup(
   val prefix: String,
   val offset: Int,
@@ -11,6 +13,14 @@ data class Lookup(
 ) {
   fun clearFeatures() {
     features = null
+  }
+
+  fun selectedWithoutPrefix(): String? {
+    if (selectedPosition == -1) return null
+
+    return suggestions.getOrNull(selectedPosition)?.let {
+      if (it.kind == SuggestionKind.TOKEN) firstToken(it.text) else it.text
+    }?.drop(prefix.length)?.takeIf { it.isNotEmpty() }
   }
 
   companion object {

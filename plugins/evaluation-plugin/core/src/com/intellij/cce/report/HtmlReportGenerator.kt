@@ -1,6 +1,5 @@
 package com.intellij.cce.report
 
-import com.intellij.cce.actions.CompletionGolfEmulation
 import com.intellij.cce.metric.MetricInfo
 import com.intellij.cce.metric.MetricValueType
 import com.intellij.cce.metric.SuggestionsComparator
@@ -22,14 +21,10 @@ import java.util.*
 import kotlin.io.path.writeText
 
 class HtmlReportGenerator(
-  outputDir: String,
-  private val filterName: String,
-  private val comparisonFilterName: String,
+  private val dirs: GeneratorDirectories,
   private val defaultMetrics: List<String>?,
-  suggestionsComparators: List<SuggestionsComparator>,
-  featuresStorages: List<FeaturesStorage>,
-  fullLineStorages: List<FullLineLogsStorage>,
-  completionGolfSettings: CompletionGolfEmulation.Settings?
+  val fileGenerator: FileReportGenerator,
+  //completionGolfSettings: CompletionGolfEmulation.Settings?
 ) : FullReportGenerator {
   companion object {
     private const val globalReportName = "index.html"
@@ -53,14 +48,14 @@ class HtmlReportGenerator(
 
   private val errorReferences: MutableMap<String, Path> = mutableMapOf()
 
-  private val dirs = GeneratorDirectories.create(outputDir, type, filterName, comparisonFilterName)
+  //private val dirs = GeneratorDirectories.create(outputDir, type, filterName, comparisonFilterName)
 
-  private var fileGenerator: FileReportGenerator = if (completionGolfSettings != null) {
-    CompletionGolfFileReportGenerator(completionGolfSettings, filterName, comparisonFilterName, featuresStorages, fullLineStorages, dirs)
-  }
-  else {
-    BasicFileReportGenerator(suggestionsComparators, filterName, comparisonFilterName, featuresStorages, dirs)
-  }
+  //private var fileGenerator: FileReportGenerator = if (completionGolfSettings != null) {
+  //  CompletionGolfFileReportGenerator(completionGolfSettings, filterName, comparisonFilterName, featuresStorages, fullLineStorages, dirs)
+  //}
+  //else {
+  //  BasicFileReportGenerator(suggestionsComparators, filterName, comparisonFilterName, featuresStorages, dirs)
+  //}
 
   private fun copyResources(resource: String) {
     val resultFile = Paths.get(dirs.resourcesDir.toString(), resource).toFile()
@@ -70,9 +65,9 @@ class HtmlReportGenerator(
 
   init {
     resources.forEach { copyResources(it) }
-    if (completionGolfSettings != null) {
-      downloadV2WebFiles()
-    }
+    //if (completionGolfSettings != null) {
+    //  downloadV2WebFiles()
+    //}
   }
 
   override fun generateFileReport(sessions: List<FileEvaluationInfo>) = fileGenerator.generateFileReport(sessions)
@@ -81,7 +76,7 @@ class HtmlReportGenerator(
     for (fileError in errors) {
       val filePath = Paths.get(fileError.path)
       val reportPath = dirs.getPaths(filePath.fileName.toString()).reportPath
-      val reportTitle = "Error on actions generation for file ${filePath.fileName} ($filterName and $comparisonFilterName filters)"
+      val reportTitle = "Error on actions generation for file ${filePath.fileName}"
       createHTML().html {
         head {
           title(reportTitle)
@@ -113,7 +108,7 @@ class HtmlReportGenerator(
   override fun generateGlobalReport(globalMetrics: List<MetricInfo>): Path {
     val reportPath = Paths.get(dirs.filterDir.toString(), globalReportName)
 
-    val reportTitle = "Code Completion Report for filters \"$filterName\" and \"$comparisonFilterName\""
+    val reportTitle = "Evaluation report"
     createHTML().html {
       head {
         title(reportTitle)

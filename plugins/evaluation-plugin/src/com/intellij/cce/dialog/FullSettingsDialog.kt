@@ -1,6 +1,8 @@
 package com.intellij.cce.dialog
 
 import com.intellij.cce.EvaluationPluginBundle
+import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.util.FilesHelper
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.ConfigFactory
@@ -17,10 +19,11 @@ import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JFileChooser
 
-class FullSettingsDialog(
+class FullSettingsDialog<T : EvaluationStrategy>(
   private val project: Project,
   private val files: List<VirtualFile>,
-  language2files: Map<String, Set<VirtualFile>>
+  language2files: Map<String, Set<VirtualFile>>,
+  private val strategySerializer: StrategySerializer<T>
 ) : DialogWrapper(true) {
   companion object {
     const val configStateKey = "com.intellij.cce.config.full"
@@ -50,7 +53,7 @@ class FullSettingsDialog(
       val value = properties.getValue(configStateKey)
       val previousState = try {
         if (value == null) ConfigFactory.defaultConfig(project.basePath!!)
-        else ConfigFactory.deserialize(value)
+        else ConfigFactory.deserialize(value, strategySerializer)
       }
       catch (e: Throwable) {
         ConfigFactory.defaultConfig(project.basePath!!)

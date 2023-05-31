@@ -4,10 +4,10 @@ import com.intellij.cce.interpreter.InterpretFilter
 import kotlin.random.Random
 
 class RandomInterpretFilter(
-  private val completeTokenProbability: Double,
-  private val completeTokenSeed: Long?) : InterpretFilter {
+  private val sessionProbability: Double,
+  private val sessionSeed: Long?) : InterpretFilter {
 
-  private val random = if (completeTokenSeed != null) Random(completeTokenSeed) else Random.Default
+  private val random = if (sessionSeed != null) Random(sessionSeed) else Random.Default
 
-  override fun shouldCompleteToken(): Boolean = random.nextFloat() < completeTokenProbability
+  override fun shouldCompleteToken(): Boolean = random.nextFloat() < sessionProbability
 }

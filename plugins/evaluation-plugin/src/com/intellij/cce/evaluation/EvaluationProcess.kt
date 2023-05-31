@@ -59,8 +59,7 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
 
       if (shouldInterpretActions) {
         factory.setupStatsCollectorStep()?.let { steps.add(it) }
-        steps.add(factory.setupCompletionStep())
-        steps.add(factory.setupFullLineStep())
+        steps.addAll(factory.featureSpecificSteps())
       }
 
       if (shouldGenerateActions) {

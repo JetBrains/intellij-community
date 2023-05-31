@@ -8,11 +8,12 @@ import com.jetbrains.python.PythonTokenSetContributor
 import com.jetbrains.python.psi.*
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 
-class PythonCompletionEvaluationVisitor : CompletionEvaluationVisitor, PyRecursiveElementVisitor() {
+class PythonCompletionEvaluationVisitor : EvaluationVisitor, PyRecursiveElementVisitor() {
   private var _codeFragment: CodeFragment? = null
   private val tokenSetContributor = PythonTokenSetContributor()
 
   override val language: Language = Language.PYTHON
+  override val feature: String = "completion"
 
   override fun getFile(): CodeFragment = _codeFragment
                                          ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")

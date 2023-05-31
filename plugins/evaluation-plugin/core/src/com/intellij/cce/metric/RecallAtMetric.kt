@@ -2,7 +2,6 @@ package com.intellij.cce.metric
 
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
-import java.util.stream.Collectors
 
 class RecallAtMetric(private val n: Int) : Metric {
   private val sample = Sample()
@@ -12,9 +11,8 @@ class RecallAtMetric(private val n: Int) : Metric {
     get() = sample.mean()
 
   override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    val listOfCompletions = sessions.stream()
-      .flatMap { session -> session.lookups.map { lookup -> Pair(lookup.suggestions, session.expectedText) }.stream() }
-      .collect(Collectors.toList())
+    val listOfCompletions = sessions
+      .flatMap { session -> session.lookups.map { lookup -> Pair(lookup.suggestions, session.expectedText) } }
 
     val fileSample = Sample()
     for (completion in listOfCompletions) {
@@ -23,7 +21,7 @@ class RecallAtMetric(private val n: Int) : Metric {
         fileSample.add(1.0)
         sample.add(1.0)
       }
-      else if (completion.first.isNotEmpty()) {
+      else {
         fileSample.add(0.0)
         sample.add(0.0)
       }

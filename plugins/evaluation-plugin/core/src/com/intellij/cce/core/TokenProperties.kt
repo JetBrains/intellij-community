@@ -1,6 +1,7 @@
 package com.intellij.cce.core
 
 import com.google.gson.*
+import com.intellij.cce.actions.TextRange
 import java.lang.reflect.Type
 
 interface TokenProperties {
@@ -21,7 +22,11 @@ interface TokenProperties {
 
   object JsonAdapter : JsonDeserializer<TokenProperties>, JsonSerializer<TokenProperties> {
     override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): TokenProperties {
-      return context.deserialize(json, SimpleTokenProperties::class.java)
+      val simpleTokenProperties = context.deserialize<SimpleTokenProperties>(json, SimpleTokenProperties::class.java)
+      if (simpleTokenProperties.tokenType == TypeProperty.LINE) {
+        return context.deserialize(json, LineProperties::class.java)
+      }
+      return simpleTokenProperties
     }
 
     override fun serialize(src: TokenProperties, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
@@ -32,6 +37,16 @@ interface TokenProperties {
   companion object {
     val UNKNOWN = SimpleTokenProperties.create(TypeProperty.UNKNOWN, SymbolLocation.UNKNOWN) {}
   }
+}
+
+
+class LineProperties(val completableRanges: List<TextRange>) : TokenProperties {
+  override val tokenType: TypeProperty = TypeProperty.LINE
+  override val location: SymbolLocation = SymbolLocation.UNKNOWN
+  override fun additionalProperty(name: String): String? = null
+  override fun describe(): String = ""
+  override fun hasFeature(feature: String): Boolean = false
+  override fun withFeatures(features: Set<String>): TokenProperties = this
 }
 
 
@@ -123,8 +138,9 @@ enum class SymbolLocation {
 enum class TypeProperty {
   KEYWORD,
   VARIABLE,
+  LOCAL_VARIABLE,
   LINE,
-
+  PARAMETER,
   // TODO: consider constructors separately
   TYPE_REFERENCE,
   METHOD_CALL,

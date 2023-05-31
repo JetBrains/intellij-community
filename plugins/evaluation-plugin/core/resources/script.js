@@ -146,7 +146,7 @@ function addSuggestions(sessionDiv, popup, lookup) {
     suggestionDiv.setAttribute("id", `${getId(sessionDiv)} ${i}`)
     let p = document.createElement(isCompletionGolf ? "code" : "plaintext")
     p.setAttribute("class", "suggestion-p")
-    if (sessions[sessionId].expectedText == suggestions[i].text) {
+    if (sessions[sessionId].expectedText == suggestions[i].text || lookup["selectedPosition"] == i) {
       p.setAttribute("style", "font-weight: bold;")
     }
     p.innerHTML = suggestions[i].presentationText

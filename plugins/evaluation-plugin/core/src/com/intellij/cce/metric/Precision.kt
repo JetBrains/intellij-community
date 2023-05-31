@@ -1,0 +1,34 @@
+package com.intellij.cce.metric
+
+import com.intellij.cce.core.Session
+import com.intellij.cce.metric.util.Bootstrap
+import com.intellij.cce.metric.util.Sample
+
+class Precision : Metric {
+  private val sample = mutableListOf<Double>()
+  override val name = "Precision"
+  override val valueType = MetricValueType.DOUBLE
+  override val value: Double
+    get() = sample.average()
+
+  override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { it.average() }
+
+  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
+    val fileSample = Sample()
+    for (session in sessions) {
+      for (lookup in session.lookups) {
+        for (suggestion in lookup.suggestions) {
+          if (comparator.accept(suggestion, session.expectedText)) {
+            fileSample.add(1.0)
+            sample.add(1.0)
+          } else {
+            fileSample.add(0.0)
+            sample.add(0.0)
+          }
+        }
+      }
+    }
+
+    return fileSample.mean()
+  }
+}

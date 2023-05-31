@@ -7,10 +7,11 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.psi.util.PsiTypesUtil
 
-class JavaCompletionEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursiveElementVisitor() {
+class JavaCompletionVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
   private var codeFragment: CodeFragment? = null
 
   override val language: Language = Language.JAVA
+  override val feature: String = "completion"
 
   override fun getFile(): CodeFragment = codeFragment
                                          ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
@@ -57,7 +58,7 @@ class JavaCompletionEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursi
              is PsiClass -> typeReferenceProperties(def)
              is PsiClassObjectAccessExpression ->
                PsiTypesUtil.getPsiClass(def.operand.type)?.let { typeReferenceProperties(it) }
-//            is PsiTypeCastExpression ->
+             //            is PsiTypeCastExpression ->
              is PsiVariable -> variableProperties()
              is PsiMethod -> methodProperties(def)
              else -> null

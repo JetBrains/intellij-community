@@ -35,7 +35,7 @@ class ReorderElementsStep(config: Config, project: Project, isHeadless: Boolean)
         for (session in fileSessionsInfo.sessions) {
           val json = workspace1.featuresStorage.getFeatures(session.id, fileSessionsInfo.filePath)
           val features = FeaturesSerializer.deserialize(json)
-          val newSession = Session(session.offset, session.expectedText, session.completableLength, session.content, session.properties)
+          val newSession = Session(session.offset, session.expectedText, session.completableLength, session.properties)
           for ((i, lookup) in session.lookups.withIndex()) {
             val elements2features = lookup.suggestions.zip(features[i].element)
             val sortedElements2features = elements2features.sortedWith(compareByMultipleFeatures())

@@ -10,4 +10,9 @@ abstract class GenerateActionsProcessor : CodeFragmentProcessor {
   }
 
   fun getActions() = actions
+
+  fun clear() {
+    actions.clear()
+  }
+
 }

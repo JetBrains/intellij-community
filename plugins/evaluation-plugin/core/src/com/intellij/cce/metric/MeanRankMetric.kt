@@ -7,6 +7,7 @@ class MeanRankMetric : Metric {
   private val sample = Sample()
   override val name = NAME
   override val valueType = MetricValueType.DOUBLE
+  override val showByDefault: Boolean = false
   override val value: Double
     get() = sample.mean()
 

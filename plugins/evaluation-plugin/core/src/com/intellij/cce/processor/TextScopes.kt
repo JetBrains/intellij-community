@@ -2,7 +2,7 @@ package com.intellij.cce.processor
 
 import java.util.*
 
-internal class TextScopes(text: String) {
+class TextScopes(text: String) {
 
   private val closed: Stack<Char> = Stack()
   private val opened: Stack<Char> = Stack()
