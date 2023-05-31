@@ -84,11 +84,28 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   }
 
   /**
-   * @return Language ID to be used in external formats like Json and .editorconfig. Must consist only of low case {@code 'a'...'z'} characters.
+   * @return Language ID to be used in external formats like Json and .editorconfig. Must consist only of low case {@code 'a'...'z'} and
+   * '-' characters. Base implementation uses {@link Language#getID()}, converts it to lower case letters and replaces any non-latin
+   * characters with '-'.
    */
   @NotNull
   public String getExternalLanguageId() {
-    return StringUtil.toLowerCase(getLanguage().getID());
+    return sanitizeLanguageId(StringUtil.toLowerCase(getLanguage().getID()));
+  }
+
+  private static String sanitizeLanguageId(@NotNull String id) {
+    StringBuilder sb = new StringBuilder(id.length());
+    id.chars().forEach(
+      c-> {
+        if (c >= 'a' && c <= 'z') {
+          sb.appendCodePoint(c);
+        }
+        else {
+          sb.append('-');
+        }
+      }
+    );
+    return sb.toString();
   }
 
   /**
