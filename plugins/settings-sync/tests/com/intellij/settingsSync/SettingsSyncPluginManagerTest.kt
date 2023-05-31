@@ -311,4 +311,21 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     Thread.sleep(100)
     assertFalse(SettingsSyncSettings.getInstance().isSubcategoryEnabled(SettingsCategory.PLUGINS, quickJump.idString))
   }
+
+  @Test
+  @TestFor(issues = ["IDEA-305325"])
+  fun `don't disable incompatible on start`() {
+    testPluginManager.addPluginDescriptors(git4idea, cvsOutdated.withEnabled(false))
+    pluginManager.updateStateFromIdeOnStart(state {
+      cvsOutdated(enabled = true)
+    })
+
+    assertIdeState {
+      git4idea(enabled = true)
+      cvsOutdated(enabled = false)
+    }
+    assertPluginManagerState {
+      cvsOutdated(enabled = true) // remains the same as it's incompatible
+    }
+  }
 }

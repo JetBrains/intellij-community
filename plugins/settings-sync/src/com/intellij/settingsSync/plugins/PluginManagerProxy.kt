@@ -22,4 +22,6 @@ interface PluginManagerProxy {
   fun getDisabledPluginIds(): Set<PluginId>
 
   fun isEssential(pluginId: PluginId): Boolean
+
+  fun isIncompatible(plugin: IdeaPluginDescriptor): Boolean
 }

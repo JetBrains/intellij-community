@@ -50,6 +50,12 @@ abstract class BasePluginManagerTest {
     listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),
     bundled = true
   )
+  internal val cvsOutdated = TestPluginDescriptor(
+    "cvs",
+    listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),
+    bundled = false,
+    compatible = false
+  )
   internal val javascript = TestPluginDescriptor(
     "JavaScript",
     listOf(TestPluginDependency("css", false)),

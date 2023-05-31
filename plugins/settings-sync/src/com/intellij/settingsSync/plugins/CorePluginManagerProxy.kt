@@ -33,4 +33,6 @@ class CorePluginManagerProxy : AbstractPluginManagerProxy() {
   override fun createInstaller(notifyErrors: Boolean): SettingsSyncPluginInstaller {
     return SettingsSyncPluginInstallerImpl(notifyErrors)
   }
+
+  override fun isIncompatible(plugin: IdeaPluginDescriptor) = PluginManagerCore.isIncompatible(plugin)
 }

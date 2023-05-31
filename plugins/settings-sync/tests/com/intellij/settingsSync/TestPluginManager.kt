@@ -62,12 +62,15 @@ internal class TestPluginManager : AbstractPluginManagerProxy() {
 
   override fun isDescriptorEssential(pluginId: PluginId): Boolean {
     val descriptor = ownPluginDescriptors[pluginId] ?: Assert.fail("Cannot find descriptor for pluginId $pluginId")
-    return (descriptor as TestPluginDescriptor).isEssential()
-
+    return (descriptor as TestPluginDescriptor).essential
   }
 
   override fun getDisabledPluginIds(): Set<PluginId> {
     return ownPluginDescriptors.filter { (_, descriptor) -> !descriptor.isEnabled }.keys
+  }
+
+  override fun isIncompatible(plugin: IdeaPluginDescriptor): Boolean {
+    return !(plugin as TestPluginDescriptor).compatible
   }
 
   override fun addPluginStateChangedListener(listener: PluginEnableStateChangedListener, parentDisposable: Disposable) {

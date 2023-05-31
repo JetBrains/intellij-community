@@ -40,7 +40,8 @@ data class TestPluginDescriptor(
   val idString: String,
   var pluginDependencies: List<TestPluginDependency> = emptyList(),
   val bundled: Boolean = false,
-  private var essential: Boolean = false
+  val essential: Boolean = false,
+  val compatible: Boolean = true
 ) : IdeaPluginDescriptor {
   companion object {
     val ALL = hashMapOf<PluginId, TestPluginDescriptor>()
@@ -60,10 +61,6 @@ data class TestPluginDescriptor(
 
   override fun getPluginPath(): Path {
     throw UnsupportedOperationException("Not supported")
-  }
-
-  fun isEssential(): Boolean {
-    return essential
   }
 
   override fun isBundled(): Boolean {

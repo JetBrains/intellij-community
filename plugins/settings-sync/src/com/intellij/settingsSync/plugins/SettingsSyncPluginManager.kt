@@ -49,9 +49,11 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
 
       for (plugin in currentIdePlugins) {
         val id = plugin.pluginId
-        if (PluginManagerProxy.getInstance().isEssential(id)) {
+        if (PluginManagerProxy.getInstance().isEssential(id)
+            || PluginManagerProxy.getInstance().isIncompatible(plugin)) {
           // don't change state of essential plugin (it will be enabled in the current IDE anyway)
-          // other IDEs will manage it themselves
+          // also, don't take into account incompatible plugins (makes no sense to deal with them)
+          // other IDEs will manage such plugins themselves
         }
         else if (shouldSaveState(plugin)) {
           newPlugins[id] = getPluginData(plugin)
