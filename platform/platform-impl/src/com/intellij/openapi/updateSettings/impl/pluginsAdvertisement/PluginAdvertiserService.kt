@@ -407,6 +407,7 @@ open class PluginAdvertiserServiceImpl(
 
     val pluginNames = (plugins.map { it.pluginName } + disabledPlugins.map { it.name })
       .sorted()
+      .distinct()
       .joinToString(", ")
 
     val addressedFeatures = collectFeaturesByName(ids, features)
