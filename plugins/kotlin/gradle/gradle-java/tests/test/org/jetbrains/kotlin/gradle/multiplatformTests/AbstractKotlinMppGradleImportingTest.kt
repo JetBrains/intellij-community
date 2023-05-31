@@ -146,6 +146,9 @@ abstract class AbstractKotlinMppGradleImportingTest :
         // Temporary mute TEST_TASKS checks due to issues with hosts on CI. See KT-56332
         if (checker is TestTasksChecker) return false
 
+        // Custom checker is always enabled
+        if (checker is CustomImportChecker) return true
+
         val config = testConfiguration.getConfiguration(GeneralWorkspaceChecks)
         if (config.disableCheckers != null && checker in config.disableCheckers!!) return false
         // Highlighting checker should be disabled explicitly, because it's rarely the intention to not run
