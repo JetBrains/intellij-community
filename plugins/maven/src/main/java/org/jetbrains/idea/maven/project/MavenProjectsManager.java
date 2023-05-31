@@ -492,7 +492,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
         if (nativeMavenProject != null) {
           var project = projectWithChanges.first;
           if (shouldScheduleProject(projectWithChanges)) {
-            scheduleForNextImport(List.of(projectWithChanges));
+            //scheduleForNextImport(List.of(projectWithChanges));
 
             MavenImportingSettings importingSettings;
 

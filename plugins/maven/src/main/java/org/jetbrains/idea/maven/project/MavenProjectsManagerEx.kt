@@ -285,7 +285,12 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         }
       }
     }
-    val createdModules = importMavenProjects()
+
+    val projectsToImport = resolutionResult.mavenProjectMap.entries
+      .flatMap { it.value }
+      .filter { it.changes.hasChanges() }
+      .associateBy({ it.mavenProject }, { it.changes })
+    val createdModules = importMavenProjects(projectsToImport + myProjectsToImport)
     result.setResult(createdModules)
 
     callback?.run()
