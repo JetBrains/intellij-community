@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.base.searching.usages.dialogs;
 import com.intellij.ui.SimpleColoredComponent;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport;
 import org.jetbrains.kotlin.psi.KtNamedDeclaration;
 
@@ -27,26 +28,35 @@ final class Utils {
     }
 
     static boolean renameCheckbox(@NotNull JPanel panel, @NotNull String srcText, @Nls @NotNull String destText) {
-        for (Component component : panel.getComponents()) {
-            if (component instanceof JCheckBox checkBox) {
-              if (checkBox.getText().equals(srcText)) {
-                    checkBox.setText(destText);
-                    return true;
-                }
-            }
+        JCheckBox checkbox = findCheckbox(panel, srcText);
+        if (checkbox != null) {
+            checkbox.setText(destText);
+            return true;
         }
-
         return false;
     }
 
     static void removeCheckbox(@NotNull JPanel panel, @NotNull String srcText) {
+        JCheckBox checkbox = findCheckbox(panel, srcText);
+        if (checkbox != null) {
+            panel.remove(checkbox.getParent());
+        }
+    }
+
+    private static @Nullable JCheckBox findCheckbox(@NotNull JPanel panel, @NotNull String srcText) {
+        JCheckBox checkBox = null;
         for (Component component : panel.getComponents()) {
-            if (component instanceof JCheckBox checkBox) {
-              if (checkBox.getText().equals(srcText)) {
-                    panel.remove(checkBox);
-                    return;
+            if (component instanceof JCheckBox jCheckBox) {
+                if (jCheckBox.getText().equals(srcText)) {
+                    checkBox = jCheckBox;
                 }
+                break;
+            }
+            if (component instanceof JPanel jPanel) {
+                checkBox = findCheckbox(jPanel, srcText);
+                if (checkBox != null) break;
             }
         }
+        return checkBox;
     }
 }
