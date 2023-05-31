@@ -7,6 +7,12 @@ import java.awt.Rectangle
 import javax.swing.JScrollPane
 
 @Experimental
+/**
+ * This interface is used by ScrollingModel to calculate the scrolling position for a given targetLocation.
+ * It is designed specifically for the IdeaVim plugin, since Vim has its own policy for handling scroll offsets and scroll jumps.
+ * This implies that IdeaVim users will have their own ScrollPositionCalculator that will replace the default one.
+ * If you intend to use this outside IdeaVim, you are doing something wrong.
+ */
 interface ScrollPositionCalculator {
   fun calcOffsetsToScroll(editor: Editor, targetLocation: Point, scrollType: ScrollType, viewRect: Rectangle, scrollPane: JScrollPane): Point {
     var adjustedScrollType = scrollType
