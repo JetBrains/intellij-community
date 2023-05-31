@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.psi.imports.KotlinImportPathComparator
-import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
@@ -478,7 +477,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
             replaceWith = ReplaceWith("this.addImport", "org.jetbrains.kotlin.idea.base.psi.imports.addImport")
         )
         fun addImport(project: Project, file: KtFile, fqName: FqName, allUnder: Boolean = false, alias: Name? = null): KtImportDirective {
-            return _addImport(project, file, fqName, allUnder, alias)
+            return file._addImport(fqName, allUnder, alias, project)
         }
     }
 }
