@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -28,6 +29,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
@@ -502,8 +504,9 @@ public final class CustomizationUtil {
       if (groupName == null) return null;
 
       final Ref<Component> popupInvoker = Ref.create();
+      String actionID = "customize.toolbar." + groupID;
       DefaultActionGroup customizationGroup = new DefaultActionGroup(
-        DumbAwareAction.create(IdeBundle.message("action.customizations.customize.action"), event -> {
+        new MyDumbAction(actionID, IdeBundle.message("action.customizations.customize.action"), event -> {
           Component src = popupInvoker.get();
           AnAction targetAction = ObjectUtils.doIfCast(src, ActionButton.class, ActionButton::getAction);
           DialogWrapper dialogWrapper = createCustomizeGroupDialog(event.getProject(), groupID, groupName, targetAction);
@@ -759,6 +762,33 @@ public final class CustomizationUtil {
     @Override
     public @NotNull ActionGroup getDelegate() {
       return ObjectUtils.notNull(myActionGroupSupplier.get(), ActionGroup.EMPTY_GROUP);
+    }
+  }
+
+  private static class MyDumbAction extends DumbAwareAction implements ActionIdProvider, ActionWithDelegate<Consumer<? super AnActionEvent>> {
+
+    @NotNull private final String id;
+    @NotNull private final Consumer<? super AnActionEvent> myActionPerformed;
+
+    private MyDumbAction(@NotNull String id, @Nullable @NlsActions.ActionText String text, @NotNull Consumer<? super AnActionEvent> actionPerformed) {
+      super(text);
+      this.id = id;
+      myActionPerformed = actionPerformed;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myActionPerformed.consume(e);
+    }
+
+    @Override
+    public @NotNull String getId() {
+      return id;
+    }
+
+    @Override
+    public @NotNull Consumer<? super AnActionEvent> getDelegate() {
+      return myActionPerformed;
     }
   }
 }
