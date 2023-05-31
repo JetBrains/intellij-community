@@ -4,13 +4,16 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.details.*
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.collaboration.ui.util.gap
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
 import kotlinx.coroutines.CoroutineScope
@@ -21,10 +24,10 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRCommitsViewModel
@@ -38,6 +41,7 @@ internal object GHPRDetailsComponentFactory {
     project: Project,
     scope: CoroutineScope,
     reviewDetailsVm: CodeReviewDetailsViewModel,
+    branchesVm: CodeReviewBranchesViewModel,
     reviewStatusVm: GHPRStatusViewModel,
     reviewFlowVm: GHPRReviewFlowViewModel,
     commitsVm: GHPRCommitsViewModel,
@@ -45,7 +49,6 @@ internal object GHPRDetailsComponentFactory {
     repositoryDataService: GHPRRepositoryDataService,
     securityService: GHPRSecurityService,
     avatarIconsProvider: GHAvatarIconsProvider,
-    branchesModel: GHPRBranchesModel,
     commitFilesBrowserComponent: JComponent
   ): JComponent {
     val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
@@ -53,7 +56,14 @@ internal object GHPRDetailsComponentFactory {
       add(CodeReviewDetailsCommitsComponentFactory.create(scope, commitsVm) { commit: GHCommit? ->
         createCommitsPopupPresenter(commit, commitsVm.reviewCommits.value.size, securityService.ghostUser)
       })
-      add(GHPRDetailsBranchesComponentFactory.create(project, dataProvider, repositoryDataService, branchesModel))
+      add(CodeReviewDetailsBranchComponentFactory.create(
+        scope, branchesVm,
+        checkoutAction = ActionManager.getInstance().getAction("Github.PullRequest.Branch.Checkout.Remote"),
+        dataContext = SimpleDataContext.builder()
+          .add(CommonDataKeys.PROJECT, project)
+          .add(GHPRActionKeys.GIT_REPOSITORY, repositoryDataService.remoteCoordinates.repository)
+          .add(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER, dataProvider)
+          .build()))
     }
     val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewStatusVm, reviewFlowVm, securityService, avatarIconsProvider)
     val actionsComponent = GHPRDetailsActionsComponentFactory.create(scope, reviewDetailsVm.reviewRequestState, reviewFlowVm, dataProvider)
