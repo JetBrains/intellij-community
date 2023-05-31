@@ -253,21 +253,25 @@ fn layout_launcher(
     // .
     // └── Contents
     //     ├── bin/
-    //     │   └── xplat-launcher | remote-dev-server
+    //     │   └── remote-dev-server [::RemoteDev]
     //     │   └── xplat.vmoptions
     //     │   └── idea.properties
+    //     ├── MacOS/
+    //     │   └── xplat-launcher [::Standard]
     //     ├── Resources/
     //     │   └── product-info.json
     //     ├── lib/
     //     │   └── app.jar
     //     │   └── boot-macos.jar
-    //     └── jbr/
+    //     ├── jbr/
+    //     └── Info.plist
 
     let launcher_rel_path = match launcher_location {
-        LauncherLocation::Standard => "bin/xplat-launcher",
+        LauncherLocation::Standard => "MacOS/xplat-launcher",
         LauncherLocation::RemoteDev => "bin/remote-dev-server"
     };
     let dist_root = target_dir.join("Contents");
+    let info_plist_path = shared_env.vm_options_path.parent_or_err()?.join("Info.plist");
 
     layout_launcher_impl(
         &dist_root,
@@ -279,7 +283,8 @@ fn layout_launcher(
             (&shared_env.launcher_path, launcher_rel_path),
             (&shared_env.vm_options_path, "bin/xplat.vmoptions"),
             (&shared_env.app_jar_path, "lib/app.jar"),
-            (&shared_env.product_info_path, "Resources/product-info.json")
+            (&shared_env.product_info_path, "Resources/product-info.json"),
+            (&info_plist_path, "Info.plist")
         ],
         include_jbr,
         &shared_env.jbr_root
