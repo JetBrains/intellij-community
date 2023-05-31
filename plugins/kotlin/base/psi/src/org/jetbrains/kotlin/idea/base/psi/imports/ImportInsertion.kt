@@ -13,24 +13,24 @@ import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.resolve.ImportPath
 
-fun KtFile.addImport(fqName: FqName, allUnder: Boolean = false, alias: Name? = null, project: Project = this.project): KtImportDirective {
+fun addImport(project: Project, file: KtFile, fqName: FqName, allUnder: Boolean = false, alias: Name? = null): KtImportDirective {
     val importPath = ImportPath(fqName, allUnder, alias)
 
     val psiFactory = KtPsiFactory(project)
-    if (this is KtCodeFragment) {
+    if (file is KtCodeFragment) {
         val newDirective = psiFactory.createImportDirective(importPath)
-        addImportsFromString(newDirective.text)
+        file.addImportsFromString(newDirective.text)
         return newDirective
     }
 
-    val importList = importList
+    val importList = file.importList
     if (importList != null) {
         val newDirective = psiFactory.createImportDirective(importPath)
         val imports = importList.imports
         return if (imports.isEmpty()) {
-            val packageDirective = packageDirective?.takeIf { it.packageKeyword != null }
+            val packageDirective = file.packageDirective?.takeIf { it.packageKeyword != null }
             packageDirective?.let {
-                addAfter(psiFactory.createNewLine(2), it)
+                file.addAfter(psiFactory.createNewLine(2), it)
             }
 
             (importList.add(newDirective) as KtImportDirective).also {
@@ -45,13 +45,13 @@ fun KtFile.addImport(fqName: FqName, allUnder: Boolean = false, alias: Name? = n
 
                         whiteSpace.replace(newLineBreak)
                     } else {
-                        addAfter(psiFactory.createNewLine(2), importList)
+                        file.addAfter(psiFactory.createNewLine(2), importList)
                     }
                 }
             }
         } else {
 
-            val importPathComparator = KotlinImportPathComparator.create(this)
+            val importPathComparator = KotlinImportPathComparator.create(file)
             val insertAfter = imports.lastOrNull {
                 val directivePath = it.importPath
                 directivePath != null && importPathComparator.compare(directivePath, importPath) <= 0
@@ -62,6 +62,6 @@ fun KtFile.addImport(fqName: FqName, allUnder: Boolean = false, alias: Name? = n
             }
         }
     } else {
-        error("Trying to insert import $fqName into a file $name of type ${this::class.java} with no import list.")
+        error("Trying to insert import $fqName into a file ${file.name} of type ${file::class.java} with no import list.")
     }
 }
