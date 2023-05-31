@@ -26,29 +26,30 @@ internal class GitLabMergeRequestsPanelFactory {
              listVm: GitLabMergeRequestsListViewModel): JComponent {
 
     val listModel = collectMergeRequests(scope, listVm)
-    val listMergeRequests = GitLabMergeRequestsListComponentFactory.create(listModel, listVm.avatarIconsProvider)
+    val list = GitLabMergeRequestsListComponentFactory.create(listModel, listVm.avatarIconsProvider)
 
-    val listLoaderPanel = createListLoaderPanel(scope, listVm, listMergeRequests)
+    val listLoaderPanel = createListLoaderPanel(scope, listVm, list)
     val listWrapper = Wrapper()
     val progressStripe = CollaborationToolsUIUtil.wrapWithProgressStripe(scope, listVm.loadingState, listWrapper).also { panel ->
       DataManager.registerDataProvider(panel) { dataId ->
         when {
-          GitLabMergeRequestsActionKeys.SELECTED.`is`(dataId) -> listMergeRequests.takeIf { it.isShowing }?.selectedValue
+          GitLabMergeRequestsActionKeys.SELECTED.`is`(dataId) -> list.takeIf { it.isShowing }?.selectedValue
           GitLabMergeRequestsActionKeys.REVIEW_LIST_VM.`is`(dataId) -> listVm
           else -> null
         }
       }
-
-      val groupId = "GitLab.Merge.Request.List.Actions"
-      PopupHandler.installPopupMenu(panel, ActionManager.getInstance().getAction(groupId) as ActionGroup, groupId)
       val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
       EmptyAction.registerWithShortcutSet("GitLab.Merge.Request.Show", shortcuts, panel)
     }
     ScrollableContentBorder.setup(listLoaderPanel, Side.TOP, progressStripe)
 
+    val popupActionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.List.Actions") as ActionGroup
+    PopupHandler.installPopupMenu(progressStripe, popupActionGroup, ActionPlaces.POPUP)
+    PopupHandler.installPopupMenu(list, popupActionGroup, ActionPlaces.POPUP)
+
     val searchPanel = createSearchPanel(scope, listVm)
 
-    GitLabMergeRequestsListController(scope, accountVm, listVm, listMergeRequests.emptyText, listLoaderPanel, listWrapper)
+    GitLabMergeRequestsListController(scope, accountVm, listVm, list.emptyText, listLoaderPanel, listWrapper)
 
     return JBUI.Panels.simplePanel(progressStripe)
       .addToTop(searchPanel)
