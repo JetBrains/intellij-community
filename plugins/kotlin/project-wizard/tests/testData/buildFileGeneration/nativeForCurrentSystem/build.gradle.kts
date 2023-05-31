@@ -22,7 +22,7 @@ kotlin {
         else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
     }
 
-    
+
     sourceSets {
         val myNativeMain by getting
         val myNativeTest by getting
