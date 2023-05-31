@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
@@ -83,7 +84,9 @@ class FileNotInSourceRootService(val project: Project) : Disposable {
       .registerFix(moveFileFix, listOf(DismissFix(), IgnoreForThisProjectFix()), null, null, null)
       .create()
     if (info != null) {
-      DaemonCodeAnalyzerEx.getInstanceEx(project).addFileLevelHighlight(GROUP, info, psiFile)
+      ApplicationManager.getApplication().invokeLater({
+        DaemonCodeAnalyzerEx.getInstanceEx(project).addFileLevelHighlight(GROUP, info, psiFile)
+      }, project.disposed)
     }
   }
 
