@@ -17,6 +17,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.LanguageLevelUtil.getNextLanguageLevel
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -96,6 +97,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
 
     if (!isMavenProjectLinked) {
       ApplicationManager.getApplication().invokeAndWait {
+        FileDocumentManager.getInstance().saveAllDocuments()
         mavenProjectAware.linkAndLoadProject(project, basePath)
       }
     }
