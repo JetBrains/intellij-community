@@ -26,7 +26,7 @@ object CodeReviewDetailsDescriptionComponentFactory {
     htmlPaneFactory: () -> JEditorPane
   ): JComponent {
     val descriptionPanel = htmlPaneFactory().apply {
-      bindTextIn(scope, detailsVm.description)
+      detailsVm.description?.also { bindTextIn(scope, it) }
       PopupHandler.installPopupMenu(this, actionGroup, "CodeReviewDetailsPopup")
     }.let {
       CollaborationToolsUIUtil.wrapWithLimitedSize(it, DimensionRestrictions.LinesHeight(it, VISIBLE_DESCRIPTION_LINES))

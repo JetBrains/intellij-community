@@ -9,6 +9,6 @@ interface CodeReviewDetailsViewModel {
   val url: String
 
   val title: Flow<String>
-  val description: Flow<String>
+  val description: Flow<String>?
   val reviewRequestState: Flow<ReviewRequestState>
 }

@@ -129,7 +129,8 @@ object CodeReviewDetailsStatusComponentFactory {
     reviewerActionProvider: (Reviewer) -> ActionGroup,
     reviewerNameProvider: (Reviewer) -> String,
     avatarKeyProvider: (Reviewer) -> IconKey,
-    iconProvider: (iconKey: IconKey, iconSize: Int) -> Icon
+    iconProvider: (iconKey: IconKey, iconSize: Int) -> Icon,
+    statusIconsEnabled: Boolean = true
   ): JComponent {
     val panel = VerticalListPanel(STATUS_REVIEWER_GAP).apply {
       name = "Code review status: reviewers"
@@ -142,7 +143,7 @@ object CodeReviewDetailsStatusComponentFactory {
         panel.removeAll()
         reviewersReview.forEach { (reviewer, reviewState) ->
           panel.add(createReviewerReviewStatus(reviewer, reviewState, reviewerActionProvider, reviewerNameProvider, avatarKeyProvider,
-                                               iconProvider))
+                                               iconProvider, statusIconsEnabled))
         }
         panel.revalidate()
         panel.repaint()
@@ -158,19 +159,23 @@ object CodeReviewDetailsStatusComponentFactory {
     reviewerActionProvider: (Reviewer) -> ActionGroup,
     reviewerNameProvider: (Reviewer) -> String,
     avatarKeyProvider: (Reviewer) -> IconKey,
-    iconProvider: (iconKey: IconKey, iconSize: Int) -> Icon
+    iconProvider: (iconKey: IconKey, iconSize: Int) -> Icon,
+    statusIconsEnabled: Boolean
   ): JComponent {
     return HorizontalListPanel(STATUS_REVIEWER_COMPONENT_GAP).apply {
-      val reviewStatusIconLabel = JLabel().apply {
-        icon = ReviewDetailsUIUtil.getReviewStateIcon(reviewState)
-      }
       val reviewerLabel = ReviewDetailsStatusLabel("Code review status: reviewer").apply {
         iconTextGap = STATUS_REVIEWER_COMPONENT_GAP
         icon = iconProvider(avatarKeyProvider(reviewer), Avatar.Sizes.BASE)
         text = ReviewDetailsUIUtil.getReviewStateText(reviewState, reviewerNameProvider(reviewer))
       }
 
-      add(reviewStatusIconLabel)
+      if (statusIconsEnabled) {
+        val reviewStatusIconLabel = JLabel().apply {
+          icon = ReviewDetailsUIUtil.getReviewStateIcon(reviewState)
+        }
+        add(reviewStatusIconLabel)
+      }
+
       add(reviewerLabel)
 
       if (reviewState != ReviewState.ACCEPTED) {

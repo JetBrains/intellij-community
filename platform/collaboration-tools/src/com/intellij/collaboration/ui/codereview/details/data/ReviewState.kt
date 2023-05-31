@@ -4,5 +4,5 @@ package com.intellij.collaboration.ui.codereview.details.data
 enum class ReviewState {
   ACCEPTED,
   WAIT_FOR_UPDATES,
-  NEED_REVIEW,
+  NEED_REVIEW
 }
