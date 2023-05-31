@@ -168,7 +168,14 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        " @Experimental public String experimentalAttribute; " +
                        "}")
     myFixture.addClass("package foo; import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval; " +
-                       "@ScheduledForRemoval(inVersion = \"removeVersion\") @Deprecated public class MyScheduledForRemovalEP {}")
+                       "@ScheduledForRemoval(inVersion = \"removeVersion\") " +
+                       "@Deprecated " +
+                       "public class MyScheduledForRemovalEP {" +
+                       " @com.intellij.util.xmlb.annotations.Attribute " +
+                       " @Deprecated" +
+                       " @ScheduledForRemoval " +
+                       " public String scheduledForRemovalAttribute; " +
+                       "}")
     myFixture.addClass("package foo; import org.jetbrains.annotations.ApiStatus.Internal; " +
                        "@Internal public class MyInternalEP {" +
                        " @com.intellij.util.xmlb.annotations.Attribute " +
