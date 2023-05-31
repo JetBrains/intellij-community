@@ -36,6 +36,9 @@ private const val MAX_SCALE_TO_CACHE = 4
 @JvmField
 var svgCache: SvgCacheManager? = null
 
+internal val activeSvgCache: SvgCacheManager?
+  get() = svgCache?.takeIf { it.isActive() }
+
 interface SvgAttributePatcher {
   fun patchColors(attributes: MutableMap<String, String>) {
   }
@@ -200,8 +203,8 @@ private inline fun loadAndCacheIfApplicable(path: String?,
                                             deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
                                             dataProvider: () -> ByteArray?): BufferedImage? {
   val colorPatcherDigest = colorPatcher?.digest() ?: deprecatedColorPatcher?.digest()?.let { longArrayOf(hasher.hashBytesToLong(it)) }
-  val svgCache = svgCache
-  if (svgCache == null || !svgCache.isActive() ||
+  val svgCache = activeSvgCache
+  if (svgCache == null ||
       (colorPatcherDigest == null && (colorPatcher != null || deprecatedColorPatcher != null)) ||
       scale > MAX_SCALE_TO_CACHE) {
     return renderImage(colorPatcher = colorPatcher,
@@ -255,17 +258,22 @@ private fun renderAndCache(deprecatedColorPatcher: SVGLoader.SvgElementColorPatc
                            @Suppress("SameParameterValue") cache: SvgCacheManager): BufferedImage {
   val image = renderImage(colorPatcher = colorPatcher, deprecatedColorPatcher = deprecatedColorPatcher, data = data, scale = scale,
                           path = path)
-  try {
-    val cacheWriteStart = StartUpMeasurer.getCurrentTimeIfEnabled()
-    cache.storeLoadedImage(precomputedCacheKey = precomputedCacheKey,
-                           themeKey = themeKey,
-                           imageBytes = data,
-                           compoundKey = compoundCacheKey,
-                           image = image)
-    IconLoadMeasurer.svgCacheWrite.end(cacheWriteStart)
-  }
-  catch (e: Throwable) {
-    logger<SVGLoader>().error("Failed to save icon to cache (path=$path, precomputedCacheKey=$precomputedCacheKey)", e)
+  // maybe closed during rendering
+  if (cache.isActive()) {
+    try {
+      val cacheWriteStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+      cache.storeLoadedImage(precomputedCacheKey = precomputedCacheKey,
+                             themeKey = themeKey,
+                             imageBytes = data,
+                             compoundKey = compoundCacheKey,
+                             image = image)
+      IconLoadMeasurer.svgCacheWrite.end(cacheWriteStart)
+    }
+    catch (e: Throwable) {
+      if (cache.isActive()) {
+        logger<SVGLoader>().error("Failed to save icon to cache (path=$path, precomputedCacheKey=$precomputedCacheKey)", e)
+      }
+    }
   }
   return image
 }
@@ -302,7 +310,7 @@ private fun renderImage(colorPatcher: SvgAttributePatcher?,
 
 @ApiStatus.Internal
 fun loadWithSizes(sizes: List<Int>, data: ByteArray, scale: Float = JBUIScale.sysScale()): List<Image> {
-  val svgCache = svgCache
+  val svgCache = activeSvgCache
   val document by lazy(LazyThreadSafetyMode.NONE) { createJSvgDocument(data) }
   val isHiDpiNeeded = isHiDPIEnabledAndApplicable(scale)
   return sizes.map { size ->
