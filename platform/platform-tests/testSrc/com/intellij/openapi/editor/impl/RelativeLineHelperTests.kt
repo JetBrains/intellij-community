@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.impl
 class RelativeLineHelperTests : AbstractEditorTest() {
   fun `test relative line above caret`() {
     initText("line 1\nline 2\nline 3\nline 4\nline 5\n")
-    assertEquals(1, RelativeLineHelper.getRelativeLine(editor, 2, 1))
+    assertEquals(-1, RelativeLineHelper.getRelativeLine(editor, 2, 1))
   }
 
   fun `test relative line below caret`() {
@@ -25,7 +25,7 @@ class RelativeLineHelperTests : AbstractEditorTest() {
   fun `test relative line above caret in fold`() {
     initText("line 1\nline 2\nline 3\nline 4\nline 5\n")
     foldLines(2, 3)
-    assertEquals(1, RelativeLineHelper.getRelativeLine(editor, 2, 1))
+    assertEquals(-1, RelativeLineHelper.getRelativeLine(editor, 2, 1))
   }
 
   fun `test relative line below caret in fold`() {
@@ -58,35 +58,46 @@ class RelativeLineHelperTests : AbstractEditorTest() {
   fun `test line number for fold above caret`() {
     initText("line 1\nline 2\nline 3\nline 4\nline 5\n")
     foldLines(2, 3)
-    assertEquals(2, RelativeLineHelper.getRelativeLine(editor, 4, 1))
-    assertEquals(1, RelativeLineHelper.getRelativeLine(editor, 4, 2))
-    assertEquals(1, RelativeLineHelper.getRelativeLine(editor, 4, 3))
+    assertEquals(-2, RelativeLineHelper.getRelativeLine(editor, 4, 1))
+    assertEquals(-1, RelativeLineHelper.getRelativeLine(editor, 4, 2))
+    assertEquals(-1, RelativeLineHelper.getRelativeLine(editor, 4, 3))
     assertEquals(0, RelativeLineHelper.getRelativeLine(editor, 4, 4))
   }
 
-  fun `test new line folded`() {
-    initText("""
+  fun `test fold inside line`() {
+    val text = """
       line 0
       line 1
       
+      aaa
       
+      
+      bbb
       
       line 5
-    """.trimIndent())
-    foldRegion(15, 16)
-    assertEquals(3, RelativeLineHelper.getRelativeLine(editor, 3, 0))
-    assertEquals(2, RelativeLineHelper.getRelativeLine(editor, 3, 1))
-    assertEquals(1, RelativeLineHelper.getRelativeLine(editor, 3, 2))
+    """.trimIndent()
+    initText(text)
+
+    foldRegion(text.indexOf("aaa") + 3, text.indexOf("bbb"))
+    assertEquals(-3, RelativeLineHelper.getRelativeLine(editor, 3, 0))
+    assertEquals(-2, RelativeLineHelper.getRelativeLine(editor, 3, 1))
+    assertEquals(-1, RelativeLineHelper.getRelativeLine(editor, 3, 2))
     assertEquals(0, RelativeLineHelper.getRelativeLine(editor, 3, 3))
     assertEquals(0, RelativeLineHelper.getRelativeLine(editor, 3, 4))
-    assertEquals(1, RelativeLineHelper.getRelativeLine(editor, 3, 5))
+    assertEquals(0, RelativeLineHelper.getRelativeLine(editor, 3, 5))
+    assertEquals(0, RelativeLineHelper.getRelativeLine(editor, 3, 6))
+    assertEquals(1, RelativeLineHelper.getRelativeLine(editor, 3, 7))
+    assertEquals(2, RelativeLineHelper.getRelativeLine(editor, 3, 8))
 
-    assertEquals(3, RelativeLineHelper.getRelativeLine(editor, 4, 0))
-    assertEquals(2, RelativeLineHelper.getRelativeLine(editor, 4, 1))
-    assertEquals(1, RelativeLineHelper.getRelativeLine(editor, 4, 2))
+    assertEquals(-3, RelativeLineHelper.getRelativeLine(editor, 4, 0))
+    assertEquals(-2, RelativeLineHelper.getRelativeLine(editor, 4, 1))
+    assertEquals(-1, RelativeLineHelper.getRelativeLine(editor, 4, 2))
     assertEquals(0, RelativeLineHelper.getRelativeLine(editor, 4, 3))
     assertEquals(0, RelativeLineHelper.getRelativeLine(editor, 4, 4))
-    assertEquals(1, RelativeLineHelper.getRelativeLine(editor, 4, 5))
+    assertEquals(0, RelativeLineHelper.getRelativeLine(editor, 4, 5))
+    assertEquals(0, RelativeLineHelper.getRelativeLine(editor, 4, 6))
+    assertEquals(1, RelativeLineHelper.getRelativeLine(editor, 4, 7))
+    assertEquals(2, RelativeLineHelper.getRelativeLine(editor, 4, 8))
   }
 
   /**
