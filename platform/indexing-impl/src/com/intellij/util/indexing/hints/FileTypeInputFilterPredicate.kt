@@ -24,9 +24,7 @@ class FileTypeInputFilterPredicate : BaseFileTypeInputFilter {
 
   constructor(vararg fileTypes: FileType) : this({ fileType -> fileTypes.contains(fileType) })
 
-  override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
-    throw AssertionError("Should not be invoked, because hintAcceptFileType for filetype never returns UNSURE");
-  }
+  override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean = false // for directories
 
   override fun acceptFileType(fileType: FileType): ThreeState = ThreeState.fromBoolean(predicate(fileType))
 }
