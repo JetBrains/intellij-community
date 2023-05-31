@@ -56,6 +56,7 @@ import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecut
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.SimpleTextAttributes;
@@ -66,9 +67,13 @@ import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction;
 import org.jetbrains.plugins.gradle.execution.filters.ReRunTaskFilter;
 import org.jetbrains.plugins.gradle.execution.test.runner.events.GradleTestEventsProcessor;
 import org.jetbrains.plugins.gradle.execution.test.runner.events.GradleTestsExecutionConsoleOutputProcessor;
+import org.jetbrains.plugins.gradle.service.execution.GradleCommandLineUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
+import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+
+import java.nio.file.Files;
 
 /**
  * @author Vladislav.Soroka
@@ -262,7 +267,35 @@ public class GradleTestsExecutionConsoleManager
     if (task instanceof ExternalSystemExecuteTaskTask taskTask) {
       if (StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) {
         var isRunAsTest = taskTask.getUserData(GradleRunConfiguration.RUN_AS_TEST_KEY);
-        return ObjectUtils.chooseNotNull(isRunAsTest, false);
+        if (ObjectUtils.chooseNotNull(isRunAsTest, false)) {
+          return true;
+        }
+        return hasTestTasks(taskTask);
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Checks that ES task has a tasks which can produce test events.
+   * <p>
+   * Note: This function has specific heuristics for recognition which task can produce test events.
+   * Therefore, this function cannot be reused in the other place.
+   */
+  private static boolean hasTestTasks(@NotNull ExternalSystemExecuteTaskTask taskTask) {
+    var project = taskTask.getIdeProject();
+    var modulePath = taskTask.getExternalProjectPath();
+    var commandLine = GradleCommandLineUtil.parseCommandLine(taskTask.getTasksToExecute(), taskTask.getArguments());
+    var indices = GradleTasksIndices.getInstance(project);
+    for (var task : commandLine.getTasks()) {
+      if (!GradleCommandLineUtil.getTestPatterns(task).isEmpty()) {
+        return true;
+      }
+      var taskData = indices.findTasks(modulePath, task.getName());
+      for (var taskDatum : taskData) {
+        if (taskDatum.isTest()) {
+          return true;
+        }
       }
     }
     return false;

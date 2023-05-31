@@ -289,7 +289,12 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       }
 
       executeTasks(":test --rerun-tasks", isRunAsTest = false)
-      assertRunTreeView {
+      assertTestTreeView {
+        assertNode("TestCase") {
+          assertNode("test")
+        }
+      }
+      assertBuildExecutionTree {
         assertNode("successful") {
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -302,7 +307,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       }
 
       executeTasks(":test", isRunAsTest = false)
-      assertRunTreeView {
+      assertTestTreeViewIsEmpty()
+      assertBuildExecutionTree {
         assertNode("successful") {
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -363,7 +369,11 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       }
 
       executeTasks(":allTests", isRunAsTest = true)
-      assertTestTreeViewIsEmpty()
+      assertTestTreeView {
+        assertNode("TestCase") {
+          assertNode("test")
+        }
+      }
       assertBuildExecutionTree {
         val status = when {
           isTestLauncherSupported() -> "failed"

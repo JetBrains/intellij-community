@@ -22,6 +22,7 @@ import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.testing.AbstractTestTask
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.jvm.toolchain.internal.JavaToolchain
@@ -57,7 +58,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
   public static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
-  public static final boolean is51OrBetter = is4OrBetter && gradleBaseVersion >= GradleVersion.version("5.1")
+  public static final boolean is44OrBetter = gradleBaseVersion >= GradleVersion.version("4.4")
+  public static final boolean is51OrBetter = gradleBaseVersion >= GradleVersion.version("5.1")
   public static final boolean is67OrBetter = gradleBaseVersion >= GradleVersion.version("6.7")
   public static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
   public static final boolean is80OrBetter = gradleBaseVersion >= GradleVersion.version("8.0")
@@ -202,8 +204,11 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         externalTask.description = task.description
         externalTask.group = task.group ?: "other"
         def ext = task.getExtensions()?.extraProperties
-        externalTask.test = (task instanceof Test) ||
-                            (ext?.has("idea.internal.test") && Boolean.valueOf(ext.get("idea.internal.test").toString()))
+        def isInternalTest = ext?.has("idea.internal.test") && Boolean.valueOf(ext.get("idea.internal.test").toString())
+        def isEffectiveTest = "check" == task.name && "verification" == task.group
+        def isJvmTest = task instanceof Test
+        def isAbstractTest = is44OrBetter && task instanceof AbstractTestTask
+        externalTask.test = isJvmTest || isAbstractTest || isInternalTest || isEffectiveTest
         externalTask.type = ProjectExtensionsDataBuilderImpl.getType(task)
         result.put(externalTask.name, externalTask)
       }
