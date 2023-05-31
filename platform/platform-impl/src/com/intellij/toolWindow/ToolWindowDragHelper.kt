@@ -11,10 +11,7 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ToolWindowAnchor.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.*
-import com.intellij.ui.ComponentUtil
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.MouseDragHelper
-import com.intellij.ui.ScreenUtil
+import com.intellij.ui.*
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -329,18 +326,19 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
           lastDropTooltipAnchor = anchor
 
           val tooltip = HelpTooltip()
-          tooltip.setTitle(anchor.toString())
+          tooltip.setTitle(UIBundle.message("tool.window.move.to.action.group.name") + " " + anchor.toString())
           dropTooltipPopup = HelpTooltip.initPopupBuilder(tooltip.createTipPanel()).createPopup()
         }
 
         val bounds = dialog.bounds
-        val location = Point(0, bounds.y)
+        val size = dropTooltipPopup!!.content.preferredSize
+        val location = Point(0, bounds.y + (bounds.height - size.height) / 2)
 
         if (anchor.toString().lowercase().contains("left")) {
           location.x = bounds.x + bounds.width + JBUI.scale(10)
         }
         else {
-          location.x = bounds.x - JBUI.scale(10) - dropTooltipPopup!!.content.preferredSize.width
+          location.x = bounds.x - JBUI.scale(10) - size.width
         }
 
         if (dropTooltipPopup!!.isVisible) {

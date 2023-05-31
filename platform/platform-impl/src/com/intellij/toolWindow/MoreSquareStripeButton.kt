@@ -37,7 +37,7 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
     val group = DefaultActionGroup()
 
     for (anchor in moveTo) {
-      group.add(object : DumbAwareAction(UIBundle.message("tool.window.more.button.move", anchor.capitalizedDisplayName)) {
+      group.add(object : DumbAwareAction(UIBundle.message("tool.window.more.button.move", anchor.displayName)) {
         override fun actionPerformed(e: AnActionEvent) {
           ToolWindowManagerEx.getInstanceEx(e.project ?: return).setMoreButtonSide(anchor)
         }
