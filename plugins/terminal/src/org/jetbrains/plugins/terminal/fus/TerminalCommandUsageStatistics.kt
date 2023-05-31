@@ -18,7 +18,8 @@ internal object TerminalCommandUsageStatistics {
   private val absolutePathCommand = TerminalCommandEventData("<absolute path>", null)
   private val knownCommandToSubCommandsMap: Map<String, List<String>> = buildKnownCommandToSubCommandMap()
 
-  internal val commandExecutableField = EventFields.String("command", listOf(relativePathCommand.command, absolutePathCommand.command)
+  internal val commandExecutableField = EventFields.String("command", listOf(relativePathCommand.command, absolutePathCommand.command,
+                                                                             emptyCommand.command, whitespacesCommand.command)
                                                                      + knownCommandToSubCommandsMap.keys)
   internal val subCommandField = EventFields.String("subCommand", knownCommandToSubCommandsMap.values.flatten())
 
