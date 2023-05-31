@@ -44,8 +44,10 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   // return true if was stopped
   boolean stopIfRunning() {
-    if(mySpan != null) mySpan.end();
     synchronized (getLock()) {
+      if(mySpan != null) {
+        mySpan.end();
+      }
       if (isRunning()) {
         stop();
         return true;
