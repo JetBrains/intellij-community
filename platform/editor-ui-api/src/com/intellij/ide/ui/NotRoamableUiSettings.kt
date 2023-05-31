@@ -5,8 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.FontUtil
-import com.intellij.util.xmlb.Accessor
-import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import java.awt.Font
@@ -155,11 +153,11 @@ data class NotRoamableUiOptions(
   val fontFace: String? = null,
 
   @JvmField
-  @field:Property(filter = FontFilter::class)
+  @field:Property
   val fontSize: Float = 0f,
 
   @JvmField
-  @field:Property(filter = FontFilter::class)
+  @field:Property
   val fontScale: Float = UISettings.defFontScale,
 
   @JvmField
@@ -179,16 +177,3 @@ data class NotRoamableUiOptions(
   @OptionTag
   val overrideLafFontsWasMigrated: Boolean = false,
 )
-
-private class FontFilter : SerializationFilter {
-  override fun accepts(accessor: Accessor, bean: Any): Boolean {
-    val settings = bean as NotRoamableUiOptions
-    val fontData = JBUIScale.getSystemFontData(null)
-    if ("fontFace" == accessor.name) {
-      return fontData.first != settings.fontFace
-    }
-    // fontSize/fontScale should either be stored in a pair or not stored at all,
-    // otherwise the fontSize restore logic gets broken (see loadState)
-    return !(fontData.second.toFloat() == settings.fontSize && 1f == settings.fontScale)
-  }
-}
