@@ -798,7 +798,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
         .add("updated", "parent", "child")
         .add("deleted")
         .add("resolved", "parent")
-        .add("plugins", "parent")
         .add("folders", "parent"),
       listener.log);
     myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
@@ -807,7 +806,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
         .add("updated", "parent", "child")
         .add("deleted")
         .add("resolved", "parent")
-        .add("plugins", "parent")
         .add("folders", "parent"),
       listener.log);
   }

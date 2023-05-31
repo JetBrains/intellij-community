@@ -165,7 +165,7 @@ public class Maven3XProjectResolver {
         task.updateTotalRequests(buildingResultsToResolveDependencies.size());
         boolean runInParallel = canResolveDependenciesInParallel();
         Collection<Maven3ExecutionResult> execResults =
-          MavenServerParallelRunner.execute(
+          ParallelRunner.execute(
             runInParallel,
             buildingResultsToResolveDependencies.entrySet(), entry -> {
               if (task.isCanceled()) return new Maven3ExecutionResult(Collections.emptyList());

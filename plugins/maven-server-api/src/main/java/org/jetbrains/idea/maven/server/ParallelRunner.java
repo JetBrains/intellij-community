@@ -11,27 +11,71 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public final class MavenServerParallelRunner {
+public final class ParallelRunner {
+  @FunctionalInterface
+  public interface ThrowingConsumer<T> extends Consumer<T> {
+    @Override
+    default void accept(final T e) {
+      try {
+        accept0(e);
+      }
+      catch (Throwable ex) {
+        sneakyThrow(ex);
+      }
+    }
+
+    void accept0(T e) throws Throwable;
+  }
+
+  @NotNull
+  private static <T> Consumer<T> toThrowingConsumer(@NotNull ThrowingConsumer<T> consumer) {
+    return consumer;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <E extends Throwable> void sneakyThrow(@NotNull Throwable ex) throws E {
+    throw (E)ex;
+  }
+
   public static <T> void runInParallel(@NotNull Collection<T> collection, @NotNull Consumer<T> method) {
-    collection.parallelStream().forEach(method);
+    collection.parallelStream().flatMap(item -> {
+      try {
+        method.accept(item);
+        return null;
+      }
+      catch (RuntimeException ex) {
+        return Stream.of(ex);
+      }
+    }).reduce((ex1, ex2) -> {
+      ex1.addSuppressed(ex2);
+      return ex1;
+    }).ifPresent(ex -> {
+      throw ex;
+    });
+  }
+
+  @SuppressWarnings("RedundantThrows")
+  public static <T, E extends Throwable> void runInParallelRethrow(@NotNull Collection<T> collection, @NotNull ThrowingConsumer<T> method)
+    throws E {
+    collection.parallelStream().forEach(toThrowingConsumer(item -> {
+      method.accept(item);
+    }));
   }
 
   public static <T> void runSequentially(@NotNull Collection<T> collection, @NotNull Consumer<T> method) {
     collection.forEach(method);
   }
 
-  public static <T> void run(boolean runInParallel, @NotNull Collection<T> collection, @NotNull Consumer<T> method) {
-    if (runInParallel) {
-      runInParallel(collection, method);
-    }
-    else {
-      runSequentially(collection, method);
-    }
+  @SuppressWarnings("RedundantThrows")
+  public static <T, E extends Throwable> void runSequentiallyRethrow(@NotNull Collection<T> collection, @NotNull ThrowingConsumer<T> method)
+    throws E {
+    collection.forEach(method);
   }
 
   public static <T, R, E extends Exception> List<R> executeSequentially(@NotNull Collection<T> collection,
-                                                                        @NotNull CheckedFunction<T, R, E> method) throws E {
+                                                                        @NotNull ParallelRunner.CheckedFunction<T, R, E> method) throws E {
     List<R> result = new ArrayList<>();
 
     for (T item : collection) {
@@ -42,7 +86,7 @@ public final class MavenServerParallelRunner {
   }
 
   public static <T, R, E extends Exception> List<R> executeInParallel(@NotNull Collection<T> collection,
-                                                                      @NotNull CheckedFunction<T, R, E> method) throws E {
+                                                                      @NotNull ParallelRunner.CheckedFunction<T, R, E> method) throws E {
     Set<RuntimeException> runtimeExceptions = ConcurrentHashMap.newKeySet();
     Set<E> checkedExceptions = ConcurrentHashMap.newKeySet();
 
@@ -81,7 +125,7 @@ public final class MavenServerParallelRunner {
 
   public static <T, R, E extends Exception> List<R> execute(boolean inParallel,
                                                             @NotNull Collection<T> collection,
-                                                            @NotNull CheckedFunction<T, R, E> method) throws E {
+                                                            @NotNull ParallelRunner.CheckedFunction<T, R, E> method) throws E {
     return inParallel ? executeInParallel(collection, method) : executeSequentially(collection, method);
   }
 

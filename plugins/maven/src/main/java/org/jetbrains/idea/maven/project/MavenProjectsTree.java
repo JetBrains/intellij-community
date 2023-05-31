@@ -36,6 +36,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.server.ParallelRunner;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -79,7 +80,7 @@ public final class MavenProjectsTree {
   private final Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new HashMap<>();
 
   private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
-  private final Project myProject;
+  private final @NotNull  Project myProject;
 
 
   private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
@@ -94,6 +95,7 @@ public final class MavenProjectsTree {
     myProject = project;
   }
 
+  @NotNull
   Project getProject() {
     return myProject;
   }

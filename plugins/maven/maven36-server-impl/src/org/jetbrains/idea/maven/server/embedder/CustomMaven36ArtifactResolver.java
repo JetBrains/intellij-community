@@ -7,7 +7,7 @@ import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.server.MavenServerParallelRunner;
+import org.jetbrains.idea.maven.server.ParallelRunner;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -68,7 +68,7 @@ public class CustomMaven36ArtifactResolver implements ArtifactResolver {
 
     List<ArtifactRequest> requestList = new ArrayList<>(requests);
 
-    List<ArtifactResultData> resultDataList = MavenServerParallelRunner.execute(
+    List<ArtifactResultData> resultDataList = ParallelRunner.execute(
       true,
       requests,
       request -> doResolveArtifactAndWrapException(session, request)

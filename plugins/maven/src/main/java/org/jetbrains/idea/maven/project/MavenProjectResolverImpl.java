@@ -22,10 +22,10 @@ import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 import org.jetbrains.idea.maven.server.MavenConfigParseException;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.server.ParallelRunner;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.idea.maven.utils.ParallelRunner;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
@@ -197,9 +197,11 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
     mavenProjectCandidate.getProblems(); // need for fill problem cache
     tree.fireProjectResolved(Pair.create(mavenProjectCandidate, changes), nativeMavenProject);
 
-    if (null != nativeMavenProject) {
-      if (!mavenProjectCandidate.hasReadingProblems() && mavenProjectCandidate.hasUnresolvedPlugins()) {
+    if(!mavenProjectCandidate.hasReadingProblems()) {
+      if (null != nativeMavenProject) {
         projectsWithUnresolvedPlugins.add(new MavenProjectWithHolder(mavenProjectCandidate, nativeMavenProject));
+      } else {
+        MavenLog.LOG.error("Native maven project is null for " + mavenProjectCandidate);
       }
     }
   }

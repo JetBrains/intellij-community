@@ -24,6 +24,6 @@ public interface MavenProjectResolver {
     return project.getService(MavenProjectResolver.class);
   }
 
-  record MavenProjectResolutionResult(@NotNull Map<String, Collection<MavenProjectWithHolder>> projectsWithUnresolvedPlugins) {
+  record MavenProjectResolutionResult(@NotNull Map<String, Collection<MavenProjectWithHolder>> mavenProjectMap) {
   }
 }

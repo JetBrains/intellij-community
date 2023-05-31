@@ -206,7 +206,7 @@ class MavenImportFlow {
                                             mavenProgressIndicator.indicator,
                                             mavenProgressIndicator.syncConsole)
     Disposer.dispose(d)
-    val projectsWithUnresolvedPlugins = resolutionResult.projectsWithUnresolvedPlugins.values.flatten()
+    val projectsWithUnresolvedPlugins = resolutionResult.mavenProjectMap.values.flatten()
     return MavenResolvedContext(context.project, projectsToImport.toList(), projectsWithUnresolvedPlugins, context)
   }
 

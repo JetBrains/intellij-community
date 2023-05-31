@@ -278,14 +278,13 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorPluginsResolvingTask::class.java) {
         withRawProgressReporter {
           coroutineToIndicator {
-            for (entry in resolutionResult.projectsWithUnresolvedPlugins) {
-              pluginResolver.resolvePlugins(entry.value, embeddersManager, mavenConsole, indicator, true)
+            for (mavenProjects in resolutionResult.mavenProjectMap) {
+              pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, indicator, true)
             }
           }
         }
       }
     }
-
     val createdModules = importMavenProjects()
     result.setResult(createdModules)
 
