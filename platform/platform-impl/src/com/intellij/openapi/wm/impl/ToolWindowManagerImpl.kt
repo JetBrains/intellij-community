@@ -39,6 +39,7 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -293,6 +294,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
           for (entry in manager.idToEntry.values) {
             manager.saveFloatingOrWindowedState(entry, manager.layoutState.getInfo(entry.id) ?: continue)
           }
+        }
+
+        override fun projectClosed(project: Project) {
+          (project.serviceIfCreated<ToolWindowManager>() as ToolWindowManagerImpl?)?.projectClosed()
         }
       })
 
@@ -564,6 +569,30 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     return toolWindowPanes.get(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
            ?: throw IllegalStateException("You must not register toolwindow programmatically so early. " +
                                           "Rework code or use ToolWindowManager.invokeLater")
+  }
+
+  internal fun projectClosed() {
+    // Hide everything outside the frame (floating and windowed) - frame contents are handled separately elsewhere.
+    for (entry in idToEntry.values) {
+      if (entry.toolWindow.windowInfo.type.isInternal) {
+        continue
+      }
+      try {
+        removeExternalDecorators(entry)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+      }
+      finally {
+        Disposer.dispose(entry.disposable)
+      }
+    }
   }
 
   private fun loadDefault() {
