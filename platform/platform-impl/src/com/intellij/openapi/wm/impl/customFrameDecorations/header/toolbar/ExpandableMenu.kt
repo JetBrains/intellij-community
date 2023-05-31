@@ -184,14 +184,12 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
 
     override fun paint(g: Graphics?) {
       g as Graphics2D
+      g.color = background
+      g.fillRect(0, 0, width, height)
       g.translate(-horizontalOffset, 0)
       val root = SwingUtilities.getRoot(this) as? Window
-      val painted = if (root == null) false else ProjectWindowCustomizerService.getInstance().paint(root, this, g)
+      if (root == null) false else ProjectWindowCustomizerService.getInstance().paint(root, this, g)
       g.translate(horizontalOffset, 0)
-      if (!painted) {
-        g.color = background
-        g.fillRect(0, 0, width, height)
-      }
       super.paint(g)
     }
   }
