@@ -44,7 +44,7 @@ final class JBCefOsrBrowserMeasureFpsAction extends DumbAwareAction {
       throw new IllegalStateException("No JCEF OSR browser is in focus");
     }
 
-    Notification notification = JBCefApp.NOTIFICATION_GROUP.getValue().
+    Notification notification = JBCefApp.getNotificationGroup().
       createNotification(IdeBundle.message("notification.title.jcef.measureFPS"),
                          IdeBundle.message("notification.content.jcef.measureFPS"), NotificationType.INFORMATION);
     notification.notify(null);
