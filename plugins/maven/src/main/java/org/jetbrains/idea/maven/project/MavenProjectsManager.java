@@ -6,7 +6,6 @@ import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -48,7 +47,6 @@ import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.CacheForCompilerErrorMessages;
-import org.jetbrains.idea.maven.importing.MavenImportStats;
 import org.jetbrains.idea.maven.importing.MavenImportUtil;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
@@ -103,7 +101,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ModificationTracker myModificationTracker;
-  private BuildProgressListener myProgressListener;
+  protected BuildProgressListener myProgressListener;
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
@@ -896,22 +894,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return scheduleImportAndResolve(MavenImportSpec.EXPLICIT_IMPORT);
   }
 
-  public Promise<List<Module>> scheduleImportAndResolve(MavenImportSpec spec) {
-    MavenSyncConsole console = getSyncConsole();
-    console.startImport(myProgressListener, spec);
-    StructuredIdeActivity activity = MavenImportStats.startImportActivity(myProject);
-    fireImportAndResolveScheduled(spec);
-
-    Runnable callback = () -> {
-      waitForImportCompletion().onProcessed(o -> {
-        activity.finished();
-        MavenResolveResultProblemProcessor.notifyMavenProblems(myProject);
-        MavenSyncConsole.finishTransaction(myProject);
-      });
-    };
-
-    return scheduleResolveSync(callback);
-  }
+  public abstract Promise<List<Module>> scheduleImportAndResolve(MavenImportSpec spec);
 
   public void showServerException(Throwable e) {
     getSyncConsole().addException(e, myProgressListener);
@@ -944,8 +927,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     });
     return promise;
   }
-
-  protected abstract AsyncPromise<List<Module>> scheduleResolveSync(Runnable callback);
 
   // used in third-party plugins
   public void scheduleFoldersResolveForAllProjects() {
@@ -1120,7 +1101,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
-  private void fireImportAndResolveScheduled(MavenImportSpec spec) {
+  protected void fireImportAndResolveScheduled(MavenImportSpec spec) {
     for (Listener each : myManagerListeners) {
       each.importAndResolveScheduled();
     }

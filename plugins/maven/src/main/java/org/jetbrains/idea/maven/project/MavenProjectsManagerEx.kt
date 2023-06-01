@@ -25,7 +25,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole.Companion.finishTransaction
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
@@ -253,7 +256,22 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     importMavenProjects(projectsToImport)
   }
 
-  override fun scheduleResolveSync(callback: Runnable?): AsyncPromise<List<Module>> {
+  override fun scheduleImportAndResolve(spec: MavenImportSpec): Promise<List<Module>> {
+    val console = syncConsole
+    console.startImport(myProgressListener, spec)
+    val activity = MavenImportStats.startImportActivity(myProject)
+    fireImportAndResolveScheduled(spec)
+    val callback = Runnable {
+      waitForImportCompletion().onProcessed { _: Any? ->
+        activity.finished()
+        MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
+        finishTransaction(myProject)
+      }
+    }
+    return scheduleResolveSync(callback)
+  }
+
+  private fun scheduleResolveSync(callback: Runnable?): AsyncPromise<List<Module>> {
     return runBlockingCancellableUnderIndicator { resolveAndImport(callback) }
   }
 
