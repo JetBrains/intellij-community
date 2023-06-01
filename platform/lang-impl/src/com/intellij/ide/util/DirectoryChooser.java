@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -330,6 +331,7 @@ public class DirectoryChooser extends DialogWrapper {
 
   public static class ItemWrapper {
     private final PsiDirectory myDirectory;
+    private final @Nullable Module myModule;
     private PathFragment[] myFragments;
     private final String myPostfix;
     private final Icon myIcon;
@@ -346,10 +348,12 @@ public class DirectoryChooser extends DialogWrapper {
       myDirectory = directory;
       myPostfix = postfix != null && postfix.length() > 0 ? postfix : null;
       myIcon = directory != null ? getIconInternal(directory) : PlatformIcons.FOLDER_ICON;
-      final VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
+      VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
+      Project project = directory != null ? directory.getProject() : null;
       myRelativeToProjectPath =
         virtualFile != null ? ProjectUtil.calcRelativeToProjectPath(virtualFile, directory.getProject(), true, false, true) +
                               ObjectUtils.notNull(myPostfix, "") : getPresentableUrl();
+      myModule = virtualFile != null ? ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile) : null;
     }
 
     public PathFragment[] getFragments() { return myFragments; }
@@ -408,6 +412,10 @@ public class DirectoryChooser extends DialogWrapper {
 
     public @NlsSafe String getRelativeToProjectPath() {
       return myRelativeToProjectPath;
+    }
+
+    public @Nullable Module getModule() {
+      return myModule;
     }
   }
 

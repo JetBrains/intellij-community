@@ -22,11 +22,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
@@ -65,14 +62,12 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private final Map<Module, DefaultMutableTreeNode> myModuleNodes = new HashMap<>();
   private final Map<ModuleGroup, DefaultMutableTreeNode> myModuleGroupNodes = new HashMap<>();
   private final DefaultMutableTreeNode myRootNode;
-  private final ProjectFileIndex myFileIndex;
   private final ModuleGrouper myModuleGrouper;
 
   DirectoryChooserModuleTreeView(@NotNull Project project) {
     myRootNode = new DefaultMutableTreeNode();
     myTree = new Tree(myRootNode);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-    myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myModuleGrouper = ModuleGrouper.instanceFor(project);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
@@ -147,8 +142,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   @Override
   public void addItem(DirectoryChooser.ItemWrapper itemWrapper) {
     myItems.add(itemWrapper);
-    final PsiDirectory directory = itemWrapper.getDirectory();
-    final Module module = myFileIndex.getModuleForFile(directory.getVirtualFile());
+    final Module module = itemWrapper.getModule();
     DefaultMutableTreeNode node = myModuleNodes.get(module);
     if (node == null) {
       node = new DefaultMutableTreeNode(module, true);
