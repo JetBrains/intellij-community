@@ -888,10 +888,15 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   /**
    * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
    * if project is closed)
+   * @deprecated  Use {@link #resolveAndImportMavenProjectsSync(MavenImportSpec)}}
    */
   // used in third-party plugins
+  @Deprecated
   public Promise<List<Module>> scheduleImportAndResolve() {
-    return scheduleImportAndResolve(MavenImportSpec.EXPLICIT_IMPORT);
+    var promise = new AsyncPromise<List<Module>>();
+    var modules = resolveAndImportMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
+    promise.setResult(modules);
+    return promise;
   }
 
   public abstract Promise<List<Module>> scheduleImportAndResolve(MavenImportSpec spec);

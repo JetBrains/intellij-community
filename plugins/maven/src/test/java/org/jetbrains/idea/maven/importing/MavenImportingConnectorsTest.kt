@@ -52,10 +52,11 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     MavenOpenProjectProvider().linkToExistingProject(p2Root, myProject)
     waitForLinkingCompleted()
     assertModules("project1", "m1", "project2", "m2")
-    assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
+    val allConnectors = MavenServerManager.getInstance().allConnectors
+    assertEquals(1, allConnectors.size)
 
     assertUnorderedElementsAreEqual(
-      MavenServerManager.getInstance().allConnectors.first().multimoduleDirectories.map {
+      allConnectors.first().multimoduleDirectories.map {
         FileUtil.getRelativePath(myDir, File(it))
       },
       listOf("project", "anotherProject")
