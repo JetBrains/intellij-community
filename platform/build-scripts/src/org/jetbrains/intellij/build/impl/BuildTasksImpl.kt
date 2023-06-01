@@ -990,7 +990,7 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
         ProductInfoLaunchData(
           os = OsFamily.MACOS.osName,
           arch = arch.dirName,
-          launcherPath = "MacOS/$executableName",
+          launcherPath = "bin/${executableName}.sh",
           javaExecutablePath = null,
           vmOptionsFilePath = "bin/mac/${executableName}.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
