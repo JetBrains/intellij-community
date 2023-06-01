@@ -39,6 +39,7 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Function
@@ -169,17 +170,25 @@ private fun <T> toList(value: Collection<T>): List<T> {
   return if (value.isEmpty()) emptyList() else ArrayList(value)
 }
 
-private fun toRootList(value: Collection<VirtualFile>): List<VirtualFile> {
-  if (value.size < 2) {
-    if (value is List<VirtualFile>) return value
-    return if (value.isEmpty()) emptyList() else ArrayList(value)
+private fun selectRootVirtualFiles(value: Collection<VirtualFile>): List<VirtualFile> {
+  return selectRootItems(value) { file -> file.path }
+}
+
+fun selectRootVirtualFileUrls(urls: Collection<VirtualFileUrl>): List<VirtualFileUrl> {
+  return selectRootItems(urls) { url -> JpsPathUtil.urlToPath(url.url) }
+}
+
+private fun <T> selectRootItems(items: Collection<T>, toPath: Function<T, String>): List<T> {
+  if (items.size < 2) {
+    if (items is List<T>) return items
+    return if (items.isEmpty()) emptyList() else ArrayList(items)
   }
 
-  val pathMap = TreeMap<String, VirtualFile>(OSAgnosticPathUtil.COMPARATOR)
-  for (file in value) {
-    val path = FileUtil.toSystemIndependentName(file.path)
+  val pathMap = TreeMap<String, T>(OSAgnosticPathUtil.COMPARATOR)
+  for (item in items) {
+    val path = FileUtil.toSystemIndependentName(toPath.apply(item))
     if (!isIncluded(pathMap, path)) {
-      pathMap[path] = file
+      pathMap[path] = item
       while (true) {
         val excludedPath = pathMap.higherKey(path)
         if (excludedPath != null && OSAgnosticPathUtil.startsWith(excludedPath, path)) {
@@ -194,7 +203,7 @@ private fun toRootList(value: Collection<VirtualFile>): List<VirtualFile> {
   return pathMap.values.toList()
 }
 
-private fun isIncluded(existingFiles: NavigableMap<String, VirtualFile>, path: String): Boolean {
+private fun isIncluded(existingFiles: NavigableMap<String, *>, path: String): Boolean {
   val suggestedCoveringRoot = existingFiles.floorKey(path)
   return suggestedCoveringRoot != null && OSAgnosticPathUtil.startsWith(path, suggestedCoveringRoot)
 }
@@ -323,7 +332,7 @@ internal class WorkspaceIndexingRootsBuilder {
                             storage: EntityStorage) {
     val initialIterators = ArrayList<IndexableFilesIterator>()
     for ((module, roots) in moduleRoots.entrySet()) {
-      initialIterators.add(ModuleIndexableFilesIteratorImpl(module, toRootList(roots), true))
+      initialIterators.add(ModuleIndexableFilesIteratorImpl(module, selectRootVirtualFiles(roots), true))
     }
     for (description in descriptions) {
       when (description) {
