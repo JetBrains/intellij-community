@@ -29,6 +29,7 @@ import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.sun.jdi.*;
@@ -76,11 +77,15 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   public List<ClassPrepareRequest> createPrepareRequests(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
     throws NoDataException {
     return ReadAction.compute(() -> {
+      List<String> patterns;
       List<ClassPrepareRequest> res = new ArrayList<>();
       for (PsiClass psiClass : getLineClasses(position.getFile(), position.getLine())) {
         ClassPrepareRequestor prepareRequestor = requestor;
-        String classPattern = JVMNameUtil.getNonAnonymousClassName(psiClass);
-        if (classPattern == null) {
+        String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
+        if (className != null) {
+          patterns = getAlternativeClassNames(psiClass);
+        }
+        else {
           final PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
           if (parent == null) {
             continue;
@@ -89,7 +94,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           if (parentQName == null) {
             continue;
           }
-          classPattern = parentQName + "*";
+          patterns = Collections.singletonList(parentQName + "*");
           prepareRequestor = new ClassPrepareRequestor() {
             @Override
             public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
@@ -99,9 +104,11 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
             }
           };
         }
-        ClassPrepareRequest request = myDebugProcess.getRequestsManager().createClassPrepareRequest(prepareRequestor, classPattern);
-        if (request != null) {
-          res.add(request);
+        for (String pattern : patterns) {
+          ClassPrepareRequest request = myDebugProcess.getRequestsManager().createClassPrepareRequest(prepareRequestor, pattern);
+          if (request != null) {
+            res.add(request);
+          }
         }
       }
       return res;
@@ -362,6 +369,22 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return null;
   }
 
+  protected List<String> getAlternativeClassNames(PsiClass psiClass) {
+    String name = JVMNameUtil.getNonAnonymousClassName(psiClass);
+    return ContainerUtil.createMaybeSingletonList(name);
+  }
+
+  protected List<ReferenceType> getAnonymousClassReferences(
+    @NotNull final PsiClass psiClass,
+    SourcePosition position,
+    String className,
+    int depth
+  ) {
+    return ContainerUtil.mapNotNull(
+      myDebugProcess.getVirtualMachineProxy().classesByName(className),
+      outer -> findNested(outer, 0, psiClass, depth, position));
+  }
+
   private PsiClass findPsiClassByName(String originalQName, @Nullable Consumer<? super ClsClassImpl> altClsProcessor) {
     PsiClass psiClass = null;
     // first check alternative jre if any
@@ -453,14 +476,17 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
 
     if (!isLocalOrAnonymous) {
-      return StreamEx.of(myDebugProcess.getVirtualMachineProxy().classesByName(className));
+      for (String name : getAlternativeClassNames(psiClass)) {
+        List<ReferenceType> types = myDebugProcess.getVirtualMachineProxy().classesByName(name);
+        if (!types.isEmpty()) {
+          return StreamEx.of(types);
+        }
+      }
+      return StreamEx.empty();
     }
 
-    final int depth = requiredDepth;
     // the name is a parent class for a local or anonymous class
-    return StreamEx.of(myDebugProcess.getVirtualMachineProxy().classesByName(className))
-      .map(outer -> findNested(outer, 0, psiClass, depth, position))
-      .nonNull();
+    return StreamEx.of(getAnonymousClassReferences(psiClass, position, className, requiredDepth));
   }
 
   private static Pair<PsiClass, Integer> getTopOrStaticEnclosingClass(PsiClass aClass) {
@@ -481,7 +507,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   }
 
   @Nullable
-  private ReferenceType findNested(final ReferenceType fromClass, final int currentDepth, final PsiClass classToFind, final int requiredDepth, final SourcePosition position) {
+  protected ReferenceType findNested(final ReferenceType fromClass, final int currentDepth, final PsiClass classToFind, final int requiredDepth, final SourcePosition position) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final VirtualMachineProxyImpl vmProxy = myDebugProcess.getVirtualMachineProxy();
     if (fromClass.isPrepared()) {
