@@ -39,11 +39,13 @@ import java.util.zip.ZipException
  */
 internal suspend fun checkClassFiles(versionCheckConfig: Map<String, String>,
                                      forbiddenSubPaths: List<String>,
+                                     forbiddenSubPathExceptions: List<String>,
                                      root: Path,
                                      messages: BuildMessages) {
   spanBuilder("verify class files")
     .setAttribute("ruleCount", versionCheckConfig.size.toLong())
     .setAttribute("forbiddenSubPathCount", forbiddenSubPaths.size.toLong())
+    .setAttribute("forbiddenSubPathExceptionsCount", forbiddenSubPathExceptions.size.toLong())
     .setAttribute("root", root.toString())
     .useWithScope2 {
       val rules = ArrayList<Rule>(versionCheckConfig.size)
@@ -62,7 +64,7 @@ internal suspend fun checkClassFiles(versionCheckConfig: Map<String, String>,
         })
       }
 
-      val checker = ClassFileChecker(rules, forbiddenSubPaths)
+      val checker = ClassFileChecker(messages, rules, forbiddenSubPaths, forbiddenSubPathExceptions)
       val errors = ConcurrentLinkedQueue<String>()
       if (Files.isDirectory(root)) {
         coroutineScope {
@@ -106,7 +108,10 @@ class ClassFileCheckError(message: String, val errors: Collection<String> = empt
 
 private val READ = EnumSet.of(StandardOpenOption.READ)
 
-private class ClassFileChecker(private val versionRules: List<Rule>, private val forbiddenSubPaths: List<String>) {
+private class ClassFileChecker(private val messages: BuildMessages,
+                               private val versionRules: List<Rule>,
+                               private val forbiddenSubPaths: List<String>,
+                               private val forbiddenSubPathExceptions: List<String>) {
   val checkedJarCount = AtomicInteger()
   val checkedClassCount = AtomicInteger()
 
@@ -182,8 +187,15 @@ private class ClassFileChecker(private val versionRules: List<Rule>, private val
   }
 
   private fun checkIfSubPathIsForbidden(relPath: String, errors: MutableCollection<String>) {
+    if (forbiddenSubPathExceptions.contains(relPath)) {
+      messages.info("$relPath is explicitly allowed and will be excepted from the forbidden sub paths check.")
+      return
+    }
+
     for (f in forbiddenSubPaths) {
       if (relPath.contains(f)) {
+
+
         errors.add("$relPath: .class file has a forbidden sub-path: $f")
       }
     }

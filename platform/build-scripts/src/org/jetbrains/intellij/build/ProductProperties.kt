@@ -186,9 +186,16 @@ abstract class ProductProperties {
   var versionCheckerConfig: PersistentMap<String, String> = persistentMapOf()
 
   /**
-   * Strings which are forbidden as a part of resulting class file path
+   * Strings which are forbidden as a part of resulting class file path. E.g.:
+   * "license"
    */
   var forbiddenClassFileSubPaths: PersistentList<String> = persistentListOf()
+
+  /**
+   * Exceptions from forbiddenClassFileSubPaths. Must contain full string with the offending class, including the jar path. E.g.:
+   * "plugins/sample/lib/sample.jar!/com/sample/license/ThirdPartyLicensesDialog.class"
+   */
+  var forbiddenClassFileSubPathExceptions: PersistentList<String> = persistentListOf()
 
   /**
    * Paths to properties files the content of which should be appended to idea.properties file.

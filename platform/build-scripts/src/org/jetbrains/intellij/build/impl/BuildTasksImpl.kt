@@ -1037,8 +1037,11 @@ private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll
   }
 
   val forbiddenSubPaths = context.productProperties.forbiddenClassFileSubPaths
+  val forbiddenSubPathExceptions = context.productProperties.forbiddenClassFileSubPathExceptions
   if (forbiddenSubPaths.isNotEmpty()) {
-    context.messages.warning("checkClassFiles: forbiddenSubPaths: ${forbiddenSubPaths.joinToString()}")
+    val forbiddenString = forbiddenSubPaths.let { "(${it.size}): ${it.joinToString()}" }
+    val exceptionsString = forbiddenSubPathExceptions.let { "(${it.size}): ${it.joinToString()}" }
+    context.messages.warning("checkClassFiles: forbiddenSubPaths $forbiddenString, exceptions $exceptionsString")
   }
   else {
     context.messages.warning("checkClassFiles: forbiddenSubPaths: EMPTY (no scrambling checks will be done)")
@@ -1047,6 +1050,7 @@ private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll
   if (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty()) {
     checkClassFiles(versionCheckConfig = versionCheckerConfig,
                     forbiddenSubPaths = forbiddenSubPaths,
+                    forbiddenSubPathExceptions = forbiddenSubPathExceptions,
                     root = root,
                     messages = context.messages)
   }
