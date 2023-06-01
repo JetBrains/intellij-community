@@ -33,16 +33,6 @@ fun VirtualFile.isKlibLibraryRootForPlatform(targetPlatform: TargetPlatform): Bo
         return true
     }
 
-    if (requestedBuiltInsPlatform == BuiltInsPlatform.JS) {
-        try {
-            return children?.any {
-                checkKlibComponent(it, requestedBuiltInsPlatform) || checkKlibComponent(it, BuiltInsPlatform.WASM)
-            } == true
-        } catch (e: InvalidVirtualFileAccessException) {
-            return false
-        }
-    }
-
     try {
         return children?.any { checkKlibComponent(it, requestedBuiltInsPlatform) } == true
     } catch (e: InvalidVirtualFileAccessException) {

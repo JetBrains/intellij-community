@@ -7,11 +7,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.JsPlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.WasmPlatform
 import org.jetbrains.kotlin.platform.has
 import org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
@@ -34,6 +36,7 @@ fun IdePlatformKind.isCompatibleWith(platform: TargetPlatform): Boolean {
         is JvmIdePlatformKind -> platform.has(JvmPlatform::class)
         is NativeIdePlatformKind -> platform.has(NativePlatform::class)
         is JsIdePlatformKind -> platform.has(JsPlatform::class)
+        is WasmIdePlatformKind -> platform.has(WasmPlatform::class)
         is CommonIdePlatformKind -> true
         else -> false
     }
