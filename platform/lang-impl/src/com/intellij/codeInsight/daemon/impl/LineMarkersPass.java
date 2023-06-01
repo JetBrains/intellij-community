@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -46,8 +45,6 @@ import java.util.*;
 public final class LineMarkersPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(LineMarkersPass.class);
 
-  private volatile List<LineMarkerInfo<?>> myMarkers = Collections.emptyList();
-
   @NotNull private final PsiFile myFile;
   @NotNull private final TextRange myPriorityBounds;
   @NotNull private final TextRange myRestrictRange;
@@ -73,9 +70,22 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
+    List<LineMarkerInfo<?>> markers = doCollectMarkers();
+    try {
+      LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, markers, getId());
+      DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+      FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
+      fileStatusMap.markFileUpToDate(myDocument, getId());
+    }
+    catch (IndexNotReadyException ignored) {
+    }
+  }
+
+  @NotNull
+  private List<LineMarkerInfo<?>> doCollectMarkers() {
     if (!EditorSettingsExternalizable.getInstance().areGutterIconsShown() && !Registry.is("calculate.gutter.actions.always")) {
       // optimization: do not even try to query expensive providers if icons they are going to produce are not to be displayed
-      return;
+      return Collections.emptyList();
     }
     List<LineMarkerInfo<?>> lineMarkers = new ArrayList<>();
     FileViewProvider viewProvider = myFile.getViewProvider();
@@ -108,18 +118,10 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
     }
 
     List<LineMarkerInfo<?>> markers = mergeLineMarkers(lineMarkers, getDocument());
-    myMarkers = markers;
     if (LOG.isDebugEnabled()) {
       LOG.debug("LineMarkersPass.doCollectInformation. lineMarkers: " + lineMarkers+"; merged: "+markers);
     }
-    try {
-      LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, markers, getId());
-      DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-      FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-      fileStatusMap.markFileUpToDate(myDocument, getId());
-    }
-    catch (IndexNotReadyException ignored) {
-    }
+    return markers;
   }
 
   @NotNull
@@ -264,6 +266,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
         for (TextRange editable : editables) {
           TextRange hostRange = manager.injectedToHost(injectedPsi, editable);
           Icon icon = gutterRenderer == null ? null : gutterRenderer.getIcon();
+          //noinspection unchecked
           GutterIconNavigationHandler<PsiElement> navigationHandler = (GutterIconNavigationHandler<PsiElement>)injectedMarker.getNavigationHandler();
           LineMarkerInfo<PsiElement> converted = icon == null
                                                  ? new LineMarkerInfo<>(injectedElement, hostRange)
@@ -284,8 +287,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
       return Collections.emptyList();
     }
     LineMarkersPass pass = new LineMarkersPass(file.getProject(), file, document, file.getTextRange(), file.getTextRange(), Mode.ALL);
-    pass.doCollectInformation(new EmptyProgressIndicator());
-    return pass.myMarkers;
+    return pass.doCollectMarkers();
   }
 
   @NotNull
