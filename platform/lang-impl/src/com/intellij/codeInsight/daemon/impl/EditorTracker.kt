@@ -1,295 +1,251 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.daemon.impl;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
-import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.SmartList;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.codeInsight.daemon.impl
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeListener;
-import java.util.List;
-import java.util.*;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.SmartList
+import java.awt.Window
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
+import java.beans.PropertyChangeListener
+import javax.swing.SwingUtilities
 
-public class EditorTracker implements Disposable {
-  private static final Logger LOG = Logger.getInstance(EditorTracker.class);
+private val LOG = logger<EditorTracker>()
 
-  protected final Project project;
+private fun windowByEditor(editor: Editor, project: Project): Window? {
+  val window = SwingUtilities.windowForComponent(editor.component)
+  val frameHelper = getFrameHelper(window)
+  return if (frameHelper != null && frameHelper.project !== project) null else window
+}
 
-  private final Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<>();
-  private final Map<Window, WindowAdapter> myWindowToWindowFocusListenerMap = new HashMap<>();
-  private final Map<Editor, Window> myEditorToWindowMap = new HashMap<>();
-  private List<? extends Editor> myActiveEditors = Collections.emptyList(); // accessed in EDT only
+open class EditorTracker(@JvmField protected val project: Project) : Disposable {
+  private val windowToEditorsMap = HashMap<Window, MutableList<Editor>>()
+  private val windowToWindowFocusListenerMap = HashMap<Window, WindowAdapter>()
+  private val editorToWindowMap = HashMap<Editor, Window>()
+  // accessed in EDT only
+  private var myActiveEditors = emptyList<Editor>()
+  private var activeWindow: Window? = null
+  private val executeOnEditorRelease = HashMap<Editor, () -> Unit>()
 
-  private Window myActiveWindow;
-  private final Map<Editor, Runnable> myExecuteOnEditorRelease = new HashMap<>();
-
-  public EditorTracker(@NotNull Project project) {
-    this.project = project;
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): EditorTracker = project.service<EditorTracker>()
   }
 
-  public static EditorTracker getInstance(@NotNull Project project) {
-    return project.getService(EditorTracker.class);
-  }
-
-  static final class MyAppLevelFileEditorManagerListener implements FileEditorManagerListener {
-    @Override
-    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-      Project project = event.getManager().getProject();
-      JFrame frame = WindowManager.getInstance().getFrame(project);
-      if (frame != null && frame.getFocusOwner() != null) {
-        getInstance(project).setActiveWindow(frame);
+  internal class MyAppLevelFileEditorManagerListener : FileEditorManagerListener {
+    override fun selectionChanged(event: FileEditorManagerEvent) {
+      val project = event.manager.project
+      val frame = WindowManager.getInstance().getFrame(project)
+      if (frame != null && frame.focusOwner != null) {
+        getInstance(project).setActiveWindow(frame)
       }
     }
   }
 
-  static final class MyAppLevelEditorFactoryListener implements EditorFactoryListener {
-    @Override
-    public void editorCreated(@NotNull EditorFactoryEvent event) {
-      Project project = event.getEditor().getProject();
-      if (project != null && !project.isDisposed()) {
-        getInstance(project).editorCreated(event, project);
+  internal class MyAppLevelEditorFactoryListener : EditorFactoryListener {
+    override fun editorCreated(event: EditorFactoryEvent) {
+      val project = event.editor.project
+      if (project != null && !project.isDisposed) {
+        getInstance(project).editorCreated(event, project)
       }
     }
 
-    @Override
-    public void editorReleased(@NotNull EditorFactoryEvent event) {
-      Project project = event.getEditor().getProject();
-      if (project != null && !project.isDisposed()) {
-        getInstance(project).editorReleased(event, project);
+    override fun editorReleased(event: EditorFactoryEvent) {
+      val project = event.editor.project
+      if (project != null && !project.isDisposed) {
+        getInstance(project).editorReleased(event, project)
       }
     }
   }
 
-  private void registerEditor(@NotNull Editor editor, @NotNull Project project) {
-    unregisterEditor(editor);
-
-    Window window = windowByEditor(editor, project);
-    if (window == null) {
-      return;
-    }
-
-    myEditorToWindowMap.put(editor, window);
-    List<Editor> list = myWindowToEditorsMap.get(window);
+  private fun registerEditor(editor: Editor, project: Project) {
+    unregisterEditor(editor)
+    val window = windowByEditor(editor, project) ?: return
+    editorToWindowMap.put(editor, window)
+    var list = windowToEditorsMap.get(window)
     if (list == null) {
-      list = new ArrayList<>();
-      myWindowToEditorsMap.put(window, list);
-
-      if (!(window instanceof IdeFrameImpl)) {
-        WindowAdapter listener =  new WindowAdapter() {
-          @Override
-          public void windowGainedFocus(WindowEvent e) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("windowGainedFocus:" + window);
-            }
-
-            setActiveWindow(window);
+      list = ArrayList()
+      windowToEditorsMap.put(window, list)
+      if (window !is IdeFrameImpl) {
+        val listener: WindowAdapter = object : WindowAdapter() {
+          override fun windowGainedFocus(e: WindowEvent) {
+            LOG.debug { "windowGainedFocus:$window" }
+            setActiveWindow(window)
           }
 
-          @Override
-          public void windowLostFocus(WindowEvent e) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("windowLostFocus:" + window);
-            }
-
-            setActiveWindow(null);
+          override fun windowLostFocus(e: WindowEvent) {
+            LOG.debug { "windowLostFocus:$window" }
+            setActiveWindow(null)
           }
 
-          @Override
-          public void windowClosed(WindowEvent event) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("windowClosed:" + window);
-            }
-
-            setActiveWindow(null);
+          override fun windowClosed(event: WindowEvent) {
+            LOG.debug { "windowClosed:$window" }
+            setActiveWindow(null)
           }
-        };
-        myWindowToWindowFocusListenerMap.put(window, listener);
-        window.addWindowFocusListener(listener);
-        window.addWindowListener(listener);
-        if (window.isFocused()) {  // windowGainedFocus is missed; activate by force
-          setActiveWindow(window);
+        }
+        windowToWindowFocusListenerMap.put(window, listener)
+        window.addWindowFocusListener(listener)
+        window.addWindowListener(listener)
+        if (window.isFocused) {
+          // windowGainedFocus is missed; activate by force
+          setActiveWindow(window)
         }
       }
     }
-    list.add(editor);
-
-    if (myActiveWindow == window) {
-      setActiveWindow(window); // to fire event
+    list.add(editor)
+    if (activeWindow === window) {
+      // to fire event
+      setActiveWindow(window)
     }
   }
 
-  private void unregisterEditor(@NotNull Editor editor) {
-    Window oldWindow = myEditorToWindowMap.get(editor);
-    if (oldWindow != null) {
-      myEditorToWindowMap.remove(editor);
-      List<Editor> editorsList = myWindowToEditorsMap.get(oldWindow);
-      boolean removed = editorsList.remove(editor);
-      LOG.assertTrue(removed);
-      if (oldWindow == myActiveWindow) {
-        updateActiveEditors(myActiveWindow);
+  private fun unregisterEditor(editor: Editor) {
+    val oldWindow = editorToWindowMap.get(editor) ?: return
+    editorToWindowMap.remove(editor)
+    val editorList = windowToEditorsMap.get(oldWindow)!!
+    val removed = editorList.remove(editor)
+    LOG.assertTrue(removed)
+    if (oldWindow === activeWindow) {
+      updateActiveEditors(activeWindow)
+    }
+    if (editorList.isEmpty()) {
+      windowToEditorsMap.remove(oldWindow)
+      val listener = windowToWindowFocusListenerMap.remove(oldWindow)
+      if (listener != null) {
+        oldWindow.removeWindowFocusListener(listener)
+        oldWindow.removeWindowListener(listener)
+      }
+    }
+  }
+
+  open var activeEditors: List<Editor>
+    get() {
+      ApplicationManager.getApplication().assertIsDispatchThread()
+      return myActiveEditors
+    }
+    set(editors) {
+      ApplicationManager.getApplication().assertIsDispatchThread()
+      if (editors == myActiveEditors) {
+        return
       }
 
-      if (editorsList.isEmpty()) {
-        myWindowToEditorsMap.remove(oldWindow);
-        WindowAdapter listener = myWindowToWindowFocusListenerMap.remove(oldWindow);
-        if (listener != null) {
-          oldWindow.removeWindowFocusListener(listener);
-          oldWindow.removeWindowListener(listener);
+      myActiveEditors = editors
+      if (LOG.isDebugEnabled) {
+        LOG.debug("active editors changed:")
+        val psiDocumentManager = PsiDocumentManager.getInstance(project)
+        for (editor in editors) {
+          val psiFile = psiDocumentManager.getPsiFile(editor.document)
+          LOG.debug("    $psiFile")
         }
       }
+      project.messageBus.syncPublisher(EditorTrackerListener.TOPIC).activeEditorsChanged(editors)
     }
+
+  private fun setActiveWindow(window: Window?) {
+    activeWindow = window
+    updateActiveEditors(window)
   }
 
-  private static @Nullable Window windowByEditor(@NotNull Editor editor, @NotNull Project project) {
-    Window window = SwingUtilities.windowForComponent(editor.getComponent());
-    ProjectFrameHelper frameHelper = ProjectFrameHelper.getFrameHelper(window);
-    return (frameHelper != null && frameHelper.getProject() != project) ? null : window;
-  }
-
-  public @NotNull List<? extends Editor> getActiveEditors() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return myActiveEditors;
-  }
-
-  private void setActiveWindow(@Nullable Window window) {
-    myActiveWindow = window;
-    updateActiveEditors(window);
-  }
-
-  private void updateActiveEditors(@Nullable Window window) {
-    List<Editor> list = window == null ? null : myWindowToEditorsMap.get(window);
-    if (list == null || list.isEmpty()) {
-      setActiveEditors(Collections.emptyList());
+  private fun updateActiveEditors(window: Window?) {
+    val list = if (window == null) null else windowToEditorsMap.get(window)
+    if (list.isNullOrEmpty()) {
+      activeEditors = emptyList()
     }
     else {
-      List<Editor> editors = new SmartList<>();
-      for (Editor editor : list) {
-        if (editor.getContentComponent().isShowing() && !editor.isDisposed()) {
-          editors.add(editor);
+      val editors = SmartList<Editor>()
+      for (editor in list) {
+        if (editor.contentComponent.isShowing && !editor.isDisposed) {
+          editors.add(editor)
         }
       }
-      setActiveEditors(editors);
+      activeEditors = editors
     }
   }
 
-  public void setActiveEditors(@NotNull List<? extends Editor> editors) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (editors.equals(myActiveEditors)) {
-      return;
-    }
-
-    myActiveEditors = editors;
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("active editors changed:");
-      for (Editor editor : editors) {
-        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-        LOG.debug("    " + psiFile);
-      }
-    }
-
-    project.getMessageBus().syncPublisher(EditorTrackerListener.TOPIC).activeEditorsChanged(editors);
-  }
-
-  private void editorCreated(@NotNull EditorFactoryEvent event, @NotNull Project project) {
-    Editor editor = event.getEditor();
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+  private fun editorCreated(event: EditorFactoryEvent, project: Project) {
+    val editor = event.editor
+    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
     if (psiFile != null) {
-      createEditorImpl(editor, project);
+      createEditorImpl(editor = editor, project = project)
     }
   }
 
-  protected void createEditorImpl(@NotNull Editor editor, @NotNull Project project) {
-    JComponent component = editor.getComponent();
-    JComponent contentComponent = editor.getContentComponent();
-
-    PropertyChangeListener propertyChangeListener = evt -> {
-      if (evt.getOldValue() == null && evt.getNewValue() != null) {
-        registerEditor(editor, project);
+  protected open fun createEditorImpl(editor: Editor, project: Project) {
+    val component = editor.component
+    val contentComponent = editor.contentComponent
+    val propertyChangeListener = PropertyChangeListener { event ->
+      if (event.oldValue == null && event.newValue != null) {
+        registerEditor(editor, project)
       }
-    };
-    component.addPropertyChangeListener("ancestor", propertyChangeListener);
-
-    FocusListener focusListener = new FocusListener() {
-      @Override
-      public void focusGained(@NotNull FocusEvent e) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-        Window window = myEditorToWindowMap.get(editor);
-        if (window == null) {
-          return;
+    }
+    component.addPropertyChangeListener("ancestor", propertyChangeListener)
+    val focusListener = object : FocusListener {
+      override fun focusGained(e: FocusEvent) {
+        ApplicationManager.getApplication().assertIsDispatchThread()
+        val window = editorToWindowMap.get(editor) ?: return
+        val list = windowToEditorsMap.get(window)!!
+        val index = list.indexOf(editor)
+        LOG.assertTrue(index >= 0)
+        if (list.isEmpty()) {
+          return
         }
 
-        List<Editor> list = myWindowToEditorsMap.get(window);
-        int index = list.indexOf(editor);
-        LOG.assertTrue(index >= 0);
-        if (list.isEmpty()) return;
-
-        for (int i = index - 1; i >= 0; i--) {
-          list.set(i + 1, list.get(i));
+        for (i in index - 1 downTo 0) {
+          list.set(i + 1, list.get(i))
         }
-        list.set(0, editor);
-
-        setActiveWindow(window);
+        list.set(0, editor)
+        setActiveWindow(window)
       }
 
-      @Override
-      public void focusLost(@NotNull FocusEvent e) {
-      }
-    };
-    contentComponent.addFocusListener(focusListener);
+      override fun focusLost(e: FocusEvent) {}
+    }
 
-    myExecuteOnEditorRelease.put(editor, () -> {
-      component.removePropertyChangeListener("ancestor", propertyChangeListener);
-      contentComponent.removeFocusListener(focusListener);
-    });
+    contentComponent.addFocusListener(focusListener)
+    executeOnEditorRelease.put(editor) {
+      component.removePropertyChangeListener("ancestor", propertyChangeListener)
+      contentComponent.removeFocusListener(focusListener)
+    }
   }
 
-  private void editorReleased(@NotNull EditorFactoryEvent event, @NotNull Project project) {
-    editorReleasedImpl(event.getEditor(), project);
+  private fun editorReleased(event: EditorFactoryEvent, project: Project) {
+    editorReleasedImpl(editor = event.editor, project = project)
   }
 
-  protected void editorReleasedImpl(@NotNull Editor editor, @NotNull Project project) {
-    unregisterEditor(editor);
-    executeOnRelease(editor);
+  protected open fun editorReleasedImpl(editor: Editor, project: Project) {
+    unregisterEditor(editor)
+    executeOnRelease(editor)
   }
 
-  @Override
-  public void dispose() {
-    executeOnRelease(null);
+  override fun dispose() {
+    executeOnRelease(null)
   }
 
-  private void executeOnRelease(@Nullable Editor editor) {
+  private fun executeOnRelease(editor: Editor?) {
     if (editor == null) {
-      for (Runnable r : myExecuteOnEditorRelease.values()) {
-        r.run();
+      for (r in executeOnEditorRelease.values) {
+        r()
       }
-      myExecuteOnEditorRelease.clear();
+      executeOnEditorRelease.clear()
     }
     else {
-      Runnable runnable = myExecuteOnEditorRelease.get(editor);
-      if (runnable != null) {
-        runnable.run();
-        myExecuteOnEditorRelease.remove(editor);
-      }
+      executeOnEditorRelease.remove(editor)?.invoke()
     }
   }
 }
