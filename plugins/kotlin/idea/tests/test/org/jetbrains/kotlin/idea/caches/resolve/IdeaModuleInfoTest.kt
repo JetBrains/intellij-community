@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.withLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
@@ -1378,6 +1380,55 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         )
     }
 
+    fun testDependencyResolutionAnchors() {
+        val module1 = module("M1")
+        val lib1 = projectLibrary("Lib1", classesRoot = TestKotlinArtifacts.kotlinCompiler.jarRoot)
+        val lib2 = projectLibrary("Lib2", classesRoot = TestKotlinArtifacts.kotlinDaemon.jarRoot)
+        module1.addDependency(lib1)
+        module1.addDependency(lib2)
+
+        val module2 = module("M2")
+        val lib3 = projectLibrary("Lib3", classesRoot = TestKotlinArtifacts.kotlinReflect.jarRoot)
+        module2.addDependency(lib2)
+        module2.addDependency(lib3)
+        val anchorModule = module("anchor")
+        val anchorModuleInfo = anchorModule.production
+
+        val lib1Info = lib1.toLibraryInfo()
+        val lib2Info = lib2.toLibraryInfo()
+        val lib3Info = lib3.toLibraryInfo()
+
+        module1.production.assertDependenciesEqual(
+            module1.production,
+            lib1Info,
+            lib2Info,
+        )
+        module2.production.assertDependenciesEqual(
+            module2.production,
+            lib2Info,
+            lib3Info,
+        )
+
+        assertDependencies(
+            lib = lib1Info,
+            lib1Info, lib2Info
+        )
+        assertDependencies(
+            lib = lib2Info,
+            lib1Info, lib2Info, lib3Info
+        )
+
+        val resolutionAnchorCacheService = ResolutionAnchorCacheService.getInstance(project) as ResolutionAnchorCacheServiceImpl
+        val anchorMapping = mapOf(lib3.name!! to anchorModule.name)
+        resolutionAnchorCacheService.setAnchors(anchorMapping)
+
+        project.withLibraryToSourceAnalysis {
+            with(resolutionAnchorCacheService.getDependencyResolutionAnchors(lib1Info)) {
+                assertEquals(1, this.size)
+                assertEquals(anchorModuleInfo, this.first())
+            }
+        }
+    }
 
     fun testExportedDependency() {
         val (a, b, c) = modules()
