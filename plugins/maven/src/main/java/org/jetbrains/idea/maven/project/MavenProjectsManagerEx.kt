@@ -40,6 +40,7 @@ import java.util.function.Supplier
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
   suspend fun importMavenProjects(): List<Module>
+  suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module>
   suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
   fun importMavenProjectsSync(): List<Module>
   fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module>
@@ -84,6 +85,10 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   override fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider, projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
     return prepareImporter(modelsProvider, projectsToImport, false).importMavenProjectsBlocking()
+  }
+
+  override suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module> {
+    return resolveAndImport(projects)
   }
 
   private suspend fun doImportMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
@@ -253,11 +258,19 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   private suspend fun resolveAndImport(callback: Runnable?): AsyncPromise<List<Module>> {
-    val result = AsyncPromise<List<Module>>()
-
     val projectsToResolve = LinkedHashSet(myProjectsToResolve)
     myProjectsToResolve.removeAll(projectsToResolve)
 
+    val result = AsyncPromise<List<Module>>()
+    val createdModules = resolveAndImport(projectsToResolve)
+    result.setResult(createdModules)
+
+    callback?.run()
+
+    return result
+  }
+
+  private suspend fun resolveAndImport(projectsToResolve: Collection<MavenProject>): List<Module> {
     val resolver = MavenProjectResolver.getInstance(project)
 
     val resolutionResult = withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.resolving"), true) {
@@ -295,12 +308,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                       importingSettings.isDownloadSourcesAutomatically,
                       importingSettings.isDownloadDocsAutomatically)
 
-    val createdModules = importMavenProjects(projectsToImport + myProjectsToImport)
-    result.setResult(createdModules)
-
-    callback?.run()
-
-    return result
+    return importMavenProjects(projectsToImport + myProjectsToImport)
   }
 
   private val mavenConsole: MavenConsole
