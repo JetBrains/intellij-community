@@ -3,6 +3,7 @@ package com.intellij.execution.target.java
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
@@ -65,7 +66,7 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
 
         val versionPromise = if (config.javaVersionString.isBlank()) {
           subject.promiseExecuteScript(listOf("java", "-version"))
-            .thenApply { acceptJavaVersionOutput(it.stderr) }
+            .thenApply { it.acceptJavaVersion() }
         }
         else {
           Introspector.DONE
@@ -85,10 +86,10 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
         }
       }
 
-      private fun acceptJavaVersionOutput(output: String?) {
-        output?.lines()?.firstNotNullOf {
-          kotlin.runCatching { JavaVersion.parse(it) }.getOrNull()
-        }?.let { config.javaVersionString = it.toString() }
+      private fun ProcessOutput.acceptJavaVersion() {
+        listOf(stderr, stdout)
+          .firstNotNullOfOrNull { tryParseJavaVersionFromOutput(it) }
+          ?.let { config.javaVersionString = it.toString() }
       }
     }
   }
@@ -119,5 +120,10 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
       ExecutionBundle.message("java.language.runtime.agents.volume.browsing.title"),
       ""
     )
+
+    private fun tryParseJavaVersionFromOutput(output: String?): JavaVersion? =
+      output?.lines()?.firstNotNullOfOrNull {
+        kotlin.runCatching { JavaVersion.parse(it) }.getOrNull()
+      }
   }
 }
