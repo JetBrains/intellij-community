@@ -13,6 +13,7 @@ import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.services.ServiceEventListener;
+import com.intellij.execution.services.ServiceViewDescriptor;
 import com.intellij.execution.services.ServiceViewManager;
 import com.intellij.execution.services.ServiceViewManagerImpl;
 import com.intellij.execution.services.ServiceViewUIUtils;
@@ -36,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -727,6 +729,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
           textPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
         }
       }
+      ClientProperty.put(mainPanel, ServiceViewDescriptor.ACTION_HOLDER_KEY, Boolean.TRUE);
       myEmptyContent = mainPanel;
     }
     return myEmptyContent;

@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ObjectUtils;
@@ -189,6 +190,7 @@ public final class RunDashboardServiceViewContributor
 
     RunConfigurationServiceViewDescriptor(RunConfigurationNode node) {
       myNode = node;
+      ClientProperty.put(myWrapper, ServiceViewDescriptor.ACTION_HOLDER_KEY, Boolean.TRUE);
     }
 
     @Nullable
