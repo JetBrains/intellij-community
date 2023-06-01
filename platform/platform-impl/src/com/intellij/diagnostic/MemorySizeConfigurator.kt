@@ -27,7 +27,7 @@ private class MemorySizeConfigurator : ProjectActivity {
       LOG.info("Memory size configurator skipped: Unable to determine current -Xmx. VM options file is ${System.getProperty("jb.vmOptionsFile")}")
       return
     }
-    if (currentXmx > 750) {
+    if (currentXmx > DEFAULT_XMX) {
       // Memory has already been adjusted by the user manually
       return
     }
@@ -57,6 +57,16 @@ private class MemorySizeConfigurator : ProjectActivity {
 
   companion object {
     val LOG = Logger.getInstance(MemorySizeConfigurator::class.java)
+
+    /**
+     * Must be the same as [org.jetbrains.intellij.build.impl.VmOptionsGenerator.DEFAULT_XMX].
+     */
+    const val DEFAULT_XMX = 750
+    const val MAXIMUM_SUGGESTED_XMX = 2048
+
+    init {
+      require(MAXIMUM_SUGGESTED_XMX >= DEFAULT_XMX * 2)
+    }
   }
 }
 
@@ -67,6 +77,6 @@ open class MemorySizeConfiguratorService {
   }
 
   open fun getSuggestedMemorySize(currentXmx: Int, totalPhysicalMemory: Int): Int {
-    return (totalPhysicalMemory / 8).coerceIn(750, 2048)
+    return (totalPhysicalMemory / 8).coerceIn(MemorySizeConfigurator.DEFAULT_XMX, MemorySizeConfigurator.MAXIMUM_SUGGESTED_XMX)
   }
 }

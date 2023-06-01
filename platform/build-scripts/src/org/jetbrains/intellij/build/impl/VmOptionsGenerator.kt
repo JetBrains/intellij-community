@@ -30,9 +30,15 @@ object VmOptionsGenerator {
     "-Dkotlinx.coroutines.debug=off"
   )
 
+  private const val DEFAULT_XMS = 128
+  /**
+   * Must be the same as [com.intellij.diagnostic.MemorySizeConfigurator.DEFAULT_XMX].
+   */
+  private const val DEFAULT_XMX = 750
+
   private val MEMORY_OPTIONS: Map<String, String> = linkedMapOf(
-    "-Xms" to "128m",
-    "-Xmx" to "750m",
+    "-Xms" to "${DEFAULT_XMS}m",
+    "-Xmx" to "${DEFAULT_XMX}m",
     "-XX:ReservedCodeCacheSize=" to "512m"
   )
 
