@@ -353,17 +353,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":compileTestJava")
           assertNode(":processTestResources")
           assertNode(":testClasses")
-          assertNode(":test") {
-            if (isTestLauncherSupported()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor 1") {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
-              }
-            }
-          }
+          assertNode(":test")
           assertNode(":allTests")
         }
       }
@@ -375,11 +365,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         }
       }
       assertBuildExecutionTree {
-        val status = when {
-          isTestLauncherSupported() -> "failed"
-          else -> "successful"
-        }
-        assertNode(status) {
+        assertNode("successful") {
           assertNode(":compileJava")
           assertNode(":processResources")
           assertNode(":classes")
@@ -388,9 +374,6 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test")
           assertNode(":allTests")
-          if (isTestLauncherSupported()) {
-            assertNode("No matching tests found in any candidate test task.")
-          }
         }
       }
 
@@ -453,15 +436,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       assertTestTreeViewIsEmpty()
       assertBuildExecutionTree {
         assertNode("failed") {
-          when {
-            isTestLauncherSupported() ->
-              assertNode(
-                "Task ':allTests' of type 'org.gradle.api.DefaultTask_Decorated' " +
-                "not supported for executing tests via TestLauncher API."
-              )
-            else ->
-              assertNode("Unknown command-line option '--tests'")
-          }
+          assertNode("Unknown command-line option '--tests'")
         }
       }
 

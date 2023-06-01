@@ -209,6 +209,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         def isJvmTest = task instanceof Test
         def isAbstractTest = is44OrBetter && task instanceof AbstractTestTask
         externalTask.test = isJvmTest || isAbstractTest || isInternalTest || isEffectiveTest
+        externalTask.jvmTest = isJvmTest
         externalTask.type = ProjectExtensionsDataBuilderImpl.getType(task)
         result.put(externalTask.name, externalTask)
       }

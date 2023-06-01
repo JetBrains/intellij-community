@@ -460,7 +460,7 @@ public class GradleExecutionHelper {
       setupTestLauncherArguments(testLauncher, commandLine);
     }
     else if (operation instanceof BuildLauncher buildLauncher) {
-      setupBuildLauncherArguments(buildLauncher, commandLine, settings.isRunAsTest());
+      setupBuildLauncherArguments(buildLauncher, commandLine, settings);
     }
     else {
       operation.withArguments(commandLine.getTokens());
@@ -508,11 +508,11 @@ public class GradleExecutionHelper {
   private static void setupBuildLauncherArguments(
     @NotNull BuildLauncher buildLauncher,
     @NotNull GradleCommandLine commandLine,
-    boolean isRunAsTest
+    @NotNull GradleExecutionSettings settings
   ) {
     buildLauncher.forTasks(ArrayUtil.toStringArray(commandLine.getTasks().getTokens()));
     buildLauncher.withArguments(commandLine.getOptions().getTokens());
-    if (isRunAsTest) {
+    if (settings.isTestTaskRerun()) {
       var initScript = GradleInitScriptUtil.createTestInitScript();
       buildLauncher.addArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString());
     }

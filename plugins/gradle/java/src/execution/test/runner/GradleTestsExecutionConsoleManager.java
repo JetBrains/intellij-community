@@ -56,7 +56,6 @@ import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecut
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.SimpleTextAttributes;
@@ -72,8 +71,6 @@ import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-
-import java.nio.file.Files;
 
 /**
  * @author Vladislav.Soroka
@@ -270,7 +267,10 @@ public class GradleTestsExecutionConsoleManager
         if (ObjectUtils.chooseNotNull(isRunAsTest, false)) {
           return true;
         }
-        return hasTestTasks(taskTask);
+        if (hasTestTasks(taskTask)) {
+          taskTask.putUserData(GradleRunConfiguration.RUN_AS_TEST_KEY, true);
+          return true;
+        }
       }
     }
     return false;

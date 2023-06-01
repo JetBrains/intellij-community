@@ -158,6 +158,11 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     putUserData(GradleRunConfiguration.RUN_AS_TEST_KEY, isRunAsTest);
   }
 
+  public boolean isTestTaskRerun() {
+    var value = getUserData(GradleRunConfiguration.IS_TEST_TASK_RERUN_KEY);
+    return ObjectUtils.chooseNotNull(value, false);
+  }
+
   @Override
   public int hashCode() {
     int result = super.hashCode();
