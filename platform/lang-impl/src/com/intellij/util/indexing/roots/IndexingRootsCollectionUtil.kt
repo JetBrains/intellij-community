@@ -10,9 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.CustomizingIndexingContributor
 import com.intellij.util.indexing.ReincludedRootsUtil
@@ -43,43 +41,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Function
-
-/**
- * Usually it makes sense to deduplicate roots, for content root and source roots may share them.
- * But there may be too many of them, resulting in a freeze, especially for Rider or CLion who add each file as a root.
- */
-private const val ROOTS_SIZE_OPTIMISING_LIMIT = 1000
-
-fun optimizeRoots(roots: Collection<VirtualFile>): List<VirtualFile> {
-  val size = roots.size
-  return if (size == 0) {
-    emptyList()
-  }
-  else if (size == 1) {
-    SmartList(roots.iterator().next())
-  }
-  else if (size > ROOTS_SIZE_OPTIMISING_LIMIT) {
-    ArrayList(roots)
-  }
-  else {
-    val filteredList: MutableList<VirtualFile> = ArrayList()
-    val consumer: Consumer<VirtualFile> = object : Consumer<VirtualFile> {
-      private var previousPath: String? = null
-      override fun accept(file: VirtualFile) {
-        val path = file.path
-        if (previousPath == null || !FileUtil.startsWith(path, previousPath!!)) {
-          filteredList.add(file)
-          previousPath = path
-        }
-      }
-    }
-    roots.sortedWith { o1: VirtualFile, o2: VirtualFile ->
-      StringUtil.compare(o1.path, o2.path, false)
-    }.forEach(consumer)
-
-    return filteredList
-  }
-}
 
 internal sealed interface IndexingRootsDescription {
   fun createBuilders(): Collection<IndexableIteratorBuilder>
@@ -170,7 +131,7 @@ private fun <T> toList(value: Collection<T>): List<T> {
   return if (value.isEmpty()) emptyList() else ArrayList(value)
 }
 
-private fun selectRootVirtualFiles(value: Collection<VirtualFile>): List<VirtualFile> {
+fun selectRootVirtualFiles(value: Collection<VirtualFile>): List<VirtualFile> {
   return selectRootItems(value) { file -> file.path }
 }
 

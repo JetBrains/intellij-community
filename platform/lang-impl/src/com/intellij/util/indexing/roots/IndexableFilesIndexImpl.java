@@ -189,6 +189,6 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       });
       return files;
     }).executeSynchronously();
-    return IndexingRootsCollectionUtil.optimizeRoots(roots);
+    return IndexingRootsCollectionUtil.selectRootVirtualFiles(roots);
   }
 }
