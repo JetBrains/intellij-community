@@ -524,6 +524,14 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return myEmbeddersManager;
   }
 
+  @ApiStatus.Internal
+  public void waitForReadingCompletionIfNeeded() {
+    if (!isInitialized()) {
+      waitForReadingCompletion();
+    }
+    myReadingProcessor.waitForCompletionIfNotEmptyQueue();
+  }
+
   private boolean isInitialized() {
     return !initLock.isLocked() && isInitialized.get();
   }
