@@ -20,6 +20,7 @@ import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingIm
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.workspaceModel.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.workspaceModel.storage.instrumentation.EntityStorageSnapshotInstrumentation
 import com.intellij.workspaceModel.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
@@ -31,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
+@OptIn(EntityStorageInstrumentationApi::class)
 internal data class EntityReferenceImpl<E : WorkspaceEntity>(internal val id: EntityId) : EntityReference<E>() {
   override fun resolve(storage: EntityStorage): E? {
     storage as EntityStorageInstrumentation
@@ -50,6 +52,7 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(internal val id: En
   }
 }
 
+@OptIn(EntityStorageInstrumentationApi::class)
 internal class EntityStorageSnapshotImpl(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
@@ -89,6 +92,7 @@ internal class EntityStorageSnapshotImpl(
 }
 
 
+@OptIn(EntityStorageInstrumentationApi::class)
 internal class MutableEntityStorageImpl(
   override val entitiesByType: MutableEntitiesBarrel,
   override val refs: MutableRefsTable,
@@ -902,6 +906,7 @@ internal class MutableEntityStorageImpl(
   }
 }
 
+@OptIn(EntityStorageInstrumentationApi::class)
 internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
 
   internal abstract val entitiesByType: EntitiesBarrel
