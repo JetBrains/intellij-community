@@ -186,9 +186,13 @@ public final class MavenProjectsManagerWatcher {
 
       if (spec.isForceResolve()) {
         MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-        projectsManager.scheduleImportAndResolve(spec)
-          .onSuccess(modules -> promise.setResult(null))
-          .onError(t -> promise.setError(t));
+        try {
+          projectsManager.resolveAndImportMavenProjectsSync(spec);
+          promise.setResult(null);
+        }
+        catch (Exception e) {
+          promise.setError(e);
+        }
       }
       else {
         promise.setResult(null);
