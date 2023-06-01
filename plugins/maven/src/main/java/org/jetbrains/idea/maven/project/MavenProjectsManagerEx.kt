@@ -28,11 +28,13 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole.Companion.finishTransaction
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
+import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.model.MavenArtifact
+import org.jetbrains.idea.maven.server.MavenWrapperDownloader
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.runBlockingCancellableUnderIndicator
@@ -42,6 +44,7 @@ import java.util.function.Supplier
 
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
+  suspend fun updateAllMavenProjects(spec: MavenImportSpec)
   suspend fun importMavenProjects(): List<Module>
   suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module>
   fun resolveAndImportMavenProjectsSync(spec: MavenImportSpec): List<Module>
@@ -276,7 +279,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
     activity.finished()
     MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
-    finishTransaction(myProject)
+    MavenSyncConsole.finishTransaction(myProject)
 
     return result
   }
@@ -320,6 +323,48 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                       importingSettings.isDownloadDocsAutomatically)
 
     return importMavenProjects(projectsToImport + myProjectsToImport)
+  }
+
+  override suspend fun updateAllMavenProjects(spec: MavenImportSpec) {
+    // display all import activities using the same build progress
+    MavenSyncConsole.startTransaction(myProject)
+    try {
+      val mavenProgressIndicator = MavenProgressIndicator(project, Supplier { syncConsole })
+      withBackgroundProgressIfApplicable(myProject, SyncBundle.message("maven.sync.waiting.for.completion"), false) {
+        runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorPluginsResolvingTask::class.java) {
+          withRawProgressReporter {
+            coroutineToIndicator {
+              val indicator = ProgressManager.getGlobalProgressIndicator()
+              try {
+                checkOrInstallMavenWrapper(project)
+                // TODO: use indicator
+                projectsTree.updateAll(spec.isForceReading, generalSettings, mavenProgressIndicator)
+                generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
+              }
+              finally {
+                if (spec.isForceResolve) {
+                  resolveAndImportMavenProjectsSync(spec)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    finally {
+      if (!spec.isForceResolve) {
+        MavenSyncConsole.finishTransaction(myProject)
+      }
+    }
+  }
+
+  private fun checkOrInstallMavenWrapper(project: Project) {
+    if (projectsTree.existingManagedFiles.size == 1) {
+      val baseDir = MavenUtil.getBaseDir(projectsTree.existingManagedFiles[0])
+      if (MavenUtil.isWrapper(generalSettings)) {
+        MavenWrapperDownloader.checkOrInstallForSync(project, baseDir.toString())
+      }
+    }
   }
 
   private val mavenConsole: MavenConsole
