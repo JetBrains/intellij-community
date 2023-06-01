@@ -184,14 +184,12 @@ class ProjectWindowCustomizerService : Disposable {
    * @return true if method painted something
    */
   fun paint(project: Project, parent: JComponent, g: Graphics2D): Boolean {
-    if (!isActive() || !getPaintingType().isGradient()) return false
-    val projectPath = getProjectNameForIcon(project)
-
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-
     g.color = parent.background
     g.fillRect(0, 0, parent.width, parent.height)
 
+    if (!isActive() || !getPaintingType().isGradient()) return false
+    val projectPath = getProjectNameForIcon(project)
     val color = computeOrGetColor(projectPath, project)
 
     val length = Registry.intValue("ide.colorful.toolbar.gradient.length", 600)
