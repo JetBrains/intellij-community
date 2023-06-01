@@ -23,7 +23,7 @@ import javax.swing.SwingUtilities
 import javax.swing.tree.TreePath
 
 object EditSourceOnDoubleClickHandler {
-  private val INSTALLED = Key.create<Boolean>("EditSourceOnDoubleClickHandlerInstalled")
+  val INSTALLED = Key.create<Boolean>("EditSourceOnDoubleClickHandlerInstalled")
 
   @JvmOverloads
   @JvmStatic
