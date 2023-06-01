@@ -947,12 +947,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   protected abstract AsyncPromise<List<Module>> scheduleResolveSync(Runnable callback);
 
-  @TestOnly
-  public void scheduleResolveInTests(Collection<MavenProject> projects) {
-    scheduleForNextResolve(projects);
-    scheduleResolveSync(null);
-  }
-
   // used in third-party plugins
   public void scheduleFoldersResolveForAllProjects() {
     MavenProjectsManagerUtilKt.scheduleFoldersResolveForAllProjects(myProject);

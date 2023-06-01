@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.utils.MavenImportingTestCaseKt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -48,7 +49,7 @@ public abstract class MavenPerformanceTest extends MavenMultiVersionImportingTes
 
     myProjectsManager.unscheduleAllTasksInTests();
 
-    myProjectsManager.scheduleResolveInTests(mavenProjects.subList(0, 100));
+    MavenImportingTestCaseKt.resolveAndImportMavenProjectsSync(myProjectsManager, mavenProjects.subList(0, 100));
     measure(50000, () -> myProjectsManager.waitForReadingCompletion());
   }
 
