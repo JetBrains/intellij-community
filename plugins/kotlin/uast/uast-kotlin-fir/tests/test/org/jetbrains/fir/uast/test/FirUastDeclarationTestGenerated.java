@@ -98,6 +98,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         runTest("testData/declaration/mangling.kt");
     }
 
+    @TestMetadata("missingNames.kt")
+    public void testMissingNames() throws Exception {
+        runTest("testData/declaration/missingNames.kt");
+    }
+
     @TestMetadata("nullabilityOfTypeParameter.kt")
     public void testNullabilityOfTypeParameter() throws Exception {
         runTest("testData/declaration/nullabilityOfTypeParameter.kt");
