@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.base.externalSystem.findAll
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -202,11 +203,12 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
 
         val NON_JVM_LIBRARY_KINDS: List<PersistentLibraryKind<*>> = listOf(
             KotlinJavaScriptLibraryKind,
+            KotlinWasmLibraryKind,
             KotlinNativeLibraryKind,
             KotlinCommonLibraryKind
         )
 
-        val NON_JVM_SUFFIXES = listOf("-common", "-js", "-native", "-kjsm", "-metadata")
+        val NON_JVM_SUFFIXES = listOf("-common", "-js", "-wasm", "-native", "-kjsm", "-metadata")
     }
 }
 

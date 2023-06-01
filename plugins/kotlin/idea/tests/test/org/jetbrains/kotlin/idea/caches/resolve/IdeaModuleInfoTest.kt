@@ -27,6 +27,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
@@ -48,6 +49,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
+import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 import org.jetbrains.kotlin.projectModel.FullJdk
 import org.jetbrains.kotlin.projectModel.KotlinSdk
 import org.jetbrains.kotlin.projectModel.ResolveSdk
@@ -1098,6 +1100,9 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         js --> common
         js --> STDLIB_JS
         js --> KOTLIN_SDK
+        wasm --> common
+        wasm --> STDLIB_WASM
+        wasm --> KOTLIN_SDK
         jvmNoSdk --> common
         jvmNoSdk --> STDLIB_JVM
         jvmWithSdk --> common
@@ -1112,11 +1117,13 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
 
         val common = module("common")
         val js = module("js")
+        val wasm = module("wasm")
         val jvmNoSdk = module("jvmNoSdk")
         val jvmWithSdk = module("jvmWithSdk")
         val native = module("native")
 
         js.addDependency(common)
+        wasm.addDependency(common)
         jvmNoSdk.addDependency(common)
         jvmWithSdk.addDependency(common)
         native.addDependency(common)
@@ -1135,6 +1142,12 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
 
         js.addDependency(stdlibJs)
         js.addDependency(KotlinSdk, testRootDisposable)
+
+        val stdlibWasm = projectLibrary("stdlibWasm", classesRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(TestKotlinArtifacts.kotlinStdlibWasm))
+        val stdlibWasmInfo = stdlibWasm.toLibraryInfo()
+
+        wasm.addDependency(stdlibWasm)
+        wasm.addDependency(KotlinSdk, testRootDisposable)
 
         val stdlibJvm = projectLibrary("stdlibJvm", classesRoot = TestKotlinArtifacts.kotlinStdlib.jarRoot)
         val stdlibJvmLibInfo = stdlibJvm.toLibraryInfo()
@@ -1163,6 +1176,13 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             stdlibJsInfo
         )
 
+        wasm.production.assertDependenciesEqual(
+            kotlinSdkInfo,
+            wasm.production,
+            common.production,
+            stdlibWasmInfo
+        )
+
         jvmNoSdk.production.assertDependenciesEqual(
             jvmNoSdk.production,
             common.production,
@@ -1187,6 +1207,12 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             lib = stdlibJsInfo,
             expectedSdkInfos = listOf(kotlinSdkInfo),
             stdlibCommonLibInfo, stdlibJsInfo
+        )
+
+        assertDependencies(
+            lib = stdlibWasmInfo,
+            expectedSdkInfos = listOf(kotlinSdkInfo),
+            stdlibCommonLibInfo, stdlibWasmInfo
         )
 
         assertDependencies(
@@ -1630,6 +1656,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val stdlibCommon = stdlibCommon()
         val stdlibJvm = stdlibJvm()
         val stdlibJs = stdlibJs()
+        val stdlibWasm = stdlibWasm()
 
         val a = module("a")
         a.addDependency(stdlibCommon)
@@ -1640,9 +1667,15 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         b.addDependency(stdlibCommon)
         b.addDependency(stdlibJs)
 
+        val c = module("c")
+        c.setUpPlatform(WasmPlatforms.Default)
+        c.addDependency(stdlibCommon)
+        c.addDependency(stdlibWasm)
+
         stdlibCommon.toLibraryInfo().assertAdditionalLibraryDependencies()
         stdlibJvm.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
         stdlibJs.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
+        stdlibWasm.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
     }
 
     fun testScriptDependenciesForModule() {
@@ -2132,6 +2165,12 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
       "kotlin-stdlib-js",
       TestKotlinArtifacts.kotlinStdlibJs.jarRoot,
       kind = KotlinJavaScriptLibraryKind
+    )
+
+    private fun stdlibWasm(): LibraryEx = projectLibrary(
+        "kotlin-stdlib-wasm",
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(TestKotlinArtifacts.kotlinStdlibWasm),
+        kind = KotlinWasmLibraryKind
     )
 
     private fun projectLibraryWithFakeRoot(name: String): LibraryEx {
