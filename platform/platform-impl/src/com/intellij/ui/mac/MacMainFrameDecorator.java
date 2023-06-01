@@ -211,6 +211,9 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     JRootPane rootPane = frame.getRootPane();
     if (rootPane != null) {
       rootPane.putClientProperty(FULL_SCREEN, Boolean.TRUE);
+      if (rootPane.getBorder() != null) {
+        rootPane.setBorder(null);
+      }
     }
   }
 
