@@ -29,16 +29,19 @@ internal class IncorrectProcessCanceledExceptionHandlingInspection : DevKitUastI
         }
         else {
           val tryExpression = node.getParentOfType<UTryExpression>() ?: return super.visitCatchClause(node)
-          if (tryExpression.containsPceCatchClause()) {
+          if (tryExpression.containsCatchClauseForType<ProcessCanceledException>()) {
             // PCE will be caught by the explicit catch clause
             return super.visitCatchClause(node)
           }
-          val caughtGenericThrowableParam =
-            catchParameters.firstOrNull {
-              it.type.isClassType<RuntimeException>() || it.type.isClassType<Exception>() || it.type.isClassType<Throwable>()
-            }
+          val caughtGenericThrowableParam = catchParameters.firstOrNull {
+            it.type.isClassType<RuntimeException>() || it.type.isClassType<Exception>() || it.type.isClassType<Throwable>()
+          }
           if (caughtGenericThrowableParam != null) {
-            val (pceThrowingExpression, isPceInheritorThrown) = findPceThrowingExpression(tryExpression.tryClause)
+            if (tryExpression.containsMoreSpecificCatchClause(caughtGenericThrowableParam)) {
+              // PCE will be caught by catch clause with a more specific type, so do not report
+              return super.visitCatchClause(node)
+            }
+            val (pceThrowingExpression, isPceInheritorThrown) = findPceThrowingExpression(tryExpression)
             if (pceThrowingExpression != null) {
               inspectIncorrectImplicitPceHandling(node, caughtGenericThrowableParam, isPceInheritorThrown, pceThrowingExpression)
             }
@@ -50,17 +53,24 @@ internal class IncorrectProcessCanceledExceptionHandlingInspection : DevKitUastI
       private fun findPceCaughtParam(catchParameters: List<UParameter>): Pair<UParameter?, Boolean> {
         val resolveScope = holder.file.resolveScope
         val pceClass = JavaPsiFacade.getInstance(holder.project).findClass(pceClassName, resolveScope) ?: return Pair(null, false)
-        val pceParam = catchParameters.firstOrNull {
-          val type = it.type
+        for (catchParameter in catchParameters) {
+          val type = catchParameter.type
           if (type is PsiDisjunctionType) {
-            return@firstOrNull type.disjunctions.any { disjunction -> disjunction.isInheritorOrSelf(pceClass) }
+            for (disjunction in type.disjunctions) {
+              if (disjunction.isInheritorOrSelf(pceClass)) {
+                return Pair(catchParameter, disjunction.isPceClass())
+              }
+            }
           }
-          return@firstOrNull type.isInheritorOrSelf(pceClass)
+          else if (type.isInheritorOrSelf(pceClass)) {
+            return Pair(catchParameter, type.isPceClass())
+          }
         }
-        if (pceParam == null) return Pair(null, false)
-        val caughtClassQualifiedName = (pceParam.type as? PsiClassType)?.resolve()?.qualifiedName ?: return Pair(null, false)
-        val isPceInheritorCaught = pceClassName != caughtClassQualifiedName
-        return Pair(pceParam, isPceInheritorCaught)
+        return Pair(null, false)
+      }
+
+      private fun PsiType.isPceClass(): Boolean {
+        return pceClassName != (this as? PsiClassType)?.resolve()?.qualifiedName
       }
 
       private fun PsiType.isInheritorOrSelf(pceClass: PsiClass): Boolean {
@@ -141,7 +151,8 @@ internal class IncorrectProcessCanceledExceptionHandlingInspection : DevKitUastI
       }
 
       // it searches only for explicit `throws` declarations in directly called methods.
-      private fun findPceThrowingExpression(tryClause: UExpression): Pair<UCallExpression?, Boolean> {
+      private fun findPceThrowingExpression(tryExpression: UTryExpression): Pair<UCallExpression?, Boolean> {
+        val tryClause = tryExpression.tryClause
         var pceThrowingExpression: UCallExpression? = null
         var isPceInheritorCaught = false
         val resolveScope = tryClause.sourcePsi?.resolveScope ?: return Pair(null, false)
@@ -153,9 +164,11 @@ internal class IncorrectProcessCanceledExceptionHandlingInspection : DevKitUastI
               for (throwsType in calledMethod.javaPsi.throwsTypes) {
                 val psiClassType = throwsType as? PsiClassType ?: continue
                 if (psiClassType.isInheritorOrSelf(pceClass)) {
-                  pceThrowingExpression = node
-                  isPceInheritorCaught = psiClassType.resolve()?.qualifiedName != pceClassName
-                  return super.visitCallExpression(node)
+                  if (!isInNestedTryCatchBlock(node, tryExpression, psiClassType)) {
+                    pceThrowingExpression = node
+                    isPceInheritorCaught = psiClassType.resolve()?.qualifiedName != pceClassName
+                    return super.visitCallExpression(node)
+                  }
                 }
               }
             }
@@ -172,8 +185,33 @@ internal class IncorrectProcessCanceledExceptionHandlingInspection : DevKitUastI
         return PsiTypesUtil.classNameEquals(this, T::class.java.name)
       }
 
-      private fun UTryExpression.containsPceCatchClause(): Boolean {
-        return this.catchClauses.any { clause -> clause.parameters.any { it.type.isClassType<ProcessCanceledException>() } }
+      private inline fun <reified T> UTryExpression.containsCatchClauseForType(): Boolean {
+        return this.catchClauses.any { clause -> clause.parameters.any { it.type.isClassType<T>() } }
+      }
+
+      private fun UTryExpression.containsMoreSpecificCatchClause(param: UParameter): Boolean {
+        return when ((param.type as? PsiClassType)?.resolve()?.qualifiedName) {
+          java.lang.Throwable::class.java.name ->
+            this.containsCatchClauseForType<Exception>() || this.containsCatchClauseForType<RuntimeException>()
+          java.lang.Exception::class.java.name -> this.containsCatchClauseForType<RuntimeException>()
+          else -> false
+        }
+      }
+
+      private fun isInNestedTryCatchBlock(expression: UCallExpression,
+                                          checkedTryExpression: UTryExpression,
+                                          thrownExceptionType: PsiClassType): Boolean {
+        val thrownExceptionClass = thrownExceptionType.resolve() ?: return false
+        val parentTryExpression = expression.getParentOfType<UTryExpression>() ?: return false
+        if (parentTryExpression == checkedTryExpression) return false
+        return parentTryExpression.catchClauses.any { catchClause ->
+          catchClause.types.any anyType@{ type ->
+            if (type is PsiDisjunctionType) {
+              return@anyType type.disjunctions.any { it.isInheritorOrSelf(thrownExceptionClass) }
+            }
+            return@anyType type.isInheritorOrSelf(thrownExceptionClass)
+          }
+        }
       }
 
     }, arrayOf(UCatchClause::class.java))

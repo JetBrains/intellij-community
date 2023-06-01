@@ -1,10 +1,11 @@
+import com.example.SubclassOfProcessCanceledException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 
 private val LOG = Logger.getInstance("any")
 
 class IncorrectPceHandlingTests {
-  fun test1() {
+  fun testPceSwallowed() {
     try {
       // anything
     }
@@ -13,16 +14,26 @@ class IncorrectPceHandlingTests {
     }
   }
 
-  fun test2() {
+  fun testPceLogged() {
+    try {
+      // anything
+    }
+    catch (e: ProcessCanceledException) {
+      LOG.<error descr="'ProcessCanceledException' must not be logged">error(e)</error>
+      throw e
+    }
+  }
+
+  fun testSwallowedAndLoggedWithMessageOnInfoLevel() {
     try {
       // anything
     }
     catch (<error descr="'ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
-      LOG.<error descr="'ProcessCanceledException' must not be logged">info("Error occurred", e)</error>
+      LOG.<error descr="'ProcessCanceledException' must not be logged">info("Error occured", e)</error>
     }
   }
 
-  fun test3() {
+  fun testSwallowedAndLoggedOnInfoLevel() {
     try {
       // anything
     }
@@ -31,7 +42,7 @@ class IncorrectPceHandlingTests {
     }
   }
 
-  fun test4() {
+  fun testSwallowedAndLoggedOnErrorLevel() {
     try {
       // anything
     }
@@ -40,7 +51,7 @@ class IncorrectPceHandlingTests {
     }
   }
 
-  fun test5() {
+  fun testSwallowedAndOnlyExceptionMessageLogged() {
     try {
       // anything
     }
@@ -48,4 +59,14 @@ class IncorrectPceHandlingTests {
       LOG.<error descr="'ProcessCanceledException' must not be logged">error("Error occurred: " + e.message)</error>
     }
   }
+
+  fun testPceInheritorSwallowedAndLogger() {
+    try {
+      // anything
+    }
+    catch (<error descr="'ProcessCanceledException' inheritor must be rethrown">e</error>: SubclassOfProcessCanceledException) {
+      LOG.<error descr="'ProcessCanceledException' inheritor must not be logged">error(e)</error>
+    }
+  }
+
 }

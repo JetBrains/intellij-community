@@ -1,10 +1,11 @@
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.example.SubclassOfProcessCanceledException;
 
 class IncorrectPceHandlingTests {
   private static final Logger LOG = Logger.getInstance(IncorrectPceHandlingTests.class);
 
-  void test1() {
+  void testPceSwallowed() {
     try {
       // anything
     } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
@@ -12,7 +13,16 @@ class IncorrectPceHandlingTests {
     }
   }
 
-  void test2() {
+  void testPceLogged() {
+    try {
+      // anything
+    } catch (ProcessCanceledException e) {
+      <error descr="'ProcessCanceledException' must not be logged">LOG.error(e)</error>;
+      throw e;
+    }
+  }
+
+  void testSwallowedAndLoggedWithMessageOnInfoLevel() {
     try {
       // anything
     } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
@@ -20,7 +30,7 @@ class IncorrectPceHandlingTests {
     }
   }
 
-  void test3() {
+  void testSwallowedAndLoggedOnInfoLevel() {
     try {
       // anything
     } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
@@ -28,7 +38,7 @@ class IncorrectPceHandlingTests {
     }
   }
 
-  void test4() {
+  void testSwallowedAndLoggedOnErrorLevel() {
     try {
       // anything
     } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
@@ -36,11 +46,43 @@ class IncorrectPceHandlingTests {
     }
   }
 
-  void test5() {
+  void testSwallowedAndOnlyExceptionMessageLogged() {
     try {
       // anything
     } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
       <error descr="'ProcessCanceledException' must not be logged">LOG.error("Error occurred: " + e.getMessage())</error>;
+    }
+  }
+
+  void testDisjunctionTypesWhenPceIsFirst() {
+    try {
+      // anything
+    } catch (ProcessCanceledException | IllegalStateException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
+      <error descr="'ProcessCanceledException' must not be logged">LOG.error("Error occurred: " + e.getMessage())</error>;
+    }
+  }
+
+  void testDisjunctionTypesWhenPceIsSecond() {
+    try {
+      // anything
+    } catch (IllegalStateException | ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
+      <error descr="'ProcessCanceledException' must not be logged">LOG.error("Error occurred: " + e.getMessage())</error>;
+    }
+  }
+
+  void testPceInheritorSwallowedAndLogger() {
+    try {
+      // anything
+    } catch (SubclassOfProcessCanceledException <error descr="'ProcessCanceledException' inheritor must be rethrown">e</error>) {
+      <error descr="'ProcessCanceledException' inheritor must not be logged">LOG.error(e)</error>;
+    }
+  }
+
+  void testPceInheritorSwallowedAndLoggerWhenDisjunctionTypeDefined() {
+    try {
+      // anything
+    } catch (IllegalStateException | SubclassOfProcessCanceledException <error descr="'ProcessCanceledException' inheritor must be rethrown">e</error>) {
+      <error descr="'ProcessCanceledException' inheritor must not be logged">LOG.error(e)</error>;
     }
   }
 
