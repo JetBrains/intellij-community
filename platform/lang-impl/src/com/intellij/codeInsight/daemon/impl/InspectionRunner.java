@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -175,15 +175,13 @@ class InspectionRunner {
     return finalPriorityRange;
   }
 
-  @NotNull
-  private InspectionContext createTombStone() {
+  private @NotNull InspectionContext createTombStone() {
     LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new LocalInspectionEP());
     InspectionProblemHolder holder = new InspectionProblemHolder(myPsiFile, tool, false, myInspectionProfileWrapper, empty());
     return new InspectionContext(tool, holder, new PsiElementVisitor() {});
   }
 
-  @NotNull
-  private static <T> Map<PsiFile, T> createInjectedFileMap() {
+  private static @NotNull <T> Map<PsiFile, T> createInjectedFileMap() {
     // TODO remove when injected PsiFile implemented equals() base on its offsets in the host
     return CollectionFactory.createCustomHashingStrategyMap(new HashingStrategy<>() {
       @Override
@@ -270,11 +268,9 @@ class InspectionRunner {
     result.addAll(runner.inspect(wrappers, false, empty(), emptyCallback(), emptyCallback(), null));
   }
 
-  @NotNull
-  private static Consumer<InspectionContext> emptyCallback() { return __ -> { }; }
+  private static @NotNull Consumer<InspectionContext> emptyCallback() { return __ -> { }; }
 
-  @NotNull
-  private static BiPredicate<ProblemDescriptor, LocalInspectionToolWrapper> empty() { return (_1, _2) -> true; }
+  private static @NotNull BiPredicate<ProblemDescriptor, LocalInspectionToolWrapper> empty() { return (_1, _2) -> true; }
 
   private void visitElements(@NotNull List<? extends InspectionContext> init,
                              @NotNull List<? extends PsiElement> elements,
@@ -430,7 +426,7 @@ class InspectionRunner {
   }
 
   static class InspectionProblemHolder extends ProblemsHolder {
-    private @NotNull final LocalInspectionToolWrapper myToolWrapper;
+    private final @NotNull LocalInspectionToolWrapper myToolWrapper;
     private final InspectionProfileWrapper myProfileWrapper;
     private final BiPredicate<? super ProblemDescriptor, ? super LocalInspectionToolWrapper> applyIncrementallyCallback;
     volatile boolean applyIncrementally;

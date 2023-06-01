@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -161,8 +161,7 @@ final class LineMarkersUtil {
     }
   }
 
-  @Nullable
-  static LineMarkerInfo<?> getLineMarkerInfo(@NotNull RangeHighlighter highlighter) {
+  static @Nullable LineMarkerInfo<?> getLineMarkerInfo(@NotNull RangeHighlighter highlighter) {
     return highlighter.getUserData(LINE_MARKER_INFO);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -48,16 +48,12 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
 
   private final AnnotationHolderImpl myAnnotationHolder;
   private final List<MyData<?,?>> myAnnotationData = new ArrayList<>();
-  @NotNull
-  private volatile List<? extends HighlightInfo> myHighlightInfos = Collections.emptyList();
+  private volatile @NotNull List<? extends HighlightInfo> myHighlightInfos = Collections.emptyList();
 
   private static class MyData<K,V> {
-    @NotNull
-    final ExternalAnnotator<K,V> annotator;
-    @NotNull
-    final PsiFile psiRoot;
-    @NotNull
-    final K collectedInfo;
+    final @NotNull ExternalAnnotator<K,V> annotator;
+    final @NotNull PsiFile psiRoot;
+    final @NotNull K collectedInfo;
     volatile V annotationResult;
 
     MyData(@NotNull ExternalAnnotator<K,V> annotator, @NotNull PsiFile psiRoot, @NotNull K collectedInfo) {
@@ -178,9 +174,8 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     ExternalAnnotatorManager.getInstance().queue(update);
   }
 
-  @NotNull
   @Override
-  public List<HighlightInfo> getInfos() {
+  public @NotNull List<HighlightInfo> getInfos() {
     try {
       ExternalAnnotatorManager.getInstance().waitForAllExecuted(1, TimeUnit.MINUTES);
     }
@@ -232,8 +227,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
   }
 
-  @NotNull
-  private List<HighlightInfo> convertToHighlights() {
+  private @NotNull List<HighlightInfo> convertToHighlights() {
     List<HighlightInfo> infos = new ArrayList<>(myAnnotationHolder.size());
     for (Annotation annotation : myAnnotationHolder) {
       infos.add(HighlightInfo.fromAnnotation(annotation));

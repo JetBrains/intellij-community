@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -42,7 +42,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
-public class ShowAutoImportPass extends TextEditorHighlightingPass {
+public final class ShowAutoImportPass extends TextEditorHighlightingPass {
   private final Editor myEditor;
 
   private final PsiFile myFile;
@@ -141,11 +141,10 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     return ContainerUtil.exists(ReferenceImporter.EP_NAME.getExtensionList(), importer -> importer.isAddUnambiguousImportsOnTheFlyEnabled(psiFile));
   }
 
-  @NotNull
-  private static List<HighlightInfo> getVisibleHighlights(@NotNull TextRange visibleRange,
-                                                          @NotNull Project project,
-                                                          @NotNull Editor editor,
-                                                          boolean isDirty) {
+  private static @NotNull List<HighlightInfo> getVisibleHighlights(@NotNull TextRange visibleRange,
+                                                                   @NotNull Project project,
+                                                                   @NotNull Editor editor,
+                                                                   boolean isDirty) {
     List<HighlightInfo> highlights = new ArrayList<>();
     int offset = editor.getCaretModel().getOffset();
     DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, visibleRange.getStartOffset(), visibleRange.getEndOffset(), info -> {
@@ -175,8 +174,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
            DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myFile);
   }
 
-  @NotNull
-  static List<HintAction> extractHints(@NotNull HighlightInfo info) {
+  static @NotNull List<HintAction> extractHints(@NotNull HighlightInfo info) {
     List<HintAction> result = new ArrayList<>();
     info.findRegisteredQuickFix((descriptor, range) -> {
       ProgressManager.checkCanceled();
@@ -190,8 +188,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
 
-  @NotNull
-  public static @NlsContexts.HintText String getMessage(boolean multiple, @NotNull String name) {
+  public static @NotNull @NlsContexts.HintText String getMessage(boolean multiple, @NotNull String name) {
     String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";
     String hintText = DaemonBundle.message(messageKey, name);
     hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));

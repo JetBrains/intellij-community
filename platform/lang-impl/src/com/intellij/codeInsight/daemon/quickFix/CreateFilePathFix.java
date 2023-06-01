@@ -38,8 +38,7 @@ import java.util.function.Supplier;
  */
 public class CreateFilePathFix extends AbstractCreateFileFix {
   private final String myText;
-  @Nullable
-  private Supplier<String> myFileTextSupplier;
+  private @Nullable Supplier<String> myFileTextSupplier;
 
   // invoked from other module
   @SuppressWarnings("WeakerAccess")
@@ -130,8 +129,7 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
     }
   }
 
-  @Nullable
-  protected String getFileText() {
+  protected @Nullable String getFileText() {
     if (myFileTextSupplier != null) {
       return myFileTextSupplier.get();
     }
@@ -139,20 +137,17 @@ public class CreateFilePathFix extends AbstractCreateFileFix {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return CodeInsightBundle.message(myKey, myNewFileName);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return CodeInsightBundle.message("create.file.family");
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
     return null;
   }
 

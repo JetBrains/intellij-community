@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
@@ -57,9 +57,8 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     myReducedRanges = reducedRanges;
   }
 
-  @NotNull
   @Override
-  protected String getPresentableName() {
+  protected @NotNull String getPresentableName() {
     return IdeBundle.message("highlighting.pass.injected.presentable.name");
   }
 
@@ -181,10 +180,9 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     }
   }
 
-  @NotNull
-  private HighlightInfoHolder createInfoHolder(@NotNull PsiFile injectedPsi, @NotNull DocumentWindow documentWindow,
-                                               @NotNull InjectedLanguageManager injectedLanguageManager,
-                                               @NotNull Consumer<? super HighlightInfo> outInfos) {
+  private @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile injectedPsi, @NotNull DocumentWindow documentWindow,
+                                                        @NotNull InjectedLanguageManager injectedLanguageManager,
+                                                        @NotNull Consumer<? super HighlightInfo> outInfos) {
     HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
     EditorColorsScheme actualScheme = getColorsScheme() == null ? EditorColorsManager.getInstance().getGlobalScheme() : getColorsScheme();
     return new HighlightInfoHolder(injectedPsi, filters) {

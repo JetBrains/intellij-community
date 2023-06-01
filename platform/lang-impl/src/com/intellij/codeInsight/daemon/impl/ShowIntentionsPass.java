@@ -217,9 +217,8 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
              notificationActionsToShow.isEmpty();
     }
 
-    @NonNls
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return
         "Errors: " + errorFixesToShow + "; " +
         "Inspection fixes: " + inspectionFixesToShow + "; " +
