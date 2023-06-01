@@ -58,18 +58,20 @@ internal object DotnetIconsTransformation {
       }
     }
 
-    icons.firstOrNull() { it.suffix == dotnetExpUiDaySuffix }?.changeSuffix("")?.also {
+    // change icon suffixes after moving to not override original icons
+    icons.firstOrNull() { it.suffix == dotnetExpUiDaySuffix }?.let {
       if (hasLightIcon) {
-        it.moveToExpUi(rootPath)
+        return@let it.moveToExpUi(rootPath) // move before changing suffixes to not override original icons
       }
-      transformed += it
-    }
-    icons.firstOrNull() { it.suffix == dotnetExpUiNightSuffix }?.changeSuffix(ideaDarkSuffix)?.also {
+      return@let it
+    }?.changeSuffix("")?.also { transformed += it }
+    icons.firstOrNull() { it.suffix == dotnetExpUiNightSuffix }?.let {
       if (hasDarkIcon) {
-        it.moveToExpUi(rootPath)
+        return@let it.moveToExpUi(rootPath) // move before changing suffixes to not override original icons
       }
-      transformed += it
-    }
+      return@let it
+    }?.changeSuffix(ideaDarkSuffix)?.also { transformed += it }
+
     (icons - transformed).forEach(DotnetIcon::delete)
   }
 
@@ -86,13 +88,13 @@ internal object DotnetIconsTransformation {
     suffices.contains(it.suffix)
   }
 
-  private fun DotnetIcon.moveToExpUi(rootPath: Path) {
+  private fun DotnetIcon.moveToExpUi(rootPath: Path): DotnetIcon {
     if (!rootPath.isAncestorOf(file)) {
       error("Icon $file is not under $rootPath")
     }
 
     val relativePath = file.relativeTo(rootPath)
     val target = rootPath.resolve("expui").resolve(relativePath).parent
-    this.moveToDir(target)
+    return this.moveToDir(target)
   }
 }
