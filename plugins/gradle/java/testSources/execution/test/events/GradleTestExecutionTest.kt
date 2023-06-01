@@ -56,7 +56,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":test") {
             if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor 1") {
+                assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("AppTest") {
                     assertNode("Test test()(org.example.AppTest)")
                   }
@@ -67,7 +67,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":additionalTest") {
             if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :additionalTest") {
-                assertNode("Gradle Test Executor 2") {
+                assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("AppTest") {
                     assertNode("Test test()(org.example.AppTest)") {
                       assertNode("'Test error message'")
@@ -157,7 +157,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":test") {
             if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor 1") {
+                assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("AppTest") {
                     assertNode("Test test()(org.example.AppTest)")
                   }
@@ -249,7 +249,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":test") {
             if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor 1") {
+                assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("TestCase") {
                     assertNode("Test test()(org.example.TestCase)")
                   }
@@ -277,7 +277,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":test") {
             if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor 2") {
+                assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("TestCase") {
                     assertNode("Test test()(org.example.TestCase)")
                   }
@@ -478,7 +478,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":test") {
             if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor 1") {
+                assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("TestCase") {
                     assertNode("Test test()(org.example.TestCase)")
                   }
@@ -500,7 +500,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":test") {
             if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor 2") {
+                assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("TestCase") {
                     assertNode("Test test()(org.example.TestCase)")
                   }
@@ -524,7 +524,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":test") {
             if (isTestLauncherSupported()) {
               assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor 3") {
+                assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("TestCase") {
                     assertNode("Test test()(org.example.TestCase)")
                   }
