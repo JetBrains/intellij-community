@@ -1170,7 +1170,6 @@ private fun crossPlatformZip(macX64DistDir: Path,
       }
 
       val commonFilter: (String) -> Boolean = { relPath ->
-        !relPath.startsWith("Info.plist") &&
         !relPath.startsWith("bin/fsnotifier") &&
         !relPath.startsWith("bin/repair") &&
         !relPath.startsWith("bin/restart") &&
@@ -1185,15 +1184,15 @@ private fun crossPlatformZip(macX64DistDir: Path,
 
       out.dir(distAllDir, "", fileFilter = { _, relPath -> relPath != "bin/idea.properties" }, entryCustomizer = entryCustomizer)
 
-      out.dir(macX64DistDir, "", fileFilter = { _, relativePath ->
-        commonFilter.invoke(relativePath) &&
-        filterFileIfAlreadyInZip(relativePath, macX64DistDir.resolve(relativePath), zipFileUniqueGuard)
-      }, entryCustomizer = entryCustomizer)
-
-      out.dir(macArm64DistDir, "", fileFilter = { _, relPath ->
-        commonFilter.invoke(relPath) &&
-        filterFileIfAlreadyInZip(relPath, macArm64DistDir.resolve(relPath), zipFileUniqueGuard)
-      }, entryCustomizer = entryCustomizer)
+      for (macDistDir in arrayOf(macX64DistDir, macArm64DistDir)) {
+        out.dir(macDistDir, "", fileFilter = { _, relPath ->
+          commonFilter.invoke(relPath) &&
+          !relPath.startsWith("MacOS/") &&
+          !relPath.startsWith("Resources/") &&
+          !relPath.startsWith("Info.plist") &&
+          filterFileIfAlreadyInZip(relPath, macArm64DistDir.resolve(relPath), zipFileUniqueGuard)
+        }, entryCustomizer = entryCustomizer)
+      }
 
       out.dir(linuxX64DistDir, "", fileFilter = { _, relPath ->
         commonFilter.invoke(relPath) &&
