@@ -53,9 +53,9 @@ final class ReadMostlyRWLock {
   // (we have to reduce frequency of this "dead readers GC" activity because Thread.isAlive() turned out to be too expensive)
   private volatile long deadReadersGCStamp;
 
-  // This flag should be set by write thread only, and checked by same thread, so
-  // no "volatile" needed
-  private boolean allowImplicitRead = true;
+  // This flag should be set by write thread only, but can be checked by any thread
+  // for example in startRead() method. Should be volatile.
+  private volatile boolean allowImplicitRead = true;
 
   ReadMostlyRWLock(@NotNull Thread writeThread) {
     this.writeThread = writeThread;
