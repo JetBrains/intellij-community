@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
 import org.jetbrains.kotlin.idea.debugger.evaluate.LOG
 import org.jetbrains.kotlin.idea.debugger.evaluate.gatherProjectFilesDependedOnByFragment
@@ -80,6 +81,9 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
     }
 
     override fun processError(e: CodeFragmentCodegenException) {
+        if (isFallbackDisabled()) {
+            throw e
+        }
         // TODO maybe break down known cases of failures and keep statistics on them?
         //      This way, we will have a complete picture of what exact errors users
         //      come across.
@@ -91,5 +95,9 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         if (isUnitTestMode()) return null
 
         return OldCodeFragmentCompilingStrategy(codeFragment)
+    }
+
+    private fun isFallbackDisabled(): Boolean {
+        return Registry.`is`("debugger.kotlin.evaluator.disable.fallback.to.old.backend")
     }
 }
