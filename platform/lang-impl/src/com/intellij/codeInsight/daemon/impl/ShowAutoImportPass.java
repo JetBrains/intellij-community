@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -91,10 +90,16 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   @Override
   public void doApplyInformationToEditor() {
-    ApplicationManager.getApplication().invokeLater(()-> {
-      if (!UIUtil.hasFocus(myEditor.getContentComponent())) return;
-      if (DumbService.isDumb(myProject) || !myFile.isValid()) return;
-      if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!UIUtil.hasFocus(myEditor.getContentComponent())) {
+        return;
+      }
+      if (DumbService.isDumb(myProject) || !myFile.isValid()) {
+        return;
+      }
+      if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) {
+        return;
+      }
 
       int caretOffset = myEditor.getCaretModel().getOffset();
       importUnambiguousImports();
@@ -110,7 +115,7 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
           }
         }
       }
-    });
+    }, myProject.getDisposed());
   }
 
   private void importUnambiguousImports() {
