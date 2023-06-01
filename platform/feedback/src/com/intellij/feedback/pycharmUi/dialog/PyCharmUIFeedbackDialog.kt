@@ -2,8 +2,8 @@
 package com.intellij.feedback.pycharmUi.dialog
 
 import com.intellij.feedback.common.dialog.BlockBasedFeedbackDialogWithEmail
-import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
-import com.intellij.feedback.common.dialog.JsonSerializable
+import com.intellij.feedback.common.dialog.CommonFeedbackSystemData
+import com.intellij.feedback.common.dialog.SystemDataJsonSerializable
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.dialog.uiBlocks.*
 import com.intellij.feedback.common.notification.ThanksForFeedbackNotification
@@ -20,7 +20,7 @@ import javax.swing.Action.NAME
 class PyCharmUIFeedbackDialog(
   project: Project?,
   forTest: Boolean
-) : BlockBasedFeedbackDialogWithEmail<PyCharmFeedbackSystemInfoData>(project, forTest) {
+) : BlockBasedFeedbackDialogWithEmail<PyCharmFeedbackSystemData>(project, forTest) {
 
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
   override val zendeskTicketTitle: String = "PyCharm in-IDE Feedback"
@@ -36,7 +36,7 @@ class PyCharmUIFeedbackDialog(
     TextAreaBlock(PyCharmUIFeedbackBundle.message("dialog.like_most.textarea.label"), "like_most"),
     TextAreaBlock(PyCharmUIFeedbackBundle.message("dialog.dislike.textarea.label"), "dislike_most"),
   )
-  override val mySystemInfoData: PyCharmFeedbackSystemInfoData by lazy {
+  override val mySystemInfoData: PyCharmFeedbackSystemData by lazy {
     createPyCharmFeedbackSystemInfoData(NewUI.isEnabled())
   }
   override val myShowFeedbackSystemInfoDialog: () -> Unit = {
@@ -60,10 +60,10 @@ class PyCharmUIFeedbackDialog(
 }
 
 @Serializable
-data class PyCharmFeedbackSystemInfoData(
+data class PyCharmFeedbackSystemData(
   val isNewUINowEnabled: Boolean,
-  val commonSystemInfo: CommonFeedbackSystemInfoData
-) : JsonSerializable {
+  val commonSystemInfo: CommonFeedbackSystemData
+) : SystemDataJsonSerializable {
   override fun toString(): String {
     return buildString {
       appendLine(PyCharmUIFeedbackBundle.message("dialog.system.info.isNewUIEnabled"))
@@ -80,13 +80,13 @@ data class PyCharmFeedbackSystemInfoData(
 }
 
 private fun showPyCharmFeedbackSystemInfoDialog(project: Project?,
-                                                systemInfoData: PyCharmFeedbackSystemInfoData
+                                                systemInfoData: PyCharmFeedbackSystemData
 ) = showFeedbackSystemInfoDialog(project, systemInfoData.commonSystemInfo) {
   row(PyCharmUIFeedbackBundle.message("dialog.system.info.isNewUIEnabled")) {
     label(if (systemInfoData.isNewUINowEnabled) "True" else "False") //NON-NLS
   }
 }
 
-private fun createPyCharmFeedbackSystemInfoData(isNewUINowEnabled: Boolean): PyCharmFeedbackSystemInfoData {
-  return PyCharmFeedbackSystemInfoData(isNewUINowEnabled, CommonFeedbackSystemInfoData.getCurrentData())
+private fun createPyCharmFeedbackSystemInfoData(isNewUINowEnabled: Boolean): PyCharmFeedbackSystemData {
+  return PyCharmFeedbackSystemData(isNewUINowEnabled, CommonFeedbackSystemData.getCurrentData())
 }

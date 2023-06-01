@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.common.state
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.*
 import kotlinx.serialization.Serializable
 
@@ -9,7 +10,21 @@ import kotlinx.serialization.Serializable
 class DontShowAgainFeedbackService : PersistentStateComponent<DontShowAgainFeedbackState> {
   companion object {
     @JvmStatic
-    fun getInstance(): DontShowAgainFeedbackService = service()
+    fun checkIsAllowedToShowFeedback(): Boolean {
+      return !getInstance().state.dontShowAgainIdeVersions.contains(ApplicationInfoEx.getInstanceEx().shortVersion)
+    }
+
+    @JvmStatic
+    fun dontShowFeedbackInCurrentVersion() {
+      getInstance().state.dontShowAgainIdeVersions.add(ApplicationInfoEx.getInstanceEx().shortVersion)
+    }
+
+    @JvmStatic
+    fun getAllIdeVersionWithDisabledFeedback(): List<String> {
+      return getInstance().state.dontShowAgainIdeVersions.toList()
+    }
+
+    private fun getInstance(): DontShowAgainFeedbackService = service()
   }
 
   private var state: DontShowAgainFeedbackState = DontShowAgainFeedbackState()

@@ -2,7 +2,6 @@
 package com.intellij.feedback.common.statistics
 
 import com.intellij.feedback.common.state.DontShowAgainFeedbackService
-import com.intellij.feedback.common.state.DontShowAgainFeedbackState
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -19,7 +18,6 @@ class DontShowAgainValueCollector : ApplicationUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(): Set<MetricEvent> {
-    val state: DontShowAgainFeedbackState = DontShowAgainFeedbackService.getInstance().state
-    return setOf(DISABLED_VERSION_GROUP.metric(state.dontShowAgainIdeVersions.toList()))
+    return setOf(DISABLED_VERSION_GROUP.metric(DontShowAgainFeedbackService.getAllIdeVersionWithDisabledFeedback()))
   }
 }

@@ -2,7 +2,7 @@
 package com.intellij.feedback.kafka.dialog
 
 import com.intellij.feedback.common.dialog.BlockBasedFeedbackDialogWithEmail
-import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
+import com.intellij.feedback.common.dialog.CommonFeedbackSystemData
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.dialog.uiBlocks.*
 import com.intellij.feedback.common.notification.ThanksForFeedbackNotification
@@ -15,7 +15,7 @@ abstract class KafkaConsumerProducerFeedbackDialog(
   project: Project?,
   forTest: Boolean,
   @NlsContexts.Label questionLabel: String
-) : BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemInfoData>(project, forTest) {
+) : BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemData>(project, forTest) {
 
   /** Increase the additional number when feedback format is changed */
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 2
@@ -75,8 +75,8 @@ abstract class KafkaConsumerProducerFeedbackDialog(
     TextAreaBlock(KafkaFeedbackBundle.message("any.feedback.label"), "textarea"),
   )
 
-  override val mySystemInfoData: CommonFeedbackSystemInfoData by lazy {
-    CommonFeedbackSystemInfoData.getCurrentData()
+  override val mySystemInfoData: CommonFeedbackSystemData by lazy {
+    CommonFeedbackSystemData.getCurrentData()
   }
   override val myShowFeedbackSystemInfoDialog: () -> Unit = {
     showFeedbackSystemInfoDialog(myProject, mySystemInfoData)

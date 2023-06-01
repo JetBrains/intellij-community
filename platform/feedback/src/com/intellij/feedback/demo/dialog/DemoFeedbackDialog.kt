@@ -2,7 +2,7 @@
 package com.intellij.feedback.demo.dialog
 
 import com.intellij.feedback.common.dialog.BlockBasedFeedbackDialog
-import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
+import com.intellij.feedback.common.dialog.CommonFeedbackSystemData
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.dialog.uiBlocks.*
 import com.intellij.feedback.demo.bundle.DemoFeedbackBundle
@@ -11,14 +11,14 @@ import com.intellij.openapi.project.Project
 class DemoFeedbackDialog(
   project: Project?,
   forTest: Boolean,
-) : BlockBasedFeedbackDialog<CommonFeedbackSystemInfoData>(project, forTest) {
+) : BlockBasedFeedbackDialog<CommonFeedbackSystemData>(project, forTest) {
 
   /** Increase the additional number when feedback format is changed */
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
   override val myFeedbackReportId: String = "demo_feedback"
 
-  override val mySystemInfoData: CommonFeedbackSystemInfoData by lazy {
-    CommonFeedbackSystemInfoData.getCurrentData()
+  override val mySystemInfoData: CommonFeedbackSystemData by lazy {
+    CommonFeedbackSystemData.getCurrentData()
   }
 
   override val myShowFeedbackSystemInfoDialog: () -> Unit = {

@@ -13,8 +13,8 @@ import com.intellij.ui.dsl.builder.Panel
 /** This number should be increased when [BlockBasedFeedbackDialogWithEmail] fields changing */
 const val BLOCK_BASED_FEEDBACK_WITH_EMAIL_VERSION = 1
 
-abstract class BlockBasedFeedbackDialogWithEmail<T : JsonSerializable>(myProject: Project?,
-                                                                       forTest: Boolean) : BlockBasedFeedbackDialog<T>(myProject, forTest) {
+abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>(
+  myProject: Project?, forTest: Boolean) : BlockBasedFeedbackDialog<T>(myProject, forTest) {
 
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + BLOCK_BASED_FEEDBACK_WITH_EMAIL_VERSION
   abstract val zendeskTicketTitle: String

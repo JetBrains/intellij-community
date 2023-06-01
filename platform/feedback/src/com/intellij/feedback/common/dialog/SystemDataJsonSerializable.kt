@@ -4,7 +4,7 @@ package com.intellij.feedback.common.dialog
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 
-interface JsonSerializable {
+interface SystemDataJsonSerializable {
 
   fun serializeToJson(json: Json): JsonElement
 }

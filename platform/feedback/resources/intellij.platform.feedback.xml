@@ -1,4 +1,9 @@
 <idea-plugin package="com.intellij.feedback">
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.feedback.idleFeedbackSurvey" interface="com.intellij.feedback.common.openapi.FeedbackSurvey"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
 
     <applicationService serviceImplementation="com.intellij.feedback.common.state.DontShowAgainFeedbackService"/>
@@ -6,17 +11,19 @@
     <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessages"
                        key="notification.group.feedback"/>
 
-    <typedHandler implementation="com.intellij.feedback.common.track.EditorTypingEventTracker"/>
+    <typedHandler implementation="com.intellij.feedback.common.track.EditorInputEventTracker"/>
     <typedHandler implementation="com.intellij.feedback.aqua.track.AquaEditorTypingChecker"/>
     <backgroundPostStartupActivity implementation="com.intellij.feedback.aqua.track.AquaFirstUsageLogger"/>
-    <editorFactoryMouseListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
-    <editorFactoryMouseMotionListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
+    <editorFactoryMouseListener implementation="com.intellij.feedback.common.track.EditorInputEventTracker"/>
+    <editorFactoryMouseMotionListener implementation="com.intellij.feedback.common.track.EditorInputEventTracker"/>
 
     <registryKey key="platform.feedback" defaultValue="true" description="Enable to collect user feedback"/>
     <registryKey key="platform.feedback.time.to.show.notification" defaultValue="600"
                  description="Explicitly sets the number of seconds until the feedback notification is displayed."/>
     <statistics.applicationUsagesCollector implementation="com.intellij.feedback.common.statistics.DontShowAgainValueCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector"/>
+
+    <feedback.idleFeedbackSurvey survey_id="demo_survey" implementation="com.intellij.feedback.demo.DemoInIdeFeedbackSurvey"/>
   </extensions>
 
   <applicationListeners>

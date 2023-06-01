@@ -3,7 +3,7 @@ package com.intellij.feedback.aqua.dialog
 
 import com.intellij.feedback.aqua.bundle.AquaFeedbackBundle
 import com.intellij.feedback.common.dialog.BlockBasedFeedbackDialogWithEmail
-import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
+import com.intellij.feedback.common.dialog.CommonFeedbackSystemData
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.dialog.uiBlocks.*
 import com.intellij.feedback.common.notification.ThanksForFeedbackNotification
@@ -13,7 +13,7 @@ import javax.swing.Action
 class AquaOldUserFeedbackDialog(
   project: Project?,
   forTest: Boolean
-) : BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemInfoData>(project, forTest) {
+) : BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemData>(project, forTest) {
 
   /** Increase the additional number when feedback format is changed */
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
@@ -29,8 +29,8 @@ class AquaOldUserFeedbackDialog(
     TextAreaBlock(AquaFeedbackBundle.message("old.user.dialog.like_most.label"), "like_most"),
     TextAreaBlock(AquaFeedbackBundle.message("old.user.dialog.problems.label"), "problems_or_missing_features"),
   )
-  override val mySystemInfoData: CommonFeedbackSystemInfoData by lazy {
-    CommonFeedbackSystemInfoData.getCurrentData()
+  override val mySystemInfoData: CommonFeedbackSystemData by lazy {
+    CommonFeedbackSystemData.getCurrentData()
   }
   override val myShowFeedbackSystemInfoDialog: () -> Unit = {
     showFeedbackSystemInfoDialog(myProject, mySystemInfoData)

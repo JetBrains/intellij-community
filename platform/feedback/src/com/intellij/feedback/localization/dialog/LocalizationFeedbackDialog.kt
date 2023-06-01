@@ -4,7 +4,7 @@ package com.intellij.feedback.localization.dialog
 import com.intellij.feedback.common.*
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
-import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
+import com.intellij.feedback.common.dialog.CommonFeedbackSystemData
 import com.intellij.feedback.common.dialog.adjustBehaviourForFeedbackForm
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.notification.ThanksForFeedbackNotification
@@ -53,7 +53,7 @@ class LocalizationFeedbackDialog(
     isResizable = false
   }
 
-  private val systemData by lazy { CommonFeedbackSystemInfoData.getCurrentData() }
+  private val systemData by lazy { CommonFeedbackSystemData.getCurrentData() }
 
   override fun createCenterPanel() = panel {
     row {

@@ -27,7 +27,7 @@ import javax.swing.JComponent
 /** This number should be increased when [BlockBasedFeedbackDialog] fields changing */
 const val BLOCK_BASED_FEEDBACK_VERSION = 1
 
-abstract class BlockBasedFeedbackDialog<T : JsonSerializable>(
+abstract class BlockBasedFeedbackDialog<T : SystemDataJsonSerializable>(
   protected val myProject: Project?,
   protected val myForTest: Boolean
 ) : DialogWrapper(myProject) {

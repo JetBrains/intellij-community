@@ -2,8 +2,8 @@
 package com.intellij.feedback.new_ui.dialog
 
 import com.intellij.feedback.common.dialog.BlockBasedFeedbackDialogWithEmail
-import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
-import com.intellij.feedback.common.dialog.JsonSerializable
+import com.intellij.feedback.common.dialog.CommonFeedbackSystemData
+import com.intellij.feedback.common.dialog.SystemDataJsonSerializable
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.dialog.uiBlocks.*
 import com.intellij.feedback.new_ui.CancelFeedbackNotification
@@ -22,7 +22,7 @@ import javax.swing.Action.NAME
 class NewUIFeedbackDialog(
   project: Project?,
   forTest: Boolean
-) : BlockBasedFeedbackDialogWithEmail<NewUIFeedbackSystemInfoData>(project, forTest) {
+) : BlockBasedFeedbackDialogWithEmail<NewUIFeedbackSystemData>(project, forTest) {
 
   /** Increase the additional number when feedback format is changed */
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
@@ -40,7 +40,7 @@ class NewUIFeedbackDialog(
     TextAreaBlock(NewUIFeedbackBundle.message("dialog.dislike.textarea.label"), "dislike")
   )
 
-  override val mySystemInfoData: NewUIFeedbackSystemInfoData by lazy {
+  override val mySystemInfoData: NewUIFeedbackSystemData by lazy {
     val state = NewUIInfoService.getInstance().state
     createNewUIFeedbackSystemInfoData(NewUiValue.isEnabled(), state.enableNewUIDate, state.disableNewUIDate)
   }
@@ -65,12 +65,12 @@ class NewUIFeedbackDialog(
 }
 
 @Serializable
-data class NewUIFeedbackSystemInfoData(
+data class NewUIFeedbackSystemData(
   val isNewUINowEnabled: Boolean,
   val enableNewUIDate: LocalDateTime?,
   val disableNewUIDate: LocalDateTime?,
-  val commonSystemInfo: CommonFeedbackSystemInfoData
-) : JsonSerializable {
+  val commonSystemInfo: CommonFeedbackSystemData
+) : SystemDataJsonSerializable {
   override fun toString(): String {
     return buildString {
       appendLine(NewUIFeedbackBundle.message("dialog.system.info.isNewUIEnabled"))
@@ -95,7 +95,7 @@ data class NewUIFeedbackSystemInfoData(
 }
 
 private fun showNewUIFeedbackSystemInfoDialog(project: Project?,
-                                              systemInfoData: NewUIFeedbackSystemInfoData
+                                              systemInfoData: NewUIFeedbackSystemData
 ) = showFeedbackSystemInfoDialog(project, systemInfoData.commonSystemInfo) {
   row(NewUIFeedbackBundle.message("dialog.system.info.isNewUIEnabled")) {
     label(if (systemInfoData.isNewUINowEnabled) "True" else "False") //NON-NLS
@@ -110,7 +110,7 @@ private fun showNewUIFeedbackSystemInfoDialog(project: Project?,
 
 private fun createNewUIFeedbackSystemInfoData(isNewUINowEnabled: Boolean,
                                               enableNewUIDate: LocalDateTime?,
-                                              disableNewUIDate: LocalDateTime?): NewUIFeedbackSystemInfoData {
-  return NewUIFeedbackSystemInfoData(isNewUINowEnabled, enableNewUIDate, disableNewUIDate,
-                                     CommonFeedbackSystemInfoData.getCurrentData())
+                                              disableNewUIDate: LocalDateTime?): NewUIFeedbackSystemData {
+  return NewUIFeedbackSystemData(isNewUINowEnabled, enableNewUIDate, disableNewUIDate,
+                                 CommonFeedbackSystemData.getCurrentData())
 }

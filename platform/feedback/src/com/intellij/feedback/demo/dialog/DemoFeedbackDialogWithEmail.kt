@@ -2,7 +2,7 @@
 package com.intellij.feedback.demo.dialog
 
 import com.intellij.feedback.common.dialog.BlockBasedFeedbackDialogWithEmail
-import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
+import com.intellij.feedback.common.dialog.CommonFeedbackSystemData
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.dialog.uiBlocks.*
 import com.intellij.feedback.demo.bundle.DemoFeedbackBundle
@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 class DemoFeedbackDialogWithEmail(
   project: Project?,
   forTest: Boolean,
-) : BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemInfoData>(project, forTest) {
+) : BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemData>(project, forTest) {
 
   /** Increase the additional number when feedback format is changed */
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
@@ -20,8 +20,8 @@ class DemoFeedbackDialogWithEmail(
   override val zendeskFeedbackType: String = "demo_feedback_with_email"
   override val zendeskTicketTitle: String = "Demo Feedback Survey"
 
-  override val mySystemInfoData: CommonFeedbackSystemInfoData by lazy {
-    CommonFeedbackSystemInfoData.getCurrentData()
+  override val mySystemInfoData: CommonFeedbackSystemData by lazy {
+    CommonFeedbackSystemData.getCurrentData()
   }
 
   override val myShowFeedbackSystemInfoDialog: () -> Unit = {

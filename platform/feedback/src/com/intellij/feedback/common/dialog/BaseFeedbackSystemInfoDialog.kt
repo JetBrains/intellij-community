@@ -15,7 +15,7 @@ import javax.swing.Action
 import javax.swing.JComponent
 
 fun showFeedbackSystemInfoDialog(project: Project?,
-                                 systemInfoData: CommonFeedbackSystemInfoData,
+                                 systemInfoData: CommonFeedbackSystemData,
                                  addSpecificRows: Panel.() -> Unit = {}
 ) {
   /**

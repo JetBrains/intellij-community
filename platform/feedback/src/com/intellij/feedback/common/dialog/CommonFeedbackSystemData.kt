@@ -24,11 +24,11 @@ import kotlinx.serialization.json.encodeToJsonElement
 import java.text.SimpleDateFormat
 import java.util.*
 
-/** This number should be increased when [CommonFeedbackSystemInfoData] fields changing */
+/** This number should be increased when [CommonFeedbackSystemData] fields changing */
 const val COMMON_FEEDBACK_SYSTEM_INFO_VERSION = 2
 
 @Serializable
-data class CommonFeedbackSystemInfoData(
+data class CommonFeedbackSystemData(
   val osVersion: String,
   private val memorySize: Long, // in megabytes
   val coresNumber: Int,
@@ -40,10 +40,10 @@ data class CommonFeedbackSystemInfoData(
   private val registry: List<String>,
   private val disabledBundledPlugins: List<String>,
   private val nonBundledPlugins: List<String>
-) : JsonSerializable {
+) : SystemDataJsonSerializable {
   companion object {
-    fun getCurrentData(): CommonFeedbackSystemInfoData {
-      return CommonFeedbackSystemInfoData(
+    fun getCurrentData(): CommonFeedbackSystemData {
+      return CommonFeedbackSystemData(
         getOsVersion(),
         getMemorySize(),
         getCoresNumber(),

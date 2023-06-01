@@ -8,9 +8,9 @@ import com.intellij.feedback.aqua.state.AquaNewUserFeedbackService
 import com.intellij.feedback.aqua.state.AquaNewUserInfoState
 import com.intellij.feedback.aqua.state.AquaOldUserFeedbackService
 import com.intellij.feedback.aqua.state.AquaOldUserInfoState
-import com.intellij.feedback.common.IdleFeedbackTypeResolver.isFeedbackNotificationDisabled
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.notification.RequestFeedbackNotification
+import com.intellij.feedback.common.state.DontShowAgainFeedbackService.Companion.dontShowFeedbackInCurrentVersion
 import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.logDisableNotificationActionInvoked
 import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.logRequestNotificationShown
 import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.logRespondNotificationActionInvoked
@@ -467,7 +467,7 @@ enum class IdleFeedbackTypes {
     notification.addAction(
       NotificationAction.createSimpleExpiring(getCancelFeedbackNotificationLabel()) {
         if (!forTest) {
-          isFeedbackNotificationDisabled = true
+          dontShowFeedbackInCurrentVersion()
           logDisableNotificationActionInvoked(this)
         }
         getNotificationOnCancelAction(project)()

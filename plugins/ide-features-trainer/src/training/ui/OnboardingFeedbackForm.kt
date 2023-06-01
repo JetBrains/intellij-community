@@ -4,7 +4,7 @@ package training.ui
 import com.intellij.feedback.common.FEEDBACK_REPORT_ID_KEY
 import com.intellij.feedback.common.FeedbackRequestType
 import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
-import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
+import com.intellij.feedback.common.dialog.CommonFeedbackSystemData
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.submitGeneralFeedback
 import com.intellij.icons.AllIcons
@@ -144,7 +144,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     put("like_vote", likenessToString(likenessResult()))
   }
 
-  val systemInfoData = CommonFeedbackSystemInfoData.getCurrentData()
+  val systemInfoData = CommonFeedbackSystemData.getCurrentData()
 
   val recentProjectsNumber = RecentProjectsManagerBase.getInstanceEx().getRecentPaths().size
   val actionsNumber = service<ActionsLocalSummary>().getActionsStats().keys.size
@@ -277,7 +277,7 @@ private fun likenessToString(likenessResult: FeedbackLikenessAnswer) = when (lik
 }
 
 private fun showSystemData(project: Project?,
-                           systemInfoData: CommonFeedbackSystemInfoData,
+                           systemInfoData: CommonFeedbackSystemData,
                            onboardingFeedbackData: OnboardingFeedbackData?,
                            recentProjectsNumber: Int,
                            actionsNumber: Int) {
