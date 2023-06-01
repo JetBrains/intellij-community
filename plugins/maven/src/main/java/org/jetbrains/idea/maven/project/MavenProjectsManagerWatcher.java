@@ -140,8 +140,8 @@ public final class MavenProjectsManagerWatcher {
     return promise;
   }
 
-  public Promise<Void> scheduleUpdate(List<VirtualFile> filesToUpdate,
-                                      List<VirtualFile> filesToDelete,
+  public Promise<Void> scheduleUpdate(@NotNull List<VirtualFile> filesToUpdate,
+                                      @NotNull List<VirtualFile> filesToDelete,
                                       MavenImportSpec spec) {
 
     if (MavenUtil.isLinearImportEnabled()) {
@@ -158,7 +158,7 @@ public final class MavenProjectsManagerWatcher {
                   ". Files to update: " + filesToUpdate + ". Files to delete: " + filesToDelete);
       }
 
-      scheduleReadingTask(new MavenProjectsProcessorReadingTask(
+      scheduleReadingTask(new MavenProjectsProcessorDeltaReadingTask(
         filesToUpdate, filesToDelete, spec.isForceReading(), myProjectsTree, myGeneralSettings, onCompletion));
     }
     finally {
@@ -172,7 +172,7 @@ public final class MavenProjectsManagerWatcher {
   /**
    * All changed documents must be saved before reading
    */
-  private void scheduleReadingTask(@NotNull MavenProjectsProcessorReadingTask readingTask) {
+  private void scheduleReadingTask(@NotNull MavenProjectsProcessorTask readingTask) {
     myReadingProcessor.scheduleTask(readingTask);
   }
 
