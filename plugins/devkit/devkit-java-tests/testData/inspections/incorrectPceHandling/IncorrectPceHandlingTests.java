@@ -7,7 +7,7 @@ class IncorrectPceHandlingTests {
   void test1() {
     try {
       // anything
-    } catch (ProcessCanceledException <warning descr="'ProcessCanceledException' must be rethrown">e</warning>) {
+    } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
       // exception swallowed
     }
   }
@@ -15,32 +15,32 @@ class IncorrectPceHandlingTests {
   void test2() {
     try {
       // anything
-    } catch (ProcessCanceledException <warning descr="'ProcessCanceledException' must be rethrown">e</warning>) {
-      <warning descr="'ProcessCanceledException' must not be logged">LOG.info("Error occured", e)</warning>;
+    } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
+      <error descr="'ProcessCanceledException' must not be logged">LOG.info("Error occured", e)</error>;
     }
   }
 
   void test3() {
     try {
       // anything
-    } catch (ProcessCanceledException <warning descr="'ProcessCanceledException' must be rethrown">e</warning>) {
-      <warning descr="'ProcessCanceledException' must not be logged">LOG.info(e)</warning>;
+    } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
+      <error descr="'ProcessCanceledException' must not be logged">LOG.info(e)</error>;
     }
   }
 
   void test4() {
     try {
       // anything
-    } catch (ProcessCanceledException <warning descr="'ProcessCanceledException' must be rethrown">e</warning>) {
-      <warning descr="'ProcessCanceledException' must not be logged">LOG.error(e)</warning>;
+    } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
+      <error descr="'ProcessCanceledException' must not be logged">LOG.error(e)</error>;
     }
   }
 
   void test5() {
     try {
       // anything
-    } catch (ProcessCanceledException <warning descr="'ProcessCanceledException' must be rethrown">e</warning>) {
-      <warning descr="'ProcessCanceledException' must not be logged">LOG.error("Error occurred: " + e.getMessage())</warning>;
+    } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
+      <error descr="'ProcessCanceledException' must not be logged">LOG.error("Error occurred: " + e.getMessage())</error>;
     }
   }
 

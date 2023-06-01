@@ -394,7 +394,7 @@
     <localInspection language="UAST"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="false" level="WARNING"
+                     enabledByDefault="false" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IncorrectProcessCanceledExceptionHandlingInspection"
                      key="inspections.incorrect.process.canceled.exception.handling.display.name"/>
 

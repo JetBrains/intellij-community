@@ -13,7 +13,7 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
     try {
       throwPce()
     }
-    catch (<warning descr="'ProcessCanceledException' must be rethrown. 'ProcessCanceledException' is thrown by 'throwPce()'.">e</warning>: Exception) {
+    catch (<error descr="'ProcessCanceledException' must be rethrown. 'ProcessCanceledException' is thrown by 'throwPce()'.">e</error>: Exception) {
       // exception swallowed
     }
   }
@@ -22,8 +22,8 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
     try {
       throwPce()
     }
-    catch (<warning descr="'ProcessCanceledException' must be rethrown. 'ProcessCanceledException' is thrown by 'throwPce()'.">e</warning>: Exception) {
-      LOG.<warning descr="'ProcessCanceledException' must not be logged. 'ProcessCanceledException' is thrown by 'throwPce()'.">info("Error occurred", e)</warning>
+    catch (<error descr="'ProcessCanceledException' must be rethrown. 'ProcessCanceledException' is thrown by 'throwPce()'.">e</error>: Exception) {
+      LOG.<error descr="'ProcessCanceledException' must not be logged. 'ProcessCanceledException' is thrown by 'throwPce()'.">info("Error occurred", e)</error>
     }
   }
 
@@ -31,8 +31,8 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
     try {
       throwPce()
     }
-    catch (<warning descr="'ProcessCanceledException' must be rethrown. 'ProcessCanceledException' is thrown by 'throwPce()'.">e</warning>: Exception) {
-      LOG.<warning descr="'ProcessCanceledException' must not be logged. 'ProcessCanceledException' is thrown by 'throwPce()'.">info(e)</warning>
+    catch (<error descr="'ProcessCanceledException' must be rethrown. 'ProcessCanceledException' is thrown by 'throwPce()'.">e</error>: Exception) {
+      LOG.<error descr="'ProcessCanceledException' must not be logged. 'ProcessCanceledException' is thrown by 'throwPce()'.">info(e)</error>
     }
   }
 
@@ -40,8 +40,8 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
     try {
       throwPce()
     }
-    catch (<warning descr="'ProcessCanceledException' must be rethrown. 'ProcessCanceledException' is thrown by 'throwPce()'.">e</warning>: Exception) {
-      LOG.<warning descr="'ProcessCanceledException' must not be logged. 'ProcessCanceledException' is thrown by 'throwPce()'.">error(e)</warning>
+    catch (<error descr="'ProcessCanceledException' must be rethrown. 'ProcessCanceledException' is thrown by 'throwPce()'.">e</error>: Exception) {
+      LOG.<error descr="'ProcessCanceledException' must not be logged. 'ProcessCanceledException' is thrown by 'throwPce()'.">error(e)</error>
     }
   }
 
@@ -49,8 +49,8 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
     try {
       throwPce()
     }
-    catch (<warning descr="'ProcessCanceledException' must be rethrown. 'ProcessCanceledException' is thrown by 'throwPce()'.">e</warning>: Exception) {
-      LOG.<warning descr="'ProcessCanceledException' must not be logged. 'ProcessCanceledException' is thrown by 'throwPce()'.">error("Error occurred: " + e.message)</warning>
+    catch (<error descr="'ProcessCanceledException' must be rethrown. 'ProcessCanceledException' is thrown by 'throwPce()'.">e</error>: Exception) {
+      LOG.<error descr="'ProcessCanceledException' must not be logged. 'ProcessCanceledException' is thrown by 'throwPce()'.">error("Error occurred: " + e.message)</error>
     }
   }
 

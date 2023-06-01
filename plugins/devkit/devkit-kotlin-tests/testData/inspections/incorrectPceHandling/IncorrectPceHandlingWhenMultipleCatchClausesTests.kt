@@ -8,7 +8,7 @@ class IncorrectPceHandlingWhenMultipleCatchClausesTests {
     try {
       // anything
     }
-    catch (<warning descr="'ProcessCanceledException' must be rethrown">e</warning>: ProcessCanceledException) {
+    catch (<error descr="'ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
       // exception swallowed
     }
     catch (e: Exception) {
@@ -20,8 +20,8 @@ class IncorrectPceHandlingWhenMultipleCatchClausesTests {
     try {
       // anything
     }
-    catch (<warning descr="'ProcessCanceledException' must be rethrown">e</warning>: ProcessCanceledException) {
-      LOG.<warning descr="'ProcessCanceledException' must not be logged">info("Error occurred", e)</warning>
+    catch (<error descr="'ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
+      LOG.<error descr="'ProcessCanceledException' must not be logged">info("Error occurred", e)</error>
     }
     catch (e: Exception) {
       LOG.info("Error occurred", e)
@@ -35,8 +35,8 @@ class IncorrectPceHandlingWhenMultipleCatchClausesTests {
     catch (e: Exception) {
       LOG.info(e)
     }
-    catch (<warning descr="'ProcessCanceledException' must be rethrown">e</warning>: ProcessCanceledException) {
-      LOG.<warning descr="'ProcessCanceledException' must not be logged">info(e)</warning>
+    catch (<error descr="'ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
+      LOG.<error descr="'ProcessCanceledException' must not be logged">info(e)</error>
     }
   }
 
@@ -44,8 +44,8 @@ class IncorrectPceHandlingWhenMultipleCatchClausesTests {
     try {
       // anything
     }
-    catch (<warning descr="'ProcessCanceledException' must be rethrown">e</warning>: ProcessCanceledException) {
-      LOG.<warning descr="'ProcessCanceledException' must not be logged">error(e)</warning>
+    catch (<error descr="'ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
+      LOG.<error descr="'ProcessCanceledException' must not be logged">error(e)</error>
     }
     catch (e: Exception) {
       LOG.error(e)
@@ -59,8 +59,8 @@ class IncorrectPceHandlingWhenMultipleCatchClausesTests {
     catch (e: Exception) {
       LOG.error("Error occurred: " + e.message)
     }
-    catch (<warning descr="'ProcessCanceledException' must be rethrown">e</warning>: ProcessCanceledException) {
-      LOG.<warning descr="'ProcessCanceledException' must not be logged">error("Error occurred: " + e.message)</warning>
+    catch (<error descr="'ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
+      LOG.<error descr="'ProcessCanceledException' must not be logged">error("Error occurred: " + e.message)</error>
     }
   }
 }
