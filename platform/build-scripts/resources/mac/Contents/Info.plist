@@ -48,7 +48,10 @@
 
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.developer-tools</string>
-    @@architectures@@
+    <key>LSArchitecturePriority</key>
+    <array>
+      @@architectures@@
+    </array>
     <key>LSRequiresNativeExecution</key>
     <string>YES</string>
     <key>LSMinimumSystemVersion</key>
