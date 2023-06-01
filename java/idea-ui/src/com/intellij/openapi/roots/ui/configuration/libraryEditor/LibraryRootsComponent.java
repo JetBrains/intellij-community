@@ -66,7 +66,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   private JPanel myPanel;
   private JPanel myTreePanel;
-  private MultiLineLabel myPropertiesLabel;
+  protected MultiLineLabel myPropertiesLabel;
   private JPanel myPropertiesPanel;
   private JLabel myBottomLabel;
   private LibraryPropertiesEditor myPropertiesEditor;
