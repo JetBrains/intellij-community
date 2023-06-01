@@ -953,26 +953,10 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     scheduleResolveSync(null);
   }
 
-  @TestOnly
-  public void scheduleResolveAllInTests() {
-    scheduleResolveInTests(getProjects());
-  }
-
   // used in third-party plugins
   public void scheduleFoldersResolveForAllProjects() {
     MavenProjectsManagerUtilKt.scheduleFoldersResolveForAllProjects(myProject);
   }
-
-/*  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects,
-                                           @Nullable final Collection<MavenArtifact> artifacts,
-                                           final boolean sources, final boolean docs,
-                                           @Nullable final AsyncPromise<DownloadResult> result) {
-    if (!sources && !docs) return;
-
-    runWhenFullyOpen(() -> myArtifactsDownloadingProcessor
-      .scheduleTask(
-        new MavenProjectsProcessorArtifactsDownloadingTask(projects, myProjectsTree, artifacts, sources, docs, result)));
-  }*/
 
 
   // TODO merge [result] promises (now, promise will be lost after merge of import requests)
