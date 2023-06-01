@@ -31,8 +31,6 @@ internal class DialogHeader(val window: Window) : CustomHeader(window) {
         val gb = GridBag().setDefaultFill(GridBagConstraints.VERTICAL).setDefaultAnchor(GridBagConstraints.WEST)
         add(productIcon, gb.next())
         add(titleLabel, gb.next().fillCell().weightx(1.0))
-
-        preferredSize = preferredSize.apply { height = 40 }
     }
 
     private val dragListener = object : MouseAdapter() { //passing events to OS handler to make it draggable

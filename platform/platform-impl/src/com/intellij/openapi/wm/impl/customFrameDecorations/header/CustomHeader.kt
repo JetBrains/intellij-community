@@ -125,6 +125,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     setCustomFrameTopBorder()
 
     customTitleBar = JBR.getWindowDecorations()?.createCustomTitleBar()
+    preferredSize = preferredSize.apply { height = 40 }
   }
 
   protected open fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
@@ -176,21 +177,21 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
     if ((window is JDialog && window.isUndecorated) ||
         (window is JFrame && window.isUndecorated)) {
-      setCustomToolbar(null)
+      setCustomTitleBar(null)
     }
     else {
       if (height == 0) return
       customTitleBar.height = (height - insets.bottom).toFloat()
-      setCustomToolbar(customTitleBar)
+      setCustomTitleBar(customTitleBar)
     }
 
     border = JBUI.Borders.empty(0, customTitleBar.leftInset.toInt(), 0, customTitleBar.rightInset.toInt())
   }
 
-  private fun setCustomToolbar(toolbar: WindowDecorations.CustomTitleBar?) {
+  private fun setCustomTitleBar(titleBar: WindowDecorations.CustomTitleBar?) {
     JBR.getWindowDecorations()?.let {
-      if (window is Dialog) it.setCustomTitleBar(window, toolbar)
-      else if (window is Frame) it.setCustomTitleBar(window, toolbar)
+      if (window is Dialog) it.setCustomTitleBar(window, titleBar)
+      else if (window is Frame) it.setCustomTitleBar(window, titleBar)
     }
   }
 

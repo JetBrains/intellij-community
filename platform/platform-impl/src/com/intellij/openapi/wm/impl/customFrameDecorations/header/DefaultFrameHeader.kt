@@ -2,24 +2,27 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationTitle
+import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
-import net.miginfocom.swing.MigLayout
 import java.awt.Frame
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import javax.swing.JFrame
 
 internal class DefaultFrameHeader(frame: JFrame, isForDockContainerProvider: Boolean) : FrameHeader(frame) {
   private val customDecorationTitle = CustomDecorationTitle(frame, isForDockContainerProvider = isForDockContainerProvider)
 
   init {
-    layout = MigLayout("novisualpadding, ins 0, fillx, gap 0", "[min!][][pref!]")
+    layout = GridBagLayout()
 
     updateCustomTitleBar()
 
     productIcon.border = JBUI.Borders.empty(V, H, V, H)
     customDecorationTitle.view.border = JBUI.Borders.empty(V, 0, V, H)
 
-    add(productIcon)
-    add(customDecorationTitle.view, "wmin 0, left, growx, center")
+    val gb = GridBag().setDefaultFill(GridBagConstraints.VERTICAL).setDefaultAnchor(GridBagConstraints.WEST)
+    add(productIcon, gb.next())
+    add(customDecorationTitle.view, gb.next().fillCell().weightx(1.0))
 
     setCustomFrameTopBorder(isTopNeeded = { myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH })
   }
