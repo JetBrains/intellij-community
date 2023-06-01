@@ -32,9 +32,7 @@ class SearchEverywhereTyposLogger : CounterUsagesCollector(), SearchEverywhereIt
                               selectedItems: List<Any>,
                               elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                               closePopup: Boolean) {
-    val suggestion = elementsProvider.invoke()
-      .map { it.element }
-      .findIsInstance<SearchEverywhereSpellCheckResult.Correction>()
+    val suggestion = elementsProvider.invoke().first().element.takeIfIsInstance<SearchEverywhereSpellCheckResult.Correction>()
 
     val eventData = computeEventData(suggestion, selectedItems)
     ITEM_SELECTED_EVENT.log(eventData)
@@ -50,5 +48,5 @@ class SearchEverywhereTyposLogger : CounterUsagesCollector(), SearchEverywhereIt
     }
   }
 
-  private inline fun <reified T> Iterable<*>.findIsInstance(): T? = this.find { it is T } as? T
+  private inline fun <reified T> Any.takeIfIsInstance(): T? = this.takeIf { it is T } as? T
 }
