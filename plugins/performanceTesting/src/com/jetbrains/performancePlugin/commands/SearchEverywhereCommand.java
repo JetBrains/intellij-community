@@ -100,8 +100,8 @@ public class SearchEverywhereCommand extends AbstractCommand {
         }
       }));
       try {
-        SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
         typingSemaphore.acquire();
+        SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
         if (myOptions.close) {
           ApplicationManager.getApplication().invokeAndWait(() -> ui.closePopup());
         }
