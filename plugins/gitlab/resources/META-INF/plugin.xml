@@ -53,6 +53,8 @@
   </extensions>
 
   <actions>
+    <action id="GitLab.Open.Settings.Page" class="org.jetbrains.plugins.gitlab.GitLabOpenSettingsPageAction"/>
+    
     <action id="GitLab.Merge.Request.List.Refresh"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestListRefreshAction"
             use-shortcut-of="Refresh"
