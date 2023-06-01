@@ -169,9 +169,9 @@ private fun generateOptionDescriptors(call: FormCall, optionDescriptors: StringB
     optionDescriptors.append("val $propertyName = CheckboxDescriptor(${call.args[0]}, ")
 
     val propertyBindingArg =
-      when {
-        size == 1 -> "TODO()"
-        size == 2 -> "${call.args[1]}.toBinding()"
+      when (size) {
+        1 -> "TODO()"
+        2 -> "${call.args[1]}.toBinding()"
         else -> "PropertyBinding(${call.args[1]}, ${call.args[2]})"
       }
 

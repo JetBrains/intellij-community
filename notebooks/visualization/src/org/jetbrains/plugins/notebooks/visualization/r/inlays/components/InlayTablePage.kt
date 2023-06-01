@@ -144,9 +144,9 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
     table.model = DataFrameTableModel(dataFrame)
 
     for (i in dataFrame.getColumns().indices) {
-      table.columnModel.getColumn(i).cellRenderer = when {
-        dataFrame[i].type == IntType -> IntegerTableCellRenderer()
-        dataFrame[i].type == DoubleType -> DoubleTableCellRenderer()
+      table.columnModel.getColumn(i).cellRenderer = when (dataFrame[i].type) {
+        IntType -> IntegerTableCellRenderer()
+        DoubleType -> DoubleTableCellRenderer()
         else -> StringTableCellRenderer()
       }
     }

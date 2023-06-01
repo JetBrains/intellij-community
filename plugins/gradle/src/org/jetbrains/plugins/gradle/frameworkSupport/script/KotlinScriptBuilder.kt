@@ -6,14 +6,14 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statem
 
 class KotlinScriptBuilder(indent: Int = 0) : AbstractScriptBuilder(indent) {
   override fun add(element: ScriptElement, indent: Int, isNewLine: Boolean) {
-    when {
-      element is ListElement -> {
+    when (element) {
+      is ListElement -> {
         add("listOf(", indent, isNewLine)
         add(element.elements, indent)
         add(")", indent, false)
         return
       }
-      element is PropertyElement -> {
+      is PropertyElement -> {
         add("var", indent, isNewLine)
         add(" ", indent, false)
         add(element.name, indent, false)
