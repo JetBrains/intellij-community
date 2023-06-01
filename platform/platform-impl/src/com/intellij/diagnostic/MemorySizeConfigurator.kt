@@ -35,7 +35,7 @@ private class MemorySizeConfigurator : ProjectActivity {
     val osMxBean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
     val totalPhysicalMemory = osMxBean.totalPhysicalMemorySize shr 20
 
-    val newXmx = MemorySizeConfiguratorService.getInstance().getSuggestedMemorySize(currentXmx, totalPhysicalMemory.toInt())
+    val newXmx = MemorySizeConfiguratorService.getInstance().getSuggestedMemorySize(totalPhysicalMemory.toInt())
 
     val currentXms = max(VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, true),
                          VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, false))
@@ -76,7 +76,10 @@ open class MemorySizeConfiguratorService {
     fun getInstance(): MemorySizeConfiguratorService = service()
   }
 
-  open fun getSuggestedMemorySize(currentXmx: Int, totalPhysicalMemory: Int): Int {
+  open fun getSuggestedMemorySize(totalPhysicalMemory: Int): Int {
+    if (MemorySizeConfigurator.DEFAULT_XMX > totalPhysicalMemory) {
+      return 750.coerceAtMost(totalPhysicalMemory) // 750 is the old default
+    }
     return (totalPhysicalMemory / 8).coerceIn(MemorySizeConfigurator.DEFAULT_XMX, MemorySizeConfigurator.MAXIMUM_SUGGESTED_XMX)
   }
 }
