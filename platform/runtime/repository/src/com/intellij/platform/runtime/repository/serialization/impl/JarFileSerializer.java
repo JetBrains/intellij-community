@@ -21,6 +21,8 @@ import java.util.jar.*;
 public final class JarFileSerializer {
   public static final String SPECIFICATION_VERSION = "0.1";
   public static final String SPECIFICATION_TITLE = "IntelliJ Runtime Module Repository";
+  private static final Attributes.Name BOOTSTRAP_MODULE_ATTRIBUTE_NAME = new Attributes.Name("Bootstrap-Module-Name");
+  private static final Attributes.Name BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME = new Attributes.Name("Bootstrap-Class-Path");
 
   @NotNull
   public static Map<String, RawRuntimeModuleDescriptor> loadFromJar(@NotNull Path jarPath) throws IOException, XMLStreamException {
@@ -50,6 +52,26 @@ public final class JarFileSerializer {
     return rawData;
   }
 
+  public static @NotNull String @Nullable [] loadBootstrapClasspath(@NotNull Path jarPath, @NotNull String bootstrapModuleName)
+    throws IOException {
+    try (JarInputStream input = new JarInputStream(new BufferedInputStream(Files.newInputStream(jarPath)))) {
+      Manifest manifest = input.getManifest();
+      if (manifest == null) return null;
+      Attributes attributes = manifest.getMainAttributes();
+      if (!SPECIFICATION_VERSION.equals(attributes.getValue(Attributes.Name.SPECIFICATION_VERSION))) {
+        return null;
+      }
+      if (!bootstrapModuleName.equals(attributes.getValue(BOOTSTRAP_MODULE_ATTRIBUTE_NAME))) {
+        return null;
+      }
+      String classpathValue = attributes.getValue(BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME);
+      if (classpathValue == null) {
+        return null;
+      }
+      return classpathValue.split(" ");
+    }
+  }
+
   public static void saveToJar(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors,
                                @Nullable String bootstrapModuleName,
                                @NotNull Path jarFile, int generatorVersion)
@@ -62,8 +84,8 @@ public final class JarFileSerializer {
     attributes.put(Attributes.Name.SPECIFICATION_VERSION, SPECIFICATION_VERSION);
     attributes.put(Attributes.Name.IMPLEMENTATION_VERSION, SPECIFICATION_VERSION + "." + generatorVersion);
     if (bootstrapModuleName != null) {
-      attributes.put(new Attributes.Name("Bootstrap-Module-Name"), bootstrapModuleName);
-      attributes.put(new Attributes.Name("Bootstrap-Class-Path"), computeClasspath(descriptors, bootstrapModuleName));
+      attributes.put(BOOTSTRAP_MODULE_ATTRIBUTE_NAME, bootstrapModuleName);
+      attributes.put(BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME, computeClasspath(descriptors, bootstrapModuleName));
     }
     try (JarOutputStream jarOutput = new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(jarFile)), manifest)) {
       XMLOutputFactory factory = XMLOutputFactory.newDefaultFactory();

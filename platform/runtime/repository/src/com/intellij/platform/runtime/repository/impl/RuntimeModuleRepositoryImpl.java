@@ -6,9 +6,12 @@ import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
+import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization;
+import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,13 +19,14 @@ import java.util.stream.Collectors;
 
 public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   private final Map<RuntimeModuleId, ResolveResult> myResolveResults;
-  private final Map<String, RawRuntimeModuleDescriptor> myRawDescriptors;
+  private volatile Map<String, RawRuntimeModuleDescriptor> myRawDescriptors;
+  private final Path myDescriptorsJarPath;
   private final Path myBasePath;
   private final Map<String, RuntimeModuleId> myInternedModuleIds;
 
-  public RuntimeModuleRepositoryImpl(@NotNull Map<String, RawRuntimeModuleDescriptor> descriptorMap, @NotNull Path basePath) {
-    myRawDescriptors = descriptorMap;
-    myBasePath = basePath;
+  public RuntimeModuleRepositoryImpl(@NotNull Path descriptorsJarPath) {
+    myDescriptorsJarPath = descriptorsJarPath;
+    myBasePath = myDescriptorsJarPath.getParent();
     myResolveResults = new ConcurrentHashMap<>();
     myInternedModuleIds = new ConcurrentHashMap<>();
   }
@@ -40,7 +44,7 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
     ResolveResult cached = myResolveResults.get(moduleId);
     if (cached != null) return cached;
 
-    RawRuntimeModuleDescriptor rawDescriptor = myRawDescriptors.get(moduleId.getStringId());
+    RawRuntimeModuleDescriptor rawDescriptor = getRawDescriptors().get(moduleId.getStringId());
     if (rawDescriptor == null) {
       List<RuntimeModuleId> failedPath = new ArrayList<>(dependencyPath.size() + 1);
       failedPath.addAll(dependencyPath.keySet());
@@ -100,7 +104,7 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
 
   @Override
   public @NotNull List<Path> getModuleResourcePaths(@NotNull RuntimeModuleId moduleId) {
-    RawRuntimeModuleDescriptor rawDescriptor = myRawDescriptors.get(moduleId.getStringId());
+    RawRuntimeModuleDescriptor rawDescriptor = getRawDescriptors().get(moduleId.getStringId());
     if (rawDescriptor == null) {
       throw new MalformedRepositoryException("Cannot find module '" + moduleId.getStringId() + "'");
     }
@@ -109,8 +113,34 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   }
 
   @Override
+  public @NotNull List<@NotNull Path> getBootstrapClasspath(@NotNull String bootstrapModuleName) {
+    if (myRawDescriptors == null) {
+      try {
+        String[] bootstrapClasspath = JarFileSerializer.loadBootstrapClasspath(myDescriptorsJarPath, bootstrapModuleName);
+        if (bootstrapClasspath != null) {
+          List<Path> result = new ArrayList<>(bootstrapClasspath.length);
+          for (String relativePath : bootstrapClasspath) {
+            result.add(myBasePath.resolve(relativePath));
+          }
+          return result;
+        }
+      }
+      catch (IOException ignore) {
+      }
+    }
+    return getModule(RuntimeModuleId.module(bootstrapModuleName)).getModuleClasspath();
+  }
+
+  @Override
   public String toString() {
-    return "RuntimeModuleRepository{basePath=" + myBasePath + '}';
+    return "RuntimeModuleRepository{descriptorsJarPath=" + myDescriptorsJarPath + '}';
+  }
+
+  private Map<String, RawRuntimeModuleDescriptor> getRawDescriptors() {
+    if (myRawDescriptors == null) {
+      myRawDescriptors = RuntimeModuleRepositorySerialization.loadFromJar(myDescriptorsJarPath);
+    }
+    return myRawDescriptors;
   }
 
   private static final class SuccessfulResolveResult implements ResolveResult {

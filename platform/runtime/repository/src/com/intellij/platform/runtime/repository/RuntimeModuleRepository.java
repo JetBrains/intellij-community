@@ -2,14 +2,12 @@
 package com.intellij.platform.runtime.repository;
 
 import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl;
-import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
-import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
 
 /**
  * Represents the set of available modules. 
@@ -20,8 +18,7 @@ public interface RuntimeModuleRepository {
    * Creates a repository from a JAR file containing module descriptors.
    */
   static @NotNull RuntimeModuleRepository create(@NotNull Path moduleDescriptorsJarPath) throws MalformedRepositoryException {
-    Map<String, RawRuntimeModuleDescriptor> map = RuntimeModuleRepositorySerialization.loadFromJar(moduleDescriptorsJarPath);
-    return new RuntimeModuleRepositoryImpl(map, moduleDescriptorsJarPath.getParent());
+    return new RuntimeModuleRepositoryImpl(moduleDescriptorsJarPath);
   }
 
   /**
@@ -52,4 +49,11 @@ public interface RuntimeModuleRepository {
      */
     @NotNull List<RuntimeModuleId> getFailedDependencyPath();
   }
+
+  /**
+   * Returns the classpath for the bootstrap module {@code bootstrapModuleName}.
+   * This works faster than calculating classpath via {@link RuntimeModuleDescriptor#getModuleClasspath()} if the classpath for this 
+   * bootstrap module is cached in MANIFEST.MF, because in that case it isn't needed to read and parse module descriptors.
+   */
+  @NotNull List<@NotNull Path> getBootstrapClasspath(@NotNull String bootstrapModuleName);
 }
