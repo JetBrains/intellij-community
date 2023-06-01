@@ -82,6 +82,13 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
     return myUseQualifiedModuleNames;
   }
 
+  /**
+   * @deprecated qualified module names are used by default, so there is no need to call with method with {@code true}; and {@code false}
+   * shouldn't be used as a parameter as well, because all plugins are supposed to use qualified module names for grouping (see IDEA-166061 
+   * for details). 
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public void setUseQualifiedModuleNames(boolean useQualifiedModuleNames) {
     myUseQualifiedModuleNames = useQualifiedModuleNames;
   }
