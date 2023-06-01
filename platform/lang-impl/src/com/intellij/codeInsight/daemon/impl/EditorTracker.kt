@@ -248,4 +248,8 @@ open class EditorTracker(@JvmField protected val project: Project) : Disposable 
       executeOnEditorRelease.remove(editor)?.invoke()
     }
   }
+
+  override fun toString(): String {
+    return "EditorTracker(activeWindow=$activeWindow, activeEditors=$activeEditors, windowToEditorsMap=$windowToEditorsMap)"
+  }
 }

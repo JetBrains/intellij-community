@@ -3,10 +3,12 @@ package com.jetbrains.performancePlugin.commands
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl.EditorTracker
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.ui.TypingTarget
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -36,7 +38,7 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
   override suspend fun doExecute(context: PlaybackContext) {
     val project = context.project
     project.waitForSmartMode()
-    checkFocusInEditor(context)
+    checkFocusInEditor(context, project)
 
     val busConnection = project.messageBus.simpleConnect()
     val span = PerformanceTestSpan.getTracer(isWarmupMode()).spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext())
@@ -95,7 +97,7 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
     }
   }
 
-  private suspend fun checkFocusInEditor(context: PlaybackContext) {
+  private suspend fun checkFocusInEditor(context: PlaybackContext, project: Project) {
     if (!context.isUseTypingTargets) {
       return
     }
@@ -110,7 +112,8 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
         each = each.parent
       }
 
-      throw IllegalStateException("There is no focus in editor (focusOwner=$focusOwner)")
+      val editorTracker = EditorTracker.getInstance(project)
+      throw IllegalStateException("There is no focus in editor (focusOwner=$focusOwner, editorTracker=$editorTracker)")
     }
   }
 
