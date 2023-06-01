@@ -61,6 +61,19 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
   }
 }
 
+enum class MainToolbarCustomizationType {
+  JUST_ICON,
+  LINEAR_GRAD_WITH_ICON,
+  CIRCULAR_GRADIENT_WITH_ICON,
+  DROPDOWN_WITH_ICON,
+  JUST_DROPDOWN;
+
+  fun isLinearGradient() = this == LINEAR_GRAD_WITH_ICON
+  fun isCircularGradient() = this == CIRCULAR_GRADIENT_WITH_ICON
+  fun isGradient() = isLinearGradient() || isCircularGradient()
+  fun isShowIcon() = this != JUST_DROPDOWN
+}
+
 @Service
 class ProjectWindowCustomizerService : Disposable {
   companion object {
@@ -88,6 +101,15 @@ class ProjectWindowCustomizerService : Disposable {
 
   fun getProjectIcon(project: Project): Icon {
     return project.service<ProjectWindowCustomizerIconCache>().cachedIcon
+  }
+
+  fun getPaintingType() = when (Registry.get("ide.colorful.toolbar.gradient.type").selectedOption) {
+      "Just Icon"                    -> MainToolbarCustomizationType.JUST_ICON
+      "Linear Gradient and Icon"     -> MainToolbarCustomizationType.LINEAR_GRAD_WITH_ICON
+      "Circular Gradient and Icon"   -> MainToolbarCustomizationType.CIRCULAR_GRADIENT_WITH_ICON
+      "Dropdown Background and Icon" -> MainToolbarCustomizationType.DROPDOWN_WITH_ICON
+      "Just Dropdown"                -> MainToolbarCustomizationType.JUST_DROPDOWN
+      else                           -> MainToolbarCustomizationType.LINEAR_GRAD_WITH_ICON
   }
 
   internal fun update(newValue: Boolean) {
