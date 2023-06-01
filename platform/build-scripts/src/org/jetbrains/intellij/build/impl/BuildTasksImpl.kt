@@ -1010,23 +1010,24 @@ private suspend fun checkClassFiles(targetFile: Path, context: BuildContext) {
     context.productProperties.versionCheckerConfig
   }
 
-  val forbiddenSubPaths = if (context.proprietaryBuildTools.scrambleTool == null) {
-    emptyList()
+  val (forbiddenSubPaths, forbiddenSubPathExceptions) = if (context.proprietaryBuildTools.scrambleTool == null) {
+    emptyList<String>() to emptyList<String>()
   }
   else {
-    context.productProperties.forbiddenClassFileSubPaths
+    context.productProperties.forbiddenClassFileSubPaths to context.productProperties.forbiddenClassFileSubPathExceptions
   }
 
-  if (forbiddenSubPaths.isNotEmpty()) {
+  if (forbiddenSubPaths.isNotEmpty() || forbiddenSubPathExceptions.isNotEmpty()) {
     require(context.productProperties.scrambleMainJar) {
-      "productProperties.scrambleMainJar is set to false, but productProperties.forbiddenClassFileSubPaths is not empty " +
-      "(forbiddenClassFileSubPaths=$forbiddenSubPaths)"
+      "productProperties.scrambleMainJar is set to false, but scrambling-specific productProperties are not empty " +
+      "(forbiddenClassFileSubPaths=$forbiddenSubPaths, forbiddenClassFileSubPathExceptions=$forbiddenSubPathExceptions)"
     }
   }
 
   if (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty()) {
     checkClassFiles(versionCheckConfig = versionCheckerConfig,
                     forbiddenSubPaths = forbiddenSubPaths,
+                    forbiddenSubPathExceptions = forbiddenSubPathExceptions,
                     root = targetFile,
                     messages = context.messages)
   }
