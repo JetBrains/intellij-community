@@ -889,7 +889,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
    * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
    * if project is closed)
    */
-
+  // used in third-party plugins
   public Promise<List<Module>> scheduleImportAndResolve() {
     return scheduleImportAndResolve(MavenImportSpec.EXPLICIT_IMPORT);
   }

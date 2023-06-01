@@ -44,6 +44,7 @@ import java.util.function.Supplier
 interface MavenAsyncProjectsManager {
   suspend fun importMavenProjects(): List<Module>
   suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module>
+  fun resolveAndImportMavenProjectsSync(spec: MavenImportSpec): List<Module>
   suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
   fun importMavenProjectsSync(): List<Module>
   fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module>
@@ -88,6 +89,10 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   override fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider, projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
     return prepareImporter(modelsProvider, projectsToImport, false).importMavenProjectsBlocking()
+  }
+
+  override fun resolveAndImportMavenProjectsSync(spec: MavenImportSpec): List<Module> {
+    return scheduleImportAndResolve(spec).blockingGet(0)!!
   }
 
   override suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module> {
