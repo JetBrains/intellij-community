@@ -282,7 +282,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     HighlightInfoType type = new InspectionHighlightInfoType(level, element);
     String plainMessage = message.startsWith("<html>")
                           ? StringUtil.unescapeXmlEntities(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", ""))
-                            .replaceAll("&nbsp;", " ")
+                            .replaceAll("&nbsp;|&#32;", " ")
                           : message;
 
     @NlsSafe String tooltip = null;
