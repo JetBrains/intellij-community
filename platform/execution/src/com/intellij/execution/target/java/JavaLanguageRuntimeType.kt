@@ -26,7 +26,8 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
   override val displayName: String = "Java"
 
   @Nls
-  override val configurableDescription: @Nls String = ExecutionBundle.message("JavaLanguageRuntimeType.configurable.description.configure.java")
+  override val configurableDescription: @Nls String =
+    ExecutionBundle.message("JavaLanguageRuntimeType.configurable.description.configure.java")
 
   @Nls
   override val launchDescription: @Nls String = ExecutionBundle.message("JavaLanguageRuntimeType.launch.description.run.java.application")
@@ -102,17 +103,21 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
     val TYPE_ID: String = "JavaLanguageRuntime"
 
     @JvmStatic
-    val CLASS_PATH_VOLUME: VolumeDescriptor = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":classPath",
-                                                               ExecutionBundle.message("java.language.runtime.classpath.volume.label"),
-                                                               ExecutionBundle.message("java.language.runtime.classpath.volume.description"),
-                                                               ExecutionBundle.message("java.language.runtime.classpath.volume.browsing.title"),
-                                                               "")
+    val CLASS_PATH_VOLUME: VolumeDescriptor = VolumeDescriptor(
+      JavaLanguageRuntimeType::class.qualifiedName + ":classPath",
+      ExecutionBundle.message("java.language.runtime.classpath.volume.label"),
+      ExecutionBundle.message("java.language.runtime.classpath.volume.description"),
+      ExecutionBundle.message("java.language.runtime.classpath.volume.browsing.title"),
+      ""
+    )
 
     @JvmStatic
-    val AGENTS_VOLUME: VolumeDescriptor = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":agents",
-                                                           ExecutionBundle.message("java.language.runtime.agents.volume.label"),
-                                                           ExecutionBundle.message("java.language.runtime.agents.volume.description"),
-                                                           ExecutionBundle.message("java.language.runtime.agents.volume.browsing.title"),
-                                                           "")
+    val AGENTS_VOLUME: VolumeDescriptor = VolumeDescriptor(
+      JavaLanguageRuntimeType::class.qualifiedName + ":agents",
+      ExecutionBundle.message("java.language.runtime.agents.volume.label"),
+      ExecutionBundle.message("java.language.runtime.agents.volume.description"),
+      ExecutionBundle.message("java.language.runtime.agents.volume.browsing.title"),
+      ""
+    )
   }
 }
