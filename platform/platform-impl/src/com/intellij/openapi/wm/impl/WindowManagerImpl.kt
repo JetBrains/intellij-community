@@ -473,6 +473,9 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
       }
       else if (isMaximized(extendedState)) {
         val normalBounds = frame.normalBounds
+        if (normalBounds == null) {
+          IDE_FRAME_EVENT_LOG.debug("Not updating frame bounds because normalBounds == null")
+        }
         if (normalBounds != null) {
           normalBoundsOnCurrentScreen = normalBounds
           if (
@@ -485,6 +488,11 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
             ScreenUtil.moveAndScale(normalBoundsOnCurrentScreen, oldScreen, newScreen)
             if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
               IDE_FRAME_EVENT_LOG.debug("Updated bounds for IDE frame ${normalBoundsOnCurrentScreen} after moving from $oldScreen to $newScreen")
+            }
+          }
+          else {
+            if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+              IDE_FRAME_EVENT_LOG.debug("Frame moved from $oldScreen to $newScreen, not updating normal bounds $normalBounds")
             }
           }
         }

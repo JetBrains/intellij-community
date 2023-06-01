@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.FrameBoundsConverter.convertToDeviceSpace
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
 import com.intellij.ui.ScreenUtil
+import com.intellij.ui.scale.JBUIScale
 import sun.awt.AWTAccessor
 import java.awt.Frame
 import java.awt.Point
@@ -94,6 +95,19 @@ internal fun updateFrameInfo(frameHelper: ProjectFrameHelper, frame: JFrame, las
   val usePreviousBounds = lastNormalFrameBounds == null && isMaximized &&
                           oldBounds != null &&
                           newBounds.contains(Point(oldBounds.centerX.toInt(), oldBounds.centerY.toInt()))
+
+  if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+    IDE_FRAME_EVENT_LOG.debug(
+      "Updating frame bounds: lastNormalFrameBounds = $lastNormalFrameBounds, " +
+      "frame.bounds = ${frame.bounds}, " +
+      "frame screen = ${frame.graphicsConfiguration.bounds}, scale = ${JBUIScale.sysScale(frame.graphicsConfiguration)}, " +
+      "isMaximized = $isMaximized, " +
+      "isInFullScreen = $isInFullScreen, " +
+      "oldBounds = $oldBounds, " +
+      "newBounds = $newBounds, " +
+      "usePreviousBounds = $usePreviousBounds"
+    )
+  }
 
   // don't report if was already reported
   if (!usePreviousBounds && oldBounds != newBounds && !ScreenUtil.intersectsVisibleScreen(frame)) {
