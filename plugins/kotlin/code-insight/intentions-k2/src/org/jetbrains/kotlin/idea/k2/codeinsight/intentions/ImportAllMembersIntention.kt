@@ -93,7 +93,25 @@ internal class ImportAllMembersIntention :
     }
 
     override fun apply(element: KtExpression, context: Context, project: Project, editor: Editor?) {
-        context.shortenCommand.invokeShortening()
+        val shortenCommand = context.shortenCommand
+        val file = shortenCommand.targetFile.element ?: return
+        removeExistingImportsWhichWillBecomeRedundantAfterAddingStarImports(shortenCommand.starImportsToAdd, file)
+        shortenCommand.invokeShortening()
+    }
+
+    private fun removeExistingImportsWhichWillBecomeRedundantAfterAddingStarImports(
+        starImportsToAdd: List<FqName>,
+        ktFile: KtFile
+    ) {
+        for (starImportFqName in starImportsToAdd) {
+            for (existingImportFromFile in ktFile.importDirectives) {
+                if (existingImportFromFile.alias == null
+                    && existingImportFromFile.importPath?.fqName?.parent() == starImportFqName
+                ) {
+                    existingImportFromFile.delete()
+                }
+            }
+        }
     }
 }
 
