@@ -189,7 +189,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     }
     else {
       myContext.setHoldingFilter(true);
-      myHits = optionRegistrar.getConfigurables(myGroups, type, myFiltered, text, myProject);
+      myHits = optionRegistrar.getConfigurables(myGroups, type, null, text, myProject);
       myFiltered = myHits.getAll();
     }
     mySearch.getTextEditor().setBackground(myFiltered != null && myFiltered.isEmpty()
