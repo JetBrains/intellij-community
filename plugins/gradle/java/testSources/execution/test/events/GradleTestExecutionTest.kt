@@ -38,7 +38,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test :additionalTest")
+      executeTasks(":test :additionalTest", isRunAsTest = true)
       assertTestTreeView {
         assertNode("AppTest") {
           assertNode("test")
@@ -111,7 +111,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         |print("script output text without eol")
       """.trimMargin())
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("AppTest") {
           assertNode("test")
@@ -140,7 +140,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("AppTest") {
           assertNode("test")
@@ -191,7 +191,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase1") {
           assertNode("test1")
@@ -203,7 +203,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         }
       }
 
-      executeTasks(":test --tests org.example.TestCase1")
+      executeTasks(":test --tests org.example.TestCase1", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase1") {
           assertNode("test1")
@@ -211,7 +211,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         }
       }
 
-      executeTasks(":test --tests org.example.TestCase2.test2")
+      executeTasks(":test --tests org.example.TestCase2.test2", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase2") {
           assertNode("test2")
@@ -339,7 +339,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":allTests --rerun-tasks", isRunAsTest = true)
+      executeTasks(":allTests", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertNode("test")
@@ -463,7 +463,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         |tasks.create('afterTest')
       """.trimMargin())
 
-      executeTasks(":beforeTest :test --tests org.example.TestCase.test")
+      executeTasks(":beforeTest :test --tests org.example.TestCase.test", isRunAsTest = true)
       assertBuildExecutionTree {
         assertNode("successful") {
           assertNode(":beforeTest")
@@ -486,7 +486,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           }
         }
       }
-      executeTasks(":test --tests org.example.TestCase.test :afterTest")
+      executeTasks(":test --tests org.example.TestCase.test :afterTest", isRunAsTest = true)
       assertBuildExecutionTree {
         assertNode("successful") {
           assertNode(":compileJava")
@@ -509,7 +509,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":afterTest")
         }
       }
-      executeTasks(":beforeTest :test --tests org.example.TestCase.test :afterTest")
+      executeTasks(":beforeTest :test --tests org.example.TestCase.test :afterTest", isRunAsTest = true)
       assertBuildExecutionTree {
         assertNode("successful") {
           assertNode(":beforeTest")

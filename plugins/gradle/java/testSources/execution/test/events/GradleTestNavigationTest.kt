@@ -16,7 +16,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
       writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT5_TEST)
       writeText("src/test/java/org/example/DisplayNameTestCase.java", JAVA_DISPLAY_NAME_JUNIT5_TEST)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertPsiLocation("TestCase")
@@ -87,7 +87,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
       writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT5_TEST)
       writeText("src/test/java/org/example/DisplayNameTestCase.java", JAVA_DISPLAY_NAME_JUNIT5_TEST)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertPsiLocation("TestCase")
@@ -187,7 +187,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
       writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT4_TEST)
       writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_JUNIT4_TEST)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertPsiLocation("TestCase")
@@ -221,7 +221,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
       writeText("src/test/java/org/example/TestCase.java", JAVA_TESTNG_TEST)
       writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_TESTNG_TEST)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("Gradle suite") {
           assertNode("Gradle test") {
@@ -259,7 +259,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
     testSpockProject(gradleVersion) {
       writeText("src/test/groovy/org/example/SpockTestCase.groovy", GROOVY_CLASS_WITH_SPOCK_TESTS)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("SpockTestCase") {
           assertPsiLocation("SpockTestCase")
