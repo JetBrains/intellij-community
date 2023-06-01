@@ -184,7 +184,7 @@ class ProjectWindowCustomizerService : Disposable {
    * @return true if method painted something
    */
   fun paint(project: Project, parent: JComponent, g: Graphics2D): Boolean {
-    if (!isActive()) return false
+    if (!isActive() || !getPaintingType().isGradient()) return false
     val projectPath = getProjectNameForIcon(project)
 
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
