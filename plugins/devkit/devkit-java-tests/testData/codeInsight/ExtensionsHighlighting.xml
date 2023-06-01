@@ -54,7 +54,7 @@
         <<error descr="Deprecated extension point 'com.intellij.definitionsSearch', use 'com.intellij.definitionsScopedSearch' instead">definitionsSearch</error> implementation="foo.MyRunnable"/>
 
         <!-- no replacement EP 'com.intellij.dom.fileMetaData' defined -->
-        <dom.fileDescription implementation="foo.MyRunnable"/>=
+        <dom.fileDescription implementation="foo.MyRunnable"/>
 
         <!-- no replacement EP to suggest -->
         <<error descr="Deprecated extension point 'com.intellij.exportable'">exportable</error> implementation="foo.MyRunnable"/>
