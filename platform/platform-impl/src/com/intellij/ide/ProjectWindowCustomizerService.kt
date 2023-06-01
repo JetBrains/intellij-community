@@ -195,7 +195,14 @@ class ProjectWindowCustomizerService : Disposable {
     val color = computeOrGetColor(projectPath, project)
 
     val length = Registry.intValue("ide.colorful.toolbar.gradient.length", 600)
-    g.paint = GradientPaint(parent.x.toFloat(), parent.y.toFloat(), color, length.toFloat(), parent.y.toFloat(), parent.background)
+    val x = parent.x.toFloat()
+    val y = parent.y.toFloat()
+    if (getPaintingType().isCircularGradient()) {
+      val offset = 150f
+      g.paint = RadialGradientPaint(x + offset, y + parent.height / 2, length - offset, floatArrayOf(0.0f, 0.6f), arrayOf(color, parent.background))
+    } else {
+      g.paint = GradientPaint(x, y, color, length.toFloat(), y, parent.background)
+    }
     g.fillRect(0, 0, length, parent.height)
 
     return true
