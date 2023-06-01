@@ -61,9 +61,7 @@ internal class ImportAllMembersIntention :
             return null
         }
         if (element.getQualifiedExpressionForReceiver()?.isEnumSyntheticMethodCall(target) == true) return null
-        with (this@KtAnalysisSession) {
-            if (element.containingKtFile.hasImportedEnumSyntheticMethodCall()) return null
-        }
+        if (element.containingKtFile.hasImportedEnumSyntheticMethodCall()) return null
 
         val shortenCommand = collectPossibleReferenceShortenings(
             element.containingKtFile,
