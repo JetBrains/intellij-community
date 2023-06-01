@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class CaretModelWindow implements CaretModel {
+final class CaretModelWindow implements CaretModel {
   private final CaretModel myDelegate;
   private final EditorEx myHostEditor;
   private final EditorWindow myEditorWindow;
@@ -32,7 +32,7 @@ class CaretModelWindow implements CaretModel {
 
   private final ListenerWrapperMap<CaretListener> myCaretListeners = new ListenerWrapperMap<>();
   @Override
-  public void addCaretListener(@NotNull final CaretListener listener) {
+  public void addCaretListener(final @NotNull CaretListener listener) {
     CaretListener wrapper = new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
@@ -50,7 +50,7 @@ class CaretModelWindow implements CaretModel {
   }
 
   @Override
-  public void removeCaretListener(@NotNull final CaretListener listener) {
+  public void removeCaretListener(final @NotNull CaretListener listener) {
     CaretListener wrapper = myCaretListeners.removeWrapper(listener);
     if (wrapper != null) {
       myDelegate.removeCaretListener(wrapper);
@@ -79,15 +79,13 @@ class CaretModelWindow implements CaretModel {
     return myDelegate.getMaxCaretCount();
   }
 
-  @NotNull
   @Override
-  public Caret getCurrentCaret() {
+  public @NotNull Caret getCurrentCaret() {
     return createInjectedCaret(myDelegate.getCurrentCaret());
   }
 
-  @NotNull
   @Override
-  public Caret getPrimaryCaret() {
+  public @NotNull Caret getPrimaryCaret() {
     return createInjectedCaret(myDelegate.getPrimaryCaret());
   }
 
@@ -96,9 +94,8 @@ class CaretModelWindow implements CaretModel {
     return myDelegate.getCaretCount();
   }
 
-  @NotNull
   @Override
-  public List<Caret> getAllCarets() {
+  public @NotNull List<Caret> getAllCarets() {
     List<Caret> hostCarets = myDelegate.getAllCarets();
     List<Caret> carets = new ArrayList<>(hostCarets.size());
     for (Caret hostCaret : hostCarets) {
@@ -107,17 +104,15 @@ class CaretModelWindow implements CaretModel {
     return carets;
   }
 
-  @Nullable
   @Override
-  public Caret getCaretAt(@NotNull VisualPosition pos) {
+  public @Nullable Caret getCaretAt(@NotNull VisualPosition pos) {
     LogicalPosition hostPos = myEditorWindow.injectedToHost(myEditorWindow.visualToLogicalPosition(pos));
     Caret caret = myDelegate.getCaretAt(myHostEditor.logicalToVisualPosition(hostPos));
     return createInjectedCaret(caret);
   }
 
-  @Nullable
   @Override
-  public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
+  public @Nullable Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
     LogicalPosition hostPos = myEditorWindow.injectedToHost(myEditorWindow.visualToLogicalPosition(pos));
     Caret caret = myDelegate.addCaret(myHostEditor.logicalToVisualPosition(hostPos));
     return createInjectedCaret(caret);
@@ -169,9 +164,8 @@ class CaretModelWindow implements CaretModel {
     return position == null ? null : myEditorWindow.injectedToHost(position);
   }
 
-  @NotNull
   @Override
-  public List<CaretState> getCaretsAndSelections() {
+  public @NotNull List<CaretState> getCaretsAndSelections() {
     List<CaretState> caretsAndSelections = myDelegate.getCaretsAndSelections();
     List<CaretState> convertedStates = new ArrayList<>(caretsAndSelections.size());
     for (CaretState state : caretsAndSelections) {
@@ -202,7 +196,7 @@ class CaretModelWindow implements CaretModel {
   }
 
   @Override
-  public void runForEachCaret(@NotNull final CaretAction action, boolean reverseOrder) {
+  public void runForEachCaret(final @NotNull CaretAction action, boolean reverseOrder) {
     myDelegate.runForEachCaret(caret -> action.perform(createInjectedCaret(caret)), reverseOrder);
   }
 

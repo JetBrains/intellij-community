@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,8 +23,7 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
   private static final Logger LOG = Logger.getInstance(StubUpdatingIndexStorage.class);
 
   private StubIndexImpl myStubIndex;
-  @Nullable
-  private final CompositeBinaryBuilderMap myCompositeBinaryBuilderMap = FileBasedIndex.USE_IN_MEMORY_INDEX
+  private final @Nullable CompositeBinaryBuilderMap myCompositeBinaryBuilderMap = FileBasedIndex.USE_IN_MEMORY_INDEX
                                                                         ? null
                                                                         : new CompositeBinaryBuilderMap();
   private final @NotNull SerializationManagerEx mySerializationManager;
@@ -48,8 +47,7 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
     }
   }
 
-  @NotNull
-  private StubIndexImpl getStubIndex() {
+  private @NotNull StubIndexImpl getStubIndex() {
     StubIndexImpl index = myStubIndex;
     if (index == null) {
       myStubIndex = index = (StubIndexImpl)StubIndex.getInstance();
@@ -99,8 +97,7 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
     }
   }
 
-  @NotNull
-  private static Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> getStubIndexMaps(@NotNull StubCumulativeInputDiffBuilder diffBuilder) {
+  private static @NotNull Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> getStubIndexMaps(@NotNull StubCumulativeInputDiffBuilder diffBuilder) {
     SerializedStubTree tree = diffBuilder.getSerializedStubTree();
     return tree == null ? Collections.emptyMap() : tree.getStubIndicesValueMap();
   }

@@ -124,7 +124,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
       PsiFile fileToUse;
       if (info.isFromInjection()) {
         if (injectedEditor[0] == null) {
-          injectedFile[0] = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
+          injectedFile[0] = InjectedLanguageUtilBase.findInjectedPsiNoCommit(file, offset);
           injectedEditor[0] = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile[0]);
         }
         editorToUse = injectedFile[0] == null ? editor : injectedEditor[0];
@@ -159,7 +159,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     return segment.getEndOffset() <= segment.getStartOffset();
   }
 
-  public static class IntentionsInfo {
+  public static final class IntentionsInfo {
     public final List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     public final List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     public final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -233,7 +233,10 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
-    if (state != null && !state.isFinished()) return;
+    if (state != null && !state.isFinished()) {
+      return;
+    }
+
     IntentionsInfo myIntentionsInfo = new IntentionsInfo();
     getActionsToShow(myEditor, myFile, myIntentionsInfo, myPassIdToShowIntentionsFor, myQueryIntentionActions);
     myCachedIntentions = IntentionsUI.getInstance(myProject).getCachedIntentions(myEditor, myFile);

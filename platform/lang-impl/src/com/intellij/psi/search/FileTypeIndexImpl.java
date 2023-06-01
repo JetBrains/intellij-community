@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -17,30 +17,26 @@ public final class FileTypeIndexImpl
   private static final boolean USE_LOG_INDEX = SystemProperties.getBooleanProperty("use.log.file.type.index", false);
   private static final boolean USE_MAPPED_INDEX = SystemProperties.getBooleanProperty("use.mapped.file.type.index", true);
 
-  @NotNull
   @Override
-  public ID<FileType, Void> getName() {
+  public @NotNull ID<FileType, Void> getName() {
     return FileTypeIndex.NAME;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<FileType, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<FileType, Void, FileContent> getIndexer() {
     if (USE_LOG_INDEX || USE_MAPPED_INDEX) {
       throw new UnsupportedOperationException();
     }
     return in -> Collections.singletonMap(in.getFileType(), null);
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<FileType> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<FileType> getKeyDescriptor() {
     return new FileTypeKeyDescriptor();
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return file -> !file.isDirectory();
   }
 

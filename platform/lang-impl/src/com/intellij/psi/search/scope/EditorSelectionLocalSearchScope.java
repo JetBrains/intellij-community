@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.scope;
 
 import com.intellij.openapi.application.ReadAction;
@@ -84,12 +84,12 @@ public class EditorSelectionLocalSearchScope extends RangeBasedLocalSearchScope 
   }
 
   public EditorSelectionLocalSearchScope(@NotNull Editor editor, Project project,
-                                         @NotNull final @Nls String displayName) {
+                                         final @NotNull @Nls String displayName) {
     this(editor, project, displayName, false);
   }
 
   public EditorSelectionLocalSearchScope(@NotNull Editor editor, Project project,
-                                         @NotNull final @Nls String displayName,
+                                         final @NotNull @Nls String displayName,
                                          final boolean ignoreInjectedPsi) {
     super(displayName, ignoreInjectedPsi);
     myEditor = editor;

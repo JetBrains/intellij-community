@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.AppTopics;
@@ -51,16 +51,15 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
-      public void fileContentLoaded(@NotNull final VirtualFile virtualFile, @NotNull Document document) {
+      public void fileContentLoaded(final @NotNull VirtualFile virtualFile, @NotNull Document document) {
         PsiFile psiFile = ReadAction.compute(() -> myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile));
         fireDocumentCreated(document, psiFile);
       }
     });
   }
 
-  @Nullable
   @Override
-  public PsiFile getPsiFile(@NotNull Document document) {
+  public @Nullable PsiFile getPsiFile(@NotNull Document document) {
     final PsiFile psiFile = super.getPsiFile(document);
     if (myUnitTestMode) {
       VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
@@ -122,7 +121,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   }
 
   @Override
-  protected void beforeDocumentChangeOnUnlockedDocument(@NotNull final FileViewProvider viewProvider) {
+  protected void beforeDocumentChangeOnUnlockedDocument(final @NotNull FileViewProvider viewProvider) {
     PostprocessReformattingAspect.getInstance(myProject).assertDocumentChangeIsAllowed(viewProvider);
     super.beforeDocumentChangeOnUnlockedDocument(viewProvider);
   }
@@ -192,9 +191,8 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     return result;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return super.toString() + " for the project " + myProject + ".";
   }
 
@@ -203,9 +201,8 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
   }
 
-  @NotNull
   @Override
-  protected DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
+  protected @NotNull DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
     return InjectedLanguageManager.getInstance(myProject).freezeWindow(document);
   }
 
