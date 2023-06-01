@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.debugText.getDebugText
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
 
@@ -296,8 +295,7 @@ object SourceNavigationHelper {
         from: KtDeclaration,
         navigationKind: NavigationKind
     ): KtDeclaration {
-        val project = from.project
-        if (DumbService.isDumb(project)) return from
+        if (!from.isValid || DumbService.isDumb(from.project)) return from
 
         when (navigationKind) {
             NavigationKind.CLASS_FILES_TO_SOURCES -> if (!from.containingKtFile.isCompiled) return from
