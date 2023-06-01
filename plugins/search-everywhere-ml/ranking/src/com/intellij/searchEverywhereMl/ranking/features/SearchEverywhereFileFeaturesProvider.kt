@@ -12,10 +12,13 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.io.toNioPath
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.textMatching.PrefixMatchingUtil
 import org.jetbrains.annotations.ApiStatus
+import java.lang.IllegalArgumentException
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 @ApiStatus.Internal
@@ -44,6 +47,9 @@ class SearchEverywhereFileFeaturesProvider
         this.toNioPath()
       }
       catch (e: UnsupportedOperationException) {
+        null
+      }
+      catch (e: InvalidPathException) {
         null
       }
     }
@@ -131,10 +137,13 @@ class SearchEverywhereFileFeaturesProvider
   private fun isExactRelativePath(item: PsiFileSystemItem, searchQuery: String): Boolean {
     val filePath = item.virtualFile.toNioPathOrNull() ?: return false
     val basePath = item.project.guessProjectDir()?.toNioPathOrNull() ?: return false
-    val queryPath = searchQuery.toNioPath()
-    val relativePath = basePath.relativize(filePath)
-
-    return queryPath == relativePath
+    val queryPath = searchQuery.toNioPathOrNull() ?: return false
+    try {
+      val relativePath = basePath.relativize(filePath)
+      return queryPath == relativePath
+    } catch (e: IllegalArgumentException) {
+      return false
+    }
   }
 
   internal fun getRelativePathNameMatchingFeatures(item: PsiFileSystemItem, searchQuery: String): Collection<EventPair<*>> {
