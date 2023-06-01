@@ -261,29 +261,19 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     console.startImport(myProgressListener, spec)
     val activity = MavenImportStats.startImportActivity(myProject)
     fireImportAndResolveScheduled(spec)
-    val callback = Runnable {
-      waitForImportCompletion().onProcessed { _: Any? ->
-        activity.finished()
-        MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
-        finishTransaction(myProject)
-      }
-    }
-    return scheduleResolveSync(callback)
-  }
 
-  private fun scheduleResolveSync(callback: Runnable?): AsyncPromise<List<Module>> {
-    return runBlockingCancellableUnderIndicator { resolveAndImport(callback) }
-  }
-
-  private suspend fun resolveAndImport(callback: Runnable?): AsyncPromise<List<Module>> {
     val projectsToResolve = LinkedHashSet(myProjectsToResolve)
     myProjectsToResolve.removeAll(projectsToResolve)
 
     val result = AsyncPromise<List<Module>>()
-    val createdModules = resolveAndImport(projectsToResolve)
+    val createdModules = runBlockingCancellableUnderIndicator { resolveAndImport(projectsToResolve) }
     result.setResult(createdModules)
 
-    callback?.run()
+    waitForImportCompletion().onProcessed { _: Any? ->
+      activity.finished()
+      MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
+      finishTransaction(myProject)
+    }
 
     return result
   }
