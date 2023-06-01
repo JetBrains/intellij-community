@@ -4,7 +4,8 @@ package com.intellij.searchEverywhereMl.ranking.features
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
-import com.intellij.ide.bookmarks.BookmarkManager
+import com.intellij.ide.bookmark.BookmarksManager
+import com.intellij.ide.bookmark.FileBookmark
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -93,8 +94,9 @@ class SearchEverywhereFileFeaturesProvider
   }
 
   private fun isBookmark(item: PsiFileSystemItem): Boolean {
-    val bookmarkManager = BookmarkManager.getInstance(item.project)
-    return ReadAction.compute<Boolean, Nothing> { item.virtualFile?.let { bookmarkManager.findFileBookmark(it) } != null }
+    val bookmarksManager = BookmarksManager.getInstance(item.project)
+    val bkm = ReadAction.compute<Boolean, Nothing> { item.virtualFile?.let { vFile -> bookmarksManager?.bookmarks?.find { it is FileBookmark && it.file == vFile } } != null }
+    return bkm
   }
 
   private fun isExactMatch(item: PsiFileSystemItem, searchQuery: String, elementPriority: Int): Boolean {
