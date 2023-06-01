@@ -29,7 +29,7 @@ class SnapshotHashEnumeratorService : Closeable {
     }
   }
 
-  private enum class State { OPEN, OPEN_AND_CLEAN, CLOSED }
+  private enum class State { OPEN, CLOSED }
 
   interface HashEnumeratorHandle {
     @Throws(IOException::class)
@@ -66,6 +66,9 @@ class SnapshotHashEnumeratorService : Closeable {
   @Volatile
   private var contentHashEnumerator: ContentHashEnumerator? = null
 
+  @Volatile
+  private var storageRecreated: Boolean = false
+
   private val handles: MutableSet<HashEnumeratorHandle> = HashSet()
 
   private val lock: Lock = ReentrantLock()
@@ -80,12 +83,16 @@ class SnapshotHashEnumeratorService : Closeable {
           IOUtil.openCleanOrResetBroken({ ContentHashEnumerator(hashEnumeratorFile) },
                                         {
                                           IOUtil.deleteAllFilesStartingWith(hashEnumeratorFile)
-                                          state = State.OPEN_AND_CLEAN
-                                        })!!
-
+                                          storageRecreated = true
+                                        })
       }
       LOG.assertTrue(state != State.CLOSED)
-      return state == State.OPEN
+
+      // this method will be called several times for each snapshot-mapping index. We initialize storage once, and each client
+      // of this method will receive the same initialization result. If the storage was recreated, each invocation of this method
+      // will return `false` (not only the first one that actually initialized the storage), so all the snapshot-mapping indexes
+      // will be rebuilt because each index will observe `false` value returned from this method.
+      return !storageRecreated
     }
   }
 
