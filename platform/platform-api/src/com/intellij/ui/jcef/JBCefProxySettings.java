@@ -18,6 +18,7 @@ class JBCefProxySettings {
   public final @Nullable String PAC_URL;
   public final @Nullable String PROXY_HOST;
   public final int PROXY_PORT;
+  public final @Nullable String PROXY_EXCEPTIONS;
   public final boolean PROXY_AUTHENTICATION;
   private final @NotNull Credentials myCredentials;
 
@@ -29,6 +30,7 @@ class JBCefProxySettings {
                              @Nullable String pacUrl,
                              @Nullable String proxyHost,
                              int proxyPort,
+                             @Nullable String proxyExceptions,
                              boolean proxyAuthentication,
                              @NotNull Credentials credentials)
   {
@@ -39,6 +41,7 @@ class JBCefProxySettings {
     PROXY_HOST = proxyHost;
     PROXY_PORT = proxyPort;
     PROXY_AUTHENTICATION = proxyAuthentication;
+    PROXY_EXCEPTIONS = proxyExceptions;
     myCredentials = credentials;
   }
 
@@ -54,6 +57,7 @@ class JBCefProxySettings {
       httpSettings.PAC_URL,
       httpSettings.PROXY_HOST,
       httpSettings.PROXY_PORT,
+      httpSettings.PROXY_EXCEPTIONS,
       httpSettings.PROXY_AUTHENTICATION,
       new Credentials() {
         @Override
@@ -74,6 +78,7 @@ class JBCefProxySettings {
                                      @Nullable String pacUrl,
                                      @Nullable String proxyHost,
                                      int proxyPort,
+                                     @Nullable String proxyExceptions,
                                      boolean proxyAuthentication,
                                      @Nullable String login,
                                      @Nullable String password)
@@ -88,6 +93,7 @@ class JBCefProxySettings {
       pacUrl,
       proxyHost,
       proxyPort,
+      proxyExceptions,
       proxyAuthentication,
       new Credentials() {
         @Override

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
@@ -130,7 +131,14 @@ final class SettingsHelper {
       }
     }
     else if (proxySettings.USE_HTTP_PROXY) {
-      proxyArgs = new String[] {"--proxy-server=" + proxySettings.PROXY_HOST + ":" + proxySettings.PROXY_PORT};
+      String proxyServer = "--proxy-server=" + proxySettings.PROXY_HOST + ":" + proxySettings.PROXY_PORT;
+      if (StringUtil.isEmptyOrSpaces(proxySettings.PROXY_EXCEPTIONS)) {
+        proxyArgs = new String[]{proxyServer};
+      }
+      else {
+        String proxyBypassList = "--proxy-bypass-list=" + proxySettings.PROXY_EXCEPTIONS;
+        proxyArgs = new String[]{proxyServer, proxyBypassList};
+      }
     }
     if (proxyArgs != null) args = ArrayUtil.mergeArrays(args, proxyArgs);
 
