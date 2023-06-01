@@ -61,8 +61,8 @@ private class MemorySizeConfigurator : ProjectActivity {
     /**
      * Must be the same as [org.jetbrains.intellij.build.impl.VmOptionsGenerator.DEFAULT_XMX].
      */
-    const val DEFAULT_XMX = 750
-    const val MAXIMUM_SUGGESTED_XMX = 2048
+    const val DEFAULT_XMX = 2048
+    const val MAXIMUM_SUGGESTED_XMX = 4096
 
     init {
       require(MAXIMUM_SUGGESTED_XMX >= DEFAULT_XMX * 2)

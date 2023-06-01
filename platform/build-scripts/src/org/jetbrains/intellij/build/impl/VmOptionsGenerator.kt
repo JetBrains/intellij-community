@@ -34,7 +34,7 @@ object VmOptionsGenerator {
   /**
    * Must be the same as [com.intellij.diagnostic.MemorySizeConfigurator.DEFAULT_XMX].
    */
-  private const val DEFAULT_XMX = 750
+  private const val DEFAULT_XMX = 2048
 
   private val MEMORY_OPTIONS: Map<String, String> = linkedMapOf(
     "-Xms" to "${DEFAULT_XMS}m",
