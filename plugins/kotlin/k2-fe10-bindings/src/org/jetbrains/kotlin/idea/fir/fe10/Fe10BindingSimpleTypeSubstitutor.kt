@@ -14,8 +14,7 @@ class Fe10BindingSimpleTypeSubstitutor private constructor(
   private val map: Map<KtTypeParameterSymbol, TypeProjection>
 ) {
     private fun substitute(kotlinType: KotlinType): KotlinType? {
-        val unwrappedType = kotlinType.unwrap()
-        when (unwrappedType) {
+        when (val unwrappedType = kotlinType.unwrap()) {
             is SimpleType -> return substitute(unwrappedType)
             is FlexibleType -> {
                 val lower = substitute(unwrappedType.lowerBound)?.lowerIfFlexible()

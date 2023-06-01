@@ -116,8 +116,7 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
   }
 
   private fun applyHints(indexingHint: IndexingHint, fileType: FileType?): IndexedFilePredicate {
-    val hint = applyFileTypeHint(indexingHint, fileType)
-    return when (hint) {
+    return when (applyFileTypeHint(indexingHint, fileType)) {
       ThreeState.YES -> truePredicate
       ThreeState.NO -> falsePredicate
       ThreeState.UNSURE -> object : IndexedFilePredicate {

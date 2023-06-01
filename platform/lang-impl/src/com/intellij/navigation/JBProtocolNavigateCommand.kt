@@ -25,8 +25,7 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
       return IdeBundle.message("jb.protocol.navigate.target", target)
     }
 
-    val openProjectResult = openProject(parameters)
-    val project = when(openProjectResult) {
+    val project = when(val openProjectResult = openProject(parameters)) {
       is ProtocolOpenProjectResult.Success -> openProjectResult.project
       is ProtocolOpenProjectResult.Error -> return openProjectResult.message
     }

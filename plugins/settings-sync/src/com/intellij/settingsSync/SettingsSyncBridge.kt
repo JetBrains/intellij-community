@@ -120,8 +120,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       LOG.info("Migration from old storage applied.")
       var masterPosition = settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings & by migration
 
-      val updateResult = remoteCommunicator.receiveUpdates()
-      when (updateResult) {
+      when (val updateResult = remoteCommunicator.receiveUpdates()) {
         is UpdateResult.Success -> {
           LOG.info("There is a snapshot on the server => prefer server version over local migration data")
           val snapshot = updateResult.settingsSnapshot
