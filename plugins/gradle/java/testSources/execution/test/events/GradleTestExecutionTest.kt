@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.events
 
-import com.intellij.idea.Bombed
 import com.intellij.openapi.util.SystemInfo
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleTestExecutionTest : GradleExecutionTestCase() {
@@ -407,16 +407,14 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
     }
   }
 
+  /**
+   * Disabled due to deprecation cycle of --tests option for non-test tasks.
+   * Please see IDEA-318304 for details.
+   * Please remove org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.fixUpGradleCommandLine,
+   */
+  @Disabled
   @ParameterizedTest
   @AllGradleVersionsSource
-  @Bombed(
-    year = 2024, month = 1, day = 9, user = "Sergei Vorobyov",
-    description = """
-      Happy New Year! Deprecation cycle has ended.
-      Please remove org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.fixUpGradleCommandLine,
-      And resolve IDEA-318304 issue.
-    """
-  )
   fun `test hacky non-test task execution`(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
