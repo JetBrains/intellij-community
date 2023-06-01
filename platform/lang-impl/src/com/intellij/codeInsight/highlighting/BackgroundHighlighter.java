@@ -24,7 +24,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -211,7 +211,7 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
         ProperTextRange visibleRange = ProperTextRange.from(0, textLength);
         IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().createHighlightingPass(newFile, newEditor, visibleRange);
         DaemonProgressIndicator indicator = new DaemonProgressIndicator();
-        ProgressManager.getInstance().runProcess(() -> {
+        ProgressIndicatorUtils.runWithWriteActionPriority(() -> {
           PsiFile hostPsiFile = PsiDocumentManager.getInstance(newFile.getProject()).getPsiFile(hostEditor.getDocument());
           if (hostPsiFile == null) return;
           HighlightingSessionImpl.runInsideHighlightingSession(hostPsiFile, hostEditor.getColorsScheme(), ProperTextRange.create(hostPsiFile.getTextRange()), false, session -> {
