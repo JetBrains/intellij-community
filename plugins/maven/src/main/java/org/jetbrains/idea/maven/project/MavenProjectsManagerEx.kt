@@ -269,11 +269,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     val createdModules = runBlockingCancellableUnderIndicator { resolveAndImport(projectsToResolve) }
     result.setResult(createdModules)
 
-    waitForImportCompletion().onProcessed { _: Any? ->
-      activity.finished()
-      MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
-      finishTransaction(myProject)
-    }
+    activity.finished()
+    MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
+    finishTransaction(myProject)
 
     return result
   }
