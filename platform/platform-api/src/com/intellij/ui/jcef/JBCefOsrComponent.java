@@ -26,6 +26,7 @@ import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.CEIL;
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
@@ -39,11 +40,13 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
  */
 @SuppressWarnings("NotNullFieldNotInitialized")
 class JBCefOsrComponent extends JPanel {
+  static final int RESIZE_DELAY_MS = Integer.getInteger("ide.browser.jcef.resize_delay_ms", 100);
   private volatile @NotNull JBCefOsrHandler myRenderHandler;
   private final @NotNull InputMethodAdapter myInputMethodAdapter = new InputMethodAdapter();
   private volatile @NotNull CefBrowser myBrowser;
   private final @NotNull MyScale myScale = new MyScale();
 
+  private @NotNull AtomicLong mySchedlueResizeMs = new AtomicLong(-1);
   private @Nullable Alarm myAlarm;
   private @NotNull Disposable myDisposable;
 
@@ -115,11 +118,20 @@ class JBCefOsrComponent extends JPanel {
   @Override
   public void reshape(int x, int y, int w, int h) {
     super.reshape(x, y, w, h);
+    final long timeMs = System.currentTimeMillis();
     if (myAlarm != null) {
+      if (myAlarm.isEmpty())
+        mySchedlueResizeMs.set(timeMs);
       myAlarm.cancelAllRequests();
-
-      double scale = myScale.getInverted();
-      myAlarm.addRequest(() -> myBrowser.wasResized(CEIL.round(w * scale), CEIL.round(h * scale)), 100);
+      final double scale = myScale.getInverted();
+      final int scaledW = CEIL.round(w * scale);
+      final int scaledH = CEIL.round(h * scale);
+      if (timeMs - mySchedlueResizeMs.get() > RESIZE_DELAY_MS)
+        myBrowser.wasResized(scaledW, scaledH);
+      else
+        myAlarm.addRequest(() -> {
+          myBrowser.wasResized(scaledW, scaledH);
+        }, RESIZE_DELAY_MS);
     }
   }
 
