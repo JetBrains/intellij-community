@@ -585,8 +585,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     }
   }
 
-  protected void scheduleResolveAll() {
-    myProjectsManager.scheduleResolveAllInTests();
+  protected void resolveAndImportAllMavenProjects() {
+    MavenImportingTestCaseKt.resolveAndImportMavenProjectsSync(myProjectsManager, myProjectsManager.getProjects());
   }
 
   protected void waitForReadingCompletion() {

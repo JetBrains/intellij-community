@@ -1638,7 +1638,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     setRepositoryPath(new File(myDir, "__repo").getPath());
     myProjectsManager.getEmbeddersManager().reset(); // to recognize repository change
 
-    scheduleResolveAll();
+    resolveAndImportAllMavenProjects();
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
@@ -1671,7 +1671,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     setRepositoryPath(new File(myDir, "__repo").getPath());
     myProjectsManager.getEmbeddersManager().reset(); // to recognize repository change
 
-    scheduleResolveAll();
+    resolveAndImportAllMavenProjects();
 
     resolveDependenciesAndImport();
 
@@ -1700,9 +1700,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/"),
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/"));
 
-    scheduleResolveAll();
+    resolveAndImportAllMavenProjects();
     resolveDependenciesAndImport();
-    scheduleResolveAll();
+    resolveAndImportAllMavenProjects();
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
@@ -1733,9 +1733,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        Collections.emptyList(),
                        Collections.emptyList());
 
-    scheduleResolveAll();
+    resolveAndImportAllMavenProjects();
     resolveDependenciesAndImport();
-    scheduleResolveAll();
+    resolveAndImportAllMavenProjects();
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
