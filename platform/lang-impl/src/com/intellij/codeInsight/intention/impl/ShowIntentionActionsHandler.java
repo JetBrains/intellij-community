@@ -25,6 +25,8 @@ import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.IntentionsCollector;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommand;
@@ -38,6 +40,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -71,6 +74,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, boolean showFeedbackOnEmptyMenu) {
+    long start = System.currentTimeMillis();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
@@ -102,6 +106,12 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     showIntentionHint(project, editor, file, calcIntentions(project, editor, file), showFeedbackOnEmptyMenu);
+    long elapsed = System.currentTimeMillis() - start;
+    reportDelayToFUS(project, elapsed, file.getFileType());
+  }
+
+  private void reportDelayToFUS(@NotNull Project project, long elapsed, @NotNull FileType fileType) {
+    ShowIntentionActionFUSCollector.SHOWN.log(project, new EventPair<>(EventFields.DurationMs, elapsed), new EventPair<>(EventFields.FileType, fileType));
   }
 
   protected void showIntentionHint(@NotNull Project project,
@@ -109,7 +119,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
                                    @NotNull PsiFile file,
                                    @NotNull ShowIntentionsPass.IntentionsInfo intentions,
                                    boolean showFeedbackOnEmptyMenu) {
-    if (!intentions.isEmpty()) {
+    if (intentions.isEmpty()) {
+      showEmptyMenuFeedback(editor, showFeedbackOnEmptyMenu);
+    }
+    else {
       editor.getScrollingModel().runActionOnScrollingFinished(() -> {
         CachedIntentions cachedIntentions = CachedIntentions.createAndUpdateActions(project, file, editor, intentions);
         cachedIntentions.wrapAndUpdateGutters();
@@ -120,9 +133,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
           IntentionHintComponent.showIntentionHint(project, file, editor, true, cachedIntentions);
         }
       });
-    }
-    else {
-      showEmptyMenuFeedback(editor, showFeedbackOnEmptyMenu);
     }
   }
 
