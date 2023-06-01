@@ -9,13 +9,16 @@ import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
+import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-interface GitLabApi : HttpApiHelper, JsonHttpApiHelper, GraphQLApiHelper
+abstract class GitLabApi : HttpApiHelper, JsonHttpApiHelper, GraphQLApiHelper {
+  fun gqlQuery(uri: URI, query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest = gqlQuery(uri, query.filePath, variablesObject)
+}
 
 class GitLabApiImpl private constructor(httpHelper: HttpApiHelper)
-  : GitLabApi,
+  : GitLabApi(),
     HttpApiHelper by httpHelper,
     JsonHttpApiHelper by JsonHttpApiHelper(logger<GitLabApi>(),
                                            httpHelper,

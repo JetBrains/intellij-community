@@ -6,7 +6,7 @@ import com.intellij.collaboration.api.json.loadOptionalJsonList
 import com.intellij.collaboration.util.resolveRelative
 import com.intellij.collaboration.util.withQuery
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabGQLQueries
+import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -34,7 +34,7 @@ suspend fun GitLabApi.loadMergeRequest(
     "projectId" to project.projectPath.fullPath(),
     "mergeRequestId" to mergeRequestId.iid
   )
-  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.getMergeRequest, parameters)
+  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.GET_MERGE_REQUEST, parameters)
   return loadGQLResponse(request, GitLabMergeRequestDTO::class.java, "project", "mergeRequest")
 }
 
@@ -91,7 +91,7 @@ suspend fun GitLabApi.mergeRequestUpdate(
     "mergeRequestId" to mergeRequestId.iid,
     "state" to state
   )
-  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.mergeRequestUpdate, parameters)
+  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.MERGE_REQUEST_UPDATE, parameters)
   return loadGQLResponse(request, GitLabMergeRequestResult::class.java, "mergeRequestUpdate")
 }
 
@@ -105,7 +105,7 @@ suspend fun GitLabApi.mergeRequestSetReviewers(
     "mergeRequestId" to mergeRequestId.iid,
     "reviewerUsernames" to reviewers.map { it.username }
   )
-  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.mergeRequestSetReviewers, parameters)
+  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.MERGE_REQUEST_SET_REVIEWERS, parameters)
   return loadGQLResponse(request, GitLabMergeRequestResult::class.java, "mergeRequestSetReviewers")
 }
 
@@ -123,7 +123,7 @@ suspend fun GitLabApi.mergeRequestAccept(
     "sha" to sha,
     "withSquash" to withSquash
   )
-  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.mergeRequestAccept, parameters)
+  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.MERGE_REQUEST_ACCEPT, parameters)
   return loadGQLResponse(request, GitLabMergeRequestResult::class.java, "mergeRequestAccept")
 }
 
@@ -137,7 +137,7 @@ suspend fun GitLabApi.mergeRequestSetDraft(
     "mergeRequestId" to mergeRequestId.iid,
     "isDraft" to isDraft
   )
-  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.mergeRequestSetDraft, parameters)
+  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.MERGE_REQUEST_SET_DRAFT, parameters)
   return loadGQLResponse(request, GitLabMergeRequestResult::class.java, "mergeRequestSetDraft")
 }
 

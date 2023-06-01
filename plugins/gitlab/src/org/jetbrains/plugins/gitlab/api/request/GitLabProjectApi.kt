@@ -8,7 +8,7 @@ import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.api.page.foldToList
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabGQLQueries
+import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
@@ -18,7 +18,7 @@ suspend fun GitLabApi.loadAllProjectLabels(project: GitLabProjectCoordinates): L
     val parameters = page.asParameters() + mapOf(
       "fullPath" to project.projectPath.fullPath()
     )
-    val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.getProjectLabels, parameters)
+    val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.GET_PROJECT_LABELS, parameters)
     loadGQLResponse(request, LabelConnection::class.java, "project", "labels").body()
   }.map { it.nodes }.foldToList()
 
@@ -27,7 +27,7 @@ suspend fun GitLabApi.getAllProjectMembers(project: GitLabProjectCoordinates): L
     val parameters = page.asParameters() + mapOf(
       "fullPath" to project.projectPath.fullPath()
     )
-    val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.getProjectMembers, parameters)
+    val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.GET_PROJECT_MEMBERS, parameters)
     loadGQLResponse(request, ProjectMembersConnection::class.java, "project", "projectMembers").body()
   }.map { it.nodes }.foldToList().filterNotNull()
 

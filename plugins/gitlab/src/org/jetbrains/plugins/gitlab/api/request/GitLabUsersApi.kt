@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gitlab.api.request
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabGQLQueries
+import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserRestDTO
@@ -18,7 +18,7 @@ suspend fun GitLabApi.getCurrentUserRest(server: GitLabServerPath): HttpResponse
 }
 
 suspend fun GitLabApi.getCurrentUser(server: GitLabServerPath): GitLabUserDTO? {
-  val request = gqlQuery(server.gqlApiUri, GitLabGQLQueries.getCurrentUser)
+  val request = gqlQuery(server.gqlApiUri, GitLabGQLQuery.GET_CURRENT_USER)
   return loadGQLResponse(request, GitLabUserDTO::class.java, "currentUser").body()
 }
 
