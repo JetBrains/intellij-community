@@ -233,18 +233,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
-    val messageBusConnection = project.messageBus.connect()
-    messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChange) {
-        if (event.getChanges(ContentRootEntity::class.java).any() || event.getChanges(SourceRootEntity::class.java).any()) {
-          clearSelectedConfigurationIcon()
-
-          deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
-        }
-      }
-    })
-
-    messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+    project.messageBus.connect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         iconAndInvalidCache.clear()
       }
@@ -773,6 +762,15 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
 
   @VisibleForTesting
   protected open fun onFirstLoadingFinished() {
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        if (event.getChanges(ContentRootEntity::class.java).any() || event.getChanges(SourceRootEntity::class.java).any()) {
+          clearSelectedConfigurationIcon()
+          deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
+        }
+      }
+    })
+
     @Suppress("TestOnlyProblems")
     if (ProjectManagerImpl.isLight(project)) {
       return
