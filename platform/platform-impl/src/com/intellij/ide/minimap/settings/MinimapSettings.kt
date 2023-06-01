@@ -19,7 +19,7 @@ class MinimapSettings : PersistentStateComponent<MinimapSettingsState> {
     fun getInstance(): MinimapSettings = service<MinimapSettings>()
   }
 
-  val settingsChangeCallback: WeakDelegate<SettingsChangeType, Unit> = WeakDelegate<SettingsChangeType, Unit>()
+  val settingsChangeCallback: WeakDelegate<SettingsChangeType, Unit> = WeakDelegate()
 
   private var state = MinimapSettingsState()
 

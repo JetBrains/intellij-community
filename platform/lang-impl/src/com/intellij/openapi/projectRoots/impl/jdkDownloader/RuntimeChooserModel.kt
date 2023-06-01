@@ -28,7 +28,7 @@ internal fun <Y> GraphProperty<Y>.getAndSubscribe(lifetime: Disposable, action: 
 class RuntimeChooserModel {
   private val graph = PropertyGraph()
 
-  val currentRuntime: GraphProperty<RuntimeChooserCurrentItem?> = graph.property<RuntimeChooserCurrentItem?>(null)
+  val currentRuntime: GraphProperty<RuntimeChooserCurrentItem?> = graph.property(null)
 
   private var downloadableJbs: List<JdkItem> = listOf()
   private val customJdks = mutableListOf<RuntimeChooserCustomItem>()

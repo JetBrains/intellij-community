@@ -86,7 +86,7 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
     var projectDefaultTargetUuid: String? by string()
 
     @get: XCollection(style = XCollection.Style.v2)
-    var targets: MutableList<OneTargetState> by list<OneTargetState>()
+    var targets: MutableList<OneTargetState> by list()
   }
 
   @Tag("target")
@@ -96,7 +96,7 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
 
     @get: XCollection(style = XCollection.Style.v2)
     @get: Property(surroundWithTag = false)
-    var runtimes: MutableList<ContributedConfigurationsList.ContributedStateBase> by list<ContributedConfigurationsList.ContributedStateBase>()
+    var runtimes: MutableList<ContributedConfigurationsList.ContributedStateBase> by list()
 
     fun toTargetConfiguration(): TargetEnvironmentConfiguration? {
       return TargetEnvironmentType.EXTENSION_NAME.deserializeState(this)?.also { result ->

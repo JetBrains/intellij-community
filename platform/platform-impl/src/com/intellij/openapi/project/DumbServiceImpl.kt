@@ -471,7 +471,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   companion object {
     @JvmField
-    val REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY: ExtensionPointName<RequiredForSmartMode> = ExtensionPointName<RequiredForSmartMode>(
+    val REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY: ExtensionPointName<RequiredForSmartMode> = ExtensionPointName(
       "com.intellij.requiredForSmartModeStartupActivity")
 
     @JvmField

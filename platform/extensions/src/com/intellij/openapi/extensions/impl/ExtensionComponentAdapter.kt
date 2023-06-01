@@ -14,7 +14,7 @@ abstract class ExtensionComponentAdapter internal constructor(implementationClas
                                                               @JvmField internal val implementationClassResolver: ImplementationClassResolver) : LoadingOrder.Orderable {
   companion object {
     @JvmField
-    val EMPTY_ARRAY: Array<ExtensionComponentAdapter?> = arrayOfNulls<ExtensionComponentAdapter>(0)
+    val EMPTY_ARRAY: Array<ExtensionComponentAdapter?> = arrayOfNulls(0)
   }
 
   // Class or String

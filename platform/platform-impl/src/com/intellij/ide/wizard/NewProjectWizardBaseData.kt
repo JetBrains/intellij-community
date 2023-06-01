@@ -26,7 +26,7 @@ interface NewProjectWizardBaseData {
 
   companion object {
 
-    val KEY: Key<NewProjectWizardBaseData> = Key.create<NewProjectWizardBaseData>(NewProjectWizardBaseData::class.java.name)
+    val KEY: Key<NewProjectWizardBaseData> = Key.create(NewProjectWizardBaseData::class.java.name)
 
     @JvmStatic
     val NewProjectWizardStep.baseData: NewProjectWizardBaseData?

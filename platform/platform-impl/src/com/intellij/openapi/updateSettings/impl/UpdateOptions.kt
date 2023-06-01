@@ -8,10 +8,10 @@ import com.intellij.util.xmlb.annotations.OptionTag
 
 class UpdateOptions : BaseState() {
   @get:CollectionBean
-  val pluginHosts: MutableList<String> by list<String>()
+  val pluginHosts: MutableList<String> by list()
 
   @get:CollectionBean
-  val ignoredBuildNumbers: MutableList<String> by list<String>()
+  val ignoredBuildNumbers: MutableList<String> by list()
 
   @get:OptionTag("CHECK_NEEDED")
   var isCheckNeeded: Boolean by property(true)

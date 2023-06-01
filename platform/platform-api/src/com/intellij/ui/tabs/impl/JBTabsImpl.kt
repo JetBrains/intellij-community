@@ -89,10 +89,10 @@ open class JBTabsImpl(private var project: Project?,
                                                       QuickActionProvider, MorePopupAware, Accessible {
   companion object {
     @JvmField
-    val PINNED: Key<Boolean> = Key.create<Boolean>("pinned")
+    val PINNED: Key<Boolean> = Key.create("pinned")
 
     @JvmField
-    val SIDE_TABS_SIZE_LIMIT_KEY: Key<Int> = Key.create<Int>("SIDE_TABS_SIZE_LIMIT_KEY")
+    val SIDE_TABS_SIZE_LIMIT_KEY: Key<Int> = Key.create("SIDE_TABS_SIZE_LIMIT_KEY")
 
     private val HIDDEN_INFOS_SELECT_INDEX_KEY = Key.create<Int>("HIDDEN_INFOS_SELECT_INDEX")
 

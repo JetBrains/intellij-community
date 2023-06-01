@@ -54,10 +54,10 @@ class InternalDecoratorImpl internal constructor(
   private val myDecoratorChild: JComponent
 ) : InternalDecorator(), Queryable, DataProvider, ComponentWithMnemonics {
   companion object {
-    val SHARED_ACCESS_KEY: Key<Boolean> = Key.create<Boolean>("sharedAccess")
+    val SHARED_ACCESS_KEY: Key<Boolean> = Key.create("sharedAccess")
 
-    internal val HIDE_COMMON_TOOLWINDOW_BUTTONS: Key<Boolean> = Key.create<Boolean>("HideCommonToolWindowButtons")
-    internal val INACTIVE_LOOK: Key<Boolean> = Key.create<Boolean>("InactiveLook")
+    internal val HIDE_COMMON_TOOLWINDOW_BUTTONS: Key<Boolean> = Key.create("HideCommonToolWindowButtons")
+    internal val INACTIVE_LOOK: Key<Boolean> = Key.create("InactiveLook")
 
     /**
      * Catches all event from tool window and modifies decorator's appearance.

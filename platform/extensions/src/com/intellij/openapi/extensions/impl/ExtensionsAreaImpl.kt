@@ -58,7 +58,7 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
   @Volatile
   @Internal
   @JvmField
-  var extensionPoints: Map<String, ExtensionPointImpl<*>> = emptyMap<String, ExtensionPointImpl<*>>()
+  var extensionPoints: Map<String, ExtensionPointImpl<*>> = emptyMap()
 
   private val epTraces = if (DEBUG_REGISTRATION) HashMap<String, Throwable>() else null
 

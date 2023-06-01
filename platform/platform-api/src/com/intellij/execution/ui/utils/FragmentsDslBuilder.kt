@@ -317,7 +317,7 @@ interface FragmentsDslBuilderExtender<Settings : FragmentedSettings> {
 
   companion object {
     @JvmField
-    val EP_NAME: ExtensionPointName<FragmentsDslBuilderExtender<*>> = ExtensionPointName.create<FragmentsDslBuilderExtender<*>>("com.intellij.fragments.dsl.builder.extender")
+    val EP_NAME: ExtensionPointName<FragmentsDslBuilderExtender<*>> = ExtensionPointName.create("com.intellij.fragments.dsl.builder.extender")
 
     inline fun <reified T : FragmentedSettings> getExtenders(startId: String): List<FragmentsDslBuilderExtender<T>> {
       return EP_NAME.extensionList.map {

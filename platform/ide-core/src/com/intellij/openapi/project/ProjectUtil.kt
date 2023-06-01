@@ -40,7 +40,7 @@ import java.util.*
 import javax.swing.JComponent
 import kotlin.io.path.exists
 
-val NOTIFICATIONS_SILENT_MODE: Key<Boolean> = Key.create<Boolean>("NOTIFICATIONS_SILENT_MODE")
+val NOTIFICATIONS_SILENT_MODE: Key<Boolean> = Key.create("NOTIFICATIONS_SILENT_MODE")
 
 val Module.rootManager: ModuleRootManager
   get() = ModuleRootManager.getInstance(this)

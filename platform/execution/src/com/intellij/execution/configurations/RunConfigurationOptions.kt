@@ -33,7 +33,7 @@ open class RunConfigurationOptions : BaseState(), FragmentedSettings {
 
   @get:Property(surroundWithTag = false)
   @get:XCollection
-  var predefinedLogFiles: MutableList<PredefinedLogFile> by list<PredefinedLogFile>()
+  var predefinedLogFiles: MutableList<PredefinedLogFile> by list()
 
   @com.intellij.configurationStore.Property(description = "Show console when a message is printed to standard output stream")
   @get:Attribute("show_console_on_std_out")
@@ -44,7 +44,7 @@ open class RunConfigurationOptions : BaseState(), FragmentedSettings {
 
   @get:Property(surroundWithTag = false)
   @get:XCollection
-  var logFiles: MutableList<LogFileOptions> by list<LogFileOptions>()
+  var logFiles: MutableList<LogFileOptions> by list()
 
   @com.intellij.configurationStore.Property(description = "Allow multiple instances")
   @get:Transient
@@ -57,7 +57,7 @@ open class RunConfigurationOptions : BaseState(), FragmentedSettings {
   var projectPathOnTarget: String? by string()
 
   @get:XCollection(propertyElementName = "selectedOptions")
-  override var selectedOptions: MutableList<FragmentedSettings.Option> by list<FragmentedSettings.Option>()
+  override var selectedOptions: MutableList<FragmentedSettings.Option> by list()
 }
 
 open class LocatableRunConfigurationOptions : RunConfigurationOptions() {
@@ -71,7 +71,7 @@ open class ModuleBasedConfigurationOptions : LocatableRunConfigurationOptions() 
   var module: String? by string()
 
   @get:XCollection(propertyElementName = "classpathModifications")
-  var classpathModifications: MutableList<ClasspathModification> by list<ClasspathModification>()
+  var classpathModifications: MutableList<ClasspathModification> by list()
 
   @Tag("entry")
   class ClasspathModification() : BaseState() {

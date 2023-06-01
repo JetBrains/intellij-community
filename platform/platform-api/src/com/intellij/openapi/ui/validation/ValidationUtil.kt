@@ -10,7 +10,7 @@ import java.nio.file.Path
  * Created validation with parameter that produces error if [getMessage] returns non-null value.
  */
 fun <T> validationErrorFor(getMessage: (T) -> @NlsContexts.DialogMessage String?): DialogValidation.WithParameter<() -> T> =
-  DialogValidation.WithParameter<() -> T> {
+  DialogValidation.WithParameter {
     DialogValidation {
       val message = getMessage(it())
       if (message != null) {

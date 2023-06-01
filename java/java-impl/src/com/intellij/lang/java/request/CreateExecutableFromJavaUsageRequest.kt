@@ -25,7 +25,7 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
 
   override fun isValid(): Boolean = callPointer.element != null
 
-  override fun getAnnotations(): List<AnnotationRequest> = emptyList<AnnotationRequest>()
+  override fun getAnnotations(): List<AnnotationRequest> = emptyList()
 
   override fun getModifiers(): Collection<JvmModifier> = modifiers
 

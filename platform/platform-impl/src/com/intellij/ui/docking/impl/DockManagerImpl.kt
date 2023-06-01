@@ -75,12 +75,12 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
   private var loadedState: Element? = null
 
   companion object {
-    val SHOW_NORTH_PANEL: Key<Boolean> = Key.create<Boolean>("SHOW_NORTH_PANEL")
-    val WINDOW_DIMENSION_KEY: Key<String> = Key.create<String>("WINDOW_DIMENSION_KEY")
+    val SHOW_NORTH_PANEL: Key<Boolean> = Key.create("SHOW_NORTH_PANEL")
+    val WINDOW_DIMENSION_KEY: Key<String> = Key.create("WINDOW_DIMENSION_KEY")
     @JvmField
-    val REOPEN_WINDOW: Key<Boolean> = Key.create<Boolean>("REOPEN_WINDOW")
+    val REOPEN_WINDOW: Key<Boolean> = Key.create("REOPEN_WINDOW")
     @JvmField
-    val ALLOW_DOCK_TOOL_WINDOWS: Key<Boolean> = Key.create<Boolean>("ALLOW_DOCK_TOOL_WINDOWS")
+    val ALLOW_DOCK_TOOL_WINDOWS: Key<Boolean> = Key.create("ALLOW_DOCK_TOOL_WINDOWS")
 
     @JvmStatic
     fun isSingletonEditorInWindow(editors: List<FileEditor>): Boolean {

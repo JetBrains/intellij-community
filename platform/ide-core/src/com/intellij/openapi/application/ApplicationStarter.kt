@@ -30,7 +30,7 @@ abstract class ModernApplicationStarter : ApplicationStarter {
  */
 interface ApplicationStarter {
   companion object {
-    val EP_NAME: ExtensionPointName<ApplicationStarter> = ExtensionPointName<ApplicationStarter>("com.intellij.appStarter")
+    val EP_NAME: ExtensionPointName<ApplicationStarter> = ExtensionPointName("com.intellij.appStarter")
 
     const val NON_MODAL: Int = 1
     const val ANY_MODALITY: Int = 2

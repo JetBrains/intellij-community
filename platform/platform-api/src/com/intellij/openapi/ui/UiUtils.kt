@@ -31,7 +31,7 @@ import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
 
-val PREFERRED_FOCUSED_COMPONENT: Key<JComponent> = Key.create<JComponent>("JComponent.preferredFocusedComponent")
+val PREFERRED_FOCUSED_COMPONENT: Key<JComponent> = Key.create("JComponent.preferredFocusedComponent")
 
 fun JComponent.getPreferredFocusedComponent(): JComponent? {
   if (this is DialogPanel) {
@@ -127,7 +127,7 @@ fun ExtendableTextField.addExtension(
   addExtension(ExtendableTextComponent.Extension.create(icon, hoverIcon, tooltip, action))
 }
 
-fun <T> ListModel<T>.asSequence(): Sequence<T> = sequence<T> {
+fun <T> ListModel<T>.asSequence(): Sequence<T> = sequence {
   for (i in 0 until size) {
     yield(getElementAt(i))
   }

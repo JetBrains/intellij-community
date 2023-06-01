@@ -168,7 +168,7 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
       Listener::class.java, Topic.BroadcastDirection.NONE, true)
     private val OUR_ITEMS = Key.create<MutableList<DocRenderItemImpl>>("doc.render.items")
     @JvmField
-    val OWN_HIGHLIGHTER: Key<Boolean> = Key.create<Boolean>("doc.render.highlighter")
+    val OWN_HIGHLIGHTER: Key<Boolean> = Key.create("doc.render.highlighter")
     private fun keepScrollingPositionWhile(editor: Editor, task: BooleanSupplier) {
       val keeper = EditorScrollingPositionKeeper(editor)
       keeper.savePosition()

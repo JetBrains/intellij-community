@@ -64,6 +64,6 @@ internal class BrokenFileBasedIndexExtension : ScalarIndexExtension<Int>() {
 
   companion object {
     @JvmStatic
-    val INDEX_ID: ID<Int, Void> = ID.create<Int, Void>("broken.file.based.index")
+    val INDEX_ID: ID<Int, Void> = ID.create("broken.file.based.index")
   }
 }

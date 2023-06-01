@@ -16,7 +16,7 @@ object CustomizeIDEWizardInteractions {
   val featuredPluginGroups: AtomicReference<Set<PluginId>> = AtomicReference<Set<PluginId>>()
 
   var skippedOnPage: Int = -1
-  val interactions: MutableList<CustomizeIDEWizardInteraction> = mutableListOf<CustomizeIDEWizardInteraction>()
+  val interactions: MutableList<CustomizeIDEWizardInteraction> = mutableListOf()
 
   @JvmOverloads
   fun record(type: CustomizeIDEWizardInteractionType, pluginDescriptor: PluginDescriptor? = null, groupId: String? = null) {

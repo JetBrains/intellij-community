@@ -15,7 +15,7 @@ internal abstract class BgtTreeWalker<N : Any>(
   private val convert: (N) -> Any,
 ) : TreeWalkerBase<N>() {
 
-  val promise: AsyncPromise<TreePath> = AsyncPromise<TreePath>()
+  val promise: AsyncPromise<TreePath> = AsyncPromise()
   private inner class Level(val path: TreePath?, val nodes: ArrayDeque<N>)
   private val stack = ArrayDeque<Level>()
   @set:RequiresEdt

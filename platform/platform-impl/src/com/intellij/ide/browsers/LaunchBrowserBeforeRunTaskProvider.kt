@@ -28,7 +28,7 @@ import javax.swing.JCheckBox
 
 internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<LaunchBrowserBeforeRunTask>(), DumbAware {
   companion object {
-    val ID: Key<LaunchBrowserBeforeRunTask> = Key.create<LaunchBrowserBeforeRunTask>("LaunchBrowser.Before.Run")
+    val ID: Key<LaunchBrowserBeforeRunTask> = Key.create("LaunchBrowser.Before.Run")
   }
 
   override fun getName(): @Nls String = IdeBundle.message("task.browser.launch")
@@ -118,7 +118,7 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
 
 internal class LaunchBrowserBeforeRunTaskState : BaseState() {
   @get:Attribute(value = "browser", converter = WebBrowserReferenceConverter::class)
-  var browser: WebBrowser? by property<WebBrowser?>(null) { it == null }
+  var browser: WebBrowser? by property(null) { it == null }
   @get:Attribute()
   var url: String? by string()
   @get:Attribute()

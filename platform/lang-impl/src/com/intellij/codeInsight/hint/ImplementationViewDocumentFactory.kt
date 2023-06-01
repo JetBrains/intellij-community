@@ -12,7 +12,7 @@ interface ImplementationViewDocumentFactory {
 
   companion object {
     @JvmField
-    val EP_NAME: ExtensionPointName<ImplementationViewDocumentFactory> = ExtensionPointName.create<ImplementationViewDocumentFactory>(
+    val EP_NAME: ExtensionPointName<ImplementationViewDocumentFactory> = ExtensionPointName.create(
       "com.intellij.implementationViewDocumentFactory")
   }
 }

@@ -28,19 +28,19 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
 
   var numberOfIndexedFiles: Int = 0
 
-  var listOfFilesFullyIndexedByExtensions: ArrayList<String> = arrayListOf<String>()
+  var listOfFilesFullyIndexedByExtensions: ArrayList<String> = arrayListOf()
 
   var numberOfFilesFullyIndexedByExtensions: Int = 0
 
   var numberOfTooLargeForIndexingFiles: Int = 0
 
-  val statsPerIndexer: HashMap<String, StatsPerIndexer> = hashMapOf<String /* ID.name() */, StatsPerIndexer>()
+  val statsPerIndexer: HashMap<String, StatsPerIndexer> = hashMapOf()
 
-  val statsPerFileType: HashMap<String, StatsPerFileType> = hashMapOf<String /* File type name */, StatsPerFileType>()
+  val statsPerFileType: HashMap<String, StatsPerFileType> = hashMapOf()
 
-  val indexedFiles: ArrayList<IndexedFile> = arrayListOf<IndexedFile>()
+  val indexedFiles: ArrayList<IndexedFile> = arrayListOf()
 
-  val slowIndexedFiles: LimitedPriorityQueue<SlowIndexedFile> = LimitedPriorityQueue<SlowIndexedFile>(SLOW_FILES_LIMIT, compareBy { it.processingTime })
+  val slowIndexedFiles: LimitedPriorityQueue<SlowIndexedFile> = LimitedPriorityQueue(SLOW_FILES_LIMIT, compareBy { it.processingTime })
 
   var allValuesAppliedSeparately: Boolean = true
   var allSeparateApplicationTimeInAllThreads: TimeNano = 0 //is 0 when !allValuesAppliedSeparately

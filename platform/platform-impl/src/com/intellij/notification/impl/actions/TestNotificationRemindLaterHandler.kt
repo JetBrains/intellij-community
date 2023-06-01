@@ -50,7 +50,7 @@ class TestNotificationRemindLaterHandler : NotificationRemindLaterHandler {
 
 class ActionsState : BaseState() {
   @get:CollectionBean
-  val actions: MutableList<String> by list<String>()
+  val actions: MutableList<String> by list()
 }
 
 class TestNotificationRemindLaterHandler2 : NotificationRemindLaterHandlerWithState<ActionsState>(ActionsState::class.java) {

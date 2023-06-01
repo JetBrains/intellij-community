@@ -128,7 +128,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
   override fun getGroups(): List<BookmarkGroup> = synchronized(notifier) { allGroups.toList() }
 
   override fun getGroups(bookmark: Bookmark): List<BookmarkGroup> = synchronized(notifier) {
-    allBookmarks[bookmark]?.groups?.let { allGroups.filter(it::contains) } ?: emptyList<BookmarkGroup>()
+    allBookmarks[bookmark]?.groups?.let { allGroups.filter(it::contains) } ?: emptyList()
   }
 
   override fun addGroup(name: String, isDefault: Boolean): BookmarkGroup? = when {
@@ -627,7 +627,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
 
   internal inner class InManagerInfo(val bookmark: Bookmark, var type: BookmarkType) {
     val renderer: GutterLineBookmarkRenderer? = (bookmark as? LineBookmark)?.let { GutterLineBookmarkRenderer(it) }
-    val groups: MutableSet<Group> = mutableSetOf<Group>()
+    val groups: MutableSet<Group> = mutableSetOf()
 
     fun refreshRenderer(): Unit? = renderer?.refreshHighlighter { groups.isEmpty() }
 

@@ -547,7 +547,7 @@ class JdkInstallerStateEntry : BaseState() {
 
 class JdkInstallerState : BaseState() {
   @get:XCollection
-  var installedItems: MutableList<JdkInstallerStateEntry> by list<JdkInstallerStateEntry>()
+  var installedItems: MutableList<JdkInstallerStateEntry> by list()
 }
 
 @State(name = "JdkInstallerHistory", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)], allowLoadInTests = true)

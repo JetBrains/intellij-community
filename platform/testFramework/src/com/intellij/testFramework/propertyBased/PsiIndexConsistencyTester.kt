@@ -62,7 +62,7 @@ object PsiIndexConsistencyTester {
 
 
   open class Model(val vFile: VirtualFile, val fixture: CodeInsightTestFixture) {
-    val refs: HashMap<RefKind, Any?> = hashMapOf<RefKind, Any?>()
+    val refs: HashMap<RefKind, Any?> = hashMapOf()
     val project: Project = fixture.project!!
 
     fun findPsiFile(language: Language? = null): PsiFile = findViewProvider().let { vp -> vp.getPsi(language ?: vp.baseLanguage) }!!

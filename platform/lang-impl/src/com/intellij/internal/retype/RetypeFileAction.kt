@@ -105,7 +105,7 @@ interface RetypeFileAssistant {
   }
 
   companion object {
-    val EP_NAME: ExtensionPointName<RetypeFileAssistant> = ExtensionPointName.create<RetypeFileAssistant>("com.intellij.retypeFileAssistant")
+    val EP_NAME: ExtensionPointName<RetypeFileAssistant> = ExtensionPointName.create("com.intellij.retypeFileAssistant")
   }
 }
 

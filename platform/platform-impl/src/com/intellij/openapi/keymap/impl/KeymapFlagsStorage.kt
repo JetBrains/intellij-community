@@ -34,7 +34,7 @@ class KeymapFlagsStorage : SimplePersistentStateComponent<KeymapFlagsStorage.Sta
     var lifetime: KeymapFlagLifetimeKind?
   )
   class State internal constructor(): BaseState() {
-    var keymapToDescriptor: MutableMap<String, MutableList<FlagDescriptor>> by map<String, MutableList<FlagDescriptor>>() // keymapName to descriptor
+    var keymapToDescriptor: MutableMap<String, MutableList<FlagDescriptor>> by map() // keymapName to descriptor
   }
 
   fun addFlag(keymap: Keymap, actionId: String, shortcut: Shortcut, flag: String, lifetime: KeymapFlagLifetimeKind) {

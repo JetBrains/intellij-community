@@ -12,7 +12,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.CodeStyleSettings
 
-val visualFormattingElementKey: Key<Boolean> = Key.create<Boolean>("visual.formatting.element")
+val visualFormattingElementKey: Key<Boolean> = Key.create("visual.formatting.element")
 
 abstract class VisualFormattingLayerService {
   private val EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS = Key.create<CodeStyleSettings>("visual.formatting.layer.info")

@@ -108,7 +108,7 @@ open class ContributedConfigurationsList<C, T>(private val extPoint: ExtensionPo
    */
   open class ListState : BaseState() {
     @get: XCollection(style = XCollection.Style.v2)
-    var configs: MutableList<ContributedStateBase> by list<ContributedStateBase>()
+    var configs: MutableList<ContributedStateBase> by list()
   }
 
   /**

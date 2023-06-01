@@ -9,7 +9,7 @@ import com.intellij.util.xmlb.annotations.Property
 internal class VisibleTreeStateComponent : BaseState() {
   @get:Property(surroundWithTag = false)
   @get:MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-  var profileNameToState: MutableMap<String, VisibleTreeState> by map<String, VisibleTreeState>()
+  var profileNameToState: MutableMap<String, VisibleTreeState> by map()
 
   fun getVisibleTreeState(profile: InspectionProfile): VisibleTreeState = profileNameToState.getOrPut(profile.name) {
     incrementModificationCount()

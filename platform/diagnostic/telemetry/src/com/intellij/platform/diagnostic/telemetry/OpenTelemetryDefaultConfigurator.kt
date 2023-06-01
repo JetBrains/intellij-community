@@ -38,7 +38,7 @@ open class OpenTelemetryDefaultConfigurator(protected val mainScope: CoroutineSc
 
   val aggregatedMetricsExporter: AggregatedMetricsExporter = AggregatedMetricsExporter()
   val aggregatedSpansProcessor: AggregatedSpansProcessor = AggregatedSpansProcessor(mainScope)
-  protected val spanExporters: MutableList<AsyncSpanExporter> = mutableListOf<AsyncSpanExporter>()
+  protected val spanExporters: MutableList<AsyncSpanExporter> = mutableListOf()
   private val metricsExporters = mutableListOf<MetricsExporterEntry>()
 
   private fun isMetricsEnabled(): Boolean {

@@ -14,7 +14,7 @@ import kotlin.reflect.KProperty
 @Suppress("LeakingThis")
 abstract class ToolbarComboWidget: JComponent() {
 
-  val pressListeners: MutableList<ActionListener> = mutableListOf<ActionListener>()
+  val pressListeners: MutableList<ActionListener> = mutableListOf()
 
   var text: @Nls String? by Delegates.observable("", this::fireUpdateEvents)
 

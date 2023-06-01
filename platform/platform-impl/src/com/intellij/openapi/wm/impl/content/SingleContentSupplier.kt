@@ -81,7 +81,7 @@ interface SingleContentSupplier {
 
   companion object {
     @JvmField
-    val KEY: DataKey<SingleContentSupplier> = DataKey.create<SingleContentSupplier>("SingleContentSupplier")
+    val KEY: DataKey<SingleContentSupplier> = DataKey.create("SingleContentSupplier")
 
     @JvmField
     val DRAGGED_OUT_KEY: Key<Boolean> = Key.create("DraggedOutKey")

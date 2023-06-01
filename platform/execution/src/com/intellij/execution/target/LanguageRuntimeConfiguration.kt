@@ -85,7 +85,7 @@ abstract class LanguageRuntimeConfiguration(typeId: String) : ContributedConfigu
    */
   class VolumeState : BaseState() {
     var remotePath: String? by string()
-    var targetSpecificBits: MutableMap<String, String> by map<String, String>()
+    var targetSpecificBits: MutableMap<String, String> by map()
 
     var targetSpecificData: TargetSpecificVolumeData?
       @Transient

@@ -82,7 +82,7 @@ import kotlin.math.min
  * @author Konstantin Bulenkov
  */
 object Switcher : BaseSwitcherAction(null) {
-  val SWITCHER_KEY: Key<SwitcherPanel> = Key.create<SwitcherPanel>("SWITCHER_KEY")
+  val SWITCHER_KEY: Key<SwitcherPanel> = Key.create("SWITCHER_KEY")
 
   @Deprecated("Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, boolean, boolean)}")
   @JvmStatic

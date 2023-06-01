@@ -7,7 +7,7 @@ import com.intellij.util.xmlb.annotations.XMap
 
 class ManagerState {
   @get:XCollection
-  val groups: MutableList<GroupState> = mutableListOf<GroupState>()
+  val groups: MutableList<GroupState> = mutableListOf()
 }
 
 
@@ -16,7 +16,7 @@ class GroupState {
   var isDefault: Boolean = false
 
   @get:XCollection
-  val bookmarks: MutableList<BookmarkState> = mutableListOf<BookmarkState>()
+  val bookmarks: MutableList<BookmarkState> = mutableListOf()
 }
 
 
@@ -26,7 +26,7 @@ class BookmarkState {
   var type: BookmarkType = BookmarkType.DEFAULT
 
   @get:XMap
-  val attributes: MutableMap<String, String> = mutableMapOf<String, String>()
+  val attributes: MutableMap<String, String> = mutableMapOf()
 
   override fun toString(): String = StringBuilder("BookmarkState").apply {
     append(": provider=").append(provider)

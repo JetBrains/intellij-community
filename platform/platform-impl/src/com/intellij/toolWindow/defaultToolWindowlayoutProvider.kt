@@ -22,7 +22,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 interface DefaultToolWindowLayoutExtension {
   companion object {
-    val EP_NAME: ExtensionPointName<DefaultToolWindowLayoutExtension> = ExtensionPointName.create<DefaultToolWindowLayoutExtension>("com.intellij.defaultToolWindowLayout")
+    val EP_NAME: ExtensionPointName<DefaultToolWindowLayoutExtension> = ExtensionPointName.create("com.intellij.defaultToolWindowLayout")
   }
 
   fun buildV1Layout(builder: DefaultToolWindowLayoutBuilder)

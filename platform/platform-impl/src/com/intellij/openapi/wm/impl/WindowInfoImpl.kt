@@ -41,7 +41,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    * Bounds of window in "floating" mode. It equals to `null` if floating bounds are undefined.
    */
   @get:Property(flat = true, style = Property.Style.ATTRIBUTE)
-  override var floatingBounds: Rectangle? by property<Rectangle?>(null) { it == null || (it.width == 0 && it.height == 0 && it.x == 0 && it.y == 0) }
+  override var floatingBounds: Rectangle? by property(null) { it == null || (it.width == 0 && it.height == 0 && it.x == 0 && it.y == 0) }
 
   /**
    * This attribute persists state 'maximized' for `ToolWindowType.WINDOWED` where decoration is presented by JFrame

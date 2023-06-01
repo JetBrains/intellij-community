@@ -16,7 +16,7 @@ class CodeStyleProcessorBuilder(private val messageOutput: MessageOutput) {
   private var primaryCodeStyle: CodeStyleSettings? = null
   private var defaultCodeStyle: CodeStyleSettings? = null
   private var fileMasks = emptyList<Regex>()
-  val entries: ArrayList<File> = arrayListOf<File>()
+  val entries: ArrayList<File> = arrayListOf()
   var charset: Charset? = null
 
   fun dryRun(): CodeStyleProcessorBuilder = this.also { isDryRun = true }

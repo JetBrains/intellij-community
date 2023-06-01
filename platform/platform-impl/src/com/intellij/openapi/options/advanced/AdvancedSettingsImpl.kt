@@ -204,7 +204,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
 
   companion object {
     @JvmField
-    val EP_NAME: ExtensionPointName<AdvancedSettingBean> = ExtensionPointName<AdvancedSettingBean>("com.intellij.advancedSetting")
+    val EP_NAME: ExtensionPointName<AdvancedSettingBean> = ExtensionPointName("com.intellij.advancedSetting")
   }
 
   override fun getKey(): String = id
@@ -215,7 +215,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
 @State(name = "AdvancedSettings", storages = [Storage("advancedSettings.xml"), Storage(value = "ide.general.xml", deprecated = true)])
 class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState>, Disposable {
   class AdvancedSettingsState {
-    var settings: MutableMap<String, String> = mutableMapOf<String, String>()
+    var settings: MutableMap<String, String> = mutableMapOf()
   }
 
   private val epCollector = KeyedExtensionCollector<AdvancedSettingBean, String>(AdvancedSettingBean.EP_NAME.name)

@@ -89,7 +89,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
     private val jbProduced = mutableSetOf<PluginData>()
 
     @VisibleForTesting
-    val thirdParty: MutableSet<PluginData> = mutableSetOf<PluginData>()
+    val thirdParty: MutableSet<PluginData> = mutableSetOf()
 
     init {
       val descriptorsById = PluginManagerCore.buildPluginIdMap()

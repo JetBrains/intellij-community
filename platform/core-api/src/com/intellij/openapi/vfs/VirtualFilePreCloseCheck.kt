@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 
 interface VirtualFilePreCloseCheck {
   companion object {
-    val extensionPoint: ExtensionPointName<VirtualFilePreCloseCheck> = ExtensionPointName.create<VirtualFilePreCloseCheck>("com.intellij.openapi.vfs.VirtualFilePreCloseCheck")
+    val extensionPoint: ExtensionPointName<VirtualFilePreCloseCheck> = ExtensionPointName.create("com.intellij.openapi.vfs.VirtualFilePreCloseCheck")
   }
 
   /**

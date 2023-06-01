@@ -22,7 +22,7 @@ interface InlineCompletionProvider {
   }
 
   object DUMMY : InlineCompletionProvider {
-    override suspend fun getProposals(request: InlineCompletionRequest): List<InlineCompletionElement> = emptyList<InlineCompletionElement>()
+    override suspend fun getProposals(request: InlineCompletionRequest): List<InlineCompletionElement> = emptyList()
     override fun isEnabled(event: DocumentEvent): Boolean = true
   }
 }

@@ -14,13 +14,13 @@ internal class DialogPanelConfig {
 
   var preferredFocusedComponent: JComponent? = null
 
-  val applyCallbacks: LinkedHashMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf<JComponent?, MutableList<() -> Unit>>()
-  val resetCallbacks: LinkedHashMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf<JComponent?, MutableList<() -> Unit>>()
-  val isModifiedCallbacks: LinkedHashMap<JComponent?, MutableList<() -> Boolean>> = linkedMapOf<JComponent?, MutableList<() -> Boolean>>()
+  val applyCallbacks: LinkedHashMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
+  val resetCallbacks: LinkedHashMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
+  val isModifiedCallbacks: LinkedHashMap<JComponent?, MutableList<() -> Boolean>> = linkedMapOf()
 
-  val validationRequestors: LinkedHashMap<JComponent, MutableList<DialogValidationRequestor>> = linkedMapOf<JComponent, MutableList<DialogValidationRequestor>>()
-  val validationsOnInput: LinkedHashMap<JComponent, MutableList<DialogValidation>> = linkedMapOf<JComponent, MutableList<DialogValidation>>()
-  val validationsOnApply: LinkedHashMap<JComponent, MutableList<DialogValidation>> = linkedMapOf<JComponent, MutableList<DialogValidation>>()
+  val validationRequestors: LinkedHashMap<JComponent, MutableList<DialogValidationRequestor>> = linkedMapOf()
+  val validationsOnInput: LinkedHashMap<JComponent, MutableList<DialogValidation>> = linkedMapOf()
+  val validationsOnApply: LinkedHashMap<JComponent, MutableList<DialogValidation>> = linkedMapOf()
 }
 
 internal fun <C: JComponent?, T> MutableMap<C, MutableList<T>>.list(component: C): MutableList<T> {

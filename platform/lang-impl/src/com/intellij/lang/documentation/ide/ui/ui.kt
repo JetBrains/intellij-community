@@ -30,7 +30,7 @@ import javax.swing.JScrollPane
 internal const val DEFAULT_UI_RESPONSE_TIMEOUT: Long = 300
 
 @JvmField
-internal val FORCED_WIDTH: Key<Int> = Key.create<Int>("WidthBasedLayout.width")
+internal val FORCED_WIDTH: Key<Int> = Key.create("WidthBasedLayout.width")
 
 internal typealias UISnapshot = () -> Unit
 

@@ -34,7 +34,7 @@ abstract class RunManager {
 
     @JvmField
     @ApiStatus.Internal
-    val IS_RUN_MANAGER_INITIALIZED: Key<Boolean> = Key.create<Boolean>("RunManagerInitialized")
+    val IS_RUN_MANAGER_INITIALIZED: Key<Boolean> = Key.create("RunManagerInitialized")
 
     private val LOG = logger<RunManager>()
 

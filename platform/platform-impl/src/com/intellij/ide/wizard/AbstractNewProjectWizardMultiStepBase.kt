@@ -26,7 +26,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
   private val stepsPanels = HashMap<String, DialogPanel>()
 
-  protected open fun initSteps(): Map<String, NewProjectWizardStep> = emptyMap<String, NewProjectWizardStep>()
+  protected open fun initSteps(): Map<String, NewProjectWizardStep> = emptyMap()
 
   protected open fun setupSwitcherUi(builder: Panel) {
     builder.row(label) {

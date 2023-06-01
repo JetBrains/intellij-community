@@ -13,7 +13,7 @@ class DeclarativeInlayHintsSettings : SimplePersistentStateComponent<Declarative
   class HintsState : BaseState() {
     // Format: providerId + # + optionId
     var disabledOptions: MutableSet<String> by stringSet()
-    var providerIdToEnabled: MutableMap<String, Boolean> by map<String, Boolean>()
+    var providerIdToEnabled: MutableMap<String, Boolean> by map()
   }
 
 

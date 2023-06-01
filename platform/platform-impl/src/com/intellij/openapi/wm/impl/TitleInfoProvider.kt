@@ -22,7 +22,7 @@ interface TitleInfoProvider {
 
     @ApiStatus.Internal
     @JvmField
-    val EP: ExtensionPointName<TitleInfoProvider> = ExtensionPointName<TitleInfoProvider>("com.intellij.titleInfoProvider")
+    val EP: ExtensionPointName<TitleInfoProvider> = ExtensionPointName("com.intellij.titleInfoProvider")
 
     fun getProviders(): List<TitleInfoProvider> = EP.extensionList
 

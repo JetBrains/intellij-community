@@ -66,7 +66,7 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
 
   companion object {
     @JvmField
-    val EXTENSION_NAME: ExtensionPointName<LanguageRuntimeType<*>> = ExtensionPointName.create<LanguageRuntimeType<*>>("com.intellij.executionTargetLanguageRuntimeType")
+    val EXTENSION_NAME: ExtensionPointName<LanguageRuntimeType<*>> = ExtensionPointName.create("com.intellij.executionTargetLanguageRuntimeType")
 
     fun LanguageRuntimeType<*>.findVolumeDescriptor(type: VolumeType): VolumeDescriptor? =
       this.volumeDescriptors().firstOrNull { it.type == type }

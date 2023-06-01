@@ -15,10 +15,10 @@ import javax.swing.tree.TreePath
 @Tag("profile-state")
 internal class VisibleTreeState : BaseState() {
   @get:XCollection(elementName = "expanded", valueAttributeName = "path", propertyElementName = "expanded-state")
-  var expandedNodes: MutableSet<State> by treeSet<State>()
+  var expandedNodes: MutableSet<State> by treeSet()
 
   @get:XCollection(elementName = "selected", valueAttributeName = "path", propertyElementName = "selected-state")
-  var selectedNodes: MutableSet<State> by treeSet<State>()
+  var selectedNodes: MutableSet<State> by treeSet()
 
   fun expandNode(node: InspectionConfigTreeNode) {
     expandedNodes.add(getState(node))

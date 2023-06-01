@@ -44,8 +44,8 @@ class JavaLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(JavaLangua
     var homePath: String? by string()
     var javaVersionString: String? by string()
 
-    var applicationFolder: VolumeState? by property<VolumeState>()
-    var classpathFolder: VolumeState? by property<VolumeState>()
-    var agentFolder: VolumeState? by property<VolumeState>()
+    var applicationFolder: VolumeState? by property()
+    var classpathFolder: VolumeState? by property()
+    var agentFolder: VolumeState? by property()
   }
 }

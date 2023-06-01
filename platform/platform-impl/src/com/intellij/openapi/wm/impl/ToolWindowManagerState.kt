@@ -46,7 +46,7 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
     private set
   override var layoutToRestoreLater: DesktopLayout? = null
   override val recentToolWindows: LinkedList<String> = LinkedList<String>()
-  override val scheduledLayout: AtomicProperty<DesktopLayout?> = AtomicProperty<DesktopLayout?>(null)
+  override val scheduledLayout: AtomicProperty<DesktopLayout?> = AtomicProperty(null)
 
   override val isEditorComponentActive: Boolean
     get() {

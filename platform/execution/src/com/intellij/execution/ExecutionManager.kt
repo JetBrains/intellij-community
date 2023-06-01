@@ -21,10 +21,10 @@ import java.util.function.Consumer
 abstract class ExecutionManager {
   companion object {
     @JvmField
-    val EXECUTION_SESSION_ID_KEY: Key<Any> = Key.create<Any>("EXECUTION_SESSION_ID_KEY")
+    val EXECUTION_SESSION_ID_KEY: Key<Any> = Key.create("EXECUTION_SESSION_ID_KEY")
 
     @JvmField
-    val EXECUTION_SKIP_RUN: Key<Boolean> = Key.create<Boolean>("EXECUTION_SKIP_RUN")
+    val EXECUTION_SKIP_RUN: Key<Boolean> = Key.create("EXECUTION_SKIP_RUN")
 
     @JvmField
     @Topic.ProjectLevel

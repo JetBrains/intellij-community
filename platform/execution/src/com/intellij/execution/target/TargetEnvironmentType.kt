@@ -61,7 +61,7 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
      * For retrieving the list of target types available for Run Configurations use [getTargetTypesForRunConfigurations].
      */
     @JvmField
-    val EXTENSION_NAME: ExtensionPointName<TargetEnvironmentType<*>> = ExtensionPointName.create<TargetEnvironmentType<*>>("com.intellij.executionTargetType")
+    val EXTENSION_NAME: ExtensionPointName<TargetEnvironmentType<*>> = ExtensionPointName.create("com.intellij.executionTargetType")
 
     /**
      * Returns the types that might be shown in "Run on" for Run Configurations.

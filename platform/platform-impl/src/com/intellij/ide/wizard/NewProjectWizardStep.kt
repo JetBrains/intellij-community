@@ -109,7 +109,7 @@ interface NewProjectWizardStep {
 
     const val GENERATE_ONBOARDING_TIPS_NAME: String = "NewProjectWizard.generateOnboardingTips"
 
-    val MODIFIABLE_MODULE_MODEL_KEY: Key<ModifiableModuleModel> = Key.create<ModifiableModuleModel>("MODIFIABLE_MODULE_MODEL_KEY")
+    val MODIFIABLE_MODULE_MODEL_KEY: Key<ModifiableModuleModel> = Key.create("MODIFIABLE_MODULE_MODEL_KEY")
 
   }
 }

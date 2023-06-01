@@ -14,7 +14,7 @@ class RunToolbarProcessData {
   companion object {
     @ApiStatus.Internal
     @JvmField
-    val RW_SLOT: DataKey<String> = DataKey.create<String>("RunWidgetSlot")
+    val RW_SLOT: DataKey<String> = DataKey.create("RunWidgetSlot")
 
     @ApiStatus.Internal
     @JvmField

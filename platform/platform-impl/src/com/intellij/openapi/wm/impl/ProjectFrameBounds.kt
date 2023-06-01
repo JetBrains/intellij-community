@@ -37,7 +37,7 @@ internal class ProjectFrameBounds {
 @Property(style = Property.Style.ATTRIBUTE)
 internal class FrameInfo : BaseState() {
   @get:Property(flat = true, style = Property.Style.ATTRIBUTE)
-  var bounds: Rectangle? by property<Rectangle?>(null) { it == null || (it.width == 0 && it.height == 0 && it.x == 0 && it.y == 0) }
+  var bounds: Rectangle? by property(null) { it == null || (it.width == 0 && it.height == 0 && it.x == 0 && it.y == 0) }
 
   var extendedState: Int by property(Frame.NORMAL)
   var fullScreen: Boolean by property(false)

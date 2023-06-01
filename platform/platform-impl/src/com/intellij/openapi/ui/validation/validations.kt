@@ -35,7 +35,7 @@ val CHECK_NON_EMPTY_DIRECTORY: DialogValidation.WithParameter<() -> String> = va
   else null
 }.asWarning().withOKEnabled()
 
-val CHECK_DIRECTORY: DialogValidation.WithParameter<() -> String> = validationErrorFor<String> { text ->
+val CHECK_DIRECTORY: DialogValidation.WithParameter<() -> String> = validationErrorFor { text ->
   runCatching { Path.of(text).toFile() }
     .mapCatching { file ->
       when {
@@ -73,13 +73,13 @@ val CHECK_ARTIFACT_ID: DialogValidation.WithParameter<() -> String> = CHECK_NO_W
 
 private fun Project.getModules() = ModuleManager.getInstance(this).modules
 
-val CHECK_FREE_MODULE_NAME: DialogValidation.WithTwoParameters<Project?, () -> String> = validationErrorFor<Project?, String> { project, name ->
+val CHECK_FREE_MODULE_NAME: DialogValidation.WithTwoParameters<Project?, () -> String> = validationErrorFor { project, name ->
   project?.getModules()
     ?.find { it.name == name }
     ?.let { UIBundle.message("label.project.wizard.new.module.name.exists.error", it.name) }
 }
 
-val CHECK_FREE_MODULE_PATH: DialogValidation.WithTwoParameters<Project?, () -> String> = validationPathErrorFor<Project?> { project, path ->
+val CHECK_FREE_MODULE_PATH: DialogValidation.WithTwoParameters<Project?, () -> String> = validationPathErrorFor { project, path ->
   project?.getModules()
     ?.find { m -> m.rootManager.contentRoots.map { it.toNioPath() }.any { it == path } }
     ?.let { UIBundle.message("label.project.wizard.new.module.directory.already.taken.error", it.name) }

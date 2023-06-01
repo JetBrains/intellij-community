@@ -23,7 +23,7 @@ class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings
 
   class State : BaseState() {
     @get:OptionTag("TRUSTED_PATHS")
-    var trustedPaths: MutableList<String> by list<String>()
+    var trustedPaths: MutableList<String> by list()
   }
 
   fun isPathTrusted(path: Path): Boolean {

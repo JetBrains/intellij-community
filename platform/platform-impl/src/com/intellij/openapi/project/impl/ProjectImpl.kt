@@ -59,10 +59,10 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     private val LOG = logger<ProjectImpl>()
 
     @Internal
-    val RUN_START_UP_ACTIVITIES: Key<Boolean> = Key.create<Boolean>("RUN_START_UP_ACTIVITIES")
+    val RUN_START_UP_ACTIVITIES: Key<Boolean> = Key.create("RUN_START_UP_ACTIVITIES")
 
     @JvmField
-    val CREATION_TIME: Key<Long> = Key.create<Long>("ProjectImpl.CREATION_TIME")
+    val CREATION_TIME: Key<Long> = Key.create("ProjectImpl.CREATION_TIME")
 
     @TestOnly
     const val LIGHT_PROJECT_NAME: @NonNls String = "light_temp"
@@ -71,11 +71,11 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
     @TestOnly
     @JvmField
-    val CREATION_TEST_NAME: Key<String> = Key.create<String>("ProjectImpl.CREATION_TEST_NAME")
+    val CREATION_TEST_NAME: Key<String> = Key.create("ProjectImpl.CREATION_TEST_NAME")
 
     @TestOnly
     @JvmField
-    val USED_TEST_NAMES: Key<String> = Key.create<String>("ProjectImpl.USED_TEST_NAMES")
+    val USED_TEST_NAMES: Key<String> = Key.create("ProjectImpl.USED_TEST_NAMES")
 
     // for light projects, preload only services that are essential
     // ("await" means "project component loading activity is completed only when all such services are completed")

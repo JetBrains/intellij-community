@@ -13,7 +13,7 @@ class LineNode(project: Project, bookmark: LineBookmark) : BookmarkNode<LineBook
   override fun getVirtualFile(): VirtualFile = value.file
 
   override fun isAlwaysLeaf(): Boolean = true
-  override fun getChildren(): List<AbstractTreeNode<*>> = emptyList<AbstractTreeNode<*>>()
+  override fun getChildren(): List<AbstractTreeNode<*>> = emptyList()
 
   override fun update(presentation: PresentationData) {
     val line = value.line + 1

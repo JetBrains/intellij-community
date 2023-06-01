@@ -36,13 +36,13 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
   private val timesImpl = IndexingTimesImpl(indexingReason = indexingReason, scanningType = scanningType,
                                             updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
-  override val scanningStatistics: ArrayList<JsonScanningStatistics> = arrayListOf<JsonScanningStatistics>()
+  override val scanningStatistics: ArrayList<JsonScanningStatistics> = arrayListOf()
 
-  override val providerStatistics: ArrayList<JsonFileProviderIndexStatistics> = arrayListOf<JsonFileProviderIndexStatistics>()
+  override val providerStatistics: ArrayList<JsonFileProviderIndexStatistics> = arrayListOf()
 
-  override val totalStatsPerFileType: HashMap<String, StatsPerFileTypeImpl> = hashMapOf<String /* File type name */, StatsPerFileTypeImpl>()
+  override val totalStatsPerFileType: HashMap<String, StatsPerFileTypeImpl> = hashMapOf()
 
-  override val totalStatsPerIndexer: HashMap<String, StatsPerIndexerImpl> = hashMapOf<String /* Index ID */, StatsPerIndexerImpl>()
+  override val totalStatsPerIndexer: HashMap<String, StatsPerIndexerImpl> = hashMapOf()
 
   override var visibleTimeToAllThreadsTimeRatio: Double = 0.0
 
@@ -368,7 +368,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   private val timesImpl = ScanningTimesImpl(scanningReason = scanningReason, scanningType = scanningType, scanningId = scanningSessionId,
                                             updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
-  override val scanningStatistics: ArrayList<JsonScanningStatistics> = arrayListOf<JsonScanningStatistics>()
+  override val scanningStatistics: ArrayList<JsonScanningStatistics> = arrayListOf()
 
   private val events = mutableListOf<Event>()
 
@@ -582,11 +582,11 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
 
   override var refreshedScanningStatistics: JsonScanningStatistics = JsonScanningStatistics()
 
-  override val providerStatistics: ArrayList<JsonFileProviderIndexStatistics> = arrayListOf<JsonFileProviderIndexStatistics>()
+  override val providerStatistics: ArrayList<JsonFileProviderIndexStatistics> = arrayListOf()
 
-  override val totalStatsPerFileType: HashMap<String, StatsPerFileTypeImpl> = hashMapOf<String /* File type name */, StatsPerFileTypeImpl>()
+  override val totalStatsPerFileType: HashMap<String, StatsPerFileTypeImpl> = hashMapOf()
 
-  override val totalStatsPerIndexer: HashMap<String, StatsPerIndexerImpl> = hashMapOf<String /* Index ID */, StatsPerIndexerImpl>()
+  override val totalStatsPerIndexer: HashMap<String, StatsPerIndexerImpl> = hashMapOf()
 
   override var visibleTimeToAllThreadsTimeRatio: Double = 0.0
 

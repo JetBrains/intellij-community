@@ -33,7 +33,7 @@ interface RunConfigurationTargetEnvironmentAdjuster {
     private val LOG = logger<RunConfigurationTargetEnvironmentAdjuster>()
 
     @JvmStatic
-    val EP_NAME: ExtensionPointName<RunConfigurationTargetEnvironmentAdjuster> = ExtensionPointName<RunConfigurationTargetEnvironmentAdjuster>("com.intellij.runConfigurationTargetEnvironmentAdjuster")
+    val EP_NAME: ExtensionPointName<RunConfigurationTargetEnvironmentAdjuster> = ExtensionPointName("com.intellij.runConfigurationTargetEnvironmentAdjuster")
 
     @JvmStatic
     fun findTargetEnvironmentRequestAdjuster(sdk: Sdk): RunConfigurationTargetEnvironmentAdjuster? {

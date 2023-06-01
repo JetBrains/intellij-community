@@ -30,7 +30,7 @@ class CreateBeanPropertyRequest(
   private val myModifiers = listOf(JvmModifier.PUBLIC)
   override fun getModifiers(): List<JvmModifier> = myModifiers
 
-  override fun getAnnotations(): List<AnnotationRequest> = emptyList<AnnotationRequest>()
+  override fun getAnnotations(): List<AnnotationRequest> = emptyList()
 
   private val myTargetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
   override fun getTargetSubstitutor(): PsiJvmSubstitutor = myTargetSubstitutor

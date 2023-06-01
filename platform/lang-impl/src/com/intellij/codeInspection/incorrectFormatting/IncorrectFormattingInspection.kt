@@ -16,7 +16,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 
-val INSPECTION_KEY: Key<IncorrectFormattingInspection> = Key.create<IncorrectFormattingInspection>(IncorrectFormattingInspection().shortName)
+val INSPECTION_KEY: Key<IncorrectFormattingInspection> = Key.create(IncorrectFormattingInspection().shortName)
 
 class IncorrectFormattingInspection(
   @JvmField var reportPerFile: Boolean = false,  // generate only one warning per file

@@ -57,7 +57,7 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
   private val projectScanning = project.service<UnindexedFilesScannerExecutor>().isRunning
 
   init {
-    project.messageBus.simpleConnect().subscribe<DynamicPluginListener>(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+    project.messageBus.simpleConnect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         myRunWhenSmartQueue.removeIf { runnable ->
           val unwrappedRunnable = if (runnable is RunnableDelegate) runnable.task else runnable

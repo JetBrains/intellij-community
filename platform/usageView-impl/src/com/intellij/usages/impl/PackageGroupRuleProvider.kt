@@ -19,6 +19,6 @@ interface PackageGroupRuleProvider {
 
   companion object {
     @JvmField
-    val EP_NAME: ExtensionPointName<PackageGroupRuleProvider> = create<PackageGroupRuleProvider>("com.intellij.packageGroupRuleProvider")
+    val EP_NAME: ExtensionPointName<PackageGroupRuleProvider> = create("com.intellij.packageGroupRuleProvider")
   }
 }

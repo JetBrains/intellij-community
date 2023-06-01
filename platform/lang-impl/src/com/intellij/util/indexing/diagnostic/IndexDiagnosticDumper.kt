@@ -53,7 +53,7 @@ class IndexDiagnosticDumper : Disposable {
 
     @JvmStatic
     val projectIndexingHistoryListenerEpName: ExtensionPointName<ProjectIndexingHistoryListener> =
-      ExtensionPointName.create<ProjectIndexingHistoryListener>("com.intellij.projectIndexingHistoryListener")
+      ExtensionPointName.create("com.intellij.projectIndexingHistoryListener")
 
     @JvmStatic
     private val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean

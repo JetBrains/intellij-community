@@ -119,7 +119,7 @@ abstract class LineChart<X: Number, Y: Number, D: LineDataset<X, Y>>: GridChartW
   }
 
   var borderPainted: Boolean = false
-  override val ranges: Grid<X, Y> = Grid<X, Y>()
+  override val ranges: Grid<X, Y> = Grid()
 
   override fun paintComponent(g: Graphics2D) {
     val gridWidth = width - (margins.left + margins.right)

@@ -311,27 +311,27 @@ open class FileEditorManagerImpl(
 
   companion object {
     @JvmField
-    protected val DUMB_AWARE: Key<Boolean> = Key.create<Boolean>("DUMB_AWARE")
+    protected val DUMB_AWARE: Key<Boolean> = Key.create("DUMB_AWARE")
 
     @JvmField
-    val NOTHING_WAS_OPENED_ON_START: Key<Boolean> = Key.create<Boolean>("NOTHING_WAS_OPENED_ON_START")
+    val NOTHING_WAS_OPENED_ON_START: Key<Boolean> = Key.create("NOTHING_WAS_OPENED_ON_START")
 
     @JvmField
     @TestOnly
-    val ALLOW_IN_LIGHT_PROJECT: Key<Boolean> = Key.create<Boolean>("ALLOW_IN_LIGHT_PROJECT")
+    val ALLOW_IN_LIGHT_PROJECT: Key<Boolean> = Key.create("ALLOW_IN_LIGHT_PROJECT")
 
     @JvmField
-    val CLOSING_TO_REOPEN: Key<Boolean> = Key.create<Boolean>("CLOSING_TO_REOPEN")
+    val CLOSING_TO_REOPEN: Key<Boolean> = Key.create("CLOSING_TO_REOPEN")
 
     /**
      * Works on VirtualFile objects and allows disabling the Preview Tab functionality for certain files.
      * If a virtual file has, this key is set to TRUE, the corresponding editor will always be opened in a regular tab.
      */
     @JvmField
-    val FORBID_PREVIEW_TAB: Key<Boolean> = Key.create<Boolean>("FORBID_PREVIEW_TAB")
+    val FORBID_PREVIEW_TAB: Key<Boolean> = Key.create("FORBID_PREVIEW_TAB")
 
     @JvmField
-    val OPEN_IN_PREVIEW_TAB: Key<Boolean> = Key.create<Boolean>("OPEN_IN_PREVIEW_TAB")
+    val OPEN_IN_PREVIEW_TAB: Key<Boolean> = Key.create("OPEN_IN_PREVIEW_TAB")
 
     /**
      * Works on [FileEditor] objects, allows forcing opening other editor tabs in the main window.
@@ -343,7 +343,7 @@ open class FileEditorManagerImpl(
      * but in a separate detached window, then the new editors will be opened in the main window splitters.
      */
     @JvmField
-    val SINGLETON_EDITOR_IN_WINDOW: Key<Boolean> = Key.create<Boolean>("OPEN_OTHER_TABS_IN_MAIN_WINDOW")
+    val SINGLETON_EDITOR_IN_WINDOW: Key<Boolean> = Key.create("OPEN_OTHER_TABS_IN_MAIN_WINDOW")
 
     const val FILE_EDITOR_MANAGER: String = "FileEditorManager"
     const val EDITOR_OPEN_INACTIVE_SPLITTER: String = "editor.open.inactive.splitter"

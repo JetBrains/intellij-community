@@ -52,15 +52,15 @@ class RecentProjectMetaInfo : BaseState() {
 class RecentProjectManagerState : BaseState() {
   @Deprecated("")
   @get:OptionTag
-  val recentPaths: MutableList<String> by list<String>()
+  val recentPaths: MutableList<String> by list()
 
   @get:OptionTag
-  val groups: MutableList<ProjectGroup> by list<ProjectGroup>()
+  val groups: MutableList<ProjectGroup> by list()
   var pid: String? by string()
 
   @get:OptionTag
   @get:MapAnnotation(sortBeforeSave = false)
-  val additionalInfo: MutableMap<String, RecentProjectMetaInfo> by linkedMap<String, RecentProjectMetaInfo>()
+  val additionalInfo: MutableMap<String, RecentProjectMetaInfo> by linkedMap()
 
   var lastProjectLocation: String? by string()
 

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus.Obsolete
 interface StartupActivity {
   companion object {
     @Internal
-    val POST_STARTUP_ACTIVITY: ExtensionPointName<Any> = ExtensionPointName<Any>("com.intellij.postStartupActivity")
+    val POST_STARTUP_ACTIVITY: ExtensionPointName<Any> = ExtensionPointName("com.intellij.postStartupActivity")
   }
 
   fun runActivity(project: Project)

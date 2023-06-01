@@ -17,11 +17,11 @@ import kotlin.math.min
 @ApiStatus.Internal
 internal class GridImpl : Grid {
 
-  override val resizableColumns: MutableSet<Int> = mutableSetOf<Int>()
-  override val resizableRows: MutableSet<Int> = mutableSetOf<Int>()
+  override val resizableColumns: MutableSet<Int> = mutableSetOf()
+  override val resizableRows: MutableSet<Int> = mutableSetOf()
 
-  override val columnsGaps: MutableList<UnscaledGapsX> = mutableListOf<UnscaledGapsX>()
-  override val rowsGaps: MutableList<UnscaledGapsY> = mutableListOf<UnscaledGapsY>()
+  override val columnsGaps: MutableList<UnscaledGapsX> = mutableListOf()
+  override val rowsGaps: MutableList<UnscaledGapsY> = mutableListOf()
 
   val visible: Boolean
     get() = cells.any { it.visible }

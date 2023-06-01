@@ -20,7 +20,7 @@ infix fun DialogValidation.and(validation: DialogValidation): DialogValidation =
  * New validation returns null (data is valid) when both validations return null.
  */
 infix fun <T> DialogValidation.WithParameter<T>.and(validation: DialogValidation.WithParameter<T>): DialogValidation.WithParameter<T> =
-  DialogValidation.WithParameter<T> { curry(it) and validation(it) }
+  DialogValidation.WithParameter { curry(it) and validation(it) }
 
 /**
  * Creates validation from two validations with parameter.
@@ -28,7 +28,7 @@ infix fun <T> DialogValidation.WithParameter<T>.and(validation: DialogValidation
  * New validation returns null (data is valid) when both validations return null.
  */
 infix fun <T> DialogValidation.WithParameter<T>.and(validation: DialogValidation): DialogValidation.WithParameter<T> =
-  DialogValidation.WithParameter<T> { curry(it) and validation }
+  DialogValidation.WithParameter { curry(it) and validation }
 
 /**
  * Creates validation from two validations with parameter.
@@ -36,7 +36,7 @@ infix fun <T> DialogValidation.WithParameter<T>.and(validation: DialogValidation
  * New validation returns null (data is valid) when both validations return null.
  */
 infix fun <T> DialogValidation.and(validation: DialogValidation.WithParameter<T>): DialogValidation.WithParameter<T> =
-  DialogValidation.WithParameter<T> { this and validation(it) }
+  DialogValidation.WithParameter { this and validation(it) }
 
 /**
  * Creates validation from two validations with two shared parameters.
@@ -44,7 +44,7 @@ infix fun <T> DialogValidation.and(validation: DialogValidation.WithParameter<T>
  * New validation returns null (data is valid) when both validations return null.
  */
 infix fun <T1, T2> DialogValidation.WithTwoParameters<T1, T2>.and(validation: DialogValidation.WithTwoParameters<T1, T2>): DialogValidation.WithTwoParameters<T1, T2> =
-  DialogValidation.WithTwoParameters<T1, T2> { curry(it) and validation(it) }
+  DialogValidation.WithTwoParameters { curry(it) and validation(it) }
 
 /**
  * Creates validation from two validations with two parameters.
@@ -52,7 +52,7 @@ infix fun <T1, T2> DialogValidation.WithTwoParameters<T1, T2>.and(validation: Di
  * New validation returns null (data is valid) when both validations return null.
  */
 infix fun <T1, T2> DialogValidation.WithTwoParameters<T1, T2>.and(validation: DialogValidation): DialogValidation.WithTwoParameters<T1, T2> =
-  DialogValidation.WithTwoParameters<T1, T2> { curry(it) and validation }
+  DialogValidation.WithTwoParameters { curry(it) and validation }
 
 /**
  * Creates validation from two validations with two parameters where second one is shared.
@@ -60,7 +60,7 @@ infix fun <T1, T2> DialogValidation.WithTwoParameters<T1, T2>.and(validation: Di
  * New validation returns null (data is valid) when both validations return null.
  */
 infix fun <T1, T2> DialogValidation.WithTwoParameters<T1, T2>.and(validation: DialogValidation.WithParameter<T2>): DialogValidation.WithTwoParameters<T1, T2> =
-  DialogValidation.WithTwoParameters<T1, T2> { curry(it) and validation }
+  DialogValidation.WithTwoParameters { curry(it) and validation }
 
 /**
  * Creates validation from two validations with two parameters.
@@ -68,7 +68,7 @@ infix fun <T1, T2> DialogValidation.WithTwoParameters<T1, T2>.and(validation: Di
  * New validation returns null (data is valid) when both validations return null.
  */
 infix fun <T1, T2> DialogValidation.and(validation: DialogValidation.WithTwoParameters<T1, T2>): DialogValidation.WithTwoParameters<T1, T2> =
-  DialogValidation.WithTwoParameters<T1, T2> { this and validation(it) }
+  DialogValidation.WithTwoParameters { this and validation(it) }
 
 /**
  * Creates validation from two validations with two parameters where second one is shared.
@@ -76,7 +76,7 @@ infix fun <T1, T2> DialogValidation.and(validation: DialogValidation.WithTwoPara
  * New validation returns null (data is valid) when both validations return null.
  */
 infix fun <T1, T2> DialogValidation.WithParameter<T2>.and(validation: DialogValidation.WithTwoParameters<T1, T2>): DialogValidation.WithTwoParameters<T1, T2> =
-  DialogValidation.WithTwoParameters<T1, T2> { this and validation(it) }
+  DialogValidation.WithTwoParameters { this and validation(it) }
 
 /**
  * Transforms validation result. It allows changing validation info properties.
@@ -90,14 +90,14 @@ fun DialogValidation.transformResult(transform: ValidationInfo.() -> ValidationI
  * For example, you can make warning from error validation.
  */
 fun <T> DialogValidation.WithParameter<T>.transformResult(transform: ValidationInfo.() -> ValidationInfo?): DialogValidation.WithParameter<T> =
-  DialogValidation.WithParameter<T> { curry(it).transformResult(transform) }
+  DialogValidation.WithParameter { curry(it).transformResult(transform) }
 
 /**
  * Transforms validation result. It allows changing validation info properties.
  * For example, you can make warning from error validation.
  */
 fun <T1, T2> DialogValidation.WithTwoParameters<T1, T2>.transformResult(transform: ValidationInfo.() -> ValidationInfo?): DialogValidation.WithTwoParameters<T1, T2> =
-  DialogValidation.WithTwoParameters<T1, T2> { curry(it).transformResult(transform) }
+  DialogValidation.WithTwoParameters { curry(it).transformResult(transform) }
 
 fun DialogValidation.asWarning(): DialogValidation = transformResult { asWarning() }
 
@@ -116,7 +116,7 @@ fun <T1, T2> DialogValidation.WithTwoParameters<T1, T2>.withOKEnabled(): DialogV
  * For example, it allows using existed text field validation for text field with browse button.
  */
 fun <T, R> DialogValidation.WithParameter<R>.transformParameter(transform: T.() -> R): DialogValidation.WithParameter<T> =
-  DialogValidation.WithParameter<T> { parameter ->
+  DialogValidation.WithParameter { parameter ->
     curry(transform(parameter))
   }
 
@@ -124,7 +124,7 @@ fun <T, R> DialogValidation.WithParameter<R>.transformParameter(transform: T.() 
  * Transforms string validation into validation with trimmed string parameter.
  */
 fun DialogValidation.WithParameter<() -> String>.trimParameter(): DialogValidation.WithParameter<() -> String> =
-  transformParameter<() -> String, () -> String> { { invoke().trim() } }
+  transformParameter { { invoke().trim() } }
 
 /**
  * Transforms string validation into validation for [JTextComponent].
@@ -153,7 +153,7 @@ fun <T> DialogValidation.WithParameter<() -> T>.forProperty(): DialogValidation.
  * @see forProperty with one parameter
  */
 fun <T1, T2> DialogValidation.WithTwoParameters<T1, () -> T2>.forProperty(): DialogValidation.WithTwoParameters<T1, ObservableProperty<T2>> =
-  DialogValidation.WithTwoParameters<T1, ObservableProperty<T2>> { parameter ->
+  DialogValidation.WithTwoParameters { parameter ->
     curry(parameter).forProperty()
   }
 

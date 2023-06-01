@@ -76,7 +76,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
    */
   var internalBottomGap: Int = 0
 
-  val cells: MutableList<CellBaseImpl<*>?> = mutableListOf<CellBaseImpl<*>?>()
+  val cells: MutableList<CellBaseImpl<*>?> = mutableListOf()
 
   private var visible = true
   private var enabled = true

@@ -595,7 +595,7 @@ class RetypeSession(
   }
 }
 
-val RETYPE_SESSION_KEY: Key<RetypeSession> = Key.create<RetypeSession>("com.intellij.internal.retype.RetypeSession")
+val RETYPE_SESSION_KEY: Key<RetypeSession> = Key.create("com.intellij.internal.retype.RetypeSession")
 
 class RetypeEditorNotificationProvider : EditorNotificationProvider {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
