@@ -303,7 +303,9 @@ open class FrameWrapper @JvmOverloads constructor(private var project: Project?,
     override fun toggleFullScreen(state: Boolean): Job = CompletableDeferred(value = Unit)
 
     override fun addNotify() {
-      CustomHeader.enableCustomHeader(this)
+      if (IdeFrameDecorator.isCustomDecorationActive()) {
+        CustomHeader.enableCustomHeader(this)
+      }
       super.addNotify()
     }
 

@@ -215,7 +215,9 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
   }
 
   override fun addNotify() {
-    CustomHeader.enableCustomHeader(this)
+    if (IdeFrameDecorator.isCustomDecorationActive()) {
+      CustomHeader.enableCustomHeader(this)
+    }
     super.addNotify()
   }
 
