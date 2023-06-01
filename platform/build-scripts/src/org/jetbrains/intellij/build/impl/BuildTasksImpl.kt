@@ -1199,15 +1199,15 @@ private fun crossPlatformZip(macX64DistDir: Path,
         filterFileIfAlreadyInZip(relPath, linuxX64DistDir.resolve(relPath), zipFileUniqueGuard)
       }, entryCustomizer = entryCustomizer)
 
-      out.dir(startDir = winX64DistDir, prefix = "", fileFilter = { _, relativePath ->
-        commonFilter.invoke(relativePath) &&
-        !(relativePath.startsWith("bin/${executableName}") && relativePath.endsWith(".exe")) &&
-        filterFileIfAlreadyInZip(relativePath, winX64DistDir.resolve(relativePath), zipFileUniqueGuard)
+      out.dir(startDir = winX64DistDir, prefix = "", fileFilter = { _, relPath ->
+        commonFilter.invoke(relPath) &&
+        !(relPath.startsWith("bin/${executableName}") && relPath.endsWith(".exe")) &&
+        filterFileIfAlreadyInZip(relPath, winX64DistDir.resolve(relPath), zipFileUniqueGuard)
       }, entryCustomizer = entryCustomizer)
 
       for (distFile in distFiles) {
-        // linux and windows: we don't add win and linux specific dist dirs for ARM, so, copy distFiles explicitly
-        // macOS: we don't copy dist files for macOS distribution to avoid extra copy operation
+        // Linux and Windows: we don't add specific dist dirs for ARM, so, copy dist files explicitly
+        // macOS: we don't copy dist files to avoid extra copy operation
         if (zipFileUniqueGuard.putIfAbsent(distFile.relativePath, distFile.file) == null) {
           out.entry(distFile.relativePath, distFile.file)
         }

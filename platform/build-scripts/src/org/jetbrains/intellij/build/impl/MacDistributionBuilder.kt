@@ -101,6 +101,7 @@ class MacDistributionBuilder(override val context: BuildContext,
                  context = context)
 
     generateBuildTxt(context, macDistDir.resolve("Resources"))
+
     // if copyDistFiles false, it means that we will copy dist files directly without stage dir
     if (copyDistFiles) {
       copyDistFiles(context = context, newDir = macDistDir, os = OsFamily.MACOS, arch = arch)
@@ -273,20 +274,19 @@ class MacDistributionBuilder(override val context: BuildContext,
     }
     else {
       """
-      <key>CFBundleURLTypes</key>
-      <array>
-        <dict>
-          <key>CFBundleTypeRole</key>
-          <string>Editor</string>
-          <key>CFBundleURLName</key>
-          <string>Stacktrace</string>
-          <key>CFBundleURLSchemes</key>
-          <array>
-            ${urlSchemes.joinToString(separator = "\n") { "          <string>${it}</string>" }}
-          </array>
-        </dict>
-      </array>
-    """
+    <key>CFBundleURLTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleURLName</key>
+        <string>Stacktrace</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          ${urlSchemes.joinToString(separator = "\n          ") { "<string>${it}</string>" }}
+        </array>
+      </dict>
+    </array>"""
     }
 
     val architectures = (if (!customizer.useXPlatLauncher) listOf("arm64", "x86_64") else when (arch) {
@@ -384,7 +384,8 @@ class MacDistributionBuilder(override val context: BuildContext,
 
   private suspend fun buildForArch(arch: JvmArchitecture,
                                    macZip: Path,
-                                   macZipWithoutRuntime: Path?, notarize: Boolean,
+                                   macZipWithoutRuntime: Path?,
+                                   notarize: Boolean,
                                    customizer: MacDistributionCustomizer,
                                    context: BuildContext) {
     val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"

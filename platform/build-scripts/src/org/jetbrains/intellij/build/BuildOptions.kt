@@ -263,9 +263,10 @@ class BuildOptions(
       }
     }
 
-  var buildMacArtifactsWithoutRuntime = SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITHOUT_RUNTIME,
-                                                                            SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
-  var buildMacArtifactsWithRuntime = SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITH_RUNTIME, true)
+  var buildMacArtifactsWithoutRuntime =
+    SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITHOUT_RUNTIME, SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
+  var buildMacArtifactsWithRuntime =
+    SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITH_RUNTIME, true)
 
   /**
    * Pass 'true' to this system property to produce .snap packages.
