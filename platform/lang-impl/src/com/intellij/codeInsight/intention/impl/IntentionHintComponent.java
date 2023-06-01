@@ -61,7 +61,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
@@ -354,7 +353,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       JComponent convertComponent = editor.getContentComponent();
 
       // place the light bulb at the corner of the surrounding component
-      JComboBox<?> ancestorCombo = Util.findAncestorCombo(editor);
+      JComboBox<?> ancestorCombo = findAncestorCombo(editor);
       if (ancestorCombo != null) {
         convertComponent = ancestorCombo;
       }
@@ -598,7 +597,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     @Override
     public void dispose() {
       if (myOuterComboboxPopupListener != null) {
-        JComboBox<?> ancestor = Util.findAncestorCombo(myEditor);
+        JComboBox<?> ancestor = findAncestorCombo(myEditor);
         if (ancestor != null) {
           ancestor.removePopupMenuListener(myOuterComboboxPopupListener);
         }
@@ -623,7 +622,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
           if (shortcut instanceof KeyboardShortcut keyboardShortcut && keyboardShortcut.getSecondKeyStroke() == null) {
             wizardPopup.registerAction(
               "activateSelectedElement", keyboardShortcut.getFirstKeyStroke(),
-              Util.createAction(e -> popup.myListPopup.handleSelect(true))
+              createAction(e -> popup.myListPopup.handleSelect(true))
             );
           }
         }
@@ -636,39 +635,21 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
       ListPopupImpl list = ObjectUtils.tryCast(popup.myListPopup, ListPopupImpl.class);
 
-      var selectionListener = new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-          Object source = e.getSource();
+      ListSelectionListener selectionListener = e -> {
+        Object source = e.getSource();
 
-          if (source instanceof DataProvider dataProvider) {
-            Object selectedItem = PlatformCoreDataKeys.SELECTED_ITEM.getData(dataProvider);
-            if (selectedItem instanceof IntentionActionWithTextCaching actionWithCaching) {
-              IntentionAction action = IntentionActionDelegate.unwrap(actionWithCaching.getAction());
-              if (list != null) {
-                popup.updatePreviewPopup(action, list.getOriginalSelectedIndex());
-              }
-              highlightOnHover(selectedItem);
-              return;
+        if (source instanceof DataProvider dataProvider) {
+          Object selectedItem = PlatformCoreDataKeys.SELECTED_ITEM.getData(dataProvider);
+          if (selectedItem instanceof IntentionActionWithTextCaching actionWithCaching) {
+            IntentionAction action = IntentionActionDelegate.unwrap(actionWithCaching.getAction());
+            if (list != null) {
+              popup.updatePreviewPopup(action, list.getOriginalSelectedIndex());
             }
-          }
-          context.dropHighlight();
-        }
-
-        private void highlightOnHover(Object selectedItem) {
-          if (!(selectedItem instanceof IntentionActionWithTextCaching actionWithCaching)) return;
-          IntentionAction action = IntentionActionDelegate.unwrap(actionWithCaching.getAction());
-
-          if (context.mayHaveHighlighting(action)) {
-            ReadAction.nonBlocking(() -> context.computeHighlightsToApply(action))
-              .coalesceBy(popup)
-              .finishOnUiThread(ModalityState.any(), Runnable::run)
-              .submit(AppExecutorUtil.getAppExecutorService());
-          }
-          else {
-            context.dropHighlight();
+            highlightOnHover(actionWithCaching, context, popup);
+            return;
           }
         }
+        context.dropHighlight();
       };
       ((ListPopupImpl)popup.myListPopup).getList().addFocusListener(new FocusListener() {
         @Override
@@ -690,8 +671,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       popup.myListPopup.addListener(new JBPopupListener() {
         @Override
         public void beforeShown(@NotNull LightweightWindowEvent event) {
-          if (list != null) {
-            selectionListener.highlightOnHover(list.getList().getSelectedValue());
+          Object selectedValue = list == null ? null : list.getList().getSelectedValue();
+          if (selectedValue instanceof IntentionActionWithTextCaching actionWithTextCaching) {
+            highlightOnHover(actionWithTextCaching, context, popup);
           }
         }
 
@@ -705,7 +687,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
       if (popup.myEditor.isOneLineMode()) {
         // hide popup on combobox popup show
-        JComboBox<?> comboBox = Util.findAncestorCombo(popup.myEditor);
+        JComboBox<?> comboBox = findAncestorCombo(popup.myEditor);
         if (comboBox != null) {
           popup.myOuterComboboxPopupListener = new PopupMenuListenerAdapter() {
             @Override
@@ -720,6 +702,21 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
       Disposer.register(popup, popup.myListPopup);
       Disposer.register(popup.myListPopup, ApplicationManager.getApplication()::assertIsDispatchThread);
+    }
+
+    private static void highlightOnHover(@NotNull IntentionActionWithTextCaching actionWithCaching, @NotNull HighlightingContext context,
+                                  @NotNull IntentionPopup popup) {
+      IntentionAction action = IntentionActionDelegate.unwrap(actionWithCaching.getAction());
+
+      if (context.mayHaveHighlighting(action)) {
+        ReadAction.nonBlocking(() -> context.computeHighlightsToApply(action))
+          .coalesceBy(popup)
+          .finishOnUiThread(ModalityState.any(), Runnable::run)
+          .submit(AppExecutorUtil.getAppExecutorService());
+      }
+      else {
+        context.dropHighlight();
+      }
     }
 
     /**
@@ -788,9 +785,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         }
         else if (action instanceof CustomizableIntentionAction customizableAction) {
           init();
-          var ranges = customizableAction.getRangesToHighlight(myPopup.myEditor, myPopup.myFile);
+          List<CustomizableIntentionAction.RangeToHighlight> ranges = customizableAction.getRangesToHighlight(myPopup.myEditor, myPopup.myFile);
           List<Runnable> actions = new ArrayList<>();
-          for (var range : ranges) {
+          for (CustomizableIntentionAction.RangeToHighlight range : ranges) {
             TextRange rangeInFile = range.getRangeInFile();
             PsiFile file = range.getContainingFile();
             if (injectedFile != null && file.getViewProvider() == injectedFile.getViewProvider()) {
@@ -823,13 +820,13 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
 
     private void registerIntentionShortcut(@NotNull IntentionAction intention) {
-      var shortcuts = IntentionShortcutManager.getInstance().getShortcutSet(intention);
+      ShortcutSet shortcuts = IntentionShortcutManager.getInstance().getShortcutSet(intention);
       if (shortcuts == null) return;
 
-      for (var shortcut : shortcuts.getShortcuts()) {
+      for (Shortcut shortcut : shortcuts.getShortcuts()) {
         if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
           ((WizardPopup)myListPopup).registerAction(
-            IntentionShortcutUtils.getWrappedActionId(intention), keyboardShortcut.getFirstKeyStroke(), Util.createAction(e -> {
+            IntentionShortcutUtils.getWrappedActionId(intention), keyboardShortcut.getFirstKeyStroke(), createAction(e -> {
               close();
               IntentionShortcutUtils.invokeAsAction(intention, myEditor, myFile);
             })
@@ -841,7 +838,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     @RequiresEdt
     private void registerShowPreviewAction() {
       KeyStroke keyStroke = KeymapUtil.getKeyStroke(IntentionPreviewPopupUpdateProcessor.Companion.getShortcutSet());
-      Action action = Util.createAction(e -> maybeShowPreview());
+      Action action = createAction(e -> maybeShowPreview());
       ((WizardPopup)myListPopup).registerAction("showIntentionPreview", keyStroke, action);
       advertisePopup(myListPopup);
     }
@@ -876,19 +873,16 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
     }
   }
+  private static @NotNull Action createAction(@NotNull Consumer<ActionEvent> perform) {
+    return new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        perform.accept(e);
+      }
+    };
+  }
 
-  private static final class Util {
-    static Action createAction(Consumer<ActionEvent> perform) {
-      return new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          perform.accept(e);
-        }
-      };
-    }
-
-    static JComboBox<?> findAncestorCombo(Editor editor) {
-      return (JComboBox<?>)SwingUtilities.getAncestorOfClass(JComboBox.class, editor.getContentComponent());
-    }
+  private static JComboBox<?> findAncestorCombo(@NotNull Editor editor) {
+    return (JComboBox<?>)SwingUtilities.getAncestorOfClass(JComboBox.class, editor.getContentComponent());
   }
 }

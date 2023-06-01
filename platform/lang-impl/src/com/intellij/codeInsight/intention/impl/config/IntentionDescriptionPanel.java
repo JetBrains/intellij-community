@@ -52,11 +52,11 @@ public class IntentionDescriptionPanel {
 
   public IntentionDescriptionPanel() {
     myDescriptionBrowser = new DescriptionEditorPane();
-    var descriptionScrollPane = ScrollPaneFactory.createScrollPane(myDescriptionBrowser);
+    JScrollPane descriptionScrollPane = ScrollPaneFactory.createScrollPane(myDescriptionBrowser);
     descriptionScrollPane.setBorder(null);
 
     JPanel examplePanel = new JPanel(new GridBagLayout());
-    var constraint = new GridBag()
+    GridBag constraint = new GridBag()
       .setDefaultInsets(UIUtil.LARGE_VGAP, 0, 0, 0)
       .setDefaultFill(GridBagConstraints.BOTH)
       .setDefaultWeightY(0.5)
@@ -64,14 +64,13 @@ public class IntentionDescriptionPanel {
 
     myBeforePanel = new JPanel();
     examplePanel.add(PanelFactory.panel(myBeforePanel)
-                       .withLabel(CodeInsightBundle.message("border.title.before"))
-                       .moveLabelOnTop()
-                       .resizeX(true)
-                       .resizeY(true)
-                       .createPanel(),
-                     constraint.nextLine()
+      .withLabel(CodeInsightBundle.message("border.title.before"))
+      .moveLabelOnTop()
+      .resizeX(true)
+      .resizeY(true)
+      .createPanel(),
+      constraint.nextLine()
     );
-
     myAfterPanel = new JPanel();
     examplePanel.add(PanelFactory.panel(myAfterPanel)
                        .withLabel(CodeInsightBundle.message("border.title.after"))
