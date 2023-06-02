@@ -2,7 +2,6 @@
 package com.intellij.platform.workspaceModel.storage.impl
 
 import com.intellij.platform.workspaceModel.storage.EntityTypesResolver
-import com.intellij.platform.workspaceModel.storage.loadClassByName
 
 object SimpleEntityTypesResolver : EntityTypesResolver {
   override fun getPluginId(clazz: Class<*>): String? = null

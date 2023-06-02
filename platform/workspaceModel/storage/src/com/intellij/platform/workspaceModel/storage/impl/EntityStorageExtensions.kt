@@ -3,7 +3,6 @@ package com.intellij.platform.workspaceModel.storage.impl
 
 import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.checkCircularDependency
 import com.intellij.platform.workspaceModel.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspaceModel.storage.instrumentation.instrumentation
 
