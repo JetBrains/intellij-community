@@ -205,21 +205,16 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
                                                boolean verifySha256Checksums,
                                                boolean useBindRepositories) throws Exception {
     final JpsMavenRepositoryLibraryDescriptor descriptor = lib.getProperties().getData();
-    final List<File> required = lib.getFiles(JpsOrderRootType.COMPILED);
-
-    JpsLibraryResolveGuard.performUnderGuard(context, descriptor, required, () -> {
+    List<File> compiledRoots = lib.getFiles(JpsOrderRootType.COMPILED);
+    JpsLibraryResolveGuard.performUnderGuard(context, descriptor, compiledRoots, () -> {
       try {
-        ArtifactRepositoryManager effectiveRepoManager = getRepositoryManager(context, descriptor, lib.getName(), useBindRepositories);
-
-        List<File> compiledRoots = new ArrayList<>(required);
-        for (Iterator<File> it = required.iterator(); it.hasNext(); ) {
-          if (isArtifactNotCorrupted(context, lib.getName(), descriptor, it.next())) {
-            it.remove(); // leaving only missing artifacts
-          }
-        }
+        // list of missing roots needed to be resolved
+        List<File> required = ContainerUtil.filter(compiledRoots, root -> !verifyLibraryArtifact(context, lib.getName(), descriptor, root));
         if (!required.isEmpty()) {
           context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.resolving.0.library", lib.getName()), currentTargets));
           LOG.debug("Downloading missing files for " + lib.getName() + " library: " + required);
+
+          ArtifactRepositoryManager effectiveRepoManager = getRepositoryManager(context, descriptor, lib.getName(), useBindRepositories);
           final Collection<File> resolved = effectiveRepoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(),
                                                                                    descriptor.getVersion(),
                                                                                    descriptor.isIncludeTransitiveDependencies(), descriptor.getExcludedDependencies());
@@ -281,10 +276,10 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
    * @param artifact Artifact file.
    * @return true if artifact exists and not corrupted, otherwise false.
    */
-  private static boolean isArtifactNotCorrupted(@NotNull CompileContext context,
-                                                @NotNull String libraryName,
-                                                @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
-                                                @NotNull File artifact) {
+  private static boolean verifyLibraryArtifact(@NotNull CompileContext context,
+                                               @NotNull String libraryName,
+                                               @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                               @NotNull File artifact) {
     if (!artifact.exists()) return false;
 
     boolean zipCheckEnabled = SystemProperties.getBooleanProperty(RESOLUTION_RETRY_DOWNLOAD_CORRUPTED_ZIP_PROPERTY, false) ||
