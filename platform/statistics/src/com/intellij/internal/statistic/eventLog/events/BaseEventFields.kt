@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -150,6 +150,25 @@ data class AnonymizedEventField(override val name: String) : PrimitiveEventField
 
   override fun addData(fuData: FeatureUsageData, value: String?) {
     fuData.addAnonymizedValue(name, value)
+  }
+}
+
+internal data class ShortAnonymizedEventField(override val name: String) : PrimitiveEventField<String?>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp#short_hash}")
+
+  override fun addData(fuData: FeatureUsageData, value: String?) {
+    fuData.addAnonymizedValue(name, value, true)
+  }
+}
+
+internal data class DatedShortAnonymizedEventField<T>(override val name: String, val dateAndValueProvider: (T) -> Pair<Long, String?>) : PrimitiveEventField<T>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp#date_short_hash}")
+
+  override fun addData(fuData: FeatureUsageData, value: T) {
+    val (timestamp, toHash) = dateAndValueProvider.invoke(value)
+    fuData.addDatedShortAnonymizedValue(name, timestamp, toHash)
   }
 }
 

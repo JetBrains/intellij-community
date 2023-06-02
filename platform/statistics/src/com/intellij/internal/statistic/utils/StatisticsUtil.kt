@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils
 
 import org.jetbrains.annotations.ApiStatus
@@ -173,6 +173,17 @@ object StatisticsUtil {
   fun getCurrentHourInUTC(calendar: Calendar = Calendar.getInstance(Locale.ENGLISH)): String {
     calendar[Calendar.YEAR] = calendar[Calendar.YEAR].coerceIn(2000, 2099)
     val format = SimpleDateFormat("yyMMddHH", Locale.ENGLISH)
+    format.timeZone = TimeZone.getTimeZone(ZoneOffset.UTC)
+    return format.format(calendar.time)
+  }
+
+  /**
+   * Returns provided timestamp date in UTC as "yyMMdd"
+   */
+  fun getTimestampDateInUTC(timestamp: Long, calendar: Calendar = Calendar.getInstance(Locale.ENGLISH)): String {
+    calendar.timeInMillis = timestamp
+    calendar[Calendar.YEAR] = calendar[Calendar.YEAR].coerceIn(2000, 2099)
+    val format = SimpleDateFormat("yyMMdd", Locale.ENGLISH)
     format.timeZone = TimeZone.getTimeZone(ZoneOffset.UTC)
     return format.format(calendar.time)
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -364,6 +364,35 @@ object EventFields {
       }
     }
   }
+
+  /**
+   * Can be used to report unique identifiers safely by anonymizing them using hash function and local salt
+   * */
+  @JvmStatic
+  fun AnonymizedField(@NonNls name: String): EventField<String?> = AnonymizedEventField(name)
+
+  /**
+   * Can be used to report unique identifiers safely by anonymizing them using hash function and local salt
+   *
+   * Intended for ids which are unique inside some context (during one IDE run, during some process)
+   *
+   * Reduces amount of data reported from user, but increases probability of collisions
+   * */
+  @JvmStatic
+  fun ShortAnonymizedField(@NonNls name: String): EventField<String?> = ShortAnonymizedEventField(name)
+
+  /**
+   * Can be used to report unique identifiers safely by anonymizing them using hash function and local salt
+   *
+   * Intended for ids which are unique inside some context (during one IDE run, during some process),
+   * but leaves ability to track id creation date
+   *
+   * Reduces amount of data reported from user, but increases probability of collisions
+   *
+   * @param dateAndValueProvider extracts timestamp and value to hash from reporting object
+   * */
+  @JvmStatic
+  fun <T> DatedShortAnonymizedField(@NonNls name: String, dateAndValueProvider: (T) -> Pair<Long, String?>): EventField<T> = DatedShortAnonymizedEventField(name, dateAndValueProvider)
 
   @JvmField
   val CodeWithMeClientId = object : PrimitiveEventField<String?>() {
