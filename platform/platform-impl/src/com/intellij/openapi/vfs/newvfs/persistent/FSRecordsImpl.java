@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionIntercepto
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
@@ -44,6 +43,7 @@ import java.util.function.IntPredicate;
 import java.util.zip.ZipException;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
@@ -71,17 +71,16 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 public final class FSRecordsImpl {
   private static final Logger LOG = Logger.getInstance(FSRecordsImpl.class);
 
-  private static final boolean USE_CONTENT_HASHES = SystemProperties.getBooleanProperty("idea.share.contents", true);
-  static final boolean INLINE_ATTRIBUTES = SystemProperties.getBooleanProperty("idea.inline.vfs.attributes", true);
+  private static final boolean USE_CONTENT_HASHES = getBooleanProperty("idea.share.contents", true);
+  static final boolean INLINE_ATTRIBUTES = getBooleanProperty("idea.inline.vfs.attributes", true);
 
   /**
    * If true -> use {@link CompactRecordsTable} for managing attributes record, instead of default {@link com.intellij.util.io.storage.RecordsTable}
    */
-  static final boolean USE_SMALL_ATTR_TABLE = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
+  static final boolean USE_SMALL_ATTR_TABLE = getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
 
-  static final boolean USE_FAST_NAMES_IMPLEMENTATION = SystemProperties.getBooleanProperty("vfs.use-fast-names-storage", false);
-  static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION =
-    SystemProperties.getBooleanProperty("vfs.use-streamlined-attributes-storage", false);
+  static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-storage", false);
+  static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.use-streamlined-attributes-storage", true);
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
 
@@ -146,23 +145,18 @@ public final class FSRecordsImpl {
     final int mainVFSFormatVersion = 60;
     return nextMask(mainVFSFormatVersion +
                     (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
-                    nextMask(USE_CONTENT_HASHES,
-                             nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
-                                      nextMask(false, // feel free to re-use
-                                               nextMask(INLINE_ATTRIBUTES,
-                                                        nextMask(SystemProperties.getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER,
-                                                                                                     false),
-                                                                 nextMask(false, // feel free to re-use
-                                                                          nextMask(USE_SMALL_ATTR_TABLE,
-                                                                                   nextMask(
-                                                                                     PersistentHashMapValueStorage.COMPRESSION_ENABLED,
-                                                                                     nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
-                                                                                              nextMask(
-                                                                                                ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
-                                                                                                nextMask(USE_FAST_NAMES_IMPLEMENTATION,
-                                                                                                         nextMask(
-                                                                                                           USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION,
-                                                                                                           0)))))))))))));
+           nextMask(USE_CONTENT_HASHES,
+           nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
+           nextMask(false, // feel free to re-use
+           nextMask(INLINE_ATTRIBUTES,
+           nextMask(getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
+           nextMask(false, // feel free to re-use
+           nextMask(USE_SMALL_ATTR_TABLE,
+           nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
+           nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
+           nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
+           nextMask(USE_FAST_NAMES_IMPLEMENTATION,
+           nextMask(USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION, 0)))))))))))));
   }
 
 
