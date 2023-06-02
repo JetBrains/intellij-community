@@ -15,6 +15,9 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.internal.statistic.StructuredIdeActivity;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
+import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader;
@@ -23,6 +26,7 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.nio.file.Path;
+import java.util.Collections;
 
 public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessorTask {
   private final boolean myForce;
@@ -45,6 +49,10 @@ public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessor
                       MavenEmbeddersManager embeddersManager,
                       MavenConsole console,
                       MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+    StructuredIdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(project, MavenUtil.SYSTEM_ID, () ->
+      Collections.singletonList(ProjectImportCollector.TASK_CLASS.with(MavenProjectsProcessorReadingTask.class))
+    );
+
     try {
       checkOrInstallMavenWrapper(project);
       myTree.updateAll(myForce, mySettings, indicator);
@@ -52,6 +60,7 @@ public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessor
       mySettings.updateFromMavenConfig(myTree.getRootProjectsFiles());
     }
     finally {
+      activity.finished();
       if (myOnCompletion != null) myOnCompletion.run();
     }
   }
