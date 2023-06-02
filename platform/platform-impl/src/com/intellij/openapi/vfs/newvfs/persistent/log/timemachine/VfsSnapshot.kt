@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.timemachine
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.bind
@@ -36,8 +37,19 @@ interface VfsSnapshot {
     /**
      * @return [State.NotAvailable] if recovery is not possible at all, [State.Ready] if an attempt to recover children ids was made,
      * but be cautious that the result may be incomplete in any case: some children ids may get lost if log was truncated from the start.
+     * Keep in mind that a file is considered a child here if its record has its parentId field set to our fileId, so it will be
+     * considered a child even if the record is marked as deleted.
+     * @see [notDeleted]
      */
     fun getChildrenIds(): DefinedState<RecoveredChildrenIds>
+
+    companion object {
+      val VirtualFileSnapshot.isDeleted: DefinedState<Boolean> get() =
+        flags.observeState().fmap { PersistentFSRecordAccessor.hasDeletedFlag(it) }
+
+      fun Collection<VirtualFileSnapshot>.notDeleted(keepIfNotAvailable: Boolean = false) =
+        filter { it.isDeleted.mapCases({ keepIfNotAvailable }) { !it } }
+    }
 
     interface RecoveredChildrenIds: List<Int> {
       /**
