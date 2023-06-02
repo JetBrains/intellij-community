@@ -163,6 +163,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
         }
       });
       init();
+      validateButtons();
     }
 
     @Override
