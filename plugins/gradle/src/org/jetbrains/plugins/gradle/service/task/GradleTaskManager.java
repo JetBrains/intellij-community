@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.GradleCommandLineUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
@@ -127,14 +128,12 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     BuildEnvironment buildEnvironment = null;
     try {
       buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationTokenSource, settings);
-      String gradleVersion = Optional.ofNullable(buildEnvironment)
-        .map(it -> it.getGradle())
-        .map(it -> it.getGradleVersion())
-        .orElse(null);
+      var gradleVersion = getGradleVersion(buildEnvironment);
+
       setupGradleScriptDebugging(settings);
       setupDebuggerDispatchPort(settings);
 
-      var isApplicableTestLauncher = isApplicableTestLauncher(id, projectPath, tasks, settings);
+      var isApplicableTestLauncher = isApplicableTestLauncher(id, projectPath, tasks, settings, gradleVersion);
       appendInitScriptArgument(tasks, jvmParametersSetup, settings, gradleVersion, isApplicableTestLauncher);
 
       for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
@@ -167,11 +166,20 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
   }
 
+  private static @Nullable GradleVersion getGradleVersion(@Nullable BuildEnvironment buildEnvironment) {
+    return Optional.ofNullable(buildEnvironment)
+      .map(it -> it.getGradle())
+      .map(it -> it.getGradleVersion())
+      .map(it -> GradleInstallationManager.getGradleVersionSafe(it))
+      .orElse(null);
+  }
+
   private static boolean isApplicableTestLauncher(
     @NotNull ExternalSystemTaskId id,
     @NotNull String projectPath,
     @NotNull List<String> tasksAndArguments,
-    @NotNull GradleExecutionSettings settings
+    @NotNull GradleExecutionSettings settings,
+    @Nullable GradleVersion gradleVersion
   ) {
     if (!Registry.is("gradle.testLauncherAPI.enabled")) {
       LOG.debug("TestLauncher isn't applicable: disabled by registry");
@@ -181,7 +189,6 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       LOG.debug("TestLauncher isn't applicable: RC doesn't expect task rerun");
       return false;
     }
-    var gradleVersion = settings.getGradleVersion();
     if (gradleVersion == null || isGradleOlderThan(gradleVersion, "8.2")) {
       LOG.debug("TestLauncher isn't applicable: unsupported Gradle version " + gradleVersion);
       return false;
@@ -307,7 +314,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     @NotNull List<String> taskNames,
     @Nullable String jvmParametersSetup,
     @NotNull GradleExecutionSettings effectiveSettings,
-    @Nullable String gradleVersion,
+    @Nullable GradleVersion gradleVersion,
     boolean isApplicableTestLauncher
   ) {
     final List<String> initScripts = new ArrayList<>();
@@ -334,8 +341,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
       enhancementParameters.put(GradleProjectResolverExtension.TEST_LAUNCHER_WILL_BE_USED_KEY, String.valueOf(isApplicableTestLauncher));
 
-      enhancementParameters.put(GradleProjectResolverExtension.GRADLE_VERSION, gradleVersion);
-
+      if (gradleVersion != null) {
+        enhancementParameters.put(GradleProjectResolverExtension.GRADLE_VERSION, gradleVersion.getVersion());
+      }
 
       resolverExtension.enhanceTaskProcessing(taskNames, script -> {
         if (StringUtil.isNotEmpty(script)) {
@@ -359,16 +367,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
     final Collection<VersionSpecificInitScript> scripts = effectiveSettings.getUserData(VERSION_SPECIFIC_SCRIPTS_KEY);
     if (gradleVersion != null && scripts != null && !scripts.isEmpty()) {
-      try {
-        GradleVersion version = GradleVersion.version(gradleVersion);
         scripts.stream()
-          .filter(script -> script.isApplicableTo(version))
+          .filter(script -> script.isApplicableTo(gradleVersion))
           .filter(script -> StringUtil.isNotEmpty(script.getScript()))
           .forEach(script -> writeAndAppendScript(effectiveSettings, script.getScript(), notNullize(script.getFilePrefix(), "ijverspecinit")));
-      }
-      catch (IllegalArgumentException e) {
-        LOG.error("Failed to parse gradle version value [" + gradleVersion + "]", e);
-      }
     }
 
     if (effectiveSettings.getArguments().contains(GradleConstants.INIT_SCRIPT_CMD_OPTION)) {
