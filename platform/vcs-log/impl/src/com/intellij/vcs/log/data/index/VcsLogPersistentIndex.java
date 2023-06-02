@@ -339,7 +339,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
               throw reThrown;
             }
             catch (Throwable t) {
-              request.processException(indicator, t);
+              indicator.checkCanceled();
+              request.processException(t);
             }
           }
         }
@@ -443,7 +444,12 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         throw e;
       }
       catch (VcsException e) {
-        processException(indicator, e);
+        if (indicator.isCanceled()) {
+          performCommit = true;
+          scheduleReindex();
+          throw new ProcessCanceledException();
+        }
+        processException(e);
         scheduleReindex();
       }
       finally {
@@ -469,9 +475,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       }
     }
 
-    private void processException(@NotNull ProgressIndicator indicator, @NotNull Throwable e) {
-      indicator.checkCanceled();
-
+    private void processException(@NotNull Throwable e) {
       int errorHash = ThrowableInterner.computeTraceHashCode(e);
       int errors = myIndexingErrors.get(myRoot).cacheOrGet(errorHash, 0);
       myIndexingErrors.get(myRoot).put(errorHash, errors + 1);
