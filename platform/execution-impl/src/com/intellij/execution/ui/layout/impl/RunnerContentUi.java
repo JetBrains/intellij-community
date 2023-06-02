@@ -54,7 +54,6 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
@@ -2082,9 +2081,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  private void fireContentClosed(Content content) {
+  private void fireContentClosed(@Nullable Content content) {
     for (Listener each : myDockingListeners) {
-      each.contentRemoved(content);
+      // dirty hack to not pass null here, listener implementation do not take this value into account
+      each.contentRemoved(content != null ? content : new Object());
     }
   }
 
