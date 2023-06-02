@@ -607,23 +607,37 @@ public class DefaultTreeUI extends BasicTreeUI {
       private void onSingleChildInserted(TreePath path, int oldRowCount) {
         if (path == null || oldRowCount + 1 != getRowCount()) return;
         JTree tree = getTree();
-        if (tree == null || !isAutoExpandAllowed(tree) || !tree.isVisible(path)) return;
+        if (!shouldAutoExpand(tree, path)) return;
         TreeModel model = tree.getModel();
         if (model instanceof AsyncTreeModel && 1 == model.getChildCount(path.getLastPathComponent())) {
           int pathCount = 1 + path.getPathCount();
           for (int i = 0; i <= oldRowCount; i++) {
             TreePath row = getPathForRow(i);
             if (row != null && pathCount == row.getPathCount() && path.equals(row.getParentPath())) {
-              Object node = row.getLastPathComponent();
-              if (isAutoExpandAllowed(tree, node)) {
-                ((AsyncTreeModel)model).onValidThread(() -> tree.expandPath(row));
-              }
+              handleAutoExpand(row);
               return; // this code is intended to auto-expand a single child node
             }
           }
         }
       }
     };
+  }
+
+  private static boolean shouldAutoExpand(JTree tree, TreePath path) {
+    return tree != null && isAutoExpandAllowed(tree) && tree.isVisible(path);
+  }
+
+  private void handleAutoExpand(@NotNull TreePath row) {
+    var tree = getTree();
+    if (!shouldAutoExpand(tree, row.getParentPath())) {
+      return;
+    }
+    if (tree.getModel() instanceof AsyncTreeModel asyncTreeModel) {
+      Object node = row.getLastPathComponent();
+      if (isAutoExpandAllowed(tree, node)) {
+        asyncTreeModel.onValidThread(() -> tree.expandPath(row));
+      }
+    }
   }
 
   @Override
