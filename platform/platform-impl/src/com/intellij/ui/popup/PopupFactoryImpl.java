@@ -306,6 +306,32 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
     }
 
+    @Override
+    protected void handleRightKeyPressed(@NotNull KeyEvent keyEvent) {
+      if (!handleRightOrLeftKeyPressed(keyEvent, true)) {
+        super.handleRightKeyPressed(keyEvent);
+      }
+    }
+
+    @Override
+    protected void handleLeftKeyPressed(@NotNull KeyEvent keyEvent) {
+      if (!handleRightOrLeftKeyPressed(keyEvent, false)) {
+        super.handleLeftKeyPressed(keyEvent);
+      }
+    }
+
+    private boolean handleRightOrLeftKeyPressed(@NotNull KeyEvent keyEvent, boolean isRightKey) {
+      ActionItem item = ObjectUtils.tryCast(getList().getSelectedValue(), ActionItem.class);
+      ActionPopupStep step = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
+      if (step != null && item != null && step.isSelectable(item) && item.isKeepPopupOpen() && item.myAction instanceof ToggleAction toggleAction) {
+        AnActionEvent event = step.createAnActionEvent(toggleAction, keyEvent);
+        toggleAction.setSelected(event, isRightKey);
+        step.updateStepItems(getList());
+        return true;
+      }
+      return false;
+    }
+
     /**
      * @deprecated Do not use or override this method. Use {@link ActionGroupPopup#handleToggleAction(InputEvent)} instead.
      */

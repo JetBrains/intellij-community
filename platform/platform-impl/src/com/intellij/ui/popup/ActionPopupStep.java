@@ -261,6 +261,11 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     ActionUtil.invokeAction(action, myContext.get(), myActionPlace, inputEvent, null);
   }
 
+  public @NotNull AnActionEvent createAnActionEvent(@NotNull AnAction action, @Nullable InputEvent inputEvent) {
+    Presentation presentation = myPresentationFactory != null ? myPresentationFactory.getPresentation(action) : action.getTemplatePresentation().clone();
+    return AnActionEvent.createFromInputEvent(inputEvent, myActionPlace, presentation, myContext.get());
+  }
+
   public void updateStepItems(@NotNull JComponent component) {
     DataContext dataContext = Utils.wrapDataContext(myContext.get());
     PresentationFactory presentationFactory = myPresentationFactory != null ? myPresentationFactory : new PresentationFactory();
