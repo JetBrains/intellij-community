@@ -1210,7 +1210,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
 
     // tests usually care about just one explicitly configured editor
-    List<FileEditor> tabEditors = application.isUnitTestMode() ? Collections.emptyList() : Arrays.asList(getFileEditorManager().getSelectedEditorWithRemotes());
+    List<FileEditor> tabEditors = application.isUnitTestMode() ? Collections.emptyList() : getFileEditorManager().getSelectedEditorWithRemotes();
     return ContainerUtil.filter(ContainerUtil.union(activeTextEditors, tabEditors),
                          fileEditor -> fileEditor.isValid() && fileEditor.getFile() != null && fileEditor.getFile().isValid());
   }

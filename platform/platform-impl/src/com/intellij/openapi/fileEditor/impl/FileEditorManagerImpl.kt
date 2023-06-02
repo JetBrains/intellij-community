@@ -190,7 +190,7 @@ open class FileEditorManagerImpl(
 
   private val splitterFlow = MutableSharedFlow<EditorsSplitters>(replay = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
-  override val currentFileEditorFlow: StateFlow<FileEditor?>
+  final override val currentFileEditorFlow: StateFlow<FileEditor?>
 
   override val dockContainer: DockContainer?
     get() = dockable.value
@@ -1359,13 +1359,13 @@ open class FileEditorManagerImpl(
     return target.editor
   }
 
-  override fun getSelectedEditorWithRemotes(): Array<FileEditor> {
+  override fun getSelectedEditorWithRemotes(): List<FileEditor> {
     val result = ArrayList<FileEditor>()
     result.addAll(selectedEditors)
     for (m in allClientFileEditorManagers) {
       result.addAll(m.getSelectedEditors())
     }
-    return result.toTypedArray()
+    return result
   }
 
   override fun getSelectedTextEditorWithRemotes(): Array<Editor> {
