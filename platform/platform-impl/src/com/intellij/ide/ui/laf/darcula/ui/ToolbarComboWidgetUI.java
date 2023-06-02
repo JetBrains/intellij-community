@@ -3,15 +3,13 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ProjectWindowCustomizerService;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBEmptyBorder;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import sun.swing.SwingUtilities2;
@@ -111,6 +109,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     Rectangle innerArea = SwingUtilities.calculateInnerArea(c, null);
     Graphics2D g2 = (Graphics2D)g.create(innerArea.x, innerArea.y, innerArea.width, innerArea.height);
     Rectangle paintRect = new Rectangle(0, 0, innerArea.width, innerArea.height);
+    doClip(paintRect, getLeftGap());
     int maxTextWidth = calcMaxTextWidth(combo, paintRect);
     try {
       GraphicsUtil.setupAAPainting(g2);
@@ -186,7 +185,8 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
                                 ? c.getTransparentHoverBackground() : c.getHoverBackground();
         if (hoverRect != null && hoverBackground != null) {
           g2.setColor(hoverBackground);
-          g2.fillRect(hoverRect.x, hoverRect.y, hoverRect.width, hoverRect.height);
+          int arc = DarculaUIUtil.COMPONENT_ARC.get();
+          g2.fillRoundRect(hoverRect.x, hoverRect.y, hoverRect.width, hoverRect.height, arc, arc);
         }
       }
     }
@@ -264,6 +264,8 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
   public Dimension getPreferredSize(JComponent c) {
     ToolbarComboWidget combo = (ToolbarComboWidget)c;
     Dimension res = new Dimension();
+
+    res.width += getLeftGap();
 
     List<Icon> icons = combo.getLeftIcons();
     if (!icons.isEmpty()) {
@@ -363,16 +365,17 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
 
     private void calcHoverRect(Point mousePosition) {
       Rectangle compBounds = comp.getVisibleRect();
+      Insets insets = comp.getInsets();
+      JBInsets.removeFrom(compBounds, insets);
       if (!isSeparatorShown(comp)) {
         updateHoverRect(compBounds);
         return;
       }
 
-      Insets insets = comp.getInsets();
-      Rectangle left = new Rectangle(compBounds.x, compBounds.y, separatorPosition + insets.left + SEPARATOR_WIDTH, compBounds.height);
-      Rectangle right = new Rectangle(separatorPosition + insets.left, compBounds.y, (int)(compBounds.getMaxX() - insets.right - separatorPosition), compBounds.height);
+      Rectangle left = new Rectangle(compBounds.x, compBounds.y, separatorPosition - 1, compBounds.height);
+      Rectangle right = new Rectangle(separatorPosition + SEPARATOR_WIDTH + insets.left + 1, compBounds.y, (compBounds.width - separatorPosition - SEPARATOR_WIDTH - 1), compBounds.height);
 
-      updateHoverRect(left.contains(mousePosition) ? left : right);
+      updateHoverRect(mousePosition.x <= separatorPosition + insets.left ? left : right);
     }
 
     private void updateHoverRect(Rectangle newRect) {
