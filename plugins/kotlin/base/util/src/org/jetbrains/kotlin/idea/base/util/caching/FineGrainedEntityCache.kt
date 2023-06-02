@@ -12,8 +12,8 @@ import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.EntityChange
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 

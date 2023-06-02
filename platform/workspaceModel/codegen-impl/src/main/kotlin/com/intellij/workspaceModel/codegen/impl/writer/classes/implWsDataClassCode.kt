@@ -10,13 +10,13 @@ import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsDataFieldIni
 import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
 import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.allFields
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.SoftLinkable
-import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspaceModel.storage.*
+import com.intellij.platform.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.platform.workspaceModel.storage.impl.UsedClassesCollector
+import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 
 /**
  * - Soft links

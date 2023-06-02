@@ -17,11 +17,11 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridg
 import com.intellij.packaging.impl.elements.FileOrDirectoryCopyPackagingElement
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel.Companion.getInstance
-import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.ExternalEntityMapping
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.FileOrDirectoryPackagingElementEntity
+import com.intellij.platform.workspaceModel.storage.CachedValue
+import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspaceModel.storage.ExternalEntityMapping
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ArtifactEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.FileOrDirectoryPackagingElementEntity
 
 internal class ArtifactVirtualFileListener(private val project: Project) : BulkFileListener {
   private val parentPathsToArtifacts: CachedValue<Map<String, List<ArtifactEntity>>> = CachedValue { storage: EntityStorage ->

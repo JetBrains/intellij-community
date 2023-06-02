@@ -1,10 +1,10 @@
 package com.intellij.workspaceModel.codegen.impl.writer
 
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.impl.ConnectionId
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
+import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import kotlin.reflect.*
 import kotlin.reflect.jvm.javaMethod
 

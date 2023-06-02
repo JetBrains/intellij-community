@@ -8,12 +8,12 @@ import com.intellij.workspaceModel.codegen.impl.writer.getRefType
 import com.intellij.workspaceModel.codegen.impl.writer.isRefType
 import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.javaName
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
-import com.intellij.workspaceModel.storage.impl.*
-import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
-import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryRoot
+import com.intellij.platform.workspaceModel.storage.impl.*
+import com.intellij.platform.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.platform.workspaceModel.storage.impl.containers.MutableWorkspaceSet
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 
 val ObjProperty<*, *>.implWsBuilderFieldCode: String
   get() = valueType.implWsBuilderBlockingCode(this)

@@ -2,7 +2,7 @@
 package com.intellij.platform.workspaceModel.storage.tests.containers
 
 import com.intellij.testFramework.UsefulTestCase.*
-import com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap
+import com.intellij.platform.workspaceModel.storage.impl.containers.BidirectionalMap
 import org.junit.Before
 import org.junit.Test
 

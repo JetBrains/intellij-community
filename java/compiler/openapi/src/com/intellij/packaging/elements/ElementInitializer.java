@@ -2,9 +2,9 @@
 package com.intellij.packaging.elements;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
+import com.intellij.platform.workspaceModel.storage.EntityStorage;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
 import org.jetbrains.annotations.NotNull;
 
 /**

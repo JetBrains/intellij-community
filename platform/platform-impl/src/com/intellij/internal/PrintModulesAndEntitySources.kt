@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.workspaceModel.ide.workspaceModel
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 class PrintModulesAndEntitySources : DumbAwareAction("Print Modules and Entity Sources to Log") {
   override fun actionPerformed(e: AnActionEvent) {

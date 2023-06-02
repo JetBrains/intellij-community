@@ -11,8 +11,8 @@ import com.intellij.workspaceModel.codegen.impl.writer.fqn
 import com.intellij.workspaceModel.codegen.impl.writer.lines
 import com.intellij.workspaceModel.codegen.impl.writer.toQualifiedName
 import com.intellij.workspaceModel.codegen.impl.writer.allFields
-import com.intellij.workspaceModel.storage.SymbolicEntityId
-import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
+import com.intellij.platform.workspaceModel.storage.SymbolicEntityId
+import com.intellij.platform.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 
 internal fun ObjClass<*>.softLinksCode(context: LinesBuilder, hasSoftLinks: Boolean) {
   context.conditionalLine({ hasSoftLinks }, "override fun getLinks(): Set<${SymbolicEntityId::class.fqn}<*>>") {

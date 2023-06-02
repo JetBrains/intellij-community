@@ -4,10 +4,10 @@ package com.intellij.platform.workspaceModel.storage.tests.impl
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
 import com.intellij.platform.workspaceModel.storage.tests.createEmptyBuilder
 import com.intellij.testFramework.assertInstanceOf
-import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
-import com.intellij.workspaceModel.storage.impl.ChangeEntry
-import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
-import com.intellij.workspaceModel.storage.impl.assertConsistency
+import com.intellij.platform.workspaceModel.storage.impl.AbstractEntityStorage
+import com.intellij.platform.workspaceModel.storage.impl.ChangeEntry
+import com.intellij.platform.workspaceModel.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspaceModel.storage.impl.assertConsistency
 import org.junit.After
 import org.junit.Before
 import org.junit.Test

@@ -2,13 +2,13 @@
 package com.intellij.platform.workspaceModel.storage.tests
 
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
-import com.intellij.workspaceModel.storage.SerializationResult
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
-import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
-import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspaceModel.storage.SerializationResult
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.addLibraryEntity
+import com.intellij.platform.workspaceModel.storage.impl.EntityStorageSerializerImpl
+import com.intellij.platform.workspaceModel.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -184,48 +184,48 @@ class EntityStorageSerializationTest {
 
 // Kotlin tip: Use the ugly ${'$'} to insert the $ into the multiline string
 private val expectedKryoRegistration = """
-  [10, com.intellij.workspaceModel.storage.impl.ConnectionId]
-  [11, com.intellij.workspaceModel.storage.impl.ImmutableEntitiesBarrel]
-  [12, com.intellij.workspaceModel.storage.impl.ChildEntityId]
-  [13, com.intellij.workspaceModel.storage.impl.ParentEntityId]
+  [10, com.intellij.platform.workspaceModel.storage.impl.ConnectionId]
+  [11, com.intellij.platform.workspaceModel.storage.impl.ImmutableEntitiesBarrel]
+  [12, com.intellij.platform.workspaceModel.storage.impl.ChildEntityId]
+  [13, com.intellij.platform.workspaceModel.storage.impl.ParentEntityId]
   [14, it.unimi.dsi.fastutil.objects.ObjectOpenHashSet]
-  [15, com.intellij.workspaceModel.storage.impl.indices.SymbolicIdInternalIndex]
-  [16, com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex]
-  [17, com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex]
-  [18, com.intellij.workspaceModel.storage.impl.containers.BidirectionalLongMultiMap]
+  [15, com.intellij.platform.workspaceModel.storage.impl.indices.SymbolicIdInternalIndex]
+  [16, com.intellij.platform.workspaceModel.storage.impl.indices.EntityStorageInternalIndex]
+  [17, com.intellij.platform.workspaceModel.storage.impl.indices.MultimapStorageIndex]
+  [18, com.intellij.platform.workspaceModel.storage.impl.containers.BidirectionalLongMultiMap]
   [19, it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap]
   [20, it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap]
-  [21, com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl${'$'}TypeInfo]
+  [21, com.intellij.platform.workspaceModel.storage.impl.EntityStorageSerializerImpl${'$'}TypeInfo]
   [22, java.util.List]
   [23, java.util.ArrayList]
   [24, java.util.HashMap]
   [25, com.intellij.util.SmartList]
   [26, java.util.LinkedHashMap]
-  [27, com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap]
-  [28, com.intellij.workspaceModel.storage.impl.containers.BidirectionalSetMap]
+  [27, com.intellij.platform.workspaceModel.storage.impl.containers.BidirectionalMap]
+  [28, com.intellij.platform.workspaceModel.storage.impl.containers.BidirectionalSetMap]
   [29, com.intellij.util.containers.BidirectionalMultiMap]
   [30, com.google.common.collect.HashBiMap]
   [31, java.util.LinkedHashSet]
-  [32, com.intellij.workspaceModel.storage.impl.containers.LinkedBidirectionalMap]
+  [32, com.intellij.platform.workspaceModel.storage.impl.containers.LinkedBidirectionalMap]
   [33, it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap]
   [34, it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap]
   [35, byte[]]
-  [36, com.intellij.workspaceModel.storage.impl.ImmutableEntityFamily]
-  [37, com.intellij.workspaceModel.storage.impl.RefsTable]
-  [38, com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntBiMap]
-  [39, com.intellij.workspaceModel.storage.impl.containers.ImmutableIntIntUniqueBiMap]
-  [40, com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex]
-  [41, com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntMultiMap${'$'}ByList]
+  [36, com.intellij.platform.workspaceModel.storage.impl.ImmutableEntityFamily]
+  [37, com.intellij.platform.workspaceModel.storage.impl.RefsTable]
+  [38, com.intellij.platform.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntBiMap]
+  [39, com.intellij.platform.workspaceModel.storage.impl.containers.ImmutableIntIntUniqueBiMap]
+  [40, com.intellij.platform.workspaceModel.storage.impl.indices.VirtualFileIndex]
+  [41, com.intellij.platform.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntMultiMap${'$'}ByList]
   [42, int[]]
   [43, kotlin.Pair]
-  [44, com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl${'$'}SerializableEntityId]
-  [45, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}AddEntity]
-  [46, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}RemoveEntity]
-  [47, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceEntity]
-  [48, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ChangeEntitySource]
-  [49, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceAndChangeSource]
-  [50, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceEntity${'$'}Data]
-  [51, com.intellij.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceEntity${'$'}References]
+  [44, com.intellij.platform.workspaceModel.storage.impl.EntityStorageSerializerImpl${'$'}SerializableEntityId]
+  [45, com.intellij.platform.workspaceModel.storage.impl.ChangeEntry${'$'}AddEntity]
+  [46, com.intellij.platform.workspaceModel.storage.impl.ChangeEntry${'$'}RemoveEntity]
+  [47, com.intellij.platform.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceEntity]
+  [48, com.intellij.platform.workspaceModel.storage.impl.ChangeEntry${'$'}ChangeEntitySource]
+  [49, com.intellij.platform.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceAndChangeSource]
+  [50, com.intellij.platform.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceEntity${'$'}Data]
+  [51, com.intellij.platform.workspaceModel.storage.impl.ChangeEntry${'$'}ReplaceEntity${'$'}References]
   [52, java.util.Collections${'$'}UnmodifiableCollection]
   [53, java.util.Collections${'$'}UnmodifiableSet]
   [54, java.util.Collections${'$'}UnmodifiableRandomAccessList]

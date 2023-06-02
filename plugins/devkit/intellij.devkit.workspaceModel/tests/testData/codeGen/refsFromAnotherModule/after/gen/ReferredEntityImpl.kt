@@ -1,21 +1,21 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.storage.EntityInformation
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.impl.ConnectionId
-import com.intellij.workspaceModel.storage.impl.EntityLink
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
-import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspaceModel.storage.EntityInformation
+import com.intellij.platform.workspaceModel.storage.EntitySource
+import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
+import com.intellij.platform.workspaceModel.storage.impl.EntityLink
+import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspaceModel.storage.impl.UsedClassesCollector
+import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspaceModel.storage.impl.extractOneToOneChild
+import com.intellij.platform.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)

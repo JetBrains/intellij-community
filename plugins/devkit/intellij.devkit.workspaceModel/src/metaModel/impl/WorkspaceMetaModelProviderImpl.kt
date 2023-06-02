@@ -6,7 +6,7 @@ import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.openapi.module.Module
 import com.intellij.workspaceModel.codegen.deft.meta.*
 import com.intellij.workspaceModel.deft.api.annotations.Default
-import com.intellij.workspaceModel.storage.EqualsBy
+import com.intellij.platform.workspaceModel.storage.EqualsBy
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.annotations.Open

@@ -2,12 +2,12 @@
 package com.intellij.packaging.elements;
 
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.storage.ExternalEntityMapping;
-import com.intellij.workspaceModel.storage.MutableExternalEntityMapping;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder;
+import com.intellij.platform.workspaceModel.storage.ExternalEntityMapping;
+import com.intellij.platform.workspaceModel.storage.MutableExternalEntityMapping;
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
+import com.intellij.platform.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder;
 import kotlin.Pair;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;

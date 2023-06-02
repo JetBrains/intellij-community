@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
-import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.platform.workspaceModel.storage.EntitySource
 
 /**
  * Represents entities imported from external project system.

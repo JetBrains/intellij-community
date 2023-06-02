@@ -4,9 +4,9 @@ package com.intellij.platform.workspaceModel.storage.tests
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
-import com.intellij.workspaceModel.storage.impl.assertConsistency
-import com.intellij.workspaceModel.storage.impl.exceptions.SymbolicIdAlreadyExistsException
+import com.intellij.platform.workspaceModel.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspaceModel.storage.impl.assertConsistency
+import com.intellij.platform.workspaceModel.storage.impl.exceptions.SymbolicIdAlreadyExistsException
 import org.hamcrest.CoreMatchers
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

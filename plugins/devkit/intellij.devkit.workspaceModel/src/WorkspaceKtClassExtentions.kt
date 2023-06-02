@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.references.mainReference

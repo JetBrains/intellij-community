@@ -5,8 +5,8 @@ import com.intellij.facet.Facet
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.module.Module
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.FacetEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 class FacetEntityContributor: WorkspaceFacetContributor<FacetEntity> {
   override val rootEntityType: Class<FacetEntity>

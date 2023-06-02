@@ -14,7 +14,7 @@ abstract class WorkspaceEntityInspectionBase: LightJavaCodeInsightFixtureTestCas
       
       interface Obj""".trimIndent())
     myFixture.createFile("WorkspaceEntity.kt", """
-        package com.intellij.workspaceModel.storage
+        package com.intellij.platform.workspaceModel.storage
         
         import org.jetbrains.deft.Obj
         

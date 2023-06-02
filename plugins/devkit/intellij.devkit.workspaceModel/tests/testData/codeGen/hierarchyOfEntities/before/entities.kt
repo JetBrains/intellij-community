@@ -1,6 +1,6 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Open
 

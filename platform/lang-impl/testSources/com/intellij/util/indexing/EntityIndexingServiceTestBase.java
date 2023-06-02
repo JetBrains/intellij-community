@@ -12,10 +12,10 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
+import com.intellij.platform.workspaceModel.storage.EntityChange;
+import com.intellij.platform.workspaceModel.storage.VersionedStorageChange;
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl;
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

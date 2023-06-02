@@ -17,10 +17,10 @@ import com.intellij.workspaceModel.codegen.impl.writer.fqn
 import com.intellij.workspaceModel.codegen.impl.writer.fqn7
 import com.intellij.workspaceModel.codegen.impl.writer.lines
 import com.intellij.workspaceModel.codegen.impl.writer.*
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspaceModel.storage.*
+import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 

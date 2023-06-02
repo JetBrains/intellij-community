@@ -49,9 +49,9 @@
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.EntitiesOrphanageImpl"/>
     <projectService serviceInterface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex"
                     serviceImplementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl"/>
-    <projectService serviceInterface="com.intellij.workspaceModel.storage.url.VirtualFileUrlManager"
+    <projectService serviceInterface="com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.workspaceModel.storage.url.VirtualFileUrlManager"
+    <applicationService serviceInterface="com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
 

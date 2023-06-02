@@ -7,11 +7,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.bridgeEntities.TestModulePropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.TestModulePropertiesEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.modifyEntity
 
 class TestModulePropertiesBridge(private val currentModule: Module): TestModuleProperties() {
   private val workspaceModel = WorkspaceModel.getInstance(currentModule.project)

@@ -5,7 +5,7 @@ import com.intellij.platform.workspaceModel.storage.testEntities.entities.Anothe
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.FinalFieldsEntity
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.MySource
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.modifyEntity
-import com.intellij.workspaceModel.storage.toBuilder
+import com.intellij.platform.workspaceModel.storage.toBuilder
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

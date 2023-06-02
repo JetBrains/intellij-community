@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
-import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspaceModel.storage.impl.url.toVirtualFileUrl
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 
 /**
  * Returns `null` for the default project

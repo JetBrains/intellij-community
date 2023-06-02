@@ -2,10 +2,10 @@
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
 import com.intellij.packaging.elements.PackagingElement
-import com.intellij.workspaceModel.storage.ExternalEntityMapping
-import com.intellij.workspaceModel.storage.MutableExternalEntityMapping
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.ExternalEntityMapping
+import com.intellij.platform.workspaceModel.storage.MutableExternalEntityMapping
+import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 
 const val PACKAGING_ELEMENTS = "intellij.artifacts.packaging.elements"
 internal val MutableEntityStorage.mutableElements: MutableExternalEntityMapping<PackagingElement<*>>

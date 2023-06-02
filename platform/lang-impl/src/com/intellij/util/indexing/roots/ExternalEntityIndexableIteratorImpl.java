@@ -10,7 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.customizingIteration.ExternalEntityIndexableIterator;
 import com.intellij.util.indexing.roots.origin.ExternalEntityOrigin;
 import com.intellij.util.indexing.roots.origin.ExternalEntityOriginImpl;
-import com.intellij.workspaceModel.storage.EntityReference;
+import com.intellij.platform.workspaceModel.storage.EntityReference;
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

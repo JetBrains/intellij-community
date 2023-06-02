@@ -4,7 +4,7 @@ package com.intellij.platform.workspaceModel.storage.tests
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.MySource
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.OptionalOneToOneChildEntity
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.OptionalOneToOneParentEntity
-import com.intellij.workspaceModel.storage.impl.assertConsistency
+import com.intellij.platform.workspaceModel.storage.impl.assertConsistency
 import org.junit.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull

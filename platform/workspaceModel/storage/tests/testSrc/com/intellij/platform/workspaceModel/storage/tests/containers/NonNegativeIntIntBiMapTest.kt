@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspaceModel.storage.tests.containers
 
-import com.intellij.workspaceModel.storage.impl.containers.MutableNonNegativeIntIntBiMap
+import com.intellij.platform.workspaceModel.storage.impl.containers.MutableNonNegativeIntIntBiMap
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

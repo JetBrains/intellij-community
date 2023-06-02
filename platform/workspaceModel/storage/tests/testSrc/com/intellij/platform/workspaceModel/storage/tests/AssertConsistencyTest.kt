@@ -2,8 +2,8 @@
 package com.intellij.platform.workspaceModel.storage.tests
 
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.addAssertConsistencyEntity
-import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
-import com.intellij.workspaceModel.storage.impl.assertConsistency
+import com.intellij.platform.workspaceModel.storage.impl.AbstractEntityStorage
+import com.intellij.platform.workspaceModel.storage.impl.assertConsistency
 import org.junit.Test
 
 class AssertConsistencyTest {

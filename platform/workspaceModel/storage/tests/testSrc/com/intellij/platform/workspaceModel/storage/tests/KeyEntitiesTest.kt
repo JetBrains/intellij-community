@@ -5,8 +5,8 @@ import com.intellij.platform.workspaceModel.storage.testEntities.entities.Anothe
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.KeyChild
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.KeyParent
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.MySource
-import com.intellij.workspaceModel.storage.impl.ChangeEntry
-import com.intellij.workspaceModel.storage.impl.assertConsistency
+import com.intellij.platform.workspaceModel.storage.impl.ChangeEntry
+import com.intellij.platform.workspaceModel.storage.impl.assertConsistency
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
