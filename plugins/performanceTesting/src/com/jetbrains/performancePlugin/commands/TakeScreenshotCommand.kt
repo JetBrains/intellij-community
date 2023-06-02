@@ -89,11 +89,12 @@ internal suspend fun takeScreenshotOfFrame(fileName: String) {
             val component = frame.component
             val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
             component.printAll(img.createGraphics())
-            val prefix = if (projects.size == 1) "" else project.name + "_"
+            val prefix = if (projects.size == 1) "" else "${project.name}_"
             withContext(Dispatchers.IO) {
               try {
-                ImageIO.write(img, "png", File(prefix + fileName))
-                LOG.info("Screenshot is saved at: $fileName")
+                val file = File(prefix + fileName)
+                ImageIO.write(img, "png", file)
+                LOG.info("Screenshot is saved at: $file")
               }
               catch (e: IOException) {
                 LOG.info(e)

@@ -34,7 +34,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-public class FileLevelIntentionComponent extends EditorNotificationPanel {
+public final class FileLevelIntentionComponent extends EditorNotificationPanel {
   public FileLevelIntentionComponent(@NlsContexts.Label String description,
                                      @NotNull HighlightSeverity severity,
                                      @Nullable GutterMark gutterMark,
