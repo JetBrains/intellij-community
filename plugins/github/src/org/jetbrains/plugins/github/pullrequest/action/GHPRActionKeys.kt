@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.action
 
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
@@ -32,4 +33,8 @@ object GHPRActionKeys {
   @JvmStatic
   val COMBINED_DIFF_PREVIEW_MODEL = DataKey.create<CombinedDiffPreviewModel>(
     "org.jetbrains.plugins.github.pullrequest.combined.diff.preview.model")
+
+  @JvmStatic
+  val REVIEW_BRANCH_VM: DataKey<CodeReviewBranchesViewModel> =
+    DataKey.create("org.jetbrains.plugins.github.pullrequest.review.branch.viewmodel")
 }

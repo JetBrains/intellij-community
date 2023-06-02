@@ -8,4 +8,6 @@ interface CodeReviewBranchesViewModel {
   val targetBranch: StateFlow<String>
   val sourceBranch: StateFlow<String>
   val isCheckedOut: Flow<Boolean>
+
+  fun fetchAndCheckoutRemoteBranch()
 }

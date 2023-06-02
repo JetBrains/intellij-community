@@ -11,10 +11,8 @@ import com.intellij.collaboration.ui.util.gap
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
 import kotlinx.coroutines.CoroutineScope
 import net.miginfocom.layout.AC
@@ -26,7 +24,6 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModel
@@ -38,7 +35,6 @@ import javax.swing.JPanel
 internal object GHPRDetailsComponentFactory {
 
   fun create(
-    project: Project,
     scope: CoroutineScope,
     reviewDetailsVm: CodeReviewDetailsViewModel,
     branchesVm: CodeReviewBranchesViewModel,
@@ -46,7 +42,6 @@ internal object GHPRDetailsComponentFactory {
     reviewFlowVm: GHPRReviewFlowViewModel,
     commitsVm: GHPRCommitsViewModel,
     dataProvider: GHPRDataProvider,
-    repositoryDataService: GHPRRepositoryDataService,
     securityService: GHPRSecurityService,
     avatarIconsProvider: GHAvatarIconsProvider,
     commitFilesBrowserComponent: JComponent
@@ -60,9 +55,7 @@ internal object GHPRDetailsComponentFactory {
         scope, branchesVm,
         checkoutAction = ActionManager.getInstance().getAction("Github.PullRequest.Branch.Checkout.Remote"),
         dataContext = SimpleDataContext.builder()
-          .add(CommonDataKeys.PROJECT, project)
-          .add(GHPRActionKeys.GIT_REPOSITORY, repositoryDataService.remoteCoordinates.repository)
-          .add(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER, dataProvider)
+          .add(GHPRActionKeys.REVIEW_BRANCH_VM, branchesVm)
           .build()))
     }
     val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewStatusVm, reviewFlowVm, securityService, avatarIconsProvider)

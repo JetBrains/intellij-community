@@ -14,7 +14,6 @@ import com.intellij.collaboration.ui.util.gap
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
@@ -90,7 +89,6 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     val branchesVm = detailsVm.branchesVm
     val statusVm = detailsVm.statusVm
     val changesVm = detailsVm.changesVm
-    val repository = detailsVm.repository
 
     val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
@@ -101,9 +99,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
         cs, branchesVm,
         checkoutAction = ActionManager.getInstance().getAction("GitLab.Merge.Request.Branch.Checkout.Remote"),
         dataContext = SimpleDataContext.builder()
-          .add(CommonDataKeys.PROJECT, project)
-          .add(GitLabMergeRequestsActionKeys.GIT_REPOSITORY, repository)
-          .add(GitLabMergeRequestsActionKeys.MERGE_REQUEST, detailsInfoVm.mergeRequest)
+          .add(GitLabMergeRequestsActionKeys.REVIEW_BRANCH_VM, branchesVm)
           .build()))
     }
     val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
