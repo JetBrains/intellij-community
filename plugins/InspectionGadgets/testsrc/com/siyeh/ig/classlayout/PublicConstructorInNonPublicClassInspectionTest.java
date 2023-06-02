@@ -25,6 +25,14 @@ public class PublicConstructorInNonPublicClassInspectionTest extends LightJavaCo
   }
 
   public void testQuickfix() {
+    checkQuickFix();
+  }
+
+  public void testQuickfixWithParameters() {
+    checkQuickFix();
+  }
+
+  private void checkQuickFix() {
     doTest();
     final IntentionAction intention = myFixture.getAvailableIntention("Remove 'public' modifier");
     assertNotNull(intention);
