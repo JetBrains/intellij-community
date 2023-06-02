@@ -41,7 +41,7 @@ class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
         return try {
             CodeFragmentCompiler(executionContext).compile(codeFragment, filesToCompile, strategy, newBindingContext, moduleDescriptor)
         } catch (e: CodeFragmentCodegenException) {
-            strategy.processError(e)
+            strategy.processError(e, codeFragment, executionContext)
             val fallback = strategy.getFallbackStrategy()
             if (fallback != null) {
                 return doCompileCodeFragment(fallback, codeFragment, moduleDescriptor, bindingContext, executionContext)
