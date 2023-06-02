@@ -14,6 +14,7 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.*
@@ -130,7 +131,21 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
     }
 
     _renderer.invoke(list, value, index, isSelected, cellHasFocus, RowParamsImpl(selectablePanel))
+
+    selectablePanel.accessibleContext.accessibleName = getAccessibleName()
+
     return selectablePanel
+  }
+
+  @Nls
+  private fun getAccessibleName(): String {
+    val names = cells
+      .filter { it.visible }
+      .map { it.component.accessibleContext.accessibleName.trim() }
+      .filter { it.isNotEmpty() }
+
+    // Comma gives a good pause between unrelated text for readers on Windows/MacOS
+    return names.joinToString(", ")
   }
 
   private fun add(cell: LcrCellBaseImpl, initParams: LcrInitParamsImpl, baselineAlign: Boolean) {

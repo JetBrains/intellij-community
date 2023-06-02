@@ -72,6 +72,7 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
       invalidate()
     }
 
+  @ApiStatus.Experimental
   var accessibleContextProvider: Component? = null
 
   init {
