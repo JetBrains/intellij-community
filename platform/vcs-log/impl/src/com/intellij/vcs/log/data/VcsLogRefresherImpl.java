@@ -109,6 +109,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       myDataPack = DataPack.build(compoundList, refs, myProviders, myStorage, false);
       mySingleTaskController.request(RefreshRequest.RELOAD_ALL); // build/rebuild the full log in background
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Exception e) {
       LOG.info(e);
       myDataPack = new DataPack.ErrorDataPack(e);
