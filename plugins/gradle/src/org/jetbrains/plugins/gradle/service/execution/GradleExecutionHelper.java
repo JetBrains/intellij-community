@@ -357,7 +357,7 @@ public class GradleExecutionHelper {
 
     setupJavaHome(operation, settings);
 
-    setupProgressListeners(operation, id, listener, buildEnvironment);
+    setupProgressListeners(operation, settings, id, listener, buildEnvironment);
 
     setupStandardIO(operation, settings, id, listener);
 
@@ -375,6 +375,7 @@ public class GradleExecutionHelper {
 
   private static void setupProgressListeners(
     @NotNull LongRunningOperation operation,
+    @NotNull GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskId id,
     @NotNull ExternalSystemTaskNotificationListener listener,
     @Nullable BuildEnvironment buildEnvironment
@@ -383,7 +384,7 @@ public class GradleExecutionHelper {
     GradleProgressListener progressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)progressListener);
     operation.addProgressListener(progressListener, OperationType.TASK, OperationType.FILE_DOWNLOAD);
-    if (operation instanceof TestLauncher) {
+    if (settings.isRunAsTest() && settings.isBuiltInTestEventsUsed()) {
       operation.addProgressListener(progressListener, OperationType.TEST, OperationType.TEST_OUTPUT);
     }
   }

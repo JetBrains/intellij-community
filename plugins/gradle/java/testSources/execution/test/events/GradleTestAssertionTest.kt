@@ -82,7 +82,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             """.trimMargin())
           }
           assertNode("test multiple assert equals for texts") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               assertTestConsoleContains("""
                 |
                 |assertion message 1
@@ -150,7 +150,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             """.trimMargin())
           }
           assertNode("test assert equals for objects") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               assertTestConsoleContains("""
                 |
                 |assertion message
@@ -169,7 +169,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             }
           }
           assertNode("test assert equals for same objects") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               assertTestConsoleContains("""
                 |
                 |assertion message

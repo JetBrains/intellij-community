@@ -22,7 +22,7 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
       else -> "org.junit.Ignore"
     }
 
-  fun isTestLauncherSupported(): Boolean {
+  fun isBuiltInTestEventsUsed(): Boolean {
     return isGradleAtLeast("7.6")
   }
 

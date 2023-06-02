@@ -128,7 +128,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
             assertPsiLocation("DisplayNameTestCase", "ugly_test")
           }
           assertNode("parametrized test") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
               assertPsiLocation("DisplayNameTestCase", "parametrized_test")
             }
@@ -140,7 +140,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
             }
           }
           assertNode("pretty parametrized test") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
               assertPsiLocation("DisplayNameTestCase", "ugly_parametrized_test")
             }
@@ -152,7 +152,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
             }
           }
           assertNode("dynamic test") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
               assertPsiLocation("DisplayNameTestCase", "dynamic_test")
             }
@@ -164,7 +164,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
             }
           }
           assertNode("pretty dynamic test") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
               assertPsiLocation("DisplayNameTestCase", "ugly_dynamic_test")
             }

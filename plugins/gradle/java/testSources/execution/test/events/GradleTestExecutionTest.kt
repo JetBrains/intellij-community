@@ -55,7 +55,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("AppTest") {
@@ -66,7 +66,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
             }
           }
           assertNode(":additionalTest") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               assertNode("Gradle Test Run :additionalTest") {
                 assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("AppTest") {
@@ -77,12 +77,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
                 }
               }
             }
-            else {
-              assertNode("There were failing tests. See the report at: .*".toRegex())
-            }
-          }
-          if (isTestLauncherSupported()) {
-            assertNode("Test failed.")
+            assertNode("There were failing tests. See the report at: .*".toRegex())
           }
         }
       }
@@ -156,7 +151,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("AppTest") {
@@ -248,7 +243,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("TestCase") {
@@ -276,7 +271,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("TestCase") {
@@ -303,7 +298,17 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":compileTestJava")
           assertNode(":processTestResources")
           assertNode(":testClasses")
-          assertNode(":test")
+          assertNode(":test") {
+            if (isBuiltInTestEventsUsed()) {
+              assertNode("Gradle Test Run :test") {
+                assertNode("Gradle Test Executor \\d+".toRegex()) {
+                  assertNode("TestCase") {
+                    assertNode("Test test()(org.example.TestCase)")
+                  }
+                }
+              }
+            }
+          }
         }
       }
 
@@ -354,7 +359,17 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":compileTestJava")
           assertNode(":processTestResources")
           assertNode(":testClasses")
-          assertNode(":test")
+          assertNode(":test") {
+            if (isBuiltInTestEventsUsed()) {
+              assertNode("Gradle Test Run :test") {
+                assertNode("Gradle Test Executor \\d+".toRegex()) {
+                  assertNode("TestCase") {
+                    assertNode("Test test()(org.example.TestCase)")
+                  }
+                }
+              }
+            }
+          }
           assertNode(":allTests")
         }
       }
@@ -373,7 +388,17 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":compileTestJava")
           assertNode(":processTestResources")
           assertNode(":testClasses")
-          assertNode(":test")
+          assertNode(":test") {
+            if (isBuiltInTestEventsUsed()) {
+              assertNode("Gradle Test Run :test") {
+                assertNode("Gradle Test Executor \\d+".toRegex()) {
+                  assertNode("TestCase") {
+                    assertNode("Test test()(org.example.TestCase)")
+                  }
+                }
+              }
+            }
+          }
           assertNode(":allTests")
         }
       }
@@ -475,7 +500,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("TestCase") {
@@ -497,7 +522,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("TestCase") {
@@ -521,7 +546,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":processTestResources")
           assertNode(":testClasses")
           assertNode(":test") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               assertNode("Gradle Test Run :test") {
                 assertNode("Gradle Test Executor \\d+".toRegex()) {
                   assertNode("TestCase") {

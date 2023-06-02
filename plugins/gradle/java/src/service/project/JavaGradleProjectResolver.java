@@ -185,11 +185,11 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
                                     @NotNull Consumer<String> initScriptConsumer,
                                     @NotNull Map<String, String> parameters) {
 
-    var testsWillBeExecuted = Boolean.parseBoolean(parameters.get(TEST_EXECUTION_EXPECTED_KEY));
-    var testLauncherWillBeUsed = Boolean.parseBoolean(parameters.get(TEST_LAUNCHER_WILL_BE_USED_KEY));
+    var isRunAsTest = Boolean.parseBoolean(parameters.get(IS_RUN_AS_TEST_KEY));
+    var isBuiltInTestEventsUsed = Boolean.parseBoolean(parameters.get(IS_BUILT_IN_TEST_EVENTS_USED_KEY));
     var jvmParametersSetup = parameters.get(GradleProjectResolverExtension.JVM_PARAMETERS_SETUP_KEY);
-    if (testsWillBeExecuted) {
-      var initScript = testLauncherWillBeUsed
+    if (isRunAsTest) {
+      var initScript = isBuiltInTestEventsUsed
                        ? GradleInitScriptUtil.loadFileComparisonTestLoggerInitScript()
                        : GradleInitScriptUtil.loadIjTestLoggerInitScript();
       initScriptConsumer.consume(initScript);

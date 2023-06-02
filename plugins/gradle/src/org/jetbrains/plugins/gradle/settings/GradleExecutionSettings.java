@@ -33,6 +33,8 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   private boolean useQualifiedModuleNames = false;
   private boolean delegatedBuild = true;
 
+  private boolean myBuiltInTestEventsUsed = false;
+
   public GradleExecutionSettings(@Nullable String gradleHome,
                                  @Nullable String serviceDirectory,
                                  @NotNull DistributionType distributionType,
@@ -151,6 +153,14 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   public boolean isTestTaskRerun() {
     var value = getUserData(GradleRunConfiguration.IS_TEST_TASK_RERUN_KEY);
     return ObjectUtils.chooseNotNull(value, false);
+  }
+
+  public boolean isBuiltInTestEventsUsed() {
+    return myBuiltInTestEventsUsed;
+  }
+
+  public void setBuiltInTestEventsUsed(boolean isBuiltInTestEventsUsed) {
+    myBuiltInTestEventsUsed = isBuiltInTestEventsUsed;
   }
 
   @Override

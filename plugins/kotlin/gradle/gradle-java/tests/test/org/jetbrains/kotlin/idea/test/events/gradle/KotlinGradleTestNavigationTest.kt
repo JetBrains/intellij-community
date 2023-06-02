@@ -116,7 +116,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
                         assertPsiLocation("DisplayNameTestCase", "ugly test")
                     }
                     assertNode("pretty parametrized test") {
-                        if (isTestLauncherSupported()) {
+                        if (isBuiltInTestEventsUsed()) {
                             // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
                             assertPsiLocation("DisplayNameTestCase", "ugly parametrized test")
                         }
@@ -128,7 +128,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
                         }
                     }
                     assertNode("pretty dynamic test") {
-                        if (isTestLauncherSupported()) {
+                        if (isBuiltInTestEventsUsed()) {
                             // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
                             assertPsiLocation("DisplayNameTestCase", "ugly dynamic test")
                         }

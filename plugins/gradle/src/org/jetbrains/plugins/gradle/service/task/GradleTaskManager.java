@@ -132,9 +132,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
       setupGradleScriptDebugging(settings);
       setupDebuggerDispatchPort(settings);
+      setupBuiltInTestEvents(settings, gradleVersion);
 
-      var isApplicableTestLauncher = isApplicableTestLauncher(id, projectPath, tasks, settings, gradleVersion);
-      appendInitScriptArgument(tasks, jvmParametersSetup, settings, gradleVersion, isApplicableTestLauncher);
+      appendInitScriptArgument(tasks, jvmParametersSetup, settings, gradleVersion);
 
       for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
         settings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
@@ -147,7 +147,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
           .notifyConnectionAboutChangedPaths(connection);
       }
 
-      if (isApplicableTestLauncher) {
+      if (isApplicableTestLauncher(id, projectPath, tasks, settings, gradleVersion)) {
         TestLauncher launcher = myHelper.getTestLauncher(connection, id, tasks, settings, listener);
         launcher.withCancellationToken(cancellationTokenSource.token());
         launcher.run();
@@ -307,15 +307,14 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     @Nullable String jvmParametersSetup,
     @NotNull GradleExecutionSettings effectiveSettings
   ) {
-    appendInitScriptArgument(taskNames, jvmParametersSetup, effectiveSettings, null, false);
+    appendInitScriptArgument(taskNames, jvmParametersSetup, effectiveSettings, null);
   }
 
   private static void appendInitScriptArgument(
     @NotNull List<String> taskNames,
     @Nullable String jvmParametersSetup,
     @NotNull GradleExecutionSettings effectiveSettings,
-    @Nullable GradleVersion gradleVersion,
-    boolean isApplicableTestLauncher
+    @Nullable GradleVersion gradleVersion
   ) {
     final List<String> initScripts = new ArrayList<>();
     List<GradleProjectResolverExtension> extensions = GradleProjectResolverUtil.createProjectResolvers(null).toList();
@@ -325,8 +324,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       Map<String, String> enhancementParameters = new HashMap<>();
       enhancementParameters.put(GradleProjectResolverExtension.JVM_PARAMETERS_SETUP_KEY, jvmParametersSetup);
 
-      Boolean isTestExecution = effectiveSettings.isRunAsTest();
-      enhancementParameters.put(GradleProjectResolverExtension.TEST_EXECUTION_EXPECTED_KEY, String.valueOf(isTestExecution));
+      var isRunAsTest = effectiveSettings.isRunAsTest();
+      enhancementParameters.put(GradleProjectResolverExtension.IS_RUN_AS_TEST_KEY, String.valueOf(isRunAsTest));
+      var isBuiltInTestEventsUsed = effectiveSettings.isBuiltInTestEventsUsed();
+      enhancementParameters.put(GradleProjectResolverExtension.IS_BUILT_IN_TEST_EVENTS_USED_KEY, String.valueOf(isBuiltInTestEventsUsed));
 
       Integer debugDispatchPort = effectiveSettings.getUserData(DEBUGGER_DISPATCH_PORT_KEY);
       if (debugDispatchPort != null) {
@@ -338,8 +339,6 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       if (debugDispatchAddr != null) {
         enhancementParameters.put(GradleProjectResolverExtension.DEBUG_DISPATCH_ADDR_KEY, debugDispatchAddr);
       }
-
-      enhancementParameters.put(GradleProjectResolverExtension.TEST_LAUNCHER_WILL_BE_USED_KEY, String.valueOf(isApplicableTestLauncher));
 
       if (gradleVersion != null) {
         enhancementParameters.put(GradleProjectResolverExtension.GRADLE_VERSION, gradleVersion.getVersion());
@@ -414,6 +413,12 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     String dispatchAddr = effectiveSettings.getUserData(DEBUGGER_DISPATCH_ADDR_KEY);
     if (dispatchAddr != null) {
       effectiveSettings.withVmOption(String.format("-D%s=%s", DISPATCH_ADDR_SYS_PROP, dispatchAddr));
+    }
+  }
+
+  private static void setupBuiltInTestEvents(@NotNull GradleExecutionSettings settings, @Nullable GradleVersion gradleVersion) {
+    if (gradleVersion != null && !isGradleOlderThan(gradleVersion, "7.6")) {
+      settings.setBuiltInTestEventsUsed(true);
     }
   }
 
