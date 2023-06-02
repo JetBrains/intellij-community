@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspaceModel.storage.bridgeEntities
 
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspaceModel.storage.*
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage
@@ -24,11 +22,6 @@ import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractOneC
 import com.intellij.platform.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.platform.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Abstract
-import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)

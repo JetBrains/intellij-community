@@ -4,7 +4,7 @@ package com.intellij.devkit.workspaceModel
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import org.jetbrains.deft.annotations.Abstract
+import com.intellij.platform.workspaceModel.storage.annotations.Abstract
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.parsing.parseNumericLiteral

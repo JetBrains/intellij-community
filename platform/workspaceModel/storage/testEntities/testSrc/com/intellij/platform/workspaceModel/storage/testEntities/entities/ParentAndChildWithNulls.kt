@@ -4,7 +4,7 @@ package com.intellij.platform.workspaceModel.storage.testEntities.entities
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import org.jetbrains.deft.annotations.Child
+import com.intellij.platform.workspaceModel.storage.annotations.Child
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import com.intellij.platform.workspaceModel.storage.EntitySource

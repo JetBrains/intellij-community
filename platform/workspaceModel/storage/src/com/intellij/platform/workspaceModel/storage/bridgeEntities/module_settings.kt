@@ -8,7 +8,7 @@ import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntityWithSymbolicId
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Abstract
+import com.intellij.platform.workspaceModel.storage.annotations.Abstract
 
 @Abstract
 interface ModuleSettingsBase : WorkspaceEntityWithSymbolicId {

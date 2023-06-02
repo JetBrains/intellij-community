@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.codegen.deft.meta
 
 import com.intellij.workspaceModel.codegen.deft.annotations.Cached
 import com.intellij.workspaceModel.codegen.deft.annotations.Parent
-import org.jetbrains.deft.annotations.Child
+import com.intellij.platform.workspaceModel.storage.annotations.Child
 
 interface ObjType<T> : Obj {
   val classifier: ObjType<T>

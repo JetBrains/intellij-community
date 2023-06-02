@@ -20,9 +20,6 @@ import com.intellij.platform.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.platform.workspaceModel.storage.impl.updateOneToOneParentOfChild
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)

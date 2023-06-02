@@ -2,7 +2,7 @@
 package com.intellij.platform.workspaceModel.storage.impl
 
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import org.jetbrains.deft.annotations.Child
+import com.intellij.platform.workspaceModel.storage.annotations.Child
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType

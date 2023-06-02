@@ -7,7 +7,7 @@ import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Child
+import com.intellij.platform.workspaceModel.storage.annotations.Child
 
 interface ReferredEntity : WorkspaceEntity {
   val version: Int

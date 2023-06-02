@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.codegen.deft.meta
 
 import com.intellij.workspaceModel.codegen.deft.annotations.Name
-import org.jetbrains.deft.annotations.Child
+import com.intellij.platform.workspaceModel.storage.annotations.Child
 
 interface ObjModule : Obj {
   @Name

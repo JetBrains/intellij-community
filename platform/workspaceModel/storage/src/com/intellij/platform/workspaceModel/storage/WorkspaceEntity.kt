@@ -3,7 +3,7 @@ package com.intellij.platform.workspaceModel.storage
 
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityExtensionDelegate
 import org.jetbrains.deft.Obj
-import org.jetbrains.deft.annotations.Abstract
+import com.intellij.platform.workspaceModel.storage.annotations.Abstract
 
 /**
  * A base interface for entities. An entity may have properties of the following types:
