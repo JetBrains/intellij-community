@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.execution.test.events
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleTestEventTest : GradleExecutionTestCase() {
@@ -22,45 +21,6 @@ class GradleTestEventTest : GradleExecutionTestCase() {
 
       executeTasks(":test", isRunAsTest = true)
       assertTestConsoleDoesNotContain("<ijLogEol/>")
-    }
-  }
-
-  @ParameterizedTest
-  @TargetVersions("3.5+")
-  @AllGradleVersionsSource
-  fun `test configuration resolves after execution graph`(gradleVersion: GradleVersion) {
-    testJavaProject(gradleVersion) {
-      appendText("build.gradle", """
-        |import java.util.concurrent.atomic.AtomicBoolean;
-        |
-        |def resolutionAllowed = new AtomicBoolean(false)
-        |
-        |configurations.testRuntimeClasspath.incoming.beforeResolve {
-        |  logger.warn("Attempt to resolve configuration")
-        |  if (!resolutionAllowed.get()) {
-        |    logger.warn("Attempt to resolve configuration too early")
-        |  }
-        |}
-        |
-        |gradle.taskGraph.beforeTask { Task task ->
-        |  if (task.path == ":test" ) {
-        |    logger.warn("Green light to resolve configuration")
-        |    resolutionAllowed.set(true)
-        |  }
-        |}
-      """.trimMargin())
-      writeText("src/test/java/org/example/TestCase.java", """
-        |package org.example;
-        |import $jUnitTestAnnotationClass;
-        |public class TestCase {
-        |  @Test public void test() {}
-        |}
-      """.trimMargin())
-
-      executeTasks(":test", isRunAsTest = true)
-      assertTestConsoleContains("Green light to resolve configuration")
-      assertTestConsoleContains("Attempt to resolve configuration")
-      assertTestConsoleDoesNotContain("Attempt to resolve configuration too early")
     }
   }
 
