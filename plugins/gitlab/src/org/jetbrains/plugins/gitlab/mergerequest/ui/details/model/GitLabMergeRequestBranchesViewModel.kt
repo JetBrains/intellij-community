@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.util.childScope
 import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.fetch.GitFetchSupport
@@ -18,22 +19,34 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.ui.branch.GitBranchPopupActions
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 internal class GitLabMergeRequestBranchesViewModel(
   private val project: Project,
+  parentCs: CoroutineScope,
   private val mergeRequest: GitLabMergeRequest,
   private val repository: GitRepository
 ) : CodeReviewBranchesViewModel {
   private val git: Git = Git.getInstance()
   private val vcsNotifier: VcsNotifier = project.service<VcsNotifier>()
 
+  private val cs: CoroutineScope = parentCs.childScope()
+
+  private val targetProject: StateFlow<GitLabProjectDTO> = mergeRequest.targetProject
+  private val sourceProject: StateFlow<GitLabProjectDTO> = mergeRequest.sourceProject
+
   override val targetBranch: StateFlow<String> = mergeRequest.targetBranch
-  override val sourceBranch: StateFlow<String> = mergeRequest.sourceBranch
+  override val sourceBranch: StateFlow<String> =
+    combine(targetProject, sourceProject, mergeRequest.sourceBranch) { targetProject, sourceProject, sourceBranch ->
+      if (targetProject == sourceProject) return@combine sourceBranch
+      val sourceUrl = sourceProject.webUrl
+      val sourceProjectOwner = sourceUrl.split("/").dropLast(1).last()
+      return@combine "$sourceProjectOwner:$sourceBranch"
+    }.stateIn(cs, SharingStarted.Lazily, mergeRequest.sourceBranch.value)
 
   override val isCheckedOut: Flow<Boolean> = callbackFlow {
     val cs = this
@@ -57,9 +70,8 @@ internal class GitLabMergeRequestBranchesViewModel(
       true
     ) {
       override fun run(indicator: ProgressIndicator) {
-        val sourceProject = mergeRequest.sourceProject.value
         val sourceBranch = sourceBranch.value
-        val httpForkUrl = sourceProject.httpUrlToRepo
+        val httpForkUrl = sourceProject.value.httpUrlToRepo
         val pullRequestAuthor = mergeRequest.author
 
         val headRemote = git.findOrCreateRemote(repository, pullRequestAuthor.username, httpForkUrl)
