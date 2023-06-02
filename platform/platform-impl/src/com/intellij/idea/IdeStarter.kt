@@ -20,8 +20,6 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -35,7 +33,6 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
-import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import java.nio.file.Path
 import java.util.*
@@ -233,31 +230,7 @@ private fun CoroutineScope.postOpenUiTasks() {
   }
 
   launch {
-    // first apply in the scope of IdeStarter
-    service<ScreenReaderStateManager>().apply()
-  }
-
-  launch {
     startSystemHealthMonitor()
-  }
-}
-
-@Service(Service.Level.APP)
-private class ScreenReaderStateManager(coroutineScope: CoroutineScope) {
-  init {
-    coroutineScope.launch {
-      GeneralSettings.getInstance().propertyChangedFlow.collect {
-        if (it == GeneralSettings.PropertyNames.supportScreenReaders) {
-          apply()
-        }
-      }
-    }
-  }
-
-  suspend fun apply() {
-    withContext(Dispatchers.EDT) {
-      ScreenReader.setActive(GeneralSettings.getInstance().isSupportScreenReaders)
-    }
   }
 }
 
