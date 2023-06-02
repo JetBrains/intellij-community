@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.move
 import com.intellij.ide.util.DirectoryUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -34,6 +35,8 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.io.File
 import java.util.*
+
+private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.refactoring.move.MoveUtil")
 
 var KtFile.allElementsToMove: List<PsiElement>? by UserDataProperty(Key.create("SCOPE_TO_MOVE"))
 
@@ -187,7 +190,7 @@ private fun processReference(
             else -> reference?.bindToElement(newElement)
         }
     } catch (e: IncorrectOperationException) {
-        // Suppress exception if bindToElement is not implemented
+        LOG.warn("bindToElement not implemented for ${reference!!::class.qualifiedName}")
     }
 }
 
