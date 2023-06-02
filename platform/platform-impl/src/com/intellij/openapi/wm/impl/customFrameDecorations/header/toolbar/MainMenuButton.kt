@@ -137,7 +137,7 @@ internal class MainMenuButton {
 
     override fun actionPerformed(e: AnActionEvent) {
       if (expandableMenu?.isEnabled() == true) {
-        expandableMenu!!.switchState(button.size)
+        expandableMenu!!.switchState()
       } else {
         showPopup(e.dataContext)
       }
@@ -172,7 +172,7 @@ internal class MainMenuButton {
     override fun actionPerformed(e: ActionEvent?) {
       if (!UISettings.getInstance().disableMnemonics) {
         if (expandableMenu?.isEnabled() == true) {
-          expandableMenu!!.switchState(button.size, actionToShow)
+          expandableMenu!!.switchState(actionToShow)
         } else {
           val component = IdeFocusManager.getGlobalInstance().focusOwner ?: button
           showPopup(DataManager.getInstance().getDataContext(component), actionToShow)
@@ -183,7 +183,7 @@ internal class MainMenuButton {
 }
 
 
-internal fun createMenuButton(action: AnAction): ActionButton {
+private fun createMenuButton(action: AnAction): ActionButton {
   val button = object : ActionButton(action, PresentationFactory().getPresentation(action),
                                      ActionPlaces.MAIN_MENU, { ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
     override fun getDataContext(): DataContext {
