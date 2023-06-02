@@ -258,8 +258,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   private fun clearSelectedConfigurationIcon() {
-    selectedConfiguration?.let {
-      iconAndInvalidCache.remove(it.uniqueID)
+    selectedConfigurationId?.let {
+      iconAndInvalidCache.remove(it)
     }
   }
 
