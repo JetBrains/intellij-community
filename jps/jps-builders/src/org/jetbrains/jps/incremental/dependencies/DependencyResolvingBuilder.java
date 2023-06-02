@@ -492,18 +492,20 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
         .map((root) -> getRootGuard(context, root));
 
       List<Guard> guards = Stream.concat(descriptorGuard, rootsGuards).collect(Collectors.toList());
+      int lockedGuardsCounter = 0;
       try {
         for (Guard guard : guards) {
           if (!guard.requestProcessing(context.getCancelStatus())) {
             return;
           }
+          lockedGuardsCounter++;
         }
 
         action.run();
       }
       finally {
-        // release locks in reversed order to prevent deadlocks
-        for (Guard guard : ContainerUtil.reverse(guards)) {
+        // release only guards we're holding; release in reversed order to prevent deadlocks
+        for (Guard guard : ContainerUtil.reverse(guards.subList(0, lockedGuardsCounter))) {
           guard.finish();
         }
       }
