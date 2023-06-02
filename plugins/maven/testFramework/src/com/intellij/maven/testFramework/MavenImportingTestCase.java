@@ -668,7 +668,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       return downloadArtifactAndWaitForResult(projects, artifacts);
     }
     var result = myProjectsManager.downloadArtifactsSync(projects, artifacts, true, true);
-    myProjectsManager.waitForArtifactsDownloadingCompletion();
     return result;
   }
 
