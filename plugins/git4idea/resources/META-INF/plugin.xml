@@ -514,9 +514,6 @@
                               Otherwise only the affected files will be refreshed.
                               Affects only a subset of Git operations.
                               The option is needed to debug possible &quot;incomplete VFS refresh&quot; reports, if they appear."/>
-    <registryKey key="git.log.fix.merge.commits.parents.order" defaultValue="false" restartRequired="true"
-                 description="Find merge commits where a remote branch was merged into local before pushing
-                              and fix parents order for such commits in order to display them more naturally in the commits graph."/>
     <registryKey key="git.log.use.index.for.picked.commits.highlighting" defaultValue="true"
                  description="Find cherry-picked commits not only looking at patches using 'git cherry'
                               but also by matching commit author, author time and &quot;cherry picked from commit &lt;hash&gt;&quot; suffix."/>
