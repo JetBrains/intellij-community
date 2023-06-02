@@ -2,8 +2,8 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity
+import com.intellij.platform.workspaceModel.storage.EntitySource
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*
 

@@ -3,12 +3,12 @@ package com.intellij.platform.workspaceModel.storage.tests
 
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.MySource
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity
+import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals

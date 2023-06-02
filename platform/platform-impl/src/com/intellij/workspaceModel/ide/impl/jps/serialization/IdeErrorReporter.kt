@@ -11,8 +11,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.Nls
 
 internal class IdeErrorReporter(private val project: Project) : ErrorReporter {

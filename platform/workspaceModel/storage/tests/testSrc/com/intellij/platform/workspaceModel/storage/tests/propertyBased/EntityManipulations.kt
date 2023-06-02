@@ -2,11 +2,11 @@
 package com.intellij.platform.workspaceModel.storage.tests.propertyBased
 
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.impl.*
-import com.intellij.workspaceModel.storage.impl.exceptions.SymbolicIdAlreadyExistsException
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspaceModel.storage.EntitySource
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.impl.*
+import com.intellij.platform.workspaceModel.storage.impl.exceptions.SymbolicIdAlreadyExistsException
+import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.junit.Assert

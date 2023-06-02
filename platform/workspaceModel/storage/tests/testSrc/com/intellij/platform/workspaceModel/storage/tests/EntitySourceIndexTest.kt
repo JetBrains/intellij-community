@@ -2,9 +2,9 @@
 package com.intellij.platform.workspaceModel.storage.tests
 
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
-import com.intellij.workspaceModel.storage.impl.ClassToIntConverter
-import com.intellij.workspaceModel.storage.impl.assertConsistency
-import com.intellij.workspaceModel.storage.impl.createEntityId
+import com.intellij.platform.workspaceModel.storage.impl.ClassToIntConverter
+import com.intellij.platform.workspaceModel.storage.impl.assertConsistency
+import com.intellij.platform.workspaceModel.storage.impl.createEntityId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

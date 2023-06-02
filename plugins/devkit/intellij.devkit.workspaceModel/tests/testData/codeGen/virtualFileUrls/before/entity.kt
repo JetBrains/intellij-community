@@ -1,7 +1,7 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 
 interface EntityWithUrls : WorkspaceEntity {
   val simpleUrl: VirtualFileUrl

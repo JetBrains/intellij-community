@@ -5,7 +5,7 @@ import com.intellij.platform.workspaceModel.storage.testEntities.entities.Sample
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspaceModel.storage.tests.createBuilderFrom
 import com.intellij.platform.workspaceModel.storage.tests.createEmptyBuilder
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import junit.framework.Assert.assertTrue
 import org.junit.Test
 

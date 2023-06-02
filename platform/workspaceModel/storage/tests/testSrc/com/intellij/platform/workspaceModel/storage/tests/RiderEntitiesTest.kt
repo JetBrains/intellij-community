@@ -5,10 +5,10 @@ import com.intellij.platform.workspaceModel.storage.testEntities.entities.Descri
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.MySource
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.ProjectModelTestEntity
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.modifyEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.storage.toBuilder
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspaceModel.storage.toBuilder
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import kotlin.test.assertNotNull

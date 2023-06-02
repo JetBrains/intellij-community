@@ -10,12 +10,12 @@ import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
 import com.intellij.packaging.impl.ui.ModuleElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.workspaceModel.storage.EntitySource;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleTestOutputPackagingElementEntity;
+import com.intellij.platform.workspaceModel.storage.EntitySource;
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleTestOutputPackagingElementEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 

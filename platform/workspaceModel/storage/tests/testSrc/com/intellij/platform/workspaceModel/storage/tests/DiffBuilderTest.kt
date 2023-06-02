@@ -3,16 +3,16 @@ package com.intellij.platform.workspaceModel.storage.tests
 
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.EntityStorageSnapshotImpl
-import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
-import com.intellij.workspaceModel.storage.impl.assertConsistency
-import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
-import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.storage.toBuilder
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.platform.workspaceModel.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspaceModel.storage.impl.assertConsistency
+import com.intellij.platform.workspaceModel.storage.impl.exceptions.AddDiffException
+import com.intellij.platform.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
+import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspaceModel.storage.toBuilder
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.util.*

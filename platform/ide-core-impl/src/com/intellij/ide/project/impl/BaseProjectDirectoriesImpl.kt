@@ -11,9 +11,9 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.virtualFile
-import com.intellij.workspaceModel.storage.EntityStorageSnapshot
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.platform.workspaceModel.storage.EntityStorageSnapshot
+import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import java.util.concurrent.atomic.AtomicInteger

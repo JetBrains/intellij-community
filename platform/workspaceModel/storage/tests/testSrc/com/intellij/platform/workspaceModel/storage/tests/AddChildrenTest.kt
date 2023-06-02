@@ -3,7 +3,7 @@
 package com.intellij.platform.workspaceModel.storage.tests
 
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import junit.framework.TestCase.*
 import org.junit.Test
 

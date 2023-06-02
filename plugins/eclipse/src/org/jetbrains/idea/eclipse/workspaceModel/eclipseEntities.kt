@@ -5,16 +5,16 @@ import com.intellij.platform.workspaceModel.jps.JpsFileDependentEntitySource
 import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
 import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.EntitySource
+import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
 
 
 /**

@@ -3,7 +3,7 @@ package com.intellij.platform.workspaceModel.storage.tests
 
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.workspaceModel.storage.impl.ClassToIntConverter
+import com.intellij.platform.workspaceModel.storage.impl.ClassToIntConverter
 import junit.framework.TestCase.assertEquals
 import org.junit.Test
 import java.util.concurrent.Callable

@@ -13,13 +13,13 @@ import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.virtualFile
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot.InclusionOptions.*
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryRoot.InclusionOptions.*
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 
 class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEntity>, PlatformInternalWorkspaceFileIndexContributor {
   override val entityClass: Class<LibraryEntity> get() = LibraryEntity::class.java

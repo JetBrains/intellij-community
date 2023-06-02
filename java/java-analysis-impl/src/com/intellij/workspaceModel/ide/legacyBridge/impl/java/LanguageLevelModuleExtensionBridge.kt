@@ -9,10 +9,10 @@ import com.intellij.workspaceModel.ide.java.languageLevel
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
+import com.intellij.platform.workspaceModel.storage.VersionedEntityStorage
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.modifyEntity
 
 class LanguageLevelModuleExtensionBridge private constructor(private val module: ModuleBridge,
                                                              private val entityStorage: VersionedEntityStorage,

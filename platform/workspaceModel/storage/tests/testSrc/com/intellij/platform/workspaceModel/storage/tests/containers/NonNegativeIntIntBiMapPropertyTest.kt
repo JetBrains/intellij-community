@@ -2,8 +2,8 @@
 package com.intellij.platform.workspaceModel.storage.tests.containers
 
 import com.intellij.util.containers.BidirectionalMap
-import com.intellij.workspaceModel.storage.impl.containers.MutableNonNegativeIntIntBiMap
-import com.intellij.workspaceModel.storage.impl.containers.NonNegativeIntIntBiMap
+import com.intellij.platform.workspaceModel.storage.impl.containers.MutableNonNegativeIntIntBiMap
+import com.intellij.platform.workspaceModel.storage.impl.containers.NonNegativeIntIntBiMap
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker

@@ -5,12 +5,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.workspaceModel.jps.JpsGlobalFileEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
+import com.intellij.platform.workspaceModel.storage.EntityChange
+import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
 import kotlin.reflect.KClass
 
 class GlobalWorkspaceModelSynchronizerListener(private val project: Project) : WorkspaceModelChangeListener {

@@ -2,7 +2,7 @@
 package com.intellij.testFramework.workspaceModel
 
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 
 fun WorkspaceModel.updateProjectModel(updater: (MutableEntityStorage) -> Unit) {
   updateProjectModel("Test update", updater)

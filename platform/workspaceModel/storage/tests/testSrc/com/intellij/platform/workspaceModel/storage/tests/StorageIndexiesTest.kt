@@ -2,11 +2,11 @@
 package com.intellij.platform.workspaceModel.storage.tests.impl
 
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspaceModel.storage.EntitySource
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

@@ -7,10 +7,10 @@ import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGe
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryId;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryTableId;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 

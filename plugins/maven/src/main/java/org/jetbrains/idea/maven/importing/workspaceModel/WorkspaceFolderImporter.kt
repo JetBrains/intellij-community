@@ -4,9 +4,9 @@ package org.jetbrains.idea.maven.importing.workspaceModel
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.FileCollectionFactory
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.BuildHelperMavenPluginUtil
 import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator

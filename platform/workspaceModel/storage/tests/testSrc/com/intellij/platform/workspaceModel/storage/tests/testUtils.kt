@@ -2,12 +2,12 @@
 package com.intellij.platform.workspaceModel.storage.tests
 
 import com.google.common.collect.HashBiMap
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.EntityTypesResolver
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.impl.*
-import com.intellij.workspaceModel.storage.impl.containers.BidirectionalLongMultiMap
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspaceModel.storage.EntityTypesResolver
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.impl.*
+import com.intellij.platform.workspaceModel.storage.impl.containers.BidirectionalLongMultiMap
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase.*
 import org.junit.Assert
 import java.nio.file.Files

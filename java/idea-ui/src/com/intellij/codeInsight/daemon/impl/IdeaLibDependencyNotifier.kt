@@ -17,11 +17,11 @@ import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.toPath
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryRoot
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import java.nio.file.Path

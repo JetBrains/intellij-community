@@ -11,12 +11,12 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.storage.EntitySource;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactRootElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
+import com.intellij.platform.workspaceModel.storage.EntitySource;
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ArtifactRootElementEntity;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

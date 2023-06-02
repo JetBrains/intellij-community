@@ -1,7 +1,7 @@
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.codegen.impl.writer.getRefType
 import com.intellij.workspaceModel.codegen.impl.writer.refsFields
 import com.intellij.workspaceModel.codegen.impl.writer.*

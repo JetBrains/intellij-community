@@ -5,7 +5,7 @@ import com.intellij.platform.workspaceModel.storage.testEntities.entities.ChildF
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.ChildSecondEntity
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.MySource
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.ParentAbEntity
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import org.junit.Test

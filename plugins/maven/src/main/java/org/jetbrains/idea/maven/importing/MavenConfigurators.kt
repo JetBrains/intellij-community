@@ -7,10 +7,10 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
@@ -24,7 +24,7 @@ interface MavenWorkspaceConfigurator {
 
   /**
    * Called for each imported project in order to add
-   * [com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity]-es to the corresponding [ModuleEntity]-es.
+   * [com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity]-es to the corresponding [ModuleEntity]-es.
    *
    * * Called on a background thread.
    * * Side-effects are not allowed.
@@ -37,7 +37,7 @@ interface MavenWorkspaceConfigurator {
 
   /**
    * Called for each imported project in order to add
-   * [com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity]-es to the corresponding [ModuleEntity]-es.
+   * [com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity]-es to the corresponding [ModuleEntity]-es.
    *
    * * Called on a background thread.
    * * Side-effects are not allowed.
@@ -50,7 +50,7 @@ interface MavenWorkspaceConfigurator {
 
   /**
    * Called for each imported project.
-   * Implement this method to prevent creation of [com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity]-es in the corresponding [ModuleEntity]-es.
+   * Implement this method to prevent creation of [com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity]-es in the corresponding [ModuleEntity]-es.
    * These folders are also marked as 'excluded' in the corresponding [Module]. See [com.intellij.openapi.roots.ExcludeFolder].
    *
    *

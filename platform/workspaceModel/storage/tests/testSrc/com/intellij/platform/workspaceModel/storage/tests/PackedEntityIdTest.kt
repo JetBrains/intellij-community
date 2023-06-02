@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspaceModel.storage.tests
 
-import com.intellij.workspaceModel.storage.impl.arrayId
-import com.intellij.workspaceModel.storage.impl.clazz
-import com.intellij.workspaceModel.storage.impl.createEntityId
+import com.intellij.platform.workspaceModel.storage.impl.arrayId
+import com.intellij.platform.workspaceModel.storage.impl.clazz
+import com.intellij.platform.workspaceModel.storage.impl.createEntityId
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

@@ -2,11 +2,11 @@
 package com.intellij.platform.workspaceModel.storage.tests
 
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.EntityStorageSnapshot
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspaceModel.storage.EntityChange
+import com.intellij.platform.workspaceModel.storage.EntityStorageSnapshot
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before

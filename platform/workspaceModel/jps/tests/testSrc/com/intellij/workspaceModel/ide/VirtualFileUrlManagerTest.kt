@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert
 import org.junit.Before
 import org.junit.ClassRule

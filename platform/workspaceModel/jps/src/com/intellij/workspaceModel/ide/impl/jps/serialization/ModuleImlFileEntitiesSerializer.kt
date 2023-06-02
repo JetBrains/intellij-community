@@ -11,10 +11,10 @@ import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGe
 import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.platform.workspaceModel.jps.serialization.impl.WorkspaceModelJpsBundle
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader.isModulePropertiesBridgeEnabled
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspaceModel.storage.*
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import org.jdom.Attribute
 import org.jdom.Element

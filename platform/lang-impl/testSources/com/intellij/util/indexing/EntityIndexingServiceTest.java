@@ -17,8 +17,8 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods;
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryId;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryTableId;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 

@@ -10,10 +10,10 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.bridgeEntities.TestModulePropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.TestModulePropertiesEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.modifyEntity
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test

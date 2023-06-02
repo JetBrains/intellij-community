@@ -6,8 +6,8 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomFacetRelated
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleComponentSerializer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleRootsSerializer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 
 /**
  * Provides components which are required to load and store projects in JPS format.

@@ -10,7 +10,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

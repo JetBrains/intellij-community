@@ -2,8 +2,8 @@
 package com.intellij.platform.workspaceModel.storage.tests.containers
 
 import com.intellij.util.containers.MultiMap
-import com.intellij.workspaceModel.storage.impl.containers.MutableNonNegativeIntIntMultiMap
-import com.intellij.workspaceModel.storage.impl.containers.NonNegativeIntIntMultiMap
+import com.intellij.platform.workspaceModel.storage.impl.containers.MutableNonNegativeIntIntMultiMap
+import com.intellij.platform.workspaceModel.storage.impl.containers.NonNegativeIntIntMultiMap
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker

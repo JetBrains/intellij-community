@@ -13,9 +13,9 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetRecognizer;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.storage.EntityReference;
-import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
+import com.intellij.platform.workspaceModel.storage.EntityReference;
+import com.intellij.platform.workspaceModel.storage.EntityStorage;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryId;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

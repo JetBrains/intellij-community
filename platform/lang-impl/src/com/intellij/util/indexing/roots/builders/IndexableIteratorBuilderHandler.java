@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.workspaceModel.storage.EntityStorage;
+import com.intellij.platform.workspaceModel.storage.EntityStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

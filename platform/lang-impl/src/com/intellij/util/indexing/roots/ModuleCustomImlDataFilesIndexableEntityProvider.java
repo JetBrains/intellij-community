@@ -3,9 +3,9 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

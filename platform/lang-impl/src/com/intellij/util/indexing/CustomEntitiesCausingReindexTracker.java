@@ -12,8 +12,8 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.*;
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

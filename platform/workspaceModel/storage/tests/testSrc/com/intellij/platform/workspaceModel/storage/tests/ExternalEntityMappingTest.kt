@@ -6,11 +6,11 @@ import com.intellij.platform.workspaceModel.storage.testEntities.entities.Sample
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.SourceEntity
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.modifyEntity
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
-import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
+import com.intellij.platform.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
+import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.junit.Assert.*
 import org.junit.Test
 

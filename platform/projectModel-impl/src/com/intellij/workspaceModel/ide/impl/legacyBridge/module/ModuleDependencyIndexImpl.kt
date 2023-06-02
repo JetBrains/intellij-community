@@ -22,9 +22,9 @@ import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGe
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.orderToRemoveReplaceAdd
+import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.workspaceModel.storage.orderToRemoveReplaceAdd
 import java.util.function.Supplier
 
 class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyIndex, Disposable {

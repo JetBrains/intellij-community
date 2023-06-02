@@ -4,11 +4,11 @@ import com.intellij.platform.workspaceModel.storage.testEntities.entities.ChildE
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.MySource
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.ParentEntity
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.modifyEntity
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.EntityStorageSnapshotImpl
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.assertConsistency
-import com.intellij.workspaceModel.storage.toBuilder
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspaceModel.storage.impl.assertConsistency
+import com.intellij.platform.workspaceModel.storage.toBuilder
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

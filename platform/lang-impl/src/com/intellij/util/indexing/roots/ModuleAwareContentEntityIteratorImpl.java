@@ -11,7 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.customizingIteration.ModuleAwareContentEntityIterator;
 import com.intellij.util.indexing.roots.origin.ModuleAwareContentEntityOrigin;
 import com.intellij.util.indexing.roots.origin.ModuleAwareContentEntityOriginImpl;
-import com.intellij.workspaceModel.storage.EntityReference;
+import com.intellij.platform.workspaceModel.storage.EntityReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

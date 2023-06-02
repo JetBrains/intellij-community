@@ -19,11 +19,11 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
-import com.intellij.workspaceModel.storage.EntityStorageSerializer
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
-import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspaceModel.storage.EntityStorageSerializer
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.addModuleEntity
+import com.intellij.platform.workspaceModel.storage.impl.EntityStorageSerializerImpl
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.lang.RandomStringUtils
 import org.junit.*

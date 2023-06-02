@@ -4,7 +4,7 @@ package com.intellij.platform.workspaceModel.storage.tests
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.MySource
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.SampleEntity2
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.modifyEntity
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows

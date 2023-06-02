@@ -26,9 +26,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTa
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
-import com.intellij.workspaceModel.storage.impl.assertConsistency
+import com.intellij.platform.workspaceModel.storage.*
+import com.intellij.platform.workspaceModel.storage.impl.VersionedEntityStorageImpl
+import com.intellij.platform.workspaceModel.storage.impl.assertConsistency
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow

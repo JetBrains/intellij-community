@@ -4,10 +4,10 @@ package com.intellij.platform.workspaceModel.storage.tests
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.SampleEntity
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.modifyEntity
-import com.intellij.workspaceModel.storage.EntityStorageSnapshot
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.storage.toBuilder
+import com.intellij.platform.workspaceModel.storage.EntityStorageSnapshot
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspaceModel.storage.toBuilder
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Ignore

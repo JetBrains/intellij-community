@@ -6,10 +6,10 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.serviceContainer.PrecomputedExtensionModel
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.VersionedEntityStorage
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

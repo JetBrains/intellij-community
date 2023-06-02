@@ -8,9 +8,9 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryTableId
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Rule

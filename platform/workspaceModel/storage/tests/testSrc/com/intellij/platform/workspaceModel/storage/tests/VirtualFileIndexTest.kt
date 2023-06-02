@@ -5,11 +5,11 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
 import com.intellij.testFramework.ApplicationRule
-import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.assertConsistency
-import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspaceModel.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspaceModel.storage.impl.assertConsistency
+import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert.*
 import org.junit.Assume
 import org.junit.Before

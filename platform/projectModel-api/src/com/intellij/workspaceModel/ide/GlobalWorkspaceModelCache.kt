@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspaceModel.storage.EntityStorage
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

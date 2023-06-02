@@ -2,9 +2,9 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.workspaceModel.core.fileIndex.*
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 class UnloadedContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRootEntity>,
                                                 PlatformInternalWorkspaceFileIndexContributor {

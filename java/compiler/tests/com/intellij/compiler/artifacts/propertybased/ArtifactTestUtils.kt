@@ -10,10 +10,10 @@ import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.workspacemodel.toElement
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ArtifactEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.PackagingElementEntity
+import com.intellij.platform.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import org.junit.Assert
 
 internal fun artifact(project: Project, name: String): Artifact {

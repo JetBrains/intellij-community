@@ -5,13 +5,13 @@ import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderFieldCode
 import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderIsInitializedCode
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.impl.ConnectionId
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
-import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
+import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.platform.workspaceModel.storage.impl.containers.MutableWorkspaceSet
 
 fun ObjClass<*>.implWsEntityBuilderCode(): String {
   return """
