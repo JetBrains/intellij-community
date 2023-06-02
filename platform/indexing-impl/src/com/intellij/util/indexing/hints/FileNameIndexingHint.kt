@@ -13,7 +13,7 @@ enum class BinaryFileTypePolicy { BINARY, NON_BINARY, BINARY_OR_NON_BINARY }
 class FileNameSuffixInputFilter(private val fileNameSuffix: String,
                                 private val ignoreCase: Boolean,
                                 binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY) : BaseWeakFileNameSuffixInputFilter(binary) {
-  override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
+  override fun whenFileTypeHintUnsure(file: IndexedFile): Boolean {
     return file.fileName.endsWith(fileNameSuffix, ignoreCase)
   }
 }
@@ -22,7 +22,7 @@ class FileNameSuffixInputFilter(private val fileNameSuffix: String,
 class ExactFileNameInputFilter(private val fileName: String,
                                private val ignoreCase: Boolean,
                                binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY) : BaseWeakFileNameSuffixInputFilter(binary) {
-  override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
+  override fun whenFileTypeHintUnsure(file: IndexedFile): Boolean {
     return file.fileName.equals(fileName, ignoreCase)
   }
 }
@@ -33,7 +33,7 @@ class FileNameExtensionInputFilter(extension: String,
                                    binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY) : BaseWeakFileNameSuffixInputFilter(binary) {
   private val dotExtension = ".$extension"
 
-  override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
+  override fun whenFileTypeHintUnsure(file: IndexedFile): Boolean {
     return file.fileName.endsWith(dotExtension, ignoreCase)
   }
 }

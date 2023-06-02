@@ -25,19 +25,19 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  *
  * In runtime indexing framework first evaluates [hintAcceptFileType]. If [hintAcceptFileType] returns `YES` or `NO`, this value is used
  * for any file with the same filetype. If [hintAcceptFileType] returns [ThreeState.UNSURE], the framework will switch to "slow"
- * mode and will invoke [whenAllOtherHintsUnsure] for each indexable file.
+ * mode and will invoke [whenFileTypeHintUnsure] for each indexable file.
  *
  * Hint results are cached (at least until IDE restart). In particular, if hint uses ExtensionPoints to evaluate result, changes
  * in relevant extension points (e.g. loading/unloading plugins) should reset caches.
  * Use [com.intellij.util.indexing.FileBasedIndexEx.resetHints] to reset cached indexing hints.
  *
- * [whenAllOtherHintsUnsure] is only invoked when [hintAcceptFileType] returned `UNSURE`, there is no need to add the logic from [hintAcceptFileType]
- * to [whenAllOtherHintsUnsure]. But this logic still should be added to [InputFilter.acceptInput] as explained below.
+ * [whenFileTypeHintUnsure] is only invoked when [hintAcceptFileType] returned `UNSURE`, there is no need to add the logic from [hintAcceptFileType]
+ * to [whenFileTypeHintUnsure]. But this logic still should be added to [InputFilter.acceptInput] as explained below.
  *
  * **When used with [InputFilter] or [ProjectSpecificInputFilter]:**
  *
- * Indexing framework evaluates [hintAcceptFileType] and falls back to [whenAllOtherHintsUnsure].
- * [whenAllOtherHintsUnsure] must answer either `true` or `false`. This means that indexing framework
+ * Indexing framework evaluates [hintAcceptFileType] and falls back to [whenFileTypeHintUnsure].
+ * [whenFileTypeHintUnsure] must answer either `true` or `false`. This means that indexing framework
  * will not invoke [InputFilter.acceptInput] or [ProjectSpecificInputFilter.acceptInput]. However, there may be other clients which may
  * invoke `acceptInput` without analyzing any hints. Therefore, `acceptInput` should provide answer just like if the filter didn't have any
  * hints in the first place.
@@ -86,5 +86,5 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 interface FileTypeIndexingHint {
   fun hintAcceptFileType(fileType: FileType): ThreeState
 
-  fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean
+  fun whenFileTypeHintUnsure(file: IndexedFile): Boolean
 }

@@ -102,7 +102,7 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
     else {
       object : FileTypeIndexingHint {
         override fun hintAcceptFileType(fileType: FileType): ThreeState = ThreeState.UNSURE
-        override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
+        override fun whenFileTypeHintUnsure(file: IndexedFile): Boolean {
           return FileBasedIndexEx.acceptsInput(filter, file)
         }
       }
@@ -111,7 +111,7 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
 
   private fun getGlobalHint(indexId: ID<*, *>): FileTypeIndexingHint = object : FileTypeIndexingHint {
     override fun hintAcceptFileType(fileType: FileType): ThreeState = ThreeState.UNSURE
-    override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
+    override fun whenFileTypeHintUnsure(file: IndexedFile): Boolean {
       return !GlobalIndexFilter.isExcludedFromIndexViaFilters(file.file, indexId, file.project)
     }
   }
@@ -121,7 +121,7 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
       ThreeState.YES -> truePredicate
       ThreeState.NO -> falsePredicate
       ThreeState.UNSURE -> object : IndexedFilePredicate {
-        override fun test(indexedFile: IndexedFile): Boolean = indexingHint.whenAllOtherHintsUnsure(indexedFile)
+        override fun test(indexedFile: IndexedFile): Boolean = indexingHint.whenFileTypeHintUnsure(indexedFile)
       }
     }
   }

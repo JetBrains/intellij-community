@@ -41,7 +41,7 @@ abstract class BaseFileTypeInputFilter(private val fileTypeStrategy: FileTypeSub
     return when (hintAcceptFileType(file.fileType)) {
       ThreeState.YES -> true
       ThreeState.NO -> false
-      ThreeState.UNSURE -> whenAllOtherHintsUnsure(file)
+      ThreeState.UNSURE -> whenFileTypeHintUnsure(file)
     }
   }
 

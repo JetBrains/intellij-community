@@ -32,6 +32,6 @@ class RejectAllIndexingHintTest {
   fun testHitFallbackForDirectory() {
     val hint = RejectAllIndexingHint()
     val someDir = VfsUtil.findFile(tempDir.createDir(), true)!!
-    Assert.assertFalse(hint.whenAllOtherHintsUnsure(IndexedFileImpl(someDir, p.project)))
+    Assert.assertFalse(hint.whenFileTypeHintUnsure(IndexedFileImpl(someDir, p.project)))
   }
 }

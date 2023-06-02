@@ -8,5 +8,5 @@ import com.intellij.util.indexing.IndexedFile
 class RejectAllIndexingHint : BaseFileTypeInputFilter() {
   override fun acceptFileType(fileType: FileType): ThreeState = ThreeState.NO
 
-  override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean = false // for directories
+  override fun whenFileTypeHintUnsure(file: IndexedFile): Boolean = false // for directories
 }
