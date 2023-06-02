@@ -4,7 +4,7 @@ package com.intellij.platform.workspaceModel.storage.bridgeEntities
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspaceModel.storage.SymbolicEntityId
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.deft.annotations.Open
+import com.intellij.platform.workspaceModel.storage.annotations.Open
 import java.io.Serializable
 
 data class ModuleId(val name: @NlsSafe String) : SymbolicEntityId<ModuleEntity> {

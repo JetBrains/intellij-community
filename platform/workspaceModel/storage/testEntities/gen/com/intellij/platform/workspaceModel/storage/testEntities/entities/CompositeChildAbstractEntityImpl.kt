@@ -21,13 +21,6 @@ import com.intellij.platform.workspaceModel.storage.impl.extractOneToManyChildre
 import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractManyChildrenOfParent
 import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractManyParentOfChild
 import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractOneParentOfChild
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Abstract
-import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)

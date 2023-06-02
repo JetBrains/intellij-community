@@ -1,8 +1,8 @@
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import org.jetbrains.deft.annotations.Abstract
-import org.jetbrains.deft.annotations.Open
+import com.intellij.platform.workspaceModel.storage.annotations.Abstract
+import com.intellij.platform.workspaceModel.storage.annotations.Open
 
 @Abstract
 interface GrandParentEntity : WorkspaceEntity {

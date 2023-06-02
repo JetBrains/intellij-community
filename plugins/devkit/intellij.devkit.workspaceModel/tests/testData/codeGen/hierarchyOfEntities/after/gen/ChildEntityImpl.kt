@@ -12,8 +12,8 @@ import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEnti
 import com.intellij.platform.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
-import org.jetbrains.deft.annotations.Abstract
-import org.jetbrains.deft.annotations.Open
+import com.intellij.platform.workspaceModel.storage.annotations.Abstract
+import com.intellij.platform.workspaceModel.storage.annotations.Open
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)

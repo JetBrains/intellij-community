@@ -12,7 +12,7 @@ import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Child
+import com.intellij.platform.workspaceModel.storage.annotations.Child
 
 interface ModuleEntity : WorkspaceEntityWithSymbolicId {
     val name: @NlsSafe String

@@ -16,7 +16,7 @@ import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspaceModel.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspaceModel.storage.impl.updateOneToOneChildOfParent
-import org.jetbrains.deft.annotations.Child
+import com.intellij.platform.workspaceModel.storage.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)

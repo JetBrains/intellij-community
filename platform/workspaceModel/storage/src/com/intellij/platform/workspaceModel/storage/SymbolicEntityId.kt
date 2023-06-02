@@ -2,7 +2,7 @@
 package com.intellij.platform.workspaceModel.storage
 
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.deft.annotations.Abstract
+import com.intellij.platform.workspaceModel.storage.annotations.Abstract
 
 /**
  * A base class for typed hierarchical entity IDs. An implementation must be a data class which contains read-only properties of the following types:

@@ -5,11 +5,11 @@ import com.intellij.devkit.workspaceModel.metaModel.IncorrectObjInterfaceExcepti
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.openapi.module.Module
 import com.intellij.workspaceModel.codegen.deft.meta.*
-import com.intellij.workspaceModel.deft.api.annotations.Default
+import com.intellij.platform.workspaceModel.storage.annotations.Default
 import com.intellij.platform.workspaceModel.storage.EqualsBy
-import org.jetbrains.deft.annotations.Abstract
-import org.jetbrains.deft.annotations.Child
-import org.jetbrains.deft.annotations.Open
+import com.intellij.platform.workspaceModel.storage.annotations.Abstract
+import com.intellij.platform.workspaceModel.storage.annotations.Child
+import com.intellij.platform.workspaceModel.storage.annotations.Open
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
