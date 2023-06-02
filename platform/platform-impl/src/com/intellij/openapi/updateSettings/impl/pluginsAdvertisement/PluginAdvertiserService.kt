@@ -217,6 +217,15 @@ open class PluginAdvertiserServiceImpl(
       .filter { pluginManagerFilters.allowInstallingPlugin(it) }
       .toList())
 
+    for (compatibleUpdate in MarketplaceRequests.getLastCompatiblePluginUpdate(result.map { it.pluginId }.toSet())) {
+      val node = result.find { it.pluginId.idString == compatibleUpdate.pluginId }
+      if (node is PluginNode) {
+        node.externalPluginId = compatibleUpdate.externalPluginId
+        node.externalUpdateId = compatibleUpdate.externalUpdateId
+        node.description = null
+      }
+    }
+
     val localPluginIdMap = PluginManagerCore.buildPluginIdMap()
 
     if (result.size < plugins.size) {
