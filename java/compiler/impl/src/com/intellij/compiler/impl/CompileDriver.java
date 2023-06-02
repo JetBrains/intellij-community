@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -480,15 +480,16 @@ public final class CompileDriver {
         compilerCacheManager.flushCaches();
         flushCompilerCaches.complete();
 
-        final long duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
+        final ExitStatus status = COMPILE_SERVER_BUILD_STATUS.get(compileContext);
+        final long duration = notifyCompilationCompleted(compileContext, callback, status);
         CompilerUtil.logDuration(
-          "\tCOMPILATION FINISHED (BUILD PROCESS); Errors: " +
-          compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
-          "; warnings: " +
-          compileContext.getMessageCount(CompilerMessageCategory.WARNING),
+          "\tCOMPILATION FINISHED (BUILD PROCESS); Errors: " + compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
+          "; warnings: " + compileContext.getMessageCount(CompilerMessageCategory.WARNING),
           duration
         );
-
+        if (isRebuild && status == ExitStatus.SUCCESS) {
+          BuildUsageCollector.logRebuildCompleted(duration);
+        }
       }
     };
 
