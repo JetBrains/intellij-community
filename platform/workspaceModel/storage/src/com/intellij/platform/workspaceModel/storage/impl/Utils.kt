@@ -1,12 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.platform.workspaceModel.storage
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.workspaceModel.storage.impl
 
-import com.intellij.platform.workspaceModel.storage.impl.*
-import com.intellij.platform.workspaceModel.storage.impl.AbstractEntityStorage
-import com.intellij.platform.workspaceModel.storage.impl.EntityId
-import com.intellij.platform.workspaceModel.storage.impl.createEntityId
-import com.intellij.platform.workspaceModel.storage.impl.findWorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
 
 // Just a wrapper for entity id in THIS store
 @JvmInline
@@ -21,7 +16,7 @@ internal fun EntityId.notThis(): NotThisEntityId = NotThisEntityId(this)
 
 internal fun currentStackTrace(depth: Int): String = Throwable().stackTrace.take(depth).joinToString(separator = "\n") { it.toString() }
 
-fun loadClassByName(name: String, classLoader: ClassLoader): Class<*> {
+internal fun loadClassByName(name: String, classLoader: ClassLoader): Class<*> {
   if (name.startsWith("[")) return Class.forName(name)
   return classLoader.loadClass(name)
 }
