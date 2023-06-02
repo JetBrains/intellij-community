@@ -9,8 +9,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
+import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
@@ -20,8 +23,6 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.SmartList
 import java.awt.Window
-import java.awt.event.FocusEvent
-import java.awt.event.FocusListener
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.beans.PropertyChangeListener
@@ -39,6 +40,7 @@ open class EditorTracker(@JvmField protected val project: Project) : Disposable 
   private val windowToEditorsMap = HashMap<Window, MutableList<Editor>>()
   private val windowToWindowFocusListenerMap = HashMap<Window, WindowAdapter>()
   private val editorToWindowMap = HashMap<Editor, Window>()
+
   // accessed in EDT only
   private var myActiveEditors = emptyList<Editor>()
   private var activeWindow: Window? = null
@@ -47,6 +49,29 @@ open class EditorTracker(@JvmField protected val project: Project) : Disposable 
   companion object {
     @JvmStatic
     fun getInstance(project: Project): EditorTracker = project.service<EditorTracker>()
+  }
+
+  init {
+    @Suppress("LeakingThis")
+    (EditorFactory.getInstance().eventMulticaster as EditorEventMulticasterEx).addFocusChangeListener(object : FocusChangeListener {
+      override fun focusGained(editor: Editor) {
+        val window = editorToWindowMap.get(editor) ?: return
+        val list = windowToEditorsMap.get(window)!!
+        val index = list.indexOf(editor)
+        LOG.assertTrue(index >= 0)
+        if (list.isEmpty()) {
+          return
+        }
+
+        if (list.size > 1) {
+          for (i in index - 1 downTo 0) {
+            list.set(i + 1, list.get(i))
+          }
+          list.set(0, editor)
+        }
+        setActiveWindow(window)
+      }
+    }, this)
   }
 
   internal class MyAppLevelFileEditorManagerListener : FileEditorManagerListener {
@@ -189,38 +214,14 @@ open class EditorTracker(@JvmField protected val project: Project) : Disposable 
 
   protected open fun createEditorImpl(editor: Editor, project: Project) {
     val component = editor.component
-    val contentComponent = editor.contentComponent
     val propertyChangeListener = PropertyChangeListener { event ->
       if (event.oldValue == null && event.newValue != null) {
         registerEditor(editor, project)
       }
     }
     component.addPropertyChangeListener("ancestor", propertyChangeListener)
-    val focusListener = object : FocusListener {
-      override fun focusGained(e: FocusEvent) {
-        ApplicationManager.getApplication().assertIsDispatchThread()
-        val window = editorToWindowMap.get(editor) ?: return
-        val list = windowToEditorsMap.get(window)!!
-        val index = list.indexOf(editor)
-        LOG.assertTrue(index >= 0)
-        if (list.isEmpty()) {
-          return
-        }
-
-        for (i in index - 1 downTo 0) {
-          list.set(i + 1, list.get(i))
-        }
-        list.set(0, editor)
-        setActiveWindow(window)
-      }
-
-      override fun focusLost(e: FocusEvent) {}
-    }
-
-    contentComponent.addFocusListener(focusListener)
     executeOnEditorRelease.put(editor) {
       component.removePropertyChangeListener("ancestor", propertyChangeListener)
-      contentComponent.removeFocusListener(focusListener)
     }
   }
 
