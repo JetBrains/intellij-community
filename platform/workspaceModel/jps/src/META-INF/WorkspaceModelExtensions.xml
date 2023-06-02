@@ -1,13 +1,13 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint name="workspaceModel.customModuleRootsSerializer"
-                    interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleRootsSerializer"
+                    interface="com.intellij.platform.workspaceModel.jps.serialization.impl.CustomModuleRootsSerializer"
                     dynamic="true"/>
     <extensionPoint name="workspaceModel.customModuleComponentSerializer"
-                    interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleComponentSerializer"
+                    interface="com.intellij.platform.workspaceModel.jps.serialization.impl.CustomModuleComponentSerializer"
                     dynamic="true"/>
     <extensionPoint name="workspaceModel.customFacetRelatedEntitySerializer"
-                    interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomFacetRelatedEntitySerializer"
+                    interface="com.intellij.platform.workspaceModel.jps.serialization.impl.CustomFacetRelatedEntitySerializer"
                     dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
@@ -19,6 +19,6 @@
                  description="Enable new method of workspace model caching"/>
     <registryKey key="ide.workspace.model.separate.component.for.roots" defaultValue="true" restartRequired="true"
                  description="Enables storing of additional roots in the separate iml component"/>
-    <workspaceModel.customFacetRelatedEntitySerializer implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DefaultFacetEntitySerializer" />
+    <workspaceModel.customFacetRelatedEntitySerializer implementation="com.intellij.platform.workspaceModel.jps.serialization.impl.DefaultFacetEntitySerializer" />
   </extensions>
 </idea-plugin>

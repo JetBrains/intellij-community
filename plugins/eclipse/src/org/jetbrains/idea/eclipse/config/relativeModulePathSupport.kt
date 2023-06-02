@@ -5,8 +5,8 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsModuleListSerializer
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsFileContentReader
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsModuleListSerializer
 import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager

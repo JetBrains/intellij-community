@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspaceModel.ide.impl.jps.serialization
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.workspaceModel.jps.serialization.impl
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
@@ -53,7 +53,8 @@ internal class FacetsSerializer(private val imlFileUrl: VirtualFileUrl, private 
     val facetTypeToSerializer = context.customFacetRelatedEntitySerializers.associateBy { it.supportedFacetType }
     for (facetState in facetStates) {
       orderOfFacets.add(facetState.name)
-      val serializer = facetTypeToSerializer[facetState.facetType] ?: facetTypeToSerializer.getValue(DefaultFacetEntitySerializer.ALL_FACETS_TYPES_MARKER)
+      val serializer = facetTypeToSerializer[facetState.facetType] ?: facetTypeToSerializer.getValue(
+        DefaultFacetEntitySerializer.ALL_FACETS_TYPES_MARKER)
       serializer.loadEntitiesFromFacetState(moduleEntity, facetState, ::evaluateEntitySource)
     }
   }

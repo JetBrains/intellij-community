@@ -10,6 +10,8 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsFileContentReader
+import com.intellij.platform.workspaceModel.jps.serialization.impl.isExternalModuleFile
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files

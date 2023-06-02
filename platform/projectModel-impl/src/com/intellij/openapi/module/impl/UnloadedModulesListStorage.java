@@ -10,7 +10,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
-import com.intellij.workspaceModel.ide.UnloadedModulesNameHolder;
+import com.intellij.platform.workspaceModel.jps.UnloadedModulesNameHolder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

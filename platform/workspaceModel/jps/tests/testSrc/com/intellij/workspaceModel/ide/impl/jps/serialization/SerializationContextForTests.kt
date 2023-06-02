@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsFileContentReader
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 
 class SerializationContextForTests(

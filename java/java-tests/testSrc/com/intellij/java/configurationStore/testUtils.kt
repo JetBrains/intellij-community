@@ -6,7 +6,7 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.platform.workspaceModel.jps.CustomModuleEntitySource
 import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.impl.jps.serialization.*
+import com.intellij.platform.workspaceModel.jps.serialization.impl.*
 import com.intellij.platform.workspaceModel.storage.*
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryId

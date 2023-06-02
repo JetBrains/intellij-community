@@ -15,7 +15,7 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.readText
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectSerializersImpl
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsProjectSerializersImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.createProjectSerializers
 import com.intellij.workspaceModel.ide.impl.jps.serialization.saveAllEntities
 import com.intellij.workspaceModel.ide.toPath
@@ -29,7 +29,6 @@ import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.jetbrains.jetCheck.PropertyChecker.checkScenarios
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
