@@ -358,10 +358,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
       if (ConfigImportHelper.isNewUser() && !PlatformUtils.isRider() && System.getProperty("ide.experimental.ui") == null) {
         runCatching {
-          EarlyAccessRegistryManager.setAndFlush(hashMapOf(
-            "ide.experimental.ui" to "true",
-            "debugger.new.tool.window.layout" to "true",
-          ))
+          EarlyAccessRegistryManager.setAndFlush(hashMapOf("ide.experimental.ui" to "true"))
         }.getOrLogException(log)
       }
     }
