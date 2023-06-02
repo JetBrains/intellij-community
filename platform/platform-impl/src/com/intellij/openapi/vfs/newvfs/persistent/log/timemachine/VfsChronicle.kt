@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.Operat
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.TraverseDirection
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag.*
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.AttributeDataRule.Companion.forFileIdAndAttributeId
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.AttributeDataRule.Companion.forFileId
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.ContentModificationRule.Companion.forContentRecordId
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.ContentOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.PropertyOverwriteRule.Companion.forFileId
@@ -75,22 +75,60 @@ object VfsChronicle {
       stopIf
     )
 
-  fun restoreContent(iterator: OperationLogStorage.Iterator,
-                     contentRecordId: Int,
-                     payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>,
-                     stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): State.DefinedState<ByteArray> {
+  interface ContentRestorationSequence {
+    val initial: ContentOperation.Set
+
+    /** in chronological order */
+    val modifications: List<ContentOperation.Modify>
+
+    companion object {
+      fun ContentRestorationSequence.restoreContent(payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>): State.DefinedState<ByteArray> =
+        modifications.fold(initial.readContent(payloadReader)) { data, modOp ->
+          data.bind { modOp.modifyContent(it, payloadReader) }
+        }
+    }
+  }
+
+  class ContentRestorationSequenceBuilder {
+    private val reversedModifications = mutableListOf<ContentOperation.Modify>()
+    private var initial: ContentOperation.Set? = null
+
+    val isFormed: Boolean get() = initial != null
+
+    fun prependModification(mod: ContentOperation.Modify) = reversedModifications.add(mod)
+
+    fun setInitial(set: ContentOperation.Set) {
+      assert(initial == null)
+      initial = set
+    }
+
+    fun buildWithInitial(set: ContentOperation.Set): ContentRestorationSequence =
+      ContentRestorationSequenceImpl(set, reversedModifications.reversed())
+        .also { assert(initial == null) }
+
+    fun buildIfInitialIsPresent(): ContentRestorationSequence? = initial?.let {
+      ContentRestorationSequenceImpl(it, reversedModifications.reversed())
+    }
+
+    companion object {
+      private class ContentRestorationSequenceImpl(override val initial: ContentOperation.Set,
+                                                   override val modifications: List<ContentOperation.Modify>) : ContentRestorationSequence
+    }
+  }
+
+
+  fun lookupContentRestorationStack(iterator: OperationLogStorage.Iterator,
+                                    contentRecordId: Int,
+                                    stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): State.DefinedState<ContentRestorationSequence> {
     if (contentRecordId == 0) return State.NotAvailable(NotEnoughInformationCause("VFS didn't cache file's content"))
-    val restoreStack = mutableListOf<ContentOperation.Modify>()
+    val seqBuilder = ContentRestorationSequenceBuilder()
     while (iterator.hasPrevious() && !stopIf(iterator)) {
-      val lookup =
-        lookupContentOperation(iterator, contentRecordId, TraverseDirection.REWIND, stopIf)
+      val lookup = lookupContentOperation(iterator, contentRecordId, TraverseDirection.REWIND, stopIf)
       if (!lookup.found) return State.NotAvailable() // didn't find any relevant content op
       when (val op = lookup.value) {
-        is ContentOperation.Modify -> restoreStack.add(op)
+        is ContentOperation.Modify -> seqBuilder.prependModification(op)
         is ContentOperation.Set -> {
-          return restoreStack.foldRight(op.readContent(payloadReader)) { modOp, data ->
-            data.bind { modOp.modifyContent(it, payloadReader) }
-          }
+          return seqBuilder.buildWithInitial(op).let(State::Ready)
         }
       }
     }
@@ -109,7 +147,7 @@ object VfsChronicle {
     traverseOperationsLogForVfsModificationLookup(
       iterator, direction,
       VfsModificationContract.attributeData.relevantOperations,
-      VfsModificationContract.attributeData.forFileIdAndAttributeId(fileId, enumeratedAttrId),
+      VfsModificationContract.attributeData.forFileId(fileId).andIf { it.affectsAttribute(enumeratedAttrId) }.map { it.data },
       stopIf
     )
 
@@ -279,7 +317,7 @@ object VfsChronicle {
     iterator: OperationLogStorage.Iterator,
     direction: TraverseDirection,
     relevantOperations: VfsOperationTagsMask,
-    ifModifies: VfsModifier<T>,
+    ifModifies: ConditionalVfsModifier<T>,
     crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false },
     onInvalid: TraverseContext.(cause: Throwable) -> Unit = { throw it },
     onIncomplete: TraverseContext.(tag: VfsOperationTag) -> Unit = { if (relevantOperations.contains(it)) stop() },
