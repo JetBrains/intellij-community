@@ -18,7 +18,8 @@ class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactor
     val notebookCellLines = NotebookCellLines.get(document)
     val factory = NotebookIntervalPointerFactoryImpl(notebookCellLines,
                                                      DocumentReferenceManager.getInstance().create(document),
-                                                     UndoManager.getInstance(project))
+                                                     UndoManager.getInstance(project),
+                                                     project)
 
     notebookCellLines.intervalListeners.addListener(factory)
     Disposer.register(project) {
@@ -57,7 +58,8 @@ private data class RedoContext(val changes: List<Change>) : ChangesContext
  */
 class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: NotebookCellLines,
                                          private val documentReference: DocumentReference,
-                                         private val undoManager: UndoManager?) : NotebookIntervalPointerFactory, NotebookCellLines.IntervalListener {
+                                         private val undoManager: UndoManager?,
+                                         private val project: Project) : NotebookIntervalPointerFactory, NotebookCellLines.IntervalListener {
   private val pointers = ArrayList<NotebookIntervalPointerImpl>()
   private var changesContext: ChangesContext? = null
   override val changeListeners: EventDispatcher<NotebookIntervalPointerFactory.ChangeListener> =
@@ -66,6 +68,9 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   init {
     pointers.addAll(notebookCellLines.intervals.asSequence().map { NotebookIntervalPointerImpl(it) })
   }
+
+  private val validUndoManager: UndoManager?
+    get() = undoManager?.takeIf { !project.isDisposed }
 
   override fun create(interval: NotebookCellLines.Interval): NotebookIntervalPointer {
     ApplicationManager.getApplication().assertReadAccessAllowed()
@@ -82,7 +87,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
 
     val pointerEvent = NotebookIntervalPointersEvent(eventChanges, cellLinesEvent = null, EventSource.ACTION)
 
-    undoManager?.undoableActionPerformed(object : BasicUndoableAction(documentReference) {
+    validUndoManager?.undoableActionPerformed(object : BasicUndoableAction(documentReference) {
       override fun undo() {
         val invertedChanges = invertChanges(eventChanges)
         updatePointersByChanges(invertedChanges)
@@ -118,6 +123,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   }
 
   override fun beforeDocumentChange(event: NotebookCellLinesEventBeforeChange) {
+    val undoManager = validUndoManager
     if (undoManager == null || undoManager.isUndoOrRedoInProgress) return
     val context = DocumentChangedContext()
     try {
@@ -143,7 +149,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     updateChangedIntervals(event, eventChanges)
     updateShiftedIntervals(event)
 
-    undoManager?.undoableActionPerformed(object : BasicUndoableAction(documentReference) {
+    validUndoManager?.undoableActionPerformed(object : BasicUndoableAction(documentReference) {
       override fun undo() {
         changesContext = UndoContext(eventChanges)
       }
