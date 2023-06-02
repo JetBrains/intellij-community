@@ -463,6 +463,10 @@
 
     <group id="MainToolbarVCSGroup">
       <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction" />
+      <action id="main.toolbar.git.update.project" class="git4idea.ui.toolbar.GitToolbarUpdateProjectAction"
+              use-shortcut-of="Vcs.UpdateProject"/>
+      <action id="main.toolbar.git.push" class="git4idea.ui.toolbar.GitToolbarPushAction"
+              use-shortcut-of="Vcs.Push"/>
       <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
     </group>
 
