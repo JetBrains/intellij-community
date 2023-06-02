@@ -230,8 +230,8 @@ class ModuleInfoProvider(private val project: Project) {
 
                 return MappingIterator(iterator) { module ->
                     if (module.isDisposed) return@MappingIterator null
-                    val moduleFileIndex = ModuleRootManager.getInstance(module).fileIndex
-                    val sourceRootType: KotlinSourceRootType? = moduleFileIndex.getKotlinSourceRootType(virtualFile)
+                    val projectFileIndex = ProjectFileIndex.getInstance(project)
+                    val sourceRootType: KotlinSourceRootType? = projectFileIndex.getKotlinSourceRootType(virtualFile)
                     module.asSourceInfo(sourceRootType)?.let(Result.Companion::success)
                 }
             }
