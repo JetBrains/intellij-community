@@ -523,9 +523,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun processCallExpression(expr: KtCallExpression, qualifierOnStack: Boolean = false) {
         val call = expr.resolveToCall()
-        var updatedQualifier = qualifierOnStack
-        if (!qualifierOnStack && call != null) {
-            updatedQualifier = updateQualifier(call)
+        val updatedQualifierOnStack = if (!qualifierOnStack && call != null) {
+            tryPushImplicitQualifier(call)
+        } else {
+            qualifierOnStack
         }
         var argCount: Int
         if (call != null) {
@@ -533,10 +534,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         } else {
             argCount = pushUnresolvedCallArguments(expr)
         }
-        if (inlineKnownMethod(expr, argCount, updatedQualifier)) return
+        if (inlineKnownMethod(expr, argCount, updatedQualifierOnStack)) return
         val lambda = getInlineableLambda(expr)
         if (lambda != null) {
-            if (updatedQualifier && inlineKnownLambdaCall(expr, lambda.lambda)) return
+            if (updatedQualifierOnStack && inlineKnownLambdaCall(expr, lambda.lambda)) return
             val kind = getLambdaOccurrenceRange(expr, lambda.descriptor.original)
             inlineLambda(lambda.lambda, kind)
         } else {
@@ -546,10 +547,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
         }
 
-        addCall(expr, argCount, updatedQualifier)
+        addCall(expr, argCount, updatedQualifierOnStack)
     }
 
-    private fun updateQualifier(call: ResolvedCall<out CallableDescriptor>): Boolean {
+    private fun tryPushImplicitQualifier(call: ResolvedCall<out CallableDescriptor>): Boolean {
         val receiver = call.dispatchReceiver
         if (receiver is ImplicitReceiver) {
             val descriptor = receiver.declarationDescriptor
