@@ -90,10 +90,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun processExpression(expr: KtExpression?) {
+        if (expr == null) {
+            pushUnknown()
+            return
+        }
         flow.startElement(expr)
         if (!processConstant(expr)) {
             when (expr) {
-                null -> pushUnknown()
                 is KtBlockExpression -> processBlock(expr)
                 is KtParenthesizedExpression -> processExpression(expr.expression)
                 is KtBinaryExpression -> processBinaryExpression(expr)
@@ -805,6 +808,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(ConditionalGotoInstruction(offset, DfTypes.NULL))
         }
         val selector = expr.selectorExpression
+        selector?.let(flow::startElement)
         if (!pushJavaClassField(receiver, selector, expr)) {
             val specialField = findSpecialField(expr)
             if (specialField != null) {
@@ -824,6 +828,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
             addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
         }
+        selector?.let(flow::finishElement)
         if (expr is KtSafeQualifiedExpression) {
             val endOffset = DeferredOffset()
             addInstruction(GotoInstruction(endOffset))
