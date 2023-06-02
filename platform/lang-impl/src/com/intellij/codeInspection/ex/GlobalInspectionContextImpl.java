@@ -22,9 +22,12 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.IntEventField;
+import com.intellij.internal.statistic.eventLog.events.LongEventField;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -58,6 +61,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -84,7 +89,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
 
-import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.*;
+import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.HighlightVisitorScope;
+import static com.intellij.codeInspection.ex.GlobalInspectionContextImpl.InspectionPerformanceCollector.*;
 import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOBAL;
 import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOBAL_SIMPLE;
 import static com.intellij.codeInspection.ex.InspectionEventsKt.reportWhenActivityFinished;
@@ -625,6 +631,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                               @NotNull InspectionManager inspectionManager,
                               @NotNull List<? extends Tools> globalTools,
                               boolean isOfflineInspections) {
+    long timestamp = System.currentTimeMillis();
     LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed() || isOfflineInspections,
                    "Must not run under read action, too unresponsive");
 
@@ -632,7 +639,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       return;
     }
 
+    long refGraphTimestamp = System.currentTimeMillis();
     buildRefGraphIfNeeded(globalTools);
+    long refGraphDuration = System.currentTimeMillis() - refGraphTimestamp;
 
     List<InspectionToolWrapper<?, ?>> needRepeatSearchRequest = new ArrayList<>();
     SearchScope initialSearchScope = ReadAction.compute(scope::toSearchScope);
@@ -691,6 +700,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       getProject(),
       () -> processPostRunActivities(needRepeatSearchRequest));
     addProblemsToView(globalTools);
+    logPerformance(refGraphDuration, System.currentTimeMillis() - timestamp, scope.getFileCount(), globalTools.size());
   }
 
   private void buildRefGraphIfNeeded(List<? extends Tools> globalTools) {
@@ -1285,5 +1295,32 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         throw new RuntimeException(e);
       }
     });
+  }
+
+  static class InspectionPerformanceCollector extends CounterUsagesCollector {
+    private static final EventLogGroup GROUP = new EventLogGroup("inspection.performance", 1);
+
+    static final LongEventField TOTAL_DURATION = new LongEventField("total_duration_ms");
+    static final LongEventField BUILD_REFERENCE_GRAPH_DURATION = new LongEventField("build_reference_graph_duration_ms");
+    static final IntEventField NUMBER_OF_FILES = new IntEventField("number_of_files");
+    static final IntEventField NUMBER_OF_INSPECTIONS = new IntEventField("number_of_inspections");
+
+    static final VarargEventId GLOBAL_INSPECTION_PERFORMANCE = GROUP.registerVarargEvent("global.inspection.performance",
+                                                                                         TOTAL_DURATION,
+                                                                                         BUILD_REFERENCE_GRAPH_DURATION,
+                                                                                         NUMBER_OF_FILES,
+                                                                                         NUMBER_OF_INSPECTIONS);
+
+    @Override
+    public EventLogGroup getGroup() {
+      return GROUP;
+    }
+
+    static void logPerformance(long refGraphDuration, long globalInspectionsDuration, int fileCount, int inspectionCount) {
+      GLOBAL_INSPECTION_PERFORMANCE.log(TOTAL_DURATION.with(globalInspectionsDuration),
+                                        BUILD_REFERENCE_GRAPH_DURATION.with(refGraphDuration),
+                                        NUMBER_OF_FILES.with(fileCount),
+                                        NUMBER_OF_INSPECTIONS.with(inspectionCount));
+    }
   }
 }
