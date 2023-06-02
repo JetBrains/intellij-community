@@ -14,8 +14,8 @@ import kotlin.io.path.relativeTo
 
 internal object DotnetIconsTransformation {
   internal const val ideaDarkSuffix = "_dark"
-  private val dotnetExpUiDaySuffix = "RiderDay"
-  private val dotnetExpUiNightSuffix = "RiderNight"
+  internal val dotnetExpUiDaySuffix = "RiderDay"
+  internal val dotnetExpUiNightSuffix = "RiderNight"
   /**
    * First icon with one of the suffices (according to order) corresponds to Idea light icon
    */
@@ -44,40 +44,26 @@ internal object DotnetIconsTransformation {
   }
 
   private fun transform(icons: List<DotnetIcon>, rootPath: Path) {
-    val transformed = ArrayList<DotnetIcon>(2)
-    var hasLightIcon = false
+    val transformed = mutableSetOf<DotnetIcon>()
+    var iconCompatibleWithRider = false
     icons.filterOnly(dotnetLightSuffices).minWithOrNull(dotnetLightComparator)?.changeSuffix("")?.also {
       transformed += it
-      hasLightIcon = true
+      iconCompatibleWithRider = true
     }
-    var hasDarkIcon = false
-    if (hasRiderDarkPart(icons)) {
+    if (iconCompatibleWithRider) {
       icons.filterOnly(dotnetDarkSuffices).minWithOrNull(dotnetDarkComparator)?.changeSuffix(ideaDarkSuffix)?.also {
         transformed += it
-        hasDarkIcon = true
       }
+
+      // change icon suffixes after moving to not override original icons
+      icons.firstOrNull { it.suffix == dotnetExpUiDaySuffix }?.let {
+        return@let it.moveToExpUi(rootPath) // move before changing suffixes to not override original icons
+      }?.changeSuffix("")?.also { transformed += it }
+      icons.firstOrNull { it.suffix == dotnetExpUiNightSuffix }?.let {
+        return@let it.moveToExpUi(rootPath) // move before changing suffixes to not override original icons
+      }?.changeSuffix(ideaDarkSuffix)?.also { transformed += it }
     }
-
-    // change icon suffixes after moving to not override original icons
-    icons.firstOrNull() { it.suffix == dotnetExpUiDaySuffix }?.let {
-      if (hasLightIcon) {
-        return@let it.moveToExpUi(rootPath) // move before changing suffixes to not override original icons
-      }
-      return@let it
-    }?.changeSuffix("")?.also { transformed += it }
-    icons.firstOrNull() { it.suffix == dotnetExpUiNightSuffix }?.let {
-      if (hasDarkIcon) {
-        return@let it.moveToExpUi(rootPath) // move before changing suffixes to not override original icons
-      }
-      return@let it
-    }?.changeSuffix(ideaDarkSuffix)?.also { transformed += it }
-
     (icons - transformed).forEach(DotnetIcon::delete)
-  }
-
-  private fun hasRiderDarkPart(icons: List<DotnetIcon>): Boolean {
-    return icons.any { it.suffix == "RiderLight" }.not()
-           || (icons.any { it.suffix == "RiderLight" } && icons.any { it.suffix == "RiderDark" })
   }
 
   private fun comparator(suffices: List<String>) = Comparator<DotnetIcon> { i1, i2 ->

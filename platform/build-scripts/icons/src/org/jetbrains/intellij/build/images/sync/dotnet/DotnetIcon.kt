@@ -55,7 +55,7 @@ internal class DotnetIcon(val file: Path) {
     val target = targetDir.resolve(file.name)
     if (!targetDir.exists()) targetDir.createDirectories()
     Files.move(file, target, StandardCopyOption.REPLACE_EXISTING)
-    return DotnetIcon(targetDir)
+    return DotnetIcon(target)
   }
 
   fun delete() {
