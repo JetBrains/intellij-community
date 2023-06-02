@@ -546,15 +546,24 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         |package org.example;
         |import $jUnitTestAnnotationClass;
         |public class TestCase {
-        |  @Test public void test() {}
+        |  @Test public void test1() {}
+        |  @Test public void test2() {}
         |}
       """.trimMargin())
       writeText("gradle.properties", """
         |org.gradle.configuration-cache=true
       """.trimMargin())
 
-      executeTasks(":test --tests org.example.TestCase.test", isRunAsTest = true)
-      assertTestTreeView { assertNode("TestCase") { assertNode("test") } }
+      executeTasks(":test", isRunAsTest = true)
+      assertTestTreeView { assertNode("TestCase") { assertNode("test1"); assertNode("test2") } }
+      assertTestConsoleDoesNotContain("Unable to enhance Gradle Daemon")
+
+      executeTasks(":test --tests org.example.TestCase.test1", isRunAsTest = true)
+      assertTestTreeView { assertNode("TestCase") { assertNode("test1") } }
+      assertTestConsoleDoesNotContain("Unable to enhance Gradle Daemon")
+
+      executeTasks(":test --tests org.example.TestCase.test2", isRunAsTest = true)
+      assertTestTreeView { assertNode("TestCase") { assertNode("test2") } }
       assertTestConsoleDoesNotContain("Unable to enhance Gradle Daemon")
     }
   }

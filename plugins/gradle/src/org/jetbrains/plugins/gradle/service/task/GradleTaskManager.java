@@ -182,7 +182,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       return false;
     }
     var gradleVersion = settings.getGradleVersion();
-    if (gradleVersion == null || isGradleOlderThan(gradleVersion, "7.6")) {
+    if (gradleVersion == null || isGradleOlderThan(gradleVersion, "8.2")) {
       LOG.debug("TestLauncher isn't applicable: unsupported Gradle version " + gradleVersion);
       return false;
     }
