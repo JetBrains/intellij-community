@@ -822,6 +822,7 @@
     },
     "HelpBrowser": {
       "UserMessage": {
+        "border": "Grey5",
         "background": "Blue2",
         "Snippet": {
           "MoreLines": {
@@ -834,6 +835,7 @@
       },
       "HelpBrowserMessage": {
         "Snippet": {
+          "border": "Grey3",
           "MoreLines": {
             "foreground": "Grey8",
             "background": "Grey2",
