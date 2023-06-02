@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.util.indexing.hints.BaseFileTypeInputFilter.FileTypeStrategy.BEFORE_SUBSTITUTION;
+import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION;
 
 public class HtmlTagIdIndex extends XmlIndex<Integer> {
   public static final ID<String, Integer> INDEX = ID.create("HtmlTagIdIndex");

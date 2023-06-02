@@ -18,7 +18,7 @@ class FileTypeInputFilterPredicate : BaseFileTypeInputFilter {
     this.predicate = predicate
   }
 
-  constructor(fileTypeStrategy: FileTypeStrategy, predicate: (filetype: FileType) -> Boolean) : super(fileTypeStrategy) {
+  constructor(fileTypeStrategy: FileTypeSubstitutionStrategy, predicate: (filetype: FileType) -> Boolean) : super(fileTypeStrategy) {
     this.predicate = predicate
   }
 
