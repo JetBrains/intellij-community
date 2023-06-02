@@ -587,6 +587,7 @@
       "collapsedSelectedIcon": "/expui/general/chevronRight.svg",
       "expandedIcon": "/expui/general/chevronDown.svg",
       "expandedSelectedIcon": "/expui/general/chevronDown.svg",
+      "forceFocusedSelectionForeground": false,
       "rowHeight": 24,
       "hash": "Grey11",
       "border": "4,12,4,12",

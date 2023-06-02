@@ -510,6 +510,7 @@
       "hash": "#505355",
       "leftChildIndent": 7,
       "paintLines": false,
+      "forceFocusedSelectionForeground": true,
       "rightChildIndent": 11,
       "rowHeight": 20,
       "UI": "com.intellij.ui.tree.ui.DefaultTreeUI"

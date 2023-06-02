@@ -2009,6 +2009,10 @@ public final class JBUI {
           return focused ? FOREGROUND : Inactive.FOREGROUND;
         }
 
+        public static boolean forceFocusedSelectionForeground() {
+          return UIManager.getBoolean("Tree.forceFocusedSelectionForeground");
+        }
+
         private interface Inactive {
           Color BACKGROUND = JBColor.namedColor("Tree.selectionInactiveBackground", DEFAULT_RENDERER_SELECTION_INACTIVE_BACKGROUND);
           Color FOREGROUND = JBColor.namedColor("Tree.selectionInactiveForeground", Tree.FOREGROUND);
