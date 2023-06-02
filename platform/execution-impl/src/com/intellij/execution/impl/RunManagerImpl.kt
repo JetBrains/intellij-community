@@ -257,8 +257,8 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
   }
 
   private fun clearSelectedConfigurationIcon() {
-    selectedConfiguration?.let {
-      iconAndInvalidCache.remove(it.uniqueID)
+    selectedConfigurationId?.let {
+      iconAndInvalidCache.remove(it)
     }
   }
 
