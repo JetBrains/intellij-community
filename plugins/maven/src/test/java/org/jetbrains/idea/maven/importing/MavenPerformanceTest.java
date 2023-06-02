@@ -47,8 +47,6 @@ public abstract class MavenPerformanceTest extends MavenMultiVersionImportingTes
     List<MavenProject> mavenProjects = myProjectsManager.getProjects();
     Collections.sort(mavenProjects, (o1, o2) -> o1.getPath().compareToIgnoreCase(o2.getPath()));
 
-    myProjectsManager.unscheduleAllTasksInTests();
-
     MavenImportingTestCaseKt.resolveAndImportMavenProjectsSync(myProjectsManager, mavenProjects.subList(0, 100));
     measure(50000, () -> myProjectsManager.waitForReadingCompletion());
   }

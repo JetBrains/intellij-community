@@ -1012,11 +1012,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
-  @TestOnly
-  public void unscheduleAllTasksInTests() {
-    unscheduleAllTasks(getProjects());
-  }
-
   public void waitForReadingCompletion() {
     waitForTasksCompletion(null);
   }
