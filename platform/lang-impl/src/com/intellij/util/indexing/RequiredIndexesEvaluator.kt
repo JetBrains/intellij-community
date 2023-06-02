@@ -7,7 +7,6 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.util.ThreeState
 import com.intellij.util.indexing.hints.FileTypeIndexingHint
 import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate
-import com.intellij.util.indexing.hints.IndexingHint
 import com.jetbrains.rd.util.concurrentMapOf
 import java.util.function.Predicate
 
@@ -86,8 +85,8 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
     return andPredicates(indexerHintPredicate, globalHintPredicate)
   }
 
-  private fun toHint(filter: FileBasedIndex.InputFilter): IndexingHint {
-    return if (filter is IndexingHint) {
+  private fun toHint(filter: FileBasedIndex.InputFilter): FileTypeIndexingHint {
+    return if (filter is FileTypeIndexingHint) {
       filter
     }
     else if (filter is DefaultFileTypeSpecificInputFilter &&
@@ -101,7 +100,8 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
       }
     }
     else {
-      object : IndexingHint {
+      object : FileTypeIndexingHint {
+        override fun hintAcceptFileType(fileType: FileType): ThreeState = ThreeState.UNSURE
         override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
           return FileBasedIndexEx.acceptsInput(filter, file)
         }
@@ -109,13 +109,14 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
     }
   }
 
-  private fun getGlobalHint(indexId: ID<*, *>): IndexingHint = object : IndexingHint {
+  private fun getGlobalHint(indexId: ID<*, *>): FileTypeIndexingHint = object : FileTypeIndexingHint {
+    override fun hintAcceptFileType(fileType: FileType): ThreeState = ThreeState.UNSURE
     override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
       return !GlobalIndexFilter.isExcludedFromIndexViaFilters(file.file, indexId, file.project)
     }
   }
 
-  private fun applyHints(indexingHint: IndexingHint, fileType: FileType?): IndexedFilePredicate {
+  private fun applyHints(indexingHint: FileTypeIndexingHint, fileType: FileType?): IndexedFilePredicate {
     return when (applyFileTypeHint(indexingHint, fileType)) {
       ThreeState.YES -> truePredicate
       ThreeState.NO -> falsePredicate
@@ -125,8 +126,8 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
     }
   }
 
-  private fun applyFileTypeHint(indexingHint: IndexingHint, fileType: FileType?): ThreeState {
-    if (fileType != null && indexingHint is FileTypeIndexingHint) {
+  private fun applyFileTypeHint(indexingHint: FileTypeIndexingHint, fileType: FileType?): ThreeState {
+    if (fileType != null) {
       return indexingHint.hintAcceptFileType(fileType)
     }
     else {
