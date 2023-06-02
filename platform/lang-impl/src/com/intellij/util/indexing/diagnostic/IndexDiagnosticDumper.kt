@@ -249,18 +249,14 @@ class IndexDiagnosticDumper : Disposable {
 
   fun onIndexingFinished(projectIndexingHistory: ProjectIndexingHistoryImpl) {
     try {
-      if (!shouldDumpOldDiagnostics) {
-        return
-      }
-      if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
-        return
-      }
       if (projectIndexingHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
         return
       }
       projectIndexingHistory.indexingFinished()
-      unsavedOldIndexingHistories.add(projectIndexingHistory)
-      NonUrgentExecutor.getInstance().execute { dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory) }
+      if (shouldDumpOldDiagnostics && (!ApplicationManager.getApplication().isUnitTestMode || shouldDumpInUnitTestMode)) {
+        unsavedOldIndexingHistories.add(projectIndexingHistory)
+        NonUrgentExecutor.getInstance().execute { dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory) }
+      }
     }
     finally {
       runAllListenersSafely { onFinishedIndexing(projectIndexingHistory) }
