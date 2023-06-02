@@ -6,7 +6,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import java.net.http.HttpResponse
 
-suspend fun GitLabApi.checkIsGitLabServer(server: GitLabServerPath): Boolean {
+suspend fun GitLabApi.Rest.checkIsGitLabServer(server: GitLabServerPath): Boolean {
   val uri = server.restApiUri.resolveRelative("metadata")
   val request = request(uri).GET().build()
   val response = sendAndAwaitCancellable(request, HttpResponse.BodyHandlers.discarding())

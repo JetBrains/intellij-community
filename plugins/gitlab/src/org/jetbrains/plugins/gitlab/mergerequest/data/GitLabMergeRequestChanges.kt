@@ -64,15 +64,15 @@ class GitLabMergeRequestChangesImpl(
       coroutineScope {
         commits.map { commit ->
           async {
-            val commitWithParents = api.loadCommit(glProject, commit.sha).body()!!
-            val patches = api.loadCommitDiffs(glProject, commit.sha).body()!!.map(GitLabDiffDTO::toPatch)
+            val commitWithParents = api.rest.loadCommit(glProject, commit.sha).body()!!
+            val patches = api.rest.loadCommitDiffs(glProject, commit.sha).body()!!.map(GitLabDiffDTO::toPatch)
             GitCommitShaWithPatches(commit.sha, commitWithParents.parentIds, patches)
           }
         }.awaitAll()
       }
     }
     val headPatches = withContext(Dispatchers.IO) {
-      api.loadMergeRequestDiffs(glProject, mergeRequestDetails).body()!!.map(GitLabDiffDTO::toPatch)
+      api.rest.loadMergeRequestDiffs(glProject, mergeRequestDetails).body()!!.map(GitLabDiffDTO::toPatch)
     }
     return GitBranchComparisonResultImpl(repository.project, repository.root, baseSha, mergeBaseSha, commitsWithPatches, headPatches)
   }

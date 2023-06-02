@@ -57,7 +57,7 @@ private class JsonHttpApiHelperImpl(
   private val httpHelper: HttpApiHelper,
   private val serializer: JsonDataSerializer,
   private val deserializer: JsonDataDeserializer)
-  : JsonHttpApiHelper {
+  : JsonHttpApiHelper, HttpApiHelper by httpHelper {
 
   override fun jsonBodyPublisher(uri: URI, body: Any): HttpRequest.BodyPublisher {
     return ByteArrayProducingBodyPublisher {

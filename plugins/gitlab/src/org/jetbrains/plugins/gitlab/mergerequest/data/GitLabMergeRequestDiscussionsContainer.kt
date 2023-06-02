@@ -69,7 +69,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       val discussionsGuard = Mutex()
       var lastCursor: String? = null
       ApiPageUtil.createGQLPagesFlow {
-        api.loadMergeRequestDiscussions(project, mr.id, it)
+        api.graphQL.loadMergeRequestDiscussions(project, mr.id, it)
       }.collect { page ->
         discussionsGuard.withLock {
           for (dto in page.nodes.filter { it.notes.isNotEmpty() }) {
@@ -81,7 +81,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       if (lastCursor != null) {
         launchNow {
           updateRequests.collect {
-            val page = api.loadMergeRequestDiscussions(project, mr.id, GraphQLRequestPagination(lastCursor!!))
+            val page = api.graphQL.loadMergeRequestDiscussions(project, mr.id, GraphQLRequestPagination(lastCursor!!))
             val newDiscussions = page?.nodes
             if (newDiscussions != null) {
               discussionsGuard.withLock {
@@ -150,7 +150,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   private suspend fun FlowCollector<List<DraftNoteWithAuthor>>.collectDraftNotes() {
     supervisorScope {
       // we shouldn't get another user's draft notes
-      val currentUser = api.getCurrentUser(project.serverPath) ?: error("Unable to load current user")
+      val currentUser = api.graphQL.getCurrentUser(project.serverPath) ?: error("Unable to load current user")
 
       val notesGuard = Mutex()
       val draftNotes = LinkedHashMap<String, GitLabMergeRequestDraftNoteRestDTO>()
@@ -158,7 +158,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       var lastETag: String? = null
       val uri = getMergeRequestDraftNotesUri(project, mr.id)
       ApiPageUtil.createPagesFlowByLinkHeader(uri) {
-        api.loadUpdatableJsonList<GitLabMergeRequestDraftNoteRestDTO>(it)
+        api.rest.loadUpdatableJsonList<GitLabMergeRequestDraftNoteRestDTO>(it)
       }.collect {
         val newNotes = it.body() ?: error("Empty response")
         notesGuard.withLock {
@@ -172,7 +172,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       if (lastETag != null) {
         launchNow {
           updateRequests.collect {
-            val response = api.loadUpdatableJsonList<GitLabMergeRequestDraftNoteRestDTO>(uri, lastETag)
+            val response = api.rest.loadUpdatableJsonList<GitLabMergeRequestDraftNoteRestDTO>(uri, lastETag)
             val newNotes = response.body()
             if (newNotes != null) {
               notesGuard.withLock {
@@ -227,7 +227,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        api.addNote(project, mr.gid, body).getResultOrThrow()
+        api.graphQL.addNote(project, mr.gid, body).getResultOrThrow()
       }.also {
         withContext(NonCancellable) {
           discussionEvents.emit(GitLabDiscussionEvent.Added(it))
@@ -239,7 +239,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override suspend fun addNote(position: GitLabDiffPositionInput, body: String) {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        api.addDiffNote(project, mr.gid, position, body).getResultOrThrow()
+        api.graphQL.addDiffNote(project, mr.gid, position, body).getResultOrThrow()
       }.also {
         withContext(NonCancellable) {
           discussionEvents.emit(GitLabDiscussionEvent.Added(it))
@@ -251,7 +251,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override suspend fun submitDraftNotes() {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        api.submitDraftNotes(project, mr.id)
+        api.rest.submitDraftNotes(project, mr.id)
       }
       withContext(NonCancellable) {
         draftNotesEvents.emit(GitLabNoteEvent.AllDeleted())

@@ -81,7 +81,7 @@ class MutableGitLabMergeRequestNote(
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          api.updateNote(project, noteData.id, newText).getResultOrThrow()
+          api.graphQL.updateNote(project, noteData.id, newText).getResultOrThrow()
         }
       }
       data.update { it.copy(body = newText) }
@@ -92,7 +92,7 @@ class MutableGitLabMergeRequestNote(
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          api.deleteNote(project, noteData.id).getResultOrThrow()
+          api.graphQL.deleteNote(project, noteData.id).getResultOrThrow()
         }
       }
       eventSink(GitLabNoteEvent.Deleted(noteData.id))
@@ -143,7 +143,7 @@ class GitLabMergeRequestDraftNoteImpl(
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          api.updateDraftNote(project, mr.id, noteData.id, newText)
+          api.rest.updateDraftNote(project, mr.id, noteData.id, newText)
         }
       }
       data.update { it.copy(note = newText) }
@@ -154,7 +154,7 @@ class GitLabMergeRequestDraftNoteImpl(
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          api.deleteDraftNote(project, mr.id, noteData.id)
+          api.rest.deleteDraftNote(project, mr.id, noteData.id)
         }
       }
       eventSink(GitLabNoteEvent.Deleted(noteData.id.toString()))

@@ -22,7 +22,7 @@ class GitLabTokenLoginPanelModel(private val requiredUsername: String? = null,
     val server = createServerPath(serverUri)
     val api = service<GitLabApiManager>().getClient(token)
     val user = withContext(Dispatchers.IO) {
-      api.getCurrentUser(server)
+      api.graphQL.getCurrentUser(server)
     } ?: throw IllegalArgumentException(GitLabBundle.message("account.token.invalid"))
     val username = user.username
     if (requiredUsername != null) {

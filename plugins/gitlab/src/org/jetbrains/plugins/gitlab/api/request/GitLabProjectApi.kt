@@ -12,22 +12,23 @@ import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
+import org.jetbrains.plugins.gitlab.api.query
 
-suspend fun GitLabApi.loadAllProjectLabels(project: GitLabProjectCoordinates): List<GitLabLabelDTO> =
+suspend fun GitLabApi.GraphQL.loadAllProjectLabels(project: GitLabProjectCoordinates): List<GitLabLabelDTO> =
   ApiPageUtil.createGQLPagesFlow { page ->
     val parameters = page.asParameters() + mapOf(
       "fullPath" to project.projectPath.fullPath()
     )
-    val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.GET_PROJECT_LABELS, parameters)
+    val request = query(project.serverPath, GitLabGQLQuery.GET_PROJECT_LABELS, parameters)
     loadGQLResponse(request, LabelConnection::class.java, "project", "labels").body()
   }.map { it.nodes }.foldToList()
 
-suspend fun GitLabApi.getAllProjectMembers(project: GitLabProjectCoordinates): List<GitLabMemberDTO> =
+suspend fun GitLabApi.GraphQL.getAllProjectMembers(project: GitLabProjectCoordinates): List<GitLabMemberDTO> =
   ApiPageUtil.createGQLPagesFlow { page ->
     val parameters = page.asParameters() + mapOf(
       "fullPath" to project.projectPath.fullPath()
     )
-    val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.GET_PROJECT_MEMBERS, parameters)
+    val request = query(project.serverPath, GitLabGQLQuery.GET_PROJECT_MEMBERS, parameters)
     loadGQLResponse(request, ProjectMembersConnection::class.java, "project", "projectMembers").body()
   }.map { it.nodes }.foldToList().filterNotNull()
 

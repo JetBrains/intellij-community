@@ -6,9 +6,7 @@ import com.intellij.collaboration.api.data.asParameters
 import com.intellij.collaboration.api.data.orDefault
 import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
-import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
@@ -16,22 +14,22 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import java.net.http.HttpResponse
 
-suspend fun GitLabApi.loadMergeRequestDiscussions(project: GitLabProjectCoordinates,
-                                                  mr: GitLabMergeRequestId,
-                                                  pagination: GraphQLRequestPagination? = null)
+suspend fun GitLabApi.GraphQL.loadMergeRequestDiscussions(project: GitLabProjectCoordinates,
+                                                                    mr: GitLabMergeRequestId,
+                                                                    pagination: GraphQLRequestPagination? = null)
   : GraphQLConnectionDTO<GitLabDiscussionDTO>? {
   val parameters = pagination.orDefault().asParameters() + mapOf(
     "projectId" to project.projectPath.fullPath(),
     "mriid" to mr.iid
   )
-  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.GET_MERGE_REQUEST_DISCUSSIONS, parameters)
+  val request = query(project.serverPath, GitLabGQLQuery.GET_MERGE_REQUEST_DISCUSSIONS, parameters)
   return loadGQLResponse(request, DiscussionConnection::class.java, "project", "mergeRequest", "discussions").body()
 }
 
 private class DiscussionConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabDiscussionDTO>)
   : GraphQLConnectionDTO<GitLabDiscussionDTO>(pageInfo, nodes)
 
-suspend fun GitLabApi.changeMergeRequestDiscussionResolve(
+suspend fun GitLabApi.GraphQL.changeMergeRequestDiscussionResolve(
   project: GitLabProjectCoordinates,
   discussionId: String,
   resolved: Boolean
@@ -40,7 +38,7 @@ suspend fun GitLabApi.changeMergeRequestDiscussionResolve(
     "discussionId" to discussionId,
     "resolved" to resolved
   )
-  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE, parameters)
+  val request = query(project.serverPath, GitLabGQLQuery.TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE, parameters)
   return loadGQLResponse(request, ResolveResult::class.java, "discussionToggleResolve")
 }
 
@@ -49,7 +47,7 @@ private class ResolveResult(discussion: GitLabDiscussionDTO, errors: List<String
   override val value = discussion
 }
 
-suspend fun GitLabApi.updateNote(
+suspend fun GitLabApi.GraphQL.updateNote(
   project: GitLabProjectCoordinates,
   noteId: String,
   newText: String
@@ -58,22 +56,22 @@ suspend fun GitLabApi.updateNote(
     "noteId" to noteId,
     "body" to newText
   )
-  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.UPDATE_NOTE, parameters)
+  val request = query(project.serverPath, GitLabGQLQuery.UPDATE_NOTE, parameters)
   return loadGQLResponse(request, GitLabGraphQLMutationResultDTO.Empty::class.java, "updateNote")
 }
 
-suspend fun GitLabApi.deleteNote(
+suspend fun GitLabApi.GraphQL.deleteNote(
   project: GitLabProjectCoordinates,
   noteId: String
 ): HttpResponse<out GitLabGraphQLMutationResultDTO<Unit>?> {
   val parameters = mapOf(
     "noteId" to noteId
   )
-  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.DESTROY_NOTE, parameters)
+  val request = query(project.serverPath, GitLabGQLQuery.DESTROY_NOTE, parameters)
   return loadGQLResponse(request, GitLabGraphQLMutationResultDTO.Empty::class.java, "destroyNote")
 }
 
-suspend fun GitLabApi.addNote(
+suspend fun GitLabApi.GraphQL.addNote(
   project: GitLabProjectCoordinates,
   mergeRequestGid: String,
   body: String
@@ -82,11 +80,11 @@ suspend fun GitLabApi.addNote(
     "noteableId" to mergeRequestGid,
     "body" to body
   )
-  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.CREATE_NOTE, parameters)
+  val request = query(project.serverPath, GitLabGQLQuery.CREATE_NOTE, parameters)
   return loadGQLResponse(request, CreateNoteResult::class.java, "createNote")
 }
 
-suspend fun GitLabApi.addDiffNote(
+suspend fun GitLabApi.GraphQL.addDiffNote(
   project: GitLabProjectCoordinates,
   mergeRequestGid: String,
   position: GitLabDiffPositionInput,
@@ -97,7 +95,7 @@ suspend fun GitLabApi.addDiffNote(
     "position" to position,
     "body" to body
   )
-  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.CREATE_DIFF_NOTE, parameters)
+  val request = query(project.serverPath, GitLabGQLQuery.CREATE_DIFF_NOTE, parameters)
   return loadGQLResponse(request, CreateNoteResult::class.java, "createDiffNote")
 }
 
@@ -108,7 +106,7 @@ private class CreateNoteResult(note: NoteHolder?, errors: List<String>?)
 
 private class NoteHolder(val discussion: GitLabDiscussionDTO)
 
-suspend fun GitLabApi.createReplyNote(
+suspend fun GitLabApi.GraphQL.createReplyNote(
   project: GitLabProjectCoordinates,
   mergeRequestGid: String,
   discussionId: String,
@@ -119,7 +117,7 @@ suspend fun GitLabApi.createReplyNote(
     "discussionId" to discussionId,
     "body" to body
   )
-  val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQuery.CREATE_REPLY_NOTE, parameters)
+  val request = query(project.serverPath, GitLabGQLQuery.CREATE_REPLY_NOTE, parameters)
   return loadGQLResponse(request, CreateReplyNoteResult::class.java, "createNote")
 }
 

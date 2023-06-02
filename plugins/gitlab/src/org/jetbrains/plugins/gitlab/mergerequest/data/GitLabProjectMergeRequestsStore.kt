@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.api.request.getCurrentUserRest
+import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabMergeRequestsListLoader
@@ -98,9 +98,9 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
   @Throws(HttpStatusErrorException::class, IllegalStateException::class)
   private suspend fun loadMergeRequest(id: GitLabMergeRequestId): GitLabMergeRequestDTO {
     return withContext(Dispatchers.IO) {
-      val body = api.loadMergeRequest(glProject, id).body()
+      val body = api.graphQL.loadMergeRequest(glProject, id).body()
       if (body == null) {
-        api.getCurrentUserRest(glProject.serverPath) // Exception is generated automatically if status code >= 400
+        api.rest.getCurrentUser(glProject.serverPath) // Exception is generated automatically if status code >= 400
         error(CollaborationToolsBundle.message("graphql.errors", "empty response"))
       }
       body

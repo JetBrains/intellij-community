@@ -9,61 +9,52 @@ import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
-import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-abstract class GitLabApi : HttpApiHelper, JsonHttpApiHelper, GraphQLApiHelper {
-  fun gqlQuery(uri: URI, query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest = gqlQuery(uri, query.filePath, variablesObject)
+sealed interface GitLabApi : HttpApiHelper {
+  val graphQL: GraphQL
+  val rest: Rest
+
+  interface GraphQL : GraphQLApiHelper, GitLabApi
+  interface Rest : JsonHttpApiHelper, GitLabApi
 }
 
-class GitLabApiImpl private constructor(httpHelper: HttpApiHelper)
-  : GitLabApi(),
-    HttpApiHelper by httpHelper,
-    JsonHttpApiHelper by JsonHttpApiHelper(logger<GitLabApi>(),
-                                           httpHelper,
-                                           GitLabRestJsonDataDeSerializer,
-                                           GitLabRestJsonDataDeSerializer),
-    GraphQLApiHelper by GraphQLApiHelper(logger<GitLabApi>(),
-                                         httpHelper,
-                                         GitLabGQLQueryLoader,
-                                         GitLabGQLDataDeSerializer,
-                                         GitLabGQLDataDeSerializer) {
+// this dark inheritance magic is required to make extensions work properly
+class GitLabApiImpl(httpHelper: HttpApiHelper) : GitLabApi, HttpApiHelper by httpHelper {
 
   constructor(tokenSupplier: () -> String) : this(httpHelper(tokenSupplier))
 
   constructor() : this(httpHelper())
 
-  companion object {
-    private fun httpHelper(tokenSupplier: () -> String): HttpApiHelper {
-      val authConfigurer = object : AuthorizationConfigurer() {
-        override val authorizationHeaderValue: String
-          get() = HttpSecurityUtil.createBearerAuthHeaderValue(tokenSupplier())
-      }
-      val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(), GitLabHeadersConfigurer, authConfigurer)
-      return HttpApiHelper(logger = logger<GitLabApi>(),
-                           requestConfigurer = requestConfigurer)
-    }
+  override val graphQL: GitLabApi.GraphQL =
+    GraphQLImpl(GraphQLApiHelper(logger<GitLabApi>(),
+                                 this,
+                                 GitLabGQLQueryLoader,
+                                 GitLabGQLDataDeSerializer,
+                                 GitLabGQLDataDeSerializer))
 
-    private fun httpHelper(): HttpApiHelper {
-      val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(), GitLabHeadersConfigurer)
-      return HttpApiHelper(logger = logger<GitLabApi>(),
-                           requestConfigurer = requestConfigurer)
-    }
+  private inner class GraphQLImpl(helper: GraphQLApiHelper) :
+    GitLabApi by this,
+    GitLabApi.GraphQL,
+    GraphQLApiHelper by helper
 
-    private const val PLUGIN_USER_AGENT_NAME = "IntelliJ-GitLab-Plugin"
+  override val rest: GitLabApi.Rest =
+    RestImpl(JsonHttpApiHelper(logger<GitLabApi>(),
+                               this,
+                               GitLabRestJsonDataDeSerializer,
+                               GitLabRestJsonDataDeSerializer))
 
-    private object GitLabHeadersConfigurer : HttpRequestConfigurer {
-      override fun configure(builder: HttpRequest.Builder): HttpRequest.Builder =
-        builder.apply {
-          header(HttpClientUtil.ACCEPT_ENCODING_HEADER, HttpClientUtil.CONTENT_ENCODING_GZIP)
-          header(HttpClientUtil.USER_AGENT_HEADER, HttpClientUtil.getUserAgentValue(PLUGIN_USER_AGENT_NAME))
-        }
-    }
-  }
+  private inner class RestImpl(helper: JsonHttpApiHelper) :
+    GitLabApi by this,
+    GitLabApi.Rest,
+    JsonHttpApiHelper by helper
 }
 
-suspend inline fun <reified T> GitLabApi.loadList(uri: String): HttpResponse<out List<T>> {
+fun GitLabApi.GraphQL.query(serverPath: GitLabServerPath, query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest =
+  gqlQuery(serverPath.gqlApiUri, query.filePath, variablesObject)
+
+suspend inline fun <reified T> GitLabApi.Rest.loadList(uri: String): HttpResponse<out List<T>> {
   val request = request(uri).GET().build()
   return loadJsonList(request)
 }
@@ -75,4 +66,31 @@ fun <R : Any, MR : GitLabGraphQLMutationResultDTO<R>> HttpResponse<out MR?>.getR
   val errors = result.errors
   if (!errors.isNullOrEmpty()) throw GitLabGraphQLMutationErrorException(errors)
   return result.value as R
+}
+
+
+private fun httpHelper(tokenSupplier: () -> String): HttpApiHelper {
+  val authConfigurer = object : AuthorizationConfigurer() {
+    override val authorizationHeaderValue: String
+      get() = HttpSecurityUtil.createBearerAuthHeaderValue(tokenSupplier())
+  }
+  val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(), GitLabHeadersConfigurer, authConfigurer)
+  return HttpApiHelper(logger = logger<GitLabApi>(),
+                       requestConfigurer = requestConfigurer)
+}
+
+private fun httpHelper(): HttpApiHelper {
+  val requestConfigurer = CompoundRequestConfigurer(RequestTimeoutConfigurer(), GitLabHeadersConfigurer)
+  return HttpApiHelper(logger = logger<GitLabApi>(),
+                       requestConfigurer = requestConfigurer)
+}
+
+private const val PLUGIN_USER_AGENT_NAME = "IntelliJ-GitLab-Plugin"
+
+private object GitLabHeadersConfigurer : HttpRequestConfigurer {
+  override fun configure(builder: HttpRequest.Builder): HttpRequest.Builder =
+    builder.apply {
+      header(HttpClientUtil.ACCEPT_ENCODING_HEADER, HttpClientUtil.CONTENT_ENCODING_GZIP)
+      header(HttpClientUtil.USER_AGENT_HEADER, HttpClientUtil.getUserAgentValue(PLUGIN_USER_AGENT_NAME))
+    }
 }

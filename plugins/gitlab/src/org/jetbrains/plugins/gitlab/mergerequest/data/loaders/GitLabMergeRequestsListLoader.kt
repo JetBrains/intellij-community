@@ -32,7 +32,7 @@ internal class GitLabMergeRequestsListLoader(
   }
 
   private suspend fun loadMergeRequests(nextUri: String?): Pair<List<GitLabMergeRequestDetails>, String?> {
-    val response = if (nextUri == null) api.loadMergeRequests(project, searchQuery) else api.loadList(nextUri)
+    val response = if (nextUri == null) api.rest.loadMergeRequests(project, searchQuery) else api.rest.loadList(nextUri)
     val linkHeader = response.headers().firstValue(LinkHttpHeaderValue.HEADER_NAME).orElse(null)?.let(LinkHttpHeaderValue::parse)
     val result = response.body().map(GitLabMergeRequestDetails.Companion::fromRestDTO)
     return result to linkHeader?.nextLink

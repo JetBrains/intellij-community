@@ -12,8 +12,8 @@ import org.jetbrains.plugins.gitlab.api.restApiUri
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import java.net.http.HttpResponse
 
-suspend fun GitLabApi.loadMergeRequestDiffs(project: GitLabProjectCoordinates,
-                                            mergeRequest: GitLabMergeRequestId): HttpResponse<out List<GitLabDiffDTO>> {
+suspend fun GitLabApi.Rest.loadMergeRequestDiffs(project: GitLabProjectCoordinates,
+                                                 mergeRequest: GitLabMergeRequestId): HttpResponse<out List<GitLabDiffDTO>> {
   val uri = project.restApiUri
     .resolveRelative("merge_requests")
     .resolveRelative(mergeRequest.iid)
@@ -22,8 +22,8 @@ suspend fun GitLabApi.loadMergeRequestDiffs(project: GitLabProjectCoordinates,
   return loadJsonList(request)
 }
 
-suspend fun GitLabApi.loadCommitDiffs(project: GitLabProjectCoordinates,
-                                      commitSha: String): HttpResponse<out List<GitLabDiffDTO>> {
+suspend fun GitLabApi.Rest.loadCommitDiffs(project: GitLabProjectCoordinates,
+                                           commitSha: String): HttpResponse<out List<GitLabDiffDTO>> {
   val uri = project.restApiUri
     .resolveRelative("repository")
     .resolveRelative("commits")
@@ -33,8 +33,8 @@ suspend fun GitLabApi.loadCommitDiffs(project: GitLabProjectCoordinates,
   return loadJsonList(request)
 }
 
-suspend fun GitLabApi.loadCommit(project: GitLabProjectCoordinates,
-                                 commitSha: String): HttpResponse<out GitLabCommitRestDTO> {
+suspend fun GitLabApi.Rest.loadCommit(project: GitLabProjectCoordinates,
+                                      commitSha: String): HttpResponse<out GitLabCommitRestDTO> {
   val uri = project.restApiUri
     .resolveRelative("repository")
     .resolveRelative("commits")
@@ -42,3 +42,4 @@ suspend fun GitLabApi.loadCommit(project: GitLabProjectCoordinates,
   val request = request(uri).GET().build()
   return loadJsonValue(request)
 }
+

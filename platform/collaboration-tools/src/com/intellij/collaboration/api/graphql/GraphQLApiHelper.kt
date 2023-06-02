@@ -16,7 +16,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
 @ApiStatus.Experimental
-interface GraphQLApiHelper  {
+interface GraphQLApiHelper {
   fun gqlQuery(uri: URI, queryPath: String, variablesObject: Any? = null): HttpRequest
 
   suspend fun <T> loadGQLResponse(request: HttpRequest, clazz: Class<T>, vararg pathFromData: String): HttpResponse<out T?>
@@ -40,16 +40,16 @@ private class GraphQLApiHelperImpl(private val logger: Logger,
                                    private val queryLoader: CachingGraphQLQueryLoader,
                                    private val serializer: JsonDataSerializer,
                                    private val deserializer: GraphQLDataDeserializer)
-  : GraphQLApiHelper {
+  : GraphQLApiHelper, HttpApiHelper by httpHelper {
 
   override fun gqlQuery(uri: URI, queryPath: String, variablesObject: Any?): HttpRequest {
     val publisher = ByteArrayProducingBodyPublisher {
-      logger.debug("Request POST $uri")
+      logger.debug("GraphQL request $uri")
       val query = queryLoader.loadQuery(queryPath)
       val request = GraphQLRequestDTO(query, variablesObject)
       val jsonBytes = serializer.toJsonBytes(request)
       if (logger.isTraceEnabled) {
-        logger.trace("Request POST $uri : Request body: " + String(jsonBytes, Charsets.UTF_8))
+        logger.trace("GraphQL request $uri : Request body: " + String(jsonBytes, Charsets.UTF_8))
       }
       jsonBytes
     }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab
 
 import kotlinx.coroutines.*
+import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabApiImpl
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.request.checkIsGitLabServer
@@ -18,7 +19,7 @@ internal class CachingGitLabServersManager(private val cs: CoroutineScope) : Git
   override suspend fun checkIsGitLabServer(server: GitLabServerPath): Boolean =
     cache.getOrPut(server) {
       cs.async(Dispatchers.IO + CoroutineName("GitLab Server metadata loader")) {
-        GitLabApiImpl().checkIsGitLabServer(server)
+        GitLabApiImpl().rest.checkIsGitLabServer(server)
       }
     }.await()
 }
