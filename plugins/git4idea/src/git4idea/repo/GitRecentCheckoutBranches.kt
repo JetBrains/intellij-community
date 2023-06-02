@@ -48,7 +48,7 @@ fun GitRepository.collectRecentCheckoutBranches(haveLocalBranch: (GitLocalBranch
     }
   }
 
-  if (recentBranchFromSettings != null && !recentBranchFromSettingsAdded) {
+  if (recentBranchFromSettings != null && !recentBranchFromSettingsAdded && haveLocalBranch(recentBranchFromSettings)) {
     branches.add(recentBranchFromSettings)
   }
 
