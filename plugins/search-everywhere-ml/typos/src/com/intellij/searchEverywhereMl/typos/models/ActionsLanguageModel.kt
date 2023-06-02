@@ -50,7 +50,7 @@ internal class ActionsLanguageModel(private val actionsDictionary: ActionsDictio
     .let { actionManager ->
       actionManager.actionIds
         .asSequence()
-        .mapNotNull { actionManager.getAction(it) }
+        .mapNotNull { actionManager.getActionOrStub(it) }
     }.filterNot { it is ActionGroup && !it.isSearchable }
     .mapNotNull { it.templateText }
 
