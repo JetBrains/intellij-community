@@ -145,6 +145,7 @@ class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
                         private val payloadReader: (PayloadRef) -> DefinedState<ByteArray>
 ) : VfsSnapshot {
   fun interface SnapshotFiller {
+    /** Must not observe properties to avoid deadlock possibility -- only fillIn can be used */
     fun fillUntil(condition: () -> Boolean)
 
     companion object {
@@ -246,12 +247,8 @@ class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
       }
 
       fun fillIn(definedState: DefinedState<T>) {
-        if (state !is State.UnknownYet) return
-        synchronized(this) {
-          if (state is State.UnknownYet) {
-            state = definedState
-          }
-        }
+        if (state is DefinedState<*>) return
+        state = definedState
       }
     }
   }
