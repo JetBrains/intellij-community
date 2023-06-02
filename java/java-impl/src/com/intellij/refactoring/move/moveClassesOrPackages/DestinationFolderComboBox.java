@@ -133,15 +133,13 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         record NonBlockingResult(@NotNull VirtualFile root, @Nullable DirectoryChooser.ItemWrapper item) {
         }
         ReadAction
-          .nonBlocking(() -> {
-            return new NonBlockingResult(
-              root,
-              ContainerUtil.find(items, item ->
-                item != DirectoryChooser.ItemWrapper.NULL
-                && Comparing.equal(fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()), root)
-              )
-            );
-          })
+          .nonBlocking(() -> new NonBlockingResult(
+            root,
+            ContainerUtil.find(items, item ->
+              item != DirectoryChooser.ItemWrapper.NULL
+              && Comparing.equal(fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()), root)
+            )
+          ))
           .expireWith(DestinationFolderComboBox.this)
           .finishOnUiThread(ModalityState.current(), result -> {
             if (result.item != null) {

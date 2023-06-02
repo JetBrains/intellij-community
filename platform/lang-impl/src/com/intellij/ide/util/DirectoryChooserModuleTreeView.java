@@ -150,11 +150,13 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
       if (groupPath == null || groupPath.isEmpty()) {
         insertNode(node, myRootNode);
       } else {
-        final DefaultMutableTreeNode parentNode = ModuleGroupUtil.buildModuleGroupPath(new ModuleGroup(groupPath),
-                                                                                       myRootNode,
-                                                                                       myModuleGroupNodes,
-                                                                                       parentChildRelation -> insertNode(parentChildRelation.getChild(), parentChildRelation.getParent()),
-                                                                                       moduleGroup -> new DefaultMutableTreeNode(moduleGroup, true));
+        final DefaultMutableTreeNode parentNode = ModuleGroupUtil.buildModuleGroupPath(
+          new ModuleGroup(groupPath),
+          myRootNode,
+          myModuleGroupNodes,
+          parentChildRelation -> insertNode(parentChildRelation.getChild(), parentChildRelation.getParent()),
+          moduleGroup -> new DefaultMutableTreeNode(moduleGroup, true)
+        );
         insertNode(node, parentNode);
       }
       myModuleNodes.put(module, node);
