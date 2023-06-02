@@ -2,7 +2,6 @@
 package com.intellij.platform.workspaceModel.storage
 
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityExtensionDelegate
-import org.jetbrains.deft.Obj
 import com.intellij.platform.workspaceModel.storage.annotations.Abstract
 
 /**

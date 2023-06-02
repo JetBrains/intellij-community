@@ -14,8 +14,8 @@ import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEnti
 import com.intellij.platform.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspaceModel.storage.ObjBuilder
+import com.intellij.platform.workspaceModel.storage.Type
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
