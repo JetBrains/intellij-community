@@ -121,7 +121,7 @@ public final class ActionUtil {
    */
   public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
     Presentation presentation = e.getPresentation();
-    if (LightEdit.owns(e.getProject()) && !isActionCompatible(action)) {
+    if (LightEdit.owns(e.getProject()) && !isActionLightEditCompatible(action)) {
       presentation.setEnabledAndVisible(false);
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, false);
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, false);
@@ -204,8 +204,8 @@ public final class ActionUtil {
     return false;
   }
 
-  public static boolean isActionCompatible(@NotNull AnAction action) {
-    if (action instanceof AnActionWrapper wrapper) return isActionCompatible(wrapper);
+  private static boolean isActionLightEditCompatible(@NotNull AnAction action) {
+    if (action instanceof AnActionWrapper wrapper) return isActionLightEditCompatible(wrapper);
     return (action instanceof ActionGroup) && action.isDumbAware() || action instanceof LightEditCompatible;
   }
 
