@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.PluginException;
@@ -93,10 +93,9 @@ public final class IdempotenceChecker {
     }
   }
 
-  @NotNull
-  private static <T> String recomputeWithLogging(@Nullable T existing,
-                                                 @Nullable T fresh,
-                                                 @NotNull Computable<? extends T> recomputeValue) {
+  private static @NotNull <T> String recomputeWithLogging(@Nullable T existing,
+                                                          @Nullable T fresh,
+                                                          @NotNull Computable<? extends T> recomputeValue) {
     ResultWithLog<T> rwl = computeWithLogging(recomputeValue);
     T freshest = rwl.result;
     @NonNls String msg = "\n\nRecomputation gives " + objAndClass(freshest);
@@ -120,8 +119,7 @@ public final class IdempotenceChecker {
    * @return Both the computation result and the log
    * @see #logTrace(String)
    */
-  @NotNull
-  public static <T> ResultWithLog<T> computeWithLogging(@NotNull Computable<? extends T> recomputeValue) {
+  public static @NotNull <T> ResultWithLog<T> computeWithLogging(@NotNull Computable<? extends T> recomputeValue) {
     List<String> threadLog = ourLog.get();
     boolean outermost = threadLog == null;
     if (outermost) {

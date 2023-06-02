@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.smartPointers;
 
@@ -19,22 +19,18 @@ abstract class SmartPointerElementInfo {
   void fastenBelt(@NotNull SmartPointerManagerImpl manager) {
   }
 
-  @Nullable
-  abstract PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager);
+  abstract @Nullable PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager);
 
-  @Nullable
-  abstract PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager);
+  abstract @Nullable PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager);
 
   abstract int elementHashCode(); // must be immutable
   abstract boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager);
 
   abstract VirtualFile getVirtualFile();
 
-  @Nullable
-  abstract Segment getRange(@NotNull SmartPointerManagerImpl manager);
+  abstract @Nullable Segment getRange(@NotNull SmartPointerManagerImpl manager);
 
-  @Nullable
-  abstract Segment getPsiRange(@NotNull SmartPointerManagerImpl manager);
+  abstract @Nullable Segment getPsiRange(@NotNull SmartPointerManagerImpl manager);
 
   void cleanup() {
   }

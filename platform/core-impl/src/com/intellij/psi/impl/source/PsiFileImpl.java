@@ -102,8 +102,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return false;
   }
 
-  @Nullable
-  public FileElement getTreeElement() {
+  public @Nullable FileElement getTreeElement() {
     FileElement node = derefTreeElement();
     if (node != null) return node;
 
@@ -184,8 +183,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     ApplicationManager.getApplication().assertReadAccessAllowed();
   }
 
-  @NotNull
-  private FileElement loadTreeElement() {
+  private @NotNull FileElement loadTreeElement() {
     assertReadAccessAllowed();
 
     if (myPossiblyInvalidated) {
@@ -254,9 +252,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
               "Consult this method's javadoc for more details.");
   }
 
-  @NotNull
   @Override
-  public StubbedSpine getStubbedSpine() {
+  public @NotNull StubbedSpine getStubbedSpine() {
     StubTree tree = getGreenStubTree();
     if (tree != null) return tree.getSpine();
 
@@ -269,15 +266,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return astSpine;
   }
 
-  @Nullable
-  public IStubFileElementType<?> getElementTypeForStubBuilder() {
+  public @Nullable IStubFileElementType<?> getElementTypeForStubBuilder() {
     ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage());
     IFileElementType type = definition == null ? null : definition.getFileNodeType();
     return type instanceof IStubFileElementType ? (IStubFileElementType<?>)type : null;
   }
 
-  @NotNull
-  protected FileElement createFileElement(CharSequence docText) {
+  protected @NotNull FileElement createFileElement(CharSequence docText) {
     FileElement treeElement;
     TreeElement contentLeaf = createContentLeafElement(docText);
 
@@ -404,7 +399,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  @NotNull public String getName() {
+  public @NotNull String getName() {
     return getViewProvider().getVirtualFile().getName();
   }
 
@@ -431,8 +426,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  @Nullable
-  public PsiDirectory getContainingDirectory() {
+  public @Nullable PsiDirectory getContainingDirectory() {
     VirtualFile file = getViewProvider().getVirtualFile();
     VirtualFile parentFile = file.getParent();
     if (parentFile == null) return null;
@@ -444,8 +438,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  @NotNull
-  public PsiFile getContainingFile() {
+  public @NotNull PsiFile getContainingFile() {
     return this;
   }
 
@@ -464,8 +457,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  @NotNull
-  public PsiFile getOriginalFile() {
+  public @NotNull PsiFile getOriginalFile() {
     return myOriginalFile == null ? this : myOriginalFile;
   }
 
@@ -504,21 +496,18 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return myElementType.getLanguage();
   }
 
-  @Nullable
   @Override
-  public IFileElementType getFileElementType() {
+  public @Nullable IFileElementType getFileElementType() {
     return myElementType instanceof IFileElementType ? (IFileElementType)myElementType
                                                      : ObjectUtils.tryCast(myContentElementType, IFileElementType.class);
   }
 
   @Override
-  @NotNull
-  public FileViewProvider getViewProvider() {
+  public @NotNull FileViewProvider getViewProvider() {
     return myViewProvider;
   }
 
@@ -552,8 +541,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return result.toArray(ArrayUtil.newArray(aClass, result.size()));
   }
 
-  @Nullable
-  public <T> T findChildByClass(Class<T> aClass) {
+  public @Nullable <T> T findChildByClass(Class<T> aClass) {
     for (PsiElement child : getChildren()) {
       if (aClass.isInstance(child)) {
         //noinspection unchecked
@@ -597,8 +585,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   /**
    * @return a root stub of {@link #getStubTree()}, or null if the file is not stub-based or AST has been loaded.
    */
-  @Nullable
-  public StubElement getStub() {
+  public @Nullable StubElement getStub() {
     StubTree stubHolder = getStubTree();
     return stubHolder != null ? stubHolder.getRoot() : null;
   }
@@ -611,8 +598,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
    * @see #getStub()
    * @see #getStubTree()
    */
-  @Nullable
-  public final StubElement<?> getGreenStub() {
+  public final @Nullable StubElement<?> getGreenStub() {
     StubTree stubHolder = getGreenStubTree();
     return stubHolder != null ? stubHolder.getRoot() : null;
   }
@@ -621,8 +607,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
    * @return a stub tree, if this file has it, and only if AST isn't loaded
    */
   @Override
-  @Nullable
-  public StubTree getStubTree() {
+  public @Nullable StubTree getStubTree() {
     assertReadAccessAllowed();
 
     if (getTreeElement() != null) return null;
@@ -683,8 +668,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
-  @NotNull
-  private StubTree setStubTree(PsiFileStub<?> root) throws StubTreeLoader.StubTreeAndIndexUnmatchCoarseException {
+  private @NotNull StubTree setStubTree(PsiFileStub<?> root) throws StubTreeLoader.StubTreeAndIndexUnmatchCoarseException {
     //noinspection unchecked
     ((StubBase<PsiFile>)root).setPsi(this);
     StubTree stubTree = new StubTree(root);
@@ -694,9 +678,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return stubTree;
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public final StubTree derefStub() {
+  public final @Nullable StubTree derefStub() {
     return myTrees.derefStub();
   }
 
@@ -739,8 +722,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return getOriginalFile();
   }
 
-  @NotNull
-  public final FileElement calcTreeElement() {
+  public final @NotNull FileElement calcTreeElement() {
     FileElement treeElement = getTreeElement();
     return treeElement != null ? treeElement : loadTreeElement();
   }
@@ -884,14 +866,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     return ResolveScopeManager.getElementResolveScope(this);
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return ResolveScopeManager.getElementUseScope(this);
   }
 
@@ -937,19 +917,16 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  @NotNull
-  public final Project getProject() {
+  public final @NotNull Project getProject() {
     return getManager().getProject();
   }
 
-  @NotNull
   @Override
-  public FileASTNode getNode() {
+  public @NotNull FileASTNode getNode() {
     return calcTreeElement();
   }
 
-  @Nullable
-  public FileASTNode getNodeIfLoaded() {
+  public @Nullable FileASTNode getNodeIfLoaded() {
     return getTreeElement();
   }
 
@@ -961,14 +938,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   /**
    * @return a stub tree object having {@link #getGreenStub()} as a root, or null if there's no green stub available
    */
-  @Nullable
-  public final StubTree getGreenStubTree() {
+  public final @Nullable StubTree getGreenStubTree() {
     StubTree result = derefStub();
     return result != null ? result : getStubTree();
   }
 
-  @NotNull
-  public StubTree calcStubTree() {
+  public @NotNull StubTree calcStubTree() {
     StubTree tree = derefStub();
     if (tree != null) {
       return tree;

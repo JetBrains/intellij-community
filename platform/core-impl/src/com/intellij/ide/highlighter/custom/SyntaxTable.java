@@ -97,8 +97,7 @@ public final class SyntaxTable implements Cloneable {
     return myKeywords4;
   }
 
-  @NotNull
-  public String getLineComment() {
+  public @NotNull String getLineComment() {
     return myLineComment;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -35,13 +35,11 @@ public final class StubTextInconsistencyException extends RuntimeException imple
     myFileText = file.getText();
   }
 
-  @NotNull
-  public String getStubsFromText() {
+  public @NotNull String getStubsFromText() {
     return myStubsFromText;
   }
 
-  @NotNull
-  public String getStubsFromPsi() {
+  public @NotNull String getStubsFromPsi() {
     return myStubsFromPsi;
   }
 
@@ -86,8 +84,7 @@ public final class StubTextInconsistencyException extends RuntimeException imple
     }
   }
 
-  @NotNull
-  private static List<PsiFileStub> restoreStubsFromText(FileViewProvider viewProvider) {
+  private static @NotNull List<PsiFileStub> restoreStubsFromText(FileViewProvider viewProvider) {
     Project project = viewProvider.getManager().getProject();
     FileContentImpl fc = (FileContentImpl)FileContentImpl.createByText(viewProvider.getVirtualFile(),
                                                                        viewProvider.getContents(),

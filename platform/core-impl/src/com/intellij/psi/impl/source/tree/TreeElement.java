@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -41,9 +41,8 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     return node == null ? null : (PsiFileImpl)node.getCachedPsi();
   }
 
-  @NotNull
   @Override
-  public Object clone() {
+  public @NotNull Object clone() {
     TreeElement clone = (TreeElement)super.clone();
     clone.myNextSibling = null;
     clone.myPrevSibling = null;
@@ -159,8 +158,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "Element" + "(" + getElementType() + ")";
   }
 
@@ -408,8 +406,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   }
 
   @Override
-  @NotNull
-  public IElementType getElementType() {
+  public @NotNull IElementType getElementType() {
     return myType;
   }
 

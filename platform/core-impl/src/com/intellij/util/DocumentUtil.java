@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,7 +43,7 @@ public final class DocumentUtil {
     executeInBulk(document, true, task);
   }
 
-  public static void writeInRunUndoTransparentAction(@NotNull final Runnable runnable) {
+  public static void writeInRunUndoTransparentAction(final @NotNull Runnable runnable) {
     CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(runnable));
   }
 
@@ -90,8 +90,7 @@ public final class DocumentUtil {
     return document.getLineEndOffset(lineNumber);
   }
 
-  @NotNull
-  public static TextRange getLineTextRange(@NotNull Document document, int line) {
+  public static @NotNull TextRange getLineTextRange(@NotNull Document document, int line) {
     return TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line));
   }
 

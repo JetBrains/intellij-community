@@ -52,8 +52,7 @@ public final class LaterInvocator {
 
   private static final ConcurrentMap<Window, ModalityStateEx> ourWindowModalities = CollectionFactory.createConcurrentWeakMap();
 
-  @NotNull
-  static ModalityStateEx modalityStateForWindow(@NotNull Window window) {
+  static @NotNull ModalityStateEx modalityStateForWindow(@NotNull Window window) {
     return ourWindowModalities.computeIfAbsent(window, __ -> {
       synchronized (ourModalityStack) {
         for (ModalityStateEx state : ourModalityStack) {
@@ -83,7 +82,7 @@ public final class LaterInvocator {
     ourEdtQueue.push(modalityState, expired, runnable);
   }
 
-  static void invokeAndWait(@NotNull ModalityState modalityState, @NotNull final Runnable runnable) {
+  static void invokeAndWait(@NotNull ModalityState modalityState, final @NotNull Runnable runnable) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     final AtomicReference<Runnable> runnableRef = new AtomicReference<>(runnable);
@@ -109,8 +108,7 @@ public final class LaterInvocator {
       }
 
       @Override
-      @NonNls
-      public String toString() {
+      public @NonNls String toString() {
         Runnable runnable = runnableRef.get();
         return "InvokeAndWait[" + (runnable == null ? "(cancelled)" : runnable.toString()) + "]";
       }
@@ -286,8 +284,7 @@ public final class LaterInvocator {
     return ArrayUtil.toObjectArray(ourModalEntities);
   }
 
-  @NotNull
-  public static ModalityStateEx getCurrentModalityState() {
+  public static @NotNull ModalityStateEx getCurrentModalityState() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (ourModalityStack) {
       return ourModalityStack.peek();
@@ -349,8 +346,7 @@ public final class LaterInvocator {
   }
 
   @TestOnly
-  @NotNull
-  public static Object getLaterInvocatorEdtQueue() {
+  public static @NotNull Object getLaterInvocatorEdtQueue() {
     return ourEdtQueue.getQueue();
   }
 

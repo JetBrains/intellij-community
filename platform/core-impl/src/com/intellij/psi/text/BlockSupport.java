@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.text;
 
@@ -25,13 +25,12 @@ public abstract class BlockSupport {
 
   public abstract void reparseRange(@NotNull PsiFile file, int startOffset, int endOffset, @NonNls @NotNull CharSequence newText) throws IncorrectOperationException;
 
-  @NotNull
-  public abstract DiffLog reparseRange(@NotNull PsiFile file,
-                                       @NotNull FileASTNode oldFileNode,
-                                       @NotNull TextRange changedPsiRange,
-                                       @NotNull CharSequence newText,
-                                       @NotNull ProgressIndicator progressIndicator,
-                                       @NotNull CharSequence lastCommittedText) throws IncorrectOperationException;
+  public abstract @NotNull DiffLog reparseRange(@NotNull PsiFile file,
+                                                @NotNull FileASTNode oldFileNode,
+                                                @NotNull TextRange changedPsiRange,
+                                                @NotNull CharSequence newText,
+                                                @NotNull ProgressIndicator progressIndicator,
+                                                @NotNull CharSequence lastCommittedText) throws IncorrectOperationException;
 
   public static final Key<Boolean> DO_NOT_REPARSE_INCREMENTALLY = Key.create("DO_NOT_REPARSE_INCREMENTALLY");
   public static final Key<Pair<ASTNode, CharSequence>> TREE_TO_BE_REPARSED = Key.create("TREE_TO_BE_REPARSED");
@@ -43,14 +42,12 @@ public abstract class BlockSupport {
       myDiffLog = diffLog;
     }
 
-    @NotNull
-    public DiffLog getDiffLog() {
+    public @NotNull DiffLog getDiffLog() {
       return myDiffLog;
     }
 
-    @NotNull
     @Override
-    public synchronized Throwable fillInStackTrace() {
+    public synchronized @NotNull Throwable fillInStackTrace() {
       return this;
     }
   }

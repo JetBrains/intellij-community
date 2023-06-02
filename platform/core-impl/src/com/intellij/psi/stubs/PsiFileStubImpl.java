@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -47,8 +47,7 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
   }
 
   @Override
-  @Nullable
-  public String getInvalidationReason() {
+  public @Nullable String getInvalidationReason() {
     return myInvalidationReason;
   }
 
@@ -57,9 +56,8 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
     return null;
   }
 
-  @NotNull
   @Override
-  public IStubFileElementType getType() {
+  public @NotNull IStubFileElementType getType() {
     return TYPE;
   }
 

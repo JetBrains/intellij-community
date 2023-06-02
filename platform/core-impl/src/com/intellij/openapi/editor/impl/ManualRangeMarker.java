@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -34,8 +34,7 @@ public class ManualRangeMarker implements Segment {
     myLinesCols = linesCols;
   }
 
-  @Nullable
-  public ManualRangeMarker getUpdatedRange(@NotNull DocumentEvent event, @NotNull FrozenDocument documentBefore) {
+  public @Nullable ManualRangeMarker getUpdatedRange(@NotNull DocumentEvent event, @NotNull FrozenDocument documentBefore) {
     if (mySurviveOnExternalChange && PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, myRange)) {
       PersistentRangeMarker.LinesCols linesCols = myLinesCols != null ? myLinesCols
                                                                       : PersistentRangeMarker.storeLinesAndCols(documentBefore, myRange);

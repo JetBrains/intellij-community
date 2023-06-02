@@ -55,7 +55,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // THashSet is avoided here because of possible tombstones overhead
   static final Set<Thread> threadsUnderCanceledIndicator = new HashSet<>(); // guarded by threadsUnderIndicator
 
-  @NotNull private static volatile CheckCanceledBehavior ourCheckCanceledBehavior = CheckCanceledBehavior.NONE;
+  private static volatile @NotNull CheckCanceledBehavior ourCheckCanceledBehavior = CheckCanceledBehavior.NONE;
 
   private enum CheckCanceledBehavior {NONE, ONLY_HOOKS, INDICATOR_PLUS_HOOKS}
 
@@ -102,9 +102,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public static List<ProgressIndicator> getCurrentIndicators() {
+  public static @NotNull List<ProgressIndicator> getCurrentIndicators() {
     synchronized (threadsUnderIndicator) {
       return new ArrayList<>(threadsUnderIndicator.keySet());
     }
@@ -405,20 +404,17 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
-  @NotNull
-  protected ProgressIndicator createDefaultAsynchronousProgressIndicator(@NotNull Task.Backgroundable task) {
+  protected @NotNull ProgressIndicator createDefaultAsynchronousProgressIndicator(@NotNull Task.Backgroundable task) {
     return new EmptyProgressIndicator();
   }
 
   // from any: bg
-  @NotNull
-  public Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
+  public @NotNull Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
     return runProcessWithProgressAsynchronously(task, createDefaultAsynchronousProgressIndicator(task), null);
   }
 
   // from any: bg
-  @NotNull
-  public Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task,
+  public @NotNull Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task,
                                                         @NotNull ProgressIndicator progressIndicator,
                                                         @Nullable Runnable continuation) {
     return runProcessWithProgressAsynchronously(task, progressIndicator, continuation, progressIndicator.getModalityState());
@@ -445,7 +441,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   private static class IndicatorDisposable implements Disposable {
-    @NotNull private final ProgressIndicator myIndicator;
+    private final @NotNull ProgressIndicator myIndicator;
 
     IndicatorDisposable(@NotNull ProgressIndicator indicator) {
       myIndicator = indicator;
@@ -459,8 +455,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   // from any: bg, task.finish on "UI/EDT"
-  @NotNull
-  public Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task,
+  public @NotNull Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task,
                                                         @NotNull ProgressIndicator progressIndicator,
                                                         @Nullable Runnable continuation,
                                                         @NotNull ModalityState modalityState) {
@@ -934,8 +929,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
-  @NotNull
-  public static ModalityState getCurrentThreadProgressModality() {
+  public static @NotNull ModalityState getCurrentThreadProgressModality() {
     ModalityState contextModality = currentThreadContextModality();
     if (contextModality != null) {
       return contextModality;

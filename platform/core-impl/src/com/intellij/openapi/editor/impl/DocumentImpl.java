@@ -95,9 +95,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       return myText.subSequence(start, end);
     }
 
-    @NotNull
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       return doGetText();
     }
   };
@@ -172,8 +171,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   // track GC of RangeMarkerTree: means no one is interested in range markers for this file anymore
   private static final ReferenceQueue<RangeMarkerTree<RangeMarkerEx>> rmTreeQueue = new ReferenceQueue<>();
   private static class RMTreeReference extends WeakReference<RangeMarkerTree<RangeMarkerEx>> {
-    @NotNull
-    private final VirtualFile virtualFile;
+    private final @NotNull VirtualFile virtualFile;
 
     RMTreeReference(@NotNull RangeMarkerTree<RangeMarkerEx> referent, @NotNull VirtualFile virtualFile) {
       super(referent, rmTreeQueue);
@@ -193,8 +191,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   /**
    * makes range marker without creating the document (which could be expensive)
    */
-  @NotNull
-  static RangeMarker createRangeMarkerForVirtualFile(@NotNull VirtualFile file,
+  static @NotNull RangeMarker createRangeMarkerForVirtualFile(@NotNull VirtualFile file,
                                                      int offset,
                                                      int startLine,
                                                      int startCol,
@@ -432,8 +429,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  @NotNull
-  public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
+  public @NotNull RangeMarker createGuardedBlock(int startOffset, int endOffset) {
     LOG.assertTrue(startOffset <= endOffset, "Should be startOffset <= endOffset");
     RangeMarker block = createRangeMarker(startOffset, endOffset, true);
     myGuardedBlocks.add(block);
@@ -446,8 +442,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  @NotNull
-  public List<RangeMarker> getGuardedBlocks() {
+  public @NotNull List<RangeMarker> getGuardedBlocks() {
     return myGuardedBlocks;
   }
 
@@ -506,8 +501,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  @NotNull
-  public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
+  public @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
     return surviveOnExternalChange
            ? new PersistentRangeMarker(this, startOffset, endOffset, true)
            : new RangeMarkerImpl(this, startOffset, endOffset, true, false);
@@ -930,14 +924,12 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     }
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return ReadAction.compute(this::doGetText);
   }
 
-  @NotNull
-  private String doGetText() {
+  private @NotNull String doGetText() {
     String s = dereference(myTextString);
     if (s == null) {
       myTextString = new SoftReference<>(s = myText.toString());
@@ -945,9 +937,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     return s;
   }
 
-  @NotNull
   @Override
-  public String getText(@NotNull TextRange range) {
+  public @NotNull String getText(@NotNull TextRange range) {
     return ReadAction
       .compute(() -> myText.subSequence(range.getStartOffset(), range.getEndOffset()).toString());
   }
@@ -958,14 +949,12 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  @NotNull
-  public CharSequence getCharsSequence() {
+  public @NotNull CharSequence getCharsSequence() {
     return myMutableCharSequence;
   }
 
-  @NotNull
   @Override
-  public CharSequence getImmutableCharSequence() {
+  public @NotNull CharSequence getImmutableCharSequence() {
     return myText;
   }
 
@@ -985,8 +974,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   // this contortion is for avoiding document leak when the listener is leaked
   private static class DocumentListenerDisposable implements Disposable {
-    @NotNull private final LockFreeCOWSortedArray<? super DocumentListener> myList;
-    @NotNull private final DocumentListener myListener;
+    private final @NotNull LockFreeCOWSortedArray<? super DocumentListener> myList;
+    private final @NotNull DocumentListener myListener;
 
     DocumentListenerDisposable(@NotNull LockFreeCOWSortedArray<? super DocumentListener> list, @NotNull DocumentListener listener) {
       myList = list;
@@ -1013,8 +1002,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  @NotNull
-  public LineIterator createLineIterator() {
+  public @NotNull LineIterator createLineIterator() {
     return getLineSet().createIterator();
   }
 
@@ -1165,8 +1153,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       ApplicationManager.getApplication().getMessageBus().syncPublisher(DocumentBulkUpdateListener.TOPIC);
   }
 
-  @NotNull
-  private static DocumentBulkUpdateListener getPublisher() {
+  private static @NotNull DocumentBulkUpdateListener getPublisher() {
     return DocumentBulkUpdateListenerHolder.ourBulkChangePublisher;
   }
 
@@ -1188,8 +1175,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     }
   }
 
-  @NotNull
-  public String dumpState() {
+  public @NotNull String dumpState() {
     @NonNls StringBuilder result = new StringBuilder();
     result.append("intervals:\n");
     int lineCount = getLineCount();
@@ -1211,8 +1197,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
            "]";
   }
 
-  @NotNull
-  public FrozenDocument freeze() {
+  public @NotNull FrozenDocument freeze() {
     FrozenDocument frozen = myFrozen;
     if (frozen == null) {
       synchronized (myLineSetLock) {

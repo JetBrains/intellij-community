@@ -51,8 +51,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     //  private int deltaUpToRoot; // sum of all deltas up to the root (including this node.delta). Has valid value only if modCount == IntervalTreeImpl.this.modCount
     //  private boolean allDeltasUpAreNull;  // true if all deltas up the tree (including this node) are 0. Has valid value only if modCount == IntervalTreeImpl.this.modCount
 
-    @NotNull
-    private final IntervalTreeImpl<E> myTree;
+    private final @NotNull IntervalTreeImpl<E> myTree;
 
     IntervalNode(@NotNull IntervalTreeImpl<E> tree, @NotNull E key, int start, int end) {
       // maxEnd == 0 so to not disrupt existing maxes
@@ -269,8 +268,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       return myRange;
     }
 
-    @NotNull
-    public IntervalTreeImpl<E> getTree() {
+    public @NotNull IntervalTreeImpl<E> getTree() {
       return myTree;
     }
 
@@ -348,15 +346,13 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       return parent;
     }
 
-    @NonNls
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "Node "+TextRangeScalarUtil.create(myRange) + ": "+intervals;
     }
   }
 
-  @NotNull
-  private Supplier<? extends T> createGetter(@NotNull T interval) {
+  private @NotNull Supplier<? extends T> createGetter(@NotNull T interval) {
     return keepIntervalsOnWeakReferences()
            ? new WeakReferencedGetter<>(interval, myReferenceQueue)
            : new StaticSupplier<>(interval);
@@ -367,9 +363,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       super(referent, q);
     }
 
-    @NonNls
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "wRef: " + get();
     }
   }
@@ -385,9 +380,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       return myT;
     }
 
-    @NonNls
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "sRef: " + get();
     }
   }
@@ -415,9 +409,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     return true;
   }
 
-  @NotNull
-  protected abstract IntervalNode<T> createNewNode(@NotNull T key, int start, int end,
-                                                   boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer);
+  protected abstract @NotNull IntervalNode<T> createNewNode(@NotNull T key, int start, int end,
+                                                            boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer);
   protected abstract IntervalNode<T> lookupNode(@NotNull T key);
   protected abstract void setNode(@NotNull T key, @Nullable IntervalNode<T> node);
 
@@ -792,9 +785,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     }
   }
 
-  @NotNull
-  public IntervalTreeImpl.IntervalNode<T> addInterval(@NotNull T interval, int start, int end,
-                                                      boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+  public @NotNull IntervalTreeImpl.IntervalNode<T> addInterval(@NotNull T interval, int start, int end,
+                                                               boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     l.writeLock().lock();
     try {
       if (firingRemove) {
@@ -860,9 +852,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     }
   }
 
-  @NotNull
   // returns real (minStart, maxStart, maxEnd)
-  private IntTrinity checkMax(@Nullable IntervalNode<T> root,
+  private @NotNull IntTrinity checkMax(@Nullable IntervalNode<T> root,
                               int deltaUpToRootExclusive,
                               boolean assertInvalid,
                               @NotNull AtomicBoolean allValid,
@@ -927,9 +918,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     return new IntTrinity(minStart, maxStart, root.maxEnd + delta);
   }
 
-  @NotNull
   @Override
-  protected Node<T> maximumNode(@NotNull Node<T> n) {
+  protected @NotNull Node<T> maximumNode(@NotNull Node<T> n) {
     IntervalNode<T> root = (IntervalNode<T>)n;
     pushDelta(root.getParent());
     pushDelta(root);
@@ -1053,8 +1043,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   }
 
   @Override
-  @NotNull
-  protected IntervalNode<T> swapWithMaxPred(@NotNull Node<T> root, @NotNull Node<T> maxPred) {
+  protected @NotNull IntervalNode<T> swapWithMaxPred(@NotNull Node<T> root, @NotNull Node<T> maxPred) {
     checkMax(false);
     IntervalNode<T> a = (IntervalNode<T>)root;
     IntervalNode<T> d = (IntervalNode<T>)maxPred;
@@ -1352,8 +1341,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
 
   private static class IntervalTreeGuide<T extends MutableInterval> implements WalkingState.TreeGuide<IntervalNode<T>> {
     private static final IntervalTreeGuide<?> INSTANCE = new IntervalTreeGuide<>();
-    @NotNull
-    private static <T> WalkingState.TreeGuide<IntervalNode<T>> getGuide() {
+    private static @NotNull <T> WalkingState.TreeGuide<IntervalNode<T>> getGuide() {
       //noinspection unchecked,rawtypes
       return (WalkingState.TreeGuide)INSTANCE;
     }
@@ -1392,8 +1380,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   }
 
   // combines iterators for two trees in one using the specified comparator
-  @NotNull
-  static <T> MarkupIterator<T> mergingOverlappingIterator(@NotNull IntervalTreeImpl<T> tree1,
+  static @NotNull <T> MarkupIterator<T> mergingOverlappingIterator(@NotNull IntervalTreeImpl<T> tree1,
                                                           @NotNull TextRange tree1Range,
                                                           @NotNull IntervalTreeImpl<T> tree2,
                                                           @NotNull TextRange tree2Range,

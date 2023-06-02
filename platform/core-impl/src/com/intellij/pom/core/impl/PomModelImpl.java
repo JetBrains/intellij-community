@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.core.impl;
 
 import com.intellij.lang.ASTNode;
@@ -72,7 +72,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   @Override
-  public void addModelListener(@NotNull final PomModelListener listener, @NotNull Disposable parentDisposable) {
+  public void addModelListener(final @NotNull PomModelListener listener, @NotNull Disposable parentDisposable) {
     addModelListener(listener);
     Disposer.register(parentDisposable, () -> removeModelListener(listener));
   }
@@ -168,8 +168,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     myPsiAspect.update(event);
   }
 
-  @Nullable
-  private PomTransaction getBlockingTransaction(PsiElement changeScope) {
+  private @Nullable PomTransaction getBlockingTransaction(PsiElement changeScope) {
     Stack<PomTransaction> blockedAspects = myTransactionStack.get();
     ListIterator<PomTransaction> iterator = blockedAspects.listIterator(blockedAspects.size());
     while (iterator.hasPrevious()) {
@@ -231,9 +230,8 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   /**
    * Reparses the file and returns a runnable which actually changes the PSI structure to match the new text.
    */
-  @Nullable
   @ApiStatus.Internal
-  public Runnable reparseFile(@NotNull PsiFile file, @NotNull FileElement treeElement, @NotNull CharSequence newText) {
+  public @Nullable Runnable reparseFile(@NotNull PsiFile file, @NotNull FileElement treeElement, @NotNull CharSequence newText) {
     TextRange changedPsiRange = ChangedPsiRangeUtil.getChangedPsiRange(file, treeElement, newText);
     if (changedPsiRange == null) return null;
 
@@ -248,9 +246,8 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     });
   }
 
-  @Nullable
   @Contract("_,null -> null")
-  private Document startTransaction(@NotNull PomTransaction transaction, @Nullable PsiFile psiFile) {
+  private @Nullable Document startTransaction(@NotNull PomTransaction transaction, @Nullable PsiFile psiFile) {
     final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
@@ -297,8 +294,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     return cachedDocument != null && manager.isUncommited(cachedDocument);
   }
 
-  @Nullable
-  private static PsiFile getContainingFileByTree(@NotNull final PsiElement changeScope) {
+  private static @Nullable PsiFile getContainingFileByTree(final @NotNull PsiElement changeScope) {
     // there could be pseudo physical trees (JSPX/JSP/etc.) which must not translate
     // any changes to document and not to fire any PSI events
     final PsiFile psiFile;
@@ -370,8 +366,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     getPsiManager().childrenChanged(event);
   }
 
-  @NotNull
-  private PsiManagerImpl getPsiManager() {
+  private @NotNull PsiManagerImpl getPsiManager() {
     return (PsiManagerImpl)PsiManager.getInstance(myProject);
   }
 }

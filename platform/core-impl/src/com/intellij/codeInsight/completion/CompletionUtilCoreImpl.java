@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -14,13 +14,11 @@ import org.jetbrains.annotations.Nullable;
 
 
 public final class CompletionUtilCoreImpl {
-  @Nullable
-  public static <T extends PsiElement> T getOriginalElement(@NotNull T psi) {
+  public static @Nullable <T extends PsiElement> T getOriginalElement(@NotNull T psi) {
     return getOriginalElement(psi, psi.getContainingFile());
   }
 
-  @Nullable
-  public static <T extends PsiElement> T getOriginalElement(@NotNull T psi, PsiFile containingFile) {
+  public static @Nullable <T extends PsiElement> T getOriginalElement(@NotNull T psi, PsiFile containingFile) {
     if (containingFile == null || psi instanceof LightElement) return psi;
 
     PsiFile originalFile = containingFile.getOriginalFile();
@@ -64,8 +62,7 @@ public final class CompletionUtilCoreImpl {
     return psi;
   }
 
-  @NotNull
-  public static <T extends PsiElement> T getOriginalOrSelf(@NotNull T psi) {
+  public static @NotNull <T extends PsiElement> T getOriginalOrSelf(@NotNull T psi) {
     final T element = getOriginalElement(psi);
     return element == null ? psi : element;
   }

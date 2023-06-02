@@ -67,16 +67,14 @@ public final class ProgressRunner<R> {
 
   private static final Logger LOG = Logger.getInstance(ProgressRunner.class);
 
-  @NotNull
-  private final Function<? super @NotNull ProgressIndicator, ? extends R> myComputation;
+  private final @NotNull Function<? super @NotNull ProgressIndicator, ? extends R> myComputation;
 
   private final boolean isSync;
 
   private final boolean isModal;
 
   private final ThreadToUse myThreadToUse;
-  @NotNull
-  private final CompletableFuture<? extends @NotNull ProgressIndicator> myProgressIndicatorFuture;
+  private final @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> myProgressIndicatorFuture;
 
   /**
    * Creates new {@code ProgressRunner} builder instance dedicated to calculating {@code computation}.
@@ -133,15 +131,15 @@ public final class ProgressRunner<R> {
     myProgressIndicatorFuture = progressIndicatorFuture;
   }
 
-  @NotNull
-  @Contract(pure = true) // to avoid abandoning the result
-  public ProgressRunner<R> sync() {
+  // to avoid abandoning the result
+  @Contract(pure = true)
+  public @NotNull ProgressRunner<R> sync() {
     return isSync ? this : new ProgressRunner<>(myComputation, true, isModal, myThreadToUse, myProgressIndicatorFuture);
   }
 
-  @NotNull
-  @Contract(pure = true) // to avoid abandoning the result
-  public ProgressRunner<R> modal() {
+  // to avoid abandoning the result
+  @Contract(pure = true)
+  public @NotNull ProgressRunner<R> modal() {
     return isModal ? this : new ProgressRunner<>(myComputation, isSync, true, myThreadToUse, myProgressIndicatorFuture);
   }
 
@@ -150,9 +148,9 @@ public final class ProgressRunner<R> {
    *
    * @param thread thread to execute computation
    */
-  @NotNull
-  @Contract(pure = true) // to avoid abandoning the result
-  public ProgressRunner<R> onThread(@NotNull ThreadToUse thread) {
+  // to avoid abandoning the result
+  @Contract(pure = true)
+  public @NotNull ProgressRunner<R> onThread(@NotNull ThreadToUse thread) {
     return thread == myThreadToUse ? this : new ProgressRunner<>(myComputation, isSync, isModal, thread, myProgressIndicatorFuture);
   }
 
@@ -161,9 +159,9 @@ public final class ProgressRunner<R> {
    *
    * @param progressIndicator progress indicator instance
    */
-  @NotNull
-  @Contract(pure = true) // to avoid abandoning the result
-  public ProgressRunner<R> withProgress(@NotNull ProgressIndicator progressIndicator) {
+  // to avoid abandoning the result
+  @Contract(pure = true)
+  public @NotNull ProgressRunner<R> withProgress(@NotNull ProgressIndicator progressIndicator) {
     ProgressIndicator myIndicator;
     try {
       myIndicator = myProgressIndicatorFuture.isDone() ? myProgressIndicatorFuture.get() : null;
@@ -182,9 +180,9 @@ public final class ProgressRunner<R> {
    *
    * @param progressIndicatorFuture future with progress indicator
    */
-  @NotNull
-  @Contract(pure = true) // to avoid abandoning the result
-  public ProgressRunner<R> withProgress(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture) {
+  // to avoid abandoning the result
+  @Contract(pure = true)
+  public @NotNull ProgressRunner<R> withProgress(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture) {
     return myProgressIndicatorFuture == progressIndicatorFuture ? this : new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, progressIndicatorFuture);
   }
 
@@ -193,8 +191,7 @@ public final class ProgressRunner<R> {
    *
    * @return a {@link ProgressResult} data class representing the result of computation
    */
-  @NotNull
-  public ProgressResult<R> submitAndGet() {
+  public @NotNull ProgressResult<R> submitAndGet() {
     Future<ProgressResult<R>> future = sync().submit();
 
     try {
@@ -211,8 +208,7 @@ public final class ProgressRunner<R> {
    *
    * @return a completable future representing the computation via {@link ProgressResult} data class
    */
-  @NotNull
-  public CompletableFuture<ProgressResult<R>> submit() {
+  public @NotNull CompletableFuture<ProgressResult<R>> submit() {
     /*
     General flow:
     1. Create Progress
@@ -303,10 +299,9 @@ public final class ProgressRunner<R> {
     return forceDirectExec;
   }
 
-  @NotNull
-  private CompletableFuture<R> execFromEDT(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressFuture,
-                                           @NotNull Semaphore modalityEntered,
-                                           @NotNull Function<ProgressIndicator, R> onThreadCallable) {
+  private @NotNull CompletableFuture<R> execFromEDT(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressFuture,
+                                                    @NotNull Semaphore modalityEntered,
+                                                    @NotNull Function<ProgressIndicator, R> onThreadCallable) {
     CompletableFuture<R> taskFuture = launchTask(onThreadCallable, progressFuture);
     CompletableFuture<R> resultFuture;
 
@@ -351,10 +346,9 @@ public final class ProgressRunner<R> {
     return resultFuture;
   }
 
-  @NotNull
-  private CompletableFuture<R> normalExec(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressFuture,
-                                          @NotNull Semaphore modalityEntered,
-                                          @NotNull Function<@NotNull ProgressIndicator, R> onThreadCallable) {
+  private @NotNull CompletableFuture<R> normalExec(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressFuture,
+                                                   @NotNull Semaphore modalityEntered,
+                                                   @NotNull Function<@NotNull ProgressIndicator, R> onThreadCallable) {
 
     if (isModal) {
       Function<ProgressIndicator, ProgressIndicator> modalityRunnable = progressIndicator -> {

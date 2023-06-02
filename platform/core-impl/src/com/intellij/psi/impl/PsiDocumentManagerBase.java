@@ -316,8 +316,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     actions.add(ThreadContext.captureThreadContext(ClientId.decorateRunnable(action)));
   }
 
-  @NotNull
-  private Runnable @NotNull [] getAndClearActionsAfterCommit(@NotNull Document document) {
+  private @NotNull Runnable @NotNull [] getAndClearActionsAfterCommit(@NotNull Document document) {
     List<Runnable> list = myActionsAfterCommit.remove(document);
     return list == null ? ArrayUtil.EMPTY_RUNNABLE_ARRAY : list.toArray(ArrayUtil.EMPTY_RUNNABLE_ARRAY);
   }
@@ -1179,8 +1178,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return myProject.isDefault();
   }
 
-  @NonNls
-  public String someDocumentDebugInfo(@NotNull Document document) {
+  public @NonNls String someDocumentDebugInfo(@NotNull Document document) {
     FileViewProvider viewProvider = getCachedViewProvider(document);
     return "cachedProvider: " + viewProvider +
            "; isEventSystemEnabled: " + isEventSystemEnabled(document) +
