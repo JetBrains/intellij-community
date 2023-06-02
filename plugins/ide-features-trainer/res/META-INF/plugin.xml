@@ -188,7 +188,6 @@
     <applicationConfigurable parentId="tools"
                              instance="training.featuresSuggester.settings.FeatureSuggesterConfigurable"
                              id="org.intellij.featuresSuggester.FeatureSuggesterConfigurable"/>
-    <projectService serviceImplementation="training.featuresSuggester.FeatureSuggestersManager"/>
     <psi.treeChangeListener
       implementation="training.featuresSuggester.listeners.PsiActionsListener"/>
     <editorFactoryDocumentListener
