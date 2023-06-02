@@ -2,12 +2,9 @@
 package com.intellij.notification.impl
 
 import com.intellij.ide.IdeBundle
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.Notifications
+import com.intellij.notification.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeRootPane
@@ -29,12 +26,13 @@ import javax.swing.JLabel
 @Internal
 object NotificationsAnnouncer {
   private val LOG = Logger.getInstance(this::class.java)
-  private val mode: Int get() = Registry.intValue("ide.accessibility.announcing.notifications.mode")
+  private val mode: NotificationAnnouncingMode get() =
+    NotificationsConfiguration.getNotificationsConfiguration().notificationAnnouncingMode
 
   @ApiStatus.Experimental
   @JvmStatic
   fun isEnabled(): Boolean {
-    return ScreenReader.isActive() && mode != 0 && JBR.isAccessibleAnnouncerSupported()
+    return ScreenReader.isActive() && mode != NotificationAnnouncingMode.NONE && JBR.isAccessibleAnnouncerSupported()
   }
 
   private val callersCache = mutableListOf<FrameWithAccessible>()
@@ -77,12 +75,12 @@ object NotificationsAnnouncer {
     return caller
   }
 
-  private fun announceComponents(components: List<String>, caller: Accessible, mode: Int) {
+  private fun announceComponents(components: List<String>, caller: Accessible, mode: NotificationAnnouncingMode) {
     val text = StringUtil.join(components, ". ")
     if (LOG.isDebugEnabled)
       LOG.info("Notification will be announced with mode=$mode, from caller=$caller, text=$text")
 
-    AccessibleAnnouncerUtil.announce(caller, text, mode != 1)
+    AccessibleAnnouncerUtil.announce(caller, text, mode == NotificationAnnouncingMode.HIGH)
   }
 
   private fun getComponentsToAnnounce(notification: Notification): List<String> {
