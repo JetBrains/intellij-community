@@ -12,7 +12,7 @@ import java.util.List;
  * @see CodeFloatingToolbar
  * @see FloatingToolbarFilter.ENABLED
  */
-interface FloatingToolbarFilter {
+public interface FloatingToolbarFilter {
 
   LanguageExtension<FloatingToolbarFilter> EP = new LanguageExtension<>("com.intellij.lang.floatingToolbarFilter");
 
