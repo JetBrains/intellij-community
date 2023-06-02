@@ -21,8 +21,8 @@ import com.intellij.platform.workspaceModel.storage.*
 import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspaceModel.storage.ObjBuilder
+import com.intellij.platform.workspaceModel.storage.Type
 
 fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
   checkSuperTypes(this@generateBuilderCode, reporter)

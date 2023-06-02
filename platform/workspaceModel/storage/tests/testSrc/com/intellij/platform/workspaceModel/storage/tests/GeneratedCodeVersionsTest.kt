@@ -6,8 +6,8 @@ import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
 import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspaceModel.storage.ObjBuilder
+import com.intellij.platform.workspaceModel.storage.Type
 import org.junit.After
 import org.junit.Before
 import org.junit.Test

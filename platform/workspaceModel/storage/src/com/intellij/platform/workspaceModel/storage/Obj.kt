@@ -1,5 +1,8 @@
-package org.jetbrains.deft
+package com.intellij.platform.workspaceModel.storage
 
+interface Obj
+
+interface ObjBuilder<T : Obj>
 
 abstract class Type<T : Obj, B : ObjBuilder<T>>(val base: Type<*, *>? = null) : Obj {
     var open: Boolean = false

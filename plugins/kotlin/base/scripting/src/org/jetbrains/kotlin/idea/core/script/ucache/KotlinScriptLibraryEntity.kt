@@ -14,8 +14,8 @@ import java.io.Serializable
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspaceModel.storage.ObjBuilder
+import com.intellij.platform.workspaceModel.storage.Type
 
 
 data class KotlinScriptLibraryRootTypeId(val name: String) : Serializable {

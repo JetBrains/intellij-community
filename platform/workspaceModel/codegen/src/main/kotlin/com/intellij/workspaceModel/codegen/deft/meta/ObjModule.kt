@@ -18,10 +18,10 @@ interface ObjModule : Obj {
   val extensions: List<@Child ExtProperty<*, *>>
 
   /**
-   * Example: `org.jetbrains.deft.obj.intellijWs`
+   * Example: `com.intellij.platform.workspaceModel.storage.obj.intellijWs`
    * will be parsed as:
-   * - `org.jetbrains.deft.obj.intellijWs` package
-   * - `org.jetbrains.deft.obj.intellijWs.IntellijWs` object name
+   * - `com.intellij.platform.workspaceModel.storage.obj.intellijWs` package
+   * - `com.intellij.platform.workspaceModel.storage.obj.intellijWs.IntellijWs` object name
    **/
   @JvmInline
   value class Id(private val notation: String) {
@@ -37,9 +37,9 @@ interface ObjModule : Obj {
 
     fun check() {
       check(objName.first().isUpperCase()) {
-        "`$notation` should be an id notation like `org.jetbrains.deft.obj.IntellijWs`.\n" +
+        "`$notation` should be an id notation like `com.intellij.platform.workspaceModel.storage.obj.IntellijWs`.\n" +
         "Will be parsed as:\n" +
-        "- `org.jetbrains.deft.obj.intellijWs` package\n" +
+        "- `com.intellij.platform.workspaceModel.storage.obj.intellijWs` package\n" +
         "- `IntellijWs` object name"
       }
     }
