@@ -483,13 +483,11 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
                                           @NotNull ThrowingRunnable action) throws Exception {
       Stream<Guard> descriptorGuard = Stream.of(getDescriptorGuard(context, descriptor));
       Stream<Guard> rootsGuards = roots.stream()
-        .map(File::toPath)
-        .map(Path::toAbsolutePath)
-        .map(Path::normalize)
+        .map(rootFile -> Path.of(FileUtil.toCanonicalPath(rootFile.getAbsolutePath())))
         // sort and filter equal guards to acquire locks always in similar order and prevent deadlocks
         .sorted()
         .distinct()
-        .map((root) -> getRootGuard(context, root));
+        .map(rootAbsolutePath -> getRootGuard(context, rootAbsolutePath));
 
       List<Guard> guards = Stream.concat(descriptorGuard, rootsGuards).collect(Collectors.toList());
       int lockedGuardsCounter = 0;
