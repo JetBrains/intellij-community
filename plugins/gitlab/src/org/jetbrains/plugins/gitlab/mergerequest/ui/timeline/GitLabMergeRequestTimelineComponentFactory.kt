@@ -44,6 +44,7 @@ import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditorComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
+import javax.swing.JScrollPane
 
 internal object GitLabMergeRequestTimelineComponentFactory {
   fun create(project: Project,
@@ -91,6 +92,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     }
 
     return ScrollPaneFactory.createScrollPane(timelineWrapper, true).apply {
+      horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
       viewport.isOpaque = false
       CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
