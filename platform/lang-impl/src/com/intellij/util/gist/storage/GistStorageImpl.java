@@ -111,11 +111,11 @@ public class GistStorageImpl extends GistStorage {
     );
 
     if (gist.version() != version) {
-      throw new IllegalArgumentException("Gist[" + id + "] is already exists, but with version(=" + gist.version() + ") != " + version);
+      throw new IllegalArgumentException("Gist[" + id + "] already exists, but with version(=" + gist.version() + ") != " + version);
     }
     if (gist.externalizer() != externalizer) {
       throw new IllegalArgumentException(
-        "Gist[" + id + "] is already exists, but with externalizer(=" + gist.externalizer() + ") != " + externalizer);
+        "Gist[" + id + "] already exists, but with externalizer(=" + gist.externalizer() + ") != " + externalizer);
     }
     return gist;
   }
