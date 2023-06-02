@@ -346,6 +346,14 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         }
       }
     }
+
+    companion object {
+      val AttributesOperation<*>.fileId: Int? get() = when (this) {
+        is WriteAttribute -> fileId
+        is DeleteAttributes -> fileId
+        is SetVersion -> null
+      }
+    }
   }
 
   sealed class ContentsOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>) : VfsOperation<T>(tag, result) {

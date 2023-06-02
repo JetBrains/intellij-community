@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogContext
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsChronicle.ContentRestorationSequence.Companion.restoreContent
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsChronicle.LookupResult.Companion.toState
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property
@@ -117,8 +118,8 @@ class CacheAwarePerPropertyVfsSnapshot(
     }
 
     override fun getContent(): DefinedState<ByteArray> =
-      contentRecordId.observeState().bind {
-        VfsChronicle.restoreContent(point(), it, payloadReader)
+      contentRecordId.observeState().bind { contentRecordId ->
+        VfsChronicle.lookupContentRestorationStack(point(), contentRecordId).bind { it.restoreContent(payloadReader) }
       }
 
     override fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?> {

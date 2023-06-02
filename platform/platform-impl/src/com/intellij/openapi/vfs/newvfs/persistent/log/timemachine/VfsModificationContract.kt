@@ -3,48 +3,40 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.timemachine
 
 import com.intellij.openapi.vfs.newvfs.persistent.log.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.*
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.AttributesOperation.Companion.fileId
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.ContentsOperation.Companion.contentRecordId
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation.Companion.fileId
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag.*
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.AttributeDataRule.AttributeOverwriteData
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.VfsRecoveryException
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
-
-/**
- * Mental hint:
-```
-val ifModifiesParentId: VfsModifier<Int> = VfsModificationContract.parentId.forFileId(fileId)
-val operation: VfsOperation<*> = VfsOperation.RecordsOperation.FillRecord(...)
-operation.ifModifiesParentId { parentId -> println("new parentId: $parentId") }
-```
- */
-typealias VfsModifier<T> = VfsOperation<*>.(modify: (T) -> Unit) -> Unit
 
 object VfsModificationContract {
   /**
    * @param relevantOperations a mask of operations that can possibly modify the property
    * @param ifModifies invokes `modify` argument with a modification value `T` if all additional conditions are met
    */
-  sealed interface ModificationRule<T> {
+  interface ModificationRule<T> {
     val relevantOperations: VfsOperationTagsMask
-    val ifModifies: VfsModifier<T>
+    val modifier: ConditionalVfsModifier<T>
   }
+
+  inline val <T> ModificationRule<T>.isRelevantAndModifies get() = modifier.precondition { relevantOperations.contains(tag) }
 
   class PropertyOverwriteRule<T>(
     override val relevantOperations: VfsOperationTagsMask,
-    val ifOverwrites: VfsOperation<*>.(setValue: (T) -> Unit) -> Unit,
+    val propertyModifier: VfsOperation<*>.(setValue: (T) -> Unit) -> Unit,
   ) : ModificationRule<T> {
     init {
       assert(relevantOperations.toList().all { it.isRecordOperation })
     }
 
-    override val ifModifies get() = ifOverwrites
+    override val modifier get() = propertyModifier
 
     companion object {
-      fun <T> PropertyOverwriteRule<T>.forFileId(fileId: Int): VfsModifier<T> = { setValue ->
-        if (relevantOperations.contains(tag) && (this as RecordsOperation<*>).fileId == fileId) {
-          ifOverwrites(setValue)
-        }
+      fun <T> PropertyOverwriteRule<T>.forFileId(fileId: Int): ConditionalVfsModifier<T> = isRelevantAndModifies.andIf {
+        (this as RecordsOperation<*>).fileId == fileId
       }
     }
   }
@@ -105,8 +97,7 @@ object VfsModificationContract {
   }
 
   val contentRecordId = PropertyOverwriteRule(
-    VfsOperationTagsMask(REC_SET_CONTENT_RECORD_ID, REC_FILL_RECORD,
-                         REC_CLEAN_RECORD)
+    VfsOperationTagsMask(REC_SET_CONTENT_RECORD_ID, REC_FILL_RECORD, REC_CLEAN_RECORD)
   ) { setValue ->
     when (this) {
       is RecordsOperation.SetContentRecordId -> setValue(recordId)
@@ -131,19 +122,17 @@ object VfsModificationContract {
 
   class ContentModificationRule(
     override val relevantOperations: VfsOperationTagsMask,
-    val ifModifiesContent: VfsOperation<*>.(modifyContent: (ContentOperation) -> Unit) -> Unit
+    val contentModifier: VfsOperation<*>.(modifyContent: (ContentOperation) -> Unit) -> Unit
   ) : ModificationRule<ContentOperation> {
     init {
       assert(relevantOperations.toList().all { it.isContentOperation })
     }
 
-    override val ifModifies get() = ifModifiesContent
+    override val modifier get() = contentModifier
 
     companion object {
-      fun ContentModificationRule.forContentRecordId(contentRecordId: Int): VfsModifier<ContentOperation> = { modifyContent ->
-        if (relevantOperations.contains(tag) && (this as ContentsOperation<*>).contentRecordId == contentRecordId) {
-          ifModifiesContent(modifyContent)
-        }
+      fun ContentModificationRule.forContentRecordId(contentRecordId: Int) = isRelevantAndModifies.andIf {
+        (this as ContentsOperation<*>).contentRecordId == contentRecordId
       }
     }
   }
@@ -160,13 +149,14 @@ object VfsModificationContract {
     }
   }
 
+
   /** reference counting is not supported, because it is not used anymore */
   val content = ContentModificationRule(
     VfsOperationTagsMask(CONTENT_ACQUIRE_NEW_RECORD, CONTENT_WRITE_BYTES,
                          CONTENT_WRITE_STREAM, CONTENT_WRITE_STREAM_2,
                          CONTENT_REPLACE_BYTES, CONTENT_APPEND_STREAM)
   ) { modifyContent ->
-    val rewriteContent = { dataPayloadRef: PayloadRef ->
+    val setContent = { dataPayloadRef: PayloadRef ->
       ContentOperation.Set { payloadReader ->
         payloadReader(dataPayloadRef)
       }
@@ -175,9 +165,9 @@ object VfsModificationContract {
       is ContentsOperation.AcquireNewRecord -> modifyContent(
         ContentOperation.Set { ByteArray(0).let(State::Ready) }
       )
-      is ContentsOperation.WriteBytes -> modifyContent(rewriteContent(dataPayloadRef))
-      is ContentsOperation.WriteStream -> modifyContent(rewriteContent(dataPayloadRef))
-      is ContentsOperation.WriteStream2 -> modifyContent(rewriteContent(dataPayloadRef))
+      is ContentsOperation.WriteBytes -> modifyContent(setContent(dataPayloadRef))
+      is ContentsOperation.WriteStream -> modifyContent(setContent(dataPayloadRef))
+      is ContentsOperation.WriteStream2 -> modifyContent(setContent(dataPayloadRef))
       is ContentsOperation.ReplaceBytes -> {
         modifyContent(ContentOperation.Modify { before, payloadReader ->
           payloadReader(dataPayloadRef).fmap { data ->
@@ -203,34 +193,31 @@ object VfsModificationContract {
 
   class AttributeDataRule(
     override val relevantOperations: VfsOperationTagsMask,
-    val ifOverwritesAttributeData: VfsOperation<*>.(setAttributeData: (PayloadRef?) -> Unit) -> Unit
-  ) : ModificationRule<PayloadRef?> {
+    val attributeDataModifier: VfsOperation<*>.(overwriteAttributeData: (AttributeOverwriteData) -> Unit) -> Unit
+  ) : ModificationRule<AttributeOverwriteData> {
     init {
       assert(relevantOperations.toList().all { it.isAttributeOperation })
     }
 
-    override val ifModifies get() = ifOverwritesAttributeData
+    class AttributeOverwriteData(val attributeIdFilter: Int?, val data: PayloadRef?) {
+      fun affectsAttribute(attrId: Int) = attributeIdFilter == null || attributeIdFilter == attrId
+    }
+
+    override val modifier get() = attributeDataModifier
 
     companion object {
-      fun AttributeDataRule.forFileIdAndAttributeId(fileId: Int, attributeIdEnumerated: Int): VfsModifier<PayloadRef?> =
-        { setAttributeData ->
-          if (relevantOperations.contains(tag) &&
-              listOf(
-                this is AttributesOperation.DeleteAttributes && this.fileId == fileId,
-                this is AttributesOperation.WriteAttribute && this.fileId == fileId && this.attributeIdEnumerated == attributeIdEnumerated
-              ).any()) {
-            ifOverwritesAttributeData(setAttributeData)
-          }
-        }
+      fun AttributeDataRule.forFileId(fileId: Int) = isRelevantAndModifies.andIf {
+        (this as AttributesOperation<*>).fileId == fileId
+      }
     }
   }
 
   val attributeData = AttributeDataRule(
     VfsOperationTagsMask(ATTR_DELETE_ATTRS, ATTR_WRITE_ATTR)
-  ) {setAttributeData ->
+  ) { overwriteAttributeData ->
     when (this) {
-      is AttributesOperation.DeleteAttributes -> setAttributeData(null)
-      is AttributesOperation.WriteAttribute -> setAttributeData(attrDataPayloadRef)
+      is AttributesOperation.DeleteAttributes -> overwriteAttributeData(AttributeOverwriteData(null, null))
+      is AttributesOperation.WriteAttribute -> overwriteAttributeData(AttributeOverwriteData(attributeIdEnumerated, attrDataPayloadRef))
       else -> throw AssertionError("operation $this does not modify attribute's data")
     }
   }
