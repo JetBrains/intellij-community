@@ -211,21 +211,12 @@ public class Chains {
     doTestPreview("""
 abstract class Foo<T> {
   void main() {
-    listOf(1, 2, 3).filter(it -> it % 2 == 0)<# Foo<Integer> #>
-      .map(it -> it * 2)<# Foo<int> #>
-      .map(it -> "item: " + it)<# Foo<Object> #>
-      .forEach(this::println);
+    Stream.of(1, 2, 3).filter(x -> x % 2 == 0) <# Foo<Integer> #>
+      .map(x -> x * 2)<# Foo<Integer> #>
+      .map(x -> "item: " + x)<# Foo<Object> #>
+      .forEach(System.out::println);
   }
-
-  abstract Void println(Object any);
-  abstract Foo<Integer> listOf(int... args);
-  abstract Foo<T> filter(Function<T, Boolean> isAccepted);
-  abstract <R> Foo<R> map(Function<T, R> mapper);
-  abstract void forEach(Function<T, Void> fun);
-  interface Function<T, R> {
-    R call(T t);
-  }
-}
+} 
     """.trimIndent(), JavaMethodChainsDeclarativeInlayProvider.PROVIDER_ID, JavaMethodChainsDeclarativeInlayProvider(),
                   JavaLanguage.INSTANCE)
   }
