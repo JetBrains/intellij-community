@@ -78,7 +78,6 @@ public final class HtmlMarkdownUtils {
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i];
       String processedLine = StringUtil.trimTrailing(line);
-      processedLine = StringUtil.trimStart(processedLine, " ");
       if (processedLine.matches("\\s+```.*")) {
         processedLine = processedLine.trim();
       }
