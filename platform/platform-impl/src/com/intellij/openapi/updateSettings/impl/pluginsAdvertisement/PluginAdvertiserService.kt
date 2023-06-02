@@ -142,7 +142,6 @@ open class PluginAdvertiserServiceImpl(
           bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
           suggestionPlugins = suggestToInstall,
           disabledDescriptors = disabledDescriptors,
-          customPlugins = customPlugins,
           featuresMap = featuresMap,
           allUnknownFeatures = unknownFeatures,
           dependencies = PluginFeatureCacheService.getInstance().dependencies,
@@ -300,7 +299,6 @@ open class PluginAdvertiserServiceImpl(
     bundledPlugins: List<String>,
     suggestionPlugins: List<PluginDownloader>,
     disabledDescriptors: List<IdeaPluginDescriptorImpl>,
-    customPlugins: List<PluginNode>,
     featuresMap: MultiMap<PluginId, UnknownFeature>,
     allUnknownFeatures: Collection<UnknownFeature>,
     dependencies: PluginFeatureMap?,
@@ -310,7 +308,8 @@ open class PluginAdvertiserServiceImpl(
       val action = if (disabledDescriptors.isEmpty()) {
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
           FUSEventSource.NOTIFICATION.logConfigurePlugins(project)
-          PluginsAdvertiserDialog(project, suggestionPlugins, customPlugins).show()
+
+          PluginManagerConfigurable.showSuggestedPlugins(project)
         }
       }
       else {

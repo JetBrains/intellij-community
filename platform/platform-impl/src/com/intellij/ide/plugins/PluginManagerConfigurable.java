@@ -1527,6 +1527,13 @@ public final class PluginManagerConfigurable
                                                     () -> configurable.select(pluginIds));
   }
 
+  public static void showSuggestedPlugins(@Nullable Project project) {
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
+    ShowSettingsUtil.getInstance().editConfigurable(project,
+                                                    configurable,
+                                                    () -> configurable.openMarketplaceTab("/suggested"));
+  }
+
   public static void showPluginConfigurable(@Nullable Component parent,
                                             @Nullable Project project,
                                             @NotNull Collection<PluginId> pluginIds) {
