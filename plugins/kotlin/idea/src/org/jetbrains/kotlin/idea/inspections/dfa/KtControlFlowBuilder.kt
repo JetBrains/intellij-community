@@ -65,6 +65,7 @@ import org.jetbrains.kotlin.resolve.calls.model.VarargValueArgument
 import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
 import org.jetbrains.kotlin.resolve.constants.TypedCompileTimeConstant
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
+import org.jetbrains.kotlin.resolve.isInlineClass
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
@@ -1505,6 +1506,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (actualType == expectedType) return
         val actualDfType = actualType.toDfType()
         val expectedDfType = expectedType.toDfType()
+        if (actualType.constructor.declarationDescriptor?.isInlineClass() == true &&
+            expectedType.constructor.declarationDescriptor?.isInlineClass() != true) {
+            // Boxing of inline class: it's a new object
+            // represent it as a constant to add knowledge that it's distinct from any other constant
+            addInstruction(PopInstruction())
+            addInstruction(PushValueInstruction(DfTypes.constant(Any(), actualDfType)))
+        }
         if (actualDfType !is DfPrimitiveType && expectedDfType is DfPrimitiveType) {
             addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
         }
