@@ -522,10 +522,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public void waitForReadingCompletionIfNeeded() {
-    if (!isInitialized()) {
+    if (MavenUtil.isNoBackgroundMode()) {
       waitForReadingCompletion();
     }
-    myReadingProcessor.waitForCompletionIfNotEmptyQueue();
   }
 
   private boolean isInitialized() {

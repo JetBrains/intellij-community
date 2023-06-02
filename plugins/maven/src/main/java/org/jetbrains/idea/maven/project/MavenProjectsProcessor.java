@@ -25,7 +25,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.BTWMavenConsole;
 import org.jetbrains.idea.maven.utils.*;
@@ -61,12 +60,6 @@ public class MavenProjectsProcessor {
     if (!MavenUtil.isNoBackgroundMode()) {
       startProcessing();
     }
-  }
-
-  @ApiStatus.Internal
-  public void waitForCompletionIfNotEmptyQueue() {
-    if (myQueue.isEmpty()) return;
-    waitForCompletion();
   }
 
   public void waitForCompletion() {
