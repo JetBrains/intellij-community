@@ -17,7 +17,10 @@ import com.intellij.util.Alarm
 import com.intellij.util.ProcessingContext
 import java.util.concurrent.CompletableFuture
 
-class ZshCompletionProvider : CompletionProvider<CompletionParameters>() {
+/**
+ * Completion provider for Zsh and Bash
+ */
+class ShCompletionProvider : CompletionProvider<CompletionParameters>() {
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(TerminalSession.KEY)
     val completionManager = parameters.editor.getUserData(TerminalCompletionManager.KEY)

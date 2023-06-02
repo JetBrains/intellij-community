@@ -13,7 +13,8 @@ import org.jetbrains.plugins.terminal.util.ShellType
 
 class TerminalCompletionContributor : CompletionContributor() {
   init {
-    extend(CompletionType.BASIC, psiElement().inFile(psiFile().with(ShellTypeCondition(ShellType.ZSH))), ZshCompletionProvider())
+    extend(CompletionType.BASIC, psiElement().inFile(psiFile().with(ShellTypeCondition(ShellType.ZSH))), ShCompletionProvider())
+    extend(CompletionType.BASIC, psiElement().inFile(psiFile().with(ShellTypeCondition(ShellType.BASH))), ShCompletionProvider())
   }
 
   private class ShellTypeCondition(private val type: ShellType) : PatternCondition<PsiFile>("shellType") {

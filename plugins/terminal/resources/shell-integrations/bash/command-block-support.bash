@@ -25,6 +25,17 @@ __jetbrains_intellij_encode() {
   fi
 }
 
+__jetbrains_intellij_prompt_shown() {
+  builtin printf '\e]1341;prompt_shown\a'
+}
+
+__jetbrains_intellij_configure_prompt() {
+  # Surround 'prompt shown' esc sequence with \[ \] to not count characters inside as part of prompt width
+  PS1="\[$(__jetbrains_intellij_prompt_shown)\]"
+  # do not show right prompt
+  builtin unset RPROMPT
+}
+
 __jetbrains_intellij_debug_log() {
   if [ -n "$JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL" ]; then
     builtin printf "$1\n"
@@ -46,6 +57,17 @@ __jetbrains_intellij_initialized=""
 
 __jetbrains_intellij_command_terminated() {
   builtin local last_exit_code="$?"
+
+  # Show completions on first TAB if there are more than one suitable option
+  # (by default Bash show all options only after second TAB in a such case)
+  builtin bind 'set show-all-if-ambiguous on'
+  # Do not show "Display all N possibilities?" question during completion
+  builtin bind 'set completion-query-items 0'
+  # Print all completion items at once instead of pagination
+  builtin bind 'set page-completions off'
+
+  __jetbrains_intellij_configure_prompt
+
   if [ -z "$__jetbrains_intellij_initialized" ]; then
     __jetbrains_intellij_initialized='1'
     __jetbrains_intellij_debug_log 'initialized'

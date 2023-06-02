@@ -55,6 +55,7 @@ class TerminalPromptPanel(private val project: Project,
 
     completionManager = when (session.shellIntegration?.shellType) {
       ShellType.ZSH -> ZshCompletionManager(session)
+      ShellType.BASH -> BashCompletionManager(session)
       else -> null
     }
 
