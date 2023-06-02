@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.ScrollingModelImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
@@ -172,6 +173,7 @@ class CombinedDiffViewer(
       val newViewer = newContent.viewer
       diffViewers.remove(blockId)?.also(Disposer::dispose)
       diffViewers[blockId] = newViewer
+      removeAdditionalLines(newViewer)
       block.updateBlockContent(newContent)
       newViewer.init()
 
@@ -179,6 +181,13 @@ class CombinedDiffViewer(
       if (blockNavigation.currentBlockIndex == getBlockIndex(blockId)) {
         requestFocusInDiffViewer(newViewer)
       }
+    }
+  }
+
+  private fun removeAdditionalLines(viewer: DiffViewer) {
+    viewer.editors.forEach { editor ->
+      editor.settings.additionalLinesCount = 0
+      (editor as? EditorImpl)?.resetSizes()
     }
   }
 
