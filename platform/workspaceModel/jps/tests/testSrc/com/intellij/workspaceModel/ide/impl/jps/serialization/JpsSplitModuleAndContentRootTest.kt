@@ -10,10 +10,13 @@ import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspaceModel.jps.OrphanageWorkerEntitySource
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JavaSettingsSerializer
+import com.intellij.platform.workspaceModel.jps.serialization.impl.ModuleImlFileEntitiesSerializer
+import com.intellij.platform.workspaceModel.jps.serialization.impl.getInternalFileSource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.EntitiesOrphanage
-import com.intellij.workspaceModel.ide.UnloadedModulesNameHolder
+import com.intellij.platform.workspaceModel.jps.UnloadedModulesNameHolder
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.*

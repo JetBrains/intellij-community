@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.config
 
-import com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleComponentSerializer
-import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentWriter
+import com.intellij.platform.workspaceModel.jps.serialization.impl.CustomModuleComponentSerializer
+import com.intellij.platform.workspaceModel.jps.serialization.impl.ErrorReporter
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsFileContentReader
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsFileContentWriter
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager

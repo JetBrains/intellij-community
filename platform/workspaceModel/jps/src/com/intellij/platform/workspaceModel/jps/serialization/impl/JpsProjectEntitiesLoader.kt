@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.workspaceModel.ide.impl.jps.serialization
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.workspaceModel.jps.serialization.impl
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
-import com.intellij.workspaceModel.ide.UnloadedModulesNameHolder
+import com.intellij.platform.workspaceModel.jps.UnloadedModulesNameHolder
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.platform.workspaceModel.storage.impl.url.toVirtualFileUrl
@@ -46,7 +46,8 @@ object JpsProjectEntitiesLoader {
                           errorReporter: ErrorReporter,
                           context: SerializationContext) {
     val reader = context.fileContentReader
-    val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(context.virtualFileUrlManager), null, source, context)
+    val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(context.virtualFileUrlManager),
+                                                                             null, source, context)
     val newEntities = serializer.loadEntities(reader, errorReporter, context.virtualFileUrlManager)
     serializer.checkAndAddToBuilder(builder, orphanage, newEntities.data)
     newEntities.exception?.let { throw it }

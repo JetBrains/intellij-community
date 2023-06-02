@@ -4,9 +4,10 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.module.impl.UnloadedModulesNameHolderImpl
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsConfigurationFilesChange
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.workspaceModel.ide.UnloadedModulesNameHolder
+import com.intellij.platform.workspaceModel.jps.UnloadedModulesNameHolder
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.projectLibraries

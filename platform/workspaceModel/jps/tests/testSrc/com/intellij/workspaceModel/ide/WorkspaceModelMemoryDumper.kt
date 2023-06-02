@@ -3,6 +3,8 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsProjectEntitiesLoader
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsProjectSerializers
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties

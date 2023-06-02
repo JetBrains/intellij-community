@@ -12,6 +12,10 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.serialization.impl.ErrorReporter
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsProjectEntitiesLoader
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsProjectSerializers
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsProjectSerializersImpl
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import com.intellij.workspaceModel.ide.toVirtualFileUrl

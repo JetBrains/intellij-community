@@ -4,6 +4,8 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspaceModel.jps.UnloadedModulesNameHolder
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsProjectEntitiesLoader
 import com.intellij.platform.workspaceModel.storage.tests.checkConsistency
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule

@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.platform.workspaceModel.jps.*
 import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalEntitiesSerializers
+import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsGlobalEntitiesSerializers
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
