@@ -65,16 +65,21 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     (widget.ui as? ToolbarComboWidgetUI)?.setMaxWidth(500)
     widget.text = presentation.text
     widget.toolTipText = presentation.description
+    widget.leftIcons = emptyList()
+    widget.isOpaque = false
+
     val customizer = ProjectWindowCustomizerService.getInstance()
-    if (customizer.isActive() && customizer.getPaintingType().isShowIcon()) {
+    if (customizer.isActive()) {
+      val paintingType = customizer.getPaintingType()
       val project = presentation.getClientProperty(projectKey)
-      if (project != null) {
+      if (paintingType.isShowIcon() && project != null) {
         widget.leftIcons = listOf(customizer.getProjectIcon(project))
         customizer.showGotIt(project, widget)
       }
-    }
-    else {
-      widget.leftIcons = emptyList()
+
+      if (paintingType.isDropdown() && project != null) {
+        widget.highlightBackground = customizer.getProjectColor(project)
+      }
     }
   }
 

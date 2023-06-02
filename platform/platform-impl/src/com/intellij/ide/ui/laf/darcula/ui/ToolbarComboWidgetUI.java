@@ -171,12 +171,24 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
   }
 
   private void paintBackground(Graphics g, ToolbarComboWidget c) {
-    Graphics g2 = g.create();
+    Graphics2D g2 = (Graphics2D)g.create();
+    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
     try {
       if (c.isOpaque()) {
         g2.setColor(c.getBackground());
         Rectangle bounds = g2.getClipBounds();
         g2.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+      }
+
+      Color highlightBackground = c.getHighlightBackground();
+      int arc = DarculaUIUtil.COMPONENT_ARC.get();
+      if (highlightBackground != null) {
+        Rectangle highlightRect = c.getVisibleRect();
+        JBInsets.removeFrom(highlightRect, c.getInsets());
+        g2.setColor(highlightBackground);
+        g2.fillRoundRect(highlightRect.x, highlightRect.y, highlightRect.width, highlightRect.height, arc, arc);
       }
 
       if (c.isEnabled()) {
@@ -185,7 +197,6 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
                                 ? c.getTransparentHoverBackground() : c.getHoverBackground();
         if (hoverRect != null && hoverBackground != null) {
           g2.setColor(hoverBackground);
-          int arc = DarculaUIUtil.COMPONENT_ARC.get();
           g2.fillRoundRect(hoverRect.x, hoverRect.y, hoverRect.width, hoverRect.height, arc, arc);
         }
       }

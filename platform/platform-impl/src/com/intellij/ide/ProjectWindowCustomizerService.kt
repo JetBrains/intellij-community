@@ -72,6 +72,7 @@ enum class MainToolbarCustomizationType {
   fun isCircularGradient() = this == CIRCULAR_GRADIENT_WITH_ICON
   fun isGradient() = isLinearGradient() || isCircularGradient()
   fun isShowIcon() = this != JUST_DROPDOWN
+  fun isDropdown() = this == JUST_DROPDOWN || this == DROPDOWN_WITH_ICON
 }
 
 @Service
@@ -101,6 +102,11 @@ class ProjectWindowCustomizerService : Disposable {
 
   fun getProjectIcon(project: Project): Icon {
     return project.service<ProjectWindowCustomizerIconCache>().cachedIcon
+  }
+
+  fun getProjectColor(project: Project): Color {
+    val projectPath = getProjectNameForIcon(project)
+    return computeOrGetColor(projectPath, project)
   }
 
   fun getPaintingType() = when (Registry.get("ide.colorful.toolbar.gradient.type").selectedOption) {
@@ -189,8 +195,7 @@ class ProjectWindowCustomizerService : Disposable {
     g.fillRect(0, 0, parent.width, parent.height)
 
     if (!isActive() || !getPaintingType().isGradient()) return false
-    val projectPath = getProjectNameForIcon(project)
-    val color = computeOrGetColor(projectPath, project)
+    val color = getProjectColor(project)
 
     val length = Registry.intValue("ide.colorful.toolbar.gradient.length", 600)
     val x = parent.x.toFloat()
