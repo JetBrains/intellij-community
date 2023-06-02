@@ -43,19 +43,19 @@ class DataFrameImpl(private val columns: ArrayList<Column<*>>) : DataFrame() {
                 is IntType -> {
                     val intColumn = columns[i] as IntColumn
                     val data = ArrayList<Int>(intColumn.size)
-                    (0 until sortedIndices.size).forEach { data.add(intColumn[sortedIndices[it]]) }
+                    sortedIndices.forEach { data.add(intColumn[it]) }
                     columns[i] = IntColumn(columns[i].name, data)
                 }
                 is DoubleType -> {
                     val doubleColumn = columns[i] as DoubleColumn
                     val data = ArrayList<Double>(doubleColumn.size)
-                    (0 until sortedIndices.size).forEach { data.add(doubleColumn[sortedIndices[it]]) }
+                    sortedIndices.forEach { data.add(doubleColumn[it]) }
                     columns[i] = DoubleColumn(columns[i].name, data)
                 }
                 is StringType -> {
                     val stringColumn = columns[i] as StringColumn
                     val data = ArrayList<String?>(stringColumn.size)
-                    (0 until sortedIndices.size).forEach { data.add(stringColumn[sortedIndices[it]]) }
+                    sortedIndices.forEach { data.add(stringColumn[it]) }
                     columns[i] = StringColumn(columns[i].name, data)
                 }
                 else -> throw Exception("Unsupported column type ${columns[i].type} in sorting.")

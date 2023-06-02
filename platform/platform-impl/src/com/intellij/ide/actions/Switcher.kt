@@ -754,8 +754,7 @@ object Switcher : BaseSwitcherAction(null) {
       private fun addSmartShortcut(window: SwitcherToolWindow, keymap: MutableMap<String?, SwitcherToolWindow?>): Boolean {
         val title = window.mainText
         if (StringUtil.isEmpty(title)) return false
-        for (i in 0 until title.length) {
-          val c = title[i]
+        for (c in title) {
           if (Character.isUpperCase(c) && addShortcut(keymap, window, c.toString())) {
             return true
           }
