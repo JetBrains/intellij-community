@@ -822,9 +822,9 @@
     },
     "HelpBrowser": {
       "UserMessage": {
-        "border": "Grey5",
-        "background": "Blue2",
+        "background": "Grey4",
         "Snippet": {
+          "border": "Grey5",
           "MoreLines": {
             "foreground": "Grey8",
             "background": "Grey2",
