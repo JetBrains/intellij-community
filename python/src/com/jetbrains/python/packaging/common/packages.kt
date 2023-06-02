@@ -7,7 +7,11 @@ import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.Nls
 
-open class PythonPackage(val name: String, val version: String)
+open class PythonPackage(val name: String, val version: String) {
+  override fun toString(): String {
+    return "PythonPackage(name='$name', version='$version')"
+  }
+}
 
 interface PythonPackageDetails {
 

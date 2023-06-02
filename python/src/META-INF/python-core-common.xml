@@ -26,7 +26,7 @@
     <listener class="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowModuleAttachListener"
               topic="com.intellij.platform.ModuleAttachListener"/>
     <listener class="com.jetbrains.python.packaging.PyDependencyCollectorListener"
-              topic="com.jetbrains.python.packaging.PyPackageManager$Listener"/>
+              topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">

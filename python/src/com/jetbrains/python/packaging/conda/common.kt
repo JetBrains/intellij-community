@@ -6,8 +6,11 @@ import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 
-class CondaPackage(name: String, version: String, val installedWithPip: Boolean = false) : PythonPackage(name, version)
-
+class CondaPackage(name: String, version: String, val installedWithPip: Boolean = false) : PythonPackage(name, version) {
+  override fun toString(): String {
+    return "CondaPackage(name='$name', version='$version', installedWithPip=$installedWithPip)"
+  }
+}
 
 class CondaPackageSpecification(override val name: String,
                                 override val version: String?) : PythonPackageSpecification {
