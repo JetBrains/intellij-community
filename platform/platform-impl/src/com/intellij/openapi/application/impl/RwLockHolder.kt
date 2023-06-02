@@ -5,5 +5,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class RwLockHolder(writeThread: Thread) {
+  @JvmField
   internal val lock: ReadMostlyRWLock = ReadMostlyRWLock(writeThread)
 }
