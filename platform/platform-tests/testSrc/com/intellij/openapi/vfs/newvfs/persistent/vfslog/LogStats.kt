@@ -8,11 +8,12 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBa
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.forEachContainedOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.PerPropertyCachingVfsTimeMachine
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SinglePassVfsTimeMachine
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.withOracle
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.withContradictionCheck
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.SimpleStringPersistentEnumerator
@@ -186,14 +187,21 @@ private fun vfsRecoveryDraft(log: VfsLog,
     if (data == null) State.NotAvailable(NotEnoughInformationCause("data is not available anymore"))
     else State.Ready(data)
   }
-  val vfsTimeMachine = PerPropertyCachingVfsTimeMachine(
+  val perPropVTM = PerPropertyCachingVfsTimeMachine(
     log.context,
     id2filename = fsRecordsOracle::getNameByNameId,
     payloadReader = payloadReader,
     attributeEnumerator = attributeEnumerator
   )
-    .withOracle(fsRecordsOracle)
-    //.withContradictionCheck(fsRecordsOracle)
+  val singlePassVTM = SinglePassVfsTimeMachine(
+    log.context,
+    id2filename = fsRecordsOracle::getNameByNameId,
+    payloadReader = payloadReader,
+    attributeEnumerator = attributeEnumerator
+  )
+  val vfsTimeMachine = singlePassVTM
+    //.withOracle(fsRecordsOracle)
+    .withContradictionCheck(perPropVTM)
 
   fun VfsSnapshot.VirtualFileSnapshot.represent(): String =
     "file: name=$name parent=$parentId id=$fileId ts=$timestamp len=$length flags=$flags contentId=$contentRecordId attrId=$attributesRecordId"
