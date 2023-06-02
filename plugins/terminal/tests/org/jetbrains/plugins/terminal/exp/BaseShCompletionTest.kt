@@ -123,8 +123,7 @@ abstract class BaseShCompletionTest : BasePlatformTestCase() {
 
     val elements = typeLsAndComplete("ac")
 
-    assertTrue(elements.isNullOrEmpty())
-    assertTrue(myFixture.editor.document.text.endsWith("acde/"))
+    assertSingleItemCompleted(elements, "acde/")
     assertPromptRestored()
   }
 
@@ -236,8 +235,7 @@ abstract class BaseShCompletionTest : BasePlatformTestCase() {
 
     val elements = typeLsAndComplete("ab")
 
-    assertTrue(elements.isNullOrEmpty())
-    assertTrue(myFixture.editor.document.text.endsWith("abc\\ de/"))
+    assertSingleItemCompleted(elements, "abc\\ de/")
     assertPromptRestored()
   }
 
@@ -319,6 +317,12 @@ abstract class BaseShCompletionTest : BasePlatformTestCase() {
     model.withContentLock { model.clearAllExceptPrompt(1) }
 
     return session
+  }
+
+  private fun assertSingleItemCompleted(elements: Array<LookupElement>?, expectedItem: String) {
+    assertTrue("Completion result is not empty: ${elements?.map { it.lookupString }}", elements.isNullOrEmpty())
+    val promptText = myFixture.editor.document.text
+    assertTrue("Incorrect prompt text: '$promptText'", promptText.endsWith(expectedItem))
   }
 
   companion object {
