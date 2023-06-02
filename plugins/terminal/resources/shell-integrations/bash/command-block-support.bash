@@ -72,6 +72,8 @@ __jetbrains_intellij_command_terminated() {
     __jetbrains_intellij_initialized='1'
     __jetbrains_intellij_debug_log 'initialized'
     builtin printf '\e]1341;initialized\a'
+    builtin local hist="$(builtin history)"
+    builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode "$hist")"
     trap '__jetbrains_intellij_command_started' DEBUG
   else
     builtin local current_directory="$PWD"
