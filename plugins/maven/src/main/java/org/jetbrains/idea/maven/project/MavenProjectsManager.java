@@ -521,9 +521,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @ApiStatus.Internal
-  public void waitForReadingCompletionIfNeeded() {
+  public void waitForResolvingCompletion() {
     if (MavenUtil.isNoBackgroundMode()) {
       waitForReadingCompletion();
+    }
+    else {
+      resolveAndImportMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
     }
   }
 

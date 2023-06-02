@@ -234,7 +234,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(selectedProjects), selectedProfiles, null);
     }
 
-    manager.waitForReadingCompletionIfNeeded();
+    manager.waitForResolvingCompletion();
     //noinspection UnresolvedPluginConfigReference
     if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
         !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode() &&
