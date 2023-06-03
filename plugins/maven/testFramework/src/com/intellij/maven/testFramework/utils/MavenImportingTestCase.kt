@@ -2,6 +2,7 @@
 package com.intellij.maven.testFramework.utils
 
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.runBlocking
@@ -11,7 +12,7 @@ import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 fun resolveFoldersAndImport(project: Project, mavenProjects: Collection<MavenProject>) {
-  runBlocking {
+  runBlockingModal(project, "") {
     MavenFolderResolver(project).resolveFoldersAndImport(mavenProjects)
   }
 }

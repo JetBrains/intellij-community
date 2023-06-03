@@ -11,11 +11,8 @@ import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.externalSystem.statistics.importActivityStarted
 import com.intellij.openapi.externalSystem.statistics.runImportActivity
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
-import com.intellij.openapi.progress.withBackgroundProgress
-import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -171,7 +168,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     @RequiresBackgroundThread
     suspend fun importMavenProjectsBg(): List<Module> {
       val importResult = withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
-        val importResult = doImport()
+        val importResult = blockingContext { doImport() }
         val fm = VirtualFileManager.getInstance()
         val noBackgroundMode = MavenUtil.isNoBackgroundMode()
         val shouldKeepTasksAsynchronousInHeadlessMode = CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
