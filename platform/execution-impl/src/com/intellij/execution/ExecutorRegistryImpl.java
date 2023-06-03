@@ -791,6 +791,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
                                        @NotNull Function<? super Executor, ? extends AnAction> childConverter) {
       myExecutorGroup = executorGroup;
       myChildConverter = childConverter;
+      getTemplatePresentation().setText(executorGroup.getStartActionText());
+      getTemplatePresentation().setIcon(executorGroup.getIcon());
     }
 
     @Override
