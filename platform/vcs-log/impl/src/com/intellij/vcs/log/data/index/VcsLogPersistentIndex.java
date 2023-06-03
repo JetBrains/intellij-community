@@ -495,7 +495,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
     private void report() {
       String formattedTime = StopWatch.formatTime(getCurrentTimeMillis() - myStartTime);
-      mySpan.setAttribute("numberOfCommits", myNewIndexedCommits.get());
+      mySpan.setAttribute("numberOfCommits-" + myRoot.getName(), myNewIndexedCommits.get());
       mySpan.setAttribute("rootName", myRoot.getName());
       if (myFull) {
         LOG.info(formattedTime +
