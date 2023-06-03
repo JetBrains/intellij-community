@@ -183,6 +183,27 @@ data class EnumEventField<T : Enum<*>>(override val name: String,
     get() = listOf("{enum:${enumClass.enumConstants.joinToString("|", transform = transform)}}")
 }
 
+data class NullableEnumEventField<T : Enum<*>>(override val name: String,
+                                               private val enumClass: Class<T>,
+                                               private val nullValue: String?,
+                                               private val transform: (T) -> String) : PrimitiveEventField<T?>() {
+  override fun addData(fuData: FeatureUsageData, value: T?) {
+    if (value == null) {
+      if (nullValue != null) fuData.addData(name, nullValue)
+    }
+    else {
+      fuData.addData(name, transform(value))
+    }
+  }
+
+  override val validationRule: List<String>
+    get() {
+      val enumValues = enumClass.enumConstants.joinToString("|", transform = transform)
+      if (nullValue != null) return listOf("{enum:$enumValues|$nullValue}")
+      return listOf("{enum:$enumValues}")
+    }
+}
+
 data class LongListEventField(override val name: String) : ListEventField<Long>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")

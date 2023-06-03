@@ -144,6 +144,35 @@ object EventFields {
   inline fun <reified T : Enum<*>> Enum(@NonNls name: String, noinline transform: (T) -> String = defaultEnumTransform): EnumEventField<T> =
     EnumEventField(name, T::class.java, transform)
 
+
+  /**
+   * Creates a field that allows nullable Enum
+   * @param name  name of the field
+   * @param enumClass class of Enum
+   * @param nullValue if value is null and nullValue isn't null then nullValue is written
+   * @param transform function that transforms Enum to String
+   */
+  @JvmStatic
+  @JvmOverloads
+  fun <T : Enum<*>> NullableEnum(@NonNls name: String,
+                                 enumClass: Class<T>,
+                                 nullValue: String? = null,
+                                 transform: (T) -> String = defaultEnumTransform): NullableEnumEventField<T> = NullableEnumEventField(name,
+                                                                                                                                      enumClass,
+                                                                                                                                      nullValue,
+                                                                                                                                      transform)
+
+  /**
+   * Creates a field that allows nullable Enum
+   * @param name  name of the field
+   * @param nullValue if value is null and nullValue isn't null then nullValue is written
+   * @param transform function that transforms Enum to String
+   */
+  inline fun <reified T : Enum<*>> NullableEnum(@NonNls name: String,
+                                                nullValue: String? = null,
+                                                noinline transform: (T) -> String = defaultEnumTransform): NullableEnumEventField<T> = NullableEnumEventField(
+    name, T::class.java, nullValue, transform)
+
   /**
    * Creates a field for a list, each element of which will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
    * @param name  name of the field
