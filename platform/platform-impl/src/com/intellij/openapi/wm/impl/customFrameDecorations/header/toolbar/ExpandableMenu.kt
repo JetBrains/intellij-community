@@ -93,8 +93,6 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
       }
     }.apply { isOpaque = false }
 
-    ideMenu.updateMenuActions(true)
-
     // menu wasn't a part of component's tree, updateUI is needed
     updateUI()
     updateBounds()
