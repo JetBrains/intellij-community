@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.EditorTracker
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -15,6 +16,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
+import com.intellij.util.ui.UIUtil
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Scope
@@ -113,7 +115,21 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
       }
 
       val editorTracker = EditorTracker.getInstance(project)
-      throw IllegalStateException("There is no focus in editor (focusOwner=$focusOwner, editorTracker=$editorTracker)")
+      val message = "There is no focus in editor (focusOwner=${
+        focusOwner?.let {
+          UIUtil.uiParents(it, false).joinToString(separator = "\n  ->\n")
+        }
+      },\neditorTracker=$editorTracker)"
+
+      if (focusOwner == null) {
+        val activeEditors = editorTracker.activeEditors
+        activeEditors.firstOrNull()?.let {
+          it.contentComponent.requestFocusInWindow()
+          logger<DoLocalInspection>().warn(message)
+          return@withContext
+        }
+      }
+      throw IllegalStateException(message)
     }
   }
 

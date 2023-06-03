@@ -21,7 +21,6 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.SmartList
 import java.awt.Window
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
@@ -194,13 +193,7 @@ open class EditorTracker(@JvmField protected val project: Project) : Disposable 
       activeEditors = emptyList()
     }
     else {
-      val editors = SmartList<Editor>()
-      for (editor in list) {
-        if (editor.contentComponent.isShowing && !editor.isDisposed) {
-          editors.add(editor)
-        }
-      }
-      activeEditors = editors
+      activeEditors = list.filter { !it.isDisposed }
     }
   }
 
