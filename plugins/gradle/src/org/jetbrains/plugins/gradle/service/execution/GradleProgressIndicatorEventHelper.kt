@@ -34,6 +34,7 @@ object GradleProgressIndicatorEventHelper {
   fun extractGradleVersion(settings: GradleExecutionSettings?): GradleVersion? {
     settings ?: return null
     val gradleStringVersion = GradleInstallationManager.getGradleVersion(settings.gradleHome)
+    gradleStringVersion ?: return null
     return GradleInstallationManager.getGradleVersionSafe(gradleStringVersion)
   }
 
