@@ -299,8 +299,16 @@ public final class PersistentFSConnection {
     }
   }
 
-  int getAttributeId(@NotNull String attId) {
-    return myEnumeratedAttributes.enumerate(attId);
+  int getAttributeId(@NotNull String attributeId) {
+    int enumeratedAttributeId = myEnumeratedAttributes.enumerate(attributeId);
+    if (enumeratedAttributeId > AbstractAttributesStorage.MAX_ATTRIBUTE_ID) {
+      throw new IllegalStateException(
+        "attribute[" + attributeId + "] assigned id[" + enumeratedAttributeId + "] which is above max " +
+        AbstractAttributesStorage.MAX_ATTRIBUTE_ID +
+        ". Current list of attributes: " + myEnumeratedAttributes.dumpToString()
+      );
+    }
+    return enumeratedAttributeId;
   }
 
   void markAsCorruptedAndScheduleRebuild(@NotNull Throwable cause) throws RuntimeException, Error {
