@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.collections.isMap
 import org.jetbrains.kotlin.idea.intentions.getArguments
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi2ir.deparenthesize
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -93,7 +95,16 @@ class ReplaceManualRangeWithIndicesCallQuickFix : LocalQuickFix {
         } else {
             psiFactory.createExpression("indices")
         }
-        element.replace(newExpression)
+        val replaced = element.replaced(newExpression)
+        replaced.removeUnnecessaryParentheses()
+    }
+
+    private fun KtExpression.removeUnnecessaryParentheses() {
+        parents.takeWhile { it is KtParenthesizedExpression }.lastOrNull()?.let {
+            if (it is KtParenthesizedExpression && KtPsiUtil.areParenthesesUseless(it)) {
+                it.replace(it.deparenthesize())
+            }
+        }
     }
 }
 
