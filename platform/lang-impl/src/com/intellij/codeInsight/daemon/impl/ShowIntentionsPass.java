@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImplKt.processHighlightsNearOffset;
 import static com.intellij.psi.util.PsiTreeUtilKt.parents;
 
 public final class ShowIntentionsPass extends TextEditorHighlightingPass {
@@ -72,7 +73,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     Project project = file.getProject();
 
     List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<>();
-    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true,
+    processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true,
                                                        info-> {
                                                          addAvailableFixesForGroups(info, editor, file, result, passId, offset);
                                                          return true;
@@ -86,8 +87,8 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     int offset = editor instanceof EditorEx ? ((EditorEx)editor).getExpectedCaretOffset() : editor.getCaretModel().getOffset();
 
     List<HighlightInfo> infos = new ArrayList<>();
-    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true,
-                                                       new CommonProcessors.CollectProcessor<>(infos));
+    processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true,
+                                new CommonProcessors.CollectProcessor<>(infos));
     for (HighlightInfo info : infos) {
       info.unregisterQuickFix(action1 -> action1 == action);
     }
@@ -304,7 +305,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     List<HighlightInfo.IntentionActionDescriptor> fixes = new ArrayList<>();
     DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor highestPriorityInfoFinder = new DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor(true);
     CommonProcessors.CollectProcessor<HighlightInfo> infos = new CommonProcessors.CollectProcessor<>();
-    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(hostEditor.getDocument(), hostFile.getProject(), HighlightSeverity.INFORMATION, offset, true, infos);
+    processHighlightsNearOffset(hostEditor.getDocument(), hostFile.getProject(), HighlightSeverity.INFORMATION, offset, true, infos);
     for (HighlightInfo info : infos.getResults()) {
       addAvailableFixesForGroups(info, hostEditor, hostFile, fixes, passIdToShowIntentionsFor, offset);
       highestPriorityInfoFinder.process(info);

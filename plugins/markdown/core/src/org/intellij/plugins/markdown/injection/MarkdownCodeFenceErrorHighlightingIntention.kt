@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.injection
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -26,7 +26,7 @@ internal class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
     override fun settingsChanged(settings: MarkdownSettings) {
       val project = settings.project
       val editorManager = FileEditorManager.getInstance(project) ?: return
-      val codeAnalyzer = DaemonCodeAnalyzerImpl.getInstance(project) ?: return
+      val codeAnalyzer = DaemonCodeAnalyzer.getInstance(project) ?: return
       val psiManager = PsiManager.getInstance(project)
       val files = editorManager.openFiles.asSequence().filter { it.hasMarkdownType() }
       for (file in files) {

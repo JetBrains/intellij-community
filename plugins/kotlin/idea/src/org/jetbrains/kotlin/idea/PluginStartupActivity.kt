@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea
 
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.blockingContext
@@ -38,12 +39,14 @@ internal class PluginStartupActivity : ProjectActivity {
             .finishOnUiThread(ModalityState.any()) { hasKotlinFiles ->
                 if (!hasKotlinFiles) return@finishOnUiThread
 
-                val daemonCodeAnalyzer = DaemonCodeAnalyzerImpl.getInstanceEx(project) as DaemonCodeAnalyzerImpl
+                val daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project) as DaemonCodeAnalyzerImpl
                 daemonCodeAnalyzer.serializeCodeInsightPasses(true)
             }
             .submit(AppExecutorUtil.getAppExecutorService())
 
-        if (ApplicationManager.getApplication().isHeadlessEnvironment) return@blockingContext
+        if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+            return@blockingContext
+        }
 
         ReadAction.nonBlocking(Callable { project.containsNonScriptKotlinFile() })
             .inSmartMode(project)

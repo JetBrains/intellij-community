@@ -59,6 +59,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImplKt.waitForUnresolvedReferencesQuickFixesUnderCaret;
+
 public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance(ShowIntentionActionsHandler.class);
 
@@ -146,7 +148,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     boolean useAlternativeResolve = dumbService.isAlternativeResolveEnabled();
     ThrowableComputable<ShowIntentionsPass.IntentionsInfo, RuntimeException> prioritizedRunnable =
       () -> ProgressManager.getInstance().computePrioritized(() -> {
-        DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+        waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
         return ReadAction.compute(() -> ShowIntentionsPass.getActionsToShow(editor, file, false));
       });
     ThrowableComputable<ShowIntentionsPass.IntentionsInfo, RuntimeException> process =

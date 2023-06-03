@@ -385,7 +385,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
       Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         if (!ReadAction.compute(() -> file.getProject().isDisposed() || editor.isDisposed())) {
-          DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+          DaemonCodeAnalyzerImplKt.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
         }
       });
       try {
@@ -404,7 +404,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     }
     else {
-      DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+      DaemonCodeAnalyzerImplKt.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
     }
   }
 

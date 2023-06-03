@@ -1,9 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeHighlighting.*
 import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.*
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx.processHighlights
 import com.intellij.codeInsight.daemon.impl.HighlightInfo.IntentionActionDescriptor
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent
@@ -57,7 +60,8 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.*
 import com.intellij.util.CommonProcessors.CollectProcessor
 import com.intellij.util.concurrency.EdtExecutorService
-import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.toArray
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
@@ -71,8 +75,6 @@ import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.function.Consumer
-import java.util.function.Supplier
 
 private const val ANY_GROUP = -409423948
 
@@ -84,26 +86,25 @@ private const val FILE_TAG: @NonNls String = "file"
 private const val URL_ATT: @NonNls String = "url"
 
 @State(name = "DaemonCodeAnalyzer", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), PersistentStateComponent<Element?>, Disposable {
-  private val myProject: Project
-  private val mySettings: DaemonCodeAnalyzerSettings
-  private val myPsiDocumentManager: PsiDocumentManager
-  private val fileEditorManager: Supplier<FileEditorManager>
-  private val myUpdateProgress: MutableMap<FileEditor, DaemonProgressIndicator> = ConcurrentHashMap()
-  private val myUpdateRunnable: UpdateRunnable
+class DaemonCodeAnalyzerImpl(private val project: Project) : DaemonCodeAnalyzerEx(), PersistentStateComponent<Element?>, Disposable {
+  private val settings: DaemonCodeAnalyzerSettings
+  private val psiDocumentManager: PsiDocumentManager
+  private val fileEditorManager = lazy(LazyThreadSafetyMode.NONE) { FileEditorManager.getInstance(project) }
+  private val myUpdateProgress = ConcurrentHashMap<FileEditor, DaemonProgressIndicator>()
+  private val updateRunnable: UpdateRunnable
 
   @Volatile
-  private var myUpdateRunnableFuture: Future<*> = CompletableFuture.completedFuture<Any?>(null)
-  private var myUpdateByTimerEnabled = true // guarded by this
-  private val myDisabledHintsFiles: MutableCollection<VirtualFile> = HashSet()
-  private val myDisabledHighlightingFiles: MutableCollection<VirtualFile?> = HashSet()
-  private val myFileStatusMap: FileStatusMap
-  private var myLastSettings: DaemonCodeAnalyzerSettings?
+  private var updateRunnableFuture: Future<*> = CompletableFuture.completedFuture<Any?>(null)
+  private var updateByTimerEnabled = true // guarded by this
+  private val disabledHintsFiles = HashSet<VirtualFile>()
+  private val disabledHighlightingFiles = HashSet<VirtualFile>()
+  private val fileStatusMap: FileStatusMap
+  private var lastSettings: DaemonCodeAnalyzerSettings?
 
   // the only possible transition: false -> true
   @Volatile
   private var isDisposed: Boolean
-  private val myPassExecutorService: PassExecutorService
+  private val passExecutorService: PassExecutorService
 
   // Timestamp of myUpdateRunnable which it's needed to start (in System.nanoTime() sense)
   // May be later than the actual ScheduledFuture sitting in the myAlarm queue.
@@ -116,97 +117,48 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
   private val daemonCancelEventCount = AtomicInteger()
   private val daemonListenerPublisher: DaemonListener
 
-  private val myDisableCount = AtomicInteger()
+  private val disableCount = AtomicInteger()
 
   init {
     // DependencyValidationManagerImpl adds scope listener, so we need to force service creation
     DependencyValidationManager.getInstance(project)
-    myProject = project
-    fileEditorManager = SynchronizedClearableLazy { FileEditorManager.getInstance(myProject) }
-    mySettings = DaemonCodeAnalyzerSettings.getInstance()
-    myPsiDocumentManager = PsiDocumentManager.getInstance(project)
-    myLastSettings = (mySettings as DaemonCodeAnalyzerSettingsImpl).clone()
-    myFileStatusMap = FileStatusMap(project)
-    myPassExecutorService = PassExecutorService(project)
-    Disposer.register(this, myPassExecutorService)
-    Disposer.register(this, myFileStatusMap)
+
+    settings = DaemonCodeAnalyzerSettings.getInstance()
+    psiDocumentManager = PsiDocumentManager.getInstance(project)
+    lastSettings = (settings as DaemonCodeAnalyzerSettingsImpl).clone()
+    fileStatusMap = FileStatusMap(project)
+    passExecutorService = PassExecutorService(project)
+    Disposer.register(this, passExecutorService)
+    Disposer.register(this, fileStatusMap)
     @Suppress("TestOnlyProblems")
     DaemonProgressIndicator.setDebug(LOG.isDebugEnabled)
     Disposer.register(this, StatusBarUpdater(project))
     isDisposed = false
-    myFileStatusMap.markAllFilesDirty("DaemonCodeAnalyzer init")
-    myUpdateRunnable = UpdateRunnable(project)
+    fileStatusMap.markAllFilesDirty("DaemonCodeAnalyzer init")
+    updateRunnable = UpdateRunnable(project)
     Disposer.register(this) {
       assert(!isDisposed) { "Double dispose" }
-      myUpdateRunnable.clearFieldsOnDispose()
+      updateRunnable.clearFieldsOnDispose()
       stopProcess(false, "Dispose $project")
       isDisposed = true
-      myLastSettings = null
+      lastSettings = null
     }
     daemonListenerPublisher = project.messageBus.syncPublisher(DAEMON_EVENT_TOPIC)
   }
 
   companion object {
     @TestOnly
-    fun getHighlights(document: Document,
-                      minSeverity: HighlightSeverity?,
-                      project: Project): List<HighlightInfo> {
-      val infos: List<HighlightInfo> = ArrayList()
-      processHighlights(document, project, minSeverity, 0, document.textLength,
-                        Processors.cancelableCollectProcessor(infos))
-      return infos
+    @JvmStatic
+    fun getHighlights(document: Document, minSeverity: HighlightSeverity?, project: Project): List<HighlightInfo> {
+      val result = ArrayList<HighlightInfo>()
+      processHighlights(document, project, minSeverity, 0, document.textLength, Processors.cancelableCollectProcessor(result))
+      return result
     }
 
-    fun processHighlightsNearOffset(document: Document,
-                                    project: Project,
-                                    minSeverity: HighlightSeverity,
-                                    offset: Int,
-                                    includeFixRange: Boolean,
-                                    processor: Processor<HighlightInfo>): Boolean {
-      return processHighlights(document, project, null, 0, document.textLength) { info ->
-        if (!info.containsOffset(offset, includeFixRange)) {
-          return@processHighlights true
-        }
-
-        val compare = info.severity.compareTo(minSeverity)
-        compare < 0 || processor.process(info)
-      }
-    }
-
-    @ApiStatus.Internal
-    @ApiStatus.Experimental
-    fun waitForUnresolvedReferencesQuickFixesUnderCaret(file: PsiFile, editor: Editor) {
-      ApplicationManager.getApplication().assertIsNonDispatchThread()
-      ApplicationManager.getApplication().assertReadAccessNotAllowed()
-      val relevantInfos: MutableList<HighlightInfo> = ArrayList()
-      val project = file.project
-      ReadAction.run<RuntimeException> {
-        PsiUtilBase.assertEditorAndProjectConsistent(project, editor)
-        val caretModel = editor.caretModel
-        val offset = caretModel.offset
-        val document = editor.document
-        val logicalLine = caretModel.logicalPosition.line
-        processHighlights(document, project, null, 0, document.textLength) { info: HighlightInfo ->
-          if (info.containsOffset(offset, true) && info.isUnresolvedReference) {
-            relevantInfos.add(info)
-            return@processHighlights true
-          }
-          // since we don't know fix ranges of potentially not-yet-added quick fixes, consider all HighlightInfos at the same line
-          val atTheSameLine = editor.offsetToLogicalPosition(
-            info.actualStartOffset).line <= logicalLine && logicalLine <= editor.offsetToLogicalPosition(info.actualEndOffset).line
-          if (atTheSameLine && info.isUnresolvedReference) {
-            relevantInfos.add(info)
-          }
-          true
-        }
-      }
-      UnresolvedReferenceQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(file, editor, relevantInfos)
-    }
-
+    @JvmStatic
     fun getLineMarkers(document: Document, project: Project): List<LineMarkerInfo<*>> {
-      val result: List<LineMarkerInfo<*>> = ArrayList()
-      LineMarkersUtil.processLineMarkers(project, document, TextRange(0, document.textLength), -1,
-                                         CollectProcessor(result))
+      val result = ArrayList<LineMarkerInfo<*>>()
+      LineMarkersUtil.processLineMarkers(project, document, TextRange(0, document.textLength), -1, CollectProcessor(result))
       return result
     }
 
@@ -229,7 +181,7 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
         return
       }
 
-      val dca = (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).takeIf { !it.isDisposed } ?: return
+      val daemonCodeAnalyzer = (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).takeIf { !it.isDisposed } ?: return
 
       if (PowerSaveMode.isEnabled()) {
         // to show the correct "power save" traffic light icon
@@ -237,17 +189,17 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
         return
       }
 
-      synchronized(dca) {
-        val actualDelay = dca.isScheduledUpdateTimestamp - System.nanoTime()
+      synchronized(daemonCodeAnalyzer) {
+        val actualDelay = daemonCodeAnalyzer.isScheduledUpdateTimestamp - System.nanoTime()
         if (actualDelay > 0) {
           // started too soon (there must've been some typings after we'd scheduled this; need to re-schedule)
-          dca.scheduleUpdateRunnable(actualDelay)
+          daemonCodeAnalyzer.scheduleUpdateRunnable(actualDelay)
           return
         }
       }
 
-      val activeEditors = getSelectedEditors(project, dca.fileEditorManager)
-      val updateByTimerEnabled = dca.isUpdateByTimerEnabled()
+      val activeEditors = getSelectedEditors(project, daemonCodeAnalyzer.fileEditorManager)
+      val updateByTimerEnabled = daemonCodeAnalyzer.isUpdateByTimerEnabled()
       if (PassExecutorService.LOG.isDebugEnabled) {
         PassExecutorService.log(null, null, "Update Runnable. myUpdateByTimerEnabled:",
                                 updateByTimerEnabled, " something disposed:",
@@ -256,29 +208,32 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
       if (!updateByTimerEnabled || activeEditors.isEmpty()) {
         return
       }
+
       if (ApplicationManager.getApplication().isWriteAccessAllowed) {
         // makes no sense to start from within write action - will cancel anyway
         // we'll restart when the write action finish
         return
       }
-      if (dca.myPsiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
+
+      if (daemonCodeAnalyzer.psiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
         // restart when everything committed
-        dca.myPsiDocumentManager.performLaterWhenAllCommitted(updateRunnable)
+        daemonCodeAnalyzer.psiDocumentManager.performLaterWhenAllCommitted(updateRunnable)
         return
       }
+
       try {
         var submitted = false
         for (fileEditor in activeEditors) {
           val virtualFile = getVirtualFile(fileEditor) ?: continue
-          val psiFile = findFileToHighlight(project = dca.myProject, virtualFile = virtualFile) ?: continue
-          submitted = submitted or (dca.queuePassesCreation(fileEditor = fileEditor,
-                                                            virtualFile = virtualFile,
-                                                            psiFile = psiFile,
-                                                            passesToIgnore = ArrayUtil.EMPTY_INT_ARRAY) != null)
+          val psiFile = findFileToHighlight(project = daemonCodeAnalyzer.project, virtualFile = virtualFile) ?: continue
+          submitted = submitted or (daemonCodeAnalyzer.queuePassesCreation(fileEditor = fileEditor,
+                                                                           virtualFile = virtualFile,
+                                                                           psiFile = psiFile,
+                                                                           passesToIgnore = ArrayUtil.EMPTY_INT_ARRAY) != null)
         }
         if (!submitted) {
           // happens e.g., when we are trying to open a directory and there's a FileEditor supporting this
-          dca.stopProcess(true, "Couldn't create session for $activeEditors")
+          daemonCodeAnalyzer.stopProcess(toRestartAlarm = true, reason = "Couldn't create session for $activeEditors")
         }
       }
       catch (ignored: ProcessCanceledException) {
@@ -293,19 +248,19 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
 
   @Synchronized
   private fun clearReferences() {
-    myUpdateProgress.values.forEach(Consumer { obj: DaemonProgressIndicator -> obj.cancel() })
+    for (indicator in myUpdateProgress.values) {
+      indicator.cancel()
+    }
     // avoid leak of highlight session via user data
     myUpdateProgress.clear()
-    myUpdateRunnableFuture.cancel(true)
+    updateRunnableFuture.cancel(true)
   }
 
   @Synchronized
   fun clearProgressIndicator() {
-    myUpdateProgress.values.forEach(
-      Consumer { indicator: DaemonProgressIndicator? ->
-        HighlightingSessionImpl.clearProgressIndicator(
-          indicator!!)
-      })
+    for (indicator in myUpdateProgress.values) {
+      HighlightingSessionImpl.clearProgressIndicator(indicator)
+    }
   }
 
   @TestOnly
@@ -313,30 +268,30 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
     assertMyFile(file.project, file)
     assertMyFile(project, file)
     val vFile = file.viewProvider.virtualFile
-    return fileEditorManager.get().getAllEditors(vFile)
+    return fileEditorManager.value.getAllEditors(vFile)
       .mapNotNull { it.getUserData(FILE_LEVEL_HIGHLIGHTS) }
       .flatten()
   }
 
   private fun assertMyFile(project: Project, file: PsiFile) {
-    check(project === myProject) { "my project is $myProject but I was called with $project" }
-    check(file.project === myProject) { "my project is " + myProject + " but I was called with file " + file + " from " + file.project }
+    check(project === this.project) { "my project is ${this.project} but I was called with $project" }
+    check(file.project === this.project) { "my project is ${this.project} but I was called with file $file from ${file.project}" }
   }
 
+  @RequiresEdt
   override fun cleanFileLevelHighlights(group: Int, psiFile: PsiFile) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
     assertMyFile(psiFile.project, psiFile)
     val vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.viewProvider.virtualFile)
-    for (fileEditor in fileEditorManager.get().getAllEditors(vFile)) {
+    for (fileEditor in fileEditorManager.value.getAllEditors(vFile)) {
       cleanFileLevelHighlights(fileEditor, group)
     }
   }
 
+  @RequiresReadLock
   override fun hasFileLevelHighlights(group: Int, psiFile: PsiFile): Boolean {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
     assertMyFile(psiFile.project, psiFile)
     val vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.viewProvider.virtualFile)
-    for (fileEditor in fileEditorManager.get().getAllEditors(vFile)) {
+    for (fileEditor in fileEditorManager.value.getAllEditors(vFile)) {
       val infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS)
       if (!infos.isNullOrEmpty()) {
         for (info in infos) {
@@ -349,15 +304,15 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
     return false
   }
 
+  @RequiresEdt
   fun cleanAllFileLevelHighlights() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    for (fileEditor in fileEditorManager.get().allEditors) {
+    for (fileEditor in fileEditorManager.value.allEditors) {
       cleanFileLevelHighlights(fileEditor, ANY_GROUP)
     }
   }
 
+  @RequiresEdt
   private fun cleanFileLevelHighlights(fileEditor: FileEditor, group: Int) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
     val infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS)
     if (infos.isNullOrEmpty()) {
       return
@@ -368,7 +323,7 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
       if (info.group == group || group == ANY_GROUP) {
         val component = info.getFileLevelComponent(fileEditor)
         if (component != null) {
-          fileEditorManager.get().removeTopComponent(fileEditor, component)
+          fileEditorManager.value.removeTopComponent(fileEditor, component)
           info.removeFileLeverComponent(fileEditor)
         }
         infosToRemove.add(info)
@@ -377,17 +332,16 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
     infos.removeAll(infosToRemove)
   }
 
+  @RequiresEdt
   override fun addFileLevelHighlight(group: Int, info: HighlightInfo, psiFile: PsiFile) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
     assertMyFile(psiFile.project, psiFile)
     val vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.viewProvider.virtualFile)
-    val fileEditorManager = fileEditorManager.get()
+    val fileEditorManager = fileEditorManager.value
     for (fileEditor in fileEditorManager.getAllEditors(vFile)) {
       if (fileEditor is TextEditor) {
-        val actionRanges: MutableList<Pair<IntentionActionDescriptor, TextRange>> = ArrayList()
-        info.findRegisteredQuickFix<Any> { descriptor: IntentionActionDescriptor, range: TextRange ->
-          actionRanges.add(
-            Pair.create(descriptor, range))
+        val actionRanges = ArrayList<Pair<IntentionActionDescriptor, TextRange>>()
+        info.findRegisteredQuickFix<Any> { descriptor, range ->
+          actionRanges.add(Pair.create(descriptor, range))
           null
         }
         val component = FileLevelIntentionComponent(info.description, info.severity,
@@ -408,21 +362,21 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
 
   override fun runMainPasses(psiFile: PsiFile, document: Document, progress: ProgressIndicator): List<HighlightInfo> {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    check(
-      !ApplicationManager.getApplication().isReadAccessAllowed) { "Must run highlighting outside read action, external annotators do not support checkCanceled" }
+    check(!ApplicationManager.getApplication().isReadAccessAllowed) {
+      "Must run highlighting outside read action, external annotators do not support checkCanceled"
+    }
     assertMyFile(psiFile.project, psiFile)
     GlobalInspectionContextBase.assertUnderDaemonProgress()
     // clear status maps to run passes from scratch so that refCountHolder won't conflict and try to restart itself on partially filled maps
-    myFileStatusMap.markAllFilesDirty("prepare to run main passes")
+    fileStatusMap.markAllFilesDirty("prepare to run main passes")
     stopProcess(false, "disable background daemon")
-    myPassExecutorService.cancelAll(true)
-    val result: MutableList<HighlightInfo>
+    passExecutorService.cancelAll(true)
+    val result = ArrayList<HighlightInfo>()
     try {
-      result = ArrayList()
       val virtualFile = psiFile.virtualFile
       if (virtualFile != null && !virtualFile.fileType.isBinary) {
-        val passes = DumbService.getInstance(myProject).runReadActionInSmartMode<List<TextEditorHighlightingPass>> {
-          val mainPasses = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject)
+        val passes = DumbService.getInstance(project).runReadActionInSmartMode<List<TextEditorHighlightingPass>> {
+          val mainPasses = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project)
             .instantiateMainPasses(psiFile, document, HighlightInfoProcessor.getEmpty())
           mainPasses.sortWith(Comparator<TextEditorHighlightingPass> { o1, o2 ->
             if (o1 is GeneralHighlightingPass) return@Comparator -1
@@ -467,6 +421,7 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
     Disposer.register(parent) { mustWaitForSmartMode = old }
   }
 
+  @RequiresEdt
   @TestOnly
   @Throws(ProcessCanceledException::class)
   fun runPasses(file: PsiFile,
@@ -475,16 +430,18 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
                 passesToIgnore: IntArray,
                 canChangeDocument: Boolean,
                 callbackWhileWaiting: Runnable?) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
     assert(!isDisposed)
     assertMyFile(file.project, file)
-    assert(
-      textEditor.editor.document === document) { "Expected document " + document + " but one of the passed TextEditors points to a different document: " + textEditor.editor.document }
-    val associatedDocument = PsiDocumentManager.getInstance(myProject).getDocument(file)
-    assert(
-      associatedDocument === document) { "Expected document $document but the passed PsiFile points to a different document: $associatedDocument" }
-    check(
-      !ApplicationManager.getApplication().isWriteAccessAllowed) { "Must not start highlighting from within write action, or deadlock is imminent" }
+    assert(textEditor.editor.document === document) {
+      "Expected document $document but one of the passed TextEditors points to a different document: ${textEditor.editor.document}"
+    }
+    val associatedDocument = PsiDocumentManager.getInstance(project).getDocument(file)
+    assert(associatedDocument === document) {
+      "Expected document $document but the passed PsiFile points to a different document: $associatedDocument"
+    }
+    check(!ApplicationManager.getApplication().isWriteAccessAllowed) {
+      "Must not start highlighting from within write action, or deadlock is imminent"
+    }
     DaemonProgressIndicator.setDebug(!ApplicationManagerEx.isInStressTest())
     (FileTypeManager.getInstance() as FileTypeManagerImpl).drainReDetectQueue()
     do {
@@ -493,19 +450,23 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
       // heavy ops are bad, but VFS refresh is ok
     }
     while (RefreshQueueImpl.isRefreshInProgress() || heavyProcessIsRunning())
+
     val dStart = System.currentTimeMillis()
-    while (mustWaitForSmartMode && DumbService.getInstance(myProject).isDumb) {
-      check(
-        System.currentTimeMillis() <= dStart + 100000) { "Timeout waiting for smart mode. If you absolutely want to be dumb, please use DaemonCodeAnalyzerImpl.mustWaitForSmartMode(false)." }
+    while (mustWaitForSmartMode && DumbService.getInstance(project).isDumb) {
+      check(System.currentTimeMillis() <= dStart + 100000) {
+        "Timeout waiting for smart mode. If you absolutely want to be dumb, please use DaemonCodeAnalyzerImpl.mustWaitForSmartMode(false)."
+      }
       EDT.dispatchAllInvocationEvents()
     }
+
     (GistManager.getInstance() as GistManagerImpl).clearQueueInTests()
     EDT.dispatchAllInvocationEvents()
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion() // wait for async editor loading
-    myUpdateRunnableFuture.cancel(false)
+    // wait for async editor loading
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    updateRunnableFuture.cancel(false)
 
     // previous passes can be canceled but still in flight. wait for them to avoid interference
-    myPassExecutorService.cancelAll(false)
+    passExecutorService.cancelAll(false)
     val fileStatusMap = fileStatusMap
     val old = fileStatusMap.allowDirt(canChangeDocument)
     for (ignoreId in passesToIgnore) {
@@ -527,8 +488,8 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
                           callbackWhileWaiting: Runnable?) {
     (ProgressManager.getInstance() as CoreProgressManager).suppressAllDeprioritizationsDuringLongTestsExecutionIn<Any?, RuntimeException> {
       val virtualFile = textEditor.file
-      var psiFile = PsiManagerEx.getInstanceEx(myProject).findFile(
-        virtualFile) // findCachedFile doesn't work with the temp file system in tests
+      // findCachedFile doesn't work with the temp file system in tests
+      var psiFile = PsiManagerEx.getInstanceEx(project).findFile(virtualFile)
       psiFile = if (psiFile is PsiCompiledFile) psiFile.decompiledPsiFile else psiFile
       LOG.assertTrue(psiFile != null, "PsiFile not found for $virtualFile")
       val session = queuePassesCreation(textEditor, virtualFile, psiFile!!, passesToIgnore)
@@ -539,6 +500,7 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
                   "; psiFile=" + psiFile)
         throw ProcessCanceledException()
       }
+
       val progress = session.progressIndicator
       // there can be PCE in FJP during queuePassesCreation
       // no PCE guarantees session is not null
@@ -559,7 +521,7 @@ class DaemonCodeAnalyzerImpl(project: Project) : DaemonCodeAnalyzerEx(), Persist
         }
         if (progress.isRunning && !progress.isCanceled) {
           throw RuntimeException(
-            """Highlighting still running after ${(System.currentTimeMillis() - start) / 1000} seconds. Still submitted passes: ${myPassExecutorService.allSubmittedPasses} ForkJoinPool.commonPool(): ${ForkJoinPool.commonPool()}
+            """Highlighting still running after ${(System.currentTimeMillis() - start) / 1000} seconds. Still submitted passes: ${passExecutorService.allSubmittedPasses} ForkJoinPool.commonPool(): ${ForkJoinPool.commonPool()}
 , ForkJoinPool.commonPool() active thread count: ${ForkJoinPool.commonPool().activeThreadCount}, ForkJoinPool.commonPool() has queued submissions: ${ForkJoinPool.commonPool().hasQueuedSubmissions()}
 ${ThreadDumper.dumpThreadsToString()}""")
         }
@@ -583,30 +545,34 @@ ${ThreadDumper.dumpThreadsToString()}""")
     }
   }
 
+  @RequiresEdt
   @TestOnly
   @Throws(Throwable::class)
-  private fun waitInOtherThread(@Suppress("SameParameterValue") millis: Int, canChangeDocument: Boolean, runWhile: ThrowableComputable<Boolean, Throwable>) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+  private fun waitInOtherThread(@Suppress("SameParameterValue") millis: Int,
+                                canChangeDocument: Boolean,
+                                runWhile: ThrowableComputable<Boolean, Throwable>) {
     val disposable = Disposer.newDisposable()
     val assertOnModification = AtomicBoolean()
     // last hope protection against PsiModificationTrackerImpl.incCounter() craziness (yes, Kotlin)
-    myProject.messageBus.connect(disposable).subscribe(PsiModificationTracker.TOPIC,
-                                                       PsiModificationTracker.Listener {
-                                                         check(
-                                                           !assertOnModification.get()) { "You must not perform PSI modifications from inside highlighting" }
-                                                       })
+    project.messageBus.connect(disposable).subscribe(PsiModificationTracker.TOPIC,
+                                                     PsiModificationTracker.Listener {
+                                                       check(!assertOnModification.get()) {
+                                                         "You must not perform PSI modifications from inside highlighting"
+                                                       }
+                                                     })
     if (!canChangeDocument) {
-      myProject.messageBus.connect(disposable).subscribe<DaemonListener>(DAEMON_EVENT_TOPIC, object : DaemonListener {
+      project.messageBus.connect(disposable).subscribe(DAEMON_EVENT_TOPIC, object : DaemonListener {
         override fun daemonCancelEventOccurred(reason: String) {
           check(!assertOnModification.get()) { "You must not cancel daemon inside highlighting test: $reason" }
         }
       })
     }
+
     val deadline = System.currentTimeMillis() + millis
     try {
       val future = ApplicationManager.getApplication().executeOnPooledThread<Boolean> {
         try {
-          return@executeOnPooledThread myPassExecutorService.waitFor(millis)
+          return@executeOnPooledThread passExecutorService.waitFor(millis)
         }
         catch (e: Throwable) {
           throw RuntimeException(e)
@@ -620,7 +586,8 @@ ${ThreadDumper.dumpThreadsToString()}""")
         catch (ignored: TimeoutException) {
         }
         finally {
-          assertOnModification.set(false) //do not assert during dispatchAllEvents() because that's where all quick fixes happen
+          // do not assert during dispatchAllEvents() because that's where all quick fixes happen
+          assertOnModification.set(false)
         }
       }
       while (runWhile.compute() && System.currentTimeMillis() < deadline)
@@ -641,35 +608,35 @@ ${ThreadDumper.dumpThreadsToString()}""")
 
   @TestOnly
   fun cleanupAfterTest() {
-    if (myProject.isOpen) {
+    if (project.isOpen) {
       prepareForTest()
     }
   }
 
   @TestOnly
   fun waitForTermination() {
-    myPassExecutorService.cancelAll(true)
+    passExecutorService.cancelAll(true)
   }
 
   override fun settingsChanged() {
-    if (mySettings.isCodeHighlightingChanged(myLastSettings)) {
+    if (settings.isCodeHighlightingChanged(lastSettings)) {
       restart()
     }
-    myLastSettings = (mySettings as DaemonCodeAnalyzerSettingsImpl).clone()
+    lastSettings = (settings as DaemonCodeAnalyzerSettingsImpl).clone()
   }
 
   @Synchronized
   override fun setUpdateByTimerEnabled(value: Boolean) {
-    myUpdateByTimerEnabled = value
+    updateByTimerEnabled = value
     stopProcess(value, "Update by timer change")
   }
 
   override fun disableUpdateByTimer(parentDisposable: Disposable) {
     setUpdateByTimerEnabled(false)
-    myDisableCount.incrementAndGet()
+    disableCount.incrementAndGet()
     ApplicationManager.getApplication().assertIsDispatchThread()
     Disposer.register(parentDisposable) {
-      if (myDisableCount.decrementAndGet() == 0) {
+      if (disableCount.decrementAndGet() == 0) {
         setUpdateByTimerEnabled(true)
       }
     }
@@ -677,42 +644,48 @@ ${ThreadDumper.dumpThreadsToString()}""")
 
   @Synchronized
   fun isUpdateByTimerEnabled(): Boolean {
-    return myUpdateByTimerEnabled
+    return updateByTimerEnabled
   }
 
   override fun setImportHintsEnabled(file: PsiFile, value: Boolean) {
     assertMyFile(file.project, file)
     val vFile = file.virtualFile
     if (value) {
-      myDisabledHintsFiles.remove(vFile)
+      disabledHintsFiles.remove(vFile)
       stopProcess(true, "Import hints change")
     }
     else {
-      myDisabledHintsFiles.add(vFile)
+      disabledHintsFiles.add(vFile)
       HintManager.getInstance().hideAllHints()
     }
   }
 
   override fun resetImportHintsEnabledForProject() {
-    myDisabledHintsFiles.clear()
+    disabledHintsFiles.clear()
   }
 
   override fun setHighlightingEnabled(psiFile: PsiFile, value: Boolean) {
     assertMyFile(psiFile.project, psiFile)
-    val virtualFile = PsiUtilCore.getVirtualFile(psiFile)
+    val virtualFile = PsiUtilCore.getVirtualFile(psiFile) ?: return
     if (value) {
-      myDisabledHighlightingFiles.remove(virtualFile)
+      disabledHighlightingFiles.remove(virtualFile)
     }
     else {
-      myDisabledHighlightingFiles.add(virtualFile)
+      disabledHighlightingFiles.add(virtualFile)
     }
   }
 
   override fun isHighlightingAvailable(psiFile: PsiFile): Boolean {
-    if (!psiFile.isPhysical) return false
+    if (!psiFile.isPhysical) {
+      return false
+    }
     assertMyFile(psiFile.project, psiFile)
-    if (myDisabledHighlightingFiles.contains(PsiUtilCore.getVirtualFile(psiFile))) return false
-    if (psiFile is PsiCompiledElement) return false
+    if (disabledHighlightingFiles.contains(PsiUtilCore.getVirtualFile(psiFile))) {
+      return false
+    }
+    if (psiFile is PsiCompiledElement) {
+      return false
+    }
     val fileType = psiFile.fileType
 
     // To enable T.O.D.O. highlighting
@@ -720,7 +693,7 @@ ${ThreadDumper.dumpThreadsToString()}""")
   }
 
   override fun isImportHintsEnabled(psiFile: PsiFile): Boolean {
-    return isAutohintsAvailable(psiFile) && !myDisabledHintsFiles.contains(psiFile.virtualFile)
+    return isAutohintsAvailable(psiFile) && !disabledHintsFiles.contains(psiFile.virtualFile)
   }
 
   override fun isAutohintsAvailable(psiFile: PsiFile): Boolean {
@@ -733,20 +706,20 @@ ${ThreadDumper.dumpThreadsToString()}""")
 
   // return true if the progress was really canceled
   fun stopProcessAndRestartAllFiles(reason: String) {
-    myFileStatusMap.markAllFilesDirty(reason)
+    fileStatusMap.markAllFilesDirty(reason)
     stopProcess(true, reason)
   }
 
   override fun restart(psiFile: PsiFile) {
     assertMyFile(psiFile.project, psiFile)
     val document = psiFile.viewProvider.document ?: return
-    val reason = "Psi file restart: " + psiFile.name
-    myFileStatusMap.markFileScopeDirty(document, TextRange(0, document.textLength), psiFile.textLength, reason)
+    val reason = "Psi file restart: ${psiFile.name}"
+    fileStatusMap.markFileScopeDirty(document, TextRange(0, document.textLength), psiFile.textLength, reason)
     stopProcess(true, reason)
   }
 
   fun getPassesToShowProgressFor(document: Document): List<ProgressableTextEditorHighlightingPass?> {
-    val allPasses = myPassExecutorService.allSubmittedPasses
+    val allPasses = passExecutorService.allSubmittedPasses
     return allPasses
       .asSequence()
       .mapNotNull { if (it is ProgressableTextEditorHighlightingPass && it.document === document) it else null }
@@ -759,37 +732,32 @@ ${ThreadDumper.dumpThreadsToString()}""")
     assertMyFile(psiFile.project, psiFile)
     val document = psiFile.viewProvider.document
     return document != null && document.modificationStamp == psiFile.viewProvider.modificationStamp &&
-           myFileStatusMap.allDirtyScopesAreNull(document)
+           fileStatusMap.allDirtyScopesAreNull(document)
   }
 
   override fun isErrorAnalyzingFinished(psiFile: PsiFile): Boolean {
-    if (isDisposed) return false
+    if (isDisposed) {
+      return false
+    }
+
     assertMyFile(psiFile.project, psiFile)
     val document = psiFile.viewProvider.document
-    return document != null && document.modificationStamp == psiFile.viewProvider.modificationStamp && myFileStatusMap.getFileDirtyScope(
-      document, psiFile, Pass.UPDATE_ALL) == null
+    return document != null &&
+           document.modificationStamp == psiFile.viewProvider.modificationStamp &&
+           fileStatusMap.getFileDirtyScope(document, psiFile, Pass.UPDATE_ALL) == null
   }
 
-  override fun getFileStatusMap(): FileStatusMap {
-    return myFileStatusMap
-  }
+  override fun getFileStatusMap(): FileStatusMap = fileStatusMap
 
   @get:Synchronized
   val isRunning: Boolean
-    get() {
-      for (indicator in myUpdateProgress.values) {
-        if (!indicator.isCanceled) {
-          return true
-        }
-      }
-      return false
-    }
+    get() = myUpdateProgress.values.any { !it.isCanceled }
 
   @get:TestOnly
   val isRunningOrPending: Boolean
     get() {
       ApplicationManager.getApplication().assertIsDispatchThread()
-      return isRunning || !myUpdateRunnableFuture.isDone || GeneralHighlightingPass.isRestartPending()
+      return isRunning || !updateRunnableFuture.isDone || GeneralHighlightingPass.isRestartPending()
     }
 
   // return true if the progress really was canceled
@@ -799,12 +767,12 @@ ${ThreadDumper.dumpThreadsToString()}""")
     val restart = toRestartAlarm && !isDisposed
 
     // reset myScheduledUpdateStart always, but re-schedule myUpdateRunnable only rarely because of thread scheduling overhead
-    val autoReparseDelayNanos = TimeUnit.MILLISECONDS.toNanos(mySettings.autoReparseDelay.toLong())
+    val autoReparseDelayNanos = TimeUnit.MILLISECONDS.toNanos(settings.autoReparseDelay.toLong())
     if (restart) {
       isScheduledUpdateTimestamp = System.nanoTime() + autoReparseDelayNanos
     }
-    // optimisation: this check is to avoid too many re-schedules in case of thousands of event spikes
-    val isDone = myUpdateRunnableFuture.isDone
+    // optimization: this check is to avoid too many re-schedules in case of thousands of event spikes
+    val isDone = updateRunnableFuture.isDone
     if (restart && isDone) {
       scheduleUpdateRunnable(autoReparseDelayNanos)
     }
@@ -812,23 +780,26 @@ ${ThreadDumper.dumpThreadsToString()}""")
 
   @Synchronized
   private fun scheduleUpdateRunnable(delayNanos: Long) {
-    val oldFuture = myUpdateRunnableFuture
+    val oldFuture = updateRunnableFuture
     if (oldFuture.isDone) {
       ConcurrencyUtil.manifestExceptionsIn(oldFuture)
     }
-    myUpdateRunnableFuture = EdtExecutorService.getScheduledExecutorInstance().schedule(myUpdateRunnable, delayNanos, TimeUnit.NANOSECONDS)
+    updateRunnableFuture = EdtExecutorService.getScheduledExecutorInstance().schedule(updateRunnable, delayNanos, TimeUnit.NANOSECONDS)
   }
 
   // return true if the progress really was canceled
   @Synchronized
   fun cancelAllUpdateProgresses(toRestartAlarm: Boolean, reason: @NonNls String) {
-    if (isDisposed || myProject.isDisposed || myProject.messageBus.isDisposed) return
+    if (isDisposed || project.isDisposed || project.messageBus.isDisposed) {
+      return
+    }
+
     var canceled = false
     for (updateProgress in myUpdateProgress.values) {
       if (!updateProgress.isCanceled) {
         PassExecutorService.log(updateProgress, null, "Cancel", reason, toRestartAlarm)
         updateProgress.cancel()
-        myPassExecutorService.cancelAll(false)
+        passExecutorService.cancelAll(false)
         canceled = true
       }
     }
@@ -839,14 +810,21 @@ ${ThreadDumper.dumpThreadsToString()}""")
   }
 
   fun findHighlightByOffset(document: Document, offset: Int, includeFixRange: Boolean): HighlightInfo? {
-    return findHighlightByOffset(document, offset, includeFixRange, HighlightSeverity.INFORMATION)
+    return findHighlightByOffset(document = document,
+                                 offset = offset,
+                                 includeFixRange = includeFixRange,
+                                 minSeverity = HighlightSeverity.INFORMATION)
   }
 
   fun findHighlightByOffset(document: Document,
                             offset: Int,
                             includeFixRange: Boolean,
                             minSeverity: HighlightSeverity): HighlightInfo? {
-    return findHighlightsByOffset(document, offset, includeFixRange, true, minSeverity)
+    return findHighlightsByOffset(document = document,
+                                  offset = offset,
+                                  includeFixRange = includeFixRange,
+                                  highestPriorityOnly = true,
+                                  minSeverity = minSeverity)
   }
 
   /**
@@ -866,7 +844,12 @@ ${ThreadDumper.dumpThreadsToString()}""")
                              highestPriorityOnly: Boolean,
                              minSeverity: HighlightSeverity): HighlightInfo? {
     val processor = HighlightByOffsetProcessor(highestPriorityOnly)
-    processHighlightsNearOffset(document, myProject, minSeverity, offset, includeFixRange, processor)
+    processHighlightsNearOffset(document = document,
+                                project = project,
+                                minSeverity = minSeverity,
+                                offset = offset,
+                                includeFixRange = includeFixRange,
+                                processor = processor)
     return processor.result
   }
 
@@ -877,6 +860,7 @@ ${ThreadDumper.dumpThreadsToString()}""")
       if (info.severity === HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY || info.type === HighlightInfoType.TODO) {
         return true
       }
+
       if (!foundInfoList.isEmpty() && highestPriorityOnly) {
         val foundInfo = foundInfoList[0]
         val compare = foundInfo.severity.compareTo(info.severity)
@@ -905,7 +889,7 @@ ${ThreadDumper.dumpThreadsToString()}""")
   }
 
   val lastIntentionHint: IntentionHintComponent?
-    get() = (IntentionsUI.getInstance(myProject) as IntentionsUIImpl).lastIntentionHint
+    get() = (IntentionsUI.getInstance(project) as IntentionsUIImpl).lastIntentionHint
 
   override fun hasVisibleLightBulbOrPopup(): Boolean {
     val hint = lastIntentionHint
@@ -914,11 +898,12 @@ ${ThreadDumper.dumpThreadsToString()}""")
 
   override fun getState(): Element {
     val state = Element("state")
-    if (myDisabledHintsFiles.isEmpty()) {
+    if (disabledHintsFiles.isEmpty()) {
       return state
     }
-    val array: MutableList<String> = ArrayList(myDisabledHintsFiles.size)
-    for (file in myDisabledHintsFiles) {
+
+    val array = ArrayList<String>(disabledHintsFiles.size)
+    for (file in disabledHintsFiles) {
       if (file.isValid) {
         array.add(file.url)
       }
@@ -935,18 +920,12 @@ ${ThreadDumper.dumpThreadsToString()}""")
   }
 
   override fun loadState(state: Element) {
-    myDisabledHintsFiles.clear()
-    val element = state.getChild(DISABLE_HINTS_TAG)
-    if (element != null) {
-      for (e in element.getChildren(FILE_TAG)) {
-        val url = e.getAttributeValue(URL_ATT)
-        if (url != null) {
-          val file = VirtualFileManager.getInstance().findFileByUrl(url)
-          if (file != null) {
-            myDisabledHintsFiles.add(file)
-          }
-        }
-      }
+    disabledHintsFiles.clear()
+    val element = state.getChild(DISABLE_HINTS_TAG) ?: return
+    for (e in element.getChildren(FILE_TAG)) {
+      val url = e.getAttributeValue(URL_ATT) ?: continue
+      val file = VirtualFileManager.getInstance().findFileByUrl(url) ?: continue
+      disabledHintsFiles.add(file)
     }
   }
 
@@ -955,39 +934,45 @@ ${ThreadDumper.dumpThreadsToString()}""")
    * return null if session wasn't created because highlighter/document/psiFile wasn't found or
    * throw PCE if it really wasn't an appropriate moment to ask
    */
+  @RequiresEdt
   private fun queuePassesCreation(fileEditor: FileEditor,
                                   virtualFile: VirtualFile,
                                   psiFile: PsiFile,
                                   passesToIgnore: IntArray): HighlightingSession? {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    var highlighter: BackgroundEditorHighlighter?
-    withClientId(getClientId(fileEditor)).use { highlighter = fileEditor.backgroundHighlighter }
-    if (highlighter == null) {
-      return null
-    }
+    val highlighter = withClientId(getClientId(fileEditor)).use { fileEditor.backgroundHighlighter } ?: return null
     val progress = createUpdateProgress(fileEditor)
     // pre-create HighlightingSession in EDT to make visible range available in a background thread
     val editor = if (fileEditor is TextEditor) fileEditor.editor else null
     if (editor != null && editor.document.isInBulkUpdate) {
       // avoid restarts until the bulk mode is finished and daemon restarted in DaemonListeners
-      stopProcess(false, editor.document.toString() + " is in bulk state")
+      stopProcess(false, "${editor.document} is in bulk state")
       throw ProcessCanceledException()
     }
-    val document = (if (fileEditor is TextEditor) fileEditor.editor.document
-    else FileDocumentManager.getInstance().getCachedDocument(virtualFile))
-                   ?: return null
-    val scheme = editor?.colorsScheme
-    var session: HighlightingSessionImpl
-    withClientId(getClientId(fileEditor)).use {
-      session = HighlightingSessionImpl.createHighlightingSession(psiFile, editor, scheme, progress, daemonCancelEventCount)
+
+    val document = (if (fileEditor is TextEditor) {
+      fileEditor.editor.document
     }
-    JobLauncher.getInstance().submitToJobThread(
-      { submitInBackground(fileEditor, document, virtualFile, psiFile, highlighter!!, passesToIgnore, progress, session) }
-    )  // manifest exceptions in EDT to avoid storing them in the Future and abandoning
-    { task: Future<*>? ->
+    else {
+      FileDocumentManager.getInstance().getCachedDocument(virtualFile)
+    }) ?: return null
+    val scheme = editor?.colorsScheme
+    val session = withClientId(getClientId(fileEditor)).use {
+      HighlightingSessionImpl.createHighlightingSession(psiFile, editor, scheme, progress, daemonCancelEventCount)
+    }
+    JobLauncher.getInstance().submitToJobThread({
+                                                  submitInBackground(fileEditor = fileEditor,
+                                                                     document = document,
+                                                                     virtualFile = virtualFile,
+                                                                     psiFile = psiFile,
+                                                                     backgroundEditorHighlighter = highlighter,
+                                                                     passesToIgnore = passesToIgnore,
+                                                                     progress = progress,
+                                                                     session = session)
+                                                })
+    { task ->
+      // manifest exceptions in EDT to avoid storing them in the Future and abandoning
       ApplicationManager.getApplication().invokeLater {
-        ConcurrencyUtil.manifestExceptionsIn(
-          task!!)
+        ConcurrencyUtil.manifestExceptionsIn(task)
       }
     }
     return session
@@ -1002,19 +987,20 @@ ${ThreadDumper.dumpThreadsToString()}""")
                                  progress: DaemonProgressIndicator,
                                  session: HighlightingSessionImpl) {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    if (myProject.isDisposed) {
-      stopProcess(false, "project disposed")
+    if (project.isDisposed) {
+      stopProcess(toRestartAlarm = false, reason = "project disposed")
       return
     }
 
     if (progress.isCanceled) {
-      stopProcess(true, "canceled in queuePassesCreation: " + progress.cancellationTrace)
+      stopProcess(toRestartAlarm = true, reason = "canceled in queuePassesCreation: " + progress.cancellationTrace)
       return
     }
 
-    if (myPsiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
-      stopProcess(true,
-                  "more documents to commit: " + ReadAction.compute<String, RuntimeException> { myPsiDocumentManager.uncommittedDocuments.contentToString() })
+    if (psiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
+      stopProcess(toRestartAlarm = true,
+                  reason = "more documents to commit: " +
+                           ReadAction.compute<String, RuntimeException> { psiDocumentManager.uncommittedDocuments.contentToString() })
       return
     }
 
@@ -1024,7 +1010,7 @@ ${ThreadDumper.dumpThreadsToString()}""")
           // wait for heavy processing to stop, re-schedule daemon but not too soon
           val heavyProcessIsRunning = heavyProcessIsRunning()
           val passes = ReadAction.compute<Array<HighlightingPass>, RuntimeException> {
-            if (myProject.isDisposed || !fileEditor.isValid || !psiFile.isValid) {
+            if (project.isDisposed || !fileEditor.isValid || !psiFile.isValid) {
               return@compute HighlightingPass.EMPTY_ARRAY
             }
 
@@ -1054,16 +1040,15 @@ ${ThreadDumper.dumpThreadsToString()}""")
             return@executeProcessUnderProgress
           }
           // synchronize on TextEditorHighlightingPassRegistrarImpl instance to avoid concurrent modification of TextEditorHighlightingPassRegistrarImpl.nextAvailableId
-          synchronized(TextEditorHighlightingPassRegistrar.getInstance(myProject)) {
-            myPassExecutorService.submitPasses(document, virtualFile, psiFile,
-                                               fileEditor, passes, progress)
+          synchronized(TextEditorHighlightingPassRegistrar.getInstance(project)) {
+            passExecutorService.submitPasses(document, virtualFile, psiFile, fileEditor, passes, progress)
           }
         },
         progress,
       )
     }
     catch (e: ProcessCanceledException) {
-      stopProcess(true, "PCE in queuePassesCreation")
+      stopProcess(toRestartAlarm = true, reason = "PCE in queuePassesCreation")
     }
     catch (e: Throwable) {
       // make it manifestable in tests
@@ -1074,19 +1059,20 @@ ${ThreadDumper.dumpThreadsToString()}""")
 
   @Synchronized
   private fun createUpdateProgress(fileEditor: FileEditor): DaemonProgressIndicator {
-    val old = myUpdateProgress[fileEditor]
+    val old = myUpdateProgress.get(fileEditor)
     if (old != null && !old.isCanceled) {
       old.cancel()
     }
-    myUpdateProgress.entries.removeIf { (key): Map.Entry<FileEditor, DaemonProgressIndicator> -> !key.isValid }
-    val progress: DaemonProgressIndicator = MyDaemonProgressIndicator(myProject, fileEditor)
+
+    myUpdateProgress.entries.removeIf { !it.key.isValid }
+    val progress = MyDaemonProgressIndicator(project, fileEditor)
     progress.setModalityProgress(null)
     progress.start()
     daemonListenerPublisher.daemonStarting(listOf(fileEditor))
     if (isRestartToCompleteEssentialHighlightingRequested) {
       progress.putUserData(COMPLETE_ESSENTIAL_HIGHLIGHTING_KEY, true)
     }
-    myUpdateProgress[fileEditor] = progress
+    myUpdateProgress.put(fileEditor, progress)
     return progress
   }
 
@@ -1115,7 +1101,9 @@ ${ThreadDumper.dumpThreadsToString()}""")
   override fun autoImportReferenceAtCursor(editor: Editor, psiFile: PsiFile) {
     assertMyFile(psiFile.project, psiFile)
     for (importer in ReferenceImporter.EP_NAME.extensionList) {
-      if (importer.isAddUnambiguousImportsOnTheFlyEnabled(psiFile) && importer.autoImportReferenceAtCursor(editor, psiFile)) break
+      if (importer.isAddUnambiguousImportsOnTheFlyEnabled(psiFile) && importer.autoImportReferenceAtCursor(editor, psiFile)) {
+        break
+      }
     }
   }
 
@@ -1125,7 +1113,7 @@ ${ThreadDumper.dumpThreadsToString()}""")
     get() = myUpdateProgress
 
   /**
-   * This API is made `Internal` intentionally as it could lead to unpredictable highlighting performance behaviour.
+   * This API is made `Internal` intentionally as it could lead to unpredictable highlighting performance behavior.
    *
    * @param flag if `true`: enables code insight passes serialization:
    * Injected fragments [InjectedGeneralHighlightingPass] highlighting and Inspections run after
@@ -1133,12 +1121,12 @@ ${ThreadDumper.dumpThreadsToString()}""")
    * if `false` (default behaviour) code insight passes are running in parallel
    */
   @ApiStatus.Internal
+  @RequiresEdt
   fun serializeCodeInsightPasses(flag: Boolean) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
     setUpdateByTimerEnabled(false)
     try {
       cancelAllUpdateProgresses(false, "serializeCodeInsightPasses")
-      val registrar = TextEditorHighlightingPassRegistrar.getInstance(myProject) as TextEditorHighlightingPassRegistrarImpl
+      val registrar = TextEditorHighlightingPassRegistrar.getInstance(project) as TextEditorHighlightingPassRegistrarImpl
       registrar.serializeCodeInsightPasses(flag)
     }
     finally {
@@ -1180,10 +1168,8 @@ private fun heavyProcessIsRunning(): Boolean {
   return if (DumbServiceImpl.ALWAYS_SMART) false else HeavyProcessLatch.INSTANCE.isRunningAnythingBut(HeavyProcessLatch.Type.Syncing)
 }
 
-private fun getSelectedEditors(project: Project, fileEditorManagerSupplier: Supplier<FileEditorManager>): Collection<FileEditor> {
-  val app = ApplicationManager.getApplication()
-  app.assertIsDispatchThread()
-
+@RequiresEdt
+private fun getSelectedEditors(project: Project, fileEditorManagerSupplier: Lazy<FileEditorManager>): Collection<FileEditor> {
   // editors in modal context
   val editors = project.serviceIfCreated<EditorTracker>()?.activeEditors ?: emptyList()
   val activeTextEditors: Sequence<TextEditor> = if (editors.isEmpty()) {
@@ -1197,6 +1183,8 @@ private fun getSelectedEditors(project: Project, fileEditorManagerSupplier: Supp
       }
       .distinct()
   }
+
+  val app = ApplicationManager.getApplication()
   if (app.currentModalityState !== ModalityState.NON_MODAL) {
     return activeTextEditors.toList()
   }
@@ -1206,9 +1194,56 @@ private fun getSelectedEditors(project: Project, fileEditorManagerSupplier: Supp
     emptySequence<FileEditor>()
   }
   else {
-    fileEditorManagerSupplier.get().selectedEditorWithRemotes.asSequence()
+    fileEditorManagerSupplier.value.selectedEditorWithRemotes.asSequence()
   }
   return (activeTextEditors + tabEditors)
     .filter { it.isValid && it.file != null && it.file.isValid }
     .toList()
+}
+
+internal fun processHighlightsNearOffset(document: Document,
+                                        project: Project,
+                                        minSeverity: HighlightSeverity,
+                                        offset: Int,
+                                        includeFixRange: Boolean,
+                                        processor: Processor<HighlightInfo>): Boolean {
+  return processHighlights(document, project, null, 0, document.textLength) { info ->
+    if (!info.containsOffset(offset, includeFixRange)) {
+      return@processHighlights true
+    }
+
+    val compare = info.severity.compareTo(minSeverity)
+    compare < 0 || processor.process(info)
+  }
+}
+
+@ApiStatus.Internal
+@ApiStatus.Experimental
+@TestOnly
+fun waitForUnresolvedReferencesQuickFixesUnderCaret(file: PsiFile, editor: Editor) {
+  ApplicationManager.getApplication().assertIsNonDispatchThread()
+  ApplicationManager.getApplication().assertReadAccessNotAllowed()
+  val relevantInfos = ArrayList<HighlightInfo>()
+  val project = file.project
+  ReadAction.run<RuntimeException> {
+    PsiUtilBase.assertEditorAndProjectConsistent(project, editor)
+    val caretModel = editor.caretModel
+    val offset = caretModel.offset
+    val document = editor.document
+    val logicalLine = caretModel.logicalPosition.line
+    processHighlights(document, project, null, 0, document.textLength) { info: HighlightInfo ->
+      if (info.containsOffset(offset, true) && info.isUnresolvedReference) {
+        relevantInfos.add(info)
+        return@processHighlights true
+      }
+      // since we don't know fix ranges of potentially not-yet-added quick fixes, consider all HighlightInfos at the same line
+      val atTheSameLine = editor.offsetToLogicalPosition(info.actualStartOffset).line <= logicalLine &&
+                          logicalLine <= editor.offsetToLogicalPosition(info.actualEndOffset).line
+      if (atTheSameLine && info.isUnresolvedReference) {
+        relevantInfos.add(info)
+      }
+      true
+    }
+  }
+  UnresolvedReferenceQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(file, editor, relevantInfos)
 }
