@@ -283,13 +283,31 @@ public class MavenUtil {
     }
   }
 
+  @TestOnly
+  public static void setNoBackgroundMode() {
+    noBackgroundMode = true;
+  }
+
+  @TestOnly
+  public static void resetNoBackgroundMode() {
+    noBackgroundMode = false;
+  }
+
+  private static volatile boolean noBackgroundMode = false;
+
   public static boolean isNoBackgroundMode() {
     if (shouldRunTasksAsynchronouslyInTests() || isLinearImportEnabled()) {
       return false;
     }
-    return (ApplicationManager.getApplication().isUnitTestMode()
-            || ApplicationManager.getApplication().isHeadlessEnvironment() &&
-               !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode());
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return noBackgroundMode;
+    }
+
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      if (!CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) return true;
+    }
+    return false;
   }
 
   public static boolean isInModalContext() {

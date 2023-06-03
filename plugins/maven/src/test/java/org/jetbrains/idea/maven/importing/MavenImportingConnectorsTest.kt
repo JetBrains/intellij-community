@@ -7,15 +7,28 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.RunAll
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager.Companion.getInstance
 import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 import org.junit.Test
 import java.io.File
 
 class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
   protected lateinit var myAnotherProjectRoot: VirtualFile
+
+  override fun setUp() {
+    MavenUtil.setNoBackgroundMode()
+    super.setUp()
+  }
+  override fun tearDown() {
+    RunAll.runAll(
+      { super.tearDown() },
+      { MavenUtil.resetNoBackgroundMode() },
+    )
+  }
 
   @Throws(Exception::class)
   override fun setUpInWriteAction() {

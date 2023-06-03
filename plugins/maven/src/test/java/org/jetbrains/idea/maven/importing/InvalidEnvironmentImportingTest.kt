@@ -8,20 +8,24 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerCMDState
 import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
-import java.util.*
 
 class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   private lateinit var myTestSyncViewManager: SyncViewManager
   private val myEvents: MutableList<BuildEvent> = ArrayList()
 
   public override fun setUp() {
+    if (!isWorkspaceImport) {
+      MavenUtil.setNoBackgroundMode()
+    }
     super.setUp()
     myTestSyncViewManager = object : SyncViewManager(myProject) {
       override fun onEvent(buildId: Any, event: BuildEvent) {
@@ -30,6 +34,13 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     }
     myProject.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
     setupTestManagerForLegacyImport()
+  }
+
+  override fun tearDown() {
+    RunAll.runAll(
+      { super.tearDown() },
+      { MavenUtil.resetNoBackgroundMode() },
+    )
   }
 
   private fun setupTestManagerForLegacyImport() {

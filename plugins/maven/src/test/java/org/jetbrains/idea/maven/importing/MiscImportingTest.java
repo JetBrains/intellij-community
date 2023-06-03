@@ -24,6 +24,7 @@ import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporte
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -39,6 +40,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Override
   protected void setUp() throws Exception {
+    MavenUtil.setNoBackgroundMode();
     super.setUp();
     myEventsTestHelper.setUp(myProject);
   }
@@ -46,6 +48,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      MavenUtil.resetNoBackgroundMode();
       myEventsTestHelper.tearDown();
     }
     catch (Throwable e) {

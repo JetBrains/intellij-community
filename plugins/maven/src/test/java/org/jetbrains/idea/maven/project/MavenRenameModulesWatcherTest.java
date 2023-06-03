@@ -7,7 +7,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
+import com.intellij.testFramework.RunAll;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
 import java.util.List;
@@ -15,9 +17,18 @@ import java.util.List;
 public class MavenRenameModulesWatcherTest extends MavenDomTestCase {
   @Override
   protected void setUp() throws Exception {
+    MavenUtil.setNoBackgroundMode();
     super.setUp();
     myProjectsManager.initForTests();
     myProjectsManager.listenForExternalChanges();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    RunAll.runAll(
+      () -> super.tearDown(),
+      () -> MavenUtil.resetNoBackgroundMode()
+    );
   }
 
   private void renameModule(@NotNull String oldName, @NotNull String newName) {

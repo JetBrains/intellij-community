@@ -10,12 +10,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.RunAll;
 import com.intellij.util.io.PathKt;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.wizards.MavenProjectBuilder;
 import org.jetbrains.idea.maven.wizards.MavenProjectImportProvider;
 
@@ -27,6 +29,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class MavenMultiProjectImportTest extends ProjectWizardTestCase<AbstractProjectWizard> {
 
+  @Override
+  protected void setUp() throws Exception {
+    MavenUtil.setNoBackgroundMode();
+    super.setUp();
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    RunAll.runAll(
+      () -> super.tearDown(),
+      () -> MavenUtil.resetNoBackgroundMode()
+    );
+  }
   private Path myDir;
 
   public void testIndicesForDifferentProjectsShouldBeSameInstance() {

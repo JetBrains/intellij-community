@@ -6,11 +6,25 @@ import com.intellij.maven.testFramework.utils.importMavenProjectsSync
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.RunAll
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectResolver
+import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 
 open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
+
+  override fun setUp() {
+    MavenUtil.setNoBackgroundMode()
+    super.setUp()
+  }
+
+  override fun tearDown() {
+    RunAll.runAll(
+      { super.tearDown() },
+      { MavenUtil.resetNoBackgroundMode() },
+    )
+  }
 
   @Test
   fun `simple library substitution`() {

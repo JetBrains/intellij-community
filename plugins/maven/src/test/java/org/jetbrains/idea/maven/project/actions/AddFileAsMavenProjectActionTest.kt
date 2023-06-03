@@ -7,10 +7,23 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.MapDataContext
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.TestActionEvent
+import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 
 class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
+  override fun setUp() {
+    MavenUtil.setNoBackgroundMode()
+    super.setUp()
+  }
+
+  override fun tearDown() {
+    RunAll.runAll(
+      { super.tearDown() },
+      { MavenUtil.resetNoBackgroundMode() },
+    )
+  }
   @Test
   fun testFilesSavedOnAction() {
     val projectPom = createProjectPom("<groupId>test</groupId>" +

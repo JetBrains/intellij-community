@@ -51,9 +51,16 @@ import static org.junit.Assume.assumeTrue;
 public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
+    MavenUtil.setNoBackgroundMode();
     super.setUp();
     initProjectsManager(true);
     Assume.assumeFalse(MavenUtil.isLinearImportEnabled());
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    MavenUtil.resetNoBackgroundMode();
+    super.tearDown();
   }
 
   @Test

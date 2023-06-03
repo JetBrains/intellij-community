@@ -8,7 +8,9 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.testFramework.RunAll;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.junit.Test;
@@ -22,9 +24,18 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
 
   @Override
   protected void setUp() throws Exception {
+    MavenUtil.setNoBackgroundMode();
     super.setUp();
     repoPath = new File(myDir, "repo").getPath();
     setRepositoryPath(repoPath);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    RunAll.runAll(
+      () -> super.tearDown(),
+      () -> MavenUtil.resetNoBackgroundMode()
+    );
   }
 
   @Test

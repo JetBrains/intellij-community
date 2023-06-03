@@ -17,6 +17,7 @@ import com.intellij.util.io.DirectoryContentSpecKt;
 import kotlin.Unit;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
 import java.io.File;
@@ -25,6 +26,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ReimportingTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
+    if (!isWorkspaceImport()) {
+      MavenUtil.setNoBackgroundMode();
+    }
     super.setUp();
     createProjectPom("""
                        <groupId>test</groupId>
@@ -49,6 +53,12 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
       <version>1</version>
       """);
     importProject();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    MavenUtil.setNoBackgroundMode();
+    super.tearDown();
   }
 
   @Test

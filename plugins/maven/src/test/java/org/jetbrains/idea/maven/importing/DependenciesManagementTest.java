@@ -18,12 +18,25 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.maven.testFramework.utils.MavenImportingTestCaseKt;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
 
 public class DependenciesManagementTest extends MavenMultiVersionImportingTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    MavenUtil.setNoBackgroundMode();
+    super.setUp();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    MavenUtil.resetNoBackgroundMode();
+    super.tearDown();
+  }
+
   @Test
   public void testImportingDependencies() throws Exception {
     if (!hasMavenInstallation()) return;

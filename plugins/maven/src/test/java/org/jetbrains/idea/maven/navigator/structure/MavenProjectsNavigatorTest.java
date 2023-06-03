@@ -33,6 +33,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
   @Override
   protected void setUp() throws Exception {
+    MavenUtil.setNoBackgroundMode();
     super.setUp();
     ServiceContainerUtil.replaceService(myProject, ToolWindowManager.class, new ToolWindowHeadlessManagerImpl(myProject) {
       @Override
@@ -51,6 +52,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
   @Override
   protected void tearDown() throws Exception {
+    MavenUtil.resetNoBackgroundMode();
     myNavigator = null;
     myStructure = null;
     super.tearDown();

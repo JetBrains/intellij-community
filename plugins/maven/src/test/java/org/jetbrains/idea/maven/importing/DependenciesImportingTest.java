@@ -15,9 +15,11 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.RunAll;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -28,6 +30,22 @@ import java.util.Collections;
 import java.util.List;
 
 public class DependenciesImportingTest extends MavenMultiVersionImportingTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    MavenUtil.setNoBackgroundMode();
+    super.setUp();
+    myProjectsManager.initForTests();
+    myProjectsManager.listenForExternalChanges();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    RunAll.runAll(
+      () -> super.tearDown(),
+      () -> MavenUtil.resetNoBackgroundMode()
+    );
+  }
+
   @Test
   public void testLibraryDependency() {
     importProject("""

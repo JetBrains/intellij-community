@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -35,11 +36,20 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
 
   @Override
   protected void setUpInWriteAction() throws Exception {
+    if (!isWorkspaceImport()) {
+      MavenUtil.setNoBackgroundMode();
+    }
     super.setUpInWriteAction();
 
     CompilerConfiguration.getInstance(myProject).addResourceFilePattern("!*.xxx");
     CompilerConfiguration.getInstance(myProject).addResourceFilePattern("!*.yyy");
     CompilerConfiguration.getInstance(myProject).addResourceFilePattern("!*.zzz");
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    MavenUtil.resetNoBackgroundMode();
+    super.tearDown();
   }
 
   @Test

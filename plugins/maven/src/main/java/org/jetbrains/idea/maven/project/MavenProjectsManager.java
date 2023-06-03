@@ -525,9 +525,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     if (MavenUtil.isNoBackgroundMode()) {
       waitForReadingCompletion();
     }
-    else {
-      resolveAndImportMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
-    }
   }
 
   private boolean isInitialized() {

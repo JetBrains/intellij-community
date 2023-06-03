@@ -38,10 +38,17 @@ import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProjectWizard> {
+  @Override
+  protected void setUp() throws Exception {
+    MavenUtil.setNoBackgroundMode();
+    super.setUp();
+  }
 
   @Override
   public void tearDown() throws Exception {
     try {
+      MavenUtil.resetNoBackgroundMode();
+
       if (MavenImportingManager.getInstance(myProject).isImportingInProgress()) {
         PlatformTestUtil.waitForPromise(MavenImportingManager.getInstance(myProject).getImportFinishPromise());
       }
