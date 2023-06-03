@@ -190,7 +190,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
                                                     @NotNull ReferenceType classType,
                                                     @NotNull ClassesByNameProvider classesByName,
                                                     boolean base) {
-    if (!MethodBreakpointBase.canBeEmulated(debugProcess)) {
+    if (breakpoint.isWatchExit() && !MethodBreakpointBase.canBeWatchExitEmulated(debugProcess)) {
       breakpoint.disableEmulation();
       return;
     }
