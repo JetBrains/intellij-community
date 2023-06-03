@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 import com.intellij.CommonBundle
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.icons.AllIcons
+import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
@@ -33,6 +34,10 @@ import javax.swing.border.Border
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
+
+private const val HEADER_HEIGHT_DFM = 30
+private const val HEADER_HEIGHT_COMPACT = 34
+private const val HEADER_HEIGHT_NORMAL = 40
 
 internal abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
   companion object {
@@ -125,7 +130,21 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     setCustomFrameTopBorder()
 
     customTitleBar = JBR.getWindowDecorations()?.createCustomTitleBar()
-    preferredSize = preferredSize.apply { height = 40 }
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    if (ExperimentalUI.isNewUI()) {
+      preferredSize = preferredSize.apply {
+        height = JBUI.scale(
+          when {
+            ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader() -> HEADER_HEIGHT_DFM
+            UISettings.getInstance().compactMode -> HEADER_HEIGHT_COMPACT
+            else -> HEADER_HEIGHT_NORMAL
+          }
+        )
+      }
+    }
   }
 
   protected open fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
