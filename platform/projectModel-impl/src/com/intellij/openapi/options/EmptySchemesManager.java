@@ -82,7 +82,8 @@ public final class EmptySchemesManager extends SchemeManager<Object> {
   }
 
   @Override
-  public void loadBundledScheme(@NotNull String resourceName, @Nullable Object requestor, @Nullable PluginDescriptor pluginDescriptor) {
+  public Object loadBundledScheme(@NotNull String resourceName, @Nullable Object requestor, @Nullable PluginDescriptor pluginDescriptor) {
+    return null;
   }
 
   @Override

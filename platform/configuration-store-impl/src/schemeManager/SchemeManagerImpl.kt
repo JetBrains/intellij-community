@@ -111,7 +111,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     directory.refresh(true, false)
   }
 
-  override fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?) {
+  override fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?): T? {
     try {
       val bytes: ByteArray?
       if (pluginDescriptor == null) {
@@ -123,7 +123,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
             bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), requestor.providerClassLoader)
             if (bytes == null) {
               LOG.error("Cannot find $resourceName in ${requestor.providerClassLoader}")
-              return
+              return null
             }
           }
           else -> {
@@ -131,7 +131,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
                                                     (if (requestor is ClassLoader) requestor else requestor!!.javaClass.classLoader))
             if (bytes == null) {
               LOG.error("Cannot read scheme from $resourceName")
-              return
+              return null
             }
           }
         }
@@ -141,7 +141,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
         bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), classLoader)
         if (bytes == null) {
           LOG.error("Cannot found scheme $resourceName in $classLoader")
-          return
+          return null
         }
       }
 
@@ -177,6 +177,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
         if (requestor is TempUIThemeBasedLookAndFeelInfo) {
           requestor.theme.editorSchemeName = schemeKey
         }
+        return scheme
       }
     }
     catch (e: ProcessCanceledException) {
@@ -188,6 +189,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     catch (e: Throwable) {
       LOG.error("Cannot read scheme from $resourceName", e)
     }
+    return null
   }
 
   internal fun createSchemeLoader(isDuringLoad: Boolean = false): SchemeLoader<T, MUTABLE_SCHEME> {
