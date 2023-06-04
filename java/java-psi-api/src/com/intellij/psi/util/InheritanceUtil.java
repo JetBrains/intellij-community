@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public final class InheritanceUtil {
   private InheritanceUtil() { }
@@ -119,26 +120,37 @@ public final class InheritanceUtil {
                                                     PsiElement scope,
                                                     boolean isSuperClassAccepted,
                                                     boolean isTypeParamsAccepted) {
-    return hasEnclosingInstanceInScope(aClass, scope, psiClass -> isSuperClassAccepted, isTypeParamsAccepted);
+    return hasEnclosingInstanceInScope(aClass, scope, isTypeParamsAccepted, psiClass -> isSuperClassAccepted);
   }
 
   public static boolean hasEnclosingInstanceInScope(@NotNull PsiClass aClass,
                                                     PsiElement scope,
+                                                    boolean isTypeParamsAccepted,
+                                                    @NotNull Predicate<? super PsiClass> isSuperClassAccepted) {
+    return findEnclosingInstanceInScope(aClass, scope, isTypeParamsAccepted, isSuperClassAccepted) != null;
+  }
+
+  /**
+   * @deprecated use {@link InheritanceUtil#hasEnclosingInstanceInScope(PsiClass, PsiElement, boolean, Predicate)}
+   */
+  @Deprecated
+  public static boolean hasEnclosingInstanceInScope(@NotNull PsiClass aClass,
+                                                    PsiElement scope,
                                                     @NotNull Condition<? super PsiClass> isSuperClassAccepted,
                                                     boolean isTypeParamsAccepted) {
-    return findEnclosingInstanceInScope(aClass, scope, isSuperClassAccepted, isTypeParamsAccepted) != null;
+    return hasEnclosingInstanceInScope(aClass, scope, isTypeParamsAccepted, isSuperClassAccepted);
   }
 
   @Nullable
   public static PsiClass findEnclosingInstanceInScope(@NotNull PsiClass aClass,
                                                       PsiElement scope,
-                                                      @NotNull Condition<? super PsiClass> isSuperClassAccepted,
-                                                      boolean isTypeParamsAccepted) {
+                                                      boolean isTypeParamsAccepted,
+                                                      @NotNull Predicate<? super PsiClass> isSuperClassAccepted) {
     PsiManager manager = aClass.getManager();
     PsiElement place = scope;
     while (place != null && !(place instanceof PsiFile)) {
       if (place instanceof PsiClass) {
-        if (isSuperClassAccepted.value((PsiClass)place)) {
+        if (isSuperClassAccepted.test((PsiClass)place)) {
           if (isInheritorOrSelf((PsiClass)place, aClass, true)) return (PsiClass)place;
         }
         else {
@@ -157,6 +169,18 @@ public final class InheritanceUtil {
       place = place.getParent();
     }
     return null;
+  }
+
+  /**
+   * @deprecated use {@link InheritanceUtil#findEnclosingInstanceInScope(PsiClass, PsiElement, boolean, Predicate)}
+   */
+  @Deprecated
+  @Nullable
+  public static PsiClass findEnclosingInstanceInScope(@NotNull PsiClass aClass,
+                                                      PsiElement scope,
+                                                      @NotNull Condition<? super PsiClass> isSuperClassAccepted,
+                                                      boolean isTypeParamsAccepted) {
+    return findEnclosingInstanceInScope(aClass, scope, isTypeParamsAccepted, isSuperClassAccepted);
   }
 
   public static boolean processSuperTypes(@NotNull PsiType type, boolean includeSelf, @NotNull Processor<? super PsiType> processor) {
