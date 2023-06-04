@@ -73,19 +73,17 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     Disposer.dispose(myAlarm);
   }
 
-  public void setData(final Project project,
-                    final PsiDirectory initialTargetDirectory,
-                    final EditorComboBox editorComboBox) {
-    setData(project, initialTargetDirectory, __->{}, editorComboBox);
+  public void setData(@NotNull Project project, @Nullable PsiDirectory initialTargetDirectory, @NotNull EditorComboBox editorComboBox) {
+    setData(project, initialTargetDirectory, __ -> {}, editorComboBox);
   }
 
-  public void setData(final Project project,
-                      final PsiDirectory initialTargetDirectory,
-                      final Consumer<? super @NlsContexts.DialogMessage String> errorMessageUpdater,
-                      final EditorComboBox editorComboBox) {
+  public void setData(@NotNull Project project,
+                      @Nullable PsiDirectory initialTargetDirectory,
+                      @NotNull Consumer<? super @NlsContexts.DialogMessage String> errorMessageUpdater,
+                      @NotNull EditorComboBox editorComboBox) {
+    myProject = project;
     myInitialTargetDirectory = initialTargetDirectory;
     mySourceRoots = getSourceRoots(project, initialTargetDirectory);
-    myProject = project;
     myUpdateErrorMessage = errorMessageUpdater;
     String leaveInSameSourceRoot = JavaBundle.message("leave.in.same.source.root.item");
     ComboboxSpeedSearch search = new ComboboxSpeedSearch(getComboBox(), null) {
@@ -194,7 +192,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
   }
 
   @NotNull
-  protected List<VirtualFile> getSourceRoots(Project project, PsiDirectory initialTargetDirectory) {
+  protected List<VirtualFile> getSourceRoots(@NotNull Project project, @Nullable PsiDirectory initialTargetDirectory) {
     return JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
   }
 
