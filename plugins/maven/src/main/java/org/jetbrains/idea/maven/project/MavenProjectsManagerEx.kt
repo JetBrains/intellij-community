@@ -4,7 +4,10 @@ package org.jetbrains.idea.maven.project
 import com.intellij.build.SyncViewManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
@@ -15,30 +18,30 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
-import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
-import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.runBlockingCancellableUnderIndicator
-import org.jetbrains.idea.maven.utils.withBackgroundProgressIfApplicable
+import org.jetbrains.idea.maven.utils.*
 import java.util.*
 import java.util.function.Supplier
 
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
+  fun updateAllMavenProjectsSync(spec: MavenImportSpec): Promise<Void>
   suspend fun updateAllMavenProjects(spec: MavenImportSpec)
   suspend fun importMavenProjects(): List<Module>
   suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module>
@@ -318,26 +321,45 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     return importMavenProjects(projectsToImport + myProjectsToImport)
   }
 
+  override fun updateAllMavenProjectsSync(spec: MavenImportSpec): Promise<Void> {
+    return runBlockingCancellableUnderIndicator {
+      updateAllMavenProjectsBgt(spec)
+    }
+  }
+
+  @RequiresBackgroundThread
+  private suspend fun updateAllMavenProjectsBgt(spec: MavenImportSpec): Promise<Void> {
+    val result = AsyncPromise<Void>()
+
+    try {
+      updateAllMavenProjects(spec)
+      result.setResult(null)
+    }
+    catch (e: Exception) {
+      result.setError(e)
+    }
+
+    return result
+  }
+
   override suspend fun updateAllMavenProjects(spec: MavenImportSpec) {
     // display all import activities using the same build progress
     MavenSyncConsole.startTransaction(myProject)
     try {
       val mavenProgressIndicator = MavenProgressIndicator(project, Supplier { syncConsole })
-      withBackgroundProgressIfApplicable(myProject, SyncBundle.message("maven.sync.waiting.for.completion"), false) {
-        runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorPluginsResolvingTask::class.java) {
+      withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.reading"), false) {
+        runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
           withRawProgressReporter {
             coroutineToIndicator {
-              val indicator = ProgressManager.getGlobalProgressIndicator()
               try {
+                val indicator = ProgressManager.getGlobalProgressIndicator()
                 checkOrInstallMavenWrapper(project)
                 // TODO: use indicator
                 projectsTree.updateAll(spec.isForceReading, generalSettings, mavenProgressIndicator)
                 generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
               }
-              finally {
-                if (spec.isForceResolve) {
-                  resolveAndImportMavenProjectsSync(spec)
-                }
+              catch (e: Throwable) {
+                logImportErrorIfNotControlFlow(e)
               }
             }
           }
@@ -345,8 +367,27 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
     }
     finally {
-      if (!spec.isForceResolve) {
+      if (spec.isForceResolve) {
+        resolveAndImportMavenProjects(spec)
+      }
+      else {
         MavenSyncConsole.finishTransaction(myProject)
+      }
+    }
+  }
+
+  private fun logImportErrorIfNotControlFlow(e: Throwable) {
+    if (e is ControlFlowException) {
+      ExceptionUtil.rethrowAllAsUnchecked(e)
+    }
+    runReadAction {
+      if (myProject.isDisposed) return@runReadAction
+      getInstance(myProject).showServerException(e)
+      if (ExceptionUtil.causedBy(e, BuildIssueException::class.java)) {
+        MavenLog.LOG.info(e)
+      }
+      else {
+        MavenLog.LOG.error(e)
       }
     }
   }
