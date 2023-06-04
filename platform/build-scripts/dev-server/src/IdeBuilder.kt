@@ -39,7 +39,16 @@ data class BuildRequest(
   @JvmField val keepHttpClient: Boolean = true,
   @JvmField val platformClassPathConsumer: ((classPath: Set<Path>, runDir: Path) -> Unit)? = null,
   @JvmField val isPackagedLib: Boolean = true,
-)
+) {
+  override fun toString(): String {
+    return "BuildRequest(platformPrefix='$platformPrefix', " +
+           "additionalModules=$additionalModules, " +
+           "isIdeProfileAware=$isIdeProfileAware, homePath=$homePath, " +
+           "productionClassOutput=$productionClassOutput, " +
+           "keepHttpClient=$keepHttpClient, " +
+           "isPackagedLib=$isPackagedLib)"
+  }
+}
 
 internal suspend fun buildProduct(productConfiguration: ProductConfiguration, request: BuildRequest) {
   val rootDir = withContext(Dispatchers.IO) {
