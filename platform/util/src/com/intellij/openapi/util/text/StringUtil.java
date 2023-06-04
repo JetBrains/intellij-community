@@ -1910,6 +1910,13 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  public static @NotNull String substringBeforeLast(@NotNull String text, @NotNull String subString, boolean includeLast) {
+    int i = text.lastIndexOf(subString);
+    if (i == -1) return text;
+    return includeLast ? text.substring(0, i + subString.length()) : text.substring(0, i);
+  }
+
+  @Contract(pure = true)
   public static @Nullable String substringAfter(@NotNull String text, @NotNull String subString) {
     int i = text.indexOf(subString);
     if (i == -1) return null;

@@ -725,6 +725,16 @@ public class StringUtilTest {
     assertEquals("abc", StringUtil.substringBeforeLast("abc", ""));
     assertEquals("abc", StringUtil.substringBeforeLast("abc", "1"));
     assertEquals("", StringUtil.substringBeforeLast("", "1"));
+    assertEquals("a", StringUtil.substringBeforeLast("abc", "b", false));
+    assertEquals("abab", StringUtil.substringBeforeLast("ababbccc", "b", false));
+    assertEquals("abc", StringUtil.substringBeforeLast("abc", "", false));
+    assertEquals("abc", StringUtil.substringBeforeLast("abc", "1", false));
+    assertEquals("", StringUtil.substringBeforeLast("", "1", false));
+    assertEquals("ab", StringUtil.substringBeforeLast("abc", "b", true));
+    assertEquals("ababb", StringUtil.substringBeforeLast("ababbccc", "b", true));
+    assertEquals("abc", StringUtil.substringBeforeLast("abc", "", true));
+    assertEquals("abc", StringUtil.substringBeforeLast("abc", "1", true));
+    assertEquals("", StringUtil.substringBeforeLast("", "1", true));
   }
 
   @Test
