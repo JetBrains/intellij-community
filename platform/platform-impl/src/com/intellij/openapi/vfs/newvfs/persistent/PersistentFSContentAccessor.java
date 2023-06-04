@@ -241,11 +241,11 @@ public final class PersistentFSContentAccessor {
     private final boolean myFixedSize;
     boolean myModified;
 
-    ContentOutputStream(int fileId, boolean readOnly) {
+    ContentOutputStream(int fileId, boolean fixedSize) {
       super(new BufferExposingByteArrayOutputStream());
       PersistentFSConnection.ensureIdIsValid(fileId);
       myFileId = fileId;
-      myFixedSize = readOnly;
+      myFixedSize = fixedSize;
     }
 
     @Override

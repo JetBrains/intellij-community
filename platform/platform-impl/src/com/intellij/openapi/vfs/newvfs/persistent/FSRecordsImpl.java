@@ -1056,8 +1056,8 @@ public final class FSRecordsImpl {
   }
 
   @NotNull DataOutputStream writeContent(int fileId,
-                                         boolean readOnly) {
-    return new DataOutputStream(contentAccessor.new ContentOutputStream(fileId, readOnly)) {
+                                         boolean fixedSize) {
+    return new DataOutputStream(contentAccessor.new ContentOutputStream(fileId, fixedSize)) {
       @Override
       public void close() {
         try {
@@ -1076,9 +1076,9 @@ public final class FSRecordsImpl {
 
   void writeContent(int fileId,
                     @NotNull ByteArraySequence bytes,
-                    boolean readOnly) {
+                    boolean fixedSize) {
     try {
-      contentAccessor.writeContent(fileId, bytes, readOnly);
+      contentAccessor.writeContent(fileId, bytes, fixedSize);
     }
     //TODO RC: catch and rethrow InterruptedIOException & OoMError as in readContent(),
     //         thus bypassing handleError() and VFS rebuild. But I'm not sure that writeContent
