@@ -650,10 +650,6 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
     private static void assertBigHeaderIsValid(final @NotNull ByteBuffer buffer,
                                                final int entryStartOffset,
                                                final byte firstByte) {
-      //as we limit attributeId to MAX=255, first header byte bits are not used, and must be empty
-      assert firstByte == BIG_ENTRY_MASK : "Invalid record(@" + entryStartOffset + ") format: header[0](=" +
-                                           Integer.toBinaryString(Byte.toUnsignedInt(firstByte)) + " -> big record) " +
-                                           "but there are other bits set but the first 2!";
       assert buffer.limit() >= entryStartOffset + BIG_HEADER_SIZE
         : "Invalid record(@" + entryStartOffset + ") format: " +
           "header[0](=" + Integer.toBinaryString(firstByte) + " -> big record) but there is no header[1..5] bytes. " +

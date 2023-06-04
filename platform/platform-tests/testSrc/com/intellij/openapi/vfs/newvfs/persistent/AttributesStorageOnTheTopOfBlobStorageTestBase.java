@@ -35,7 +35,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   protected static final int ENOUGH_RECORDS = 1 << 15;
 
   protected static final int ARBITRARY_FILE_ID = 157;
-  protected static final int ARBITRARY_ATTRIBUTE_ID = AbstractAttributesStorage.MAX_ATTRIBUTE_ID - 1;
+  protected static final int ARBITRARY_ATTRIBUTE_ID = AttributesStorageOverBlobStorage.MAX_SUPPORTED_ATTRIBUTE_ID - 1;
 
 
   @BeforeClass
