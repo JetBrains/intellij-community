@@ -100,7 +100,9 @@ class K2MoveDeclarationsDialog(
             row {
                 panel {
                     row {
-                        searchReferencesCb = checkBox(KotlinBundle.message("checkbox.text.search.references")).component
+                        searchReferencesCb = checkBox(KotlinBundle.message("checkbox.text.search.references"))
+                            .bindSelected(KotlinCommonRefactoringSettings.getInstance()::MOVE_SEARCH_REFERENCES)
+                            .component
                     }.layout(RowLayout.PARENT_GRID)
                     row {
                         deleteEmptySourceFilesCb = checkBox(KotlinBundle.message("checkbox.text.delete.empty.source.files"))
