@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.consumeUnrelatedEvent
 import com.intellij.openapi.application.EDT
@@ -353,8 +354,10 @@ private fun IdeEventQueue.pumpEventsForHierarchy(
 
 @Internal
 fun IdeEventQueue.pumpEventsForHierarchy(exitCondition: () -> Boolean) {
-  pumpEventsForHierarchy(
-    exitCondition = exitCondition,
-    modalComponent = { null },
-  )
+  resetThreadContext().use {
+    pumpEventsForHierarchy(
+      exitCondition = exitCondition,
+      modalComponent = { null },
+    )
+  }
 }

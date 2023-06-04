@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
+import com.intellij.concurrency.captureThreadContext
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -36,7 +38,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     @RequiresEdt
     fun performWhenLoaded(editor: Editor, runnable: Runnable) {
       val loader = editor.getUserData(ASYNC_LOADER)
-      loader?.delayedActions?.add(runnable) ?: runnable.run()
+      loader?.delayedActions?.add(captureThreadContext(runnable)) ?: runnable.run()
     }
 
     internal suspend fun waitForLoaded(editor: Editor) {
@@ -79,8 +81,10 @@ class AsyncEditorLoader internal constructor(private val project: Project,
       }
       editor.putUserData(ASYNC_LOADER, null)
       continuation.run()
-      while (true) {
-        (delayedActions.pollFirst() ?: break).run()
+      resetThreadContext().use {
+        while (true) {
+          (delayedActions.pollFirst() ?: break).run()
+        }
       }
     }
     else {
@@ -114,8 +118,10 @@ class AsyncEditorLoader internal constructor(private val project: Project,
 
     editor.scrollingModel.disableAnimation()
     try {
-      while (true) {
-        (delayedActions.pollFirst() ?: break).run()
+      resetThreadContext().use {
+        while (true) {
+          (delayedActions.pollFirst() ?: break).run()
+        }
       }
     }
     finally {
