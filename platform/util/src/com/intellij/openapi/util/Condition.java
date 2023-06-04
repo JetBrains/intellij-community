@@ -13,6 +13,7 @@ import java.util.function.Predicate;
  * See {@link Conditions} for chained conditions.
  */
 @FunctionalInterface
+@ApiStatus.Obsolete
 public interface Condition<T> extends Predicate<T> {
   boolean value(T t);
 
