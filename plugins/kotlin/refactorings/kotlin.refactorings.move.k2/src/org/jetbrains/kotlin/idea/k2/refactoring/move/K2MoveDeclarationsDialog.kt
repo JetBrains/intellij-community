@@ -66,7 +66,7 @@ class K2MoveDeclarationsDialog(
                 packageChooser = cell(PackageNameReferenceEditorCombo(
                     "",
                     myProject,
-                    RECENTS_KEY,
+                    RECENT_PACKAGE_KEY,
                     RefactoringBundle.message("choose.destination.package")
                 )).align(AlignX.FILL).component
                 packageChooser.prependItem(toPackage?.qualifiedName)
@@ -135,7 +135,7 @@ class K2MoveDeclarationsDialog(
     private fun saveSettings() {
         mainPanel.apply()
         KotlinCommonRefactoringSettings.getInstance().MOVE_PREVIEW_USAGES = isPreviewUsages
-        RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, destinationChooser.targetPackage)
+        RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_PACKAGE_KEY, destinationChooser.targetPackage)
     }
 
     override fun doAction() {
@@ -143,7 +143,7 @@ class K2MoveDeclarationsDialog(
     }
 
     companion object {
-        private const val RECENTS_KEY = "MoveKotlinTopLevelDeclarationsDialog.RECENTS_KEY"
+        private const val RECENT_PACKAGE_KEY = "K2MoveDeclarationsDialog.RECENT_PACKAGE_KEY"
 
         @RequiresEdt
         fun createAndShow(
