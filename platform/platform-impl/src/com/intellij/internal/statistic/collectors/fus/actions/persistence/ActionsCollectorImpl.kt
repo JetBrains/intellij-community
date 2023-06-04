@@ -199,7 +199,7 @@ class ActionsCollectorImpl : ActionsCollector() {
       else {
         data.add(ActionsEventLogGroup.ACTION_CLASS.with(actionClassName))
       }
-      data.add(ActionsEventLogGroup.ACTION_ID.with(actionId))
+      data.add(ActionsEventLogGroup.ACTION_ID.with(StringUtil.substringBeforeLast(actionId, "$\$Lambda$", true)))
       return actionId
     }
 
