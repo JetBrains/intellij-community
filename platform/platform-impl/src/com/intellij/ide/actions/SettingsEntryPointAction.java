@@ -106,9 +106,11 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     if (group.getChildrenCount() == 0) {
       resetActionIcon();
     }
-    else {
-      group.addSeparator();
+    AnAction updateGroup = ActionManager.getInstance().getAction("UpdateEntryPointGroup");
+    if (updateGroup != null) {
+      group.add(updateGroup);
     }
+    group.addSeparator();
 
     for (AnAction child : getTemplateActions()) {
       if (child instanceof Separator) {
