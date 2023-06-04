@@ -12873,6 +12873,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multidimensionalArray2.kt");
         }
 
+        @TestMetadata("multipleImplicitReceivers.kt")
+        public void testMultipleImplicitReceivers() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multipleImplicitReceivers.kt");
+        }
+
+        @TestMetadata("multipleImplicitReceivers2.kt")
+        public void testMultipleImplicitReceivers2() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multipleImplicitReceivers2.kt");
+        }
+
         @TestMetadata("notUsedAsIndex.kt")
         public void testNotUsedAsIndex() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/notUsedAsIndex.kt");
