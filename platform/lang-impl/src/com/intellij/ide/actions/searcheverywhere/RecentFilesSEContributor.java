@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -98,7 +99,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
   @Override
   public boolean isEmptyPatternSupported() {
-    return true;
+    return !Registry.is("search.everywhere.recents");
   }
 
   @Override
