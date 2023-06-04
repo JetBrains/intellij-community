@@ -13,6 +13,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.SETab;
+import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponentBase;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchPerformanceTracker;
@@ -95,6 +96,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.toPsi;
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.getReportableContributorID;
 
 /**
@@ -127,6 +129,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private final HintHelper myHintHelper;
   private final SearchEverywhereMlService myMlService;
   private final @Nullable SearchEverywhereSpellingCorrector mySpellingCorrector;
+  private JComponent myExtendedInfoPanel;
+  @Nullable
+  private ExtendedInfoComponent myExtendedInfoComponent;
+
 
   public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors) {
     this(project, contributors, s -> null);
@@ -207,6 +213,16 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     SearchPerformanceTracker performanceTracker = new SearchPerformanceTracker(() -> myHeader.getSelectedTab().getID());
     addSearchListener(performanceTracker);
     Disposer.register(this, SearchFieldStatisticsCollector.createAndStart(mySearchField, performanceTracker, myProject));
+
+    if (Registry.is("search.everywhere.footer.extended.info")) {
+      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(
+        SETabSwitcherListener.Companion.getSE_TAB_TOPIC(), new SETabSwitcherListener() {
+          @Override
+          public void tabSwitched(@NotNull SETabSwitcherListener.SETabSwitchedEvent event) {
+            updateFooter();
+          }
+        });
+    }
   }
 
   public void addSearchListener(SearchListener listener) {
@@ -281,6 +297,16 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
   }
 
+  private void updateFooter() {
+    if (mySearchField == null) return;
+
+    myExtendedInfoPanel.removeAll();
+    myExtendedInfoComponent = createExtendedInfoComponent();
+    if (myExtendedInfoComponent != null) {
+      myExtendedInfoPanel.add(myExtendedInfoComponent.myComponent);
+    }
+  }
+
   private void updateSearchFieldAdvertisement() {
     if (mySearchField == null) return;
 
@@ -314,7 +340,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         continue;
       }
 
-      return ((SearchFieldActionsContributor)contributor).createRightActions(() -> {
+      return ((SearchFieldActionsContributor)contributor).createRightActions(getSearchPattern(), () -> {
         scheduleRebuildList(SearchRestartReason.TEXT_SEARCH_OPTION_CHANGED);
       });
     }
@@ -530,6 +556,29 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   @Override
+  protected @NotNull JPanel createFooterPanel(@NotNull JPanel panel) {
+    myExtendedInfoPanel = new JPanel(new BorderLayout());
+    myExtendedInfoComponent = createExtendedInfoComponent();
+    if (myExtendedInfoComponent != null) {
+      myExtendedInfoPanel.add(myExtendedInfoComponent.myComponent);
+    }
+    panel.add(myExtendedInfoPanel, BorderLayout.SOUTH);
+
+    return panel;
+  }
+
+  @Nullable
+  private ExtendedInfoComponentBase createExtendedInfoComponent() {
+    SETab tab = myHeader.getSelectedTab();
+
+    boolean isExtendedInfoAvailable = !ContainerUtil.mapNotNull(tab.getContributors(), it -> it.createExtendedInfo()).isEmpty();
+    if (ALL_CONTRIBUTORS_GROUP_ID.equals(tab.getID()) || isExtendedInfoAvailable) {
+      return new ExtendedInfoComponentBase(myProject, new ExtendedInfoImpl(tab.getContributors()));
+    }
+    return null;
+  }
+
+  @Override
   protected void installScrollingActions() {
     ScrollingUtil.installMoveUpAction(myResultsList, getSearchField());
     ScrollingUtil.installMoveDownAction(myResultsList, getSearchField());
@@ -720,6 +769,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
 
       showDescriptionForIndex(myResultsList.getSelectedIndex());
+      if (Registry.is("search.everywhere.footer.extended.info")) {
+        if (selectedValue != null && myExtendedInfoComponent instanceof ExtendedInfoComponentBase) {
+          ((ExtendedInfoComponentBase)myExtendedInfoComponent).updateElement(selectedValue);
+        }
+      }
     });
 
     MessageBusConnection busConnection = myProject != null
@@ -1618,8 +1672,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
         @Override
         public String getTooltip() {
-          if (!(action instanceof TextSearchRightActionAction)) return null;
-          return ((TextSearchRightActionAction)action).getTooltipText();
+          return action instanceof TextSearchRightActionAction
+                 ? ((TextSearchRightActionAction)action).getTooltipText()
+                 : action.getTemplatePresentation().getDescription();
         }
 
         @Override

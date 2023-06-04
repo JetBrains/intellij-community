@@ -1473,6 +1473,14 @@
                  description="Provides AI generated code for inspections without quick-fixes"/>
 
     <idePerformanceListener implementation="com.intellij.diagnostic.FusFreezeReporter"/>
+
+    <registryKey key="search.everywhere.footer.extended.info"
+                 defaultValue="false"
+                 description="Enabled rendering of a selected element context information in the search everywhere list footer"/>
+
+    <registryKey key="search.everywhere.recents"
+                 defaultValue="false"
+                 description="Enables recent items on search everywhere tabs"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

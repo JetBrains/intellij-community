@@ -11,7 +11,7 @@ import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.actions.SearchEverywhereClassifier
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.createContext
-import com.intellij.ide.util.RunOnceUtil
+import com.intellij.ide.actions.searcheverywhere.footer.createPsiExtendedInfo
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeModel
 import com.intellij.openapi.Disposable
@@ -23,14 +23,12 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Key
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.reference.SoftReference
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
-import com.intellij.util.PlatformUtils
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
@@ -129,7 +127,7 @@ class TextSearchContributor(
   override fun getActions(onChanged: Runnable): List<AnAction> =
     listOf(ScopeAction { onChanged.run() }, JComboboxAction(project) { onChanged.run() }.also { onDispose = it.saveMask })
 
-  override fun createRightActions(onChanged: Runnable): List<TextSearchRightActionAction> {
+  override fun createRightActions(pattern: String, onChanged: Runnable): List<TextSearchRightActionAction> {
     lateinit var regexp: AtomicBooleanProperty
     val word = AtomicBooleanProperty(model.isWholeWordsOnly).apply {
       afterChange {
@@ -209,6 +207,8 @@ class TextSearchContributor(
   override fun dispose() {
     if (this::onDispose.isInitialized) onDispose()
   }
+
+  override fun createExtendedInfo() = createPsiExtendedInfo()
 
   companion object {
     private const val ID = "TextSearchContributor"

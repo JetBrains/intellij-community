@@ -2,12 +2,15 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
+import com.intellij.ide.actions.searcheverywhere.footer.FileHistoryManager;
 import com.intellij.ide.util.gotoByName.FileTypeRef;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -17,26 +20,31 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.DirtyUI;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.FileTypeFilterCollector;
+import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoKt.createPsiExtendedInfo;
 
 /**
  * @author Konstantin Bulenkov
  * @author Mikhail Sokolov
  */
-public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
+public class FileSearchEverywhereContributor extends AbstractGotoSEContributor implements SearchFieldActionsContributor {
   private static final Logger LOG = Logger.getInstance(FileSearchEverywhereContributor.class);
   private final GotoFileModel myModelForRenderer;
   private final PersistentSearchEverywhereContributorFilter<FileTypeRef> myFilter;
@@ -114,6 +122,12 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
 
   @Override
   public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
+    if (Registry.is("search.everywhere.recents")) {
+      if (selected instanceof PsiFileSystemItem) {
+        FileHistoryManager.getInstance(myProject).getState().getIds().add(((PsiFileSystemItem)selected).getVirtualFile().getPath());
+      }
+    }
+
     if (selected instanceof PsiFile) {
       VirtualFile file = ((PsiFile)selected).getVirtualFile();
       if (file != null && myProject != null) {
@@ -154,6 +168,34 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
       return path;
     }
     return super.getItemDescription(element);
+  }
+
+  @Override
+  public boolean isEmptyPatternSupported() {
+    return true;
+  }
+
+  @Nls
+  @Override
+  public @Nullable ExtendedInfo createExtendedInfo() {
+    return createPsiExtendedInfo();
+  }
+
+  @NotNull
+  @Override
+  public List<AnAction> createRightActions(@NotNull String pattern, @NotNull Runnable onChanged) {
+    if (!Registry.is("search.everywhere.recents")) return super.createRightActions(pattern, onChanged);
+    if (StringUtil.isNotEmpty(pattern)) return super.createRightActions(pattern, onChanged);
+
+    return Collections.singletonList(new AnAction(() -> LangBundle.message("action.clear.recent.actions.text"),
+                                                  () -> LangBundle.message("action.clear.recent.actions.description"),
+                                                  ExpUiIcons.Actions.ClearCash) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        FileHistoryManager.getInstance(myProject).getState().getIds().clear();
+        onChanged.run();
+      }
+    });
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<Object> {
