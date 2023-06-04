@@ -2,12 +2,14 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -111,6 +113,8 @@ public final class MavenRehighlighter implements Disposable {
     }
 
     private void doRehighlightMavenFile(VirtualFile file) {
+      if (!FileTypeManager.getInstance().isFileOfType(file, XmlFileType.INSTANCE)) return;
+
       Document doc = FileDocumentManager.getInstance().getCachedDocument(file);
       if (doc == null) return;
       PsiFile psi = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(doc);
