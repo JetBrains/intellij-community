@@ -2,9 +2,11 @@
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.*;
@@ -1519,7 +1521,9 @@ public final class UIUtil {
    */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    EDT.dispatchAllInvocationEvents();
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      EDT.dispatchAllInvocationEvents();
+    }
   }
 
   public static void addAwtListener(@NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
