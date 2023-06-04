@@ -26,6 +26,6 @@ class K2MoveDeclarationsHandler : MoveHandlerDelegate() {
                 else -> emptyList()
             }
         }
-        K2MoveDeclarationsDialog(project, elementsToSearch, targetContainer).show()
+        K2MoveDeclarationsDialog.createAndShow(project, elementsToSearch, targetContainer)
     }
 }
