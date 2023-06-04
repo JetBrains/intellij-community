@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
@@ -13,13 +14,12 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.move.MoveHandler
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo
 import com.intellij.refactoring.ui.RefactoringDialog
+import com.intellij.ui.RecentsManager
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.Align
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.RowLayout
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinDestinationFolderComboBox
@@ -52,13 +52,15 @@ class K2MoveDeclarationsDialog(
 
     private lateinit var searchCommentsAndStringsCb: JBCheckBox
 
+    private lateinit var mainPanel: DialogPanel
+
     init {
         title = MoveHandler.getRefactoringName()
         init()
     }
 
     override fun createCenterPanel(): JComponent {
-        return panel {
+        mainPanel = panel {
             row {
                 label(KotlinBundle.message("label.text.package")).align(AlignX.LEFT)
                 packageChooser = cell(PackageNameReferenceEditorCombo(
@@ -94,35 +96,48 @@ class K2MoveDeclarationsDialog(
             row {
                 selectionPanel = cell(KotlinMemberSelectionPanel(memberInfo = memberInfos)).align(Align.FILL).component
             }.layout(RowLayout.PARENT_GRID).resizableRow()
+            val refactoringSettings = KotlinCommonRefactoringSettings.getInstance()
             row {
                 panel {
                     row {
                         searchReferencesCb = checkBox(KotlinBundle.message("checkbox.text.search.references")).component
                     }.layout(RowLayout.PARENT_GRID)
                     row {
-                        deleteEmptySourceFilesCb = checkBox(
-                            KotlinBundle.message("checkbox.text.delete.empty.source.files")
-                        ).component
+                        deleteEmptySourceFilesCb = checkBox(KotlinBundle.message("checkbox.text.delete.empty.source.files"))
+                            .bindSelected(KotlinCommonRefactoringSettings.getInstance()::MOVE_DELETE_EMPTY_SOURCE_FILES)
+                            .component
                     }.layout(RowLayout.PARENT_GRID)
                 }.align(AlignX.LEFT)
                 panel {
                     row {
-                        searchTextOccurrencesCb = checkBox(KotlinBundle.message("search.for.text.occurrences")).component
+                        searchTextOccurrencesCb = checkBox(KotlinBundle.message("search.for.text.occurrences"))
+                            .bindSelected(KotlinCommonRefactoringSettings.getInstance()::MOVE_SEARCH_FOR_TEXT)
+                            .component
                     }.layout(RowLayout.PARENT_GRID)
                     row {
-                        searchCommentsAndStringsCb = checkBox(KotlinBundle.message("search.in.comments.and.strings")).component
+                        searchCommentsAndStringsCb = checkBox(KotlinBundle.message("search.in.comments.and.strings"))
+                            .bindSelected(KotlinCommonRefactoringSettings.getInstance()::MOVE_SEARCH_IN_COMMENTS)
+                            .component
+                        searchTextOccurrencesCb.isSelected = refactoringSettings.MOVE_SEARCH_IN_COMMENTS
                     }.layout(RowLayout.PARENT_GRID)
                 }.align(AlignX.RIGHT)
             }.layout(RowLayout.PARENT_GRID)
         }
+        return mainPanel
     }
 
     fun setData() {
         destinationChooser.setData(myProject, toDirectory, { s -> setErrorText(s) }, packageChooser.childComponent)
     }
 
+    private fun saveSettings() {
+        mainPanel.apply()
+        KotlinCommonRefactoringSettings.getInstance().MOVE_PREVIEW_USAGES = isPreviewUsages
+        RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, destinationChooser.targetPackage)
+    }
+
     override fun doAction() {
-        TODO("Not yet implemented")
+        saveSettings()
     }
 
     companion object {
