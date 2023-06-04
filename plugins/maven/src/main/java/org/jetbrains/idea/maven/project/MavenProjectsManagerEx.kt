@@ -21,8 +21,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
@@ -92,7 +90,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   override fun resolveAndImportMavenProjectsSync(spec: MavenImportSpec): List<Module> {
-    return scheduleImportAndResolve(spec).blockingGet(0)!!
+    return runBlockingCancellableUnderIndicator { resolveAndImportMavenProjects(spec) }
   }
 
   override suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module> {
@@ -261,7 +259,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     importMavenProjects(projectsToImport)
   }
 
-  override fun scheduleImportAndResolve(spec: MavenImportSpec): Promise<List<Module>> {
+  private suspend fun resolveAndImportMavenProjects(spec: MavenImportSpec): List<Module> {
     val console = syncConsole
     console.startImport(myProgressListener, spec)
     val activity = MavenImportStats.startImportActivity(myProject)
@@ -270,15 +268,13 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     val projectsToResolve = LinkedHashSet(myProjectsToResolve)
     myProjectsToResolve.removeAll(projectsToResolve)
 
-    val result = AsyncPromise<List<Module>>()
-    val createdModules = runBlockingCancellableUnderIndicator { resolveAndImport(projectsToResolve) }
-    result.setResult(createdModules)
+    val createdModules = resolveAndImport(projectsToResolve)
 
     activity.finished()
     MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
     MavenSyncConsole.finishTransaction(myProject)
 
-    return result
+    return createdModules
   }
 
   private suspend fun resolveAndImport(projectsToResolve: Collection<MavenProject>): List<Module> {

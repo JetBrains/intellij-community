@@ -902,8 +902,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return promise;
   }
 
-  public abstract Promise<List<Module>> scheduleImportAndResolve(MavenImportSpec spec);
-
   public void showServerException(Throwable e) {
     getSyncConsole().addException(e, myProgressListener);
   }
