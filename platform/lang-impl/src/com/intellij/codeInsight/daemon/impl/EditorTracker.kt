@@ -192,7 +192,8 @@ open class EditorTracker(@JvmField protected val project: Project) : Disposable 
       activeEditors = emptyList()
     }
     else {
-      activeEditors = list.filter { !it.isDisposed }
+      // copy list - list here is a mutable one, but we should return immutable
+      activeEditors = java.util.List.copyOf(list)
     }
   }
 
@@ -240,7 +241,7 @@ interface EditorTrackerListener : EventListener {
   companion object {
     @Topic.ProjectLevel
     @JvmField
-    val TOPIC: Topic<EditorTrackerListener> = Topic(EditorTrackerListener::class.java, Topic.BroadcastDirection.NONE)
+    val TOPIC: Topic<EditorTrackerListener> = Topic(EditorTrackerListener::class.java, Topic.BroadcastDirection.NONE, true)
   }
 
   fun activeEditorsChanged(activeEditors: List<Editor>)
