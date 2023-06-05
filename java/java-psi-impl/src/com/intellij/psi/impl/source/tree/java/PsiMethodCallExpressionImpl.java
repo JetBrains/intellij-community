@@ -189,9 +189,9 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
 
       boolean is15OrHigher = languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
       final PsiType getClassReturnType = PsiTypesUtil.patchMethodGetClassReturnType(
-        call, methodExpression, method,
-        type -> type != JavaElementType.CLASS && type != JavaElementType.ANONYMOUS_CLASS, // enum can be created inside enum only, no need to mention it here
-        languageLevel);
+        call, methodExpression, method, languageLevel,
+        type -> type != JavaElementType.CLASS && type != JavaElementType.ANONYMOUS_CLASS // enum can be created inside enum only, no need to mention it here
+      );
 
       if (getClassReturnType != null) {
         return getClassReturnType;
