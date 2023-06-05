@@ -32,7 +32,7 @@ import java.util.List;
 public class DependenciesImportingTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setNoBackgroundMode();
+    MavenUtil.setUpdateSuspendable();
     super.setUp();
     myProjectsManager.initForTests();
     myProjectsManager.listenForExternalChanges();
@@ -42,7 +42,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
   protected void tearDown() throws Exception {
     RunAll.runAll(
       () -> super.tearDown(),
-      () -> MavenUtil.resetNoBackgroundMode()
+      () -> MavenUtil.resetUpdateSuspendable()
     );
   }
 
@@ -2315,7 +2315,8 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     assertModules("project", "m1", "m2");
     assertModuleModuleDeps("m1", "m2");
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
 
 
     setIgnoredFilesPathForNextImport(Collections.singletonList(m2.getPath()));

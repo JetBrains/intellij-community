@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.statistics.MavenImportCollector;
@@ -277,9 +278,21 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
     }
   }
 
+  @TestOnly
+  // this is legacy code anyway
+  public static void setAnswerToDeleteObsoleteModulesQuestion(boolean answer) {
+    answerToDeleteObsoleteModulesQuestion = answer;
+  }
+  private static Boolean answerToDeleteObsoleteModulesQuestion = null;
+
   private boolean isDeleteObsoleteModules(@NotNull List<Module> obsoleteModules) {
     if (obsoleteModules.isEmpty()) {
       return false;
+    }
+    if (null != answerToDeleteObsoleteModulesQuestion) {
+      var delete = answerToDeleteObsoleteModulesQuestion;
+      answerToDeleteObsoleteModulesQuestion = null;
+      return delete;
     }
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() || MavenUtil.isMavenUnitTestModeEnabled()) {
       final int[] result = new int[1];
