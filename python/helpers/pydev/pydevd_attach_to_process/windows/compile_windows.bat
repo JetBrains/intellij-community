@@ -1,6 +1,6 @@
 @set VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe
 @echo Using vswhere at %VSWHERE%
-@for /f "usebackq tokens=*" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set VSDIR=%%i
+@for /f "usebackq tokens=*" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -version "[15.0,)" -property installationPath`) do set VSDIR=%%i
 @echo Using Visual C++ at %VSDIR%
                                  
 call "%VSDIR%\VC\Auxiliary\Build\vcvarsall.bat" x86 -vcvars_spectre_libs=spectre
