@@ -5,7 +5,7 @@ import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ExceptionUtilRt
 import com.intellij.util.Function
-import com.intellij.util.concurrency.createChildContext
+import com.intellij.util.concurrency.captureBiConsumerThreadContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.concurrency.Promise.State
 import java.util.concurrent.*
@@ -103,12 +103,10 @@ open class AsyncPromise<T> private constructor(internal val f: CompletableFuture
 
   private fun whenComplete(action: BiConsumer<T, Throwable?>): CompletableFuture<T> {
     val result = CompletableFuture<T>()
-    val context = createChildContext().first
+    val captured = captureBiConsumerThreadContext(action)
     f.handle { value, error ->
       try {
-        installThreadContext(context, true).use {
-          action.accept(value, error)
-        }
+        captured.accept(value, error)
         if (error != null) result.completeExceptionally(error)
         else result.complete(value)
       }

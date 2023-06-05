@@ -227,6 +227,18 @@ fun capturePropagationAndCancellationContext(
   return JBPair.create(command, expired)
 }
 
+fun <T, U> captureBiConsumerThreadContext(f: BiConsumer<T, U>): BiConsumer<T, U> {
+  val (childContext, childJob) = createChildContext()
+  var f = f
+  if (childContext != EmptyCoroutineContext) {
+    f = ContextBiConsumer(false, childContext, f)
+  }
+  if (childJob != null) {
+    f = CancellationBiConsumer(childJob, f)
+  }
+  return f
+}
+
 private fun <T> cancelIfExpired(expiredCondition: Condition<in T>, childJob: Job): Condition<T> {
   return Condition { t: T ->
     val expired = expiredCondition.value(t)
