@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries
 
 import com.intellij.openapi.module.Module
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomGradlePropertiesTestFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.enableKgpDependencyResolutionParam
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.PrinterContext
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -73,11 +75,16 @@ private fun PrinterContext.expectedKonanDistForHostAndTarget(target: TargetPlatf
 
 private fun PrinterContext.expectedKonanDistForFamily(family: Family): Set<String> {
     val versionClassifier = kotlinGradlePluginVersion.toKotlinVersion().toString()
+    val newImportFlag = testConfiguration.getConfiguration(CustomGradlePropertiesTestFeature)
+        .testProperties[enableKgpDependencyResolutionParam]
 
-    val moreSpecificDist = File(PATH_TO_EXPECTED_KONAN_DIST_CONTENTS, family.name.toLowerCaseAsciiOnly() + "-$versionClassifier.txt")
+    val additionalPathForOldImportTestData = if (newImportFlag == "false") "oldImport" else "."
+    val moreSpecificDist = File(PATH_TO_EXPECTED_KONAN_DIST_CONTENTS.resolve(additionalPathForOldImportTestData),
+                                family.name.toLowerCaseAsciiOnly() + "-$versionClassifier.txt")
         .takeIf { it.exists() }
 
-    val defaultDist = File(PATH_TO_EXPECTED_KONAN_DIST_CONTENTS, family.name.toLowerCaseAsciiOnly() + ".txt")
+    val defaultDist = File(PATH_TO_EXPECTED_KONAN_DIST_CONTENTS.resolve(additionalPathForOldImportTestData),
+                           family.name.toLowerCaseAsciiOnly() + ".txt")
 
     val chosenDist = moreSpecificDist ?: defaultDist
     check(chosenDist.exists()) {
