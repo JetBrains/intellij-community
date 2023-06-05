@@ -4,6 +4,7 @@ import pandas as pd
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 
+
 def get_type(table):
     # type: (str) -> str
     return str(type(table))
@@ -29,6 +30,7 @@ def get_column_types(table):
     return str(table.index.dtype) + TABLE_TYPE_NEXT_VALUE_SEPARATOR + \
         TABLE_TYPE_NEXT_VALUE_SEPARATOR.join([str(t) for t in table.dtypes])
 
+
 # used by pydevd
 # noinspection PyUnresolvedReferences
 def get_data(table, max_cols, max_colwidth, start_index=None, end_index=None):
@@ -37,12 +39,14 @@ def get_data(table, max_cols, max_colwidth, start_index=None, end_index=None):
     _jb_max_cols = pd.get_option('display.max_columns')
     _jb_max_colwidth = pd.get_option('display.max_colwidth')
 
+    pd.set_option('display.max_columns', max_cols)
+    pd.set_option('display.max_colwidth', max_colwidth)
+
     if start_index is not None and end_index is not None:
         table = __get_data_slice(table, start_index, end_index)
 
-    pd.set_option('display.max_columns', max_cols)
-    pd.set_option('display.max_colwidth', max_colwidth)
     data = repr(__convert_to_df(table).to_html(notebook=True, max_cols=max_cols))
+
     pd.set_option('display.max_columns', _jb_max_cols)
     pd.set_option('display.max_colwidth', _jb_max_colwidth)
 
@@ -101,7 +105,7 @@ def __series_to_df(table):
 # numpy.array support
 # TODO: extract to a dedicated provider to fix DS-2086
 def __array_to_df(table):
-    # type: (np.array) -> pd.DataFrame
+    # type: (np.ndarray) -> pd.DataFrame
     return pd.DataFrame(table)
 
 
