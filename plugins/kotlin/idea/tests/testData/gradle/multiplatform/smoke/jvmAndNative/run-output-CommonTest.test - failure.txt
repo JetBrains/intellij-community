@@ -1,3 +1,4 @@
+<time>: Executing ':cleanJvmTest :jvmTest --tests "CommonTest.test - failure"'...
 <time>: Execution finished ':cleanJvmTest :jvmTest --tests "CommonTest.test - failure"'.
 
 
