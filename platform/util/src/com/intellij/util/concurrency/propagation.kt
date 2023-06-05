@@ -8,15 +8,25 @@ package com.intellij.util.concurrency
 import com.intellij.concurrency.ContextAwareCallable
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.SchedulingWrapper.MyScheduledFutureTask
-import kotlinx.coroutines.CompletableJob
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 import java.util.concurrent.FutureTask
+import java.util.function.BiConsumer
+import java.util.function.Function
+import kotlin.Any
+import kotlin.Boolean
+import kotlin.Long
+import kotlin.OptIn
+import kotlin.Pair
+import kotlin.Suppress
+import kotlin.Throwable
+import kotlin.Unit
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
@@ -63,7 +73,7 @@ internal val isCheckContextAssertions: Boolean
   get() = Holder.checkIdeAssertion
 
 @Internal
-class BlockingJob(val blockingJob: Job) : AbstractCoroutineContextElement(BlockingJob) {
+class BlockingJob(val blockingJob: CompletableJob) : AbstractCoroutineContextElement(BlockingJob) {
   companion object : CoroutineContext.Key<BlockingJob>
 }
 
@@ -86,12 +96,25 @@ fun createChildContext(): Pair<CoroutineContext, CompletableJob?> {
   // Effectively, the chain becomes a 1-level tree,
   // as jobs of all scheduled tasks are attached to the initial current Job.
   val (cancellationContext, childJob) = if (isPropagateCancellation) {
-    val parentJob = currentThreadContext[BlockingJob]?.blockingJob
-                    ?: currentThreadContext[Job]
-    // Put BlockingJob into context so that the child of the child context would see and use it.
-    val parentJobContext = parentJob?.let(::BlockingJob) ?: EmptyCoroutineContext
-    val childJob = Job(parent = parentJob)
-    Pair(parentJobContext + childJob, childJob)
+    val parentBlockingJob = currentThreadContext[BlockingJob]
+    if (parentBlockingJob != null) {
+      val parentJob = parentBlockingJob.blockingJob
+      val childJob = Job(parent = parentJob)
+      // the job from `BlockingJob` is `SupervisorJob`, so we need to handle incoming exceptions manually
+      childJob.invokeOnCompletion {
+        when (it) {
+          null -> Unit
+          is ProcessCanceledException -> Unit
+          is CancellationException -> Unit
+          // any other kind of exception is not related to control flow
+          else -> parentJob.completeExceptionally(it)
+        }
+      }
+      Pair(parentBlockingJob + childJob, childJob)
+    }
+    else {
+      Pair(EmptyCoroutineContext, null)
+    }
   }
   else {
     Pair(EmptyCoroutineContext, null)
@@ -124,6 +147,50 @@ internal fun <V> captureCallableThreadContext(callable: Callable<V>): Callable<V
 private fun isContextAwareComputation(runnable: Any) : Boolean {
   return runnable is Continuation<*> || runnable is ContextAwareRunnable || runnable is ContextAwareCallable<*>
 }
+
+/**
+ * Runs [action] under [job], where any external cancellation of [job] is delayed until [action] is finished.
+ *
+ * Consider the following code
+ * ```
+ * blockingContextScope {
+ *   executeOnPooledThread {
+ *     doSomethingWithoutCheckingCancellationForOneHour()
+ *   }
+ *   throw NPE
+ * }
+ * ```
+ * When `throw NPE` is reached, it is important to resume `blockingContextScope` when spawned `executeOnPooledThread` terminates exceptionally.
+ * This is why we reuse coroutine algorithms to ensure proper cancellation in our structured concurrency framework.
+ * In the case above, the lambda in `executeOnPooledThread` needs to be executed under `runAsCoroutine`
+ */
+@Internal
+@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
+fun <T> runAsCoroutine(job: CompletableJob, completeOnFinish: Boolean = true, action: () -> T): T {
+  val deferred = GlobalScope.async(
+    // we need to have job in CoroutineContext so that `Deferred` becomes its child and properly delays cancellation
+    context = job,
+    start = CoroutineStart.UNDISPATCHED) {
+    action()
+  }
+  deferred.invokeOnCompletion {
+    when (it) {
+      null -> if (completeOnFinish) {
+        job.complete()
+      }
+      // `deferred` is an integral part of `Job`, so manual cancellation within `action` should lead to the cancellation of `Job`
+      is CancellationException -> job.cancel(it)
+      // Regular exceptions and PCE get propagated to `job` via parent-child relations between Jobs
+    }
+  }
+  return deferred.getCompleted()
+}
+
+/**
+ * A runnable-friendly overload for usage in Java
+ * @see runAsCoroutine
+ */
+fun runAsCoroutine(job: CompletableJob, r: Runnable): Unit = runAsCoroutine(job, action = r::run)
 
 internal fun capturePropagationAndCancellationContext(command: Runnable): Runnable {
   if (isContextAwareComputation(command)) {

@@ -5,8 +5,7 @@ import com.intellij.concurrency.callable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.concurrency.runnable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.assertReferenced
 import com.intellij.openapi.application.impl.pumpEDT
@@ -34,8 +33,7 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.coroutineContext
-import kotlin.coroutines.resume
+import kotlin.Result
 import kotlin.test.assertNotNull
 
 /**
@@ -126,7 +124,7 @@ class CancellationPropagationTest {
   @Test
   fun `cancelled invokeLater is not executed`(): Unit = timeoutRunBlocking {
     launch {
-      installThreadContext(coroutineContext).use {
+      blockingContextScope {
         ApplicationManager.getApplication().withModality {
           val runnable = Runnable {
             fail()
@@ -211,17 +209,17 @@ class CancellationPropagationTest {
   }
 
   private suspend fun doTest(submit: (() -> Unit) -> Unit) {
-    installThreadContext(coroutineContext).use {
-      suspendCancellableCoroutine { continuation ->
-        val parentJob = checkNotNull(Cancellation.currentJob())
-        submit { // switch to another thread
-          val result: Result<Unit> = runCatching {
-            assertCurrentJobIsChildOf(parentJob)
-          }
-          continuation.resumeWith(result)
-        }
+    var result: Boolean by AtomicReference(false)
+    blockingContextScope {
+      val parentJob = checkNotNull(Cancellation.currentJob())
+      submit { // switch to another thread
+        assertCurrentJobIsChildOf(parentJob)
+        assertTrue(parentJob.isActive)
+        result = true
       }
     }
+    // `blockingContextScope` suspends until it does everything
+    assert(result)
   }
 
   private suspend fun doExecutorServiceTest(service: ExecutorService) {
@@ -303,18 +301,21 @@ class CancellationPropagationTest {
   }
 
   private suspend fun doTestJobIsCancelledByFuture(submit: (() -> Unit) -> Future<*>) {
-    return suspendCancellableCoroutine { continuation ->
-      val started = Semaphore(1)
-      val cancelled = Semaphore(1)
+    val started = Semaphore(1)
+    val cancelled = Semaphore(1)
+
+    var result: Result<Unit> by AtomicReference(Result.failure(IllegalStateException("Runnable is not completed")))
+    blockingContextScope {
+      val computationEndSemaphore = Semaphore(1)
       val future = submit {
-        val result: Result<Unit> = runCatching {
+        result = runCatching<Unit> {
           started.up()
           cancelled.timeoutWaitUp()
           assertThrows<JobCanceledException> {
             Cancellation.checkCancelled()
           }
         }
-        continuation.resumeWith(result)
+        computationEndSemaphore.up()
       }
       started.timeoutWaitUp()
       future.cancel(false)
@@ -322,7 +323,9 @@ class CancellationPropagationTest {
       assertThrows<CancellationException> {
         future.timeoutGet()
       }
+      computationEndSemaphore.timeoutWaitUp()
     }
+    assert(result.isSuccess)
   }
 
   private suspend fun doTestInvokeAnyCancelsRunningCallables(service: ExecutorService): Unit = coroutineScope {
@@ -343,7 +346,7 @@ class CancellationPropagationTest {
       }
     }
     val deferred = async(Dispatchers.IO) {
-      runInterruptible {
+      blockingContextScope {
         service.invokeAny(listOf(c1, c2))
       }
     }
@@ -514,44 +517,70 @@ class CancellationPropagationTest {
 
   @Test
   fun `infinite re-scheduling does not grow job chain`(): Unit = timeoutRunBlocking {
-    suspendCancellableCoroutine { c ->
-      installThreadContext(c.context).use {
-        val job = assertNotNull(Cancellation.currentJob())
-        fun chain(remaining: Int) {
-          ApplicationManager.getApplication().executeOnPooledThread {
-            assertCurrentJobIsChildOf(job)
-            if (remaining > 0) {
-              chain(remaining - 1)
-            }
-            else {
-              c.resume(Unit)
-            }
+    val chainCounter = AtomicInteger(0)
+    blockingContextScope {
+      val job = assertNotNull(Cancellation.currentJob())
+      fun chain(remaining: Int) {
+        ApplicationManager.getApplication().executeOnPooledThread {
+          assertCurrentJobIsChildOf(job)
+          if (remaining > 0) {
+            chain(remaining - 1)
           }
         }
-        chain(1000)
+        chainCounter.incrementAndGet()
+      }
+      chain(1000)
+    }
+    assertEquals(1001, chainCounter.get())
+  }
+
+  @Test
+  fun `prepareThreadContext resets blocking job`(): Unit = timeoutRunBlocking {
+    blockingContextScope {
+      val job = assertNotNull(Cancellation.currentJob())
+      ApplicationManager.getApplication().executeOnPooledThread {
+        runCatching {
+          val blockingJob = assertNotNull(currentThreadContext()[BlockingJob])
+          assertSame(job, blockingJob.blockingJob)
+          prepareThreadContext { prepared ->
+            assertNull(prepared[BlockingJob])
+          }
+          runBlockingCancellable {
+            assertNull(coroutineContext[BlockingJob])
+          }
+        }
       }
     }
   }
 
   @Test
-  fun `prepareThreadContext resets blocking job`(): Unit = timeoutRunBlocking {
-    suspendCancellableCoroutine { c ->
-      installThreadContext(coroutineContext).use {
-        val job = assertNotNull(Cancellation.currentJob())
-        ApplicationManager.getApplication().executeOnPooledThread {
-          val result = runCatching {
-            val blockingJob = assertNotNull(currentThreadContext()[BlockingJob])
-            assertSame(job, blockingJob.blockingJob)
-            prepareThreadContext { prepared ->
-              assertNull(prepared[BlockingJob])
-            }
-            runBlockingCancellable {
-              assertNull(coroutineContext[BlockingJob])
-            }
-          }
-          c.resumeWith(result)
+  fun `blockingContextScope suspends until all children are cancelled`() = timeoutRunBlocking {
+    val allowedToProceed = Semaphore(1)
+    val scheduled = Semaphore(1)
+    var cancelled: Boolean by AtomicReference(false)
+    var blockingJobRef: Job? by AtomicReference(null)
+    val job = withRootJob {
+      blockingJobRef = it
+      ApplicationManager.getApplication().executeOnPooledThread {
+        allowedToProceed.timeoutWaitUp()
+        try {
+          Cancellation.checkCancelled()
+        }
+        catch (e: JobCanceledException) {
+          cancelled = true
+          throw e
         }
       }
+      scheduled.up()
     }
+    scheduled.timeoutWaitUp()
+    assertTrue(job.isActive)
+    blockingJobRef!!.cancel(null)
+    delay(100)
+    assertTrue(job.isActive)
+    assertFalse(cancelled)
+    allowedToProceed.up()
+    job.join()
+    assertTrue(cancelled)
   }
 }

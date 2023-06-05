@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
+import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
@@ -194,6 +195,55 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
 suspend fun <T> blockingContext(action: () -> T): T {
   val coroutineContext = coroutineContext
   return blockingContext(coroutineContext, action)
+}
+
+/**
+ * Executes the given [action] in a blocking context and suspends the coroutine until all the children computations,
+ * spawned during the execution of [action], are completed.
+ *
+ * This function is a combination of [blockingContext] and [coroutineScope], providing both their functionalities.
+ * It ensures proper tracking of children computations that are executed in different environments,
+ * such as different threads (like [com.intellij.openapi.application.Application.invokeLater])
+ * or after a certain period of time (like [com.intellij.util.Alarm.addRequest]).
+ *
+ * If any child throws an exception that is not [CancellationException] or [ProcessCanceledException],
+ * then [blockingContextScope] cancels the whole tree of spawned children
+ * and resumes with this exception when every remaining child completes exceptionally.
+ *
+ * Example:
+ * ```
+ * withContext(Dispatchers.EDT) {
+ *   print("A")
+ *   blockingContextScope {
+ *     print("B")
+ *     executeOnPooledThread {
+ *       print("C")
+ *     }
+ *     print("D")
+ *   }
+ *   print("E")
+ * }
+ * ```
+ * The execution of the snippet above prints `"ABCDE"` or `"ABDCE"`, but never `"ABDEC"`.
+ *
+ * @param action The function to execute in the blocking context.
+ * @return The result of [action] after all its children are completed.
+ *
+ * @throws Exception if any of the children computations throw an exception.
+ *
+ * @see [blockingContext]
+ * @see [coroutineScope]
+ */
+suspend fun <T> blockingContextScope(action: () -> T): T {
+  // `SupervisorJob`, because we need to treat `ProcessCancelledException` as `CancellationException`
+  val rootJob = SupervisorJob(coroutineContext.job)
+  val value = blockingContext(coroutineContext + rootJob + BlockingJob(rootJob), action)
+  // We cannot complete this job right away.
+  // After the call .complete() the job goes into `Completing` state and ignores subsequent .complete() and .completeExceptionally()
+  // It prevents the `rootJob` from completing with an exception from one of its children.
+  rootJob.children.forEach { it.join() }
+  rootJob.complete()
+  return value
 }
 
 @Internal
