@@ -4,8 +4,6 @@ package com.intellij.execution.rmi.ssl;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -23,7 +21,7 @@ import java.util.logging.Logger;
 
 public final class SslTrustStore extends DelegateKeyStore {
   private static final Logger LOG = Logger.getLogger(SslTrustStore.class.getCanonicalName());
-  private static final String NAME = "idea-trust-store";
+  public static final String NAME = "idea-trust-store";
   static {
     ourProvider.setProperty("KeyStore." + NAME, SslTrustStore.class.getName());
   }
