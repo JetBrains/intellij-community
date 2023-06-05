@@ -143,7 +143,7 @@ public final class ModCommands {
       String newText = targetFile.getText();
       VirtualFile origVirtualFile = origFile.getOriginalFile().getVirtualFile();
       if (origVirtualFile == null) return new ModNothing();
-      ModCommand command = oldText.equals(newText) ? new ModNothing() : new ModUpdateFileText(origVirtualFile, oldText, newText);
+      ModCommand command = oldText.equals(newText) ? new ModNothing() : new ModUpdateFileText(origVirtualFile, oldText, newText, List.of());
       int start = -1, end = -1, caret = -1;
       if (context.mySelectionEnd <= newText.length()) {
         start = context.mySelectionStart;

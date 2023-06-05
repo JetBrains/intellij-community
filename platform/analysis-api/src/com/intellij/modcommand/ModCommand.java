@@ -6,13 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -62,42 +59,14 @@ public sealed interface ModCommand permits ModChooseTarget, ModCompositeCommand,
   }
 
   /**
-   * A helper method to implement {@link #andThen(ModCommand)}. Should not be called directly.
-   * 
-   * @param next command to be executed right after current
-   * @return merged command that executes both this and next actions; null if merge is not possible.
-   * Here, {@link ModCompositeCommand} is not returned
-   * @see #andThen(ModCommand) 
-   */
-  default @Nullable ModCommand tryMerge(@NotNull ModCommand next) {
-    return null;
-  }
-
-  /**
    * @param next command to be executed right after current
    * @return the composite command that executes both current and the next command
    */
   default @NotNull ModCommand andThen(@NotNull ModCommand next) {
     if (isEmpty()) return next;
     if (next.isEmpty()) return this;
-    ModCommand merged = tryMerge(next);
-    if (merged != null) {
-      return merged;
-    }
     List<ModCommand> commands = new ArrayList<>(unpack());
-    ModCommand last = Objects.requireNonNull(ContainerUtil.getLastItem(commands));
-    List<ModCommand> nextCommands = next.unpack();
-    for (int i = 0; i < nextCommands.size(); i++) {
-      ModCommand command = nextCommands.get(i);
-      merged = last.tryMerge(command);
-      if (merged != null) {
-        last = merged;
-      } else {
-        commands.set(commands.size() - 1, last);
-        commands.addAll(nextCommands.subList(i, nextCommands.size()));
-        break;
-      }
-    }
+    commands.addAll(next.unpack());
     return commands.size() == 1 ? commands.get(0) : new ModCompositeCommand(commands); 
   }
 

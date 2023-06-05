@@ -7,6 +7,7 @@ import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.modcommand.*;
+import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -157,21 +158,33 @@ public class ModCommandServiceImpl implements ModCommandService {
 
   private static @NotNull ModStatus executeUpdate(@NotNull Project project, @NotNull ModUpdateFileText upd) {
     VirtualFile file = upd.file();
-    String oldText = upd.oldText();
-    String newText = upd.newText();
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return ModStatus.ABORT;
+    String oldText = upd.oldText();
+    String newText = upd.newText();
     if (!document.getText().equals(oldText)) return ModStatus.ABORT;
-    List<DiffFragment> fragments = ComparisonManager.getInstance().compareChars(oldText, newText, ComparisonPolicy.DEFAULT,
-                                                                                DumbProgressIndicator.INSTANCE);
+    List<@NotNull Fragment> ranges = calculateRanges(upd);
     return WriteAction.compute(() -> {
-      StreamEx.ofReversed(fragments)
-          .forEach(fragment -> {
-            document.replaceString(fragment.getStartOffset1(), fragment.getEndOffset1(), 
-                                   newText.substring(fragment.getStartOffset2(), fragment.getEndOffset2()));
-          });
+      int offset = 0;
+      for (Fragment range : ranges) {
+        int startOffset = range.offset() + offset;
+        document.replaceString(startOffset, startOffset + range.oldLength(),
+                               newText.substring(startOffset, startOffset + range.newLength()));
+        offset += range.newLength() - range.oldLength();
+      }
       PsiDocumentManager.getInstance(project).commitDocument(document);
       return ModStatus.SUCCESS;
     });
+  }
+  
+  private static @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {
+    List<@NotNull Fragment> ranges = upd.updatedRanges();
+    if (!ranges.isEmpty()) return ranges;
+    String oldText = upd.oldText();
+    String newText = upd.newText();
+    List<DiffFragment> fragments = ComparisonManager.getInstance().compareChars(oldText, newText, ComparisonPolicy.DEFAULT,
+                                                                                DumbProgressIndicator.INSTANCE);
+    return ContainerUtil.map(fragments, fr -> new Fragment(fr.getStartOffset1(), fr.getEndOffset1() - fr.getStartOffset1(),
+                                                           fr.getEndOffset2() - fr.getStartOffset2()));
   }
 }

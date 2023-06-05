@@ -4,8 +4,8 @@ package com.intellij.modcommand;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -14,8 +14,25 @@ import java.util.Set;
  * @param file file to update
  * @param oldText old text (expected). The command aborts if the old text doesn't match
  * @param newText new text
+ * @param updatedRanges ranges in the old text that should be updated; empty list to calculate automatically
  */
-public record ModUpdateFileText(@NotNull VirtualFile file, @NotNull String oldText, @NotNull String newText) implements ModCommand {
+public record ModUpdateFileText(@NotNull VirtualFile file, @NotNull String oldText, @NotNull String newText,
+                                @NotNull List<@NotNull Fragment> updatedRanges) implements ModCommand {
+  public ModUpdateFileText {
+    for (int i = 0; i < updatedRanges.size(); i++) {
+      Fragment prev = updatedRanges.get(i);
+      if (prev.offset < 0 || prev.oldLength < 0 || prev.newLength < 0 || prev.offset() + prev.oldLength > oldText.length()) {
+        throw new IllegalArgumentException("Range out of bounds: " + prev);
+      }
+      if (i < updatedRanges.size() - 1) {
+        Fragment next = updatedRanges.get(i + 1);
+        if (next.offset() <= prev.offset() + prev.oldLength()) {
+          throw new IllegalArgumentException("Invalid ranges: " + updatedRanges);
+        } 
+      }
+    }
+  }
+  
   @Override
   public boolean isEmpty() {
     return oldText.equals(newText);
@@ -26,12 +43,12 @@ public record ModUpdateFileText(@NotNull VirtualFile file, @NotNull String oldTe
     return Set.of(file);
   }
 
-  @Override
-  public @Nullable ModCommand tryMerge(@NotNull ModCommand next) {
-    if (next instanceof ModUpdateFileText update && file.equals(update.file) &&
-        newText.equals(update.oldText)) {
-      return new ModUpdateFileText(file, oldText, update.newText);
-    }
-    return null;
-  }
+  /**
+   * A fragment of the old text to update.
+   * 
+   * @param offset offset inside the original text
+   * @param oldLength length of the old fragment
+   * @param newLength length of the new fragment
+   */
+  public record Fragment(int offset, int oldLength, int newLength) {}
 }
