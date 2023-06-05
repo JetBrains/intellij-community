@@ -148,6 +148,7 @@
             class="com.intellij.searchEverywhereMl.ranking.actions.OpenFeaturesInScratchFileAction">
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>
       <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt 1"/>
+      <override-text place="GoToAction"/>
     </action>
   </actions>
 </idea-plugin>
