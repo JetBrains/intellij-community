@@ -80,7 +80,7 @@ abstract class MacDistributionCustomizer(
   /**
    * Enables the use of the new cross-platform launcher (which loads launch data from `product-info.json` instead of `Info.plist`).
    */
-  var useXPlatLauncher = true
+  var useXPlatLauncher = false
 
   /**
    * Filter for files that is going to be put to `<distribution>/bin` directory.
