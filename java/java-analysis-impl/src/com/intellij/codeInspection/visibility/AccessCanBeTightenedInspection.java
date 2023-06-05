@@ -338,7 +338,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
     private static boolean calledOnInheritor(@NotNull PsiElement element, PsiClass memberClass) {
       PsiExpression qualifier = getQualifier(element);
       if (qualifier == null) {
-        PsiClass enclosingInstance = InheritanceUtil.findEnclosingInstanceInScope(memberClass, element, Conditions.alwaysTrue(), true);
+        PsiClass enclosingInstance = InheritanceUtil.findEnclosingInstanceInScope(memberClass, element, true, s -> true);
         return enclosingInstance != null && enclosingInstance != memberClass;
       }
       PsiClass qClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());

@@ -215,7 +215,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
               if (pushDownData.preserveExternalLinks() && !PsiTreeUtil.isAncestor(targetElement, element, false)) {
                 continue;
               }
-              PsiClass inheritor = InheritanceUtil.findEnclosingInstanceInScope(sourceClass, element, Conditions.alwaysTrue(), false);
+              PsiClass inheritor = InheritanceUtil.findEnclosingInstanceInScope(sourceClass, element, false, s -> true);
               if (inheritor != null && inheritor != targetClass) {
                 //usages in other targets should be updated on corresponding turns
                 continue;
