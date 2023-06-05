@@ -3,6 +3,7 @@ package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.ListUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -11,11 +12,12 @@ import javax.swing.event.ListDataListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class FilteringListModel<T> extends AbstractListModel<T> {
   private final ListModel<T> myOriginalModel;
   private final List<T> myData = new ArrayList<>();
-  private Condition<? super T> myCondition = null;
+  private Predicate<? super T> myCondition = null;
 
   private final ListDataListener myListDataListener = new ListDataListener() {
     @Override
@@ -43,9 +45,17 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
     myOriginalModel.removeListDataListener(myListDataListener);
   }
 
-  public void setFilter(Condition<? super T> condition) {
-    myCondition = condition;
+  public void setFilter(Predicate<? super T> predicate) {
+    myCondition = predicate;
     refilter();
+  }
+
+  /**
+   * Please use {@link FilteringListModel#setFilter(Predicate)} instead
+   */
+  @ApiStatus.Obsolete
+  public void setFilter(Condition<? super T> condition) {
+    setFilter((Predicate<? super T>) condition);
   }
 
   private void removeAllElements() {
@@ -100,7 +110,7 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
   }
 
   private boolean passElement(T element) {
-    return myCondition == null || myCondition.value(element);
+    return myCondition == null || myCondition.test(element);
   }
 
   public boolean contains(T value) {
