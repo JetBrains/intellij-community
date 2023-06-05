@@ -15,6 +15,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 public final class ListUtil {
   public static final String SELECTED_BY_MOUSE_EVENT = "byMouseEvent";
@@ -73,9 +74,18 @@ public final class ListUtil {
   }
 
   @NotNull
-  public static <T> List<T> removeSelectedItems(@NotNull JList<T> list, @Nullable Condition<? super T> condition) {
+  public static <T> List<T> removeSelectedItems(@Nullable Predicate<? super T> predicate, @NotNull JList<T> list) {
     int[] indices = list.getSelectedIndices();
-    return removeIndices(list, indices, condition);
+    return removeIndices(list, indices, predicate);
+  }
+
+  /**
+   * @deprecated use {@link ListUtil#removeSelectedItems(Predicate, JList)} instead
+   */
+  @Deprecated
+  @NotNull
+  public static <T> List<T> removeSelectedItems(@NotNull JList<T> list, @Nullable Condition<? super T> condition) {
+    return removeSelectedItems(condition, list);
   }
 
   public static <T> T getItem(@NotNull ListModel<T> model, int index) {
@@ -98,7 +108,7 @@ public final class ListUtil {
     getExtension(model).addAll(model, items);
   }
 
-  private static <T> List<T> removeIndices(@NotNull JList<T> list, int @NotNull [] indices, @Nullable Condition<? super T> condition) {
+  private static <T> List<T> removeIndices(@NotNull JList<T> list, int @NotNull [] indices, @Nullable Predicate<? super T> predicate) {
     if (indices.length == 0) {
       return new ArrayList<>(0);
     }
@@ -111,7 +121,7 @@ public final class ListUtil {
       int index = idx1 - deletedCount;
       if (index < 0 || index >= model.getSize()) continue;
       T obj = extension.get(model, index);
-      if (condition == null || condition.value(obj)) {
+      if (predicate == null || predicate.test(obj)) {
         removedItems.add(obj);
         extension.remove(model, index);
         deletedCount++;
@@ -136,7 +146,7 @@ public final class ListUtil {
     return canRemoveSelectedItems(list, null);
   }
 
-  public static <T> boolean canRemoveSelectedItems(@NotNull JList<T> list, @Nullable Condition<? super T> condition) {
+  public static <T> boolean canRemoveSelectedItems(@Nullable Predicate<? super T> predicate, @NotNull JList<T> list) {
     int[] indices = list.getSelectedIndices();
     if (indices.length == 0) {
       return false;
@@ -146,12 +156,20 @@ public final class ListUtil {
     for (int index : indices) {
       if (index < 0 || index >= model.getSize()) continue;
       T obj = extension.get(model, index);
-      if (condition == null || condition.value(obj)) {
+      if (predicate == null || predicate.test(obj)) {
         return true;
       }
     }
 
     return false;
+  }
+
+  /**
+   * @deprecated use {@link ListUtil#canRemoveSelectedItems(Predicate, JList)} instead
+   */
+  @Deprecated
+  public static <T> boolean canRemoveSelectedItems(@NotNull JList<T> list, @Nullable Condition<? super T> condition) {
+    return canRemoveSelectedItems(condition, list);
   }
 
   public static <T> int moveSelectedItemsUp(@NotNull JList<T> list) {
