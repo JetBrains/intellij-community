@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.gist.storage;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4;
@@ -10,6 +11,7 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.lang.reflect.Proxy;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -122,8 +124,76 @@ public class GistStorageImplTest extends LightJavaCodeInsightFixtureTestCase4 {
   }
 
 
+  @Test
+  public void gistDataStoredForDifferentProjects_AreStoredSeparately() throws Throwable {
+    Gist<String> gist = gistOf("testGist", DEFAULT_GIST_VERSION);
+    VirtualFile file = emptyFile(randomFileName());
+    int gistStamp = DEFAULT_GIST_STAMP;
+
+    Project[] projects = generateFakeProjects(5);
+    for (Project project : projects) {
+      String perProjectDataToStore = project.getLocationHash();
+      gist.putProjectData(project, file, perProjectDataToStore, gistStamp);
+      GistData<String> gistData = gist.getProjectData(project, file, gistStamp);
+      assertThat(
+        "Gist data does exist",
+        gistData.hasData(),
+        is(true)
+      );
+      assertThat(
+        "Gist stamp returned is same as was put",
+        gistData.gistStamp(),
+        is(gistStamp)
+      );
+      assertThat(
+        "Gist data returned is same as was put",
+        gistData.dataIfExists(),
+        equalTo(perProjectDataToStore)
+      );
+    }
+
+    //second attempt: ensure there was no interference between different project's gists:
+    for (Project project : projects) {
+      String perProjectDataStored = project.getLocationHash();
+      GistData<String> gistData = gist.getProjectData(project, file, gistStamp);
+      assertThat(
+        "Gist data does exist (still)",
+        gistData.hasData(),
+        is(true)
+      );
+      assertThat(
+        "Gist stamp returned is (still) the same as was put",
+        gistData.gistStamp(),
+        is(gistStamp)
+      );
+      assertThat(
+        "Gist data returned is (still) the same as was put",
+        gistData.dataIfExists(),
+        equalTo(perProjectDataStored)
+      );
+    }
+  }
+
+
+
   // ============================= infrastructure: ================================================ //
 
+  private static Project[] generateFakeProjects(int projectCount) {
+    Project[] projects = new Project[projectCount];
+    for (int i = 0; i < projects.length; i++) {
+      String locationHash = "project_" + i;
+      projects[i] = (Project)Proxy.newProxyInstance(
+        GistStorageImplTest.class.getClassLoader(),
+        new Class[]{Project.class},
+        (proxy, method, args) -> {
+          if (method.getName().equals("getLocationHash")) {
+            return locationHash;
+          }
+          throw new UnsupportedOperationException("Only .getLocationHash() method is supported by this Project proxy");
+        });
+    }
+    return projects;
+  }
 
   private static final AtomicInteger filesCounter = new AtomicInteger();
 
