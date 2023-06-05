@@ -43,16 +43,6 @@ fun getMergeRequestLabelEventsUri(project: GitLabProjectCoordinates, mr: GitLabM
 fun getMergeRequestMilestoneEventsUri(project: GitLabProjectCoordinates, mr: GitLabMergeRequestId): URI =
   project.restApiUri.resolveRelative("merge_requests").resolveRelative(mr.iid).resolveRelative("resource_milestone_events")
 
-suspend inline fun <reified T> GitLabApi.Rest.loadUpdatableJsonList(uri: URI, eTag: String? = null)
-  : HttpResponse<out List<T>?> {
-  val request = request(uri).GET().apply {
-    if (eTag != null) {
-      header("If-None-Match", eTag)
-    }
-  }.build()
-  return loadOptionalJsonList(request)
-}
-
 suspend fun GitLabApi.Rest.mergeRequestApprove(
   project: GitLabProjectCoordinates,
   mergeRequestId: GitLabMergeRequestId

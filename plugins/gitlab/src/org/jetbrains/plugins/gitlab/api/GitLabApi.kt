@@ -6,9 +6,11 @@ import com.intellij.collaboration.api.graphql.GraphQLApiHelper
 import com.intellij.collaboration.api.httpclient.*
 import com.intellij.collaboration.api.json.JsonHttpApiHelper
 import com.intellij.collaboration.api.json.loadJsonList
+import com.intellij.collaboration.api.json.loadOptionalJsonList
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
+import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
@@ -57,6 +59,16 @@ fun GitLabApi.GraphQL.query(serverPath: GitLabServerPath, query: GitLabGQLQuery,
 suspend inline fun <reified T> GitLabApi.Rest.loadList(uri: String): HttpResponse<out List<T>> {
   val request = request(uri).GET().build()
   return loadJsonList(request)
+}
+
+suspend inline fun <reified T> GitLabApi.Rest.loadUpdatableJsonList(uri: URI, eTag: String? = null)
+  : HttpResponse<out List<T>?> {
+  val request = request(uri).GET().apply {
+    if (eTag != null) {
+      header("If-None-Match", eTag)
+    }
+  }.build()
+  return loadOptionalJsonList(request)
 }
 
 @Throws(GitLabGraphQLMutationException::class)

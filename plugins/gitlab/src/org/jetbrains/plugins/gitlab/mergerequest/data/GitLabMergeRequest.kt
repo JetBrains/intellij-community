@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
+import org.jetbrains.plugins.gitlab.api.loadUpdatableJsonList
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
@@ -112,7 +113,7 @@ internal class LoadedGitLabMergeRequest(
   override val sourceProject: StateFlow<GitLabProjectDTO> = mergeRequestDetailsState.mapState(cs) { it.sourceProject }
   override val title: Flow<String> = mergeRequestDetailsState.map { it.title }
   override val description: Flow<String> = mergeRequestDetailsState.map { it.description }
-  override val descriptionHtml: Flow<String> = description.map { if(it.isNotBlank()) GitLabUIUtil.convertToHtml(it) else it }
+  override val descriptionHtml: Flow<String> = description.map { if (it.isNotBlank()) GitLabUIUtil.convertToHtml(it) else it }
   override val targetBranch: StateFlow<String> = mergeRequestDetailsState.mapState(cs) { it.targetBranch }
   override val sourceBranch: StateFlow<String> = mergeRequestDetailsState.mapState(cs) { it.sourceBranch }
   override val hasConflicts: Flow<Boolean> = mergeRequestDetailsState.map { it.conflicts }
@@ -294,7 +295,7 @@ internal class LoadedGitLabMergeRequest(
 
   override suspend fun addNote(position: GitLabDiffPositionInput, body: String) = discussionsContainer.addNote(position, body)
 
-  override suspend fun submitDraftNotes()  = discussionsContainer.submitDraftNotes()
+  override suspend fun submitDraftNotes() = discussionsContainer.submitDraftNotes()
 }
 
 private fun <T> Flow<List<T>>.collectBatches(): Flow<List<T>> =
