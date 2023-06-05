@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -84,6 +85,21 @@ public interface ModCommandAction extends CommonIntentionAction {
    * @param selection selection
    */
   record ActionContext(@NotNull Project project, @NotNull PsiFile file, int offset, @NotNull TextRange selection) {
+    /**
+     * @param file file copy
+     * @return new context, which is bound to the file copy, rather than the original file
+     */
+    public @NotNull ActionContext withFile(@NotNull PsiFile file) {
+      return new ActionContext(project, file, offset, selection);
+    }
+
+    /**
+     * @return a context leaf element, if available
+     */
+    public @Nullable PsiElement findLeaf() {
+      return file.findElementAt(offset);
+    }
+
     /**
      * @param editor editor the action is invoked in
      * @param file file the action is invoked on
