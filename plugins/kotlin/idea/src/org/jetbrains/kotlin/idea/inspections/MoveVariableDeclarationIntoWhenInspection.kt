@@ -137,7 +137,7 @@ private class VariableDeclarationIntoWhenFix(
         }
 
         val resultElement = subjectExpression.replace(toReplace)
-        property.delete()
+        property.parent.deleteChildRange(property, property.nextSibling as? PsiWhiteSpace ?: property)
 
         val editor = resultElement.findExistingEditor() ?: return
         editor.moveCaret((resultElement as? KtProperty)?.nameIdentifier?.startOffset ?: resultElement.startOffset)
