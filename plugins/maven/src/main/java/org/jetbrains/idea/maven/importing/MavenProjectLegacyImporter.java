@@ -38,7 +38,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.IOException;
 import java.util.*;
 
-class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
+public final class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
   private static final Logger LOG = Logger.getInstance(MavenProjectLegacyImporter.class);
   private final Map<VirtualFile, Module> myFileToModuleMapping;
   private volatile Set<MavenProject> myAllProjects;
