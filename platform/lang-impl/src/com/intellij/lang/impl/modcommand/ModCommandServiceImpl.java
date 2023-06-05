@@ -175,12 +175,9 @@ public class ModCommandServiceImpl implements ModCommandService {
     if (!document.getText().equals(oldText)) return false;
     List<@NotNull Fragment> ranges = calculateRanges(upd);
     return WriteAction.compute(() -> {
-      int offset = 0;
       for (Fragment range : ranges) {
-        int startOffset = range.offset() + offset;
-        document.replaceString(startOffset, startOffset + range.oldLength(),
-                               newText.substring(startOffset, startOffset + range.newLength()));
-        offset += range.newLength() - range.oldLength();
+        document.replaceString(range.offset(), range.offset() + range.oldLength(),
+                               newText.substring(range.offset(), range.offset() + range.newLength()));
       }
       PsiDocumentManager.getInstance(project).commitDocument(document);
       return true;
@@ -194,7 +191,7 @@ public class ModCommandServiceImpl implements ModCommandService {
     String newText = upd.newText();
     List<DiffFragment> fragments = ComparisonManager.getInstance().compareChars(oldText, newText, ComparisonPolicy.DEFAULT,
                                                                                 DumbProgressIndicator.INSTANCE);
-    return ContainerUtil.map(fragments, fr -> new Fragment(fr.getStartOffset1(), fr.getEndOffset1() - fr.getStartOffset1(),
+    return ContainerUtil.map(fragments, fr -> new Fragment(fr.getStartOffset2(), fr.getEndOffset1() - fr.getStartOffset1(),
                                                            fr.getEndOffset2() - fr.getStartOffset2()));
   }
 }

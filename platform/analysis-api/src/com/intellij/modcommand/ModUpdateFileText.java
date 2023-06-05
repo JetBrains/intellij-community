@@ -14,21 +14,22 @@ import java.util.Set;
  * @param file file to update
  * @param oldText old text (expected). The command aborts if the old text doesn't match
  * @param newText new text
- * @param updatedRanges ranges in the old text that should be updated; empty list to calculate automatically
+ * @param updatedRanges ranges in the text that should be updated, sorted in ascending order; 
+ *                      use empty list to calculate automatically
  */
 public record ModUpdateFileText(@NotNull VirtualFile file, @NotNull String oldText, @NotNull String newText,
                                 @NotNull List<@NotNull Fragment> updatedRanges) implements ModCommand {
   public ModUpdateFileText {
     for (int i = 0; i < updatedRanges.size(); i++) {
       Fragment prev = updatedRanges.get(i);
-      if (prev.offset < 0 || prev.oldLength < 0 || prev.newLength < 0 || prev.offset() + prev.oldLength > oldText.length()) {
+      if (prev.offset() + prev.newLength > newText.length()) {
         throw new IllegalArgumentException("Range out of bounds: " + prev);
       }
       if (i < updatedRanges.size() - 1) {
         Fragment next = updatedRanges.get(i + 1);
-        if (next.offset() <= prev.offset() + prev.oldLength()) {
+        if (next.offset() <= prev.offset() + prev.newLength()) {
           throw new IllegalArgumentException("Invalid ranges: " + updatedRanges);
-        } 
+        }
       }
     }
   }
@@ -44,11 +45,44 @@ public record ModUpdateFileText(@NotNull VirtualFile file, @NotNull String oldTe
   }
 
   /**
-   * A fragment of the old text to update.
-   * 
-   * @param offset offset inside the original text
+   * A fragment of the text to update.
+   *
+   * @param offset start offset inside the new text
    * @param oldLength length of the old fragment
    * @param newLength length of the new fragment
    */
-  public record Fragment(int offset, int oldLength, int newLength) {}
+  public record Fragment(int offset, int oldLength, int newLength) {
+    public Fragment {
+      if (offset < 0) throw new IllegalArgumentException("Negative offset");
+      if (oldLength < 0) throw new IllegalArgumentException("Negative oldLength");
+      if (newLength < 0) throw new IllegalArgumentException("Negative newLength");
+    }
+
+    public @NotNull Fragment shift(int diff) {
+      return diff == 0 ? this : new Fragment(offset + diff, oldLength, newLength);
+    }
+
+    public boolean intersects(@NotNull Fragment other) {
+      return Math.max(offset, other.offset) <= Math.min(offset + newLength, other.offset + other.oldLength);
+    }
+
+    private int adjustForward(int pos) {
+      if (pos <= offset) return pos;
+      if (pos <= offset + oldLength) return offset;
+      return pos - oldLength + newLength;
+    }
+
+    private int adjustBackward(int pos) {
+      if (pos <= offset) return pos;
+      if (pos <= offset + newLength) return offset;
+      return pos - newLength + oldLength;
+    }
+
+    public @NotNull Fragment mergeWithNext(@NotNull Fragment next) {
+      int newStartOffset = Math.min(offset, next.offset);
+      int newOrigEndOffset = Math.max(offset + oldLength, adjustBackward(next.offset + next.oldLength));
+      int newUpdatedEndOffset = Math.max(next.adjustForward(offset + newLength), next.offset + next.newLength);
+      return new Fragment(newStartOffset, newOrigEndOffset - newStartOffset, newUpdatedEndOffset - newStartOffset);
+    }
+  }
 }
