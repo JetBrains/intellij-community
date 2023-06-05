@@ -6,7 +6,9 @@ import com.intellij.collaboration.api.dto.GraphQLRequestDTO
 import com.intellij.collaboration.api.httpclient.ByteArrayProducingBodyPublisher
 import com.intellij.collaboration.api.httpclient.HttpClientUtil
 import com.intellij.collaboration.api.httpclient.InflatedStreamReadingBodyHandler
+import com.intellij.collaboration.api.json.HttpJsonDeserializationException
 import com.intellij.collaboration.api.json.JsonDataSerializer
+import com.intellij.collaboration.api.logName
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
@@ -14,7 +16,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
 @ApiStatus.Experimental
-interface GraphQLApiHelper {
+interface GraphQLApiHelper  {
   fun gqlQuery(uri: URI, queryPath: String, variablesObject: Any? = null): HttpRequest
 
   suspend fun <T> loadGQLResponse(request: HttpRequest, clazz: Class<T>, vararg pathFromData: String): HttpResponse<out T?>
@@ -61,7 +63,12 @@ private class GraphQLApiHelperImpl(private val logger: Logger,
   override suspend fun <T> loadGQLResponse(request: HttpRequest, clazz: Class<T>, vararg pathFromData: String): HttpResponse<out T?> {
     val handler = InflatedStreamReadingBodyHandler { responseInfo, stream ->
       HttpClientUtil.readSuccessResponseWithLogging(logger, request, responseInfo, stream) {
-        deserializer.readAndTraverseGQLResponse(it, pathFromData, clazz)
+        try {
+          deserializer.readAndTraverseGQLResponse(it, pathFromData, clazz)
+        }
+        catch (e: Throwable) {
+          throw HttpJsonDeserializationException(request.logName(), e)
+        }
       }
     }
     return httpHelper.sendAndAwaitCancellable(request, handler)
