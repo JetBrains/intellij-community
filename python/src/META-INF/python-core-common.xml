@@ -726,10 +726,6 @@
     <PythonPackagingToolwindowActionProvider implementation="com.jetbrains.python.packaging.conda.CondaPackagingToolwindowActionProvider"/>
   </extensions>
 
-  <extensions defaultExtensionNs="qt">
-    <pathProvider implementation="com.jetbrains.pyqt.PyQtPathProvider"/>
-  </extensions>
-
   <actions>
     <action overrides="true" id="ForceStepInto" class="com.jetbrains.python.debugger.PyForceStepIntoAction"
             icon="PlatformDebuggerImplIcons.Actions.Force_step_into"/>
@@ -767,10 +763,6 @@
     <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction"
             icon="AllIcons.Nodes.Package">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
-    </action>
-
-    <action id="CompuleQrc" class="com.jetbrains.pyqt.CompileQrcAction">
-      <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </action>
 
     <action id="CleanPyc" class="com.jetbrains.python.actions.CleanPycAction">
