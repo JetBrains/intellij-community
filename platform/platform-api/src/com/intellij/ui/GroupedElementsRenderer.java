@@ -212,6 +212,11 @@ public abstract class GroupedElementsRenderer implements Accessible {
     }
 
     @ApiStatus.Internal
+    public @NotNull SeparatorWithText getSeparator() {
+      return mySeparatorComponent;
+    }
+
+    @ApiStatus.Internal
     public @NotNull GroupedElementsRenderer getRenderer() {
       return renderer;
     }
