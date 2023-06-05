@@ -24,7 +24,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.internal.statistic.IntentionsCollector;
+import com.intellij.internal.statistic.IntentionFUSCollector;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.lang.LangBundle;
@@ -292,7 +292,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
         if (contextAndCommand == null) return;
         ModCommandAction.ActionContext context = contextAndCommand.context();
         Project project = context.project();
-        IntentionsCollector.record(project, commandAction, context.file().getLanguage());
+        IntentionFUSCollector.record(project, commandAction, context.file().getLanguage());
         CommandProcessor.getInstance().executeCommand(project, () -> {
           contextAndCommand.command().execute(project);
         }, commandName, null);
@@ -338,7 +338,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   private static void invokeIntention(@NotNull IntentionAction action, @Nullable Editor editor, @NotNull PsiFile file) {
-    IntentionsCollector.record(file.getProject(), action, file.getLanguage());
+    IntentionFUSCollector.record(file.getProject(), action, file.getLanguage());
     PsiElement elementToMakeWritable = action.getElementToMakeWritable(file);
     if (elementToMakeWritable != null && !FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable)) {
       return;

@@ -14,7 +14,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.DynamicPlugins;
 import com.intellij.ide.ui.UISettingsUtils;
-import com.intellij.internal.statistic.IntentionsCollector;
+import com.intellij.internal.statistic.IntentionFUSCollector;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -572,7 +572,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         ApplicationManager.getApplication().invokeLater(this::showPreview);
       }
 
-      IntentionsCollector.reportShownIntentions(myFile.getProject(), myListPopup, myFile.getLanguage());
+      IntentionFUSCollector.reportShownIntentions(myFile.getProject(), myListPopup, myFile.getLanguage());
       myPopupShown = true;
     }
 

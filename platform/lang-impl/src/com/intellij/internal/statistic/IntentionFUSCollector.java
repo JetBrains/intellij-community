@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public final class IntentionsCollector extends CounterUsagesCollector {
+public final class IntentionFUSCollector extends CounterUsagesCollector {
   private final static EventLogGroup GROUP = new EventLogGroup("intentions", 58);
   private final static EventId3<Class<?>, PluginInfo, Language> CALLED =
     GROUP.registerEvent("called", EventFields.Class("id"), EventFields.PluginInfo, EventFields.Language);
