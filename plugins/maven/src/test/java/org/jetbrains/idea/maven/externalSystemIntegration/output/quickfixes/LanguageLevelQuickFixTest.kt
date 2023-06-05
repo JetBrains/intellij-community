@@ -12,14 +12,14 @@ import org.junit.Test
 class LanguageLevelQuickFixTest : MavenDomTestCase() {
 
   override fun setUp() {
-    MavenUtil.setNoBackgroundMode()
+    MavenUtil.setUpdateSuspendable()
     super.setUp()
   }
   override fun tearDown() {
     RunAll.runAll(
       { stopMavenImportManager() },
       { super.tearDown() },
-      { MavenUtil.resetNoBackgroundMode() },
+      { MavenUtil.resetUpdateSuspendable() },
     )
   }
 

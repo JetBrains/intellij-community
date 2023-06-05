@@ -40,7 +40,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setNoBackgroundMode();
+    MavenUtil.setUpdateSuspendable();
     super.setUp();
     myEventsTestHelper.setUp(myProject);
   }
@@ -48,7 +48,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      MavenUtil.resetNoBackgroundMode();
+      MavenUtil.resetUpdateSuspendable();
       myEventsTestHelper.tearDown();
     }
     catch (Throwable e) {

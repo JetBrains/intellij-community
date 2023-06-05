@@ -17,7 +17,7 @@ import java.util.List;
 public class MavenRenameModulesWatcherTest extends MavenDomTestCase {
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setNoBackgroundMode();
+    MavenUtil.setUpdateSuspendable();
     super.setUp();
     myProjectsManager.initForTests();
     myProjectsManager.listenForExternalChanges();
@@ -27,7 +27,7 @@ public class MavenRenameModulesWatcherTest extends MavenDomTestCase {
   protected void tearDown() throws Exception {
     RunAll.runAll(
       () -> super.tearDown(),
-      () -> MavenUtil.resetNoBackgroundMode()
+      () -> MavenUtil.resetUpdateSuspendable()
     );
   }
 

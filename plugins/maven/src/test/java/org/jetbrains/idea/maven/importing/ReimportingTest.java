@@ -57,7 +57,7 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    MavenUtil.setNoBackgroundMode();
+    MavenUtil.resetNoBackgroundMode();
     super.tearDown();
   }
 

@@ -14,14 +14,14 @@ import org.junit.Test
 
 class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
   override fun setUp() {
-    MavenUtil.setNoBackgroundMode()
+    MavenUtil.setUpdateSuspendable()
     super.setUp()
   }
 
   override fun tearDown() {
     RunAll.runAll(
       { super.tearDown() },
-      { MavenUtil.resetNoBackgroundMode() },
+      { MavenUtil.resetUpdateSuspendable() },
     )
   }
   @Test

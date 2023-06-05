@@ -31,7 +31,7 @@ public class MavenMultiProjectImportTest extends ProjectWizardTestCase<AbstractP
 
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setNoBackgroundMode();
+    MavenUtil.setUpdateSuspendable();
     super.setUp();
   }
 
@@ -39,7 +39,7 @@ public class MavenMultiProjectImportTest extends ProjectWizardTestCase<AbstractP
   public void tearDown() throws Exception {
     RunAll.runAll(
       () -> super.tearDown(),
-      () -> MavenUtil.resetNoBackgroundMode()
+      () -> MavenUtil.resetUpdateSuspendable()
     );
   }
   private Path myDir;

@@ -20,13 +20,13 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
   protected lateinit var myAnotherProjectRoot: VirtualFile
 
   override fun setUp() {
-    MavenUtil.setNoBackgroundMode()
+    MavenUtil.setUpdateSuspendable()
     super.setUp()
   }
   override fun tearDown() {
     RunAll.runAll(
       { super.tearDown() },
-      { MavenUtil.resetNoBackgroundMode() },
+      { MavenUtil.resetUpdateSuspendable() },
     )
   }
 

@@ -12,13 +12,13 @@ import org.junit.Test
 class MavenSetupProjectTest : MavenSetupProjectTestCase() {
 
   override fun setUp() {
-    MavenUtil.setNoBackgroundMode()
+    MavenUtil.setUpdateSuspendable()
     super.setUp()
   }
   override fun tearDown() {
     RunAll.runAll(
       { super.tearDown() },
-      { MavenUtil.resetNoBackgroundMode() },
+      { MavenUtil.resetUpdateSuspendable() },
     )
   }
 
