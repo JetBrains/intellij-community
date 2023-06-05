@@ -222,7 +222,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   @Override
   public @NotNull String getWindowId() {
     if (myConfiguration instanceof RunConfiguration configuration) {
-      RunDashboardManager manager = RunDashboardManager.getInstance(configuration.getProject());
+      RunDashboardManager manager = RunDashboardManager.getInstance(getProject());
       if (manager.isShowInDashboard(configuration)) {
         return manager.getToolWindowId();
       }
