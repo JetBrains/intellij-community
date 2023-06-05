@@ -162,6 +162,8 @@ def get_target_filename(is_target_process_64=None, prefix=None, extension=None):
             print('platform.machine() did not return valid value.')  # This shouldn't happen...
             return None
 
+    arch = arch.lower()
+
     if IS_WINDOWS:
         if not extension:
             extension = '.dll'
@@ -177,14 +179,13 @@ def get_target_filename(is_target_process_64=None, prefix=None, extension=None):
     elif IS_MAC:
         if not extension:
             extension = '.dylib'
-        suffix_64 = 'x86_64'
-        suffix_32 = 'x86'
+        suffix_64 = suffix_32 = ''  # universal binary
 
     else:
         print('Unable to attach to process in platform: %s', sys.platform)
         return None
 
-    if arch.lower() not in ('amd64', 'x86', 'x86_64', 'i386', 'x86'):
+    if arch not in ('amd64', 'x86', 'x86_64', 'i386', 'x86', 'aarch64', 'arm64'):
         # We don't support this processor by default. Still, let's support the case where the
         # user manually compiled it himself with some heuristics.
         #
@@ -236,14 +237,18 @@ def get_target_filename(is_target_process_64=None, prefix=None, extension=None):
 
     else:
         if is_target_process_64:
-            suffix = suffix_64
+            if arch == 'aarch64':
+                suffix = 'aarch64'  # Linux AArch64
+            else:
+                suffix = suffix_64
         else:
             suffix = suffix_32
 
         if not prefix:
-            # Default is looking for the attach_ / attach_linux
-            if IS_WINDOWS or IS_MAC:  # just the extension changes
+            if IS_WINDOWS:
                 prefix = 'attach_'
+            elif IS_MAC:
+                prefix = 'attach'
             elif IS_LINUX:
                 prefix = 'attach_linux_'  # historically it has a different name
             else:
