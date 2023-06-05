@@ -131,7 +131,7 @@ class DaemonCodeAnalyzerImpl(private val project: Project, private val coroutine
     Disposer.register(this, fileStatusMap)
     @Suppress("TestOnlyProblems")
     DaemonProgressIndicator.setDebug(LOG.isDebugEnabled)
-    StatusBarUpdater(project, this)
+    StatusBarUpdater(project, coroutineScope)
 
     isDisposed = false
     fileStatusMap.markAllFilesDirty("DaemonCodeAnalyzer init")
