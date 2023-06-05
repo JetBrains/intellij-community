@@ -5,6 +5,7 @@ import com.intellij.dvcs.push.VcsPushAction
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
+import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchUtil
@@ -22,6 +23,7 @@ class GitToolbarPushAction: VcsPushAction(), TooltipDescriptionProvider {
   }
 
   private fun updatePresentation(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = isExperimentEnabled()
     val project = e.project ?: return
     val repository = GitBranchUtil.guessWidgetRepository(project, e.dataContext) ?: return
     val currentBranch = repository.currentBranch ?: return
@@ -44,6 +46,7 @@ class GitToolbarUpdateProjectAction : CommonUpdateProjectAction(), TooltipDescri
   }
 
   private fun updatePresentation(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = isExperimentEnabled()
     val project = e.project ?: return
     val repository = GitBranchUtil.guessWidgetRepository(project, e.dataContext) ?: return
     val currentBranch = repository.currentBranch ?: return
@@ -52,4 +55,8 @@ class GitToolbarUpdateProjectAction : CommonUpdateProjectAction(), TooltipDescri
 
     e.presentation.description = if (hasIncomingForCurrentBranch) GitBundle.message("branches.there.are.incoming.commits") else ""
   }
+}
+
+private fun isExperimentEnabled(): Boolean {
+  return Experiments.getInstance().isFeatureEnabled("git4idea.new.ui.main.toolbar.actions")
 }

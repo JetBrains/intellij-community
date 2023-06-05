@@ -753,6 +753,10 @@
 
     <vcs.commitMessageProvider implementation="git4idea.commit.GitTemplateCommitMessageProvider" order="first"/>
     <jbProtocolRevisionResolver implementation="git4idea.GitNavigateRevisionResolver"/>
+    <experimentalFeature id="git4idea.new.ui.main.toolbar.actions"
+                         percentOfUsers="50">
+      <description>Show "Push" and "Update project" actions on the main toolbar for newUI</description>
+    </experimentalFeature>
   </extensions>
 
   <extensionPoints>
