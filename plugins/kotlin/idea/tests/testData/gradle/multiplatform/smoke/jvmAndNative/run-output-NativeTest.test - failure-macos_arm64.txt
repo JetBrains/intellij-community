@@ -1,3 +1,4 @@
+<time>: Executing ':cleanMacosArm64Test :macosArm64Test --tests "NativeTest.test - failure"'...
 <time>: Execution finished ':cleanMacosArm64Test :macosArm64Test --tests "NativeTest.test - failure"'.
 
 
