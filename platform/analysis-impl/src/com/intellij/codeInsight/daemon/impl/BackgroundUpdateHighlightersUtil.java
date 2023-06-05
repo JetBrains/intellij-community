@@ -263,8 +263,8 @@ public final class BackgroundUpdateHighlightersUtil {
       TextAttributesKey textAttributesKey = info.forcedTextAttributesKey == null ? info.type.getAttributesKey() : info.forcedTextAttributesKey;
       finalHighlighter.setTextAttributesKey(textAttributesKey);
 
-      if (infoAttributes != null && !infoAttributes.equals(finalHighlighter.getTextAttributes(colorsScheme)) ||
-              infoAttributes == TextAttributes.ERASE_MARKER) {
+      if (infoAttributes == TextAttributes.ERASE_MARKER ||
+          infoAttributes != null && !infoAttributes.equals(finalHighlighter.getTextAttributes(colorsScheme))) {
         finalHighlighter.setTextAttributes(infoAttributes);
       }
 
@@ -309,6 +309,7 @@ public final class BackgroundUpdateHighlightersUtil {
         LOG.error("Expected to set " + infoAttributes + " but actual attributes are: "+actualAttributes+
                   "; colorsScheme: '" + (colorsScheme == null ? "[global]" : colorsScheme.getName()) + "'" +
                   "; highlighter:" + highlighter +" ("+highlighter.getClass()+")" +
+                  "; markup: "+markup+" ("+markup.getClass()+")"+
                   "; attributes after the second .setAttributes(): "+afterSet);
       }
     }
