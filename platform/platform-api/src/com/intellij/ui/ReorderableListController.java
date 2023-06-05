@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Predicate;
 
 public abstract class ReorderableListController <T> {
   private final JList myList;
@@ -199,8 +200,8 @@ public abstract class ReorderableListController <T> {
 
   public class RemoveActionDescription extends CustomActionDescription<List<T>> {
     private final @NlsActions.ActionText String myActionName;
-    private Condition<? super List<T>> myConfirmation;
-    private Condition<? super T> myEnableCondition;
+    private Predicate<? super List<T>> myConfirmation;
+    private Predicate<? super T> myEnableCondition;
 
     public RemoveActionDescription(final @NlsActions.ActionText String actionName) {
       myActionName = actionName;
@@ -211,7 +212,7 @@ public abstract class ReorderableListController <T> {
       final ActionBehaviour<List<T>> behaviour = new ActionBehaviour<>() {
         @Override
         public List<T> performAction(@NotNull final AnActionEvent e) {
-          if (myConfirmation != null && !myConfirmation.value((List<T>)Arrays.asList(myList.getSelectedValues()))) {
+          if (myConfirmation != null && !myConfirmation.test((List<T>)Arrays.asList(myList.getSelectedValues()))) {
             return Collections.emptyList();
           }
           return ListUtil.removeSelectedItems(myEnableCondition, myList);
@@ -237,12 +238,28 @@ public abstract class ReorderableListController <T> {
       return myActionName;
     }
 
-    public void setConfirmation(final Condition<? super List<T>> confirmation) {
+    public void setConfirmation(final Predicate<? super List<T>> confirmation) {
       myConfirmation = confirmation;
     }
 
-    public void setEnableCondition(final Condition<? super T> enableCondition) {
+    /**
+     * @deprecated use {@link ReorderableListController.RemoveActionDescription#setConfirmation(Predicate)}
+     */
+    @Deprecated
+    public void setConfirmation(final Condition<? super List<T>> confirmation) {
+      setConfirmation((Predicate<? super List<T>>) confirmation);
+    }
+
+    public void setEnableCondition(final Predicate<? super T> enableCondition) {
       myEnableCondition = enableCondition;
+    }
+
+    /**
+     * @deprecated use {@link ReorderableListController.RemoveActionDescription#setEnableCondition(Predicate)}
+     */
+    @Deprecated
+    public void setEnableCondition(final Condition<? super T> enableCondition) {
+      setEnableCondition((Predicate<? super T>) enableCondition);
     }
 
     public JList getList() {
