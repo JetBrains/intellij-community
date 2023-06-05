@@ -93,7 +93,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.webp",
   "intellij.grazie",
   "intellij.featuresTrainer",
-  "intellij.lombok",
   "intellij.searchEverywhereMl",
   "intellij.platform.tracing.ide",
   "intellij.toml",
