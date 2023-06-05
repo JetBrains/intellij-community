@@ -23,6 +23,7 @@ import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.notebook.editor.BackedVirtualFileProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -67,6 +68,9 @@ import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -86,7 +90,8 @@ private const val FILE_TAG: @NonNls String = "file"
 private const val URL_ATT: @NonNls String = "url"
 
 @State(name = "DaemonCodeAnalyzer", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-class DaemonCodeAnalyzerImpl(private val project: Project) : DaemonCodeAnalyzerEx(), PersistentStateComponent<Element?>, Disposable {
+class DaemonCodeAnalyzerImpl(private val project: Project, private val coroutineScope: CoroutineScope) :
+  DaemonCodeAnalyzerEx(), PersistentStateComponent<Element?>, Disposable {
   private val settings: DaemonCodeAnalyzerSettings
   private val psiDocumentManager: PsiDocumentManager
   private val fileEditorManager = lazy(LazyThreadSafetyMode.NONE) { FileEditorManager.getInstance(project) }
@@ -971,8 +976,17 @@ ${ThreadDumper.dumpThreadsToString()}""")
                                                 })
     { task ->
       // manifest exceptions in EDT to avoid storing them in the Future and abandoning
-      ApplicationManager.getApplication().invokeLater {
-        ConcurrencyUtil.manifestExceptionsIn(task)
+      coroutineScope.launch(Dispatchers.EDT) {
+        try {
+          task.get()
+        }
+        catch (ignored: CancellationException) {
+        }
+        catch (ignored: InterruptedException) {
+        }
+        catch (e: ExecutionException) {
+          throw e.cause!!
+        }
       }
     }
     return session
