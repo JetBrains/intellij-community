@@ -17,7 +17,7 @@ import java.util.function.Predicate;
 public class FilteringListModel<T> extends AbstractListModel<T> {
   private final ListModel<T> myOriginalModel;
   private final List<T> myData = new ArrayList<>();
-  private Predicate<? super T> myCondition = null;
+  private Predicate<? super T> myPredicate = null;
 
   private final ListDataListener myListDataListener = new ListDataListener() {
     @Override
@@ -46,7 +46,7 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
   }
 
   public void setFilter(Predicate<? super T> predicate) {
-    myCondition = predicate;
+    myPredicate = predicate;
     refilter();
   }
 
@@ -110,7 +110,7 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
   }
 
   private boolean passElement(T element) {
-    return myCondition == null || myCondition.test(element);
+    return myPredicate == null || myPredicate.test(element);
   }
 
   public boolean contains(T value) {

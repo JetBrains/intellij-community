@@ -16,18 +16,20 @@
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Condition;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class FilteringTableModel<T> extends AbstractTableModel {
   private final TableModel myOriginalModel;
   private final List<List<T>> myData = new ArrayList<>();
   private final Class<T> myClz;
-  private Condition<? super T> myCondition = null;
+  private Predicate<? super T> myPredicate = null;
   private final ArrayList<Integer> myIndex = new ArrayList<>();
 
   private final TableModelListener myListDataListener = e -> refilter();
@@ -42,9 +44,14 @@ public class FilteringTableModel<T> extends AbstractTableModel {
     myOriginalModel.removeTableModelListener(myListDataListener);
   }
 
-  public void setFilter(Condition<? super T> condition) {
-    myCondition = condition;
+  public void setFilter(Predicate<? super T> predicate) {
+    myPredicate = predicate;
     refilter();
+  }
+
+  @ApiStatus.Obsolete
+  public void setFilter(Condition<? super T> condition) {
+    setFilter((Predicate<? super T>) condition);
   }
 
   private void removeAllElements() {
@@ -117,7 +124,7 @@ public class FilteringTableModel<T> extends AbstractTableModel {
   }
 
   private boolean passElement(T element) {
-    return myCondition == null || myCondition.value(element);
+    return myPredicate == null || myPredicate.test(element);
   }
 
   @Override
