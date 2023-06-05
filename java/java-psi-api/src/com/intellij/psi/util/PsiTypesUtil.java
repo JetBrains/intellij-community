@@ -182,8 +182,8 @@ public final class PsiTypesUtil {
   public static PsiType patchMethodGetClassReturnType(@NotNull PsiExpression call,
                                                       @NotNull PsiReferenceExpression methodExpression,
                                                       @NotNull PsiMethod method,
-                                                      @NotNull Condition<? super IElementType> condition,
-                                                      @NotNull LanguageLevel languageLevel) {
+                                                      @NotNull LanguageLevel languageLevel,
+                                                      @NotNull Predicate<? super IElementType> predicate) {
     //JLS3 15.8.2
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) && isGetClass(method)) {
       PsiExpression qualifier = methodExpression.getQualifierExpression();
@@ -194,7 +194,7 @@ public final class PsiTypesUtil {
       }
       else {
         PsiElement parent = call.getContext();
-        while (parent != null && condition.value(parent instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)parent).getElementType()
+        while (parent != null && predicate.test(parent instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)parent).getElementType()
                                                                                        : parent.getNode().getElementType())) {
           parent = parent.getContext();
         }
@@ -208,6 +208,18 @@ public final class PsiTypesUtil {
       return createJavaLangClassType(methodExpression, qualifierType, true);
     }
     return null;
+  }
+
+  /**
+   * @deprecated use {@link PsiTypesUtil#patchMethodGetClassReturnType(PsiExpression, PsiReferenceExpression, PsiMethod, LanguageLevel, Predicate)}
+   */
+  @Deprecated
+  public static PsiType patchMethodGetClassReturnType(@NotNull PsiExpression call,
+                                                      @NotNull PsiReferenceExpression methodExpression,
+                                                      @NotNull PsiMethod method,
+                                                      @NotNull Condition<? super IElementType> condition,
+                                                      @NotNull LanguageLevel languageLevel) {
+    return patchMethodGetClassReturnType(call, methodExpression, method, languageLevel, condition);
   }
 
   public static boolean isGetClass(@NotNull PsiMethod method) {
