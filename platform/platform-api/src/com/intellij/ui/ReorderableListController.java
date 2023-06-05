@@ -214,12 +214,12 @@ public abstract class ReorderableListController <T> {
           if (myConfirmation != null && !myConfirmation.value((List<T>)Arrays.asList(myList.getSelectedValues()))) {
             return Collections.emptyList();
           }
-          return ListUtil.removeSelectedItems(myList, myEnableCondition);
+          return ListUtil.removeSelectedItems(myEnableCondition, myList);
         }
 
         @Override
         public void updateAction(@NotNull final AnActionEvent e) {
-          e.getPresentation().setEnabled(ListUtil.canRemoveSelectedItems(myList, myEnableCondition));
+          e.getPresentation().setEnabled(ListUtil.canRemoveSelectedItems(myEnableCondition, myList));
         }
       };
       final BaseAction action = createAction(behaviour);

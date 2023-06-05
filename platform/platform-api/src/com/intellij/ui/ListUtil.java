@@ -65,7 +65,7 @@ public final class ListUtil {
 
   @NotNull
   public static <T> List<T> removeSelectedItems(@NotNull JList<T> list) {
-    return removeSelectedItems(list, null);
+    return removeSelectedItems(null, list);
   }
 
   @NotNull
@@ -143,7 +143,7 @@ public final class ListUtil {
   }
 
   public static <T> boolean canRemoveSelectedItems(@NotNull JList<T> list) {
-    return canRemoveSelectedItems(list, null);
+    return canRemoveSelectedItems(null, list);
   }
 
   public static <T> boolean canRemoveSelectedItems(@Nullable Predicate<? super T> predicate, @NotNull JList<T> list) {
