@@ -106,22 +106,24 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         val file = suspendContext.activeExecutionStack?.topFrame?.sourcePosition?.file
         val fileContents = file?.readText()
 
-        val message = """
-                ${basicErrorMessage()}, project $projectName, location: ${suspendContext.location} at ${file?.path}
-            """.trimIndent()
+        val debuggerContext = """
+            project: $projectName
+            location: ${suspendContext.location} at ${file?.path}
+        """.trimIndent()
 
         val attachments = buildList {
+            add(Attachment("debugger_context.txt", debuggerContext).apply { isIncluded = true })
             add(Attachment("code_fragment.txt", codeFragment.text).apply { isIncluded = true })
             fileContents?.let {
                 add(Attachment("opened_file_contents.txt", it))
             }
         }
 
-        LOG.error(message, RuntimeExceptionWithAttachments(e.reason, *attachments.toTypedArray()))
+        LOG.error(basicErrorMessage(), RuntimeExceptionWithAttachments(e.reason, *attachments.toTypedArray()))
     }
 
     private fun basicErrorMessage(): String {
-        return "Error when compiling code fragment with IR evaluator"
+        return "Error when compiling code fragment with IR evaluator. Details in attachments."
     }
 
     override fun getFallbackStrategy(): CodeFragmentCompilingStrategy? {
