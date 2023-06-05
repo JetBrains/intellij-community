@@ -9,7 +9,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.util.ArrayList;
 
-public class ActionsWitBrokenUpdateMethodTest extends LightPlatformTestCase {
+public class ActionsWithBrokenUpdateMethodTest extends LightPlatformTestCase {
   public void testActionsWithShortcuts() throws Exception {
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
 
