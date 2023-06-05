@@ -66,6 +66,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String externalPluginIdForScreenShots;
   private String mySuggestedCommercialIde = null;
   private Collection<String> mySuggestedFeatures;
+  private boolean myConverted;
 
   private Collection<String> dependencyNames;
 
@@ -602,6 +603,14 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setDependencyNames(@Nullable Collection<String> dependencyNames) {
     this.dependencyNames = dependencyNames;
+  }
+
+  public boolean isConverted() {
+    return myConverted;
+  }
+
+  public void setConverted(boolean converted) {
+    myConverted = converted;
   }
 
   @Override

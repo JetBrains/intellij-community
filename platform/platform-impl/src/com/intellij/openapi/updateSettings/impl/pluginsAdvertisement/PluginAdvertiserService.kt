@@ -276,6 +276,7 @@ open class PluginAdvertiserServiceImpl(
     node.vendor = descriptor.vendor
     node.organization = descriptor.organization
     node.dependencies = descriptor.dependencies
+    node.isConverted = true
 
     return node
   }
