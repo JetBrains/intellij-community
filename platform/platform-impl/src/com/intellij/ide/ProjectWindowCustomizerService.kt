@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.JBColor
 import com.intellij.util.PlatformUtils
@@ -75,6 +76,8 @@ enum class MainToolbarCustomizationType {
   fun isDropdown() = this == JUST_DROPDOWN || this == DROPDOWN_WITH_ICON
 }
 
+private const val TOOLBAR_BACKGROUND_KEY = "PROJECT_TOOLBAR_COLOR"
+
 @Service
 class ProjectWindowCustomizerService : Disposable {
   companion object {
@@ -106,7 +109,16 @@ class ProjectWindowCustomizerService : Disposable {
 
   fun getProjectColor(project: Project): Color {
     val projectPath = getProjectNameForIcon(project)
-    return computeOrGetColor(projectPath, project)
+    val colorStr = PropertiesComponent.getInstance(project).getValue(TOOLBAR_BACKGROUND_KEY)
+    val color = ColorUtil.fromHex(colorStr, null)
+    if (color != null) {
+      return color
+    }
+
+    return colorCache.getOrPut(projectPath) {
+      Disposer.register(project) { colorCache.remove(projectPath) }
+      ColorPalette.select(colors, projectPath)
+    }
   }
 
   fun getPaintingType() = when (Registry.get("ide.colorful.toolbar.gradient.type").selectedOption) {
@@ -211,11 +223,13 @@ class ProjectWindowCustomizerService : Disposable {
     return true
   }
 
-  private fun computeOrGetColor(projectPath: String, disposable: Disposable): Color {
-    return colorCache.getOrPut(projectPath) {
-      Disposer.register(disposable) { colorCache.remove(projectPath) }
-      ColorPalette.select(colors, projectPath)
-    }
+  fun getToolbarBackground(project: Project?):Color? {
+    if (project == null) return null
+    return getProjectColor(project)
+  }
+
+  fun setToolbarColor(background:Color, project: Project) {
+    PropertiesComponent.getInstance(project).setValue(TOOLBAR_BACKGROUND_KEY, ColorUtil.toHex(background))
   }
 
   override fun dispose() {}

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 
 import com.intellij.icons.AllIcons
@@ -44,8 +44,7 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    val reopenProjectAction = getSelectedItem(event) as RecentProjectItem
-    val projectPath = reopenProjectAction.projectPath
+    val projectPath = getProjectPath(event)!!
     val basePath = RecentProjectIconHelper.getDotIdeaPath(projectPath) ?: return
 
     val ui = ProjectIconUI(projectPath)
@@ -89,9 +88,16 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
     }
   }
 
+  fun getProjectPath(event: AnActionEvent): String? {
+    val selectedItem = getSelectedItem(event)
+    if (selectedItem is RecentProjectItem) {
+      return selectedItem.projectPath
+    }
+    return event.project?.basePath
+  }
+
   override fun update(event: AnActionEvent) {
-    val item = getSelectedItem(event)
-    event.presentation.isEnabled = item is RecentProjectItem
+    event.presentation.isEnabled = getProjectPath(event) != null
   }
 }
 
