@@ -239,7 +239,13 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     getGrids().forEach(grid -> grid.setToolbarBefore(value));
 
     myContextActions.clear();
-    updateTabsUI(false);
+
+    rebuildToolbar();
+    Set<String> usedNames = new HashSet<>();
+    for (TabInfo each : myTabs.getTabs()) {
+      updateTabUI(each, usedNames);
+    }
+    myTabs.updateTabActions(false);
   }
 
   void setTopLeftActionsVisible(boolean visible) {
@@ -1126,7 +1132,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       hasToolbarContent |= updateTabUI(each, usedNames);
     }
     int tabsCount = tabs.size() + myChildren.stream().mapToInt(child -> child.myTabs.getTabCount()).sum();
-    myTabs.getPresentation().setHideTabs(!hasToolbarContent && tabsCount <= 1 && myOriginal == null);
+    boolean hideTabs = !hasToolbarContent && tabsCount <= 1 && myOriginal == null;
+    myTabs.getPresentation().setHideTabs(hideTabs);
     myTabs.updateTabActions(validateNow);
 
     if (validateNow) {
