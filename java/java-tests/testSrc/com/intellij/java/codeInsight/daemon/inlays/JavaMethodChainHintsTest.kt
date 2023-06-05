@@ -29,9 +29,9 @@ public class Chains {
   @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     new A()
-      .b()<# B #>
-                .c()<# C #>
-                .a()<# A #>
+      .b()/*<# B #>*/
+                .c()/*<# C #>*/
+                .a()/*<# A #>*/
                 .c();
   }
 }""")
@@ -59,10 +59,10 @@ public class Chains {
   public static void main(String[] args) {
     A a = new A();
     a.b().c() // comment
-     .a()<# A #>
-     .b()<# B #>
+     .a()/*<# A #>*/
+     .b()/*<# B #>*/
      .a() // comment
-     .c()<# C #>
+     .c()/*<# C #>*/
      .b();
   }
 }
@@ -89,11 +89,11 @@ public class Chains {
   @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     A a = new A();
-    a.b().c()<# C #>
-     .a()<# A #>
-     .b()<# B #>
-     .a()<# A #>
-     .c()<# C #>
+    a.b().c()/*<# C #>*/
+     .a()/*<# A #>*/
+     .b()/*<# B #>*/
+     .a()/*<# A #>*/
+     .c()/*<# C #>*/
      .b();
   }
 }
@@ -121,10 +121,10 @@ public class Chains {
   public static void main(String[] args) {
     A a = new A();
     a.b().c() // comment
-     .a()<# A #>
-     .b()<# B #>
+     .a()/*<# A #>*/
+     .b()/*<# B #>*/
      .a() // comment
-     .c()<# C #>
+     .c()/*<# C #>*/
      .b();
   }
 }
@@ -151,15 +151,15 @@ public class Chains {
   @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     new A()
-      .b()<# B #>
-                .c()<# C #>
-                .a()<# A #>
+      .b()/*<# B #>*/
+                .c()/*<# C #>*/
+                .a()/*<# A #>*/
                 .c();
 
     new A()
-      .b()<# B #>
-                .c()<# C #>
-                .a()<# A #>
+      .b()/*<# B #>*/
+                .c()/*<# C #>*/
+                .a()/*<# A #>*/
                 .c();
   }
 }
@@ -194,13 +194,13 @@ public class Chains {
     new A()
       .b(() -> {
         new B()
-          .a()<# A #>
-          .c()<# C #>
-          .b()<# B #>
+          .a()/*<# A #>*/
+          .c()/*<# C #>*/
+          .b()/*<# B #>*/
           .a();
-      })<# B #>
-      .c()<# C #>
-      .a()<# A #>
+      })/*<# B #>*/
+      .c()/*<# C #>*/
+      .a()/*<# A #>*/
       .c();
   }
 }
@@ -212,9 +212,9 @@ public class Chains {
 import java.util.stream.*;
 class Foo {
   {
-    Stream.of(1, 2, 3).filter(x -> x % 2 == 0)<# Stream<Integer> #>
-      .map(x -> x * 2)<# Stream<Integer> #>
-      .map(x -> "item: " + x)<# Stream<String> #>
+    Stream.of(1, 2, 3).filter(x -> x % 2 == 0)/*<# Stream<Integer> #>*/
+      .map(x -> x * 2)/*<# Stream<Integer> #>*/
+      .map(x -> "item: " + x)/*<# Stream<String> #>*/
       .forEach(System.out::println);
   }
 } 
