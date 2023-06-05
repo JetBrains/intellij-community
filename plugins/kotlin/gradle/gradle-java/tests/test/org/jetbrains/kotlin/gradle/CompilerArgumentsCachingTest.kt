@@ -247,7 +247,6 @@ class CompilerArgumentsCachingTest {
         noStdlib = Random.nextBoolean()
         noReflect = Random.nextBoolean()
         javaParameters = Random.nextBoolean()
-        useIR = Random.nextBoolean()
         useOldBackend = Random.nextBoolean()
         allowUnstableDependencies = Random.nextBoolean()
         doNotClearBindingContext = Random.nextBoolean()
@@ -516,7 +515,6 @@ class CompilerArgumentsCachingTest {
             "noStdlib",
             "noReflect",
             "javaParameters",
-            "useIR",
             "useOldBackend",
             "allowUnstableDependencies",
             "doNotClearBindingContext",
