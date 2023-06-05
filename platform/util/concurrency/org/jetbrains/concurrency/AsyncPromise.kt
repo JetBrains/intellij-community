@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.concurrency
 
-import com.intellij.concurrency.installThreadContext
+import com.intellij.concurrency.captureThreadContext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ExceptionUtilRt
 import com.intellij.util.Function
@@ -133,7 +133,8 @@ open class AsyncPromise<T> private constructor(internal val f: CompletableFuture
   }
 
   override fun <SUB_RESULT : Any?> then(done: Function<in T, out SUB_RESULT>): Promise<SUB_RESULT> {
-    return AsyncPromise(f.thenApply { done.`fun`(it) }, hasErrorHandler, addExceptionHandler = true)
+    val newDone = captureThreadContext(java.util.function.Function<T, SUB_RESULT> { arg -> done.`fun`(arg) })
+    return AsyncPromise(f.thenApply { t -> newDone.apply(t) }, hasErrorHandler, addExceptionHandler = true)
   }
 
   override fun <SUB_RESULT : Any?> thenAsync(doneF: Function<in T, out Promise<SUB_RESULT>>): Promise<SUB_RESULT> {
