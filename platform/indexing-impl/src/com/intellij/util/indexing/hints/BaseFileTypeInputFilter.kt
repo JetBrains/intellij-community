@@ -25,7 +25,7 @@ abstract class BaseFileTypeInputFilter(private val fileTypeStrategy: FileTypeSub
 
   constructor() : this(FileTypeSubstitutionStrategy.AFTER_SUBSTITUTION)
 
-  final override fun hintAcceptFileType(fileType: FileType): ThreeState {
+  final override fun acceptsFileTypeFastPath(fileType: FileType): ThreeState {
     val fileTypeToUse: FileType =
       if (fileType is SubstitutedFileType) {
         if (fileTypeStrategy == FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION) fileType.originalFileType else fileType.fileType
@@ -38,7 +38,7 @@ abstract class BaseFileTypeInputFilter(private val fileTypeStrategy: FileTypeSub
   }
 
   final override fun acceptInput(file: IndexedFile): Boolean {
-    return when (hintAcceptFileType(file.fileType)) {
+    return when (acceptsFileTypeFastPath(file.fileType)) {
       ThreeState.YES -> true
       ThreeState.NO -> false
       ThreeState.UNSURE -> whenFileTypeHintUnsure(file)
