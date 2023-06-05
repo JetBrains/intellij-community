@@ -76,9 +76,13 @@ open class EditorTracker(@JvmField protected val project: Project) : Disposable 
   internal class MyAppLevelFileEditorManagerListener : FileEditorManagerListener {
     override fun selectionChanged(event: FileEditorManagerEvent) {
       val project = event.manager.project
-      val frame = WindowManager.getInstance().getFrame(project)
-      if (frame != null && frame.focusOwner != null) {
-        getInstance(project).setActiveWindow(frame)
+      val window = WindowManager.getInstance().getFrame(project) ?: return
+      val editorTracker = getInstance(project)
+      if (editorTracker.activeWindow === window) {
+        LOG.debug { "Skip `setActiveWindow` calling on `FileEditorManagerListener.selectionChanged` (reason=same window, window=$window)" }
+      }
+      else {
+        editorTracker.setActiveWindow(window)
       }
     }
   }
