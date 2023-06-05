@@ -761,7 +761,7 @@ private fun blockATKWrapper() {
   activity.end()
 }
 
-internal fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), "icon-v13.db")
+internal fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), "icon-v14.db")
 
 private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred: Job) {
   launch {
