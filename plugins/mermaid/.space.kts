@@ -47,6 +47,9 @@ job("Mermaid / Plugin Verifier") {
 val marketplaceToken
   get() = Secrets("mermaid_marketplace_token")
 
+val qodanaCloudToken
+  get() = Secrets("mermaid_qodana_cloud_token")
+
 job("Mermaid / Release / Stable") {
   startOn {
     gitPush {
@@ -73,6 +76,21 @@ job("Mermaid / Release / Nightly") {
     publishingEnvironment(channel = PublishChannels.NIGHTLY)
     shellScript {
       content = "./gradlew test publishPlugin"
+    }
+  }
+}
+
+job("Mermaid / Qodana Analysis") {
+  startOn {
+    gitPush {
+      enabled = true
+    }
+    codeReviewOpened()
+  }
+  container("jetbrains/qodana-jvm") {
+    env["QODANA_TOKEN"] = qodanaCloudToken
+    shellScript {
+      content = "qodana"
     }
   }
 }
