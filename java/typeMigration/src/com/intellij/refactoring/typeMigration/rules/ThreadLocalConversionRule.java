@@ -231,7 +231,9 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
               return coerceType(arg, from, to, context);
             }
           }
-          return "new " + initial.getCanonicalText() + "((" + unboxedInitialType.getCanonicalText() + ")(" + arg + "))";
+          return PsiUtil.isLanguageLevel5OrHigher(context)
+                 ? "(" + unboxedInitialType.getCanonicalText() + ")(" + arg + ")"
+                 : "new " + initial.getCanonicalText() + "((" + unboxedInitialType.getCanonicalText() + ")(" + arg + "))";
         }
       }
     }
