@@ -11,10 +11,7 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.PropertyKey
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.*
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
@@ -413,23 +410,21 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       return result
     }
 
-    result = (resourceBundleBaseName?.let { baseName ->
-      try {
-        AbstractBundle.messageOrDefault(
-          DynamicBundle.getResourceBundle(classLoader, baseName),
-          "plugin.$id.description",
-          descriptionChildText ?: "",
-        )
-      }
-      catch (_: MissingResourceException) {
-        LOG.info("Cannot find plugin $id resource-bundle: $baseName")
-        null
-      }
-    }) ?: descriptionChildText
+    result = fromPluginBundle("plugin.$id.description", descriptionChildText)
 
     description = result
     return result
   }
+
+  private fun fromPluginBundle(key: String, @Nls defaultValue: String?): String? = (resourceBundleBaseName?.let { baseName ->
+    try {
+      AbstractBundle.messageOrDefault(DynamicBundle.getResourceBundle(classLoader, baseName), key,defaultValue ?: "")
+    }
+    catch (_: MissingResourceException) {
+      LOG.info("Cannot find plugin $id resource-bundle: $baseName")
+      null
+    }
+  }) ?: defaultValue
 
   override fun getChangeNotes(): String? = changeNotes
 
@@ -462,6 +457,14 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
   override fun getCategory(): String? = category
+
+  override fun getDisplayCategory(): @Nls String? {
+    return getCategory()?.let {
+      val key = "plugin.category.${category?.replace(' ', '.')}"
+      @Suppress("HardCodedStringLiteral")
+      CoreBundle.messageOrNull(key) ?: fromPluginBundle(key, getCategory())
+    }
+  }
 
   /*
      This setter was explicitly defined to be able to set a category for a

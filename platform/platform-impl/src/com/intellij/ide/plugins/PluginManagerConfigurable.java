@@ -915,7 +915,7 @@ public final class PluginManagerConfigurable
           String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");
           visiblePlugins.get(Boolean.TRUE)
             .stream()
-            .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getCategory(), defaultCategory)))
+            .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getDisplayCategory(), defaultCategory)))
             .entrySet()
             .stream()
             .map(entry -> new ComparablePluginsGroup(entry.getKey(), entry.getValue()))
