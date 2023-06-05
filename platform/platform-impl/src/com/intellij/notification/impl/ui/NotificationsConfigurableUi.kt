@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.notification.NotificationAnnouncingMode
 import com.intellij.notification.NotificationGroup
+import com.intellij.notification.impl.NotificationsAnnouncer
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -73,17 +74,19 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
           .bindSelected(settings::SYSTEM_NOTIFICATIONS)
           .component
       }
-      row(IdeBundle.message("notifications.configurable.announcing.title")) {
-        val options = listOf(NotificationAnnouncingMode.NONE,
-                             NotificationAnnouncingMode.MEDIUM,
-                             NotificationAnnouncingMode.HIGH)
+      if (NotificationsAnnouncer.isFeatureAvailable) {
+        row(IdeBundle.message("notifications.configurable.announcing.title")) {
+          val options = listOf(NotificationAnnouncingMode.NONE,
+                               NotificationAnnouncingMode.MEDIUM,
+                               NotificationAnnouncingMode.HIGH)
 
-        val combo = comboBox(options, listCellRenderer {
-          text = notificationModeToUserString[it]
-        }).bindItem(settings::getNotificationAnnouncingMode) { settings.notificationAnnouncingMode = it!! }
+          val combo = comboBox(options, listCellRenderer {
+            text = notificationModeToUserString[it]
+          }).bindItem(settings::getNotificationAnnouncingMode) { settings.notificationAnnouncingMode = it!! }
 
-        if (SystemInfo.isMac) combo.comment(IdeBundle.message("notifications.configurable.announcing.comment"))
-      }.visibleIf(screenReaderEnabledProperty)
+          if (SystemInfo.isMac) combo.comment(IdeBundle.message("notifications.configurable.announcing.comment"))
+        }.visibleIf(screenReaderEnabledProperty)
+      }
       row {
         notificationSettings = NotificationSettingsUi(notificationsList.model.getElementAt(0), useBalloonNotifications.selected)
         scrollCell(notificationsList)

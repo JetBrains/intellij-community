@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.notification.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeRootPane
@@ -29,10 +30,15 @@ object NotificationsAnnouncer {
   private val mode: NotificationAnnouncingMode get() =
     NotificationsConfiguration.getNotificationsConfiguration().notificationAnnouncingMode
 
+  val isFeatureAvailable: Boolean get() = Registry.`is`("ide.accessibility.announcing.notifications.available")
+
   @ApiStatus.Experimental
   @JvmStatic
   fun isEnabled(): Boolean {
-    return ScreenReader.isActive() && mode != NotificationAnnouncingMode.NONE && JBR.isAccessibleAnnouncerSupported()
+    return isFeatureAvailable
+           && ScreenReader.isActive()
+           && mode != NotificationAnnouncingMode.NONE
+           && JBR.isAccessibleAnnouncerSupported()
   }
 
   private val callersCache = mutableListOf<FrameWithAccessible>()
