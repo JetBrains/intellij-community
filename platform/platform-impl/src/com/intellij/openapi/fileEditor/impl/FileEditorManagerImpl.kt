@@ -85,6 +85,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
+import com.intellij.util.containers.toArray
 import com.intellij.util.flow.zipWithNext
 import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.EDT
@@ -1359,10 +1360,16 @@ open class FileEditorManagerImpl(
     return target.editor
   }
 
-  override fun getSelectedEditorWithRemotes(): List<FileEditor> {
+  override fun getSelectedEditorWithRemotes(): Collection<FileEditor> {
+    val editorList = getSelectedEditorList()
+    val editorManagerList = allClientFileEditorManagers
+    if (editorManagerList.isEmpty()) {
+      return editorList
+    }
+
     val result = ArrayList<FileEditor>()
-    result.addAll(selectedEditors)
-    for (m in allClientFileEditorManagers) {
+    result.addAll(editorList)
+    for (m in editorManagerList) {
       result.addAll(m.getSelectedEditors())
     }
     return result
@@ -1456,18 +1463,23 @@ open class FileEditorManagerImpl(
   }
 
   override fun getSelectedEditors(): Array<FileEditor> {
+    val result = getSelectedEditorList()
+    return if (result.isEmpty()) FileEditor.EMPTY_ARRAY else result.toArray(FileEditor.EMPTY_ARRAY)
+  }
+
+  private fun getSelectedEditorList(): Collection<FileEditor> {
     if (!initJob.isCompleted) {
-      return FileEditor.EMPTY_ARRAY
+      return emptyList()
     }
 
     if (!ClientId.isCurrentlyUnderLocalId) {
-      return clientFileEditorManager?.getSelectedEditors()?.toTypedArray() ?: FileEditor.EMPTY_ARRAY
+      return clientFileEditorManager?.getSelectedEditors() ?: emptyList()
     }
     val selectedEditors = SmartHashSet<FileEditor>()
     for (splitters in getAllSplitters()) {
       splitters.addSelectedEditorsTo(selectedEditors)
     }
-    return selectedEditors.toTypedArray()
+    return selectedEditors
   }
 
   override val splitters: EditorsSplitters

@@ -945,7 +945,7 @@ ${ThreadDumper.dumpThreadsToString()}""")
     val editor = if (fileEditor is TextEditor) fileEditor.editor else null
     if (editor != null && editor.document.isInBulkUpdate) {
       // avoid restarts until the bulk mode is finished and daemon restarted in DaemonListeners
-      stopProcess(false, "${editor.document} is in bulk state")
+      stopProcess(toRestartAlarm = false, reason = "${editor.document} is in bulk state")
       throw ProcessCanceledException()
     }
 
@@ -1144,9 +1144,8 @@ ${ThreadDumper.dumpThreadsToString()}""")
 private fun getVirtualFile(fileEditor: FileEditor): VirtualFile? {
   val virtualFile = fileEditor.file
   for (provider in BackedVirtualFileProvider.EP_NAME.extensionList) {
-    val replacedVirtualFile = provider.getReplacedVirtualFile(virtualFile)
-    if (replacedVirtualFile != null) {
-      return replacedVirtualFile
+    provider.getReplacedVirtualFile(virtualFile)?.let {
+      return it
     }
   }
   return virtualFile
@@ -1170,21 +1169,19 @@ private fun heavyProcessIsRunning(): Boolean {
 
 @RequiresEdt
 private fun getSelectedEditors(project: Project, fileEditorManagerSupplier: Lazy<FileEditorManager>): Collection<FileEditor> {
-  // editors in modal context
   val editors = project.serviceIfCreated<EditorTracker>()?.activeEditors ?: emptyList()
   val activeTextEditors: Sequence<TextEditor> = if (editors.isEmpty()) {
     emptySequence()
   }
   else {
     val textEditorProvider = TextEditorProvider.getInstance()
-    editors.asSequence()
-      .mapNotNull { editor ->
-        if (editor.isDisposed) null else textEditorProvider.getTextEditor(editor)
-      }
-      .distinct()
+    editors.asSequence().mapNotNull { editor ->
+      if (editor.isDisposed) null else textEditorProvider.getTextEditor(editor)
+    }
   }
 
   val app = ApplicationManager.getApplication()
+  // editors in modal context
   if (app.currentModalityState !== ModalityState.NON_MODAL) {
     return activeTextEditors.toList()
   }
@@ -1198,6 +1195,7 @@ private fun getSelectedEditors(project: Project, fileEditorManagerSupplier: Lazy
   }
   return (activeTextEditors + tabEditors)
     .filter { it.isValid && it.file != null && it.file.isValid }
+    .distinct()
     .toList()
 }
 

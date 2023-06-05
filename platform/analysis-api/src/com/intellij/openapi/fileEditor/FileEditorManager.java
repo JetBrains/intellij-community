@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -141,7 +142,7 @@ public abstract class FileEditorManager {
    * The method returns an empty array if no editors are open.
    */
   @ApiStatus.Experimental
-  public @NotNull List<FileEditor> getSelectedEditorWithRemotes() {
+  public @NotNull Collection<FileEditor> getSelectedEditorWithRemotes() {
     return List.of(getSelectedEditors());
   }
 
