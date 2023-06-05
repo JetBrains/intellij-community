@@ -2,17 +2,23 @@
 package org.jetbrains.kotlin.idea.base.analysisApiProviders
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
@@ -34,13 +40,15 @@ import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
+@Service(Service.Level.PROJECT)
 @OptIn(Frontend10ApiUsage::class)
-class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
+class KotlinModuleStateTrackerProvider(val project: Project) : Disposable {
     init {
         val busConnection = project.messageBus.connect(this)
         busConnection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
         busConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, JdkListener())
         busConnection.subscribe(VirtualFileManager.VFS_CHANGES, ScriptFileListener())
+        busConnection.subscribe(VirtualFileManager.VFS_CHANGES, LibraryUpdatesListener())
     }
 
     private val libraryCache = ConcurrentHashMap<Library, ModuleStateTrackerImpl>()
@@ -97,6 +105,24 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
                     scriptCache.remove(file)?.invalidate()
                 }
             }
+        }
+    }
+
+    private inner class LibraryUpdatesListener : BulkFileListener {
+        val index = ProjectRootManager.getInstance(project).fileIndex
+        override fun after(events: List<VFileEvent>) {
+            events.mapNotNull { event ->
+                val file = when (event) {
+                    //for all other events workspace model should do the job 
+                    is VFileContentChangeEvent -> event.file
+                    else -> return@mapNotNull null
+                }
+                if (file.extension != "jar") return@mapNotNull null  //react only on jars
+                val jarRoot = StandardFileSystems.jar().findFileByPath(file.path + URLUtil.JAR_SEPARATOR) ?: return@mapNotNull null
+                (index.getOrderEntriesForFile(jarRoot).firstOrNull { it is LibraryOrderEntry } as? LibraryOrderEntry)?.library
+            }.distinct().forEach {
+                    libraryCache[it]?.incModificationCount()
+                }
         }
     }
 
