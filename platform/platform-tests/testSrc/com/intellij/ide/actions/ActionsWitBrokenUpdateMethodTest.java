@@ -35,6 +35,8 @@ public class ActionsWitBrokenUpdateMethodTest extends LightPlatformTestCase {
 
         if (action instanceof ActionGroup group) {
           (group).getChildren(null);
+          (group).getChildren(event1);
+          (group).getChildren(event2);
         }
       }
       catch (Throwable e) {
