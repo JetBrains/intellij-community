@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +21,7 @@ import java.util.Set;
  * <p>
  * All inheritors are records, so the whole state is declarative and readable.
  */
-public sealed interface ModCommand permits ModChooseTarget, ModCompositeCommand, ModNavigate, ModNothing, ModUpdatePsiFile {
+public sealed interface ModCommand permits ModChooseTarget, ModCompositeCommand, ModNavigate, ModNothing, ModUpdateFileText {
   /**
    * Executes the command
    * 
@@ -31,7 +30,7 @@ public sealed interface ModCommand permits ModChooseTarget, ModCompositeCommand,
    */
   @RequiresEdt
   default @NotNull ModStatus execute(@NotNull Project project) {
-    ModStatus modStatus = prepare();
+    ModStatus modStatus = prepare(project);
     if (modStatus != ModStatus.SUCCESS) return modStatus;
     return ApplicationManager.getApplication().getService(ModCommandService.class).execute(project, this);
   }
@@ -49,18 +48,16 @@ public sealed interface ModCommand permits ModChooseTarget, ModCompositeCommand,
    * @return status of execution
    */
   @RequiresEdt
-  default @NotNull ModStatus prepare() {
-    Set<PsiFile> files = modifiedFiles();
+  default @NotNull ModStatus prepare(@NotNull Project project) {
+    Set<VirtualFile> files = modifiedFiles();
     if (files.isEmpty()) return ModStatus.SUCCESS;
-    Project project = ContainerUtil.getFirstItem(files).getProject();
-    VirtualFile[] vFiles = ContainerUtil.map2Array(files, VirtualFile.class, PsiFile::getVirtualFile);
-    return ReadonlyStatusHandler.ensureFilesWritable(project, vFiles) ? ModStatus.SUCCESS : ModStatus.CANCEL;
+    return ReadonlyStatusHandler.ensureFilesWritable(project, files.toArray(VirtualFile.EMPTY_ARRAY)) ? ModStatus.SUCCESS : ModStatus.CANCEL;
   }
 
   /**
    * @return set of files that are potentially modified by this command
    */
-  default @NotNull Set<@NotNull PsiFile> modifiedFiles() {
+  default @NotNull Set<@NotNull VirtualFile> modifiedFiles() {
     return Set.of();
   }
 

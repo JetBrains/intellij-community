@@ -13,6 +13,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -24,7 +25,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -54,7 +54,7 @@ public class ModCommandServiceImpl implements ModCommandService {
 
   @Override
   public @NotNull ModStatus execute(@NotNull Project project, @NotNull ModCommand command) {
-    if (command instanceof ModUpdatePsiFile upd) {
+    if (command instanceof ModUpdateFileText upd) {
       return executeUpdate(project, upd);
     }
     if (command instanceof ModCompositeCommand cmp) {
@@ -155,14 +155,15 @@ public class ModCommandServiceImpl implements ModCommandService {
     return ModStatus.SUCCESS;
   }
 
-  private static @NotNull ModStatus executeUpdate(@NotNull Project project, @NotNull ModUpdatePsiFile upd) {
-    PsiFile file = upd.file();
+  private static @NotNull ModStatus executeUpdate(@NotNull Project project, @NotNull ModUpdateFileText upd) {
+    VirtualFile file = upd.file();
     String oldText = upd.oldText();
     String newText = upd.newText();
-    if (!file.textMatches(oldText)) return ModStatus.ABORT;
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return ModStatus.ABORT;
+    if (!document.getText().equals(oldText)) return ModStatus.ABORT;
     List<DiffFragment> fragments = ComparisonManager.getInstance().compareChars(oldText, newText, ComparisonPolicy.DEFAULT,
                                                                                 DumbProgressIndicator.INSTANCE);
-    Document document = file.getViewProvider().getDocument();
     return WriteAction.compute(() -> {
       StreamEx.ofReversed(fragments)
           .forEach(fragment -> {

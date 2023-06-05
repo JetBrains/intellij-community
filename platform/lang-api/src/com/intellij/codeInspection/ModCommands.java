@@ -141,20 +141,19 @@ public final class ModCommands {
       manager.commitDocument(document);
       manager.doPostponedOperationsAndUnblockDocument(document);
       String newText = targetFile.getText();
-      ModCommand command = oldText.equals(newText) ? new ModNothing() : new ModUpdatePsiFile(origFile, oldText, newText);
       VirtualFile origVirtualFile = origFile.getOriginalFile().getVirtualFile();
-      if (origVirtualFile != null) {
-        int start = -1, end = -1, caret = -1;
-        if (context.mySelectionEnd <= newText.length()) {
-          start = context.mySelectionStart;
-          end = context.mySelectionEnd;
-        }
-        if (context.myCaretOffset <= newText.length()) {
-          caret = context.myCaretOffset;
-        }
-        if (start != -1 || end != -1 || caret != -1) {
-          command = command.andThen(new ModNavigate(origVirtualFile, start, end, caret));
-        }
+      if (origVirtualFile == null) return new ModNothing();
+      ModCommand command = oldText.equals(newText) ? new ModNothing() : new ModUpdateFileText(origVirtualFile, oldText, newText);
+      int start = -1, end = -1, caret = -1;
+      if (context.mySelectionEnd <= newText.length()) {
+        start = context.mySelectionStart;
+        end = context.mySelectionEnd;
+      }
+      if (context.myCaretOffset <= newText.length()) {
+        caret = context.myCaretOffset;
+      }
+      if (start != -1 || end != -1 || caret != -1) {
+        command = command.andThen(new ModNavigate(origVirtualFile, start, end, caret));
       }
       return command;
     }
