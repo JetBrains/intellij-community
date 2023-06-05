@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
+import com.intellij.codeInsight.daemon.impl.HighlightingPassesCache
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
@@ -23,10 +24,8 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
+import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
-import com.intellij.openapi.fileEditor.impl.EditorWindow
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
-import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.getOpenMode
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.LightEditActionFactory
@@ -333,6 +332,15 @@ object Switcher : BaseSwitcherAction(null) {
       old?.cancel()
       project.putUserData(SWITCHER_KEY, this)
       myPopup.showCenteredInCurrentWindow(project)
+
+      if (Registry.`is`("highlighting.passes.cache")) {
+        project.getService(HighlightingPassesCache::class.java).loadPasses(getNotOpenedRecentFiles());
+      }
+    }
+    private fun getNotOpenedRecentFiles(): List<VirtualFile> {
+      val recentFiles = getInstance(project).fileList
+      val openFiles = FileEditorManager.getInstance(project).openFiles
+      return recentFiles.subtract(openFiles.toSet()).toList()
     }
 
     override fun dispose() {

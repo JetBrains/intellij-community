@@ -1481,6 +1481,10 @@
     <registryKey key="search.everywhere.recents"
                  defaultValue="false"
                  description="Enables recent items on search everywhere tabs"/>
+
+    <registryKey key="highlighting.passes.cache"
+                 defaultValue="false"
+                 description="Enables highlighting passes cache"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
