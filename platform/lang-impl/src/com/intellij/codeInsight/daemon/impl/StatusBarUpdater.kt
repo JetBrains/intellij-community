@@ -1,69 +1,59 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.daemon.impl
 
-package com.intellij.codeInsight.daemon.impl;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
+import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.util.SingleAlarm
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.util.SingleAlarm;
-import org.jetbrains.annotations.NotNull;
+internal class StatusBarUpdater(private val project: Project, parentDisposable: Disposable) {
+  private val alarm: SingleAlarm
 
-final class StatusBarUpdater {
-  private static final HighlightSeverity MIN = new HighlightSeverity("min", HighlightSeverity.INFORMATION.myVal + 1);
-
-  private final Project myProject;
-  private final SingleAlarm myAlarm;
-
-  StatusBarUpdater(@NotNull Project project, @NotNull Disposable parentDisposable) {
-    myProject = project;
-    myAlarm = new SingleAlarm(() -> updateStatus(), 100, parentDisposable);
-
-    project.getMessageBus().connect(parentDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        updateLater();
+  init {
+    alarm = SingleAlarm({ updateStatus() }, 100, parentDisposable)
+    project.messageBus.connect(parentDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
+                                                           object : FileEditorManagerListener {
+                                                               override fun selectionChanged(event: FileEditorManagerEvent) {
+                                                                 updateLater()
+                                                               }
+                                                             })
+    project.messageBus.connect(parentDisposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonListener {
+      override fun daemonFinished() {
+        updateLater()
       }
-    });
-
-    project.getMessageBus().connect(parentDisposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
-      @Override
-      public void daemonFinished() {
-        updateLater();
-      }
-    });
+    })
   }
 
-  private void updateLater() {
-    myAlarm.cancelAndRequest();
+  private fun updateLater() {
+    alarm.cancelAndRequest()
   }
 
-  private void updateStatus() {
-    Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-    if (editor == null || !editor.getContentComponent().hasFocus()){
-      return;
+  private fun updateStatus() {
+    val editor = FileEditorManager.getInstance(project).selectedTextEditor
+    if (editor == null || !editor.contentComponent.hasFocus()) {
+      return
     }
-
-    Document document = editor.getDocument();
-    if (document.isInBulkUpdate()) {
-      return;
+    val document = editor.document
+    if (document.isInBulkUpdate) {
+      return
     }
-
-    int offset = editor.getCaretModel().getOffset();
-    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    HighlightInfo info = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(document, offset, false, MIN);
-    String text = info != null && info.getDescription() != null ? info.getDescription() : "";
-
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(editor.getContentComponent(), myProject);
-    if (statusBar != null && !text.equals(statusBar.getInfo())) {
-      statusBar.setInfo(text, "updater");
+    val offset = editor.caretModel.offset
+    val codeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
+    val info = (codeAnalyzer as DaemonCodeAnalyzerImpl).findHighlightByOffset(document, offset, false, MIN)
+    val text = if (info != null && info.description != null) info.description else ""
+    val statusBar = WindowManager.getInstance().getStatusBar(editor.contentComponent, project)
+    if (statusBar != null && text != statusBar.info) {
+      statusBar.setInfo(text, "updater")
     }
+  }
+
+  companion object {
+    private val MIN = HighlightSeverity("min", HighlightSeverity.INFORMATION.myVal + 1)
   }
 }
