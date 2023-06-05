@@ -1,3 +1,4 @@
+<time>: Executing ':cleanLinuxX64Test :linuxX64Test --tests "NativeTest.test - failure"'...
 <time>: Execution finished ':cleanLinuxX64Test :linuxX64Test --tests "NativeTest.test - failure"'.
 
 
