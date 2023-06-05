@@ -128,7 +128,6 @@ class DaemonCodeAnalyzerImpl(private val project: Project, private val coroutine
     DependencyValidationManager.getInstance(project)
 
     Disposer.register(this, passExecutorService)
-    Disposer.register(this, fileStatusMap)
     @Suppress("TestOnlyProblems")
     DaemonProgressIndicator.setDebug(LOG.isDebugEnabled)
     StatusBarUpdater(project, coroutineScope)
@@ -136,6 +135,8 @@ class DaemonCodeAnalyzerImpl(private val project: Project, private val coroutine
     isDisposed = false
     fileStatusMap.markAllFilesDirty("DaemonCodeAnalyzer init")
     Disposer.register(this) {
+      fileStatusMap.dispose()
+
       assert(!isDisposed) { "Double dispose" }
       updateRunnable.clearFieldsOnDispose()
       stopProcess(false, "Dispose $project")
@@ -728,7 +729,7 @@ ${ThreadDumper.dumpThreadsToString()}""")
     val document = psiFile.viewProvider.document ?: return
     val reason = "Psi file restart: ${psiFile.name}"
     fileStatusMap.markFileScopeDirty(document, TextRange(0, document.textLength), psiFile.textLength, reason)
-    stopProcess(true, reason)
+    stopProcess(toRestartAlarm = true, reason = reason)
   }
 
   fun getPassesToShowProgressFor(document: Document): List<ProgressableTextEditorHighlightingPass?> {
