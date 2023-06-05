@@ -25,8 +25,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
@@ -41,7 +39,7 @@ import java.util.function.Supplier
 
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
-  fun updateAllMavenProjectsSync(spec: MavenImportSpec): Promise<Void>
+  fun updateAllMavenProjectsSync(spec: MavenImportSpec)
   suspend fun updateAllMavenProjects(spec: MavenImportSpec)
   suspend fun importMavenProjects(): List<Module>
   suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module>
@@ -321,25 +319,17 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     return importMavenProjects(projectsToImport + myProjectsToImport)
   }
 
-  override fun updateAllMavenProjectsSync(spec: MavenImportSpec): Promise<Void> {
+  override fun updateAllMavenProjectsSync(spec: MavenImportSpec) {
+    // unit tests
+    if (ApplicationManager.getApplication().isDispatchThread) {
+      return runBlockingModal(project, MavenProjectBundle.message("maven.reading")) {
+        updateAllMavenProjects(spec)
+      }
+    }
+
     return runBlockingCancellableUnderIndicator {
-      updateAllMavenProjectsBgt(spec)
-    }
-  }
-
-  @RequiresBackgroundThread
-  private suspend fun updateAllMavenProjectsBgt(spec: MavenImportSpec): Promise<Void> {
-    val result = AsyncPromise<Void>()
-
-    try {
       updateAllMavenProjects(spec)
-      result.setResult(null)
     }
-    catch (e: Exception) {
-      result.setError(e)
-    }
-
-    return result
   }
 
   override suspend fun updateAllMavenProjects(spec: MavenImportSpec) {
