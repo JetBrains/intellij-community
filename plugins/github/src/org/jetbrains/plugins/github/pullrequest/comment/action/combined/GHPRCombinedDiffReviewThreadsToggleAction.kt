@@ -19,7 +19,7 @@ internal class GHPRCombinedDiffReviewThreadsToggleAction : ActionGroup(), DumbAw
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    val model: CombinedDiffPreviewModel = e?.getRequiredData(GHPRActionKeys.COMBINED_DIFF_PREVIEW_MODEL) ?: return emptyArray<AnAction>()
+    val model: CombinedDiffPreviewModel = e?.getData(GHPRActionKeys.COMBINED_DIFF_PREVIEW_MODEL) ?: return emptyArray<AnAction>()
     return DiscussionsViewOption.values().map { viewOption -> ToggleOptionAction(model, viewOption) }.toTypedArray()
   }
 
