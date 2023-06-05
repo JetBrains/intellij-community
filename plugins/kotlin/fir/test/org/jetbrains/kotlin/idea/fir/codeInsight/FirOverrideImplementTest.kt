@@ -162,6 +162,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testJavaMethodWithPackageVisibility()
     }
 
+    override fun testJavaMethodWithPackageVisibilityFromOtherPackage() {
+        super.testJavaMethodWithPackageVisibilityFromOtherPackage()
+    }
+
     override fun testJavaMethodWithPackageProtectedVisibility() {
         super.testJavaMethodWithPackageProtectedVisibility()
     }
