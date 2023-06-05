@@ -95,6 +95,10 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                        : (PsiExpression)context;
       return new TypeConversionDescriptor("$qualifier$", toPrimitive("$qualifier$.get()", from, context), expression);
     }
+    if (context instanceof PsiPrefixExpression prefixExpression &&
+        prefixExpression.getOperationSign().getTokenType() == JavaTokenType.EXCL) {
+      return new TypeConversionDescriptor("!$qualifier$", "!$qualifier$.get()");
+    }
     if (parent instanceof PsiExpressionStatement) {
       if (context instanceof PsiPostfixExpression postfixExpression) {
         final String sign = postfixExpression.getOperationSign().getText();
@@ -110,11 +114,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                             ")");
       }
       else if (context instanceof PsiPrefixExpression prefixExpression) {
-        final PsiJavaToken operationSign = ((PsiPrefixExpression)context).getOperationSign();
-        if (operationSign.getTokenType() == JavaTokenType.EXCL) {
-          return new TypeConversionDescriptor("!$qualifier$", "!$qualifier$.get()");
-        }
-        final String sign = operationSign.getText();
+        final String sign = prefixExpression.getOperationSign().getText();
         final PsiExpression operand = prefixExpression.getOperand();
         return new TypeConversionDescriptor(sign + "$qualifier$",
                                             "$qualifier$.set(" +
