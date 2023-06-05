@@ -487,8 +487,8 @@ public final class CompileDriver {
           "; warnings: " + compileContext.getMessageCount(CompilerMessageCategory.WARNING),
           duration
         );
-        if (isRebuild && status == ExitStatus.SUCCESS) {
-          BuildUsageCollector.logRebuildCompleted(duration);
+        if (status == ExitStatus.SUCCESS) {
+          BuildUsageCollector.logBuildCompleted(duration, isRebuild, false);
         }
       }
     };
