@@ -68,8 +68,7 @@ public class ModCommandServiceImpl implements ModCommandService {
     doExecute(project, command);
   }
 
-  @NotNull
-  private ModStatus doExecute(@NotNull Project project, @NotNull ModCommand command) {
+  private boolean doExecute(@NotNull Project project, @NotNull ModCommand command) {
     if (command instanceof ModUpdateFileText upd) {
       return executeUpdate(project, upd);
     }
@@ -80,7 +79,7 @@ public class ModCommandServiceImpl implements ModCommandService {
       return executeNavigate(project, nav);
     }
     if (command instanceof ModNothing) {
-      return ModStatus.SUCCESS;
+      return true;
     }
     if (command instanceof ModChooseTarget<?> cht) {
       return executeChoose(project, cht);
@@ -88,21 +87,20 @@ public class ModCommandServiceImpl implements ModCommandService {
     throw new IllegalArgumentException("Unknown command: " + command);
   }
 
-  @NotNull
-  private static <T extends @NotNull PsiElement> ModStatus executeChoose(@NotNull Project project, ModChooseTarget<@NotNull T> cht) {
+  private static <T extends @NotNull PsiElement> boolean executeChoose(@NotNull Project project, ModChooseTarget<@NotNull T> cht) {
     String name = CommandProcessor.getInstance().getCurrentCommandName();
     var elements = cht.elements();
     var nextStep = cht.nextStep();
-    if (elements.isEmpty()) return ModStatus.ABORT;
+    if (elements.isEmpty()) return false;
     T element = elements.get(0).element();
     if (elements.size() == 1) {
       executeNextStep(project, nextStep, element, name);
-      return ModStatus.DEFERRED;
+      return true;
     }
     VirtualFile file = element.getContainingFile().getVirtualFile();
-    if (file == null) return ModStatus.ABORT;
+    if (file == null) return false;
     Editor editor = getEditor(project, file);
-    if (editor == null) return ModStatus.ABORT;
+    if (editor == null) return false;
     var map = StreamEx.of(elements).toMap(ModChooseTarget.ListItem::element, Function.identity());
     List<T> elementList = ContainerUtil.map(elements, ModChooseTarget.ListItem::element);
     Pass<T> callback = new Pass<>() {
@@ -111,12 +109,11 @@ public class ModCommandServiceImpl implements ModCommandService {
         executeNextStep(project, cht.nextStep(), t, name);
       }
     };
-    //noinspection SuspiciousMethodCalls
     NotNullFunction<PsiElement, TextRange> ranger = e -> map.get(e).selection();
     IntroduceTargetChooser.showChooser(editor, elementList, callback,
                                        e -> map.get(e).toString(), cht.title(), cht.selection(),
                                        ranger);
-    return ModStatus.DEFERRED;
+    return true;
   }
 
   private static <T extends @NotNull PsiElement> void executeNextStep(@NotNull Project project,
@@ -134,22 +131,21 @@ public class ModCommandServiceImpl implements ModCommandService {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  @NotNull
-  private static ModStatus executeNavigate(@NotNull Project project, ModNavigate nav) {
+  private static boolean executeNavigate(@NotNull Project project, ModNavigate nav) {
     VirtualFile file = nav.file();
     int selectionStart = nav.selectionStart();
     int selectionEnd = nav.selectionEnd();
     int caret = nav.caret();
 
     Editor editor = getEditor(project, file);
-    if (editor == null) return ModStatus.ABORT;
+    if (editor == null) return false;
     if (selectionStart != -1 && selectionEnd != -1) {
       editor.getSelectionModel().setSelection(selectionStart, selectionEnd);
     }
     if (caret != -1) {
       editor.getCaretModel().moveToOffset(caret);
     }
-    return ModStatus.SUCCESS;
+    return true;
   }
 
   private static Editor getEditor(@NotNull Project project, VirtualFile file) {
@@ -160,24 +156,23 @@ public class ModCommandServiceImpl implements ModCommandService {
     return null;
   }
 
-  @NotNull
-  private ModStatus executeComposite(@NotNull Project project, ModCompositeCommand cmp) {
+  private boolean executeComposite(@NotNull Project project, ModCompositeCommand cmp) {
     for (ModCommand command : cmp.commands()) {
-      ModStatus status = doExecute(project, command);
-      if (status != ModStatus.SUCCESS) {
-        return status;
+      boolean status = doExecute(project, command);
+      if (!status) {
+        return false;
       }
     }
-    return ModStatus.SUCCESS;
+    return true;
   }
 
-  private static @NotNull ModStatus executeUpdate(@NotNull Project project, @NotNull ModUpdateFileText upd) {
+  private static boolean executeUpdate(@NotNull Project project, @NotNull ModUpdateFileText upd) {
     VirtualFile file = upd.file();
     Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) return ModStatus.ABORT;
+    if (document == null) return false;
     String oldText = upd.oldText();
     String newText = upd.newText();
-    if (!document.getText().equals(oldText)) return ModStatus.ABORT;
+    if (!document.getText().equals(oldText)) return false;
     List<@NotNull Fragment> ranges = calculateRanges(upd);
     return WriteAction.compute(() -> {
       int offset = 0;
@@ -188,7 +183,7 @@ public class ModCommandServiceImpl implements ModCommandService {
         offset += range.newLength() - range.oldLength();
       }
       PsiDocumentManager.getInstance(project).commitDocument(document);
-      return ModStatus.SUCCESS;
+      return true;
     });
   }
   
@@ -201,28 +196,5 @@ public class ModCommandServiceImpl implements ModCommandService {
                                                                                 DumbProgressIndicator.INSTANCE);
     return ContainerUtil.map(fragments, fr -> new Fragment(fr.getStartOffset1(), fr.getEndOffset1() - fr.getStartOffset1(),
                                                            fr.getEndOffset2() - fr.getStartOffset2()));
-  }
-
-  /**
-   * Status of the execution of {@link ModCommand}
-   */
-  private enum ModStatus {
-    /**
-     * Operation completed successfully
-     */
-    SUCCESS,
-    /**
-     * Operation continues execution in background
-     */
-    DEFERRED,
-    /**
-     * Operation aborted due to intermittent state change, no changes are introduced,
-     * recreating the command and performing the operation again may be helpful
-     */
-    ABORT,
-    /**
-     * Operation cancelled by user via UI
-     */
-    CANCEL
   }
 }
