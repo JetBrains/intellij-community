@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -34,6 +35,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.ArrayList;
@@ -121,8 +123,20 @@ public final class MavenProjectsManagerWatcher {
    * if project is closed)
    */
   public Promise<Void> scheduleUpdateAll(MavenImportSpec spec) {
+    return scheduleUpdateAll(spec, false);
+  }
+
+  /**
+   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
+   * if project is closed)
+   */
+  public Promise<Void> scheduleUpdateAll(MavenImportSpec spec, boolean forceUpdateInBackground) {
     if (MavenUtil.isLinearImportEnabled()) {
       return MavenImportingManager.getInstance(myProject).scheduleImportAll(spec).getFinishPromise().then(it -> null);
+    }
+
+    if (MavenUtil.updateSuspendable()) {
+      return scheduleUpdateAllSuspendable(spec, forceUpdateInBackground);
     }
 
     final AsyncPromise<Void> promise = new AsyncPromise<>();
@@ -140,13 +154,103 @@ public final class MavenProjectsManagerWatcher {
     return promise;
   }
 
+  /**
+   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
+   * if project is closed)
+   */
+  private Promise<Void> scheduleUpdateAllSuspendable(MavenImportSpec spec, boolean forceUpdateInBackground) {
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
+
+    if (ApplicationManager.getApplication().isUnitTestMode()
+        && !forceUpdateInBackground) {
+      if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+        try {
+          projectsManager.updateAllMavenProjectsSync(spec);
+          promise.setResult(null);
+        }
+        catch (Exception e) {
+          promise.setError(e);
+        }
+      }
+      else {
+        MavenLog.LOG.warn("updateAllMavenProjectsSync skipped in write action");
+      }
+    }
+    else {
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
+        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+        try {
+          projectsManager.updateAllMavenProjectsSync(spec);
+          promise.setResult(null);
+        }
+        catch (Exception e) {
+          promise.setError(e);
+        }
+      });
+    }
+
+    return promise;
+  }
+
+
+  private Promise<Void> scheduleUpdateSuspendable(MavenImportSpec spec,
+                                                  List<VirtualFile> filesToUpdate,
+                                                  List<VirtualFile> filesToDelete,
+                                                  boolean forceUpdateInBackground) {
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
+
+    if (ApplicationManager.getApplication().isUnitTestMode()
+        && !forceUpdateInBackground) {
+      if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+        try {
+          projectsManager.updateMavenProjectsSync(spec, filesToUpdate, filesToDelete);
+          promise.setResult(null);
+        }
+        catch (Exception e) {
+          promise.setError(e);
+        }
+      }
+      else {
+        MavenLog.LOG.warn("updateAllMavenProjectsSync skipped in write action");
+      }
+    }
+    else {
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
+        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+        try {
+          projectsManager.updateMavenProjectsSync(spec, filesToUpdate, filesToDelete);
+          promise.setResult(null);
+        }
+        catch (Exception e) {
+          promise.setError(e);
+        }
+      });
+    }
+
+    return promise;
+  }
+
   public Promise<Void> scheduleUpdate(@NotNull List<VirtualFile> filesToUpdate,
                                       @NotNull List<VirtualFile> filesToDelete,
                                       MavenImportSpec spec) {
+    return scheduleUpdate(filesToUpdate, filesToDelete, spec, false);
+  }
+
+  public Promise<Void> scheduleUpdate(@NotNull List<VirtualFile> filesToUpdate,
+                                      @NotNull List<VirtualFile> filesToDelete,
+                                      MavenImportSpec spec,
+                                      boolean forceUpdateInBackground) {
 
     if (MavenUtil.isLinearImportEnabled()) {
       return MavenImportingManager.getInstance(myProject).scheduleUpdate(filesToUpdate, filesToDelete, spec).getFinishPromise().then(it -> null);
     }
+
+    if (MavenUtil.updateSuspendable()) {
+      return scheduleUpdateSuspendable(spec, filesToUpdate, filesToDelete, forceUpdateInBackground);
+    }
+
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     // display all import activities using the same build progress
     MavenSyncConsole.startTransaction(myProject);

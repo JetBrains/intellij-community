@@ -295,6 +295,24 @@ public class MavenUtil {
 
   private static volatile boolean noBackgroundMode = false;
 
+  @TestOnly
+  public static void setUpdateSuspendable() {
+    updateSuspendable = true;
+  }
+
+  @TestOnly
+  public static void resetUpdateSuspendable() {
+    updateSuspendable = false;
+  }
+
+  @ApiStatus.Internal
+  public static boolean updateSuspendable() {
+    return updateSuspendable;
+  }
+
+  private static volatile boolean updateSuspendable = false;
+
+
   public static boolean isNoBackgroundMode() {
     if (shouldRunTasksAsynchronouslyInTests() || isLinearImportEnabled()) {
       return false;

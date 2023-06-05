@@ -17,12 +17,15 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
@@ -41,6 +44,12 @@ import java.util.function.Supplier
 interface MavenAsyncProjectsManager {
   fun updateAllMavenProjectsSync(spec: MavenImportSpec)
   suspend fun updateAllMavenProjects(spec: MavenImportSpec)
+  fun updateMavenProjectsSync(spec: MavenImportSpec,
+                              filesToUpdate: MutableList<VirtualFile>,
+                              filesToDelete: MutableList<VirtualFile>)
+  suspend fun updateMavenProjects(spec: MavenImportSpec,
+                                  filesToUpdate: MutableList<VirtualFile>,
+                                  filesToDelete: MutableList<VirtualFile>)
   suspend fun importMavenProjects(): List<Module>
   suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module>
   fun resolveAndImportMavenProjectsSync(spec: MavenImportSpec): List<Module>
@@ -319,20 +328,95 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     return importMavenProjects(projectsToImport + myProjectsToImport)
   }
 
-  override fun updateAllMavenProjectsSync(spec: MavenImportSpec) {
+
+  override fun updateMavenProjectsSync(spec: MavenImportSpec,
+                                       filesToUpdate: MutableList<VirtualFile>,
+                                       filesToDelete: MutableList<VirtualFile>) {
+    MavenLog.LOG.warn("updateMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
+
     // unit tests
     if (ApplicationManager.getApplication().isDispatchThread) {
-      return runBlockingModal(project, MavenProjectBundle.message("maven.reading")) {
+      runBlockingModal(project, MavenProjectBundle.message("maven.reading")) {
+        updateMavenProjects(spec, filesToUpdate, filesToDelete)
+      }
+    }
+    else {
+      return runBlockingCancellableUnderIndicator {
+        updateMavenProjects(spec, filesToUpdate, filesToDelete)
+      }
+    }
+
+    MavenLog.LOG.warn("updateMavenProjectsSync finished, edt=" + ApplicationManager.getApplication().isDispatchThread)
+
+  }
+
+  override suspend fun updateMavenProjects(spec: MavenImportSpec,
+                                           filesToUpdate: MutableList<VirtualFile>,
+                                           filesToDelete: MutableList<VirtualFile>) {
+    importMutex.withLock { doUpdateMavenProjects(spec, filesToUpdate, filesToDelete) }
+  }
+
+  private suspend fun doUpdateMavenProjects(spec: MavenImportSpec,
+                                           filesToUpdate: MutableList<VirtualFile>,
+                                           filesToDelete: MutableList<VirtualFile>) {
+    // display all import activities using the same build progress
+    MavenSyncConsole.startTransaction(myProject)
+    try {
+      val mavenProgressIndicator = MavenProgressIndicator(project, Supplier { syncConsole })
+      withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.reading"), false) {
+        runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
+          withRawProgressReporter {
+            coroutineToIndicator {
+              try {
+                val indicator = ProgressManager.getGlobalProgressIndicator()
+                // TODO: use indicator
+                projectsTree.delete(filesToDelete, generalSettings, mavenProgressIndicator)
+                projectsTree.update(filesToUpdate, spec.isForceReading, generalSettings, mavenProgressIndicator)
+                generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
+              }
+              catch (e: Throwable) {
+                logImportErrorIfNotControlFlow(e)
+              }
+            }
+          }
+        }
+      }
+    }
+    finally {
+      if (spec.isForceResolve) {
+        resolveAndImportMavenProjects(spec)
+      }
+      else {
+        MavenSyncConsole.finishTransaction(myProject)
+      }
+    }
+  }
+
+  override fun updateAllMavenProjectsSync(spec: MavenImportSpec) {
+    MavenLog.LOG.warn("updateAllMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
+
+    // unit tests
+    if (ApplicationManager.getApplication().isDispatchThread) {
+      runBlockingModal(project, MavenProjectBundle.message("maven.reading")) {
+        updateAllMavenProjects(spec)
+      }
+    }
+    else {
+      runBlockingCancellableUnderIndicator {
         updateAllMavenProjects(spec)
       }
     }
 
-    return runBlockingCancellableUnderIndicator {
-      updateAllMavenProjects(spec)
-    }
+    MavenLog.LOG.warn("updateAllMavenProjectsSync finished, edt=" + ApplicationManager.getApplication().isDispatchThread)
   }
 
+  private val importMutex = Mutex()
+
   override suspend fun updateAllMavenProjects(spec: MavenImportSpec) {
+    importMutex.withLock { doUpdateAllMavenProjects(spec) }
+  }
+
+  private suspend fun doUpdateAllMavenProjects(spec: MavenImportSpec) {
     // display all import activities using the same build progress
     MavenSyncConsole.startTransaction(myProject)
     try {
