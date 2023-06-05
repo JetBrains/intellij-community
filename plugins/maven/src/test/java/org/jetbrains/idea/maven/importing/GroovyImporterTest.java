@@ -24,7 +24,7 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setNoBackgroundMode();
+    MavenUtil.setUpdateSuspendable();
     super.setUp();
     repoPath = new File(myDir, "repo").getPath();
     setRepositoryPath(repoPath);
@@ -34,7 +34,7 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
   protected void tearDown() throws Exception {
     RunAll.runAll(
       () -> super.tearDown(),
-      () -> MavenUtil.resetNoBackgroundMode()
+      () -> MavenUtil.resetUpdateSuspendable()
     );
   }
 

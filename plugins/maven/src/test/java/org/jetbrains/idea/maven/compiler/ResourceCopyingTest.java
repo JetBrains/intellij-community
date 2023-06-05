@@ -37,7 +37,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     if (!isWorkspaceImport()) {
-      MavenUtil.setNoBackgroundMode();
+      MavenUtil.setUpdateSuspendable();
     }
     super.setUpInWriteAction();
 
@@ -48,7 +48,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    MavenUtil.resetNoBackgroundMode();
+    MavenUtil.resetUpdateSuspendable();
     super.tearDown();
   }
 
