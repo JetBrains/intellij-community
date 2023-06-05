@@ -58,7 +58,7 @@ private data class RedoContext(val changes: List<Change>) : ChangesContext
  */
 class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: NotebookCellLines,
                                          private val documentReference: DocumentReference,
-                                         private val undoManager: UndoManager?,
+                                         undoManager: UndoManager?,
                                          private val project: Project) : NotebookIntervalPointerFactory, NotebookCellLines.IntervalListener {
   private val pointers = ArrayList<NotebookIntervalPointerImpl>()
   private var changesContext: ChangesContext? = null
@@ -69,8 +69,8 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     pointers.addAll(notebookCellLines.intervals.asSequence().map { NotebookIntervalPointerImpl(it) })
   }
 
-  private val validUndoManager: UndoManager?
-    get() = undoManager?.takeIf { !project.isDisposed }
+  private val validUndoManager: UndoManager? = undoManager
+    get() = field?.takeIf { !project.isDisposed }
 
   override fun create(interval: NotebookCellLines.Interval): NotebookIntervalPointer {
     ApplicationManager.getApplication().assertReadAccessAllowed()
