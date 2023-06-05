@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -30,22 +16,24 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.SingleAlarm;
 import org.jetbrains.annotations.NotNull;
 
-class StatusBarUpdater implements Disposable {
+final class StatusBarUpdater {
+  private static final HighlightSeverity MIN = new HighlightSeverity("min", HighlightSeverity.INFORMATION.myVal + 1);
+
   private final Project myProject;
   private final SingleAlarm myAlarm;
 
-  StatusBarUpdater(Project project) {
+  StatusBarUpdater(@NotNull Project project, @NotNull Disposable parentDisposable) {
     myProject = project;
-    myAlarm = new SingleAlarm(() -> updateStatus(), 100, this);
+    myAlarm = new SingleAlarm(() -> updateStatus(), 100, parentDisposable);
 
-    project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    project.getMessageBus().connect(parentDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         updateLater();
       }
     });
 
-    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+    project.getMessageBus().connect(parentDisposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
       @Override
       public void daemonFinished() {
         updateLater();
@@ -57,11 +45,6 @@ class StatusBarUpdater implements Disposable {
     myAlarm.cancelAndRequest();
   }
 
-  @Override
-  public void dispose() {
-  }
-
-  private static final HighlightSeverity MIN = new HighlightSeverity("min", HighlightSeverity.INFORMATION.myVal + 1);
   private void updateStatus() {
     Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
     if (editor == null || !editor.getContentComponent().hasFocus()){
@@ -69,7 +52,9 @@ class StatusBarUpdater implements Disposable {
     }
 
     Document document = editor.getDocument();
-    if (document.isInBulkUpdate()) return;
+    if (document.isInBulkUpdate()) {
+      return;
+    }
 
     int offset = editor.getCaretModel().getOffset();
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);

@@ -22,10 +22,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.notebook.editor.BackedVirtualFileProvider
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.components.*
@@ -60,7 +57,6 @@ import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.*
 import com.intellij.util.CommonProcessors.CollectProcessor
-import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.toArray
@@ -68,17 +64,18 @@ import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 
 private const val ANY_GROUP = -409423948
 
@@ -92,24 +89,26 @@ private const val URL_ATT: @NonNls String = "url"
 @State(name = "DaemonCodeAnalyzer", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class DaemonCodeAnalyzerImpl(private val project: Project, private val coroutineScope: CoroutineScope) :
   DaemonCodeAnalyzerEx(), PersistentStateComponent<Element?>, Disposable {
-  private val settings: DaemonCodeAnalyzerSettings
-  private val psiDocumentManager: PsiDocumentManager
+
+  private val settings = DaemonCodeAnalyzerSettings.getInstance() as DaemonCodeAnalyzerSettingsImpl
+  private var lastSettings: DaemonCodeAnalyzerSettingsImpl? = settings.clone()
+
+  private val psiDocumentManager = PsiDocumentManager.getInstance(project)
   private val fileEditorManager = lazy(LazyThreadSafetyMode.NONE) { FileEditorManager.getInstance(project) }
   private val myUpdateProgress = ConcurrentHashMap<FileEditor, DaemonProgressIndicator>()
-  private val updateRunnable: UpdateRunnable
+  private val updateRunnable = UpdateRunnable(project)
 
   @Volatile
-  private var updateRunnableFuture: Future<*> = CompletableFuture.completedFuture<Any?>(null)
+  private var updateRunnableFuture: Deferred<*> = CompletableDeferred(value = null)
   private var updateByTimerEnabled = true // guarded by this
   private val disabledHintsFiles = HashSet<VirtualFile>()
   private val disabledHighlightingFiles = HashSet<VirtualFile>()
-  private val fileStatusMap: FileStatusMap
-  private var lastSettings: DaemonCodeAnalyzerSettings?
+  private val fileStatusMap = FileStatusMap(project)
 
   // the only possible transition: false -> true
   @Volatile
   private var isDisposed: Boolean
-  private val passExecutorService: PassExecutorService
+  private val passExecutorService = PassExecutorService(project)
 
   // Timestamp of myUpdateRunnable which it's needed to start (in System.nanoTime() sense)
   // May be later than the actual ScheduledFuture sitting in the myAlarm queue.
@@ -128,19 +127,14 @@ class DaemonCodeAnalyzerImpl(private val project: Project, private val coroutine
     // DependencyValidationManagerImpl adds scope listener, so we need to force service creation
     DependencyValidationManager.getInstance(project)
 
-    settings = DaemonCodeAnalyzerSettings.getInstance()
-    psiDocumentManager = PsiDocumentManager.getInstance(project)
-    lastSettings = (settings as DaemonCodeAnalyzerSettingsImpl).clone()
-    fileStatusMap = FileStatusMap(project)
-    passExecutorService = PassExecutorService(project)
     Disposer.register(this, passExecutorService)
     Disposer.register(this, fileStatusMap)
     @Suppress("TestOnlyProblems")
     DaemonProgressIndicator.setDebug(LOG.isDebugEnabled)
-    Disposer.register(this, StatusBarUpdater(project))
+    StatusBarUpdater(project, this)
+
     isDisposed = false
     fileStatusMap.markAllFilesDirty("DaemonCodeAnalyzer init")
-    updateRunnable = UpdateRunnable(project)
     Disposer.register(this) {
       assert(!isDisposed) { "Double dispose" }
       updateRunnable.clearFieldsOnDispose()
@@ -172,7 +166,12 @@ class DaemonCodeAnalyzerImpl(private val project: Project, private val coroutine
       private var project: Project? = project
 
       override fun run() {
-        runUpdate(project, this)
+        runUpdate(project = project, updateRunnable = this, checkCancelled = { })
+      }
+
+
+      fun run(checkCancelled: () -> Unit) {
+        runUpdate(project = project, updateRunnable = this, checkCancelled = checkCancelled)
       }
 
       fun clearFieldsOnDispose() {
@@ -180,7 +179,7 @@ class DaemonCodeAnalyzerImpl(private val project: Project, private val coroutine
       }
     }
 
-    private fun runUpdate(project: Project?, updateRunnable: UpdateRunnable) {
+    private fun runUpdate(project: Project?, updateRunnable: UpdateRunnable, checkCancelled: () -> Unit) {
       ApplicationManager.getApplication().assertIsDispatchThread()
       if (project == null || project.isDefault || !project.isInitialized || project.isDisposed || LightEdit.owns(project)) {
         return
@@ -194,14 +193,18 @@ class DaemonCodeAnalyzerImpl(private val project: Project, private val coroutine
         return
       }
 
+      checkCancelled()
+
       synchronized(daemonCodeAnalyzer) {
         val actualDelay = daemonCodeAnalyzer.isScheduledUpdateTimestamp - System.nanoTime()
         if (actualDelay > 0) {
           // started too soon (there must've been some typings after we'd scheduled this; need to re-schedule)
-          daemonCodeAnalyzer.scheduleUpdateRunnable(actualDelay)
+          daemonCodeAnalyzer.scheduleUpdateRunnable(actualDelay.nanoseconds)
           return
         }
       }
+
+      checkCancelled()
 
       val activeEditors = getSelectedEditors(project, daemonCodeAnalyzer.fileEditorManager)
       val updateByTimerEnabled = daemonCodeAnalyzer.isUpdateByTimerEnabled()
@@ -229,6 +232,8 @@ class DaemonCodeAnalyzerImpl(private val project: Project, private val coroutine
       try {
         var submitted = false
         for (fileEditor in activeEditors) {
+          checkCancelled()
+
           val virtualFile = getVirtualFile(fileEditor) ?: continue
           val psiFile = findFileToHighlight(project = daemonCodeAnalyzer.project, virtualFile = virtualFile) ?: continue
           submitted = submitted or (daemonCodeAnalyzer.queuePassesCreation(fileEditor = fileEditor,
@@ -258,7 +263,7 @@ class DaemonCodeAnalyzerImpl(private val project: Project, private val coroutine
     }
     // avoid leak of highlight session via user data
     myUpdateProgress.clear()
-    updateRunnableFuture.cancel(true)
+    updateRunnableFuture.cancel()
   }
 
   @Synchronized
@@ -468,7 +473,7 @@ class DaemonCodeAnalyzerImpl(private val project: Project, private val coroutine
     EDT.dispatchAllInvocationEvents()
     // wait for async editor loading
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-    updateRunnableFuture.cancel(false)
+    updateRunnableFuture.cancel()
 
     // previous passes can be canceled but still in flight. wait for them to avoid interference
     passExecutorService.cancelAll(false)
@@ -478,7 +483,10 @@ class DaemonCodeAnalyzerImpl(private val project: Project, private val coroutine
       fileStatusMap.markFileUpToDate(document, ignoreId)
     }
     try {
-      doRunPasses(textEditor, passesToIgnore, canChangeDocument, callbackWhileWaiting)
+      doRunPasses(textEditor = textEditor,
+                  passesToIgnore = passesToIgnore,
+                  canChangeDocument = canChangeDocument,
+                  callbackWhileWaiting = callbackWhileWaiting)
     }
     finally {
       DaemonProgressIndicator.setDebug(false)
@@ -624,10 +632,10 @@ ${ThreadDumper.dumpThreadsToString()}""")
   }
 
   override fun settingsChanged() {
-    if (settings.isCodeHighlightingChanged(lastSettings)) {
+    if (settings.isCodeHighlightingChanged(lastSettings ?: return)) {
       restart()
     }
-    lastSettings = (settings as DaemonCodeAnalyzerSettingsImpl).clone()
+    lastSettings = settings.clone()
   }
 
   @Synchronized
@@ -762,7 +770,7 @@ ${ThreadDumper.dumpThreadsToString()}""")
   val isRunningOrPending: Boolean
     get() {
       ApplicationManager.getApplication().assertIsDispatchThread()
-      return isRunning || !updateRunnableFuture.isDone || GeneralHighlightingPass.isRestartPending()
+      return isRunning || !updateRunnableFuture.isCompleted || GeneralHighlightingPass.isRestartPending()
     }
 
   // return true if the progress really was canceled
@@ -777,19 +785,27 @@ ${ThreadDumper.dumpThreadsToString()}""")
       isScheduledUpdateTimestamp = System.nanoTime() + autoReparseDelayNanos
     }
     // optimization: this check is to avoid too many re-schedules in case of thousands of event spikes
-    val isDone = updateRunnableFuture.isDone
+    val isDone = updateRunnableFuture.isCompleted
     if (restart && isDone) {
-      scheduleUpdateRunnable(autoReparseDelayNanos)
+      scheduleUpdateRunnable(autoReparseDelayNanos.nanoseconds)
     }
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   @Synchronized
-  private fun scheduleUpdateRunnable(delayNanos: Long) {
+  private fun scheduleUpdateRunnable(delayDuration: Duration) {
     val oldFuture = updateRunnableFuture
-    if (oldFuture.isDone) {
-      ConcurrencyUtil.manifestExceptionsIn(oldFuture)
+    if (oldFuture.isCompleted) {
+      oldFuture.getCompletionExceptionOrNull()?.takeIf { it !is CancellationException }?.let {
+        throw it
+      }
     }
-    updateRunnableFuture = EdtExecutorService.getScheduledExecutorInstance().schedule(updateRunnable, delayNanos, TimeUnit.NANOSECONDS)
+    updateRunnableFuture = coroutineScope.async {
+      delay(delayDuration)
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        updateRunnable.run(checkCancelled = ::ensureActive)
+      }
+    }
   }
 
   // return true if the progress really was canceled
