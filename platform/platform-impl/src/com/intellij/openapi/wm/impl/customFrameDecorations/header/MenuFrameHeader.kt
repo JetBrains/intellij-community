@@ -50,6 +50,7 @@ internal class MenuFrameHeader(frame: JFrame,
     view.border = empty
 
     add(view, "left, growx, gapbottom 1")
+    buttonPanes?.let { add(it.getView(), "right, gapbottom 1") }
 
     setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH }, {true})
 

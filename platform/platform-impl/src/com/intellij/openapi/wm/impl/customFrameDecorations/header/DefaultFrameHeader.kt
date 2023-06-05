@@ -23,6 +23,7 @@ internal class DefaultFrameHeader(frame: JFrame, isForDockContainerProvider: Boo
     val gb = GridBag().setDefaultFill(GridBagConstraints.VERTICAL).setDefaultAnchor(GridBagConstraints.WEST)
     add(productIcon, gb.next())
     add(customDecorationTitle.view, gb.next().fillCell().weightx(1.0))
+    buttonPanes?.let { add(it.getView(), gb.next().anchor(GridBagConstraints.EAST)) }
 
     setCustomFrameTopBorder(isTopNeeded = { myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH })
   }

@@ -28,8 +28,7 @@ import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
 import java.awt.*
-import java.awt.GridBagConstraints.CENTER
-import java.awt.GridBagConstraints.WEST
+import java.awt.GridBagConstraints.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -102,6 +101,7 @@ internal class ToolbarFrameHeader(frame: JFrame, private val root: IdeRootPane) 
     productIcon.border = JBUI.Borders.empty(V, 0, V, 0)
     add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(H))
     add(myHeaderContent, gb.next().fillCell().anchor(CENTER).weightx(1.0).weighty(1.0))
+    buttonPanes?.let { add(wrap(it.getView()), gb.next().anchor(EAST)) }
 
     setCustomFrameTopBorder({ false }, {true})
 

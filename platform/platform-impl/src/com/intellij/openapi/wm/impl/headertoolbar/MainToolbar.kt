@@ -111,6 +111,10 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     }
 
   private fun installClickListener(popupHandler: PopupHandler, customTitleBar: WindowDecorations.CustomTitleBar?) {
+    if (IdeRootPane.hideNativeLinuxTitle) {
+      return
+    }
+
     if (customTitleBar == null) {
       addMouseListener(popupHandler)
       return

@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.*
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
@@ -94,6 +95,10 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     createProductIcon()
   }
 
+  protected val buttonPanes: CustomFrameTitleButtons? by lazy {
+    createButtonsPane()
+  }
+
   init {
     isOpaque = true
     background = getHeaderBackground()
@@ -153,6 +158,8 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     customFrameTopBorder = CustomFrameTopBorder(isTopNeeded, isBottomNeeded)
     border = customFrameTopBorder
   }
+
+  open fun createButtonsPane(): CustomFrameTitleButtons? = null
 
   open fun windowStateChanged() {
     updateCustomTitleBar()

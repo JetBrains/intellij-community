@@ -5,6 +5,9 @@ import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
+import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons
 import com.intellij.util.ui.JBFont
 import java.awt.Font
 import java.awt.Frame
@@ -81,6 +84,7 @@ internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(fram
     iconifyAction.isEnabled = true
     myCloseAction.isEnabled = true
 
+    buttonPanes?.updateVisibility()
     updateCustomTitleBar()
   }
 
@@ -95,5 +99,12 @@ internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(fram
 
     val closeMenuItem = menu.add(myCloseAction)
     closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
+  }
+
+  override fun createButtonsPane(): CustomFrameTitleButtons? {
+    if (IdeRootPane.hideNativeLinuxTitle)
+      return ResizableCustomFrameTitleButtons.create(myCloseAction, restoreAction, iconifyAction, maximizeAction)
+
+    return null
   }
 }
