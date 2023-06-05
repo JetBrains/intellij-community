@@ -1,3 +1,4 @@
-14:16:50: Execution finished ':cleanMacosArm64Test :macosArm64Test --tests "NativeTest.test - success"'.
+<time>: Executing ':cleanMacosArm64Test :macosArm64Test --tests "NativeTest.test - success"'...
+<time>: Execution finished ':cleanMacosArm64Test :macosArm64Test --tests "NativeTest.test - success"'.
 
 <exitCode: 0>
