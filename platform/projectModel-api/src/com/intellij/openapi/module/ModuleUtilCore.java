@@ -112,16 +112,16 @@ public class ModuleUtilCore {
           return null;
         }
 
-        if (orderEntries.size() == 1) {
+        if (orderEntries.size() == 1 && orderEntries.get(0) instanceof LibraryOrSdkOrderEntry) {
           return orderEntries.get(0).getOwnerModule();
         }
 
-        return Collections.min(
-          orderEntries,
-          Comparator.comparing(
-            OrderEntry::getOwnerModule,
-            ModuleManager.getInstance(project).moduleDependencyComparator())
-        ).getOwnerModule();
+        return orderEntries
+          .stream()
+          .filter(entry -> entry instanceof LibraryOrSdkOrderEntry)
+          .map(OrderEntry::getOwnerModule)
+          .min(ModuleManager.getInstance(project).moduleDependencyComparator())
+          .orElse(null);
       }
 
       return fileIndex.getModuleForFile(vFile);
