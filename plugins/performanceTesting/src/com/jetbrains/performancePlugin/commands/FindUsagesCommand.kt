@@ -1,7 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
-import com.intellij.find.FindSettings
 import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.openapi.application.EDT
@@ -46,6 +45,7 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
 
     val currentOTContext = Context.current()
     var findUsagesFuture: Future<Collection<Usage>>
+    val storedPageSize = AdvancedSettings.getInt("ide.usages.page.size")
     withContext(Dispatchers.EDT) {
       currentOTContext.makeCurrent().use {
         val editor = FileEditorManager.getInstance(context.project).selectedTextEditor
@@ -80,6 +80,7 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
 
     }
     val results = findUsagesFuture.get()
+    AdvancedSettings.setInt("ide.usages.page.size", storedPageSize)
     FindUsagesDumper.storeMetricsDumpFoundUsages(results.toMutableList(), context.project)
   }
 
