@@ -329,22 +329,28 @@ public final class TreeUtil {
   }
 
   public static @Nullable DefaultMutableTreeNode findNodeWithObject(final @NotNull DefaultMutableTreeNode aRoot, final Object aObject) {
-    return findNode(aRoot, node -> Comparing.equal(node.getUserObject(), aObject));
+    return findNode(aRoot, (Predicate<? super DefaultMutableTreeNode>) node -> Comparing.equal(node.getUserObject(), aObject));
   }
 
   public static @Nullable DefaultMutableTreeNode findNode(final @NotNull DefaultMutableTreeNode aRoot,
-                                                          final @NotNull Condition<? super DefaultMutableTreeNode> condition) {
-    if (condition.value(aRoot)) {
+                                                          final @NotNull Predicate<? super DefaultMutableTreeNode> predicate) {
+    if (predicate.test(aRoot)) {
       return aRoot;
     } else {
       for (int i = 0; i < aRoot.getChildCount(); i++) {
-        final DefaultMutableTreeNode candidate = findNode((DefaultMutableTreeNode)aRoot.getChildAt(i), condition);
+        final DefaultMutableTreeNode candidate = findNode((DefaultMutableTreeNode)aRoot.getChildAt(i), predicate);
         if (null != candidate) {
           return candidate;
         }
       }
       return null;
     }
+  }
+
+  @ApiStatus.Obsolete
+  public static @Nullable DefaultMutableTreeNode findNode(final @NotNull DefaultMutableTreeNode aRoot,
+                                                          final @NotNull Condition<? super DefaultMutableTreeNode> condition) {
+    return findNode(aRoot, (Predicate<? super DefaultMutableTreeNode>) condition);
   }
 
   /**
