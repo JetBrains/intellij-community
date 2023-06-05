@@ -74,11 +74,13 @@ def display_data(table, max_cols, max_colwidth, start, end):
 
 # noinspection PyUnresolvedReferences
 def __convert_to_df(table):
-    # type: (Union[pd.DataFrame, pd.Series, np.ndarray]) -> pd.DataFrame
+    # type: (Union[pd.DataFrame, pd.Series, np.ndarray, pd.Categorical]) -> pd.DataFrame
     if type(table) is pd.Series:
         return __series_to_df(table)
     if type(table) is np.ndarray:
         return __array_to_df(table)
+    if type(table) is pd.Categorical:
+        return __categorical_to_df(table)
     return table
 
 
@@ -100,6 +102,11 @@ def __series_to_df(table):
 # TODO: extract to a dedicated provider to fix DS-2086
 def __array_to_df(table):
     # type: (np.array) -> pd.DataFrame
+    return pd.DataFrame(table)
+
+
+def __categorical_to_df(table):
+    # type: (pd.Categorical) -> pd.DataFrame
     return pd.DataFrame(table)
 
 
