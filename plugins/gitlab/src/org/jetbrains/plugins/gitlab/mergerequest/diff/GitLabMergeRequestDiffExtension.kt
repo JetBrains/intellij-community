@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.viewer.DiffMapped
 import com.intellij.collaboration.ui.codereview.diff.viewer.LineHoverAwareGutterMark
 import com.intellij.collaboration.ui.codereview.diff.viewer.controlGutterIconsIn
@@ -46,21 +47,21 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
     val change = request.getUserData(ChangeDiffRequestProducer.CHANGE_KEY) ?: return
 
     val cs = DisposingMainScope(viewer)
-    val changeVmFlow = reviewVm.getViewModelFor(change)
+    val changeVmFlow = reviewVm.getViewModelFor(change).filterNotNull()
 
     cs.launch {
-      val isCumulative = changeVmFlow.first()?.isCumulativeChange ?: return@launch
+      val isCumulative = changeVmFlow.first().isCumulativeChange
       GitLabStatistics.logMrDiffOpened(isCumulative)
     }
 
-    val discussions = changeVmFlow.flatMapLatest { it?.discussions ?: flowOf(emptyList()) }
+    val discussions = changeVmFlow.flatMapLatest { it.discussions }
     viewer.controlInlaysIn(cs, discussions, GitLabMergeRequestDiffDiscussionViewModel::id) {
       val inlayCs = this
       GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(
         project, inlayCs, reviewVm.avatarIconsProvider, it
       )
     }
-    val draftDiscussions = changeVmFlow.flatMapLatest { it?.draftDiscussions ?: flowOf(emptyList()) }
+    val draftDiscussions = changeVmFlow.flatMapLatest { it.draftDiscussions }
     viewer.controlInlaysIn(cs, draftDiscussions, GitLabMergeRequestDiffDiscussionViewModel::id) {
       val inlayCs = this
       GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(
@@ -69,7 +70,6 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
     }
 
     val newDiscussions = changeVmFlow.flatMapLatest { changeVm ->
-      if (changeVm == null) return@flatMapLatest flowOf(emptyList())
       changeVm.newDiscussions.map {
         it.map { (location, vm) ->
           NewNoteDiffInlayViewModel(changeVm, location, vm)
@@ -85,10 +85,12 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
 
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       changeVmFlow.collectLatest { changeVm ->
-        coroutineScope {
-          if (changeVm != null) {
-            viewer.controlAddCommentActionsIn(this, changeVm)
-            awaitCancellation()
+        changeVm.discussionsViewOption.collectLatest { discussionsViewOption ->
+          if (discussionsViewOption != DiscussionsViewOption.DONT_SHOW) {
+            coroutineScope {
+              viewer.controlAddCommentActionsIn(this, changeVm)
+              awaitCancellation()
+            }
           }
         }
       }
