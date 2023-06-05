@@ -67,8 +67,20 @@ class KotlinGradleCompatibilityStore : IdeVersionedDataStorage<KotlinGradleCompa
     parser = KotlinGradleCompatibilityParser,
     defaultState = DEFAULT_KOTLIN_GRADLE_COMPATIBILITY_DATA
 ) {
-    private lateinit var supportedKotlinVersions: List<IdeKotlinVersion>
-    private lateinit var compatibility: List<Pair<Ranges<IdeKotlinVersion>, Ranges<GradleVersion>>>
+    @Volatile
+    private var supportedKotlinVersions: List<IdeKotlinVersion> = emptyList()
+
+    @Volatile
+    private var compatibility: List<Pair<Ranges<IdeKotlinVersion>, Ranges<GradleVersion>>> = emptyList()
+
+    private fun applyState(state: KotlinGradleCompatibilityState) {
+        compatibility = getCompatibilityRanges(state)
+        supportedKotlinVersions = state.kotlinVersions.map(IdeKotlinVersion::get)
+    }
+
+    init {
+        applyState(DEFAULT_KOTLIN_GRADLE_COMPATIBILITY_DATA)
+    }
 
     override fun newState(): KotlinGradleCompatibilityState = KotlinGradleCompatibilityState()
 
@@ -83,8 +95,7 @@ class KotlinGradleCompatibilityStore : IdeVersionedDataStorage<KotlinGradleCompa
     }
 
     override fun onStateChanged(newState: KotlinGradleCompatibilityState) {
-        compatibility = getCompatibilityRanges(newState)
-        supportedKotlinVersions = newState.kotlinVersions.map(IdeKotlinVersion::get)
+        applyState(newState)
     }
 
     companion object {

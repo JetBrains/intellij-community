@@ -19,6 +19,7 @@ abstract class IdeVersionedDataStorage<S: IdeVersionedDataState>(
     return newState
   }
 
+  @Volatile
   private var currentState: S = initializeDefaultState()
 
   protected open fun onStateChanged(newState: S) {
