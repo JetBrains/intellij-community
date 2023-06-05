@@ -10,7 +10,7 @@ import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 import com.intellij.xdebugger.impl.ui.attach.dialog.ProcessPredicate
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogElementNode
 
-class AttachToProcessElementsFilters(private val selectedFilter: AtomicLazyProperty<AttachDialogDebuggersFilter>) {
+class AttachToProcessElementsFilters(val selectedFilter: AtomicLazyProperty<AttachDialogDebuggersFilter>) {
 
   private val processPredicates = (ActionManager.getInstance().getAction(
     "XDebugger.Attach.Dialog.Settings") as? DefaultActionGroup)?.getChildren(null)?.filterIsInstance<ProcessPredicate>() ?: emptyList()
