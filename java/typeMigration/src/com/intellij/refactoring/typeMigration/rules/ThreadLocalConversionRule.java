@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
@@ -197,8 +198,13 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
       if (from instanceof PsiPrimitiveType) {
         final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(to.getParameters()[0]);
         if (unboxed != null && !from.equals(unboxed)) {
-          return context instanceof PsiLiteralExpression && PsiTypes.longType().equals(unboxed)
-                 ? replaceByArg + "L"
+          if (PsiTypes.longType().equals(unboxed)) {
+            String result = longLiteralText(context, replaceByArg);
+            if (result != null) return result;
+          }
+          return context instanceof PsiExpression expression &&
+                 PsiPrecedenceUtil.getPrecedence(expression) > PsiPrecedenceUtil.TYPE_CAST_PRECEDENCE
+                 ? "(" + unboxed.getCanonicalText() + ")(" + replaceByArg + ")"
                  : "(" + unboxed.getCanonicalText() + ")" + replaceByArg;
         }
       }
@@ -207,6 +213,16 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
     return from instanceof PsiPrimitiveType
            ? "new " + ((PsiPrimitiveType)from).getBoxedTypeName() + "(" + replaceByArg + ")"
            : replaceByArg;
+  }
+
+  private static String longLiteralText(PsiElement context, String text) {
+    if (context instanceof PsiLiteralExpression) {
+      return text + "L";
+    }
+    else if (context instanceof PsiPrefixExpression expression) {
+      return longLiteralText(expression.getOperand(), text);
+    }
+    return null;
   }
 
   private static @NonNls String getBoxedWrapper(PsiType from,
