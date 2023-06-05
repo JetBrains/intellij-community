@@ -12,6 +12,7 @@ import com.intellij.codeInsight.intention.impl.config.IntentionsMetadataService
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.ex.QuickFixWrapper
+import com.intellij.diagnostic.PluginException
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.ide.plugins.PluginManagerCore
@@ -191,9 +192,9 @@ internal class IntentionPreviewComputable(private val project: Project,
     val unwrapped = IntentionActionDelegate.unwrap(action)
     val cls = (QuickFixWrapper.unwrap(unwrapped) ?: unwrapped)::class.java
     val loader = cls.classLoader
-    val thirdParty = loader !is PluginAwareClassLoader || !PluginManagerCore.isDevelopedByJetBrains(loader.pluginDescriptor)
-    if (!thirdParty) {
-      logger<IntentionPreviewComputable>().error("Intention preview fallback is used for action ${cls.name}|${action.familyName}")
+    if (loader is PluginAwareClassLoader && PluginManagerCore.isDevelopedByJetBrains(loader.pluginDescriptor)) {
+      logger<IntentionPreviewComputable>().error(
+        PluginException("Intention preview fallback is used for action ${cls.name}|${action.familyName}", loader.pluginId))
     }
     ProgressManager.checkCanceled()
     IntentionPreviewUtils.previewSession(editorCopy) {
