@@ -2,17 +2,19 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations
 
 import com.intellij.application.subscribe
-import com.intellij.execution.ExecutionListener
-import com.intellij.execution.ExecutionManager
-import com.intellij.execution.PsiLocation
-import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.*
 import com.intellij.execution.actions.ConfigurationContext.createEmptyContextForLocation
+import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.configurations.RunConfigurationBase
+import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ExecutionUtil
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState
@@ -74,69 +76,94 @@ object ExecuteRunConfigurationsChecker : AbstractTestChecker<ExecuteRunConfigura
             val disposable = Disposer.newDisposable()
             coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
 
-            /**
-             * Quirk in [ExternalSystemTaskManagerWrapper.executeTasks]:
-             * In case of a build failure, the 'onFailure' call will terminate the process and invoke
-             * the 'processTerminated' listeners first.
-             *
-             * However, in the 'onEnd' callback will be invoked afterward with the 'farewell message'
-             * (see [ExternalSystemRunnableState])
-             *
-             * On the happy path (no failure), this farewell message will be sent first and
-             * will be available in 'onTextAvailable' before the 'processTerminated' is called.
+
+            /*
+            Creates the process listener which is collecting the execution output (requires an ExternalSystemProcessHandler).
+            This listener will also be able to determine when the execution is over (using the processTerminated callback)
              */
-            val farewellMessageReceived = Job()
+            fun processListener(processHandler: ExternalSystemProcessHandler) = object : ProcessListener {
+                /**
+                 * Quirk in [ExternalSystemTaskManagerWrapper.executeTasks]:
+                 * In case of a build failure, the 'onFailure' call will terminate the process and invoke
+                 * the 'processTerminated' listeners first.
+                 *
+                 * However, in the 'onEnd' callback will be invoked afterward with the 'farewell message'
+                 * (see [ExternalSystemRunnableState])
+                 *
+                 * On the happy path (no failure), this farewell message will be sent first and
+                 * will be available in 'onTextAvailable' before the 'processTerminated' is called.
+                 */
+                val farewellMessageReceived = Job()
 
-            /* the 'runBlockingWithTimeout' block will wait for this callbacks */
-            ExecutionManager.EXECUTION_TOPIC.subscribe(disposable, object : ExecutionListener {
-
-                /* Collecting output of the run configuration */
-                override fun processStarting(executorId: String, env: ExecutionEnvironment) {
-                    env.setCallback { descriptor ->
-                        val processHandler = descriptor.processHandler as? ExternalSystemProcessHandler ?: fail("Missing 'processHandler'")
-                        processHandler.addProcessListener(object : ProcessListener {
-                            override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-                                launch {
-                                    output.add(event.text.trim())
-                                    if (event.processHandler.isProcessTerminated) {
-                                        farewellMessageReceived.complete()
-                                    }
-                                }
-                            }
-
-                            override fun processTerminated(event: ProcessEvent) {
-                                launch {
-                                    if (event.exitCode != 0) {
-                                        farewellMessageReceived.join()
-
-                                        val task = processHandler.task ?: fail("Missing task")
-
-                                        /* Await the task getting updated */
-                                        while (task.state == ExternalSystemTaskState.IN_PROGRESS) {
-                                            yield()
-                                        }
-
-                                        task.error?.stackTraceToString()?.let { stackTraceString ->
-                                            output += "\n"
-                                            output += stackTraceString.lineSequence()
-                                                .filterNot { it.isBlank() }
-                                                .take(2)
-                                        }
-                                    }
-                                    output.add("\n<exitCode: ${event.exitCode}>")
-                                    continuation.resume(output.toList())
-                                }
-                            }
-                        })
+                override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+                    launch {
+                        output.add(event.text.trim())
+                        if (event.processHandler.isProcessTerminated) {
+                            farewellMessageReceived.complete()
+                        }
                     }
                 }
 
+                override fun processTerminated(event: ProcessEvent) {
+                    launch {
+                        if (event.exitCode != 0) {
+                            farewellMessageReceived.join()
+
+                            val task = processHandler.task ?: fail("Missing task")
+
+                            /* Await the task getting updated */
+                            while (task.state == ExternalSystemTaskState.IN_PROGRESS) {
+                                yield()
+                            }
+
+                            task.error?.stackTraceToString()?.let { stackTraceString ->
+                                output += "\n"
+                                output += stackTraceString.lineSequence()
+                                    .filterNot { it.isBlank() }
+                                    .take(2)
+                            }
+                        }
+                        output.add("\n<exitCode: ${event.exitCode}>")
+                        continuation.resume(output.toList())
+                    }
+                }
+            }
+
+            /*
+            Special extension just living for this execution test:
+            We will ensure that we can set our process listener early enough!
+             */
+            val runConfigurationExtension = object : RunConfigurationExtension() {
+                override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean = true
+
+                override fun <T : RunConfigurationBase<*>?> updateJavaParameters(
+                    configuration: T & Any, params: JavaParameters, runnerSettings: RunnerSettings?
+                ) = Unit
+
+                override fun attachToProcess(
+                    configuration: RunConfigurationBase<*>, handler: ProcessHandler, runnerSettings: RunnerSettings?
+                ) {
+                    handler.addProcessListener(processListener(handler as ExternalSystemProcessHandler))
+                }
+            }
+
+            RunConfigurationExtension.EP_NAME.point.registerExtension(
+                runConfigurationExtension, LoadingOrder.ANY, disposable
+            )
+
+            /* the 'runBlockingWithTimeout' block will wait for this callbacks */
+            ExecutionManager.EXECUTION_TOPIC.subscribe(disposable, object : ExecutionListener {
                 override fun processNotStarted(executorId: String, env: ExecutionEnvironment, cause: Throwable?) =
                     continuation.resumeWithException(cause ?: error("Process not started"))
             })
 
-            /* Start execution of the run configuration, awaiting the callback above to be invoked */
-            ExecutionUtil.runConfiguration(runConfiguration, DefaultRunExecutor.getRunExecutorInstance())
+
+            /* Finally trigger execution of the run configuration */
+            val environment = ExecutionEnvironmentBuilder
+                .create(DefaultRunExecutor.getRunExecutorInstance(), runConfiguration)
+                .build()
+
+            ExecutionManager.getInstance(testProject).restartRunProfile(environment)
         }
 
     private fun <T> runBlockingWithTimeout(timeout: Duration, action: CoroutineScope.(continuation: Continuation<T>) -> Unit): T {

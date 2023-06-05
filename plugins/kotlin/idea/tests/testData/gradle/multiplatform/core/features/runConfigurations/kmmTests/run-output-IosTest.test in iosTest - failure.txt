@@ -1,3 +1,4 @@
+<time>: Executing ':cleanIosSimulatorArm64Test :iosSimulatorArm64Test --tests "IosTest.test in iosTest - failure"'...
 <time>: Execution finished ':cleanIosSimulatorArm64Test :iosSimulatorArm64Test --tests "IosTest.test in iosTest - failure"'.
 
 
