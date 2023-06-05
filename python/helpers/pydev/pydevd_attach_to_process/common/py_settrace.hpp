@@ -127,19 +127,20 @@ int InternalSetSysTraceFunc(
         pyUnicode_InternFromString = stringFromString;
     }
 
-    DEFINE_PROC_NO_CHECK(pyObject_FastCallDict, _PyObject_FastCallDict*, "_PyObject_FastCallDict", 530);
+    _PyObject_FastCallDict* pyObject_FastCallDict;
+    if (version < PythonVersion_37) {
+        pyObject_FastCallDict = reinterpret_cast<_PyObject_FastCallDict*>(&PyObject_FastCallDictCustom);
+    } else if (version < PythonVersion_39) {
+        DEFINE_PROC(fastCallDict, _PyObject_FastCallDict*, "_PyObject_FastCallDict", 530);
+        pyObject_FastCallDict = fastCallDict;
+    } else {
+        DEFINE_PROC(vectorcallDict, _PyObject_FastCallDict*, "PyObject_VectorcallDict", 530);
+        pyObject_FastCallDict = vectorcallDict;
+    }
+
+
     DEFINE_PROC(pyTuple_New, PyTuple_New*, "PyTuple_New", 531);
     DEFINE_PROC(pyEval_CallObjectWithKeywords, PyEval_CallObjectWithKeywords*, "PyEval_CallObjectWithKeywords", 532);
-
-    if(pyObject_FastCallDict == nullptr) {
-        DEFINE_PROC_NO_CHECK(pyObject_VectorcallDict, _PyObject_FastCallDict*, "PyObject_VectorcallDict", 533);
-        pyObject_FastCallDict = pyObject_VectorcallDict;
-    }
-                                                                                                         
-    if(pyObject_FastCallDict == nullptr) {
-        // we have to use PyObject_FastCallDictCustom for older versions of CPython (pre 3.7).
-        pyObject_FastCallDict = reinterpret_cast<_PyObject_FastCallDict*>(&PyObject_FastCallDictCustom);
-    }
 
 
     DEFINE_PROC(pyTraceBack_Here, PyTraceBack_Here*, "PyTraceBack_Here", 540);
