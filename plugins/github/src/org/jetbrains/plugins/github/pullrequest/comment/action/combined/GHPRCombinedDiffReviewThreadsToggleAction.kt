@@ -29,8 +29,13 @@ internal class GHPRCombinedDiffReviewThreadsToggleAction : ActionGroup(), DumbAw
   ) : ToggleAction(viewOption.toActionName()) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isEnabledAndVisible = e.getData(GHPRDiffReviewSupport.DATA_KEY) != null
+    }
+
     override fun isSelected(e: AnActionEvent): Boolean {
-      val diffReviewSupport: GHPRDiffReviewSupport = e.getRequiredData(GHPRDiffReviewSupport.DATA_KEY)
+      val diffReviewSupport: GHPRDiffReviewSupport = e.getData(GHPRDiffReviewSupport.DATA_KEY) ?: return false
       return diffReviewSupport.discussionsViewOption == viewOption
     }
 
