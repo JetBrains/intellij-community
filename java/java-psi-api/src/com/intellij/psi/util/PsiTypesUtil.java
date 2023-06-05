@@ -211,7 +211,7 @@ public final class PsiTypesUtil {
   }
 
   /**
-   * @deprecated use {@link PsiTypesUtil#patchMethodGetClassReturnType(PsiExpression, PsiReferenceExpression, PsiMethod, LanguageLevel, Predicate)}
+   * @deprecated use {@link PsiTypesUtil#patchMethodGetClassReturnType(PsiExpression, PsiReferenceExpression, PsiMethod, LanguageLevel, Predicate)} instead
    */
   @Deprecated
   public static PsiType patchMethodGetClassReturnType(@NotNull PsiExpression call,

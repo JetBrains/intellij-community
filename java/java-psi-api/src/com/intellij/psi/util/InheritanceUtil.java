@@ -131,7 +131,7 @@ public final class InheritanceUtil {
   }
 
   /**
-   * @deprecated use {@link InheritanceUtil#hasEnclosingInstanceInScope(PsiClass, PsiElement, boolean, Predicate)}
+   * @deprecated use {@link InheritanceUtil#hasEnclosingInstanceInScope(PsiClass, PsiElement, boolean, Predicate)} instead
    */
   @Deprecated
   public static boolean hasEnclosingInstanceInScope(@NotNull PsiClass aClass,
@@ -172,7 +172,7 @@ public final class InheritanceUtil {
   }
 
   /**
-   * @deprecated use {@link InheritanceUtil#findEnclosingInstanceInScope(PsiClass, PsiElement, boolean, Predicate)}
+   * @deprecated use {@link InheritanceUtil#findEnclosingInstanceInScope(PsiClass, PsiElement, boolean, Predicate)} instead
    */
   @Deprecated
   @Nullable
