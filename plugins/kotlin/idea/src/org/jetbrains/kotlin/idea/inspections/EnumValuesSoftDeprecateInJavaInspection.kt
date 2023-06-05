@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.lang.OuterModelsModificationTrackerManager
+import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.JavaElementVisitor

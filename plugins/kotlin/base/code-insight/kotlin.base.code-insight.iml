@@ -34,5 +34,6 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.java.analysis" />
   </component>
 </module>

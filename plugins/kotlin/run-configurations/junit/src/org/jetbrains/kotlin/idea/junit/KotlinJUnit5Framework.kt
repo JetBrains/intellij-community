@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.junit
 import com.intellij.execution.junit.JUnit5Framework
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.lang.Language
-import com.intellij.lang.OuterModelsModificationTrackerManager
+import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -27,8 +27,8 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
         override fun isTestClass(declaration: KtClassOrObject): Boolean =
             super.isTestClass(declaration) && CachedValuesManager.getCachedValue(declaration) {
                 CachedValueProvider.Result.create(
-                    isJUnit5TestClass(declaration),
-                    OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
+                  isJUnit5TestClass(declaration),
+                  OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
                 )
             }
 
