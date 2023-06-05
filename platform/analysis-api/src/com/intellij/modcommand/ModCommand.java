@@ -3,7 +3,6 @@ package com.intellij.modcommand;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
@@ -23,13 +22,10 @@ public sealed interface ModCommand permits ModChooseTarget, ModCompositeCommand,
    * Executes the command
    * 
    * @param project current project
-   * @return execution status
    */
   @RequiresEdt
-  default @NotNull ModStatus execute(@NotNull Project project) {
-    ModStatus modStatus = prepare(project);
-    if (modStatus != ModStatus.SUCCESS) return modStatus;
-    return ApplicationManager.getApplication().getService(ModCommandService.class).execute(project, this);
+  default void execute(@NotNull Project project) {
+    ApplicationManager.getApplication().getService(ModCommandService.class).execute(project, this);
   }
 
   /**
@@ -37,18 +33,6 @@ public sealed interface ModCommand permits ModChooseTarget, ModCompositeCommand,
    */
   default boolean isEmpty() {
     return false;
-  }
-
-  /**
-   * Performs preparatory step, if necessary. In particular unlocks necessary files for writing
-   * 
-   * @return status of execution
-   */
-  @RequiresEdt
-  default @NotNull ModStatus prepare(@NotNull Project project) {
-    Set<VirtualFile> files = modifiedFiles();
-    if (files.isEmpty()) return ModStatus.SUCCESS;
-    return ReadonlyStatusHandler.ensureFilesWritable(project, files.toArray(VirtualFile.EMPTY_ARRAY)) ? ModStatus.SUCCESS : ModStatus.CANCEL;
   }
 
   /**

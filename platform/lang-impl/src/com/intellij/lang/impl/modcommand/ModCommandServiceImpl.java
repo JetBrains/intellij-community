@@ -23,18 +23,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 public class ModCommandServiceImpl implements ModCommandService {
@@ -53,8 +56,20 @@ public class ModCommandServiceImpl implements ModCommandService {
     return action instanceof ModCommandActionWrapper wrapper ? wrapper.action() : null;
   }
 
+  @RequiresEdt
   @Override
-  public @NotNull ModStatus execute(@NotNull Project project, @NotNull ModCommand command) {
+  public void execute(@NotNull Project project, @NotNull ModCommand command) {
+    Set<VirtualFile> files = command.modifiedFiles();
+    if (!files.isEmpty()) {
+      if (!ReadonlyStatusHandler.ensureFilesWritable(project, files.toArray(VirtualFile.EMPTY_ARRAY))) {
+        return;
+      }
+    }
+    doExecute(project, command);
+  }
+
+  @NotNull
+  private ModStatus doExecute(@NotNull Project project, @NotNull ModCommand command) {
     if (command instanceof ModUpdateFileText upd) {
       return executeUpdate(project, upd);
     }
@@ -148,7 +163,7 @@ public class ModCommandServiceImpl implements ModCommandService {
   @NotNull
   private ModStatus executeComposite(@NotNull Project project, ModCompositeCommand cmp) {
     for (ModCommand command : cmp.commands()) {
-      ModStatus status = execute(project, command);
+      ModStatus status = doExecute(project, command);
       if (status != ModStatus.SUCCESS) {
         return status;
       }
@@ -186,5 +201,28 @@ public class ModCommandServiceImpl implements ModCommandService {
                                                                                 DumbProgressIndicator.INSTANCE);
     return ContainerUtil.map(fragments, fr -> new Fragment(fr.getStartOffset1(), fr.getEndOffset1() - fr.getStartOffset1(),
                                                            fr.getEndOffset2() - fr.getStartOffset2()));
+  }
+
+  /**
+   * Status of the execution of {@link ModCommand}
+   */
+  private enum ModStatus {
+    /**
+     * Operation completed successfully
+     */
+    SUCCESS,
+    /**
+     * Operation continues execution in background
+     */
+    DEFERRED,
+    /**
+     * Operation aborted due to intermittent state change, no changes are introduced,
+     * recreating the command and performing the operation again may be helpful
+     */
+    ABORT,
+    /**
+     * Operation cancelled by user via UI
+     */
+    CANCEL
   }
 }
