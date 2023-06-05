@@ -99,6 +99,12 @@ public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T>
     return (T)this;
   }
 
+  public final T withMaximumSize(int width, int height) {
+    myMaximumWidth = width;
+    myMaximumHeight = height;
+    return (T)this;
+  }
+
   public final T withMinimumWidth(int width) {
     myMinimumWidth = width;
     return (T)this;
