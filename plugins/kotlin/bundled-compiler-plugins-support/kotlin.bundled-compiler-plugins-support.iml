@@ -21,5 +21,6 @@
     <orderEntry type="library" name="kotlinc.assignment-compiler-plugin" level="project" />
     <orderEntry type="library" name="kotlinc.parcelize-compiler-plugin" level="project" />
     <orderEntry type="library" name="kotlinc.scripting-compiler-plugin" level="project" />
+    <orderEntry type="module" module-name="intellij.android.compose-ide-plugin" />
   </component>
 </module>
