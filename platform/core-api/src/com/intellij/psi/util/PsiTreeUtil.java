@@ -339,34 +339,52 @@ public class PsiTreeUtil {
     return null;
   }
 
+  public static @Nullable PsiElement findFirstParent(@NotNull Predicate<? super  PsiElement> predicate, @Nullable PsiElement element) {
+    return findFirstParent(element, predicate, false);
+  }
+
+  @ApiStatus.Obsolete
   public static @Nullable PsiElement findFirstParent(@Nullable PsiElement element, @NotNull Condition<? super PsiElement> condition) {
-    return findFirstParent(element, false, condition);
+    return findFirstParent(condition, element);
   }
 
+  public static @Nullable PsiElement findFirstParent(@Nullable PsiElement element, @NotNull Predicate<? super PsiElement> predicate, boolean strict) {
+    if (strict && element != null) {
+      element = element.getParent();
+    }
+    while (element != null) {
+      if (predicate.test(element)) {
+        return element;
+      }
+      element = element.getParent();
+    }
+    return null;
+  }
+
+  @ApiStatus.Obsolete
   public static @Nullable PsiElement findFirstParent(@Nullable PsiElement element, boolean strict, @NotNull Condition<? super PsiElement> condition) {
+    return findFirstParent(element, condition, strict);
+  }
+
+  public static @Nullable PsiElement findFirstContext(@Nullable PsiElement element, @NotNull Predicate<? super PsiElement> predicate, boolean strict) {
     if (strict && element != null) {
-      element = element.getParent();
+      element = element.getContext();
     }
     while (element != null) {
-      if (condition.value(element)) {
+      if (predicate.test(element)) {
         return element;
       }
-      element = element.getParent();
+      element = element.getContext();
     }
     return null;
   }
 
+  /**
+   * @deprecated use {@link PsiTreeUtil#findFirstContext(PsiElement, Predicate, boolean)} instead
+   */
+  @Deprecated
   public static @Nullable PsiElement findFirstContext(@Nullable PsiElement element, boolean strict, @NotNull Condition<? super PsiElement> condition) {
-    if (strict && element != null) {
-      element = element.getContext();
-    }
-    while (element != null) {
-      if (condition.value(element)) {
-        return element;
-      }
-      element = element.getContext();
-    }
-    return null;
+    return findFirstContext(element, condition, strict);
   }
 
   public static @NotNull <T extends PsiElement> T getRequiredChildOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
