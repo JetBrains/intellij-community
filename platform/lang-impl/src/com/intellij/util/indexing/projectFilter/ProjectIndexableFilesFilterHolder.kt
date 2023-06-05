@@ -111,20 +111,23 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   override fun runHealthCheck() {
     try {
       for ((project, filter) in myProjectFilters) {
-        if (DumbService.isDumb(project)) continue
+        var errors: List<HealthCheckError>? = null
+        ProgressIndicatorUtils.runInReadActionWithWriteActionPriority {
+          if (DumbService.isDumb(project)) return@runInReadActionWithWriteActionPriority
+          errors = runHealthCheck(project, filter)
+        }
 
-        val errors = runHealthCheck(project, filter)
-        if (errors.isEmpty()) continue
+        if (errors.isNullOrEmpty()) continue
 
-        for (error in errors) {
+        for (error in errors!!) {
           error.fix(filter)
         }
 
-        val message = StringUtil.first(
-          errors.joinToString(", ") { ReadAction.nonBlocking(Callable { it.presentableText }).executeSynchronously() },
-          300,
-          true)
+        val message = StringUtil.first(errors!!.map { ReadAction.nonBlocking(Callable { it.presentableText }) }.joinToString(", "),
+                                       300,
+                                       true)
         FileBasedIndexImpl.LOG.error("Project indexable filter health check errors: $message")
+
       }
     }
     catch (_: ProcessCanceledException) {
@@ -141,11 +144,8 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     index.iterateIndexableFiles(ContentIterator {
       if (it is VirtualFileWithId) {
         val fileId = it.id
-        ProgressIndicatorUtils.runInReadActionWithWriteActionPriority {
-          if (DumbService.isDumb(project)) return@runInReadActionWithWriteActionPriority
-          if (!filter.containsFileId(fileId) && filter.ensureFileIdPresent(fileId) { true } == FileAddStatus.ADDED) {
-            errors.add(HealthCheckError(project, it))
-          }
+        if (!filter.containsFileId(fileId)) {
+          filter.ensureFileIdPresent(fileId) { true }
         }
       }
       true
