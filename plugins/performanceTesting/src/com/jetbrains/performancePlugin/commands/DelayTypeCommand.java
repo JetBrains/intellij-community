@@ -1,12 +1,16 @@
 package com.jetbrains.performancePlugin.commands;
 
-import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
+import com.intellij.internal.performance.LatencyRecord;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.LatencyListener;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.KeyCodeTypeCommand;
 import com.intellij.openapi.util.Ref;
+import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener;
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerResult;
@@ -51,7 +55,17 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
     final boolean calculateAnalyzesTime = delayText.length > 2 && Boolean.parseBoolean(delayText[2]);
     Ref<Span> spanRef = new Ref<>();
     Ref<Scope> scopeRef = new Ref<>();
-    var connection = context.getProject().getMessageBus().simpleConnect();
+    var projectConnection = context.getProject().getMessageBus().simpleConnect();
+    var applicationConnection = ApplicationManager.getApplication().getMessageBus().connect();
+
+    var latencyRecorder = new LatencyRecord();
+    applicationConnection.subscribe(LatencyListener.TOPIC, new LatencyListener() {
+      @Override
+      public void recordTypingLatency(@NotNull Editor editor, String action, long latencyMs) {
+        latencyRecorder.update(((int)latencyMs));
+      }
+    });
+
     Ref<DaemonCodeAnalyzerResult> job = new Ref<>();
     ApplicationManager.getApplication().executeOnPooledThread(Context.current().wrap(() -> {
       TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, SPAN_NAME, span -> {
@@ -72,7 +86,7 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
             () -> {
               if (currentChar == END_CHAR) {
                 if (calculateAnalyzesTime) {
-                  job.set(DaemonCodeAnalyzerListener.INSTANCE.listen(connection, spanRef, scopeRef, 0, null));
+                  job.set(DaemonCodeAnalyzerListener.INSTANCE.listen(projectConnection, spanRef, scopeRef, 0, null));
                   var spanBuilder = PerformanceTestSpan.TRACER.spanBuilder(CODE_ANALYSIS_SPAN_NAME).setParent(Context.current().with(span));
                   spanRef.set(spanBuilder.startSpan());
                   scopeRef.set(spanRef.get().makeCurrent());
@@ -93,6 +107,12 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
         try {
           allScheduled.await();
           myExecutor.awaitTermination(1, TimeUnit.MINUTES);
+
+          if (!latencyRecorder.getSamples().isEmpty()) {
+            span.setAttribute("latency#max", latencyRecorder.getMaxLatency());
+            span.setAttribute("latency#p90", latencyRecorder.percentile(90));
+            span.setAttribute("latency#mean_value", latencyRecorder.getAverageLatency());
+          }
         }
         catch (InterruptedException e) {
           result.setError(e);
@@ -102,6 +122,7 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
       if (calculateAnalyzesTime) {
         job.get().blockingWaitForComplete();
       }
+      applicationConnection.disconnect();
       result.setResult(null);
     }));
 
