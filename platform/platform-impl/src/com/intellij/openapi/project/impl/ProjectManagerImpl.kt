@@ -3,7 +3,6 @@
 
 package com.intellij.openapi.project.impl
 
-import com.intellij.concurrency.resetThreadContext
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
@@ -48,6 +47,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.ProjectImpl.Companion.PROJECT_PATH
 import com.intellij.openapi.project.impl.ProjectImpl.Companion.preloadServices
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -1163,6 +1163,8 @@ private suspend fun initProject(file: Path,
     coroutineContext.ensureActive()
 
     val registerComponentActivity = createActivity(project) { "project ${StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX}" }
+
+    PROJECT_PATH.set(project, file)
     project.registerComponents()
     registerComponentActivity?.end()
 

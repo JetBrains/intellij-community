@@ -64,6 +64,9 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     @JvmField
     val CREATION_TIME: Key<Long> = Key.create("ProjectImpl.CREATION_TIME")
 
+    @JvmField
+    val PROJECT_PATH = Key.create<Path>("ProjectImpl.PROJECT_PATH")
+
     @TestOnly
     const val LIGHT_PROJECT_NAME: @NonNls String = "light_temp"
 
