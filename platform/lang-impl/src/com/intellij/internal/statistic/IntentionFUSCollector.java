@@ -11,10 +11,13 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId3;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +33,7 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
     GROUP.registerEvent("called", EventFields.Class("id"), EventFields.PluginInfo, EventFields.Language);
   private final static EventId3<Class<?>, PluginInfo, Language> SHOWN =
     GROUP.registerEvent("shown", EventFields.Class("id"), EventFields.PluginInfo, EventFields.Language);
+  private static final VarargEventId POPUP_DELAY = GROUP.registerVarargEvent("popup_delay", EventFields.DurationMs, EventFields.FileType);
 
   @Override
   public EventLogGroup getGroup() {
@@ -74,6 +78,13 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
     for (IntentionActionWithTextCaching value : values) {
       recordIntentionEvent(project, value.getAction(), language, SHOWN);
     }
+  }
+
+  /**
+   * Report time between Alt-Enter invocation and the intention popup appearing onscreen
+   */
+  public static void reportPopupDelay(@NotNull Project project, long delayMs, @NotNull FileType fileType) {
+    POPUP_DELAY.log(project, new EventPair<>(EventFields.DurationMs, delayMs), new EventPair<>(EventFields.FileType, fileType));
   }
 }
 
