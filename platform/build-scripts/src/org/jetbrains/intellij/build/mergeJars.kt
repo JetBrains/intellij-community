@@ -149,7 +149,6 @@ suspend fun buildJar(targetFile: Path,
 
           is ZipSource -> {
             handleZipSource(source = source,
-                            targetFile = targetFile,
                             nativeFileHandler = nativeFileHandler,
                             uniqueNames = uniqueNames,
                             sources = sources,
@@ -167,13 +166,11 @@ suspend fun buildJar(targetFile: Path,
 }
 
 private suspend fun handleZipSource(source: ZipSource,
-                                    targetFile: Path,
                                     nativeFileHandler: NativeFileHandler?,
                                     uniqueNames: MutableMap<String, Path>,
                                     sources: List<Source>,
                                     packageIndexBuilder: PackageIndexBuilder?,
                                     zipCreator: ZipFileWriter) {
-  val requiresMavenFiles = targetFile.fileName.toString().startsWith("junixsocket-")
   val nativeFiles = if (nativeFileHandler == null) {
     null
   }
@@ -188,13 +185,10 @@ private suspend fun handleZipSource(source: ZipSource,
   val sourceFile = source.file
   // FileChannel is strongly required because only FileChannel provides `read(ByteBuffer dst, long position)` method -
   // ability to read data without setting channel position, as setting channel position will require synchronization
-  suspendAwareReadZipFile(sourceFile) { name: String, dataSupplier: () -> ByteBuffer ->
+  suspendAwareReadZipFile(sourceFile) { name, dataSupplier ->
     val filter = source.filter
     val isIncluded = if (filter == null) {
-      checkNameForZipSource(name = name,
-                            excludes = source.excludes,
-                            includeManifest = sources.size == 1,
-                            requiresMavenFiles = requiresMavenFiles)
+      checkNameForZipSource(name = name, excludes = source.excludes, includeManifest = sources.size == 1)
     }
     else {
       filter(name)
@@ -307,10 +301,7 @@ private fun getIgnoredNames(): Set<String> {
 
 private val ignoredNames = java.util.Set.copyOf(getIgnoredNames())
 
-private fun checkNameForZipSource(name: String,
-                                  excludes: List<Regex>,
-                                  includeManifest: Boolean,
-                                  requiresMavenFiles: Boolean): Boolean {
+private fun checkNameForZipSource(name: String, excludes: List<Regex>, includeManifest: Boolean): Boolean {
   @Suppress("SpellCheckingInspection")
   return !ignoredNames.contains(name) &&
          excludes.none { it.matches(name) } &&
@@ -359,7 +350,6 @@ private fun checkNameForZipSource(name: String,
 
          !name.startsWith("native/") &&
          !name.startsWith("licenses/") &&
-         (requiresMavenFiles || (name != "META-INF/maven" && !name.startsWith("META-INF/maven/"))) &&
          !name.startsWith("META-INF/INDEX.LIST") &&
          (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA"))) &&
          // we replace lib class by our own patched version
