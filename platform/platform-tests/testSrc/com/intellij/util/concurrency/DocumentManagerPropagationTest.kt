@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.EmptyCoroutineContext
 
-class DocumentManagerContextPropagationTest : HeavyPlatformTestCase() {
+class DocumentManagerPropagationTest : HeavyPlatformTestCase() {
 
   fun testCallbacks() = runWithContextPropagationEnabled {
     val service = PsiDocumentManager.getInstance(project)
