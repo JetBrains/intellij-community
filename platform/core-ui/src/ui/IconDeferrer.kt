@@ -18,6 +18,4 @@ abstract class IconDeferrer {
   abstract fun <T> defer(base: Icon?, param: T, evaluator: (T) -> Icon?): Icon
 
   abstract fun clearCache()
-
-  open fun equalIcons(icon1: Icon?, icon2: Icon?): Boolean = icon1 == icon2
 }
