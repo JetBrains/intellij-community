@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JarBuilder")
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RAW_RUN_BLOCKING")
 
-package org.jetbrains.intellij.build.tasks
+package org.jetbrains.intellij.build
 
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -118,7 +118,7 @@ suspend fun buildJar(targetFile: Path,
       val uniqueNames = HashMap<String, Path>()
 
       for (source in sources) {
-        val positionBefore = zipCreator.resultStream.getChannelPosition()
+        val positionBefore = zipCreator.channelPosition
         when (source) {
           is DirSource -> {
             val archiver = ZipArchiver(zipCreator, fileAdded = {
@@ -158,7 +158,7 @@ suspend fun buildJar(targetFile: Path,
           }
         }
 
-        source.sizeConsumer?.accept((zipCreator.resultStream.getChannelPosition() - positionBefore).toInt())
+        source.sizeConsumer?.accept((zipCreator.channelPosition - positionBefore).toInt())
       }
 
       packageIndexBuilder?.writePackageIndex(zipCreator)

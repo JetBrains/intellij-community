@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.io
+package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.rules.InMemoryFsExtension
@@ -10,9 +10,9 @@ import com.intellij.util.lang.ZipFile
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.configuration.ConfigurationProvider
-import org.jetbrains.intellij.build.tasks.DirSource
-import org.jetbrains.intellij.build.tasks.ZipSource
-import org.jetbrains.intellij.build.tasks.buildJar
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
+import org.jetbrains.intellij.build.io.zip
+import org.jetbrains.intellij.build.io.zipWithCompression
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -27,7 +27,7 @@ import kotlin.random.Random
 class ZipTest {
   @RegisterExtension
   @JvmField
-  // not used in every test because we want to check the real FS behaviour
+  // not used in every test because we want to check the real FS behavior
   val fs = InMemoryFsExtension()
 
   @Test

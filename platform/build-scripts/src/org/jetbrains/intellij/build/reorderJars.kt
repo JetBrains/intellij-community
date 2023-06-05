@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
-package org.jetbrains.intellij.build.tasks
+package org.jetbrains.intellij.build
 
 import com.intellij.platform.diagnostic.telemetry.impl.use
 import com.intellij.util.lang.HashMapZipFile
@@ -9,6 +9,7 @@ import io.opentelemetry.api.common.AttributeKey
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.toPersistentList
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.INDEX_FILENAME
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
@@ -97,7 +98,8 @@ private inline fun addJarsFromDir(dir: Path, consumer: (Sequence<Path>) -> Unit)
   }
 }
 
-internal fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path): Map<Path, List<String>> {
+@VisibleForTesting
+fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path): Map<Path, List<String>> {
   val sourceToNames = LinkedHashMap<Path, MutableList<String>>()
   classLoadingLog.bufferedReader().forEachLine {
     val data = it.split(':', limit = 2)

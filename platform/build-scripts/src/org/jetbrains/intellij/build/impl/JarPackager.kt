@@ -15,10 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.JetBrainsClientModuleFilter
-import org.jetbrains.intellij.build.SignNativeFileMode
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
@@ -27,7 +24,6 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.copyZipRaw
 import org.jetbrains.intellij.build.io.transformZipUsingTempFile
-import org.jetbrains.intellij.build.tasks.*
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -488,7 +484,7 @@ private fun getLibraryFiles(library: JpsLibrary,
   for (file in files) {
     val alreadyCopiedFor = copiedFiles.putIfAbsent(file, CopiedFor(library, targetFile))
     if (alreadyCopiedFor != null) {
-      // check name - we allow having same named module level library name
+      // check name - we allow having the same named module level library name
       if (isModuleLevel && alreadyCopiedFor.library.name == libName) {
         continue
       }

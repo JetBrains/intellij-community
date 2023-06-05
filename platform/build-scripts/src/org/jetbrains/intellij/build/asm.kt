@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.intellij.build.tasks
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build
 
 import org.jetbrains.org.objectweb.asm.*
 import java.nio.file.Files
@@ -13,7 +13,7 @@ import java.nio.file.Path
 //}
 
 // see https://stackoverflow.com/a/49454118
-fun injectAppInfo(inFile: Path, newFieldValue: String): ByteArray {
+internal fun injectAppInfo(inFile: Path, newFieldValue: String): ByteArray {
   val classReader = ClassReader(Files.readAllBytes(inFile))
   val classWriter = ClassWriter(classReader, 0)
   classReader.accept(object : ClassVisitor(Opcodes.API_VERSION, classWriter) {

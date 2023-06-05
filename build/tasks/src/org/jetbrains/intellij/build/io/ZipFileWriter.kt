@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ConstPropertyName")
 
 package org.jetbrains.intellij.build.io
@@ -59,6 +59,9 @@ class ZipFileWriter(channel: WritableByteChannel,
 
   private val bufferAllocator = ByteBufferAllocator()
   private val deflateBufferAllocator = if (deflater == null) null else ByteBufferAllocator()
+
+  val channelPosition: Long
+    get() = resultStream.getChannelPosition()
 
   @Suppress("DuplicatedCode")
   fun file(nameString: String, file: Path) {

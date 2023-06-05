@@ -9,12 +9,11 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jetbrains.intellij.build.MAVEN_REPO
+import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.dependencies.CacheDirCleanup
-import org.jetbrains.intellij.build.tasks.MAVEN_REPO
-import org.jetbrains.intellij.build.tasks.ZipSource
 import java.math.BigInteger
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
@@ -108,7 +107,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path) : JarCacheMa
         ),
       )
 
-      // update file modification time to maintain FIFO caches i.e. in persistent cache folder on TeamCity agent and for CacheDirCleanup
+      // update file modification time to maintain FIFO caches i.e., in persistent cache folder on TeamCity agent and for CacheDirCleanup
       Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
       return
     }
