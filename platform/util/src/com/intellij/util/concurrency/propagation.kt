@@ -268,6 +268,18 @@ internal fun <V> capturePropagationAndCancellationContext(callable: Callable<V>)
   }
 }
 
+internal fun <T, R> capturePropagationAndCancellationContext(function: Function<T, R>): Function<T, R> {
+  val (childContext, childJob) = createChildContext()
+  var f = function
+  if (childContext != EmptyCoroutineContext) {
+    f = ContextFunction(childContext, f)
+  }
+  if (childJob != null) {
+    f = CancellationFunction(childJob, f)
+  }
+  return f
+}
+
 internal fun <V> capturePropagationAndCancellationContext(
   wrapper: SchedulingWrapper,
   callable: Callable<V>,
