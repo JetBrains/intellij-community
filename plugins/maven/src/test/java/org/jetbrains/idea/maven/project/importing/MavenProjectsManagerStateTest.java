@@ -16,7 +16,7 @@ import java.util.Collections;
 public class MavenProjectsManagerStateTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setNoBackgroundMode();
+    MavenUtil.setUpdateSuspendable();
     super.setUp();
     initProjectsManager(true);
     Assume.assumeFalse(MavenUtil.isLinearImportEnabled());
@@ -24,7 +24,7 @@ public class MavenProjectsManagerStateTest extends MavenMultiVersionImportingTes
 
   @Override
   protected void tearDown() throws Exception {
-    MavenUtil.resetNoBackgroundMode();
+    MavenUtil.resetUpdateSuspendable();
     super.tearDown();
   }
 
@@ -41,6 +41,17 @@ public class MavenProjectsManagerStateTest extends MavenMultiVersionImportingTes
                                        <groupId>test</groupId>
                                        <artifactId>project1</artifactId>
                                        <version>1</version>
+                                       <profiles>
+                                        <profile>
+                                         <id>one</id>
+                                        </profile>
+                                        <profile>
+                                         <id>two</id>
+                                        </profile>
+                                        <profile>
+                                         <id>three</id>
+                                        </profile>
+                                       </profiles>
                                        """);
 
     VirtualFile p2 = createModulePom("project2",
