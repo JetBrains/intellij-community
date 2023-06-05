@@ -29,7 +29,11 @@ private data class IntroduceObjectResult(
   val replacedReferences: List<PsiExpression>
 )
 
-object ParameterObjectExtractor {
+/**
+ * Creates a class or record to wrap multiple variables inside a single instance.
+ * Used as a first step before extracting method from code fragment with multiple results.
+ */
+object ResultObjectExtractor {
   fun run(editor: Editor, variables: List<PsiVariable>, scope: List<PsiElement>){
     require(variables.isNotEmpty())
     require(scope.isNotEmpty())

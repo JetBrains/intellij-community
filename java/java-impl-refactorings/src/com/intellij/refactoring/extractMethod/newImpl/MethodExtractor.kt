@@ -34,7 +34,7 @@ import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodPopup
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceMethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.extractInDialog
-import com.intellij.refactoring.extractMethod.newImpl.parameterObject.ParameterObjectExtractor
+import com.intellij.refactoring.extractMethod.newImpl.parameterObject.ResultObjectExtractor
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
@@ -81,7 +81,7 @@ class MethodExtractor {
     catch (exception: ExtractException) {
       if (exception is ExtractMultipleVariablesException && Registry.`is`("refactorings.extract.method.introduce.object")){
         val variables = exception.variables.sortedBy { variable -> variable.textRange.startOffset }
-        invokeLater { ParameterObjectExtractor.run(editor, variables, exception.scope) }
+        invokeLater { ResultObjectExtractor.run(editor, variables, exception.scope) }
       }
       else {
         InplaceExtractUtils.showExtractErrorHint(editor, exception)
