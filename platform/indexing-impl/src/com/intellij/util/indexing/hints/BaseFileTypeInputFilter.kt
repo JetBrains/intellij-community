@@ -41,7 +41,7 @@ abstract class BaseFileTypeInputFilter(private val fileTypeStrategy: FileTypeSub
     return when (acceptsFileTypeFastPath(file.fileType)) {
       ThreeState.YES -> true
       ThreeState.NO -> false
-      ThreeState.UNSURE -> whenFileTypeHintUnsure(file)
+      ThreeState.UNSURE -> slowPathIfFileTypeHintUnsure(file)
     }
   }
 

@@ -131,7 +131,7 @@ public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<Todo
   public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new BaseFileTypeInputFilter(AFTER_SUBSTITUTION) {
       @Override
-      public boolean whenFileTypeHintUnsure(@NotNull IndexedFile file) {
+      public boolean slowPathIfFileTypeHintUnsure(@NotNull IndexedFile file) {
         return TodoIndexers.needsTodoIndex(file);
       }
 

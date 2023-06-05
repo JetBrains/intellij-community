@@ -100,7 +100,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     }
 
     @Override
-    public boolean whenFileTypeHintUnsure(@NotNull IndexedFile file) {
+    public boolean slowPathIfFileTypeHintUnsure(@NotNull IndexedFile file) {
       if (file.getFileType() instanceof LanguageFileType) {
         ParserDefinition parserDefinition = getParserDefinition(file.getFileType(), file.getFileName());
         if (parserDefinition == null) return false;

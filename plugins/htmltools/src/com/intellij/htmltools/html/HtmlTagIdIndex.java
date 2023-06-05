@@ -40,7 +40,7 @@ public class HtmlTagIdIndex extends XmlIndex<Integer> {
   public FileBasedIndex.InputFilter getInputFilter() {
     return new BaseFileTypeInputFilter(BEFORE_SUBSTITUTION) {
       @Override
-      public boolean whenFileTypeHintUnsure(@NotNull IndexedFile file) {
+      public boolean slowPathIfFileTypeHintUnsure(@NotNull IndexedFile file) {
         return file.getFile().isInLocalFileSystem();
       }
 

@@ -154,7 +154,7 @@ internal class RequiredIndexesEvaluator(private val registeredIndexes: Registere
       ThreeState.YES -> truePredicate
       ThreeState.NO -> falsePredicate
       ThreeState.UNSURE -> object : IndexedFilePredicate {
-        override fun test(indexedFile: IndexedFile): Boolean = indexingHint.whenFileTypeHintUnsure(indexedFile)
+        override fun test(indexedFile: IndexedFile): Boolean = indexingHint.slowPathIfFileTypeHintUnsure(indexedFile)
       }
     }
   }
