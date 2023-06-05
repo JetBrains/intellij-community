@@ -4,7 +4,6 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -21,10 +20,13 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.messages.Topic
 import java.awt.Window
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.beans.PropertyChangeListener
+import java.util.*
 import javax.swing.SwingUtilities
 
 private val LOG = logger<EditorTracker>()
@@ -40,8 +42,6 @@ open class EditorTracker(@JvmField protected val project: Project) : Disposable 
   private val windowToWindowFocusListenerMap = HashMap<Window, WindowAdapter>()
   private val editorToWindowMap = HashMap<Editor, Window>()
 
-  // accessed in EDT only
-  private var myActiveEditors = emptyList<Editor>()
   private var activeWindow: Window? = null
   private val executeOnEditorRelease = HashMap<Editor, () -> Unit>()
 
@@ -85,17 +85,17 @@ open class EditorTracker(@JvmField protected val project: Project) : Disposable 
 
   internal class MyAppLevelEditorFactoryListener : EditorFactoryListener {
     override fun editorCreated(event: EditorFactoryEvent) {
-      val project = event.editor.project
-      if (project != null && !project.isDisposed) {
-        getInstance(project).editorCreated(event, project)
+      val editor = event.editor
+      val project = editor.project?.takeIf { !it.isDisposed } ?: return
+      if (PsiDocumentManager.getInstance(project).getPsiFile(editor.document) != null) {
+        getInstance(project).createEditorImpl(editor = editor, project = project)
       }
     }
 
     override fun editorReleased(event: EditorFactoryEvent) {
-      val project = event.editor.project
-      if (project != null && !project.isDisposed) {
-        getInstance(project).editorReleased(event, project)
-      }
+      val editor = event.editor
+      val project = editor.project?.takeIf { !it.isDisposed } ?: return
+      getInstance(project).editorReleasedImpl(editor = editor, project = project)
     }
   }
 
@@ -159,25 +159,20 @@ open class EditorTracker(@JvmField protected val project: Project) : Disposable 
     }
   }
 
-  open var activeEditors: List<Editor>
-    get() {
-      ApplicationManager.getApplication().assertIsDispatchThread()
-      return myActiveEditors
-    }
+  @get:RequiresEdt
+  @set:RequiresEdt
+  open var activeEditors: List<Editor> = emptyList()
     set(editors) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
-      if (editors == myActiveEditors) {
+      if (editors == field) {
         return
       }
 
-      myActiveEditors = editors
+      field = editors
       if (LOG.isDebugEnabled) {
-        LOG.debug("active editors changed:")
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
-        for (editor in editors) {
-          val psiFile = psiDocumentManager.getPsiFile(editor.document)
-          LOG.debug("    $psiFile")
-        }
+        LOG.debug("active editors changed: " + editors.joinToString(separator = "\n    ") {
+          psiDocumentManager.getPsiFile(it.document).toString()
+        })
       }
       project.messageBus.syncPublisher(EditorTrackerListener.TOPIC).activeEditorsChanged(editors)
     }
@@ -197,14 +192,6 @@ open class EditorTracker(@JvmField protected val project: Project) : Disposable 
     }
   }
 
-  private fun editorCreated(event: EditorFactoryEvent, project: Project) {
-    val editor = event.editor
-    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
-    if (psiFile != null) {
-      createEditorImpl(editor = editor, project = project)
-    }
-  }
-
   protected open fun createEditorImpl(editor: Editor, project: Project) {
     val component = editor.component
     val propertyChangeListener = PropertyChangeListener { event ->
@@ -216,10 +203,6 @@ open class EditorTracker(@JvmField protected val project: Project) : Disposable 
     executeOnEditorRelease.put(editor) {
       component.removePropertyChangeListener("ancestor", propertyChangeListener)
     }
-  }
-
-  private fun editorReleased(event: EditorFactoryEvent, project: Project) {
-    editorReleasedImpl(editor = event.editor, project = project)
   }
 
   protected open fun editorReleasedImpl(editor: Editor, project: Project) {
@@ -246,4 +229,15 @@ open class EditorTracker(@JvmField protected val project: Project) : Disposable 
   override fun toString(): String {
     return "EditorTracker(activeWindow=$activeWindow, activeEditors=$activeEditors, windowToEditorsMap=$windowToEditorsMap)"
   }
+}
+
+
+interface EditorTrackerListener : EventListener {
+  companion object {
+    @Topic.ProjectLevel
+    @JvmField
+    val TOPIC: Topic<EditorTrackerListener> = Topic(EditorTrackerListener::class.java, Topic.BroadcastDirection.NONE)
+  }
+
+  fun activeEditorsChanged(activeEditors: List<Editor>)
 }
