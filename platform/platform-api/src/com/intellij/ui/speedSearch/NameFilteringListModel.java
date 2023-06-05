@@ -23,8 +23,10 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
+import java.util.function.Predicate;
 
 /**
  * @param <T> list elements generic type
@@ -48,6 +50,17 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
     list.setModel(this);
   }
 
+  public NameFilteringListModel(ListModel<T> model,
+                                Function<? super T, String> namer,
+                                Predicate<? super String> filter,
+                                Computable<String> pattern) {
+    super(model);
+    myPattern = pattern;
+    myNamer = namer;
+    setFilter(namer != null ? (Predicate<? super T>) t -> filter.test(namer.fun(t)) : null);
+  }
+
+  @ApiStatus.Obsolete
   public NameFilteringListModel(ListModel<T> model,
                                 Function<? super T, String> namer,
                                 Condition<? super String> filter,

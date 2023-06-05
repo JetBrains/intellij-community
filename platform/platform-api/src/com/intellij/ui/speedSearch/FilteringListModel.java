@@ -50,9 +50,6 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
     refilter();
   }
 
-  /**
-   * Please use {@link FilteringListModel#setFilter(Predicate)} instead
-   */
   @ApiStatus.Obsolete
   public void setFilter(Condition<? super T> condition) {
     setFilter((Predicate<? super T>) condition);
