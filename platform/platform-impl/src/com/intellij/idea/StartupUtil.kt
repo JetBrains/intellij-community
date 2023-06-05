@@ -38,9 +38,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ShutDownTracker
@@ -49,7 +47,6 @@ import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
 import com.intellij.ui.*
@@ -483,15 +480,6 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
           PerformanceWatcher.getInstance()
         }
       }
-
-      // ProjectJdkTable wants FileTypeManager and VirtualFilePointerManager
-      coroutineScope {
-        launch { app.serviceAsync<FileTypeManager>() }
-        // wants ManagingFS
-        launch { app.serviceAsync<VirtualFilePointerManager>() }
-      }
-
-      app.serviceAsync<ProjectJdkTable>()
     }
 
     // LocalHistory wants ManagingFS.
