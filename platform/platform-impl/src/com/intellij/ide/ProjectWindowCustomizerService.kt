@@ -183,6 +183,7 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   fun showGotIt(project: Project, component: JComponent) {
+    if (!PlatformUtils.isRider()) return
     if (!shouldShowGotIt() || !isActive()) return
 
     val gotIt = GotItTooltip("colorful.instances", IdeBundle.message("colorfulInstances.gotIt.text"), this).apply {
