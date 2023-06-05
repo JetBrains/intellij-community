@@ -2135,7 +2135,7 @@ public final class HighlightMethodUtil {
       currentType = ((PsiPrimitiveType)currentType).getBoxedType(method);
     }
 
-    return Objects.requireNonNull(GenericsUtil.getLeastUpperBound(currentType, valueType, manager));
+    return Objects.requireNonNullElse(GenericsUtil.getLeastUpperBound(currentType, valueType, manager), Objects.requireNonNullElse(currentType, valueType));
   }
 
   static HighlightInfo.Builder checkRecordAccessorDeclaration(PsiMethod method) {
