@@ -1624,8 +1624,10 @@
     </group>
 
     <group id="ToolbarPopupActions">
-      <action id="ColoredHeaderAction" class="com.intellij.ide.ui.customization.UseProjectColorsCheckboxAction"/>
       <reference id="MainToolbarQuickActions"/>
+      <action id="ColoredHeaderAction" class="com.intellij.ide.ui.customization.UseProjectColorsCheckboxAction"/>
+      <reference id="WelcomeScreen.ChangeProjectIcon"/>
+      <action id="ChangeMainToolbarColor" class="com.intellij.ide.ui.customization.ChangeMainToolbarColorAction"/>
     </group>
   </actions>
 </idea-plugin>
