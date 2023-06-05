@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.Disposable
@@ -29,6 +29,7 @@ import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
@@ -47,20 +48,31 @@ class NoIteratingUnderExcludedRootsTest {
   private val testDisposable
     get() = projectModel.disposableRule.disposable
 
+  private lateinit var moduleRoot: VirtualFile
+  private lateinit var excludedDir: VirtualFile
+  private lateinit var txtFile: VirtualFile
+
+  @BeforeEach
+  fun setUp() {
+    moduleRoot = projectModel.baseProjectDir.newVirtualDirectory("myModuleRoot")
+    excludedDir = VfsTestUtil.createDir(moduleRoot, "excluded")
+    txtFile = VfsTestUtil.createFile(excludedDir, "my.txt")
+    val module = projectModel.createModule()
+    PsiTestUtil.addContentRoot(module, moduleRoot)
+  }
+
   @Test
   fun testRegularExclude() {
-    val data = initBasicProject()
-    excludeFolder(data.excluded)
-    checkIterate(data.moduleRoot, data.moduleRoot)
+    excludeFolder(excludedDir)
+    checkIterate(moduleRoot, moduleRoot)
   }
 
   @Test
   fun testExcludeOnCreateEvent() {
-    val data = initBasicProject()
-    excludeFolder(data.excluded)
-    checkIterate(data.moduleRoot, data.moduleRoot)
+    excludeFolder(excludedDir)
+    checkIterate(moduleRoot, moduleRoot)
 
-    val nioExcluded2 = data.moduleRoot.toNioPath().resolve("excluded2")
+    val nioExcluded2 = moduleRoot.toNioPath().resolve("excluded2")
     VirtualFileManager.getInstance().addAsyncFileListener(AsyncFileListener { events ->
       return@AsyncFileListener object : ChangeApplier {
         override fun afterVfsChange() {
@@ -70,25 +82,24 @@ class NoIteratingUnderExcludedRootsTest {
     }, testDisposable)
 
     FileUtil.writeToFile(nioExcluded2.resolve("my.txt").toFile(), "")
-    data.moduleRoot.refresh(false, true)
-    checkIterate(data.moduleRoot, data.moduleRoot)
+    moduleRoot.refresh(false, true)
+    checkIterate(moduleRoot, moduleRoot)
   }
 
   @Test
   fun testExcludeOnEarlyCreateEvent() {
-    val data = initBasicProject()
-    excludeFolder(data.excluded)
-    checkIterate(data.moduleRoot, data.moduleRoot)
+    excludeFolder(excludedDir)
+    checkIterate(moduleRoot, moduleRoot)
 
-    val nioExcluded2 = data.moduleRoot.toNioPath().resolve("excluded2")
+    val nioExcluded2 = moduleRoot.toNioPath().resolve("excluded2")
     listenEarlyAfterVfsChanges(object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
         excludeIfCreateEvent(events, nioExcluded2)
       }
     })
     FileUtil.writeToFile(nioExcluded2.resolve("my.txt").toFile(), "")
-    data.moduleRoot.refresh(false, true)
-    checkIterate(data.moduleRoot, data.moduleRoot)
+    moduleRoot.refresh(false, true)
+    checkIterate(moduleRoot, moduleRoot)
   }
 
   private fun excludeIfCreateEvent(events: List<VFileEvent>, createdPathToExclude: Path) {
@@ -104,42 +115,40 @@ class NoIteratingUnderExcludedRootsTest {
 
   @Test
   fun testExcludeOnRenameEvent() {
-    val data = initBasicProject()
-    excludeFolder(data.excluded)
-    checkIterate(data.moduleRoot, data.moduleRoot)
+    excludeFolder(excludedDir)
+    checkIterate(moduleRoot, moduleRoot)
 
-    val oldExcludeName = data.excluded.name
+    val oldExcludeName = excludedDir.name
     val newExcludeName = "$oldExcludeName-2"
     VirtualFileManager.getInstance().addAsyncFileListener(AsyncFileListener { events ->
       return@AsyncFileListener object : ChangeApplier {
         override fun afterVfsChange() {
-          excludeIfRenameEvent(events, data.excluded.parent, newExcludeName)
+          excludeIfRenameEvent(events, excludedDir.parent, newExcludeName)
         }
       }
     }, testDisposable)
     WriteAction.run<Throwable> {
-      data.excluded.rename(null, newExcludeName)
+      excludedDir.rename(null, newExcludeName)
     }
-    checkIterate(data.moduleRoot, data.moduleRoot)
+    checkIterate(moduleRoot, moduleRoot)
   }
 
   @Test
   fun testExcludeOnEarlyRenameEvent() {
-    val data = initBasicProject()
-    excludeFolder(data.excluded)
-    checkIterate(data.moduleRoot, data.moduleRoot)
+    excludeFolder(excludedDir)
+    checkIterate(moduleRoot, moduleRoot)
 
-    val oldExcludeName = data.excluded.name
+    val oldExcludeName = excludedDir.name
     val newExcludeName = "$oldExcludeName-2"
     listenEarlyAfterVfsChanges(object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
-        excludeIfRenameEvent(events, data.excluded.parent, newExcludeName)
+        excludeIfRenameEvent(events, excludedDir.parent, newExcludeName)
       }
     })
     WriteAction.run<Throwable> {
-      data.excluded.rename(null, newExcludeName)
+      excludedDir.rename(null, newExcludeName)
     }
-    checkIterate(data.moduleRoot, data.moduleRoot)
+    checkIterate(moduleRoot, moduleRoot)
   }
 
   private fun excludeIfRenameEvent(events: List<VFileEvent>, parent: VirtualFile, newChildName: String) {
@@ -151,21 +160,6 @@ class NoIteratingUnderExcludedRootsTest {
         }
       }
     }
-  }
-
-  private fun initBasicProject(): Data {
-    return Data().also {
-      val module = projectModel.createModule()
-      checkIterate(it.moduleRoot)
-      PsiTestUtil.addContentRoot(module, it.moduleRoot)
-      checkIterate(it.moduleRoot, it.moduleRoot, it.excluded, it.txt)
-    }
-  }
-
-  private inner class Data {
-    val moduleRoot = projectModel.baseProjectDir.newVirtualDirectory("myModuleRoot")
-    val excluded = VfsTestUtil.createDir(moduleRoot, "excluded")
-    val txt = VfsTestUtil.createDir(excluded, "my.txt")
   }
 
   private fun excludeFolder(folderToExclude: VirtualFile) {

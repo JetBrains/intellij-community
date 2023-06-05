@@ -246,7 +246,10 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   override fun updateDirtyEntities() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     for (file in dirtyFiles) {
-      fileSets.remove(file)
+      val collection = fileSets.remove(file)
+      collection?.forEach { 
+        dirtyEntities.add(it.entityReference)
+      }
     }
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val removeRegistrar = RemoveFileSetsRegistrarImpl(EntityStorageKind.MAIN)
