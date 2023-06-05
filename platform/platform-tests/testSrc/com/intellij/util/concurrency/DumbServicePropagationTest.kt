@@ -17,7 +17,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 
-class DumbServiceContextPropagationTest : BasePlatformTestCase() {
+class DumbServicePropagationTest : BasePlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
