@@ -46,6 +46,7 @@ import com.intellij.ui.content.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -726,6 +727,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
           ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, group, true);
           toolbar.setTargetComponent(textPanel);
           mainPanel.add(ServiceViewUIUtils.wrapServicesAligned(toolbar), BorderLayout.NORTH);
+          toolbar.getComponent().setBorder(JBUI.Borders.emptyTop(1));
           textPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
         }
       }

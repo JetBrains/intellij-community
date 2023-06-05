@@ -93,7 +93,6 @@ class ServiceViewTreeUi implements ServiceViewUi {
       JComponent wrapper = ServiceViewUIUtils.wrapServicesAligned(myServiceActionToolbar);
       myServiceActionToolbarWrapper = actionProvider.wrapServiceToolbar(wrapper, inDetails);
       myDetailsPanel.add(myServiceActionToolbarWrapper, BorderLayout.NORTH);
-      myServiceActionToolbar.getComponent().setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
     }
     else {
       myContentPanel.setToolbar(actionProvider.wrapServiceToolbar(myServiceActionToolbar.getComponent(), inDetails));
@@ -145,7 +144,14 @@ class ServiceViewTreeUi implements ServiceViewUi {
     }
     if (component.getParent() != myContentComponentPanel) {
       if (UIExperiment.isNewDebuggerUIEnabled()) {
-        myServiceActionToolbarWrapper.setVisible(ServiceViewActionProvider.isActionToolBarRequired(component));
+        boolean visible = ServiceViewActionProvider.isActionToolBarRequired(component);
+        myServiceActionToolbarWrapper.setVisible(visible);
+        if (visible) {
+          myContentComponentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+        }
+        else {
+          myContentComponentPanel.setBorder(null);
+        }
       }
 
       myDetailsComponents.add(component);

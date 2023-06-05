@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -87,19 +86,17 @@ public final class ServiceViewUIUtils {
 
   public static @NotNull JComponent wrapServicesAligned(@NotNull ActionToolbar toolbar) {
     JComponent toolbarComponent = toolbar.getComponent();
-    toolbarComponent.setBorder(JBUI.Borders.empty(0, JBUI.scale(2)));
-    Wrapper toolbarWrapper = new Wrapper() {
+    toolbarComponent.setBorder(JBUI.Borders.empty());
+    return new NonOpaquePanel(toolbarComponent) {
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
         if (size.height > 0) {
-          size.height = JBRunnerTabs.getTabLabelPreferredHeight() - JBUI.scale(1); // without bottom border
+          size.height = JBUI.scale(JBUI.unscale(JBRunnerTabs.getTabLabelPreferredHeight()) - 1); // without bottom border
         }
         return size;
       }
     };
-    toolbarWrapper.setContent(toolbarComponent);
-    return toolbarWrapper;
   }
 
   private static class ServiceViewDetailsTabbedPaneUI extends DarculaTabbedPaneUI {
