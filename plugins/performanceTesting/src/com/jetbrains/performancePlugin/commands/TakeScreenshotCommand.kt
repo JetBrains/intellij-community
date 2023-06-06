@@ -92,7 +92,7 @@ internal suspend fun takeScreenshotOfFrame(fileName: String) {
             val prefix = if (projects.size == 1) "" else "${project.name}_"
             withContext(Dispatchers.IO) {
               try {
-                val file = File(prefix + fileName)
+                val file = File(prefix + (if (fileName.endsWith(".png", ignoreCase = true)) fileName else "$fileName.png"))
                 ImageIO.write(img, "png", file)
                 LOG.info("Screenshot is saved at: $file")
               }

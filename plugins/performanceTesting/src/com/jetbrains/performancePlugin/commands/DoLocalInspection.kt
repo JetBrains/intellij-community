@@ -23,8 +23,10 @@ import io.opentelemetry.context.Scope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.awt.KeyboardFocusManager
 import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Command runs local inspection.
@@ -40,7 +42,9 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
   override suspend fun doExecute(context: PlaybackContext) {
     val project = context.project
     project.waitForSmartMode()
-    checkFocusInEditor(context, project)
+    withTimeout(40.seconds) {
+      checkFocusInEditor(context, project)
+    }
 
     val busConnection = project.messageBus.simpleConnect()
     val span = PerformanceTestSpan.getTracer(isWarmupMode()).spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext())
