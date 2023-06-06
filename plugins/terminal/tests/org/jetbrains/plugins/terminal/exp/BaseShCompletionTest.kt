@@ -35,7 +35,7 @@ abstract class BaseShCompletionTest : BasePlatformTestCase() {
   protected abstract fun createCompletionManager(session: TerminalSession): TerminalCompletionManager
 
   override fun setUp() {
-    Assume.assumeTrue(File(shellPath).exists())
+    Assume.assumeTrue("Shell is not found in '$shellPath'", File(shellPath).exists())
     super.setUp()
 
     Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, testRootDisposable)
