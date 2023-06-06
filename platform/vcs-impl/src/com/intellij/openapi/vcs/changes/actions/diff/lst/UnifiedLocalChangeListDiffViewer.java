@@ -4,20 +4,12 @@ package com.intellij.openapi.vcs.changes.actions.diff.lst;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.fragmented.*;
-import com.intellij.diff.util.DiffGutterOperation;
-import com.intellij.diff.util.DiffGutterRenderer;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.Side;
-import com.intellij.icons.AllIcons;
+import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,12 +17,11 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LineFragmentData;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.SelectedTrackerLine;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.ToggleableLineRange;
-import com.intellij.openapi.vcs.ex.Range;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.vcs.ex.RangeExclusionState;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -203,8 +194,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
       boolean isSkipped = data.isSkipped();
       boolean isExcluded = data.isExcluded(myAllowExcludeChangesFromCommit);
       return new MyUnifiedDiffChange(blockStart, insertedStart, blockEnd, fragment, isExcluded, isSkipped,
-                                     data.getChangelistId(), data.isFromActiveChangelist(),
-                                     data.isExcludedFromCommit(), data.isPartiallyExcluded());
+                                     data.getChangelistId(), data.isPartiallyExcluded(), data.getExclusionState());
     }
   }
 
@@ -242,7 +232,28 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     if (!fragmentData.isFromActiveChangelist()) return Collections.emptyList();
 
     List<RangeHighlighter> result = new ArrayList<>();
-    result.add(createCheckboxToggleHighlighter(builder, toggleableLineRange));
+    RangeExclusionState exclusionState = fragmentData.getExclusionState();
+    if (fragmentData.isPartiallyExcluded()) {
+      RangeExclusionState.Partial partialExclusionState = (RangeExclusionState.Partial)exclusionState;
+      Range lineRange = toggleableLineRange.getLineRange();
+
+      partialExclusionState.iterateDeletionOffsets((start, end, isIncluded) -> {
+        for (int i = start; i < end; i++) {
+          result.add(createLineCheckboxToggleHighlighter(builder, i + lineRange.start1, Side.LEFT, !isIncluded));
+        }
+        return null;
+      });
+      partialExclusionState.iterateAdditionOffsets((start, end, isIncluded) -> {
+        for (int i = start; i < end; i++) {
+          result.add(createLineCheckboxToggleHighlighter(builder, i + lineRange.start2, Side.RIGHT, !isIncluded));
+        }
+        return null;
+      });
+    }
+    else {
+      result.add(createBlockCheckboxToggleHighlighter(builder, toggleableLineRange));
+    }
+
     if (LocalTrackerDiffUtil.shouldShowToggleAreaThumb(toggleableLineRange)) {
       result.add(createToggleAreaThumb(builder, toggleableLineRange));
     }
@@ -250,51 +261,44 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
   }
 
   @NotNull
-  private RangeHighlighter createCheckboxToggleHighlighter(@NotNull UnifiedFragmentBuilder builder,
-                                                           @NotNull ToggleableLineRange toggleableLineRange) {
-    Range lineRange = toggleableLineRange.getLineRange();
-    LineFragmentData fragmentData = toggleableLineRange.getFragmentData();
-    LineFragment firstFragment = ContainerUtil.getFirstItem(toggleableLineRange.getFragments());
+  private RangeHighlighter createBlockCheckboxToggleHighlighter(@NotNull UnifiedFragmentBuilder builder,
+                                                                @NotNull ToggleableLineRange toggleableLineRange) {
+    Side side = Side.RIGHT;
+    int line = LocalTrackerDiffUtil.getSingleCheckBoxLine(toggleableLineRange, side);
+    boolean isExcludedFromCommit = toggleableLineRange.getFragmentData().getExclusionState() instanceof RangeExclusionState.Excluded;
 
-    Side side = ObjectUtils.chooseNotNull(fragmentData.getPartialExclusionSide(), getMasterSide());
-    EditorEx editor = getEditor();
-    int line = firstFragment != null ? side.getStartLine(firstFragment)
-                                     : side.select(lineRange.getVcsLine1(), lineRange.getLine1());
     LineNumberConvertor lineConvertor = side.select(builder.getConvertor1(), builder.getConvertor2());
     int editorLine = lineConvertor.convertApproximateInv(line);
-    int offset = DiffGutterOperation.lineToOffset(editor, editorLine);
 
-    Icon icon = fragmentData.isExcludedFromCommit() ? AllIcons.Diff.GutterCheckBox : AllIcons.Diff.GutterCheckBoxSelected;
-    RangeHighlighter checkboxHighlighter = editor.getMarkupModel().addRangeHighlighter(null, offset, offset,
-                                                                                       HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                                       HighlighterTargetArea.LINES_IN_RANGE);
-    checkboxHighlighter.setGutterIconRenderer(
-      new DiffGutterRenderer(icon, DiffBundle.message("action.presentation.diff.include.into.commit.text")) {
-        @Override
-        protected void handleMouseClick() {
-          if (!isContentGood()) return;
+    return LocalTrackerDiffUtil.createCheckboxToggle(getEditor(), editorLine, isExcludedFromCommit, () -> {
+      LocalTrackerDiffUtil.toggleBlockExclusion(myTrackerActionProvider, line, isExcludedFromCommit);
+    });
+  }
 
-          LocalTrackerDiffUtil.toggleRangeAtLine(myTrackerActionProvider, line, fragmentData);
-        }
-      });
+  @NotNull
+  private RangeHighlighter createLineCheckboxToggleHighlighter(@NotNull UnifiedFragmentBuilder builder,
+                                                               int line, @NotNull Side side, boolean isExcludedFromCommit) {
+    LineNumberConvertor lineConvertor = side.select(builder.getConvertor1(), builder.getConvertor2());
+    int editorLine = lineConvertor.convertApproximateInv(line);
 
-    return checkboxHighlighter;
+    return LocalTrackerDiffUtil.createCheckboxToggle(getEditor(), editorLine, isExcludedFromCommit, () -> {
+      LocalTrackerDiffUtil.toggleLinePartialExclusion(myTrackerActionProvider, line, side, isExcludedFromCommit);
+    });
   }
 
   @NotNull
   private RangeHighlighter createToggleAreaThumb(@NotNull UnifiedFragmentBuilder builder,
                                                  @NotNull ToggleableLineRange toggleableLineRange) {
     Range lineRange = toggleableLineRange.getLineRange();
-    int line1 = builder.getConvertor1().convertApproximateInv(lineRange.getVcsLine1());
-    int line2 = builder.getConvertor2().convertApproximateInv(lineRange.getLine2());
+    int line1 = builder.getConvertor1().convertApproximateInv(lineRange.start1);
+    int line2 = builder.getConvertor2().convertApproximateInv(lineRange.end2);
     return LocalTrackerDiffUtil.createToggleAreaThumb(getEditor(), line1, line2);
   }
 
   private static final class MyUnifiedDiffChange extends UnifiedDiffChange {
-    @NotNull private final String myChangelistId;
-    private final boolean myIsFromActiveChangelist;
-    private final boolean myIsExcludedFromCommit;
+    private final @NotNull @NonNls String myChangelistId;
     private final boolean myIsPartiallyExcluded;
+    private final @NotNull RangeExclusionState myExclusionState;
 
     private MyUnifiedDiffChange(int blockStart,
                                 int insertedStart,
@@ -302,32 +306,25 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
                                 @NotNull LineFragment lineFragment,
                                 boolean isExcluded,
                                 boolean isSkipped,
-                                @NotNull String changelistId,
-                                boolean isFromActiveChangelist,
-                                boolean isExcludedFromCommit,
-                                boolean isPartiallyExcluded) {
+                                @NotNull @NonNls String changelistId,
+                                boolean isPartiallyExcluded,
+                                @NotNull RangeExclusionState exclusionState) {
       super(blockStart, insertedStart, blockEnd, lineFragment, isExcluded, isSkipped);
       myChangelistId = changelistId;
-      myIsFromActiveChangelist = isFromActiveChangelist;
-      myIsExcludedFromCommit = isExcludedFromCommit;
       myIsPartiallyExcluded = isPartiallyExcluded;
+      myExclusionState = exclusionState;
     }
 
-    @NotNull
-    public String getChangelistId() {
+    public @NotNull @NonNls String getChangelistId() {
       return myChangelistId;
     }
 
-    public boolean isFromActiveChangelist() {
-      return myIsFromActiveChangelist;
-    }
-
-    public boolean isExcludedFromCommit() {
-      return myIsExcludedFromCommit;
-    }
-
-    private boolean isPartiallyExcluded() {
+    public boolean isPartiallyExcluded() {
       return myIsPartiallyExcluded;
+    }
+
+    public @NotNull RangeExclusionState getExclusionState() {
+      return myExclusionState;
     }
   }
 
@@ -348,9 +345,43 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     }
 
     @Override
-    protected void doInstallActionHighlighters() {
-      if (getChange().isPartiallyExcluded()) return; // do not draw multiple ">>"
-      super.doInstallActionHighlighters();
+    public void installHighlighter() {
+      if (getChange().isPartiallyExcluded()) {
+        assert myHighlighters.isEmpty() && myOperations.isEmpty();
+
+        int deletionStart = myChange.getDeletedRange().start;
+        int additionStart = myChange.getInsertedRange().start;
+
+        RangeExclusionState.Partial exclusionState = (RangeExclusionState.Partial)getChange().getExclusionState();
+        exclusionState.iterateDeletionOffsets((start, end, isIncluded) -> {
+          myHighlighters.addAll(
+            new DiffDrawUtil.LineHighlighterBuilder(myEditor,
+                                                    start + deletionStart,
+                                                    end + deletionStart,
+                                                    TextDiffType.DELETED)
+              .withExcludedInEditor(myChange.isSkipped())
+              .withExcludedInGutter(!isIncluded)
+              .done());
+          return null;
+        });
+        exclusionState.iterateAdditionOffsets((start, end, isIncluded) -> {
+          myHighlighters.addAll(
+            new DiffDrawUtil.LineHighlighterBuilder(myEditor,
+                                                    start + additionStart,
+                                                    end + additionStart,
+                                                    TextDiffType.INSERTED)
+              .withExcludedInEditor(myChange.isSkipped())
+              .withExcludedInGutter(!isIncluded)
+              .done());
+          return null;
+        });
+
+        // do not draw ">>"
+        // doInstallActionHighlighters();
+      }
+      else {
+        super.installHighlighter();
+      }
     }
   }
 
@@ -373,8 +404,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
         .select(MyUnifiedDiffChange.class)
         .map(it -> new LocalTrackerDiffUtil.LocalTrackerChange(myViewer.transferLineFromOneside(Side.RIGHT, it.getLine1()),
                                                                myViewer.transferLineFromOneside(Side.RIGHT, it.getLine2()),
-                                                               it.getChangelistId(),
-                                                               it.isExcludedFromCommit()))
+                                                               it.getChangelistId()))
         .toList();
     }
 

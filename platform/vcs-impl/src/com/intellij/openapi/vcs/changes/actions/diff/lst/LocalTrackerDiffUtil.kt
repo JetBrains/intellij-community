@@ -3,14 +3,11 @@ package com.intellij.openapi.vcs.changes.actions.diff.lst
 
 import com.intellij.diff.comparison.ComparisonManagerImpl
 import com.intellij.diff.fragments.LineFragment
-import com.intellij.diff.fragments.LineFragmentImpl
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider
-import com.intellij.diff.util.DiffDrawUtil
-import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.*
 import com.intellij.diff.util.Range
-import com.intellij.diff.util.Side
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
@@ -22,10 +19,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -120,55 +119,26 @@ object LocalTrackerDiffUtil {
       return handler.done(isContentsEqual, texts, emptyList())
     }
 
-
-    val lstRanges = mutableListOf<LocalRange>()
-    val linesRanges = mutableListOf<Range>()
-    val rangesFragmentData = mutableListOf<LineFragmentData>()
-
-    for (localRange in ranges) {
-      when (val exclusionState = localRange.exclusionState) {
-        RangeExclusionState.Included, RangeExclusionState.Excluded -> {
-          val isExcludedFromCommit = exclusionState == RangeExclusionState.Excluded
-          lstRanges += localRange
-          linesRanges += Range(localRange.vcsLine1, localRange.vcsLine2, localRange.line1, localRange.line2)
-          rangesFragmentData += LineFragmentData(activeChangelistId, isExcludedFromCommit, localRange.changelistId, null)
-        }
-        is RangeExclusionState.Partial -> {
-          exclusionState.iterateDeletionOffsets { start, end, isIncluded ->
-            for (i in start until end) {
-              lstRanges += localRange
-              linesRanges += Range(localRange.vcsLine1 + i, localRange.vcsLine1 + i + 1, localRange.line1, localRange.line1)
-              rangesFragmentData += LineFragmentData(activeChangelistId, !isIncluded, localRange.changelistId, Side.LEFT)
-            }
-          }
-          exclusionState.iterateAdditionOffsets { start, end, isIncluded ->
-            for (i in start until end) {
-              lstRanges += localRange
-              linesRanges += Range(localRange.vcsLine2, localRange.vcsLine2, localRange.line1 + i, localRange.line1 + i + 1)
-              rangesFragmentData += LineFragmentData(activeChangelistId, !isIncluded, localRange.changelistId, Side.RIGHT)
-            }
-          }
-        }
-      }
-    }
-
     val lineOffsets1 = LineOffsetsUtil.create(diffData.vcsText)
     val lineOffsets2 = LineOffsetsUtil.create(diffData.localText)
+
+    val linesRanges = ranges.map { Range(it.vcsLine1, it.vcsLine2, it.line1, it.line2) }
     val newFragments = textDiffProvider.compare(diffData.vcsText, diffData.localText, linesRanges, indicator)!!
 
     val toggleableLineRanges = mutableListOf<ToggleableLineRange>()
-    for (i in lstRanges.indices) {
-      val lineFragmentData = rangesFragmentData[i]
-      if (newFragments[i].isEmpty() && lineFragmentData.isPartiallyExcluded()) {
-        // never ignore lines with per-line checkboxes
-        val range = linesRanges[i]
-        val fragment = ComparisonManagerImpl.createLineFragment(range.start1, range.end1, range.start2, range.end2,
+    for (i in ranges.indices) {
+      val localRange = ranges[i]
+      val lineRange = linesRanges[i]
+
+      val rangesFragmentData = LineFragmentData(activeChangelistId, localRange.changelistId, localRange.exclusionState)
+      if (rangesFragmentData.isPartiallyExcluded()) {
+        val fragment = ComparisonManagerImpl.createLineFragment(lineRange.start1, lineRange.end1,
+                                                                lineRange.start2, lineRange.end2,
                                                                 lineOffsets1, lineOffsets2)
-        val fallbackFragments = listOf(LineFragmentImpl(fragment, emptyList()))
-        toggleableLineRanges += ToggleableLineRange(lstRanges[i], fallbackFragments, lineFragmentData)
+        toggleableLineRanges += ToggleableLineRange(lineRange, listOf(fragment), rangesFragmentData)
       }
       else {
-        toggleableLineRanges += ToggleableLineRange(lstRanges[i], newFragments[i], lineFragmentData)
+        toggleableLineRanges += ToggleableLineRange(lineRange, newFragments[i], rangesFragmentData)
       }
     }
     return handler.done(isContentsEqual, texts, toggleableLineRanges)
@@ -186,21 +156,22 @@ object LocalTrackerDiffUtil {
   }
 
   class ToggleableLineRange(
-    val lineRange: com.intellij.openapi.vcs.ex.Range,
+    val lineRange: Range,
     val fragments: List<LineFragment>,
     val fragmentData: LineFragmentData
   )
 
-  data class LineFragmentData(val activeChangelistId: String,
-                              val isExcludedFromCommit: Boolean,
-                              val changelistId: String,
-                              val partialExclusionSide: Side?) {
+  data class LineFragmentData(
+    val activeChangelistId: String,
+    val changelistId: String,
+    val exclusionState: RangeExclusionState,
+  ) {
     fun isFromActiveChangelist() = changelistId == activeChangelistId
     fun isSkipped() = !isFromActiveChangelist()
     fun isExcluded(allowExcludeChangesFromCommit: Boolean) = !isFromActiveChangelist() ||
-                                                             allowExcludeChangesFromCommit && isExcludedFromCommit
+                                                             allowExcludeChangesFromCommit && exclusionState == RangeExclusionState.Excluded
 
-    fun isPartiallyExcluded(): Boolean = partialExclusionSide != null
+    fun isPartiallyExcluded(): Boolean = isFromActiveChangelist() && exclusionState is RangeExclusionState.Partial
   }
 
   private data class TrackerData(val isReleased: Boolean,
@@ -250,18 +221,38 @@ object LocalTrackerDiffUtil {
   }
 
   @JvmStatic
-  fun toggleRangeAtLine(provider: LocalTrackerActionProvider, line: Int, fragmentData: LineFragmentData) {
+  fun createCheckboxToggle(editor: EditorEx, line: Int, isExcludedFromCommit: Boolean, onClick: Runnable): RangeHighlighter {
+    val offset = DiffGutterOperation.lineToOffset(editor, line)
+    val icon = if (isExcludedFromCommit) AllIcons.Diff.GutterCheckBox else AllIcons.Diff.GutterCheckBoxSelected
+    val checkboxHighlighter = editor.markupModel.addRangeHighlighter(null, offset, offset,
+                                                                     HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                                     HighlighterTargetArea.LINES_IN_RANGE)
+    val message = DiffBundle.message("action.presentation.diff.include.into.commit.text")
+    checkboxHighlighter.gutterIconRenderer = object : DiffGutterRenderer(icon, message) {
+      override fun handleMouseClick() {
+        onClick.run()
+      }
+    }
+    return checkboxHighlighter
+  }
+
+  @JvmStatic
+  fun toggleBlockExclusion(provider: LocalTrackerActionProvider, line: Int, wasExcludedFromCommit: Boolean) {
     val tracker = provider.localRequest.partialTracker ?: return
 
-    if (fragmentData.isPartiallyExcluded()) {
-      val lines = BitSet()
-      lines.set(line)
-      tracker.setPartiallyExcludedFromCommit(lines, fragmentData.partialExclusionSide!!, !fragmentData.isExcludedFromCommit)
-    }
-    else {
-      val range = tracker.getRangeForLine(line) ?: return
-      tracker.setExcludedFromCommit(range, !fragmentData.isExcludedFromCommit)
-    }
+    val range = tracker.getRangeForLine(line) ?: return
+    tracker.setExcludedFromCommit(range, !wasExcludedFromCommit)
+
+    provider.viewer.rediff()
+  }
+
+  @JvmStatic
+  fun toggleLinePartialExclusion(provider: LocalTrackerActionProvider, line: Int, side: Side, wasExcludedFromCommit: Boolean) {
+    val tracker = provider.localRequest.partialTracker ?: return
+
+    val lines = BitSet()
+    lines.set(line)
+    tracker.setPartiallyExcludedFromCommit(lines, side, !wasExcludedFromCommit)
 
     provider.viewer.rediff()
   }
@@ -279,8 +270,17 @@ object LocalTrackerDiffUtil {
     }
 
     val lineRange = toggleableLineRange.lineRange
-    return lines1.nextClearBit(lineRange.vcsLine1) != lineRange.vcsLine2 ||
-           lines2.nextClearBit(lineRange.line1) != lineRange.line2
+    return lines1.nextClearBit(lineRange.start1) != lineRange.end1 ||
+           lines2.nextClearBit(lineRange.start2) != lineRange.end2
+  }
+
+  @JvmStatic
+  fun getSingleCheckBoxLine(toggleableLineRange: ToggleableLineRange, side: Side): Int {
+    val firstFragment = toggleableLineRange.fragments.firstOrNull()
+    if (firstFragment != null) return side.getStartLine(firstFragment)
+
+    val lineRange = toggleableLineRange.lineRange
+    return side.select(lineRange.start1, lineRange.start2)
   }
 
   @JvmStatic
@@ -614,7 +614,7 @@ object LocalTrackerDiffUtil {
     val localLines: BitSet?
   )
 
-  class LocalTrackerChange(val startLine: Int, val endLine: Int, val changelistId: String, val isExcludedFromCommit: Boolean)
+  class LocalTrackerChange(val startLine: Int, val endLine: Int, val changelistId: String)
 
   private val LocalChangeListDiffRequest.partialTracker get() = lineStatusTracker as? PartialLocalLineStatusTracker
 }
