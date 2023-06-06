@@ -2,8 +2,6 @@
 package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -11,7 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +25,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.lang.reflect.Method;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import static com.intellij.util.ReflectionUtil.getMethod;
 
@@ -48,7 +46,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private static final Logger LOG = Logger.getInstance(WideSelectionTreeUI.class);
   private static final Set<String> LOGGED_RENDERERS = ContainerUtil.newConcurrentSet();
 
-  @NotNull private final Condition<? super Integer> myWideSelectionCondition;
+  @NotNull private final Predicate<? super Integer> myWideSelectionCondition;
   private final boolean myWideSelection;
   private boolean myOldRepaintAllRowValue;
   private static final boolean mySkinny = false;
@@ -105,7 +103,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   };
 
   public WideSelectionTreeUI() {
-    this(true, Conditions.alwaysTrue());
+    this(true, s -> true);
   }
 
   /**
@@ -115,7 +113,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
    * @param wideSelectionCondition  strategy that determine if wide selection should be used for a target row (it's zero-based index
    *                                is given to the condition as an argument)
    */
-  public WideSelectionTreeUI(final boolean wideSelection, @NotNull Condition<? super Integer> wideSelectionCondition) {
+  public WideSelectionTreeUI(final boolean wideSelection, @NotNull Predicate<? super Integer> wideSelectionCondition) {
     myWideSelection = wideSelection;
     myWideSelectionCondition = wideSelectionCondition;
   }
@@ -293,7 +291,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
             LIST_SELECTION_BACKGROUND_PAINTER.paintBorder(tree, rowGraphics, xOffset, bounds.y, containerWidth, bounds.height);
           }
         }
-        else if (myWideSelectionCondition.value(row)) {
+        else if (myWideSelectionCondition.test(row)) {
           rowGraphics.setColor(background);
           rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height);
         }
@@ -302,7 +300,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
         if (selected && (UIUtil.isUnderAquaBasedLookAndFeel() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
           Color bg = RenderingUtil.getSelectionBackground(tree);
 
-          if (myWideSelectionCondition.value(row)) {
+          if (myWideSelectionCondition.test(row)) {
             rowGraphics.setColor(bg);
             rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height);
           }
@@ -350,7 +348,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     final int lastVisibleRow = tr.getClosestRowForLocation(rect.x, rect.y + rect.height);
 
     for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
-      if (tr.getSelectionModel().isRowSelected(row) && myWideSelectionCondition.value(row)) {
+      if (tr.getSelectionModel().isRowSelected(row) && myWideSelectionCondition.test(row)) {
           final Rectangle bounds = tr.getRowBounds(row);
         g.setColor(RenderingUtil.getSelectionBackground(tree));
         g.fillRect(0, bounds.y, tr.getWidth(), bounds.height);
