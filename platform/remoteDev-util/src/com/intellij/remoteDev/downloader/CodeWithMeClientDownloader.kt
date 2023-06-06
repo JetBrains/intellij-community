@@ -78,11 +78,15 @@ object CodeWithMeClientDownloader {
   val cwmJbrManifestFilter: (Path) -> Boolean = { !it.isDirectory() || isSymlink(it) }
 
   fun getJetBrainsClientManifestFilter(clientBuildNumber: String): (Path) -> Boolean {
-    if (isClientWithBundledJre(clientBuildNumber)) {
-      return { !it.isDirectory() || isSymlink(it) }
+    val universalFilter: (Path) -> Boolean = if (isClientWithBundledJre(clientBuildNumber)) {
+      { !it.isDirectory() || isSymlink(it) }
     } else {
-      return { !isJbrSymlink(it) && (!it.isDirectory() || isSymlink(it)) }
+      { !isJbrSymlink(it) && (!it.isDirectory() || isSymlink(it)) }
     }
+
+    if (!SystemInfoRt.isMac) return universalFilter
+
+    return { it.name != ".DS_Store" && universalFilter.invoke(it) }
   }
 
   private const val minimumClientBuildWithBundledJre = "223.4374"
