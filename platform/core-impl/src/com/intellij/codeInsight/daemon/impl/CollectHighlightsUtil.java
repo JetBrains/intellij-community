@@ -5,7 +5,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -18,9 +17,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public final class CollectHighlightsUtil {
-  static final ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.elementsToHighlightFilter");
+  static final ExtensionPointName<Predicate<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.elementsToHighlightFilter");
 
   private static final Logger LOG = Logger.getInstance(CollectHighlightsUtil.class);
 
@@ -62,12 +62,12 @@ public final class CollectHighlightsUtil {
     PsiElement element = parent;
 
     PsiElement child = PsiUtilCore.NULL_PSI_ELEMENT;
-    Condition<PsiElement> @NotNull [] filters = EP_NAME.getExtensions();
+    Predicate<PsiElement> @NotNull [] filters = EP_NAME.getExtensions();
     while (true) {
       ProgressIndicatorProvider.checkCanceled();
 
-      for (Condition<PsiElement> filter : filters) {
-        if (!filter.value(element)) {
+      for (Predicate<PsiElement> filter : filters) {
+        if (!filter.test(element)) {
           assert child == PsiUtilCore.NULL_PSI_ELEMENT;
           child = null; // do not want to process children
           break;
