@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.idea.fir.resolve.*
 import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoTypeDeclarationTest
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK2Tests()
@@ -279,7 +280,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("uast/uast-kotlin-fir/tests") {
         testClass<AbstractFirUastDeclarationTest> {
-            model("declaration")
+            model("declaration", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractFirUastTypesTest> {
