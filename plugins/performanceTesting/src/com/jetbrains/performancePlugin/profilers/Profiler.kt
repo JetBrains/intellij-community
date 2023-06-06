@@ -4,7 +4,6 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ActionCallback
 import com.intellij.util.SystemProperties
 import java.io.File
 import java.io.IOException
@@ -54,7 +53,7 @@ interface Profiler {
   @Throws(Exception::class)
   fun stopProfiling(options: List<String>): String
 
-  fun stopProfileWithNotification(actionCallback: ActionCallback, arguments: String): String
+  fun stopProfileWithNotification(arguments: String): String
 
   @Throws(IOException::class)
   fun compressResults(pathToResult: String, archiveName: String): File?
