@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * A node in the project view tree.
@@ -184,15 +185,21 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     });
   }
 
+  public boolean canHaveChildrenMatching(Predicate<? super PsiFile> predicate) {
+    return true;
+  }
+
   /**
    * Efficiently checks if there are nodes under the project view node which match the specified condition. Should
    * return true if it's not possible to perform the check efficiently (for example, if recursive traversal of
    * all child nodes is required to check the condition).
    *
    * @param condition the condition to check the nodes.
+   * @deprecated use {@link ProjectViewNode#canHaveChildrenMatching(Predicate)} instead
    */
+  @Deprecated
   public boolean canHaveChildrenMatching(Condition<? super PsiFile> condition) {
-    return true;
+    return canHaveChildrenMatching((Predicate<? super PsiFile>) condition);
   }
 
   @Nullable
