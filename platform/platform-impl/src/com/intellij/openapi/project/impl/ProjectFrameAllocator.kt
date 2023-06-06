@@ -366,8 +366,8 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
       frameHelper.postInit()
     }
 
-    blockingContext {
-      project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
+    project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
+      blockingContext {
         LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime), frameHelper.isTabbedWindow)
       }
     }

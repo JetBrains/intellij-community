@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.VMOptions;
@@ -73,8 +73,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final EventField<ProjectOpenMode> projectOpenModeField = EventFields.Enum("mode", ProjectOpenMode.class, (mode) -> StringUtil.toLowerCase(mode.name()));
   private static final EventId1<ProjectOpenMode> PROJECT_FRAME_SELECTED = LIFECYCLE.registerEvent("project.frame.selected", projectOpenModeField);
 
-  private static final EventsRateThrottle ourErrorsRateThrottle = new EventsRateThrottle(100, 5L * 60 * 1000); // 100 errors per 5 minutes
-  private static final EventsIdentityThrottle ourErrorsIdentityThrottle = new EventsIdentityThrottle(50, 60L * 60 * 1000); // 1 unique error per 1 hour
+  private static final EventsRateThrottle ourErrorRateThrottle = new EventsRateThrottle(100, 5L * 60 * 1000); // 100 errors per 5 minutes
+  private static final EventsIdentityThrottle ourErrorIdentityThrottle = new EventsIdentityThrottle(50, 60L * 60 * 1000); // 1 unique error per 1 hour
 
   @Override
   public EventLogGroup getGroup() {
@@ -141,14 +141,14 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
         data.add(memoryErrorKindField.with(memoryErrorKind));
       }
 
-      if (ourErrorsRateThrottle.tryPass(System.currentTimeMillis())) {
+      if (ourErrorRateThrottle.tryPass(System.currentTimeMillis())) {
 
         List<String> frames = description.getLastFrames(50);
         int framesHash = frames.hashCode();
 
         data.add(errorHashField.with(framesHash));
 
-        if (ourErrorsIdentityThrottle.tryPass(framesHash, System.currentTimeMillis())) {
+        if (ourErrorIdentityThrottle.tryPass(framesHash, System.currentTimeMillis())) {
           data.add(errorFramesField.with(frames));
           data.add(errorSizeField.with(description.getSize()));
         }
