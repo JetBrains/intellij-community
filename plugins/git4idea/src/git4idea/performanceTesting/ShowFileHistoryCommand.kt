@@ -69,7 +69,7 @@ class ShowFileHistoryCommand(text: String, line: Int) : AbstractCommand(text, li
     const val MAIN_SPAN_NAME = "showFileHistory"
     const val FIRST_PACK_SPAN_NAME = "showFirstPack"
     const val PREFIX = "${CMD_PREFIX}showFileHistory"
-    private val LOG = Logger.getInstance(AddFileCommand::class.java)
+    private val LOG = Logger.getInstance(ShowFileHistoryCommand::class.java)
   }
 
 }
