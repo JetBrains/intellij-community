@@ -88,7 +88,8 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
       return update.myContext != null &&
              ThreadContext.getContextSkeleton(myContext).equals(ThreadContext.getContextSkeleton(update.myContext)) &&
              canEat(update);
-    } else {
+    }
+    else {
       return update.myContext == null &&
              canEat(update);
     }
