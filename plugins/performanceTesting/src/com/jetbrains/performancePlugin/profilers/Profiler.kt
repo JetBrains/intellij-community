@@ -54,7 +54,7 @@ interface Profiler {
   @Throws(Exception::class)
   fun stopProfiling(options: List<String>): String
 
-  fun stopProfileWithNotification(actionCallback: ActionCallback, arguments: String?): String
+  fun stopProfileWithNotification(actionCallback: ActionCallback, arguments: String): String
 
   @Throws(IOException::class)
   fun compressResults(pathToResult: String, archiveName: String): File?

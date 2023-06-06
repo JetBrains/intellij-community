@@ -1,49 +1,46 @@
-package com.jetbrains.performancePlugin.commands;
+package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.playback.PlaybackContext;
-import com.intellij.openapi.ui.playback.commands.AbstractCommand;
-import com.intellij.openapi.util.ActionCallback;
-import com.jetbrains.performancePlugin.profilers.Profiler;
-import com.jetbrains.performancePlugin.profilers.ProfilersController;
-import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.ui.playback.PlaybackContext
+import com.intellij.openapi.ui.playback.commands.AbstractCommand
+import com.intellij.openapi.util.ActionCallback
+import com.jetbrains.performancePlugin.profilers.Profiler.Companion.getCurrentProfilerHandler
+import com.jetbrains.performancePlugin.profilers.Profiler.Companion.isAnyProfilingStarted
+import com.jetbrains.performancePlugin.profilers.ProfilersController
+import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.toPromise
 
 /**
- * Command stops async or yourkit profiler based on system property <i>integrationTests.profiler</i>.
- * <p>
+ * Command stops async or yourkit profiler based on system property *integrationTests.profiler*.
+ *
+ *
  * In case when yourkit profiler was used parameters are ignored.
- * <p>
+ *
+ *
  * Syntax: %stopProfile [parameters]
  * Example: %stopProfile collapsed,flamegraph,traces=5000
  */
-public class StopProfileCommand extends AbstractCommand {
-
-  public static final String PREFIX = CMD_PREFIX + "stopProfile";
-  private static final Logger LOG = Logger.getInstance(StopProfileCommand.class);
-
-  public StopProfileCommand(@NotNull String text, int line) {
-    super(text, line);
+class StopProfileCommand(text: String, line: Int) : AbstractCommand(text, line) {
+  override fun _execute(context: PlaybackContext): Promise<Any> {
+    val actionCallback: ActionCallback = ActionCallbackProfilerStopper()
+    ProfilersController.getInstance()
+    if (!isAnyProfilingStarted()) actionCallback.reject("Profiling hasn't been started")
+    try {
+      val reportsPath = getCurrentProfilerHandler().stopProfileWithNotification(actionCallback, extractCommandArgument(PREFIX))
+      ProfilersController.getInstance().reportsPath = reportsPath
+      ProfilersController.getInstance().isStoppedByScript = true
+      actionCallback.setDone()
+    }
+    catch (exception: Exception) {
+      actionCallback.reject(exception.message)
+      LOG.error(exception)
+    }
+    return actionCallback.toPromise()
   }
 
-  @NotNull
-  @Override
-  protected Promise<Object> _execute(@NotNull PlaybackContext context) {
-    ActionCallback actionCallback = new ActionCallbackProfilerStopper();
-    ProfilersController.getInstance();
-    if (!Profiler.isAnyProfilingStarted()) actionCallback.reject("Profiling hasn't been started");
-    try {
-      String reportsPath = Profiler.getCurrentProfilerHandler().stopProfileWithNotification(actionCallback, extractCommandArgument(PREFIX));
-      ProfilersController.getInstance().setReportsPath(reportsPath);
-      ProfilersController.getInstance().setStoppedByScript(true);
-      actionCallback.setDone();
-    }
-    catch (Exception exception) {
-      actionCallback.reject(exception.getMessage());
-      LOG.error(exception);
-    }
-    return Promises.toPromise(actionCallback);
+  companion object {
+    const val PREFIX = CMD_PREFIX + "stopProfile"
+    private val LOG = Logger.getInstance(StopProfileCommand::class.java)
   }
 }
