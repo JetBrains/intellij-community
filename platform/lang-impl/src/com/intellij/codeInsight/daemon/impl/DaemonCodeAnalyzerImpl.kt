@@ -60,6 +60,7 @@ import com.intellij.util.*
 import com.intellij.util.CommonProcessors.CollectProcessor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.toArray
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
@@ -362,7 +363,8 @@ class DaemonCodeAnalyzerImpl(private val project: Project, private val coroutine
         fileEditorManager.addTopComponent(fileEditor, component)
         var fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS)
         if (fileLevelInfos == null) {
-          fileLevelInfos = ArrayList()
+          // must be able to iterate in hasFileLevelHighlights() and concurrently modify in addFileLevelHighlight()
+          fileLevelInfos = ContainerUtil.createConcurrentList()
           fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos)
         }
         info.addFileLeverComponent(fileEditor, component)
