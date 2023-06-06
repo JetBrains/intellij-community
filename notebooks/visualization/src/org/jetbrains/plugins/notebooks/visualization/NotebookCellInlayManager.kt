@@ -363,7 +363,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
       return factory.compute(editor, controllers, intervalIterator)
     }
     catch (ex: Exception) {
-      thisLogger().error("NotebookCellInlayController.Factory shouldn't throw exceptions", ex)
+      thisLogger().error("${factory.javaClass.name} shouldn't throw exceptions at NotebookCellInlayController.Factory.compute(...)", ex)
       return null
     }
   }
