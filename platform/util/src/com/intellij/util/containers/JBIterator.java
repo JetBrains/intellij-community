@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.function.Predicate;
 
 /**
  * Iterator that accumulates transformations and filters keeping its instance.
@@ -149,8 +150,13 @@ public abstract class JBIterator<E> implements Iterator<E> {
     return addOp(true, new MapOp<E, T>(function));
   }
 
+  public final @NotNull JBIterator<E> filter(@NotNull Predicate<? super E> predicate) {
+    return addOp(true, new FilterOp<E>(predicate));
+  }
+
+  @Deprecated
   public final @NotNull JBIterator<E> filter(@NotNull Condition<? super E> condition) {
-    return addOp(true, new FilterOp<E>(condition));
+    return filter((Predicate<? super E>) condition);
   }
 
   public final @NotNull <T> JBIterator<T> filterMap(@NotNull Function<? super E, ? extends T> function) {
@@ -162,16 +168,26 @@ public abstract class JBIterator<E> implements Iterator<E> {
     return addOp(!(myLastOp instanceof NextOp), new WhileOp<>(new CountDown<>(count)));
   }
 
+  public final @NotNull JBIterator<E> takeWhile(@NotNull Predicate<? super E> predicate) {
+    return addOp(true, new WhileOp<E>(predicate));
+  }
+
+  @Deprecated
   public final @NotNull JBIterator<E> takeWhile(@NotNull Condition<? super E> condition) {
-    return addOp(true, new WhileOp<E>(condition));
+    return takeWhile((Predicate<? super E>) condition);
   }
 
   public final @NotNull JBIterator<E> skip(int count) {
     return skipWhile(new CountDown<>(count));
   }
 
+  public final @NotNull JBIterator<E> skipWhile(final @NotNull Predicate<? super E> predicate) {
+    return addOp(true, new SkipOp<E>(predicate));
+  }
+
+  @Deprecated
   public final @NotNull JBIterator<E> skipWhile(final @NotNull Condition<? super E> condition) {
-    return addOp(true, new SkipOp<E>(condition));
+    return skipWhile((Predicate<? super E>) condition);
   }
 
   private @NotNull <T> T addOp(boolean last, @NotNull Op op) {
@@ -246,7 +262,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
   }
 
-  private static class CountDown<A> implements Condition<A> {
+  private static class CountDown<A> implements Predicate<A> {
     int cur;
 
     CountDown(int count) {
@@ -254,7 +270,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
 
     @Override
-    public boolean value(A a) {
+    public boolean test(A a) {
       if (cur <= 0) return false;
       cur--;
       return true;
@@ -272,14 +288,19 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
   }
 
-  private class FilterOp<E> extends Op<Condition<? super E>> {
+  private class FilterOp<E> extends Op<Predicate<? super E>> {
+    FilterOp(Predicate<? super E> predicate) {
+      super(predicate);
+    }
+
+    @Deprecated
     FilterOp(Condition<? super E> condition) {
-      super(condition);
+      this((Predicate<? super E>) condition);
     }
 
     @Override
     Object apply(Object o) {
-      return impl.value((E)o) ? o : skip();
+      return impl.test((E)o) ? o : skip();
     }
   }
 
@@ -295,27 +316,37 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
   }
 
-  private class WhileOp<E> extends Op<Condition<? super E>> {
+  private class WhileOp<E> extends Op<Predicate<? super E>> {
 
+    WhileOp(Predicate<? super E> predicate) {
+      super(predicate);
+    }
+
+    @Deprecated
     WhileOp(Condition<? super E> condition) {
-      super(condition);
+      this((Predicate<? super E>) condition);
     }
     @Override
     Object apply(Object o) {
-      return impl.value((E)o) ? o : stop();
+      return impl.test((E)o) ? o : stop();
     }
   }
 
-  private class SkipOp<E> extends Op<Condition<? super E>> {
+  private class SkipOp<E> extends Op<Predicate<? super E>> {
     boolean active = true;
 
+    SkipOp(Predicate<? super E> predicate) {
+      super(predicate);
+    }
+
+    @Deprecated
     SkipOp(Condition<? super E> condition) {
-      super(condition);
+      this((Predicate<? super E>) condition);
     }
 
     @Override
     Object apply(Object o) {
-      if (active && impl.value((E)o)) return skip();
+      if (active && impl.test((E)o)) return skip();
       active = false;
       return o;
     }
