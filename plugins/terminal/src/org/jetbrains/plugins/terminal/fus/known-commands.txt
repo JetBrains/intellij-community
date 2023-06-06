@@ -48,6 +48,37 @@ cls
 code
 command
 compact
+composer
+composer audit
+composer bump
+composer check-platform-reqs
+composer clear-cache
+composer completion
+composer config
+composer create-project
+composer depends
+composer diagnose
+composer dump-autoload
+composer exec
+composer global
+composer help
+composer init
+composer install
+composer licenses
+composer list
+composer outdated
+composer prohibits
+composer reinstall
+composer remove
+composer require
+composer run-script
+composer search
+composer self-update
+composer show
+composer status
+composer suggests
+composer validate
+composer update
 copy
 cp
 curl
