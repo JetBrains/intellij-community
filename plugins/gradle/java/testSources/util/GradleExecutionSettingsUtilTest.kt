@@ -32,10 +32,10 @@ class GradleExecutionSettingsUtilTest : JavaPsiTestCase() {
       "'t\\\\es\\\\t'"
     )
     val actualFilters = runReadActionAndWait {
-      val aClass = psiFile.findChildByType<PsiClass>()
-      val methods = aClass.findChildByElementType("CLASS_BODY")
+      psiFile.findChildByType<PsiClass>()
+        .findChildByElementType("CLASS_BODY")
         .findChildrenByType<PsiMethod>()
-      methods.map { createTestFilterFrom(aClass, it) }
+        .map { createTestFilterFrom(it) }
     }
     val expectedFilters = listOf(
       """--tests "Test.test"""",
@@ -69,9 +69,9 @@ class GradleExecutionSettingsUtilTest : JavaPsiTestCase() {
       "super${'$'}test"
     )
     val actualFilters = runReadActionAndWait {
-      val aClass = psiFile.findChildByType<PsiClass>()
-      val methods = aClass.findChildrenByType<PsiMethod>()
-      methods.map { createTestFilterFrom(aClass, it) }
+      psiFile.findChildByType<PsiClass>()
+        .findChildrenByType<PsiMethod>()
+        .map { createTestFilterFrom(it) }
     }
     val expectedFilters = listOf(
       """--tests "Test.test"""",
@@ -91,6 +91,87 @@ class GradleExecutionSettingsUtilTest : JavaPsiTestCase() {
       createTestFilterFrom(aClass)
     }
     assertEquals("""--tests "Te${'$'}${'$'}${'$'}st"""", actualFilter)
+  }
+
+  fun `test filter generation for Java inner class`() {
+    val psiFile = createFile("TestCase.java", """
+      |package org.example;
+      |
+      |import org.junit.Test;
+      |
+      |public class TestCase {
+      |  public static class InnerClass {
+      |    @Test
+      |    public void test1() {}
+      |
+      |    public static class InnerInnerClass {
+      |      @Test
+      |      public void test2() {}
+      |    }
+      |  }
+      |}
+    """.trimMargin())
+    runReadActionAndWait {
+      val testCaseClass = psiFile.findChildByType<PsiClass>()
+      assertEquals("""--tests "org.example.TestCase"""", createTestFilterFrom(testCaseClass))
+
+      val innerClass = testCaseClass.findChildByType<PsiClass>()
+      assertEquals("""--tests "org.example.TestCase${'$'}InnerClass"""", createTestFilterFrom(innerClass))
+
+      val innerMethod = innerClass.findChildByType<PsiMethod>()
+      assertEquals("""--tests "org.example.TestCase${'$'}InnerClass.test1"""", createTestFilterFrom(innerMethod))
+
+      val innerInnerClass = innerClass.findChildByType<PsiClass>()
+      assertEquals("""--tests "org.example.TestCase${'$'}InnerClass${'$'}InnerInnerClass"""", createTestFilterFrom(innerInnerClass))
+
+      val innerInnerMethod = innerInnerClass.findChildByType<PsiMethod>()
+      assertEquals("""--tests "org.example.TestCase${'$'}InnerClass${'$'}InnerInnerClass.test2"""", createTestFilterFrom(innerInnerMethod))
+    }
+  }
+
+  fun `test filter generation for Groovy inner class`() {
+    val psiFile = createFile("TestCase.groovy", """
+      |package org.example
+      |
+      |import org.junit.Test
+      |import spock.lang.Specification
+      |
+      |class TestCase {
+      |  static class InnerClass extends Specification {
+      |    def test1() {
+      |      expect:
+      |        true
+      |    }
+      |
+      |    static class InnerInnerClass extends Specification {
+      |      def test2() {
+      |        expect:
+      |          true
+      |      }
+      |    }
+      |  }
+      |}
+    """.trimMargin())
+    runReadActionAndWait {
+      val testCaseClass = psiFile.findChildByType<PsiClass>()
+      assertEquals("""--tests "org.example.TestCase"""", createTestFilterFrom(testCaseClass))
+
+      val innerClass = testCaseClass.findChildByElementType("CLASS_BODY")
+        .findChildByType<PsiClass>()
+      assertEquals("""--tests "org.example.TestCase${'$'}InnerClass"""", createTestFilterFrom(innerClass))
+
+      val innerMethod = innerClass.findChildByElementType("CLASS_BODY")
+        .findChildByType<PsiMethod>()
+      assertEquals("""--tests "org.example.TestCase${'$'}InnerClass.test1"""", createTestFilterFrom(innerMethod))
+
+      val innerInnerClass = innerClass.findChildByElementType("CLASS_BODY")
+        .findChildByType<PsiClass>()
+      assertEquals("""--tests "org.example.TestCase${'$'}InnerClass${'$'}InnerInnerClass"""", createTestFilterFrom(innerInnerClass))
+
+      val innerInnerMethod = innerInnerClass.findChildByElementType("CLASS_BODY")
+        .findChildByType<PsiMethod>()
+      assertEquals("""--tests "org.example.TestCase${'$'}InnerClass${'$'}InnerInnerClass.test2"""", createTestFilterFrom(innerInnerMethod))
+    }
   }
 
   private fun createJavaFileContent(className: String, vararg methodNames: String): String {
