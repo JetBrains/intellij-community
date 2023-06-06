@@ -17,7 +17,6 @@ import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.project.SingleTaskExecutor.AutoclosableProgressive
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
-import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import kotlinx.coroutines.flow.StateFlow
@@ -204,8 +203,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
     }
 
     ProgressSuspender.markSuspendable(visibleIndicator, mySuspendedText).use { suspender ->
-      return ShutDownTracker.getInstance().computeWithStopperThread<SubmissionReceipt?, RuntimeException>(
-        Thread.currentThread()) { processTasksWithProgress(suspender, visibleIndicator, null) }
+      return processTasksWithProgress(suspender, visibleIndicator, null)
     }
   }
 

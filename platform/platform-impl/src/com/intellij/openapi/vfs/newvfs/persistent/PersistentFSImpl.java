@@ -82,7 +82,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     //PersistentFSImpl is an application service, and generally disposed as such, via .dispose().
     // But to be on the safe side -- add a shutdown task also:
-    ShutDownTracker.getInstance().registerShutdownTask(this::disconnect);
+    ShutDownTracker.getInstance().registerCacheShutdownTask(this::disconnect);
     LowMemoryWatcher.register(this::clearIdCache, this);
 
     AsyncEventSupport.startListening();
