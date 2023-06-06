@@ -1588,6 +1588,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/testData/basic/common/parameterNameAndType/ByAbbreviation.kt");
             }
 
+            @TestMetadata("FunctionCall.kt")
+            public void testFunctionCall() throws Exception {
+                runTest("../completion/testData/basic/common/parameterNameAndType/FunctionCall.kt");
+            }
+
             @TestMetadata("InSecondaryConstructor.kt")
             public void testInSecondaryConstructor() throws Exception {
                 runTest("../completion/testData/basic/common/parameterNameAndType/InSecondaryConstructor.kt");
