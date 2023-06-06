@@ -27,12 +27,12 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public final class IntentionFUSCollector extends CounterUsagesCollector {
-  private final static EventLogGroup GROUP = new EventLogGroup("intentions", 59);
+  private final static EventLogGroup GROUP = new EventLogGroup("intentions", 60);
   private final static EventId3<Class<?>, PluginInfo, Language> CALLED =
     GROUP.registerEvent("called", EventFields.Class("id"), EventFields.PluginInfo, EventFields.Language);
   private final static EventId3<Class<?>, PluginInfo, Language> SHOWN =
     GROUP.registerEvent("shown", EventFields.Class("id"), EventFields.PluginInfo, EventFields.Language);
-  private static final EventId2<Long, FileType> POPUP_DELAY = GROUP.registerEvent("popup_delay", EventFields.DurationMs, EventFields.FileType);
+  private static final EventId2<Long, FileType> POPUP_DELAY = GROUP.registerEvent("popup.delay", EventFields.DurationMs, EventFields.FileType);
 
   @Override
   public EventLogGroup getGroup() {
