@@ -13,6 +13,7 @@ import com.intellij.util.*
 import junit.framework.TestCase
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 class DumbServicePropagationTest : BasePlatformTestCase() {
   private lateinit var dumbService: DumbService
@@ -79,5 +80,59 @@ class DumbServicePropagationTest : BasePlatformTestCase() {
     dumbService.completeJustSubmittedTasks()
     yield() // pump event queue
     assertTrue("runWhenSmart should be completed", callTracker.get())
+  }
+
+  fun testDumbTaskIsAwaited() = doPropagationApplicationTest(propagateCancellation = true) {
+    val dumbSemaphore = Semaphore(1)
+    val queueingComplete = Semaphore(1)
+    val job = withRootJob {
+      dumbService.queueTask(object : DumbModeTask() {
+        override fun performInDumbMode(indicator: ProgressIndicator) {
+          dumbSemaphore.waitFor()
+        }
+      })
+      queueingComplete.up()
+    }
+    queueingComplete.waitFor()
+    assertTrue(job.isActive)
+    dumbSemaphore.up()
+    dumbService.completeJustSubmittedTasks()
+    job.join()
+  }
+
+  fun testRunWhenSmartIsAwaited() = doPropagationApplicationTest(propagateCancellation = true) {
+    val semaphore = Semaphore(1)
+    var job by AtomicReference<Job>(null)
+    job = withRootJob {
+      dumbService.queueTask(object : DumbModeTask() {
+        override fun performInDumbMode(indicator: ProgressIndicator) {
+          semaphore.timeoutWaitUp()
+        }
+      })
+      dumbService.runWhenSmart {
+        assertTrue(job.isActive)
+      }
+    }
+    assertTrue(job.isActive)
+    semaphore.up()
+    dumbService.completeJustSubmittedTasks()
+    job.join()
+  }
+
+  fun testDoubleScheduledTaskIsEaten() = doPropagationApplicationTest(propagateCancellation = true) {
+    var job by AtomicReference<Job>(null)
+    var invocationCounter by AtomicReference(0)
+    job = withRootJob {
+      val task = object : DumbModeTask() {
+        override fun performInDumbMode(indicator: ProgressIndicator) {
+          invocationCounter += 1
+        }
+      }
+      dumbService.queueTask(task)
+      dumbService.queueTask(task)
+    }
+    dumbService.completeJustSubmittedTasks()
+    job.join()
+    TestCase.assertEquals(1, invocationCounter)
   }
 }
