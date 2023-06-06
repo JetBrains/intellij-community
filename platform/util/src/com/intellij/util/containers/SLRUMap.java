@@ -154,14 +154,6 @@ public class SLRUMap<K,V> {
     }
   }
 
-  /**
-   * @deprecated use {@link SLRUMap#clearByPredicate(Predicate, LinkedHashMap)} instead
-   */
-  @Deprecated
-  private void clearByCondition(@NotNull Condition<? super V> condition, @NotNull LinkedHashMap<K, V> queue) {
-    clearByPredicate(condition, queue);
-  }
-
   public void clear() {
     try {
       if (!myProtectedQueue.isEmpty()) {
