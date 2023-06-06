@@ -443,6 +443,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           if (savedException != null) throw savedException;
           return progress.isRunning();
         });
+        // it will wait for the async spawned processes
+        ((HighlightingSessionImpl)session).myExternalPassFuture.get(1, TimeUnit.MINUTES);
         if (progress.isRunning() && !progress.isCanceled()) {
           throw new RuntimeException("Highlighting still running after " +
              (System.currentTimeMillis() - start) / 1000 + " seconds. Still submitted passes: " +
