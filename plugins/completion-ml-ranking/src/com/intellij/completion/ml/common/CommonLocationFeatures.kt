@@ -76,13 +76,13 @@ class CommonLocationFeatures : ContextFeatureProvider {
       this["is_whitespace_before_caret"] = MLFeatureValue.binary(whitespaces.contains(linePrefix.last()))
       val trimmedPrefix = linePrefix.trim()
       this["symbols_in_line_before_caret"] = MLFeatureValue.float(trimmedPrefix.length)
-      LoggedChar.find(trimmedPrefix.last())?.let { this["symbol_before_caret"] = MLFeatureValue.categorical(it) }
+      CharCategory.find(trimmedPrefix.last())?.let { this["non_space_symbol_before_caret"] = MLFeatureValue.categorical(it) }
     }
     if (lineSuffix.isNotBlank()) {
       this["is_whitespace_after_caret"] = MLFeatureValue.binary(whitespaces.contains(lineSuffix.first()))
       val trimmedSuffix = lineSuffix.trim()
       this["symbols_in_line_after_caret"] = MLFeatureValue.float(trimmedSuffix.length)
-      LoggedChar.find(trimmedSuffix.first())?.let { this["symbol_after_caret"] = MLFeatureValue.categorical(it) }
+      CharCategory.find(trimmedSuffix.first())?.let { this["non_space_symbol_after_caret"] = MLFeatureValue.categorical(it) }
     }
   }
 
