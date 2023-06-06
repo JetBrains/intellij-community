@@ -330,7 +330,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   void setUpShutDownTask() {
     myShutDownTask = new MyShutDownTask();
-    ShutDownTracker.getInstance().registerShutdownTask(myShutDownTask);
+    ShutDownTracker.getInstance().registerCacheShutdownTask(myShutDownTask);
   }
 
   @ApiStatus.Internal
