@@ -22,6 +22,7 @@ import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public final class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBase<JpsElementCollectionImpl<E>> implements JpsElementCollection<E> {
   private final List<E> myElements;
@@ -129,7 +130,7 @@ public final class JpsElementCollectionImpl<E extends JpsElement> extends JpsEle
     public Iterator<X> iterator() {
       //noinspection unchecked
       Iterator<JpsTypedElement<?>> iterator = (Iterator<JpsTypedElement<?>>)myElements.iterator();
-      return new FilteringIterator<>(iterator, e -> e.getType().equals(myType));
+      return new FilteringIterator<>(iterator, (Predicate<? super JpsTypedElement<?>>)e -> e.getType().equals(myType));
     }
   }
 }
