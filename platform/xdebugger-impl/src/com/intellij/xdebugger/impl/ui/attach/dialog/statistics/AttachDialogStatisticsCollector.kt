@@ -12,15 +12,15 @@ internal class AttachDialogStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("debugger.attach.dialog", 2)
+    private val GROUP = EventLogGroup("debugger.attach.dialog", 3)
 
     private val IS_MAIN_ACTION_EVENT_FIELD = EventFields.Boolean("isMainAction")
-    private val VIEW_TYPE_EVENT_FIELD = EventFields.Enum("viewType", AttachViewType::class.java)
+    private val VIEW_TYPE_EVENT_FIELD = EventFields.Enum<AttachViewType>("viewType")
     private val DEBUGGERS_FILTER_SET_EVENT_FIELD = EventFields.Boolean("debuggersFilterSet")
     private val SEARCH_FIELD_USED_EVENT_FIELD = EventFields.Boolean("searchFieldUsed")
     private val DEBUGGER_NAME_EVENT_FIELD = EventFields.Class("selectedDebugger")
 
-    private val HOST_SWITCHED = GROUP.registerEvent("host.switched", EventFields.Enum("hostType", AttachDialogHostType::class.java))
+    private val HOST_SWITCHED = GROUP.registerEvent("host.switched", EventFields.Enum<AttachDialogHostType>("hostType"))
     private val VIEW_SWITCHED = GROUP.registerEvent("view.switched", VIEW_TYPE_EVENT_FIELD)
     private val SEARCH_FIELD_USED = GROUP.registerEvent("search.filter.used")
     private val DEBUGGERS_FILTER_SET = GROUP.registerEvent("debuggers.filter.set")
