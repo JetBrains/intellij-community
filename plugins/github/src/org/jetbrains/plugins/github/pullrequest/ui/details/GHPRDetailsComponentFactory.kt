@@ -88,7 +88,7 @@ internal object GHPRDetailsComponentFactory {
       add(statusChecks, CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
       add(actionsComponent, CC().growX().pushX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS).minHeight("pref"))
 
-      PopupHandler.installPopupMenu(this, actionGroup, "GHPRDetailsPopup")
+      PopupHandler.installPopupMenu(this, actionGroup, ActionPlaces.POPUP)
     }
   }
 

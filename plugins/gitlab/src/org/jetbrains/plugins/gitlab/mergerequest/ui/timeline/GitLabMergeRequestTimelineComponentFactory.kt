@@ -19,6 +19,7 @@ import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
@@ -87,7 +88,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
               setContent(content)
               repaint()
             }
-            PopupHandler.installPopupMenu(loadedTimelinePanel, actionGroup, "GitLabMergeRequestTimelinePopup")
+            PopupHandler.installPopupMenu(loadedTimelinePanel, actionGroup, ActionPlaces.POPUP)
             DataManager.registerDataProvider(loadedTimelinePanel) { dataId ->
               when {
                 GitLabMergeRequestsActionKeys.MERGE_REQUEST.`is`(dataId) -> state.mr

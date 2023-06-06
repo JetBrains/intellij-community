@@ -14,6 +14,7 @@ import com.intellij.collaboration.ui.util.gap
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
@@ -61,7 +62,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
             val detailsVm = loadingState.detailsVm
             val detailsPanel = createDetailsComponent(project, detailsVm, avatarIconsProvider).apply {
               val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
-              PopupHandler.installPopupMenu(this, actionGroup, "GitLabMergeRequestDetailsPanelPopup")
+              PopupHandler.installPopupMenu(this, actionGroup, ActionPlaces.POPUP)
               DataManager.registerDataProvider(this) { dataId ->
                 when {
                   GitLabMergeRequestsActionKeys.MERGE_REQUEST.`is`(dataId) -> detailsVm.detailsInfoVm.mergeRequest
