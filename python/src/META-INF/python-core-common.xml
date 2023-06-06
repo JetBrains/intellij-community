@@ -766,6 +766,9 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewPopupMenuRefactoringGroup"/>
     </action>
 
+    <action id="CollapsePythonTypeAnnotations" class="com.jetbrains.python.actions.PyCollapseTypeAnnotationsAction"/>
+    <action id="ExpandPythonTypeAnnotations" class="com.jetbrains.python.actions.PyExpandTypeAnnotationsAction"/>
+
     <group id="PyPackagingMenu">
       <action id="PySyncPythonRequirements" class="com.jetbrains.python.packaging.PySyncPythonRequirementsAction"/>
       <action id="CreateSetupPy" class="com.jetbrains.python.packaging.setupPy.CreateSetupPyAction"/>
