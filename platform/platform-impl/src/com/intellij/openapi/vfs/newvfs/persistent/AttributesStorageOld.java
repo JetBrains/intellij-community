@@ -80,8 +80,8 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
                                                       final int fileId,
                                                       final @NotNull FileAttribute attribute) throws IOException {
     final Lock readLock = lock.readLock();
-    CancellationUtil.lockMaybeCancellable(readLock);
-    //readLock.lock();
+    //CancellationUtil.lockMaybeCancellable(readLock);
+    readLock.lock();
     try {
       PersistentFSConnection.ensureIdIsValid(fileId);
 
