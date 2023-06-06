@@ -22,6 +22,7 @@ import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCa
  * Makes a {@link ScheduledExecutorService} from the supplied plain non-scheduling {@link ExecutorService} by awaiting scheduled tasks in a separate thread
  * and then passing them for execution to the {@code backendExecutorService}.
  * Unlike the standard {@link ScheduledThreadPoolExecutor}, this pool can be unbounded if the {@code backendExecutorService} is.
+ * Used for reducing the number of always-running threads, because it reuses the threads from the supplied pool.
  */
 class SchedulingWrapper implements ScheduledExecutorService {
   private static final Logger LOG = Logger.getInstance(SchedulingWrapper.class);
