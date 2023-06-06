@@ -19,6 +19,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabETagUpdatableListLoader
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
+import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 private val LOG = logger<GitLabMergeRequest>()
@@ -139,17 +140,29 @@ internal class LoadedGitLabMergeRequest(
 
   private val stateEventsLoader =
     GitLabETagUpdatableListLoader<GitLabResourceStateEventDTO>(cs, getMergeRequestStateEventsUri(glProject, mergeRequest)
-    ) { uri, eTag -> api.rest.loadUpdatableJsonList<GitLabResourceStateEventDTO>(uri, eTag) }
+    ) { uri, eTag ->
+      api.rest.loadUpdatableJsonList<GitLabResourceStateEventDTO>(
+        glProject.serverPath, GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
+      )
+    }
   override val stateEvents = stateEventsLoader.batches.collectBatches().modelFlow(cs, LOG)
 
   private val labelEventsLoader =
     GitLabETagUpdatableListLoader<GitLabResourceLabelEventDTO>(cs, getMergeRequestLabelEventsUri(glProject, mergeRequest)
-    ) { uri, eTag -> api.rest.loadUpdatableJsonList<GitLabResourceLabelEventDTO>(uri, eTag) }
+    ) { uri, eTag ->
+      api.rest.loadUpdatableJsonList<GitLabResourceLabelEventDTO>(
+        glProject.serverPath, GitLabApiRequestName.REST_GET_MERGE_REQUEST_LABEL_EVENTS, uri, eTag
+      )
+    }
   override val labelEvents = labelEventsLoader.batches.collectBatches().modelFlow(cs, LOG)
 
   private val milestoneEventsLoader =
     GitLabETagUpdatableListLoader<GitLabResourceMilestoneEventDTO>(cs, getMergeRequestMilestoneEventsUri(glProject, mergeRequest)
-    ) { uri, eTag -> api.rest.loadUpdatableJsonList<GitLabResourceMilestoneEventDTO>(uri, eTag) }
+    ) { uri, eTag ->
+      api.rest.loadUpdatableJsonList<GitLabResourceMilestoneEventDTO>(
+        glProject.serverPath, GitLabApiRequestName.REST_GET_MERGE_REQUEST_MILESTONE_EVENTS, uri, eTag
+      )
+    }
   override val milestoneEvents = milestoneEventsLoader.batches.collectBatches().modelFlow(cs, LOG)
 
   private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)

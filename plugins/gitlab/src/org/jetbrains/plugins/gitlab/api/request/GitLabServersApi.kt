@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.api.request
 
+import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.api.dto.GitLabServerMetadataDTO
 import java.net.http.HttpResponse
 
 suspend fun GitLabApi.Rest.checkIsGitLabServer(server: GitLabServerPath): Boolean {
@@ -13,4 +15,11 @@ suspend fun GitLabApi.Rest.checkIsGitLabServer(server: GitLabServerPath): Boolea
   return response.headers().map().keys.any {
     it.contains("gitlab", true)
   }
+}
+
+// should not have statistics to avoid recursion
+suspend fun GitLabApi.Rest.getServerMetadata(server: GitLabServerPath): HttpResponse<out GitLabServerMetadataDTO> {
+  val uri = server.restApiUri.resolveRelative("metadata")
+  val request = request(uri).GET().build()
+  return loadJsonValue(request)
 }

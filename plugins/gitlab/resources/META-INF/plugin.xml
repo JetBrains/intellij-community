@@ -45,6 +45,11 @@
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
       implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestShowDiffActionProvider"/>
     <iconMapper mappingFile="GitlabIconMappings.json"/>
+
+    <statistics.applicationUsagesCollector
+      implementation="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabAccountsStatisticsCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

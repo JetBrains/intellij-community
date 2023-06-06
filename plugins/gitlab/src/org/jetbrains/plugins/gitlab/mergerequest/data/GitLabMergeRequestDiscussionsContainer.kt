@@ -25,6 +25,7 @@ import org.jetbrains.plugins.gitlab.api.loadUpdatableJsonList
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
+import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 
 interface GitLabMergeRequestDiscussionsContainer {
   val discussions: Flow<Collection<GitLabMergeRequestDiscussion>>
@@ -159,7 +160,9 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       var lastETag: String? = null
       val uri = getMergeRequestDraftNotesUri(project, mr.id)
       ApiPageUtil.createPagesFlowByLinkHeader(uri) {
-        api.rest.loadUpdatableJsonList<GitLabMergeRequestDraftNoteRestDTO>(it)
+        api.rest.loadUpdatableJsonList<GitLabMergeRequestDraftNoteRestDTO>(
+          project.serverPath, GitLabApiRequestName.REST_GET_DRAFT_NOTES, it
+        )
       }.collect {
         val newNotes = it.body() ?: error("Empty response")
         notesGuard.withLock {
@@ -173,7 +176,9 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       if (lastETag != null) {
         launchNow {
           updateRequests.collect {
-            val response = api.rest.loadUpdatableJsonList<GitLabMergeRequestDraftNoteRestDTO>(uri, lastETag)
+            val response = api.rest.loadUpdatableJsonList<GitLabMergeRequestDraftNoteRestDTO>(
+              project.serverPath, GitLabApiRequestName.REST_GET_DRAFT_NOTES, uri, lastETag
+            )
             val newNotes = response.body()
             if (newNotes != null) {
               notesGuard.withLock {

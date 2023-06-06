@@ -7,13 +7,10 @@ import com.intellij.collaboration.api.data.orDefault
 import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.graphql.loadResponse
-import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
-import org.jetbrains.plugins.gitlab.api.gitLabQuery
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import java.net.http.HttpResponse
@@ -27,7 +24,9 @@ suspend fun GitLabApi.GraphQL.loadMergeRequestDiscussions(project: GitLabProject
     "mriid" to mr.iid
   )
   val request = gitLabQuery(project.serverPath, GitLabGQLQuery.GET_MERGE_REQUEST_DISCUSSIONS, parameters)
-  return loadResponse<DiscussionConnection>(request, "project", "mergeRequest", "discussions").body()
+  return withErrorStats(project.serverPath, GitLabGQLQuery.GET_MERGE_REQUEST_DISCUSSIONS) {
+    loadResponse<DiscussionConnection>(request, "project", "mergeRequest", "discussions").body()
+  }
 }
 
 private class DiscussionConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabDiscussionDTO>)
@@ -43,7 +42,9 @@ suspend fun GitLabApi.GraphQL.changeMergeRequestDiscussionResolve(
     "resolved" to resolved
   )
   val request = gitLabQuery(project.serverPath, GitLabGQLQuery.TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE, parameters)
-  return loadResponse<ResolveResult>(request, "discussionToggleResolve")
+  return withErrorStats(project.serverPath, GitLabGQLQuery.TOGGLE_MERGE_REQUEST_DISCUSSION_RESOLVE) {
+    loadResponse<ResolveResult>(request, "discussionToggleResolve")
+  }
 }
 
 private class ResolveResult(discussion: GitLabDiscussionDTO, errors: List<String>?)
@@ -61,7 +62,9 @@ suspend fun GitLabApi.GraphQL.updateNote(
     "body" to newText
   )
   val request = gitLabQuery(project.serverPath, GitLabGQLQuery.UPDATE_NOTE, parameters)
-  return loadResponse<GitLabGraphQLMutationResultDTO.Empty>(request, "updateNote")
+  return withErrorStats(project.serverPath, GitLabGQLQuery.UPDATE_NOTE) {
+    loadResponse<GitLabGraphQLMutationResultDTO.Empty>(request, "updateNote")
+  }
 }
 
 suspend fun GitLabApi.GraphQL.deleteNote(
@@ -72,7 +75,9 @@ suspend fun GitLabApi.GraphQL.deleteNote(
     "noteId" to noteId
   )
   val request = gitLabQuery(project.serverPath, GitLabGQLQuery.DESTROY_NOTE, parameters)
-  return loadResponse<GitLabGraphQLMutationResultDTO.Empty>(request, "destroyNote")
+  return withErrorStats(project.serverPath, GitLabGQLQuery.DESTROY_NOTE) {
+    loadResponse<GitLabGraphQLMutationResultDTO.Empty>(request, "destroyNote")
+  }
 }
 
 suspend fun GitLabApi.GraphQL.addNote(
@@ -85,7 +90,9 @@ suspend fun GitLabApi.GraphQL.addNote(
     "body" to body
   )
   val request = gitLabQuery(project.serverPath, GitLabGQLQuery.CREATE_NOTE, parameters)
-  return loadResponse<CreateNoteResult>(request, "createNote")
+  return withErrorStats(project.serverPath, GitLabGQLQuery.CREATE_NOTE) {
+    loadResponse<CreateNoteResult>(request, "createNote")
+  }
 }
 
 suspend fun GitLabApi.GraphQL.addDiffNote(
@@ -100,7 +107,9 @@ suspend fun GitLabApi.GraphQL.addDiffNote(
     "body" to body
   )
   val request = gitLabQuery(project.serverPath, GitLabGQLQuery.CREATE_DIFF_NOTE, parameters)
-  return loadResponse<CreateNoteResult>(request, "createDiffNote")
+  return withErrorStats(project.serverPath, GitLabGQLQuery.CREATE_DIFF_NOTE) {
+    loadResponse<CreateNoteResult>(request, "createDiffNote")
+  }
 }
 
 private class CreateNoteResult(note: NoteHolder?, errors: List<String>?)
@@ -122,7 +131,9 @@ suspend fun GitLabApi.GraphQL.createReplyNote(
     "body" to body
   )
   val request = gitLabQuery(project.serverPath, GitLabGQLQuery.CREATE_REPLY_NOTE, parameters)
-  return loadResponse<CreateReplyNoteResult>(request, "createNote")
+  return withErrorStats(project.serverPath, GitLabGQLQuery.CREATE_REPLY_NOTE) {
+    loadResponse<CreateReplyNoteResult>(request, "createNote")
+  }
 }
 
 private class CreateReplyNoteResult(note: GitLabNoteDTO, errors: List<String>?)

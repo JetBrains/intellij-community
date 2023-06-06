@@ -5,7 +5,9 @@ import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.restApiUri
+import org.jetbrains.plugins.gitlab.api.withErrorStats
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
+import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse
@@ -26,7 +28,9 @@ suspend fun GitLabApi.Rest.updateDraftNote(project: GitLabProjectCoordinates,
       "note" to body
     )))
     .build()
-  return sendAndAwaitCancellable(request)
+  return withErrorStats(project.serverPath, GitLabApiRequestName.REST_UPDATE_DRAFT_NOTE) {
+    sendAndAwaitCancellable(request)
+  }
 }
 
 suspend fun GitLabApi.Rest.deleteDraftNote(project: GitLabProjectCoordinates,
@@ -35,7 +39,9 @@ suspend fun GitLabApi.Rest.deleteDraftNote(project: GitLabProjectCoordinates,
   : HttpResponse<out Unit> {
   val uri = getMergeRequestDraftNotesUri(project, mr).resolveRelative(noteId.toString())
   val request = request(uri).DELETE().build()
-  return sendAndAwaitCancellable(request)
+  return withErrorStats(project.serverPath, GitLabApiRequestName.REST_DELETE_DRAFT_NOTE) {
+    sendAndAwaitCancellable(request)
+  }
 }
 
 suspend fun GitLabApi.Rest.submitDraftNotes(project: GitLabProjectCoordinates,
@@ -43,5 +49,7 @@ suspend fun GitLabApi.Rest.submitDraftNotes(project: GitLabProjectCoordinates,
   : HttpResponse<out Unit> {
   val uri = getMergeRequestDraftNotesUri(project, mr).resolveRelative("bulk_publish")
   val request = request(uri).POST(BodyPublishers.noBody()).build()
-  return sendAndAwaitCancellable(request)
+  return withErrorStats(project.serverPath, GitLabApiRequestName.REST_SUBMIT_DRAFT_NOTES) {
+    sendAndAwaitCancellable(request)
+  }
 }

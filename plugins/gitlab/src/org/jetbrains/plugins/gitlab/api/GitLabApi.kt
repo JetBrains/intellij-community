@@ -10,6 +10,7 @@ import com.intellij.collaboration.api.json.loadOptionalJsonList
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
+import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
@@ -56,19 +57,25 @@ class GitLabApiImpl(httpHelper: HttpApiHelper) : GitLabApi, HttpApiHelper by htt
 fun GitLabApi.GraphQL.gitLabQuery(serverPath: GitLabServerPath, query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest =
   query(serverPath.gqlApiUri, query.filePath, variablesObject)
 
-suspend inline fun <reified T> GitLabApi.Rest.loadList(uri: String): HttpResponse<out List<T>> {
+suspend inline fun <reified T> GitLabApi.Rest.loadList(serverPath: GitLabServerPath, requestName: GitLabApiRequestName, uri: String)
+  : HttpResponse<out List<T>> {
   val request = request(uri).GET().build()
-  return loadJsonList(request)
+  return withErrorStats(serverPath, requestName) {
+    loadJsonList(request)
+  }
 }
 
-suspend inline fun <reified T> GitLabApi.Rest.loadUpdatableJsonList(uri: URI, eTag: String? = null)
+suspend inline fun <reified T> GitLabApi.Rest.loadUpdatableJsonList(serverPath: GitLabServerPath, requestName: GitLabApiRequestName,
+                                                                    uri: URI, eTag: String? = null)
   : HttpResponse<out List<T>?> {
   val request = request(uri).GET().apply {
     if (eTag != null) {
       header("If-None-Match", eTag)
     }
   }.build()
-  return loadOptionalJsonList(request)
+  return withErrorStats(serverPath, requestName) {
+    loadOptionalJsonList(request)
+  }
 }
 
 @Throws(GitLabGraphQLMutationException::class)

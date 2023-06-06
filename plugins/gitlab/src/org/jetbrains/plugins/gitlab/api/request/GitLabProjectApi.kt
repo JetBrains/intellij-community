@@ -8,12 +8,9 @@ import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.api.page.foldToList
 import kotlinx.coroutines.flow.map
-import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
-import org.jetbrains.plugins.gitlab.api.gitLabQuery
 
 suspend fun GitLabApi.GraphQL.loadAllProjectLabels(project: GitLabProjectCoordinates): List<GitLabLabelDTO> =
   ApiPageUtil.createGQLPagesFlow { page ->
@@ -21,7 +18,9 @@ suspend fun GitLabApi.GraphQL.loadAllProjectLabels(project: GitLabProjectCoordin
       "fullPath" to project.projectPath.fullPath()
     )
     val request = gitLabQuery(project.serverPath, GitLabGQLQuery.GET_PROJECT_LABELS, parameters)
-    loadResponse<LabelConnection>(request, "project", "labels").body()
+    withErrorStats(project.serverPath, GitLabGQLQuery.GET_PROJECT_LABELS) {
+      loadResponse<LabelConnection>(request, "project", "labels").body()
+    }
   }.map { it.nodes }.foldToList()
 
 suspend fun GitLabApi.GraphQL.getAllProjectMembers(project: GitLabProjectCoordinates): List<GitLabMemberDTO> =
@@ -30,7 +29,9 @@ suspend fun GitLabApi.GraphQL.getAllProjectMembers(project: GitLabProjectCoordin
       "fullPath" to project.projectPath.fullPath()
     )
     val request = gitLabQuery(project.serverPath, GitLabGQLQuery.GET_PROJECT_MEMBERS, parameters)
-    loadResponse<ProjectMembersConnection>(request, "project", "projectMembers").body()
+    withErrorStats(project.serverPath, GitLabGQLQuery.GET_PROJECT_MEMBERS) {
+      loadResponse<ProjectMembersConnection>(request, "project", "projectMembers").body()
+    }
   }.map { it.nodes }.foldToList().filterNotNull()
 
 private class LabelConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabLabelDTO>)
