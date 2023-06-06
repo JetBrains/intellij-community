@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.ex
 
 import com.intellij.ide.impl.DataValidators
@@ -74,7 +74,8 @@ abstract class FileEditorManagerEx : FileEditorManager() {
 
   /**
    * Close editors for the file opened in a particular window.
-   * This method runs some checks before closing the window. E.g. confirmation dialog that can prevent the window from closing
+   * This method runs some checks before closing the window.
+   * E.g., confirmation dialog that can prevent the window from closing
    * @param file file to be closed. Cannot be null.
    * @return true if the window was closed; false otherwise
    */
