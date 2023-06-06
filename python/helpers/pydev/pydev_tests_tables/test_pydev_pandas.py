@@ -32,7 +32,7 @@ def setup_dataframe():
             "I": pd.Series(range(rows_number),
                            index=list(range(rows_number)),
                            dtype="int32"),
-            # "J": pd.Categorical(["test", "train"] * (rows_number // 2)),
+            "J": pd.Categorical(["test", "train"] * (rows_number // 2)),
         }
     )
     df_html = repr(df.head().to_html(notebook=True, max_cols=max_cols))
