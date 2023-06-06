@@ -2037,7 +2037,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                          <module>m1</module>
                        </modules>""");
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     importProject();
     assertProjectLibraries("Maven: group:lib1:1");
   }
