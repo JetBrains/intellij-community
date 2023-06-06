@@ -10,7 +10,9 @@ public class StringEqualsEmptyStringFixTest extends IGQuickFixesTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new StringEqualsEmptyStringInspection());
+    StringEqualsEmptyStringInspection inspection = new StringEqualsEmptyStringInspection();
+    inspection.SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL = false;
+    myFixture.enableInspections(inspection);
     myRelativePath = "performance/replace_with_isempty";
     myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "isEmpty()");
   }
@@ -18,9 +20,7 @@ public class StringEqualsEmptyStringFixTest extends IGQuickFixesTestCase {
   public void testSimple() { doTest(); }
   public void testNullCheck() { doTest(); }
   public void testNullCheckSuppress() {
-    StringEqualsEmptyStringInspection inspection = new StringEqualsEmptyStringInspection();
-    inspection.SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL = true;
-    myFixture.enableInspections(inspection);
+    myFixture.enableInspections(new StringEqualsEmptyStringInspection());
     assertQuickfixNotAvailable();
   }
   public void testNullCheckAlreadyPresent() { doTest(); }
