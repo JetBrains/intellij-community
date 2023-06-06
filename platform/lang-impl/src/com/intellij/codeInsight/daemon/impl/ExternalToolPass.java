@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.LangBundle;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ApplicationManager;
@@ -160,7 +159,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
         DaemonProgressIndicator indicator = new DaemonProgressIndicator();
         BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
           // run annotators outside the read action because they could start OSProcessHandler
-          runChangeAware(myDocument, ExternalToolPass.this::doAnnotate);
+          runChangeAware(myDocument, () -> doAnnotate());
           ReadAction.run(() -> {
             ProgressManager.checkCanceled();
             if (!documentChanged(modificationStampBefore)) {
@@ -228,11 +227,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   }
 
   private @NotNull List<HighlightInfo> convertToHighlights() {
-    List<HighlightInfo> infos = new ArrayList<>(myAnnotationHolder.size());
-    for (Annotation annotation : myAnnotationHolder) {
-      infos.add(HighlightInfo.fromAnnotation(annotation));
-    }
-    return infos;
+    return ContainerUtil.map(myAnnotationHolder, annotation -> HighlightInfo.fromAnnotation(annotation));
   }
 
   private void doFinish(@NotNull List<? extends HighlightInfo> highlights) {
