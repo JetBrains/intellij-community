@@ -16,7 +16,7 @@ class KotlinGradleFUSCollector : CounterUsagesCollector() {
 
     companion object {
 
-        private val GROUP = EventLogGroup("kotlin.gradle.performance", 10)
+        private val GROUP = EventLogGroup("kotlin.gradle.performance", 11)
 
         private fun listOfAllMetrics(): Array<Any> {
             val result = ArrayList<Any>()
