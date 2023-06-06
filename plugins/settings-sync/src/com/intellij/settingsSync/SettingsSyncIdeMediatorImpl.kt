@@ -2,16 +2,11 @@ package com.intellij.settingsSync
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
-import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
-import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.SystemProperties
@@ -251,7 +246,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       }
     }
 
-    invokeAndWaitIfNeeded { reloadComponents(changedFileSpecs, deletedFileSpecs) }
+    invokeAndWaitIfNeeded { componentStore.reloadComponents(changedFileSpecs, deletedFileSpecs) }
   }
 
   private fun <R> writeUnderLock(fileSpec: String, writingProcedure: () -> R): R {
@@ -267,59 +262,6 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   }
 
   private fun getOrCreateLock(fileSpec: String) = fileSpecsToLocks.computeIfAbsent(fileSpec) { ReentrantReadWriteLock() }
-
-  private fun reloadComponents(changedFileSpecs: List<String>, deletedFileSpecs: List<String>) {
-    val schemeManagerFactory = SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase
-    val storageManager = componentStore.storageManager as StateStorageManagerImpl
-    val (changed, deleted) = storageManager.getCachedFileStorages(changedFileSpecs, deletedFileSpecs, null)
-
-    val changedComponentNames = LinkedHashSet<String>()
-    updateStateStorage(changedComponentNames, changed, false)
-    updateStateStorage(changedComponentNames, deleted, true)
-
-    val schemeManagersToReload = calcSchemeManagersToReload(changedFileSpecs + deletedFileSpecs, schemeManagerFactory)
-    for (schemeManager in schemeManagersToReload) {
-      if (schemeManager.fileSpec == "colors") {
-        EditorColorsManager.getInstance().reloadKeepingActiveScheme()
-      }
-      else {
-        schemeManager.reload()
-      }
-    }
-
-    val notReloadableComponents = componentStore.getNotReloadableComponents(changedComponentNames)
-    componentStore.reinitComponents(changedComponentNames, (changed + deleted).toSet(), notReloadableComponents)
-  }
-
-  private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateStorages: Collection<StateStorage>, deleted: Boolean) {
-    for (stateStorage in stateStorages) {
-      try {
-        // todo maybe we don't need "from stream provider" here since we modify the settings in place?
-        (stateStorage as XmlElementStorage).updatedFromStreamProvider(changedComponentNames, deleted)
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
-    }
-  }
-
-  private fun calcSchemeManagersToReload(pathsToCheck: List<String>,
-                                         schemeManagerFactory: SchemeManagerFactoryBase): List<SchemeManagerImpl<*, *>> {
-    val schemeManagersToReload = mutableListOf<SchemeManagerImpl<*, *>>()
-    schemeManagerFactory.process {
-      if (shouldReloadSchemeManager(it, pathsToCheck)) {
-        schemeManagersToReload.add(it)
-      }
-    }
-    return schemeManagersToReload
-  }
-
-  private fun shouldReloadSchemeManager(schemeManager: SchemeManagerImpl<*, *>, pathsToCheck: Collection<String>): Boolean {
-    val fileSpec = schemeManager.fileSpec
-    return pathsToCheck.any { path ->
-      fileSpec == path || path.startsWith("$fileSpec/")
-    }
-  }
 
   companion object {
     val LOG = logger<SettingsSyncIdeMediatorImpl>()
