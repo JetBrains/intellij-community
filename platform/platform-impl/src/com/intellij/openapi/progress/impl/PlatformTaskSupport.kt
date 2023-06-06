@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.consumeUnrelatedEvent
@@ -113,7 +114,7 @@ class PlatformTaskSupport : TaskSupport {
     action: suspend CoroutineScope.() -> T,
   ): T = prepareThreadContext { ctx ->
     val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
-    val scope = CoroutineScope(ctx)
+    val scope = CoroutineScope(ctx + ClientId.coroutineContext())
     try {
       runBlockingModalInternal(cs = scope, descriptor, action)
     }
