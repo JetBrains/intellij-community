@@ -21,12 +21,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   @NotNull private final EditorImpl myEditor;
   @NotNull private final MarkupModelEx myDelegate;
 
-  private final Condition<RangeHighlighter> IS_AVAILABLE = this::isAvailable;
+  private final Predicate<RangeHighlighter> IS_AVAILABLE = this::isAvailable;
 
   EditorFilteringMarkupModelEx(@NotNull EditorImpl editor, @NotNull MarkupModelEx delegate) {
     myEditor = editor;
@@ -67,7 +68,7 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
 
   @Override
   public RangeHighlighter @NotNull [] getAllHighlighters() {
-    List<RangeHighlighter> list = ContainerUtil.filter(myDelegate.getAllHighlighters(), IS_AVAILABLE);
+    List<RangeHighlighter> list = ContainerUtil.filter(myDelegate.getAllHighlighters(), (Condition<? super RangeHighlighter>) IS_AVAILABLE);
     return list.toArray(RangeHighlighter.EMPTY_ARRAY);
   }
 

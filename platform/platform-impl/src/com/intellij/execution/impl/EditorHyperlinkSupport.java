@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -33,6 +34,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class EditorHyperlinkSupport {
   private static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
@@ -199,7 +201,7 @@ public class EditorHyperlinkSupport {
                                         @NotNull Processor<? super RangeHighlighter> processor) {
     MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset,
-      new FilteringProcessor<>(rangeHighlighterEx -> rangeHighlighterEx.isValid() && getHyperlinkInfo(rangeHighlighterEx) != null, processor)
+      new FilteringProcessor<>((Predicate<? super RangeHighlighterEx>) rangeHighlighterEx -> rangeHighlighterEx.isValid() && getHyperlinkInfo(rangeHighlighterEx) != null, processor)
     );
   }
 

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,6 +25,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public final class FileReferenceCompletionImpl extends FileReferenceCompletion {
   private static final HashingStrategy<PsiElement> VARIANTS_HASHING_STRATEGY = new HashingStrategy<>() {
@@ -56,7 +56,7 @@ public final class FileReferenceCompletionImpl extends FileReferenceCompletion {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
-    Condition<PsiFileSystemItem> filter = reference.getFileReferenceSet().getReferenceCompletionFilter();
+    Predicate<PsiFileSystemItem> filter = reference.getFileReferenceSet().getReferenceCompletionFilter();
     final CommonProcessors.CollectProcessor<PsiFileSystemItem> collector =
       new CommonProcessors.CollectProcessor<>(CollectionFactory.createCustomHashingStrategySet(VARIANTS_HASHING_STRATEGY));
     final PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<>() {
