@@ -20,7 +20,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -54,6 +53,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 
 public final class TreeFileChooserDialog extends DialogWrapper implements TreeFileChooser {
 
@@ -407,7 +407,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   }
 
   private Object[] filterFiles(final Object[] list) {
-    Condition<PsiFile> condition = psiFile -> {
+    Predicate<PsiFile> condition = psiFile -> {
       if (myFilter != null && !myFilter.accept(psiFile)) {
         return false;
       }
@@ -430,7 +430,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       else {
         psiFile = null;
       }
-      if (psiFile != null && !condition.value(psiFile)) {
+      if (psiFile != null && !condition.test(psiFile)) {
         continue;
       }
       else {
