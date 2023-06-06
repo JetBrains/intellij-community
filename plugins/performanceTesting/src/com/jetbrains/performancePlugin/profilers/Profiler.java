@@ -27,7 +27,7 @@ public interface Profiler {
     List<Profiler> all = ContainerUtil.sorted(ContainerUtil.findAll(EP_NAME.getExtensionList(), it -> it.isEnabled()),
     //this relies on the naming, but we want a determined order and independent plugins/profilers; by default, we choose async
     Comparator.comparing(p -> p.getClass().getSimpleName()));
-    if(all.size() == 0){
+    if (all.isEmpty()){
       throw new RuntimeException("There are no installed profilers");
     }
     return all.get(0);
