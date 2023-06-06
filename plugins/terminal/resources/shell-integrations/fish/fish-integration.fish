@@ -37,9 +37,8 @@ end
 
 override_jb_variables
 
-if test -n $argv[1]
-  set -l hooks_file $argv[1]"/hooks.fish"
-  if test -e $hooks_file
-    source $hooks_file $argv[1]
-  end
+set -l thisScriptParentDir (status dirname)
+set -l commandBlockSupportScript "$thisScriptParentDir/command-block-support.fish"
+if test -e "$commandBlockSupportScript"
+  source "$commandBlockSupportScript"
 end
