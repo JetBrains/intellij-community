@@ -13,4 +13,7 @@ interface KotlinMemberInfoSupport {
 
     @RequiresBackgroundThread
     fun getOverrides(member: KtNamedDeclaration): Boolean?
+
+    @RequiresBackgroundThread
+    fun renderMemberInfo(member: KtNamedDeclaration): String
 }
