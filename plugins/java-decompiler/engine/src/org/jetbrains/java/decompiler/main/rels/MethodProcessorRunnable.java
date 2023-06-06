@@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.main.rels;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
+import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -67,6 +68,8 @@ public class MethodProcessorRunnable implements Runnable {
   }
 
   public static RootStatement codeToJava(StructClass cl, StructMethod mt, MethodDescriptor md, VarProcessor varProc) throws IOException {
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
+    cancellationManager.checkSavedCancelled();
     boolean isInitializer = CodeConstants.CLINIT_NAME.equals(mt.getName()); // for now static initializer only
 
     mt.expandData(cl);
@@ -83,6 +86,7 @@ public class MethodProcessorRunnable implements Runnable {
     // Since jsr instruction is forbidden for class files version 51.0 (Java 7) or above
     // call to inlineJsr() is only meaningful for class files prior to the Java 7.
     //
+    cancellationManager.checkSavedCancelled();
     if (!cl.isVersion7()) {
       graph.inlineJsr(cl, mt);
     }
@@ -124,11 +128,14 @@ public class MethodProcessorRunnable implements Runnable {
       }
       ExceptionDeobfuscator.insertDummyExceptionHandlerBlocks(graph, mt.getBytecodeVersion());
     }
-
+    cancellationManager.checkSavedCancelled();
     RootStatement root = DomHelper.parseGraph(graph);
+
+    cancellationManager.checkSavedCancelled();
 
     FinallyProcessor fProc = new FinallyProcessor(md, varProc);
     while (fProc.iterateGraph(cl, mt, root, graph)) {
+      cancellationManager.checkSavedCancelled();
       root = DomHelper.parseGraph(graph);
     }
 

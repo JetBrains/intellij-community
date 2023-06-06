@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.decompiler;
 
+import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.Fernflower;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
@@ -105,6 +106,11 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   public ConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger) {
     root = destination;
     engine = new Fernflower(this, this, options, logger);
+  }
+
+  public ConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger, CancellationManager cancellationManager) {
+    root = destination;
+    engine = new Fernflower(this, this, options, logger, cancellationManager);
   }
 
   public void addSource(File source) {

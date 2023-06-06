@@ -24,6 +24,7 @@ public class DecompilerContext {
   private final StructContext structContext;
   private final ClassesProcessor classProcessor;
   private final PoolInterceptor poolInterceptor;
+  private final CancellationManager cancellationManager;
   private ImportCollector importCollector;
   private VarProcessor varProcessor;
   private CounterContainer counterContainer;
@@ -34,10 +35,20 @@ public class DecompilerContext {
                            StructContext structContext,
                            ClassesProcessor classProcessor,
                            PoolInterceptor interceptor) {
+    this(properties, logger, structContext, classProcessor, interceptor, CancellationManager.DUMMY);
+      }
+
+  public DecompilerContext(Map<String, Object> properties,
+                           IFernflowerLogger logger,
+                           StructContext structContext,
+                           ClassesProcessor classProcessor,
+                           PoolInterceptor interceptor,
+                           CancellationManager cancellationManager) {
     Objects.requireNonNull(properties);
     Objects.requireNonNull(logger);
     Objects.requireNonNull(structContext);
     Objects.requireNonNull(classProcessor);
+    Objects.requireNonNull(cancellationManager);
 
     this.properties = properties;
     this.logger = logger;
@@ -45,6 +56,7 @@ public class DecompilerContext {
     this.classProcessor = classProcessor;
     this.poolInterceptor = interceptor;
     this.counterContainer = new CounterContainer();
+    this.cancellationManager = cancellationManager;
   }
 
   // *****************************************************************************
@@ -105,6 +117,13 @@ public class DecompilerContext {
 
   public static ClassesProcessor getClassProcessor() {
     return getCurrentContext().classProcessor;
+  }
+  public static CancellationManager getCancellationManager() {
+    DecompilerContext context = getCurrentContext();
+    if (context != null) {
+      return context.cancellationManager;
+    }
+    return CancellationManager.DUMMY;
   }
 
   public static PoolInterceptor getPoolInterceptor() {

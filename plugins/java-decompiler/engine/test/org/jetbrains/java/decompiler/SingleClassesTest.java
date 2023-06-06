@@ -257,7 +257,7 @@ public class SingleClassesTest {
     assertFilesEqual(referenceFile, decompiledFile);
   }
 
-  private static List<Path> collectClasses(Path classFile) {
+  static List<Path> collectClasses(Path classFile) {
     var files = new ArrayList<Path>();
     files.add(classFile);
 
