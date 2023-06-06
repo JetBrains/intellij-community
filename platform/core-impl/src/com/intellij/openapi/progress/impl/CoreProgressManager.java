@@ -2,6 +2,7 @@
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -884,7 +885,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   private void checkLaterThreadsAreUnblocked() {
     try {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+      AppExecutorUtil.getAppScheduledExecutorService().schedule((ContextAwareRunnable)() -> {
         if (isAnyPrioritizedThreadBlocked()) {
           checkLaterThreadsAreUnblocked();
         }
