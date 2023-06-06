@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class SLRUMap<K,V> {
   private final LinkedHashMap<K,V> myProtectedQueue;
@@ -129,20 +130,36 @@ public class SLRUMap<K,V> {
     return set;
   }
 
-  public void clearByCondition(@NotNull Condition<? super V> condition) {
-    clearByCondition(condition, myProtectedQueue);
-    clearByCondition(condition, myProbationalQueue);
+  public void clearByPredicate(@NotNull Predicate<? super V> predicate) {
+    clearByPredicate(predicate, myProtectedQueue);
+    clearByPredicate(predicate, myProbationalQueue);
   }
 
-  private void clearByCondition(@NotNull Condition<? super V> condition, @NotNull LinkedHashMap<K, V> queue) {
+  /**
+   * @deprecated use {@link SLRUMap#clearByPredicate(Predicate)} instead
+   */
+  @Deprecated
+  public void clearByCondition(@NotNull Condition<? super V> condition) {
+    clearByPredicate(condition);
+  }
+
+  private void clearByPredicate(@NotNull Predicate<? super V> predicate, @NotNull LinkedHashMap<K, V> queue) {
     Iterator<Map.Entry<K, V>> iterator = queue.entrySet().iterator();
     while (iterator.hasNext()) {
       Map.Entry<K, V> entry = iterator.next();
-      if (condition.value(entry.getValue())) {
+      if (predicate.test(entry.getValue())) {
         onDropFromCache(entry.getKey(), entry.getValue());
         iterator.remove();
       }
     }
+  }
+
+  /**
+   * @deprecated use {@link SLRUMap#clearByPredicate(Predicate, LinkedHashMap)} instead
+   */
+  @Deprecated
+  private void clearByCondition(@NotNull Condition<? super V> condition, @NotNull LinkedHashMap<K, V> queue) {
+    clearByPredicate(condition, queue);
   }
 
   public void clear() {
