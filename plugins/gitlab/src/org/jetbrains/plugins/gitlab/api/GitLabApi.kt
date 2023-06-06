@@ -53,8 +53,8 @@ class GitLabApiImpl(httpHelper: HttpApiHelper) : GitLabApi, HttpApiHelper by htt
     JsonHttpApiHelper by helper
 }
 
-fun GitLabApi.GraphQL.query(serverPath: GitLabServerPath, query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest =
-  gqlQuery(serverPath.gqlApiUri, query.filePath, variablesObject)
+fun GitLabApi.GraphQL.gitLabQuery(serverPath: GitLabServerPath, query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest =
+  query(serverPath.gqlApiUri, query.filePath, variablesObject)
 
 suspend inline fun <reified T> GitLabApi.Rest.loadList(uri: String): HttpResponse<out List<T>> {
   val request = request(uri).GET().build()

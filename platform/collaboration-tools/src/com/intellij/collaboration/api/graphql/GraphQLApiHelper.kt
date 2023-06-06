@@ -17,14 +17,14 @@ import java.net.http.HttpResponse
 
 @ApiStatus.Experimental
 interface GraphQLApiHelper {
-  fun gqlQuery(uri: URI, queryPath: String, variablesObject: Any? = null): HttpRequest
+  fun query(uri: URI, queryPath: String, variablesObject: Any? = null): HttpRequest
 
-  suspend fun <T> loadGQLResponse(request: HttpRequest, clazz: Class<T>, vararg pathFromData: String): HttpResponse<out T?>
+  suspend fun <T> loadResponseByClass(request: HttpRequest, clazz: Class<T>, vararg pathFromData: String): HttpResponse<out T?>
 }
 
 @ApiStatus.Experimental
-suspend inline fun <reified T> GraphQLApiHelper.loadGQLResponse(request: HttpRequest, vararg pathFromData: String): HttpResponse<out T?> =
-  loadGQLResponse(request, T::class.java, *pathFromData)
+suspend inline fun <reified T> GraphQLApiHelper.loadResponse(request: HttpRequest, vararg pathFromData: String): HttpResponse<out T?> =
+  loadResponseByClass(request, T::class.java, *pathFromData)
 
 
 @ApiStatus.Experimental
@@ -42,7 +42,7 @@ private class GraphQLApiHelperImpl(private val logger: Logger,
                                    private val deserializer: GraphQLDataDeserializer)
   : GraphQLApiHelper, HttpApiHelper by httpHelper {
 
-  override fun gqlQuery(uri: URI, queryPath: String, variablesObject: Any?): HttpRequest {
+  override fun query(uri: URI, queryPath: String, variablesObject: Any?): HttpRequest {
     val publisher = ByteArrayProducingBodyPublisher {
       logger.debug("GraphQL request $uri")
       val query = queryLoader.loadQuery(queryPath)
@@ -60,7 +60,7 @@ private class GraphQLApiHelperImpl(private val logger: Logger,
       .build()
   }
 
-  override suspend fun <T> loadGQLResponse(request: HttpRequest, clazz: Class<T>, vararg pathFromData: String): HttpResponse<out T?> {
+  override suspend fun <T> loadResponseByClass(request: HttpRequest, clazz: Class<T>, vararg pathFromData: String): HttpResponse<out T?> {
     val handler = InflatedStreamReadingBodyHandler { responseInfo, stream ->
       HttpClientUtil.readSuccessResponseWithLogging(logger, request, responseInfo, stream) {
         try {

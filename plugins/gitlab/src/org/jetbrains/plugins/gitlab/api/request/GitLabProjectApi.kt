@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.api.request
 import com.intellij.collaboration.api.data.asParameters
 import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
+import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.api.page.foldToList
 import kotlinx.coroutines.flow.map
@@ -12,15 +13,15 @@ import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
-import org.jetbrains.plugins.gitlab.api.query
+import org.jetbrains.plugins.gitlab.api.gitLabQuery
 
 suspend fun GitLabApi.GraphQL.loadAllProjectLabels(project: GitLabProjectCoordinates): List<GitLabLabelDTO> =
   ApiPageUtil.createGQLPagesFlow { page ->
     val parameters = page.asParameters() + mapOf(
       "fullPath" to project.projectPath.fullPath()
     )
-    val request = query(project.serverPath, GitLabGQLQuery.GET_PROJECT_LABELS, parameters)
-    loadGQLResponse(request, LabelConnection::class.java, "project", "labels").body()
+    val request = gitLabQuery(project.serverPath, GitLabGQLQuery.GET_PROJECT_LABELS, parameters)
+    loadResponse<LabelConnection>(request, "project", "labels").body()
   }.map { it.nodes }.foldToList()
 
 suspend fun GitLabApi.GraphQL.getAllProjectMembers(project: GitLabProjectCoordinates): List<GitLabMemberDTO> =
@@ -28,8 +29,8 @@ suspend fun GitLabApi.GraphQL.getAllProjectMembers(project: GitLabProjectCoordin
     val parameters = page.asParameters() + mapOf(
       "fullPath" to project.projectPath.fullPath()
     )
-    val request = query(project.serverPath, GitLabGQLQuery.GET_PROJECT_MEMBERS, parameters)
-    loadGQLResponse(request, ProjectMembersConnection::class.java, "project", "projectMembers").body()
+    val request = gitLabQuery(project.serverPath, GitLabGQLQuery.GET_PROJECT_MEMBERS, parameters)
+    loadResponse<ProjectMembersConnection>(request, "project", "projectMembers").body()
   }.map { it.nodes }.foldToList().filterNotNull()
 
 private class LabelConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabLabelDTO>)
