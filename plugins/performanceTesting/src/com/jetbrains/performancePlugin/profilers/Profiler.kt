@@ -2,6 +2,7 @@ package com.jetbrains.performancePlugin.profilers
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.util.SystemProperties
@@ -43,6 +44,12 @@ interface Profiler {
   }
 
   fun startProfiling(activityName: String, options: List<String>)
+
+  suspend fun startProfilingAsync(activityName: String, options: List<String>) {
+    blockingContext {
+      startProfiling(activityName, options)
+    }
+  }
 
   @Throws(Exception::class)
   fun stopProfiling(options: List<String>): String

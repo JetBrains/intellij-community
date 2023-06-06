@@ -5,8 +5,10 @@ import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.profilers.Profiler
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
 import java.util.*
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Command starts async or yourkit profiler based on system property integrationTests.profiler.
@@ -30,9 +32,11 @@ internal class StartProfileCommand(text: String, line: Int) : PlaybackCommandCor
     }
 
     val parameters = if (executedCommand.size > 1) executedCommand[1].trim().split(',').dropLastWhile { it.isEmpty() } else emptyList()
-    Profiler.getCurrentProfilerHandler().startProfiling(activityName, parameters)
-    while (!Profiler.isAnyProfilingStarted()) {
-      delay(100.milliseconds)
+    Profiler.getCurrentProfilerHandler().startProfilingAsync(activityName, parameters)
+    withTimeout(2.minutes) {
+      while (!Profiler.isAnyProfilingStarted()) {
+        delay(10.milliseconds)
+      }
     }
   }
 }
