@@ -86,11 +86,13 @@ public interface AbstractAttributesStorage extends Forceable, Closeable {
   static void checkAttributeValueSize(@NotNull FileAttribute attribute,
                                       int attributeValueSize) throws FileTooBigException {
     if (attributeValueSize > MAX_ATTRIBUTE_VALUE_SIZE) {
-      throw new FileTooBigException(
-        "Attribute " + attribute + " value is too large: " +
-        attributeValueSize + " b > max(" + MAX_ATTRIBUTE_VALUE_SIZE + ")" +
-        " -> please, do not use VFS file attributes for huge blobs of data. Consider using GistManager or GistStorage."
-      );
+      String message = "Attribute " + attribute + " value is too large: " +
+                       attributeValueSize + " b > max(" + MAX_ATTRIBUTE_VALUE_SIZE + ")" +
+                       " -> please, do not use VFS file attributes for huge blobs of data. Consider using GistManager or GistStorage.";
+      //RC: exceptions from .close() methods are frequently ignored (see e.g. kryo/Output)
+      //    => log the error right here, so ONE CAN'T SILENCE THE TRUTH!!!111
+      FSRecords.LOG.error(message);
+      throw new FileTooBigException(message);
     }
     else if (attributeValueSize > WARN_ATTRIBUTE_VALUE_SIZE) {
       FSRecords.LOG.warn(
