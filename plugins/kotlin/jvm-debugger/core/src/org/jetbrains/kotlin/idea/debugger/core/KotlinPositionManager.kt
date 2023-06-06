@@ -207,7 +207,12 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     private fun getFirstElementInsideLambdaOnLine(file: PsiFile, lambda: KtFunction, line: Int): PsiElement? {
         val bodyRange = lambda.bodyExpression!!.textRange
         val searchRange = file.getRangeOfLine(line)?.intersection(bodyRange) ?: return null
-        return file.findElementsOfTypeInRange<PsiElement>(searchRange).firstOrNull()
+        val elementsAtLine = file.findElementsOfTypeInRange<PsiElement>(searchRange)
+
+        // Prefer elements that start on the line
+        elementsAtLine.firstOrNull { it.textRange.startOffset in searchRange }?.let { return it }
+
+        return elementsAtLine.firstOrNull()
     }
 
     private fun Location.shouldBeTreatedAsReentrantSourcePosition(psiFile: PsiFile, sourceFileName: String): Boolean {
