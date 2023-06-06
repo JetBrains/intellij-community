@@ -283,6 +283,10 @@ public final class MavenProjectLegacyImporter extends MavenProjectImporterLegacy
   public static void setAnswerToDeleteObsoleteModulesQuestion(boolean answer) {
     answerToDeleteObsoleteModulesQuestion = answer;
   }
+  @TestOnly
+  public static Boolean getAnswerToDeleteObsoleteModulesQuestion() {
+    return answerToDeleteObsoleteModulesQuestion;
+  }
   private static Boolean answerToDeleteObsoleteModulesQuestion = null;
 
   private boolean isDeleteObsoleteModules(@NotNull List<Module> obsoleteModules) {

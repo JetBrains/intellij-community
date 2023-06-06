@@ -419,7 +419,7 @@ class MavenLegacyFoldersImporter {
 
     MavenProject containingProject = ReadAction.compute(() -> mavenProjectsManager.findContainingProject(sourceFolder));
     if (containingProject != null) {
-      Module module = mavenProjectsManager.findModule(containingProject);
+      Module module = ReadAction.compute(() -> mavenProjectsManager.findModule(containingProject));
       if (module == null) return false;
 
       for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
