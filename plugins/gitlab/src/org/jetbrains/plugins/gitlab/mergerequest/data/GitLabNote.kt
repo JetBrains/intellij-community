@@ -19,6 +19,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.deleteDraftNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.deleteNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.updateDraftNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.updateNote
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.util.*
 
 interface GitLabNote {
@@ -86,6 +87,7 @@ class MutableGitLabMergeRequestNote(
       }
       data.update { it.copy(body = newText) }
     }
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.UPDATE_NOTE)
   }
 
   override suspend fun delete() {
@@ -97,6 +99,7 @@ class MutableGitLabMergeRequestNote(
       }
       eventSink(GitLabNoteEvent.Deleted(noteData.id))
     }
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.DELETE_NOTE)
   }
 
   fun update(item: GitLabNoteDTO) {

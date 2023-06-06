@@ -5,11 +5,13 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId2
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.components.service
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 
 @PublishedApi
 internal object GitLabStatistics {
@@ -70,6 +72,93 @@ internal object GitLabStatistics {
   internal class GitLabCountersCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = COUNTERS_GROUP
   }
+
+  private val FILTER_SEARCH_PRESENT = EventFields.Boolean("search")
+  private val FILTER_STATE_PRESENT = EventFields.Boolean("state")
+  private val FILTER_AUTHOR_PRESENT = EventFields.Boolean("author")
+  private val FILTER_ASSIGNEE_PRESENT = EventFields.Boolean("assignee")
+  private val FILTER_REVIEWER_PRESENT = EventFields.Boolean("reviewer")
+  private val FILTER_LABEL_PRESENT = EventFields.Boolean("label")
+
+  /**
+   * Merge requests list filters applied
+   */
+  private val FILTERS_APPLIED_EVENT = COUNTERS_GROUP.registerVarargEvent("mergerequests.list.filters.applied",
+                                                                         FILTER_SEARCH_PRESENT,
+                                                                         FILTER_STATE_PRESENT,
+                                                                         FILTER_AUTHOR_PRESENT,
+                                                                         FILTER_ASSIGNEE_PRESENT,
+                                                                         FILTER_REVIEWER_PRESENT,
+                                                                         FILTER_LABEL_PRESENT)
+
+  fun logMrFiltersApplied(filters: GitLabMergeRequestsFiltersValue): Unit =
+    FILTERS_APPLIED_EVENT.log(
+      EventPair(FILTER_SEARCH_PRESENT, filters.searchQuery != null),
+      EventPair(FILTER_STATE_PRESENT, filters.state != null),
+      EventPair(FILTER_AUTHOR_PRESENT, filters.author != null),
+      EventPair(FILTER_ASSIGNEE_PRESENT, filters.assignee != null),
+      EventPair(FILTER_REVIEWER_PRESENT, filters.reviewer != null),
+      EventPair(FILTER_LABEL_PRESENT, filters.label != null)
+    )
+
+
+  /**
+   * Merge requests toolwindow login view was opened
+   */
+  private val MR_TW_LOGIN_OPENED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.toolwindow.login.opened")
+
+  fun logMrTwLoginOpened(): Unit = MR_TW_LOGIN_OPENED_EVENT.log()
+
+  /**
+   * Merge requests toolwindow was opened
+   */
+  private val MR_LIST_OPENED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.list.opened")
+
+  fun logMrListOpened(): Unit = MR_LIST_OPENED_EVENT.log()
+
+  /**
+   * Merge request details were opened
+   */
+  private val MR_DETAILS_OPENED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.details.opened")
+
+  fun logMrDetailsOpened(): Unit = MR_DETAILS_OPENED_EVENT.log()
+
+  /**
+   * Merge request diff was opened
+   */
+  private val MR_DIFF_OPENED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.diff.opened", EventFields.Boolean("isCumulative"))
+
+  fun logMrDiffOpened(isCumulative: Boolean): Unit = MR_DIFF_OPENED_EVENT.log(isCumulative)
+
+  /**
+   * Merge request action was executed
+   */
+  private val MR_ACTION_FIELD = EventFields.Enum("action", MergeRequestAction::class.java)
+
+  enum class MergeRequestAction {
+    MERGE,
+    SQUASH_MERGE,
+    APPROVE,
+    UNAPPROVE,
+    CLOSE,
+    REOPEN,
+    SET_REVIEWERS,
+    ADD_NOTE,
+    ADD_DIFF_NOTE,
+    ADD_DISCUSSION_NOTE,
+    CHANGE_DISCUSSION_RESOLVE,
+    UPDATE_NOTE,
+    DELETE_NOTE,
+    SUBMIT_DRAFT_NOTES,
+    POST_REVIEW
+  }
+
+  /**
+   * Some mutation action was requested on merge request via API
+   */
+  private val MR_ACTION_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.action.performed", MR_ACTION_FIELD)
+
+  fun logMrActionExecuted(action: MergeRequestAction): Unit = MR_ACTION_EVENT.log(action)
   //endregion
 }
 

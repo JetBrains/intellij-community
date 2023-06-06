@@ -21,6 +21,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabETagUpdatabl
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 private val LOG = logger<GitLabMergeRequest>()
 
@@ -212,6 +213,7 @@ internal class LoadedGitLabMergeRequest(
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
     discussionsContainer.checkUpdates()
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.MERGE)
   }
 
   override suspend fun squashAndMerge(commitMessage: String) {
@@ -225,6 +227,7 @@ internal class LoadedGitLabMergeRequest(
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
     discussionsContainer.checkUpdates()
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.SQUASH_MERGE)
   }
 
   override suspend fun approve() {
@@ -242,6 +245,7 @@ internal class LoadedGitLabMergeRequest(
       }
     }
     discussionsContainer.checkUpdates()
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.APPROVE)
   }
 
   override suspend fun unApprove() {
@@ -259,6 +263,7 @@ internal class LoadedGitLabMergeRequest(
       }
     }
     discussionsContainer.checkUpdates()
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.UNAPPROVE)
   }
 
   override suspend fun close() {
@@ -268,6 +273,7 @@ internal class LoadedGitLabMergeRequest(
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
       stateEventsLoader.checkForUpdates()
     }
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.CLOSE)
   }
 
   override suspend fun reopen() {
@@ -277,6 +283,7 @@ internal class LoadedGitLabMergeRequest(
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
       stateEventsLoader.checkForUpdates()
     }
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.REOPEN)
   }
 
   override suspend fun postReview() {
@@ -286,6 +293,7 @@ internal class LoadedGitLabMergeRequest(
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
     discussionsContainer.checkUpdates()
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.POST_REVIEW)
   }
 
   override suspend fun setReviewers(reviewers: List<GitLabUserDTO>) {
@@ -295,6 +303,7 @@ internal class LoadedGitLabMergeRequest(
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
     discussionsContainer.checkUpdates()
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.SET_REVIEWERS)
   }
 
   private val discussionsContainer = GitLabMergeRequestDiscussionsContainerImpl(parentCs, api, projectMapping.repository, this)

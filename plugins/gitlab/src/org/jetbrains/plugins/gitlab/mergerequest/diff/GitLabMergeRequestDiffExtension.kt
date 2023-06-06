@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffInlayComponentsFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiffDiscussionViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import javax.swing.Icon
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -46,6 +47,12 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
 
     val cs = DisposingMainScope(viewer)
     val changeVmFlow = reviewVm.getViewModelFor(change)
+
+    cs.launch {
+      val isCumulative = changeVmFlow.first()?.isCumulativeChange ?: return@launch
+      GitLabStatistics.logMrDiffOpened(isCumulative)
+    }
+
     val discussions = changeVmFlow.flatMapLatest { it?.discussions ?: flowOf(emptyList()) }
     viewer.controlInlaysIn(cs, discussions, GitLabMergeRequestDiffDiscussionViewModel::id) {
       val inlayCs = this

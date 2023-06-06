@@ -26,6 +26,7 @@ import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 interface GitLabMergeRequestDiscussionsContainer {
   val discussions: Flow<Collection<GitLabMergeRequestDiscussion>>
@@ -240,6 +241,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
         }
       }
     }
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.ADD_NOTE)
   }
 
   override suspend fun addNote(position: GitLabDiffPositionInput, body: String) {
@@ -252,6 +254,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
         }
       }
     }
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.ADD_DIFF_NOTE)
   }
 
   override suspend fun submitDraftNotes() {
@@ -264,6 +267,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
         reloadRequests.emit(Unit)
       }
     }
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.SUBMIT_DRAFT_NOTES)
   }
 
   fun requestReload() {
