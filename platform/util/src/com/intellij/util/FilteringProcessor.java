@@ -4,18 +4,28 @@ package com.intellij.util;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Predicate;
+
 public class FilteringProcessor<T> implements Processor<T> {
-  private final Condition<? super T> myFilter;
+  private final Predicate<? super T> myFilter;
   private final Processor<? super T> myProcessor;
 
-  public FilteringProcessor(@NotNull Condition<? super T> filter, @NotNull Processor<? super T> processor) {
+  public FilteringProcessor(@NotNull Predicate<? super T> filter, @NotNull Processor<? super T> processor) {
     myFilter = filter;
     myProcessor = processor;
   }
 
+  /**
+   * @deprecated use {@link FilteringProcessor#FilteringProcessor(Predicate, Processor)} instead
+   */
+  @Deprecated
+  public FilteringProcessor(@NotNull Condition<? super T> filter, @NotNull Processor<? super T> processor) {
+    this((Predicate<? super T>) filter, processor);
+  }
+
   @Override
   public boolean process(final T t) {
-    if (!myFilter.value(t)) return true;
+    if (!myFilter.test(t)) return true;
     return myProcessor.process(t);
   }
 }
