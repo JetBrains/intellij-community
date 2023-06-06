@@ -38,8 +38,8 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
     val elementName = options.expectedName
     if (position != null) {
       val result = GoToNamedElementCommand(GoToNamedElementCommand.PREFIX + " $position $elementName", -1).execute(context)
-      result.onError {
-        throw Exception("fail to go to element $elementName")
+      result.exceptionally { e ->
+        throw Exception("fail to go to element $elementName", e)
       }
     }
 
@@ -73,7 +73,7 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
         val popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor)
 
         //configuration for find usages
-        AdvancedSettings.setInt("ide.usages.page.size", Int.MAX_VALUE) //by default, it's 100, we need to find all usages to compare
+        AdvancedSettings.setInt("ide.usages.page.size", Int.MAX_VALUE) //by default, it's 100; we need to find all usages to compare
         val scope = FindUsagesOptions.findScopeByName(context.project, null, options.scope)
         findUsagesFuture = ShowUsagesAction.startFindUsagesWithResult(element, popupPosition, editor, scope)
       }
