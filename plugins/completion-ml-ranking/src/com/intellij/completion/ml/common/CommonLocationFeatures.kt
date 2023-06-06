@@ -69,9 +69,9 @@ class CommonLocationFeatures : ContextFeatureProvider {
     this["is_in_line_beginning"] = MLFeatureValue.binary(linePrefix.isBlank())
     this["is_in_line_end"] = MLFeatureValue.binary(lineSuffix.isBlank())
     this["prefix_length"] = MLFeatureValue.float(prefixLength)
-    this["context_length"] = MLFeatureValue.float(caretOffset)
+    this["offset"] = MLFeatureValue.float(caretOffset)
     this["text_length"] = MLFeatureValue.float(textLength)
-    this["context_text_lengths_ratio"] = MLFeatureValue.float(if (textLength == 0) 0.0 else caretOffset.toDouble() / textLength)
+    this["offset_text_length_ratio"] = MLFeatureValue.float(if (textLength == 0) 0.0 else caretOffset.toDouble() / textLength)
     if (linePrefix.isNotBlank()) {
       this["is_whitespace_before_caret"] = MLFeatureValue.binary(whitespaces.contains(linePrefix.last()))
       val trimmedPrefix = linePrefix.trim()
