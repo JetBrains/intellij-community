@@ -56,6 +56,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
   private volatile Set<Module> myModules;
   private final Object2IntMap<VirtualFile> myRoots;
   private final UserDataHolderBase myUserDataHolderBase = new UserDataHolderBase();
+  private final SingleFileSourcesTracker mySingleFileSourcesTracker;
 
   ModuleWithDependenciesScope(@NotNull Module module, @ScopeConstant int options) {
     super(module.getProject());
@@ -63,6 +64,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     myOptions = options;
     myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
     myRoots = calcRoots(null);
+    mySingleFileSourcesTracker = SingleFileSourcesTracker.getInstance(module.getProject());
   }
 
   private Object2IntMap<VirtualFile> calcRoots(@Nullable ModelBranch branch) {
@@ -148,6 +150,9 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
+    // in case of single file source
+    if (mySingleFileSourcesTracker.isSourceDirectoryInModule(file, myModule)) return true;
+
     VirtualFile root = myProjectFileIndex.getModuleSourceOrLibraryClassesRoot(file);
     return root != null && getRoots(file).containsKey(root);
   }

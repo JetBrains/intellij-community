@@ -4,12 +4,10 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.SingleFileSourcesTracker
 import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
 import com.intellij.openapi.roots.impl.RootFileSupplier
-import com.intellij.openapi.vfs.NonPhysicalFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.CollectionQuery
 import com.intellij.util.Query
@@ -40,6 +38,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   private val fileTypeRegistry = FileTypeRegistry.getInstance()
   private val dirtyEntities = HashSet<EntityReference<WorkspaceEntity>>()
   private val dirtyFiles = HashSet<VirtualFile>()
+  private val singleFileSourcesTracker = SingleFileSourcesTracker.getInstance(project)
   @Volatile
   private var hasDirtyEntities = false
 
@@ -276,8 +275,13 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     val addedRoots = HashSet<VirtualFile>()
     fileSetsByPackagePrefix[packageName]?.values()?.forEach { fileSet ->
       val root = fileSet.root
-      if (root.isDirectory && root.isValid && addedRoots.add(root)) {
-        result.add(root)
+      if (root.isValid) {
+        // supporting single file source
+        if (root.isFile) {
+          val singleFileSourceDir = singleFileSourcesTracker.getSourceDirectoryIfExists(root)
+          if (singleFileSourceDir != null && singleFileSourceDir.isValid && addedRoots.add(singleFileSourceDir)) result.add(singleFileSourceDir)
+        }
+        else if (addedRoots.add(root)) result.add(root)
       }
     }
   }

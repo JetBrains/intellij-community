@@ -70,6 +70,10 @@
 
     <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
+
+    <projectService serviceInterface="com.intellij.openapi.roots.SingleFileSourcesTracker"
+                    serviceImplementation="com.intellij.openapi.roots.DefaultSingleFileSourcesTracker"/>
+
     <moduleService serviceInterface="com.intellij.openapi.roots.ModuleFileIndex"
                    serviceImplementation="com.intellij.openapi.roots.impl.ModuleFileIndexImpl"/>
 

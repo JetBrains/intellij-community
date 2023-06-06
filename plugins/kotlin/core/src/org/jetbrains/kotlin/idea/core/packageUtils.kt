@@ -16,6 +16,7 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModulePackageIndex
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.SingleFileSourcesTracker
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -52,7 +53,12 @@ fun PsiDirectory.getPackage(): PsiPackage? = JavaDirectoryService.getInstance()!
 
 private fun PsiDirectory.getNonRootFqNameOrNull(): FqName? = getPackage()?.qualifiedName?.let(::FqName)
 
-fun PsiFile.getFqNameByDirectory(): FqName = parent?.getNonRootFqNameOrNull() ?: FqName.ROOT
+fun PsiFile.getFqNameByDirectory(): FqName {
+    val singleFileSourcesTracker = SingleFileSourcesTracker.getInstance(project)
+    val singleFileSourcePackageName = singleFileSourcesTracker.getPackageNameForSingleFileSource(virtualFile)
+    singleFileSourcePackageName?.let { return FqName(it) }
+    return parent?.getNonRootFqNameOrNull() ?: FqName.ROOT
+}
 
 fun PsiDirectory.getFqNameWithImplicitPrefix(): FqName? {
     val packageFqName = getNonRootFqNameOrNull() ?: return null
