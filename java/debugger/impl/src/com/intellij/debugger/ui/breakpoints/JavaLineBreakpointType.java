@@ -124,7 +124,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     List<JavaBreakpointVariant> res = new SmartList<>();
 
     boolean baseMethodWasAdded = false;
-    boolean anyLambdaWasAdded = false;
+    int lambdaCount = 0;
     if (!(startMethod instanceof PsiLambdaExpression)) {
       baseMethodWasAdded = true;
       res.add(new LineJavaBreakpointVariant(position, startMethod, -1));
@@ -141,7 +141,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
             res.add(0, new LineJavaBreakpointVariant(elementPosition, lambda, ordinal++));
           }
           else {
-            anyLambdaWasAdded = true;
+            lambdaCount++;
             res.add(new LambdaJavaBreakpointVariant(elementPosition, lambda, ordinal++));
           }
         }
@@ -149,8 +149,8 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     }
     assert baseMethodWasAdded;
 
-    if (anyLambdaWasAdded) {
-      res.add(new JavaBreakpointVariant(position)); //all
+    if (lambdaCount > 0) {
+      res.add(new JavaBreakpointVariant(position, lambdaCount)); //all
     }
 
     if (condRet != null) {
@@ -161,7 +161,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       res.add(new ConditionalReturnJavaBreakpointVariant(position, condRet, ordinal)); //conditional return
     }
 
-    assert anyLambdaWasAdded || condRet != null;
+    assert lambdaCount > 0 || condRet != null;
 
     return res;
   }
@@ -273,8 +273,16 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   }
 
   public class JavaBreakpointVariant extends XLineBreakpointAllVariant {
-    public JavaBreakpointVariant(@NotNull XSourcePosition position) {
+    private final int lambdaCount;
+
+    public JavaBreakpointVariant(@NotNull XSourcePosition position, int lambdaCount) {
       super(position);
+      this.lambdaCount = lambdaCount;
+    }
+
+    @Override
+    public @NotNull String getText() {
+      return JavaDebuggerBundle.message("breakpoint.variant.text.line.and.lambda", lambdaCount);
     }
   }
 
@@ -283,7 +291,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     private final Integer myEncodedInlinePosition;
 
     public ExactJavaBreakpointVariant(@NotNull XSourcePosition position, @Nullable PsiElement element, Integer encodedInlinePosition) {
-      super(position);
+      super(position, -1 /* unused */);
       myElement = element;
       myEncodedInlinePosition = encodedInlinePosition;
     }

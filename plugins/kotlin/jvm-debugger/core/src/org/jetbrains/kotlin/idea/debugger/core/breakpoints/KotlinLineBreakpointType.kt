@@ -47,18 +47,12 @@ class KotlinLineBreakpointType :
         position: XSourcePosition,
         element: PsiElement?,
         lambdaOrdinal: Int
-    ) : LineJavaBreakpointVariant(position, element, lambdaOrdinal) {
-        override fun getText(): String =
-            KotlinDebuggerCoreBundle.message("line.breakpoint")
-    }
+    ) : LineJavaBreakpointVariant(position, element, lambdaOrdinal)
 
     inner class KotlinBreakpointVariant(
         position: XSourcePosition,
-        private val lambdaCount: Int
-    ) : JavaBreakpointVariant(position) {
-        override fun getText(): String =
-            KotlinDebuggerCoreBundle.message("line.and.lambda.breakpoint", lambdaCount)
-    }
+        lambdaCount: Int
+    ) : JavaBreakpointVariant(position, lambdaCount)
 
     override fun createJavaBreakpoint(
         project: Project, breakpoint:
