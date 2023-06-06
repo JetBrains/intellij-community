@@ -36,6 +36,25 @@ class SpockGradleTestNavigationTest : GradleExecutionTestCase() {
     }
   }
 
+  @ParameterizedTest
+  @TargetVersions("5.6+")
+  @AllGradleVersionsSource
+  fun `test navigation for inner Groovy class with Spock specification`(gradleVersion: GradleVersion) {
+    testSpockProject(gradleVersion) {
+      writeText("src/test/groovy/org/example/SpockTestCase.groovy", GROOVY_INNER_CLASS_WITH_SPOCK_TESTS)
+
+      executeTasks(":test --tests 'org.example.SpockTestCase${'$'}InnerTestCase.inner test'", isRunAsTest = true)
+      assertTestTreeView {
+        assertNode("InnerTestCase") {
+          assertPsiLocation("InnerTestCase")
+          assertNode("inner test") {
+            assertPsiLocation("InnerTestCase", "inner test")
+          }
+        }
+      }
+    }
+  }
+
   companion object {
 
     private val GROOVY_CLASS_WITH_SPOCK_TESTS = """
@@ -62,6 +81,21 @@ class SpockGradleTestNavigationTest : GradleExecutionTestCase() {
       |    where:
       |    name     | length
       |    "Spock"  | 5
+      |  }
+      |}
+    """.trimMargin()
+
+    private val GROOVY_INNER_CLASS_WITH_SPOCK_TESTS = """
+      |package org.example
+      |
+      |import spock.lang.Specification
+      |
+      |class SpockTestCase {
+      |  static class InnerTestCase extends Specification {
+      |    def "inner test"() {
+      |      expect:
+      |        true
+      |    }
       |  }
       |}
     """.trimMargin()
