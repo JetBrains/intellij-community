@@ -39,7 +39,7 @@
     </action>
     <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision"/>
 
-    <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup"/>
+    <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup" searchable="false"/>
     <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
     <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision"/>
     <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch"/>
