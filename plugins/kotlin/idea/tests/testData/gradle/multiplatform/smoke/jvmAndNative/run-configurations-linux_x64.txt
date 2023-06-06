@@ -12,7 +12,6 @@ project.commonMain
     tasks: [jvmRun]
     scriptParameters: -DmainClass=CommonMainKt --quiet
     isDebugAllEnabled: false
-    isRunAsTest: false
 
 
 project.commonTest
@@ -22,7 +21,6 @@ project.commonTest
     tasks: [:cleanJvmTest, :jvmTest, --tests, "CommonTest"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: CommonTest
     name: CommonTest.test - failure
@@ -30,7 +28,6 @@ project.commonTest
     tasks: [:cleanJvmTest, :jvmTest, --tests, "CommonTest.test - failure"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: CommonTest
     name: CommonTest.test - success
@@ -38,7 +35,6 @@ project.commonTest
     tasks: [:cleanJvmTest, :jvmTest, --tests, "CommonTest.test - success"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
 
 project.jvmMain
@@ -48,7 +44,6 @@ project.jvmMain
     tasks: [jvmRun]
     scriptParameters: -DmainClass=jvm.JvmMainKt --quiet
     isDebugAllEnabled: false
-    isRunAsTest: false
 
     fqName: null
     name: JvmMainKt
@@ -62,7 +57,6 @@ project.jvmTest
     tasks: [:cleanJvmTest, :jvmTest, --tests, "JvmTest"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: JvmTest
     name: JvmTest.test - failure
@@ -70,7 +64,6 @@ project.jvmTest
     tasks: [:cleanJvmTest, :jvmTest, --tests, "JvmTest.test - failure"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: JvmTest
     name: JvmTest.test - success
@@ -78,7 +71,6 @@ project.jvmTest
     tasks: [:cleanJvmTest, :jvmTest, --tests, "JvmTest.test - success"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
 
 project.linuxArm64Main
@@ -114,7 +106,6 @@ project.nativeTest
     tasks: [:cleanLinuxX64Test, :linuxX64Test, --tests, "NativeTest"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: NativeTest
     name: NativeTest.test - failure
@@ -122,7 +113,6 @@ project.nativeTest
     tasks: [:cleanLinuxX64Test, :linuxX64Test, --tests, "NativeTest.test - failure"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: NativeTest
     name: NativeTest.test - success
@@ -130,7 +120,6 @@ project.nativeTest
     tasks: [:cleanLinuxX64Test, :linuxX64Test, --tests, "NativeTest.test - success"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
 
 
@@ -140,4 +129,3 @@ Test configuration:
 - Showing runConfiguration detail: tasks
 - Showing runConfiguration detail: scriptParameters
 - Showing runConfiguration detail: isDebugAllEnabled
-- Showing runConfiguration detail: isRunAsTest

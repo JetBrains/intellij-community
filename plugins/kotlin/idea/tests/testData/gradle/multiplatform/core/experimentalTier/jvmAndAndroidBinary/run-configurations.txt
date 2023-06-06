@@ -44,4 +44,3 @@ Test configuration:
 - Showing runConfiguration detail: tasks
 - Showing runConfiguration detail: scriptParameters
 - Showing runConfiguration detail: isDebugAllEnabled
-- Showing runConfiguration detail: isRunAsTest

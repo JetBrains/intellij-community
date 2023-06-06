@@ -36,7 +36,6 @@ project.multiplatformAndroidApp.unitTest
     tasks: [:multiplatformAndroidApp:cleanTestDebugUnitTest, :multiplatformAndroidApp:testDebugUnitTest, --tests, "MultiplatformAndroidApp_commonTest"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: MultiplatformAndroidApp_commonTest
     name: MultiplatformAndroidApp_commonTest.sayHello
@@ -44,7 +43,6 @@ project.multiplatformAndroidApp.unitTest
     tasks: [:multiplatformAndroidApp:cleanTestDebugUnitTest, :multiplatformAndroidApp:testDebugUnitTest, --tests, "MultiplatformAndroidApp_commonTest.sayHello"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: null
     name: MultiplatformAndroidApp_test
@@ -52,7 +50,6 @@ project.multiplatformAndroidApp.unitTest
     tasks: [:multiplatformAndroidApp:cleanTestDebugUnitTest, :multiplatformAndroidApp:testDebugUnitTest, --tests, "MultiplatformAndroidApp_test"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: MultiplatformAndroidApp_test
     name: MultiplatformAndroidApp_test.sayHello
@@ -60,7 +57,6 @@ project.multiplatformAndroidApp.unitTest
     tasks: [:multiplatformAndroidApp:cleanTestDebugUnitTest, :multiplatformAndroidApp:testDebugUnitTest, --tests, "MultiplatformAndroidApp_test.sayHello"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
 
 project.multiplatformAndroidJvmIosLibrary
@@ -100,7 +96,6 @@ project.multiplatformAndroidJvmIosLibrary2.commonTest
     tasks: [:multiplatformAndroidJvmIosLibrary2:cleanTestDebugUnitTest, :multiplatformAndroidJvmIosLibrary2:testDebugUnitTest, --tests, "MultiplatformAndroidJvmIosLibrary2_commonTest"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: MultiplatformAndroidJvmIosLibrary2_commonTest
     name: MultiplatformAndroidJvmIosLibrary2_commonTest.sayHello
@@ -108,7 +103,6 @@ project.multiplatformAndroidJvmIosLibrary2.commonTest
     tasks: [:multiplatformAndroidJvmIosLibrary2:cleanTestDebugUnitTest, :multiplatformAndroidJvmIosLibrary2:testDebugUnitTest, --tests, "MultiplatformAndroidJvmIosLibrary2_commonTest.sayHello"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
 
 project.multiplatformAndroidJvmIosLibrary2.jvmMain
@@ -120,7 +114,6 @@ project.multiplatformAndroidJvmIosLibrary2.jvmTest
     tasks: [:multiplatformAndroidJvmIosLibrary2:cleanJvmTest, :multiplatformAndroidJvmIosLibrary2:jvmTest, --tests, "MultiplatformAndroidJvmIosLibrary2_jvmTest"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: MultiplatformAndroidJvmIosLibrary2_jvmTest
     name: MultiplatformAndroidJvmIosLibrary2_jvmTest.sayHello
@@ -128,7 +121,6 @@ project.multiplatformAndroidJvmIosLibrary2.jvmTest
     tasks: [:multiplatformAndroidJvmIosLibrary2:cleanJvmTest, :multiplatformAndroidJvmIosLibrary2:jvmTest, --tests, "MultiplatformAndroidJvmIosLibrary2_jvmTest.sayHello"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
 
 project.multiplatformAndroidJvmIosLibrary2.linuxX64Main
@@ -144,7 +136,6 @@ project.multiplatformAndroidJvmIosLibrary2.unitTest
     tasks: [:multiplatformAndroidJvmIosLibrary2:cleanTestDebugUnitTest, :multiplatformAndroidJvmIosLibrary2:testDebugUnitTest, --tests, "MultiplatformAndroidJvmIosLibrary2_test"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: MultiplatformAndroidJvmIosLibrary2_test
     name: MultiplatformAndroidJvmIosLibrary2_test.sayHello
@@ -152,7 +143,6 @@ project.multiplatformAndroidJvmIosLibrary2.unitTest
     tasks: [:multiplatformAndroidJvmIosLibrary2:cleanTestDebugUnitTest, :multiplatformAndroidJvmIosLibrary2:testDebugUnitTest, --tests, "MultiplatformAndroidJvmIosLibrary2_test.sayHello"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
 
 project.multiplatformAndroidLibrary
@@ -180,4 +170,3 @@ Test configuration:
 - Showing runConfiguration detail: tasks
 - Showing runConfiguration detail: scriptParameters
 - Showing runConfiguration detail: isDebugAllEnabled
-- Showing runConfiguration detail: isRunAsTest
