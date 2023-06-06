@@ -947,11 +947,11 @@ open class FileEditorManagerImpl(
                              options: FileEditorOpenOptions): FileEditorComposite {
     assert(ApplicationManager.getApplication().isDispatchThread ||
            !ApplicationManager.getApplication().isReadAccessAllowed) { "must not attempt opening files under read action" }
+    val file = getOriginalFile(_file)
     if (!ClientId.isCurrentlyUnderLocalId) {
-      return openFileUsingClient(file = _file, options = options)
+      return openFileUsingClient(file, options)
     }
 
-    val file = getOriginalFile(_file)
     val existingComposite = if (EDT.isCurrentThreadEdt()) {
       window.getComposite(file)
     }
@@ -1541,15 +1541,15 @@ open class FileEditorManagerImpl(
 
   @RequiresEdt
   override fun getComposite(file: VirtualFile): EditorComposite? {
+    val originalFile = getOriginalFile(file)
     if (!ClientId.isCurrentlyUnderLocalId) {
-      return clientFileEditorManager?.getComposite(file)
+      return clientFileEditorManager?.getComposite(originalFile)
     }
 
     if (openedComposites.isEmpty()) {
       return null
     }
 
-    val originalFile = getOriginalFile(file)
     return splitters.currentWindow?.getComposite(originalFile)
            ?: openedComposites.firstOrNull { it.file == originalFile }
   }
