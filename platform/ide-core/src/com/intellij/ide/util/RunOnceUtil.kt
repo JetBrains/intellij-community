@@ -3,6 +3,7 @@ package com.intellij.ide.util
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -44,6 +45,18 @@ object RunOnceUtil {
   fun runOnceForApp(id: @NonNls String, task: Runnable): Boolean {
     return doRunOnce(storage = PropertiesComponent.getInstance(), id = id, ideAware = false, activity = task)
   }
+}
+
+@Internal
+suspend fun runOnceForProject(project: Project, id: @NonNls String, activity: suspend () -> Unit): Boolean {
+  val key = createKey(id = id, ideAware = false)
+  val storage = PropertiesComponent.getInstance(project)
+  if (!storage.updateValue(key, true)) {
+    return false
+  }
+
+  activity()
+  return true
 }
 
 private fun doRunOnce(storage: PropertiesComponent, id: @NonNls String, ideAware: Boolean, activity: Runnable): Boolean {
