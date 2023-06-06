@@ -1,65 +1,60 @@
-package com.jetbrains.performancePlugin.profilers;
+package com.jetbrains.performancePlugin.profilers
 
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ActionCallback
+import com.intellij.util.SystemProperties
+import java.io.File
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
 
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+interface Profiler {
+  companion object {
+    const val PROFILER_PROPERTY = "integrationTests.profiler"
 
-public interface Profiler {
-  String PROFILER_PROPERTY = "integrationTests.profiler";
-  ExtensionPointName<Profiler> EP_NAME = new ExtensionPointName<>("com.jetbrains.performancePlugin.profiler");
+    val EP_NAME: ExtensionPointName<Profiler> = ExtensionPointName("com.jetbrains.performancePlugin.profiler")
 
-  static boolean isAnyProfilingStarted() {
-    return ContainerUtil.exists(EP_NAME.getExtensionList(), it -> it.isProfilingStarted());
-  }
+    @JvmStatic
+    fun isAnyProfilingStarted(): Boolean = EP_NAME.extensionList.any { it.isProfilingStarted }
 
-  static Profiler getCurrentProfilerHandler() {
-    List<Profiler> all = ContainerUtil.sorted(ContainerUtil.findAll(EP_NAME.getExtensionList(), it -> it.isEnabled()),
-    //this relies on the naming, but we want a determined order and independent plugins/profilers; by default, we choose async
-    Comparator.comparing(p -> p.getClass().getSimpleName()));
-    if (all.isEmpty()){
-      throw new RuntimeException("There are no installed profilers");
+    @JvmStatic
+    fun getCurrentProfilerHandler(): Profiler {
+      // this relies on the naming, but we want a determined order and independent plugins/profilers; by default, we choose async
+      val all = EP_NAME.extensionList.asSequence().filter { it.isEnabled }.sortedWith(Comparator.comparing { p -> p.javaClass.simpleName })
+      return all.firstOrNull() ?: throw RuntimeException("There are no installed profilers")
     }
-    return all.get(0);
+
+    @JvmStatic
+    fun getCurrentProfilerHandler(project: Project?): Profiler {
+      val all = EP_NAME.extensionList.filter { it.isEnabledInProject(project) }
+      assert(all.size == 1)
+      return all.first()
+    }
+
+    @JvmStatic
+    fun formatSnapshotName(isMemorySnapshot: Boolean): String {
+      val buildNumber = ApplicationInfo.getInstance().build.asString()
+      val userName = SystemProperties.getUserName()
+      val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
+      return buildNumber + '_' + (if (isMemorySnapshot) "memory_" else "") + userName + '_' + snapshotDate
+    }
   }
 
-  static Profiler getCurrentProfilerHandler(Project project) {
-    List<Profiler> all = ContainerUtil.findAll(EP_NAME.getExtensionList(), it -> it.isEnabledInProject(project));
-    assert all.size() == 1;
-    return all.get(0);
-  }
+  fun startProfiling(activityName: String, options: List<String>)
 
-  @NotNull
-  static String formatSnapshotName(boolean isMemorySnapshot) {
-    String buildNumber = ApplicationInfo.getInstance().getBuild().asString();
-    String userName = SystemProperties.getUserName();
-    String snapshotDate = new SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(new Date());
-    return buildNumber + '_' + (isMemorySnapshot ? "memory_" : "") + userName + '_' + snapshotDate;
-  }
+  @Throws(Exception::class)
+  fun stopProfiling(options: List<String>): String
 
-  void startProfiling(@NotNull String activityName, @NotNull List<String> options);
+  fun stopProfileWithNotification(actionCallback: ActionCallback, arguments: String?): String
 
-  @NotNull
-  String stopProfiling(@NotNull List<String> options) throws Exception;
+  @Throws(IOException::class)
+  fun compressResults(pathToResult: String, archiveName: String): File?
 
-  @NotNull
-  String stopProfileWithNotification(ActionCallback actionCallback, String arguments);
+  val isEnabled: Boolean
 
-  File compressResults(@NotNull String pathToResult, @NotNull String archiveName) throws IOException;
+  fun isEnabledInProject(project: Project?): Boolean
 
-  boolean isEnabled();
-
-  boolean isEnabledInProject(Project project);
-
-  boolean isProfilingStarted();
+  val isProfilingStarted: Boolean
 }
