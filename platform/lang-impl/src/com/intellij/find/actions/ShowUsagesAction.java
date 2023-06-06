@@ -659,7 +659,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         UsageViewStatisticsCollector.logSearchFinished(project, usageView,
                                                        actionHandler.getTargetClass(), searchScope, actionHandler.getTargetLanguage(),
                                                        visibleUsages.size(),
-                                                       TimeUnit.NANOSECONDS.toMillis(current - firstUsageAddedTS.get()),
+                                                       TimeUnit.NANOSECONDS.toMillis(firstUsageAddedTS.get() - searchStarted),
                                                        TimeUnit.NANOSECONDS.toMillis(current - searchStarted),
                                                        tooManyResults.get(),
                                                        indicator.isCanceled(),
