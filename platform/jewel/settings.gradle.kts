@@ -26,6 +26,7 @@ dependencyResolutionManagement {
 
 include(
     ":core",
+    ":foundation",
     ":compose-utils",
     ":samples:ide-plugin",
     ":samples:standalone",

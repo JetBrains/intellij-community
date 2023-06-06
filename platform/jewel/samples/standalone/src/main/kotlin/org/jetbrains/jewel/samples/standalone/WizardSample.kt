@@ -63,10 +63,10 @@ import org.jetbrains.jewel.components.Tab
 import org.jetbrains.jewel.components.TabRow
 import org.jetbrains.jewel.components.Text
 import org.jetbrains.jewel.components.TextField
-import org.jetbrains.jewel.components.Tree
-import org.jetbrains.jewel.components.TreeLayout
-import org.jetbrains.jewel.components.asTree
 import org.jetbrains.jewel.components.rememberTabContainerState
+import org.jetbrains.jewel.foundation.tree.Tree
+import org.jetbrains.jewel.foundation.tree.TreeView
+import org.jetbrains.jewel.foundation.tree.asTree
 import org.jetbrains.jewel.styles.ButtonStyle
 import org.jetbrains.jewel.styles.IntelliJButtonStyleVariations
 import org.jetbrains.jewel.styles.SliderStyle
@@ -245,7 +245,7 @@ fun OutputDirectoriesLabelTree(modifier: Modifier = Modifier, outputDir: Mutable
         val tree = remember { mutableStateOf(Optional.empty<Tree<File>>()) }
         LaunchedEffect(true) {
             withContext(Dispatchers.IO) {
-                tree.value = Optional.of(Paths.get(outputDir.value).asTree(true))
+                tree.value = Optional.of(Paths.get(outputDir.value).asTree())
             }
         }
 
@@ -265,23 +265,25 @@ fun OutputDirectoriesLabelTree(modifier: Modifier = Modifier, outputDir: Mutable
                 text = "Output Directories:"
             )
         }
-
         Box {
             val listState = rememberLazyListState()
-            TreeLayout(
+            TreeView(
                 modifier = Modifier.fillMaxWidth(),
-                tree = tree.value.orElse(Tree(emptyList())),
-                state = listState,
-                onTreeChanged = { tree.value = Optional.of(it) },
-                onTreeElementDoubleClick = { outputDir.value = it.data.absolutePath },
-                rowContent = {
-                    val text: String = when (it) {
-                        is Tree.Element.Leaf -> it.data.name
-                        is Tree.Element.Node -> "[${it.data.name}]"
+                tree = tree.value.get(),
+                arrowContent = { isOpen ->
+                    Box(Modifier.padding(2.dp)) {
+                        Text("[${if (isOpen) "x" else "  "}]")
                     }
-                    Text(modifier = Modifier.fillMaxWidth(), text = text, softWrap = false)
+                },
+                selectionBackgroundColor = IntelliJTheme.palette.controlStrokeFocused,
+                selectionFocusedBackgroundColor = IntelliJTheme.palette.controlStrokeFocused
+            ) {
+                val text: String = when (it) {
+                    is Tree.Element.Leaf -> it.data.name
+                    is Tree.Element.Node -> "[${it.data.name}]"
                 }
-            )
+                Text(modifier = Modifier.fillMaxWidth(), text = text, softWrap = false)
+            }
             if (listState.layoutInfo.totalItemsCount > listState.layoutInfo.visibleItemsInfo.size) {
                 VerticalScrollbar(
                     modifier = Modifier

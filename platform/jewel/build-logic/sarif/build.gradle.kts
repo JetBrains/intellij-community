@@ -21,3 +21,8 @@ gradlePlugin {
         }
     }
 }
+kotlin.target.compilations.all {
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}

@@ -34,4 +34,10 @@ gradlePlugin {
             implementationClass = "org.jetbrains.jewel.buildlogic.convention.JewelKtlintPlugin"
         }
     }
+
+}
+kotlin.target.compilations.all {
+    kotlinOptions {
+        jvmTarget = "17"
+    }
 }

@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.projects
+
 plugins {
     id("org.jetbrains.jewel.kotlin")
     alias(libs.plugins.composeDesktop)
@@ -24,4 +26,5 @@ repositories {
 
 dependencies {
     implementation(projects.themes.darcula.darculaIde)
+    api(projects.foundation)
 }

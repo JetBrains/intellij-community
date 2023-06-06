@@ -10,6 +10,8 @@ plugins {
 dependencies {
     implementation(projects.themes.darcula.darculaStandalone)
     implementation(libs.compose.components.splitpane)
+    implementation(projects.jewel.themes.newUi.newUiStandalone)
+    implementation(projects.foundation)
 }
 
 compose.desktop {

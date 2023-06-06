@@ -1,15 +1,28 @@
 package org.jetbrains.jewel.themes.darcula.idebridge
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposePanel
 import com.intellij.openapi.wm.ToolWindow
+import org.jetbrains.jewel.components.Surface
 
 fun ToolWindow.addComposePanel(
-    displayName: String,
+    tabDisplayName: String,
     isLockable: Boolean = true,
+    intelliJThemed: Boolean = true,
     content: @Composable ComposePanel.() -> Unit
-) = ComposePanel(content = content)
-    .also { contentManager.addContent(contentManager.factory.createContent(it, displayName, isLockable)) }
+) = ComposePanel {
+    if (intelliJThemed) {
+        IntelliJTheme {
+            Surface(Modifier.fillMaxSize()) {
+                content()
+            }
+        }
+    } else {
+        content()
+    }
+}.also { contentManager.addContent(contentManager.factory.createContent(it, tabDisplayName, isLockable)) }
 
 internal fun ComposePanel(
     height: Int = 800,

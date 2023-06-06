@@ -7,6 +7,7 @@ ideaGradlePlugin = "1.13.0"
 javaSarif = "2.0"
 jna = "5.10.0"
 kotlin = "1.8.0"
+dokka = "1.8.10"
 kotlinterGradlePlugin = "3.12.0"
 kotlinxSerialization = "1.4.1"
 
@@ -36,3 +37,4 @@ kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinterGradlePlugin
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
