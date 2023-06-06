@@ -25,6 +25,7 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public class ComboTableCellEditor extends DefaultCellEditor {
   private final boolean myNullable;
@@ -40,7 +41,7 @@ public class ComboTableCellEditor extends DefaultCellEditor {
     JComboBox<Pair<String, Icon>> comboBox = (JComboBox<Pair<String, Icon>>)editorComponent;
     comboBox.setBorder(null);
     comboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-    ComboControl.initComboBox(comboBox, object -> myData != null && myData.containsKey(object) || myNullable && Strings.areSameInstance(EMPTY.first, object));
+    ComboControl.initComboBox(comboBox, (Predicate<? super String>) object -> myData != null && myData.containsKey(object) || myNullable && Strings.areSameInstance(EMPTY.first, object));
   }
 
   public ComboTableCellEditor(Class<? extends Enum> anEnum, final boolean nullable) {

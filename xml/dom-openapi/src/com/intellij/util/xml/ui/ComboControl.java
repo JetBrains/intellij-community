@@ -40,6 +40,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, Icon>>, String> {
   private static final Pair<String, Icon> EMPTY = new ComboBoxItem(" ", null);
@@ -128,7 +129,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
       comboBox.addItem(new ComboBoxItem(pair));
       standardValues.add(pair.first);
     }
-    return initComboBox(comboBox, object -> standardValues.contains(object));
+    return initComboBox(comboBox, (Predicate<? super String>) object -> standardValues.contains(object));
   }
 
   private static class ComboBoxItem extends Pair<String, Icon> {
@@ -147,7 +148,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
   }
 
   static JComboBox<Pair<String, Icon>> initComboBox(final JComboBox<Pair<String, Icon>> comboBox,
-                                                    final Condition<? super String> validity) {
+                                                    final Predicate<? super String> validity) {
     comboBox.setEditable(false);
     comboBox.setPrototypeDisplayValue(new ComboBoxItem("A", null));
     comboBox.setRenderer(new DefaultListCellRenderer() {
@@ -158,7 +159,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
         final @NlsSafe String text = Pair.getFirst(pair);
         setText(text);
         final Dimension dimension = getPreferredSize();
-        if (!validity.value(text)) {
+        if (!validity.test(text)) {
           setFont(getFont().deriveFont(Font.ITALIC));
           setForeground(JBColor.RED);
         }
@@ -170,9 +171,18 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
     return comboBox;
   }
 
+  /**
+   * @deprecated use {@link ComboControl#initComboBox(JComboBox, Predicate)} instead
+   */
+  @Deprecated
+  static JComboBox<Pair<String, Icon>> initComboBox(final JComboBox<Pair<String, Icon>> comboBox,
+                                                    final Condition<? super String> validity) {
+    return initComboBox(comboBox, (Predicate<? super String>) validity);
+  }
+
   @Override
   protected JComboBox<Pair<String, Icon>> createMainComponent(final JComboBox<Pair<String, Icon>> boundedComponent) {
-    return initComboBox(boundedComponent == null ? new JComboBox<>() : boundedComponent, object -> isValidValue(object));
+    return initComboBox(boundedComponent == null ? new JComboBox<>() : boundedComponent, (Predicate<? super String>) object -> isValidValue(object));
   }
 
   public boolean isValidValue(final String object) {
