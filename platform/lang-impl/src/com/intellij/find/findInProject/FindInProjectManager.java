@@ -7,8 +7,14 @@ import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -58,7 +64,12 @@ public class FindInProjectManager {
   }
 
   protected void initModel(@NotNull FindModel findModel, @NotNull DataContext dataContext) {
-    FindInProjectUtil.setDirectoryName(findModel, dataContext);
+    if (AdvancedSettings.getBoolean("ide.remember.last.search.scope")) {
+      FindInProjectState.getInstance(myProject).load(findModel);
+    }
+    else {
+      FindInProjectUtil.setDirectoryName(findModel, dataContext);
+    }
 
     String text = PlatformDataKeys.PREDEFINED_TEXT.getData(dataContext);
     if (text != null) {
