@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
 import com.intellij.testFramework.ApplicationRule
@@ -275,7 +276,8 @@ internal class GitSettingsLogTest {
       settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
         fileState("options/editor.xml", "ideEditorContent")
       }
-    } finally {
+    }
+    finally {
       System.setProperty("user.home", userHomeDefault)
     }
   }
@@ -379,6 +381,30 @@ internal class GitSettingsLogTest {
 
   @Test
   fun `use username from JBA`() {
+    val jbaEmail = "some-jba-email@jba-mail.com"
+    val jbaName = "JBA Name"
+
+    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", jbaName, jbaEmail)
+    checkUsernameEmail(jbaName, jbaEmail)
+  }
+
+  @Test
+  @TestFor(issues = ["EA-844607"])
+  fun `use empty email if JBA doesn't provide one`() {
+    val jbaName = "JBA Name 2"
+
+    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", jbaName, null)
+    checkUsernameEmail(jbaName, "")
+  }
+
+  @Test
+  @TestFor(issues = ["EA-844607"])
+  fun `use empty name if JBA doesn't provide one`() {
+    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", null, null)
+    checkUsernameEmail("", "")
+  }
+
+  private fun checkUsernameEmail(expectedName: String, expectedEmail: String) {
     val editorXml = (configDir / "options" / "editor.xml").createFile()
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
@@ -387,13 +413,6 @@ internal class GitSettingsLogTest {
         name = Gawr Gura
         email = just-email@non-existing.addr
 """.trimIndent())
-
-
-    val jbaEmail = "some-jba-email@jba-mail.com"
-    val jbaName = "JBA Name"
-
-    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", jbaName, jbaEmail)
-
     settingsLog.applyIdeState(
       settingsSnapshot {
         fileState("options/editor.xml", "Editor Ide")
@@ -403,10 +422,10 @@ internal class GitSettingsLogTest {
     val headCommit = getRepository().headCommit()
     val author = headCommit.authorIdent
     val committer = headCommit.committerIdent
-    assertEquals(jbaEmail, author.emailAddress)
-    assertEquals(jbaEmail, committer.emailAddress)
-    assertEquals(jbaName, author.name)
-    assertEquals(jbaName, committer.name)
+    assertEquals(expectedEmail, author.emailAddress)
+    assertEquals(expectedEmail, committer.emailAddress)
+    assertEquals(expectedName, author.name)
+    assertEquals(expectedName, committer.name)
   }
 
   private fun initializeGitSettingsLog(vararg filesToCopyInitially: Path): GitSettingsLog {
