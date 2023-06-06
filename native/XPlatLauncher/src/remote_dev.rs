@@ -132,6 +132,11 @@ impl DefaultLaunchConfiguration {
 
         info!("{human_readable_name}: {result_string}");
 
+        if human_readable_name == "IDE config directory" && !specific_dir.exists(){
+            info!("Config folder does not exist, considering this the first launch. Will launch with New UI as default");
+            env::set_var("REMOTE_DEV_NEW_UI_ENABLED", "1");
+        }
+
         fs::create_dir_all(&specific_dir)?;
 
         Ok(specific_dir)
