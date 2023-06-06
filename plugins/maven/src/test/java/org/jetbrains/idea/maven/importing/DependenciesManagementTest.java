@@ -142,7 +142,7 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
     // reset embedders and try to resolve project from scratch in specific order - imported one goes first
     // to make maven cache it. we have to ensure that dependent project will be resolved correctly after that
     myProjectsManager.getEmbeddersManager().releaseForcefullyInTests();
-    MavenImportingTestCaseKt.resolveAndImportMavenProjectsSync(myProjectsManager, Arrays.asList(myProjectsManager.findProject(bom),
+    MavenImportingTestCaseKt.resolveAndImportMavenProjectsSyncEdt(myProjectsManager, Arrays.asList(myProjectsManager.findProject(bom),
                                                                                                 myProjectsManager.findProject(project)));
     myProjectsManager.waitForReadingCompletion();
 
@@ -197,7 +197,7 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
 
     myProjectsManager.getEmbeddersManager().reset();
-    MavenImportingTestCaseKt.resolveAndImportMavenProjectsSync(myProjectsManager, Arrays.asList(myProjectsManager.findProject(parent),
+    MavenImportingTestCaseKt.resolveAndImportMavenProjectsSyncEdt(myProjectsManager, Arrays.asList(myProjectsManager.findProject(parent),
                                                                                                 myProjectsManager.findProject(project)));
 
     myProjectsManager.waitForReadingCompletion();
