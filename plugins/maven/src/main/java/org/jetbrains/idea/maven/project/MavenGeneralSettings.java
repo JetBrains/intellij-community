@@ -531,7 +531,12 @@ public class MavenGeneralSettings implements Cloneable {
     MavenProjectsManager instance = myProject != null ? MavenProjectsManager.getInstance(myProject) : null;
     if (instance == null) return null;
 
-    updateFromMavenConfig(MavenUtil.collectFiles(instance.getRootProjects()));
+    var files = MavenUtil.collectFiles(instance.getRootProjects());
+    if (files.isEmpty()) {
+      files = instance.getProjectsTree().getExistingManagedFiles();
+    }
+
+    updateFromMavenConfig(files);
     return mavenConfigCache;
   }
 
