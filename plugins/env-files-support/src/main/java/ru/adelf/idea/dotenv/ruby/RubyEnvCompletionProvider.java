@@ -29,7 +29,7 @@ public class RubyEnvCompletionProvider extends BaseEnvCompletionProvider impleme
 
                 PsiElement psiElement = completionParameters.getOriginalPosition();
 
-                if (psiElement == null || !DotEnvSettings.getInstance(psiElement.getProject()).completionEnabled) {
+                if (psiElement == null || !DotEnvSettings.getInstance().completionEnabled) {
                     return;
                 }
 

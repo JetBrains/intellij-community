@@ -45,7 +45,7 @@
     <depends optional="true" config-file="yaml.xml">org.jetbrains.plugins.yaml</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <projectService serviceImplementation="ru.adelf.idea.dotenv.DotEnvSettings"/>
+        <applicationService serviceImplementation="ru.adelf.idea.dotenv.DotEnvSettings"/>
         <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvKeyGotoHandler"/>
 
         <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex"/>
@@ -54,6 +54,8 @@
                   implementationClass="ru.adelf.idea.dotenv.DotEnvFileType"/>
         <lang.parserDefinition language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvParserDefinition"/>
         <lang.commenter language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCommenter"/>
+
+        <lang.foldingBuilder language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvValuesHiding"/>
 
         <localInspection language="DotEnv"
                          groupName="DotEnv"
@@ -120,11 +122,10 @@
         <lang.syntaxHighlighterFactory language="DotEnv"
                                        implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>
 
-        <projectConfigurable instance="ru.adelf.idea.dotenv.ui.DotEnvSettingsConfigurable"
+        <applicationConfigurable instance="ru.adelf.idea.dotenv.ui.DotEnvSettingsConfigurable"
                              id="DotEnv.SettingsForm"
                              displayName="DotEnv"
                              groupId="language"
-                             nonDefaultProject="true"
         />
     </extensions>
 

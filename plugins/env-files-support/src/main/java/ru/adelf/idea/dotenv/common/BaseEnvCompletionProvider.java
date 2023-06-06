@@ -15,11 +15,11 @@ import java.util.Map;
 abstract public class BaseEnvCompletionProvider extends CompletionContributor implements GotoDeclarationHandler {
 
     protected void fillCompletionResultSet(@NotNull CompletionResultSet completionResultSet, @NotNull Project project) {
-        for(Map.Entry<String, String> entry : EnvironmentVariablesApi.getAllKeyValues(project).entrySet()) {
+        for (Map.Entry<String, String> entry : EnvironmentVariablesApi.getAllKeyValues(project).entrySet()) {
             LookupElementBuilder lockup = LookupElementBuilder.create(entry.getKey())
                     .withCaseSensitivity(false);
 
-            if(StringUtils.isNotEmpty(entry.getValue())) {
+            if (StringUtils.isNotEmpty(entry.getValue())) {
                 lockup = lockup.withTailText(" = " + entry.getValue(), true);
             }
 

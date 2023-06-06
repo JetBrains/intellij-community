@@ -1,9 +1,8 @@
 package ru.adelf.idea.dotenv.ui;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.project.Project;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.DotEnvSettings;
 
@@ -12,14 +11,9 @@ import javax.swing.border.Border;
 
 public class DotEnvSettingsConfigurable implements Configurable {
 
-    private final Project project;
-
-    public DotEnvSettingsConfigurable(@NotNull final Project project) {
-        this.project = project;
-    }
-
     private JCheckBox completionEnabledCheckbox;
     private JCheckBox storeValuesCheckbox;
+    private JCheckBox hideValuesCheckbox;
 
     @Nls
     @Override
@@ -40,17 +34,25 @@ public class DotEnvSettingsConfigurable implements Configurable {
         storeValuesCheckbox.setBorder(standardBorder);
         storeValuesCheckbox.setToolTipText("Storing values in the indices can be turned off due to security reasons");
 
-        JLabel storeValuesInvalidateCachesLabel = new JLabel("Run File > Invalidate Caches... to update indices");
+        JLabel storeValuesInvalidateCachesLabel = new JBLabel("Run File > Invalidate Caches... to update indices");
         storeValuesInvalidateCachesLabel.setBorder(standardBorder);
         storeValuesInvalidateCachesLabel.setVisible(false);
 
         storeValuesCheckbox.addChangeListener(e -> storeValuesInvalidateCachesLabel.setVisible(storeValuesCheckbox.isSelected() != getSettings().storeValues));
+
+        hideValuesCheckbox = new JCheckBox("Hide values in .env files", settings.storeValues);
+        hideValuesCheckbox.setBorder(standardBorder);
+
+        JLabel hideValuesLabel = new JBLabel("<html>Check this if you want values to be hidden by default.<br>Main menu > Code > Folding actions can be used to control it.</html>");
+        hideValuesLabel.setBorder(standardBorder);
 
         JPanel rootPanel = new JPanel();
         rootPanel.setLayout(new BoxLayout(rootPanel, BoxLayout.PAGE_AXIS));
         rootPanel.add(completionEnabledCheckbox);
         rootPanel.add(storeValuesCheckbox);
         rootPanel.add(storeValuesInvalidateCachesLabel);
+        rootPanel.add(hideValuesCheckbox);
+        rootPanel.add(hideValuesLabel);
 
         return rootPanel;
     }
@@ -59,22 +61,27 @@ public class DotEnvSettingsConfigurable implements Configurable {
     public boolean isModified() {
         return !completionEnabledCheckbox.isSelected() == getSettings().completionEnabled
             || !storeValuesCheckbox.isSelected() == getSettings().storeValues
+            || !hideValuesCheckbox.isSelected() == getSettings().hideValuesInTheFile
             ;
     }
 
     @Override
     public void apply() {
-        getSettings().completionEnabled = completionEnabledCheckbox.isSelected();
-        getSettings().storeValues = storeValuesCheckbox.isSelected();
+        DotEnvSettings settings = getSettings();
+
+        settings.completionEnabled = completionEnabledCheckbox.isSelected();
+        settings.storeValues = storeValuesCheckbox.isSelected();
+        settings.hideValuesInTheFile = hideValuesCheckbox.isSelected();
     }
 
     @Override
     public void reset() {
         completionEnabledCheckbox.setSelected(getSettings().completionEnabled);
         storeValuesCheckbox.setSelected(getSettings().storeValues);
+        hideValuesCheckbox.setSelected(getSettings().hideValuesInTheFile);
     }
 
     private DotEnvSettings getSettings() {
-        return DotEnvSettings.getInstance(this.project);
+        return DotEnvSettings.getInstance();
     }
 }

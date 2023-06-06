@@ -26,7 +26,7 @@ public class GoEnvCompletionProvider extends BaseEnvCompletionProvider implement
 
                 PsiElement psiElement = completionParameters.getOriginalPosition();
 
-                if (psiElement == null || !DotEnvSettings.getInstance(psiElement.getProject()).completionEnabled) {
+                if (psiElement == null || !DotEnvSettings.getInstance().completionEnabled) {
                     return;
                 }
 

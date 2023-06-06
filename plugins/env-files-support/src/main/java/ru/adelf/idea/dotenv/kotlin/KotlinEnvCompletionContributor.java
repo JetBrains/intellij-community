@@ -24,7 +24,7 @@ public class KotlinEnvCompletionContributor extends BaseEnvCompletionProvider im
             protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
                 PsiElement psiElement = completionParameters.getOriginalPosition();
 
-                if (psiElement == null || !DotEnvSettings.getInstance(psiElement.getProject()).completionEnabled) {
+                if (psiElement == null || !DotEnvSettings.getInstance().completionEnabled) {
                     return;
                 }
 

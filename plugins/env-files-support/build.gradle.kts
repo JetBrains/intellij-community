@@ -1,9 +1,9 @@
 plugins {
-    id("org.jetbrains.intellij") version "1.9.0"
+    id("org.jetbrains.intellij") version "1.14.0"
 }
 
 group = "ru.adelf"
-version = "2022.3"
+version = "2023.2"
 
 repositories {
     mavenCentral()
@@ -32,15 +32,15 @@ sourceSets {
 }
 
 intellij {
-    version.set("IU-223.4884.69-EAP-SNAPSHOT")
+    version.set("IU-223.8617.56")
     plugins.set(
         listOf(
-            "com.jetbrains.php:223.4884.75",
+            "com.jetbrains.php:223.8617.59",
             "yaml",
-            "org.jetbrains.plugins.go:223.4884.65",
+            "org.jetbrains.plugins.go:223.8617.56",
             "Docker",
-            "pythonid:223.4884.69",
-            "org.jetbrains.plugins.ruby:223.4884.69",
+            "pythonid:223.8617.56",
+            "org.jetbrains.plugins.ruby:223.8617.56",
             "Kotlin",
             "java-i18n",
             "properties",
@@ -53,7 +53,7 @@ intellij {
 tasks {
     patchPluginXml {
         sinceBuild.set("223")
-        untilBuild.set("223.*")
+        untilBuild.set("232.*")
     }
 
     buildSearchableOptions {

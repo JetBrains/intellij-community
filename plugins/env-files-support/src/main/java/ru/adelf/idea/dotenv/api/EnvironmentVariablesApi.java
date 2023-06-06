@@ -10,6 +10,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
+import ru.adelf.idea.dotenv.DotEnvSettings;
 import ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesProviderUtil;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
@@ -26,6 +27,8 @@ public class EnvironmentVariablesApi {
         Map<VirtualFile, FileAcceptResult> resultsCache = new HashMap<>();
 
         GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+
+        boolean showValues = DotEnvSettings.getInstance().storeValues;
 
         fileBasedIndex.processAllKeys(DotEnvKeyValuesIndex.KEY, key -> {
             for (VirtualFile virtualFile : fileBasedIndex.getContainingFiles(DotEnvKeyValuesIndex.KEY, key, scope)) {
@@ -44,10 +47,16 @@ public class EnvironmentVariablesApi {
                 }
 
                 fileBasedIndex.processValues(DotEnvKeyValuesIndex.KEY, key, virtualFile, ((file, val) -> {
+                    String keyValue = val;
+
+                    if (!showValues) {
+                        keyValue = "";
+                    }
+
                     if (fileAcceptResult.isPrimary()) {
-                        keyValues.putIfAbsent(key, val);
+                        keyValues.putIfAbsent(key, keyValue);
                     } else {
-                        secondaryKeyValues.putIfAbsent(key, val);
+                        secondaryKeyValues.putIfAbsent(key, keyValue);
                     }
 
                     return true;

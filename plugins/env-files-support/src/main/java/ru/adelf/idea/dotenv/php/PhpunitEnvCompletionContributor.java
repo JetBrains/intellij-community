@@ -33,7 +33,7 @@ public class PhpunitEnvCompletionContributor extends BaseEnvCompletionProvider i
 
                 PsiElement psiElement = completionParameters.getOriginalPosition();
 
-                if (psiElement == null || !DotEnvSettings.getInstance(psiElement.getProject()).completionEnabled) {
+                if (psiElement == null || !DotEnvSettings.getInstance().completionEnabled) {
                     return;
                 }
 

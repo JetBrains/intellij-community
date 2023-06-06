@@ -29,7 +29,7 @@ public class DotEnvKeyValuesIndex extends FileBasedIndexExtension<String, String
         return fileContent -> {
             final Map<String, String> map = new HashMap<>();
 
-            boolean storeValues = DotEnvSettings.getInstance(fileContent.getProject()).storeValues;
+            boolean storeValues = DotEnvSettings.getInstance().storeValues;
 
             for (EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
                 for (KeyValuePsiElement keyValueElement : provider.getElements(fileContent.getPsiFile())) {
