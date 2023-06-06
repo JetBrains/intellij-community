@@ -172,7 +172,7 @@ class EnableStripeGroup : ToggleAction(), DumbAware {
       UISettings.getInstance().hideToolStripes = enabled
     }
 
-    private fun isSingleStripeEnabled() = customizedGroup?.let { isActionGroupAdded(it, STRIPE_ACTION_GROUP_ID) } == true
+    fun isSingleStripeEnabled() = customizedGroup?.let { isActionGroupAdded(it, STRIPE_ACTION_GROUP_ID) } == true
 
     private fun isActionGroupAdded(groupPath: List<String>, actionId: String): Boolean {
       return getInstance().getActions().find { it.groupPath == groupPath && matchesId(it.component, actionId) } != null
