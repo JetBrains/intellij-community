@@ -162,19 +162,14 @@ public final class MavenProjectsManagerWatcher {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
 
     if (ApplicationManager.getApplication().isUnitTestMode()
-        && !forceUpdateInBackground) {
-      if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-        try {
-          projectsManager.updateAllMavenProjectsSync(spec);
-          promise.setResult(null);
-        }
-        catch (Exception e) {
-          promise.setError(e);
-        }
+      && !forceUpdateInBackground) {
+      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+      try {
+        projectsManager.updateAllMavenProjectsSync(spec);
+        promise.setResult(null);
       }
-      else {
-        MavenLog.LOG.warn("updateAllMavenProjectsSync skipped in write action");
+      catch (Exception e) {
+        promise.setError(e);
       }
     }
     else {

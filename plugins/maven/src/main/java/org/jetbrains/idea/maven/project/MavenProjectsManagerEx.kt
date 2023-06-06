@@ -367,16 +367,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
           withRawProgressReporter {
             coroutineToIndicator {
-              try {
-                val indicator = ProgressManager.getGlobalProgressIndicator()
-                // TODO: use indicator
-                projectsTree.delete(filesToDelete, generalSettings, mavenProgressIndicator)
-                projectsTree.update(filesToUpdate, spec.isForceReading, generalSettings, mavenProgressIndicator)
-                generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
-              }
-              catch (e: Throwable) {
-                logImportErrorIfNotControlFlow(e)
-              }
+              readMavenProjects(spec, filesToUpdate, filesToDelete, mavenProgressIndicator)
             }
           }
         }
@@ -392,13 +383,38 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
   }
 
+  private fun readMavenProjects(spec: MavenImportSpec,
+                                filesToUpdate: MutableList<VirtualFile>,
+                                filesToDelete: MutableList<VirtualFile>,
+                                mavenProgressIndicator: MavenProgressIndicator) {
+    try {
+      val indicator = ProgressManager.getGlobalProgressIndicator()
+      // TODO: use indicator
+      projectsTree.delete(filesToDelete, generalSettings, mavenProgressIndicator)
+      projectsTree.update(filesToUpdate, spec.isForceReading, generalSettings, mavenProgressIndicator)
+      generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
+    }
+    catch (e: Throwable) {
+      logImportErrorIfNotControlFlow(e)
+    }
+  }
+
   override fun updateAllMavenProjectsSync(spec: MavenImportSpec) {
     MavenLog.LOG.warn("updateAllMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
 
     // unit tests
     if (ApplicationManager.getApplication().isDispatchThread) {
-      runBlockingModal(project, MavenProjectBundle.message("maven.reading")) {
-        updateAllMavenProjects(spec)
+      if (ApplicationManager.getApplication().isWriteAccessAllowed) {
+        MavenLog.LOG.warn("Updating maven projects under write action. " +
+                          "This should only happen in test mode. " +
+                          "Resolution and import will be skipped.")
+        val mavenProgressIndicator = MavenProgressIndicator(project, Supplier { syncConsole })
+        readAllMavenProjects(spec, mavenProgressIndicator)
+      }
+      else {
+        runBlockingModal(project, MavenProjectBundle.message("maven.reading")) {
+          updateAllMavenProjects(spec)
+        }
       }
     }
     else {
@@ -425,16 +441,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
           withRawProgressReporter {
             coroutineToIndicator {
-              try {
-                val indicator = ProgressManager.getGlobalProgressIndicator()
-                checkOrInstallMavenWrapper(project)
-                // TODO: use indicator
-                projectsTree.updateAll(spec.isForceReading, generalSettings, mavenProgressIndicator)
-                generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
-              }
-              catch (e: Throwable) {
-                logImportErrorIfNotControlFlow(e)
-              }
+              readAllMavenProjects(spec, mavenProgressIndicator)
             }
           }
         }
@@ -447,6 +454,20 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       else {
         MavenSyncConsole.finishTransaction(myProject)
       }
+    }
+  }
+
+  private fun readAllMavenProjects(spec: MavenImportSpec,
+                                   mavenProgressIndicator: MavenProgressIndicator) {
+    try {
+      val indicator = ProgressManager.getGlobalProgressIndicator()
+      checkOrInstallMavenWrapper(project)
+      // TODO: use indicator
+      projectsTree.updateAll(spec.isForceReading, generalSettings, mavenProgressIndicator)
+      generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
+    }
+    catch (e: Throwable) {
+      logImportErrorIfNotControlFlow(e)
     }
   }
 
