@@ -1192,6 +1192,28 @@ public final class FSRecordsImpl {
     return description;
   }
 
+  //========== accessors for diagnostics & sanity checks: ========================
+
+
+  PersistentFSConnection connection() {
+    return connection;
+  }
+
+  PersistentFSContentAccessor contentAccessor() {
+    return contentAccessor;
+  }
+
+  PersistentFSAttributeAccessor attributeAccessor() {
+    return attributeAccessor;
+  }
+
+  PersistentFSTreeAccessor treeAccessor() {
+    return treeAccessor;
+  }
+
+  PersistentFSRecordAccessor recordAccessor() {
+    return recordAccessor;
+  }
 
   public interface ErrorHandler {
 

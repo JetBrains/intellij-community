@@ -106,8 +106,8 @@ public final class FSRecords {
     }
   }
 
-  @NotNull
-  private static FSRecordsImpl implOrFail() {
+
+  static @NotNull FSRecordsImpl implOrFail() {
     FSRecordsImpl _impl = impl;
     if (_impl == null || _impl.isDisposed()) {
       throw alreadyDisposed();

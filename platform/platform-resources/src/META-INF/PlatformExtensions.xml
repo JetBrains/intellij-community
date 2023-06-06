@@ -1465,6 +1465,8 @@
 
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.opentelemetry.JVMStatsToOTelReporter"/>
 
+    <backgroundPostStartupActivity implementation="com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckStarter"/>
+
     <backgroundPostStartupActivity implementation="com.intellij.openapi.vfs.newvfs.monitoring.VFSInitializationConditionsToFusReporter"/>
 
     <registryKey key="llm.empty.intention.generation"
