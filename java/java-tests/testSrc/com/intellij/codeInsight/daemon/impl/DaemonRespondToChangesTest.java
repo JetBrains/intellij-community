@@ -282,17 +282,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    if (isStressTest()) {
-      // all possible inspections
-      List<InspectionToolWrapper<?, ?>> all = InspectionToolRegistrar.getInstance().createTools();
-      List<LocalInspectionTool> locals = new ArrayList<>();
-      all.stream().filter(tool -> tool instanceof LocalInspectionToolWrapper).forEach(tool -> {
-        LocalInspectionTool e = ((LocalInspectionToolWrapper)tool).getTool();
-        locals.add(e);
-      });
-      return locals.toArray(LocalInspectionTool.EMPTY_ARRAY);
-    }
-    return new LocalInspectionTool[]{
+    return new LocalInspectionTool[] {
       new FieldCanBeLocalInspection(),
       new RequiredAttributesInspectionBase(),
       new CheckDtdReferencesInspection(),
