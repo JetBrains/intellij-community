@@ -12,11 +12,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.function.IntPredicate;
+import java.util.function.Predicate;
 
 public final class InvertedIndexUtil {
+
   public static @NotNull <K, V, I> IntSet collectInputIdsContainingAllKeys(@NotNull InvertedIndex<? super K, V, I> index,
                                                                            @NotNull Collection<? extends K> dataKeys,
-                                                                           @Nullable Condition<? super V> valueChecker,
+                                                                           @Nullable Predicate<? super V> valueChecker,
                                                                            @Nullable IntPredicate idChecker)
     throws StorageException {
     IntSet mainIntersection = null;
@@ -29,7 +31,7 @@ public final class InvertedIndexUtil {
 
       for (ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
         final V value = valueIt.next();
-        if (valueChecker != null && !valueChecker.value(value)) {
+        if (valueChecker != null && !valueChecker.test(value)) {
           continue;
         }
         IOCancellationCallbackHolder.checkCancelled();
@@ -65,9 +67,21 @@ public final class InvertedIndexUtil {
     return mainIntersection == null ? IntSets.EMPTY_SET : mainIntersection;
   }
 
+  /**
+   * @deprecated use {@link InvertedIndexUtil#collectInputIdsContainingAllKeys(InvertedIndex, Collection, Predicate, IntPredicate)} instead
+   */
+  @Deprecated
+  public static @NotNull <K, V, I> IntSet collectInputIdsContainingAllKeys(@NotNull InvertedIndex<? super K, V, I> index,
+                                                                           @NotNull Collection<? extends K> dataKeys,
+                                                                           @Nullable Condition<? super V> valueChecker,
+                                                                           @Nullable IntPredicate idChecker)
+    throws StorageException {
+    return collectInputIdsContainingAllKeys(index, dataKeys, (Predicate<? super V>) valueChecker, idChecker);
+  }
+
   public static @NotNull <K, V, I> IntSet collectInputIdsContainingAnyKey(@NotNull InvertedIndex<? super K, V, I> index,
                                                                           @NotNull Collection<? extends K> dataKeys,
-                                                                          @Nullable Condition<? super V> valueChecker,
+                                                                          @Nullable Predicate<? super V> valueChecker,
                                                                           @Nullable IntPredicate idChecker) throws StorageException {
     IntSet result = null;
     for (K dataKey : dataKeys) {
@@ -75,7 +89,7 @@ public final class InvertedIndexUtil {
       ValueContainer<V> container = index.getData(dataKey);
       for (ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
         V value = valueIt.next();
-        if (valueChecker != null && !valueChecker.value(value)) {
+        if (valueChecker != null && !valueChecker.test(value)) {
           continue;
         }
         IOCancellationCallbackHolder.checkCancelled();
@@ -89,5 +103,13 @@ public final class InvertedIndexUtil {
       }
     }
     return result == null ? IntSets.EMPTY_SET : result;
+  }
+
+  @Deprecated
+  public static @NotNull <K, V, I> IntSet collectInputIdsContainingAnyKey(@NotNull InvertedIndex<? super K, V, I> index,
+                                                                          @NotNull Collection<? extends K> dataKeys,
+                                                                          @Nullable Condition<? super V> valueChecker,
+                                                                          @Nullable IntPredicate idChecker) throws StorageException {
+    return collectInputIdsContainingAnyKey(index, dataKeys, (Predicate<? super V>) valueChecker, idChecker);
   }
 }
