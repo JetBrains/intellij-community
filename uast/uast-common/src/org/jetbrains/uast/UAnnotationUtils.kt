@@ -71,32 +71,13 @@ fun getUParentForAnnotationIdentifier(identifier: PsiElement): UElement? {
  * @return the annotation in which this element occurs and a corresponding parameter name if available
  */
 fun getContainingUAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String?>? {
+  if (uElement == null) return null
 
-  fun tryConvertToEntry(uElement: UElement, parent: UElement, name: String?): Pair<UAnnotation, String?>? {
-    if (uElement !is UExpression) return null
-    val uAnnotation = parent.sourcePsi.toUElementOfType<UAnnotation>() ?: return null
-    val argumentSourcePsi = wrapULiteral(uElement).sourcePsi
-    return uAnnotation to (name ?: uAnnotation.attributeValues.find { wrapULiteral(it.expression).sourcePsi === argumentSourcePsi }?.name)
-  }
+  val sourcePsi = uElement.sourcePsi
+  if (sourcePsi == null) return null
 
-  tailrec fun retrievePsiAnnotationEntry(uElement: UElement?, name: String?): Pair<UAnnotation, String?>? {
-    if (uElement == null) return null
-    val parent = uElement.uastParent ?: return null
-    return when (parent) {
-      is UAnnotation -> parent to name
-      is UReferenceExpression -> tryConvertToEntry(uElement, parent, name)
-      is UCallExpression ->
-        if (parent.hasKind(UastCallKind.NESTED_ARRAY_INITIALIZER))
-          retrievePsiAnnotationEntry(parent, null)
-        else
-          tryConvertToEntry(uElement, parent, name)
-      is UPolyadicExpression -> retrievePsiAnnotationEntry(parent, null)
-      is UNamedExpression -> retrievePsiAnnotationEntry(parent, parent.name)
-      else -> null
-    }
-  }
-
-  return retrievePsiAnnotationEntry(uElement, null)
+  val plugin = UastLanguagePlugin.byLanguage(sourcePsi.language) ?: return null
+  return plugin.getContainingAnnotationEntry(uElement)
 }
 
 fun getContainingAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, String?>? {

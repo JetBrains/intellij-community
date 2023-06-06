@@ -5,18 +5,17 @@ package org.jetbrains.uast.kotlin
 import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.uast.DEFAULT_TYPES_LIST
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
 import org.jetbrains.uast.kotlin.KotlinConverter.convertDeclaration
 import org.jetbrains.uast.kotlin.KotlinConverter.convertDeclarationOrElement
@@ -147,4 +146,18 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
 
     override val analysisPlugin: UastAnalysisPlugin?
         get() = UastAnalysisPlugin.byLanguage(KotlinLanguage.INSTANCE)
+
+    override fun getContainingAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String?>? {
+        val sourcePsi = uElement?.sourcePsi ?: return null
+
+        val parent = sourcePsi.parent ?: return null
+        if (parent is KtAnnotationEntry) {
+            return super.getContainingAnnotationEntry(uElement)
+        }
+
+        val annotationEntry = parent.getParentOfType<KtAnnotationEntry>(true, KtDeclaration::class.java)
+        if (annotationEntry == null) return null
+
+        return super.getContainingAnnotationEntry(uElement)
+    }
 }

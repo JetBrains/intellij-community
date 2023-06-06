@@ -195,6 +195,23 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
       1 -> getPossibleSourceTypes(uastTypes.single())
       else -> ClassSetsWrapper(uastTypes.map2Array { getPossibleSourceTypes(it) })
     }
+
+  override fun getContainingAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String?>? {
+    val sourcePsi = uElement?.sourcePsi ?: return null
+    if (sourcePsi is PsiNameValuePair) {
+      return super.getContainingAnnotationEntry(uElement)
+    }
+
+    val parent = sourcePsi.parent ?: return null
+    if (parent is PsiNameValuePair) {
+      return super.getContainingAnnotationEntry(uElement)
+    }
+
+    val annotationEntry = PsiTreeUtil.getParentOfType(parent, PsiNameValuePair::class.java, true, PsiMember::class.java)
+    if (annotationEntry == null) return null
+
+    return super.getContainingAnnotationEntry(uElement)
+  }
 }
 
 internal inline fun <reified ActualT : UElement> Class<*>?.el(f: () -> UElement?): UElement? {
