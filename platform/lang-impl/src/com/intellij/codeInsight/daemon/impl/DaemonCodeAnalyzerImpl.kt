@@ -25,6 +25,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
@@ -803,7 +804,9 @@ ${ThreadDumper.dumpThreadsToString()}""")
     }
     updateRunnableFuture = coroutineScope.async {
       delay(delayDuration)
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      // null in test mode
+      val dispatcher = ApplicationManager.getApplication().serviceOrNull<CoroutineSupport>()?.edtDispatcher() ?: RawSwingDispatcher
+      withContext(dispatcher + ModalityState.any().asContextElement()) {
         updateRunnable.run(checkCancelled = ::ensureActive)
       }
     }
