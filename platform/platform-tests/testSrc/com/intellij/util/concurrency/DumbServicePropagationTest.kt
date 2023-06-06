@@ -4,91 +4,80 @@ package com.intellij.util.concurrency
 import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
 import com.intellij.concurrency.currentThreadContext
-import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.DumbModeTask
 import com.intellij.openapi.project.DumbService
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.util.SystemProperties
-import com.intellij.util.timeoutRunBlocking
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import com.intellij.util.*
+import junit.framework.TestCase
+import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 class DumbServicePropagationTest : BasePlatformTestCase() {
+  private lateinit var dumbService: DumbService
+
 
   override fun setUp() {
     super.setUp()
     val key = "idea.force.dumb.queue.tasks"
     val prev = System.setProperty(key, "true")
+    dumbService = DumbService.getInstance(project)
     disposeOnTearDown(Disposable {
       SystemProperties.setProperty(key, prev)
     })
   }
 
-  fun testDumbQueue() = runWithContextPropagationEnabled {
-    val service = DumbService.getInstance(project)
+  override fun runInDispatchThread(): Boolean = false
+
+  fun testDumbQueue() = doPropagationApplicationTest {
     val element = TestElement("element")
     val callTracker = AtomicBoolean(false)
-
-    timeoutRunBlocking {
-      withContext(element) {
-        blockingContext {
-          service.queueTask(object : DumbModeTask() {
-            override fun performInDumbMode(indicator: ProgressIndicator) {
-              callTracker.set(true)
-              assertSame(element, currentThreadContext()[TestElementKey])
-            }
-          })
-        }
-      }
-
+    withContext(element) {
       blockingContext {
-        assertFalse("dumb task should not be completed", callTracker.get())
-        assertNull(currentThreadContext()[TestElementKey])
-        service.completeJustSubmittedTasks()
-        IdeEventQueue.getInstance().flushQueue() // forcing events processing
-        assertTrue("dumb task should be completed", callTracker.get())
-      }
-    }
-  }
-
-  fun testRunWhenSmart() = runWithContextPropagationEnabled {
-    val service = DumbService.getInstance(project)
-    val element = TestElement("element")
-    val callTracker = AtomicBoolean(false)
-    runBlocking {
-
-      // spawn dumb mode
-      blockingContext {
-        service.queueTask(object : DumbModeTask() {
+        dumbService.queueTask(object : DumbModeTask() {
           override fun performInDumbMode(indicator: ProgressIndicator) {
-            // immediately finishes on execution
-          }
-        })
-      }
-      assertTrue(service.isDumb)
-
-      // set up context
-      withContext(element) {
-        blockingContext {
-          service.runWhenSmart {
             callTracker.set(true)
             assertSame(element, currentThreadContext()[TestElementKey])
           }
-        }
-      }
-
-      // discharge dumb mode
-      blockingContext {
-        assertFalse("runWhenSmart should not be completed", callTracker.get())
-        assertNull(currentThreadContext()[TestElementKey])
-        service.completeJustSubmittedTasks()
-        IdeEventQueue.getInstance().flushQueue() // forcing events processing
-        assertTrue("runWhenSmart should be completed", callTracker.get())
+        })
       }
     }
+
+    assertFalse("dumb task should not be completed", callTracker.get())
+    dumbService.completeJustSubmittedTasks()
+    yield() // pump event queue
+    assertTrue("dumb task should be completed", callTracker.get())
+  }
+
+  fun testRunWhenSmart() = doPropagationApplicationTest {
+    val element = TestElement("element")
+    val callTracker = AtomicBoolean(false)
+    // spawn dumb mode
+    blockingContext {
+      dumbService.queueTask(object : DumbModeTask() {
+        override fun performInDumbMode(indicator: ProgressIndicator) {
+          // immediately finishes on execution
+        }
+      })
+    }
+
+    assertTrue(dumbService.isDumb)
+
+    // set up context
+    withContext(element) {
+      blockingContext {
+        dumbService.runWhenSmart {
+          callTracker.set(true)
+          assertSame(element, currentThreadContext()[TestElementKey])
+        }
+      }
+    }
+
+    // discharge dumb mode
+    assertFalse("runWhenSmart should not be completed", callTracker.get())
+    dumbService.completeJustSubmittedTasks()
+    yield() // pump event queue
+    assertTrue("runWhenSmart should be completed", callTracker.get())
   }
 }

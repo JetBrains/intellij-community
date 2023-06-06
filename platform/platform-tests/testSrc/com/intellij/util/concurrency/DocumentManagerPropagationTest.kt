@@ -6,11 +6,14 @@ import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.EmptyCoroutineContext
@@ -24,14 +27,14 @@ class DocumentManagerPropagationTest : HeavyPlatformTestCase() {
     val performForCommittedDocumentTracker = AtomicBoolean(false)
     val performLaterWhenAllCommittedTracker = AtomicBoolean(false)
     val psiFile = installThreadContext(EmptyCoroutineContext).use {
-      val vFile = createTempVirtualFile ("x.txt", null, "abc", StandardCharsets.UTF_8)
+      val vFile = createTempVirtualFile("x.txt", null, "abc", StandardCharsets.UTF_8)
       val psiFile = psiManager.findFile(vFile)!!
       psiFile
     }
 
     val document = service.getDocument(psiFile)!!
 
-    runBlocking {
+    timeoutRunBlocking {
       blockingContext {
         runWriteAction {
           document.setText("42")
