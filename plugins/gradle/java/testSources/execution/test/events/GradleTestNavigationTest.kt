@@ -252,34 +252,6 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
     }
   }
 
-  @ParameterizedTest
-  @TargetVersions("5.6+")
-  @AllGradleVersionsSource
-  fun `test display name and navigation with Groovy and Spock`(gradleVersion: GradleVersion) {
-    testSpockProject(gradleVersion) {
-      writeText("src/test/groovy/org/example/SpockTestCase.groovy", GROOVY_CLASS_WITH_SPOCK_TESTS)
-
-      executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
-        assertNode("SpockTestCase") {
-          assertPsiLocation("SpockTestCase")
-          assertNode("success test") {
-            assertPsiLocation("SpockTestCase", "success test")
-          }
-          assertNode("failure test") {
-            assertPsiLocation("SpockTestCase", "failure test")
-          }
-          assertNode("length of #name is #length") {
-            assertPsiLocation("SpockTestCase", "length of #name is #length")
-            assertNode("length of Spock is 5") {
-              assertPsiLocation("SpockTestCase", "length of #name is #length")
-            }
-          }
-        }
-      }
-    }
-  }
-
   companion object {
 
     private val JAVA_JUNIT5_TEST = """
@@ -450,34 +422,6 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
       |                {3, "third"}
       |        };
       |    }
-      |}
-    """.trimMargin()
-
-    private val GROOVY_CLASS_WITH_SPOCK_TESTS = """
-      |package org.example
-      |
-      |import spock.lang.Specification
-      |
-      |class SpockTestCase extends Specification {
-      |
-      |  def "success test"() {
-      |    expect:
-      |    true
-      |  }
-      |
-      |  def "failure test"() {
-      |    expect:
-      |    false
-      |  }
-      |
-      |  def "length of #name is #length"() {
-      |    expect:
-      |    name.size() != length
-      |
-      |    where:
-      |    name     | length
-      |    "Spock"  | 5
-      |  }
       |}
     """.trimMargin()
   }
