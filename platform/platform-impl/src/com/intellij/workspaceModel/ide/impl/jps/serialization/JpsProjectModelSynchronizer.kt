@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getExternalConfigurationDir
