@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
@@ -110,7 +109,7 @@ public final class Divider {
     int startOffset = TextRangeScalarUtil.startOffset(restrictRange);
     int endOffset = TextRangeScalarUtil.endOffset(restrictRange);
 
-    Condition<PsiElement>[] filters = CollectHighlightsUtil.EP_NAME.getExtensions();
+    Predicate<PsiElement>[] filters = CollectHighlightsUtil.EP_NAME.getExtensions();
 
     IntStack starts = new IntArrayList(STARTING_TREE_HEIGHT);
     starts.push(startOffset);
@@ -123,8 +122,8 @@ public final class Divider {
     while (true) {
       ProgressManager.checkCanceled();
 
-      for (Condition<PsiElement> filter : filters) {
-        if (!filter.value(element)) {
+      for (Predicate<PsiElement> filter : filters) {
+        if (!filter.test(element)) {
           assert child == HAVE_TO_GET_CHILDREN;
           child = null; // do not want to process children
           break;
