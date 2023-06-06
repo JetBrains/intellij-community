@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Condition;
 
 import java.util.Collection;
+import java.util.function.Predicate;
 
 @FunctionalInterface
 public interface InternalIterator<T>{
@@ -44,21 +45,34 @@ public interface InternalIterator<T>{
   }
 
   class Filtering<T> implements InternalIterator<T> {
-    private final Condition<? super T> myFilter;
+    private final Predicate<? super T> myFilter;
     private final InternalIterator<? super T> myIterator;
 
-    public Filtering(InternalIterator<? super T> iterator, Condition<? super T> filter) {
+    public Filtering(InternalIterator<? super T> iterator, Predicate<? super T> filter) {
       myIterator = iterator;
       myFilter = filter;
     }
 
-    @Override
-    public boolean visit(T value) {
-      return !myFilter.value(value) || myIterator.visit(value);
+    /**
+     * @deprecated use {@link Filtering#Filtering(InternalIterator, Predicate)} instead
+     */
+    @Deprecated
+    public Filtering(InternalIterator<? super T> iterator, Condition<? super T> filter) {
+      this(iterator, (Predicate<? super T>) filter);
     }
 
-    public static <T> InternalIterator<T> create(InternalIterator<? super T> iterator, Condition<? super T> filter) {
+    @Override
+    public boolean visit(T value) {
+      return !myFilter.test(value) || myIterator.visit(value);
+    }
+
+    public static <T> InternalIterator<T> create(InternalIterator<? super T> iterator, Predicate<? super T> filter) {
       return new Filtering<>(iterator, filter);
+    }
+
+    @Deprecated
+    public static <T> InternalIterator<T> create(InternalIterator<? super T> iterator, Condition<? super T> filter) {
+      return create(iterator, (Predicate<? super T>) filter);
     }
 
     public static <T, V extends T> InternalIterator<T> createInstanceOf(InternalIterator<V> iterator, FilteringIterator.InstanceOf<V> filter) {
