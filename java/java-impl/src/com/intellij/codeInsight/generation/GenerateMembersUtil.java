@@ -458,7 +458,7 @@ public final class GenerateMembersUtil {
           paramName = generator.generateUniqueName("p");
         }
       }
-      else if (!generator.value(paramName)) {
+      else if (!generator.test(paramName)) {
         paramName = generator.generateUniqueName(paramName);
       }
       generator.addExistingName(paramName);
