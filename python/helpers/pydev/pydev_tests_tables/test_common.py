@@ -8,6 +8,7 @@ We check:
 """
 
 import os
+import sys
 import pytest
 import inspect
 import importlib
@@ -21,6 +22,9 @@ def setup_tables_modules():
     for _, _, files in os.walk(pydevd_tables_path):
         for file in files:
             if file.endswith('py') and file != '__init__.py':
+                if sys.version_info < (3, 0) and 'polars' in file:
+                    # we don't need to test polars for python 2.7
+                    continue
                 tables_files.append(file)
                 module_name = '_pydevd_bundle.tables.' + file.replace('.py', '')
                 tables_modules.append(importlib.import_module(module_name))
