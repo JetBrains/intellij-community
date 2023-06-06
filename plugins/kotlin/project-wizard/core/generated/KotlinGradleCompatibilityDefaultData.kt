@@ -42,6 +42,30 @@ internal val DEFAULT_KOTLIN_GRADLE_COMPATIBILITY_DATA = KotlinGradleCompatibilit
         KotlinGradleVersionMapping(
             kotlin = "1.7.20-1.7.30",
             gradle = "6.7.1-7.2.0"
+        ),
+        KotlinGradleVersionMapping(
+            kotlin = "1.7.0-1.7.20",
+            gradle = "6.7.1-7.0.2"
+        ),
+        KotlinGradleVersionMapping(
+            kotlin = "1.6.20-1.7.0",
+            gradle = "6.1.1-7.0.2"
+        ),
+        KotlinGradleVersionMapping(
+            kotlin = "1.6.0-1.6.20",
+            gradle = "6.1.1-7.0"
+        ),
+        KotlinGradleVersionMapping(
+            kotlin = "1.5.30-1.6.0",
+            gradle = "6.1.1-7.0"
+        ),
+        KotlinGradleVersionMapping(
+            kotlin = "1.5.20-1.5.30",
+            gradle = "6.1.1-7.0"
+        ),
+        KotlinGradleVersionMapping(
+            kotlin = "1.5.0-1.5.20",
+            gradle = "6.1-7.0"
         )
     )
 )
