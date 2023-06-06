@@ -15,11 +15,12 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class UpdaterTreeState {
   private final AbstractTreeUi myUi;
   private final Map<Object, Object> myToSelect = new WeakHashMap<>();
-  private Map<Object, Condition> myAdjustedSelection = new WeakHashMap<>();
+  private Map<Object, Predicate> myAdjustedSelection = new WeakHashMap<>();
   private final Map<Object, Object> myToExpand = new WeakHashMap<>();
   private int myProcessingCount;
 
@@ -143,7 +144,7 @@ public class UpdaterTreeState {
     final Object[] toExpand = getToExpand();
 
 
-    final Map<Object, Condition> adjusted = new WeakHashMap<>(myAdjustedSelection);
+    final Map<Object, Predicate> adjusted = new WeakHashMap<>(myAdjustedSelection);
 
     clearSelection();
     clearExpansion();
@@ -190,7 +191,7 @@ public class UpdaterTreeState {
             if (!children.contains(eachToSelect)) {
               toSelect.remove();
               if (!myToSelect.containsKey(readyElement) && !myUi.getSelectedElements().contains(eachToSelect)) {
-                addAdjustedSelection(eachToSelect, Conditions.alwaysFalse(), null);
+                addAdjustedSelection(eachToSelect, (Predicate) s -> true, null);
               }
             }
           }
@@ -226,16 +227,16 @@ public class UpdaterTreeState {
     }
   }
 
-  private ActionCallback processAdjusted(final Map<Object, Condition> adjusted, final Set<Object> originallySelected) {
+  private ActionCallback processAdjusted(final Map<Object, Predicate> adjusted, final Set<Object> originallySelected) {
     final ActionCallback result = new ActionCallback();
 
     final Set<Object> allSelected = myUi.getSelectedElements();
 
     Set<Object> toSelect = new HashSet<>();
-    for (Map.Entry<Object, Condition> entry : adjusted.entrySet()) {
-      Condition condition = entry.getValue();
+    for (Map.Entry<Object, Predicate> entry : adjusted.entrySet()) {
+      Predicate predicate = entry.getValue();
       Object key = entry.getKey();
-      if (condition.value(key)) continue;
+      if (predicate.test(key)) continue;
 
       for (final Object eachSelected : allSelected) {
         if (isParentOrSame(key, eachSelected)) continue;
@@ -254,7 +255,7 @@ public class UpdaterTreeState {
         public void perform() {
           final Set<Object> hangByParent = new HashSet<>();
           processUnsuccessfulSelections(newSelection, o -> {
-            if (myUi.isInStructure(o) && !adjusted.get(o).value(o)) {
+            if (myUi.isInStructure(o) && !adjusted.get(o).test(o)) {
               hangByParent.add(o);
             } else {
               addAdjustedSelection(o, adjusted.get(o), null);
@@ -334,11 +335,19 @@ public class UpdaterTreeState {
     myToSelect.put(element, element);
   }
 
-  void addAdjustedSelection(final Object element, Condition isExpired, @Nullable Object adjustmentCause) {
+  void addAdjustedSelection(final Object element, Predicate isExpired, @Nullable Object adjustmentCause) {
     myAdjustedSelection.put(element, isExpired);
     if (adjustmentCause != null) {
       myAdjustmentCause2Adjustment.put(adjustmentCause, element);
     }
+  }
+
+  /**
+   * @deprecated use {@link UpdaterTreeState#addAdjustedSelection(Object, Predicate, Object)} instead
+   */
+  @Deprecated
+  void addAdjustedSelection(final Object element, Condition isExpired, @Nullable Object adjustmentCause) {
+   addAdjustedSelection(element, (Predicate) isExpired, adjustmentCause);
   }
 
   @NonNls
