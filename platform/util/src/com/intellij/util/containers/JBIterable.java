@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -369,8 +370,16 @@ public abstract class JBIterable<E> implements Iterable<E> {
   /**
    * Returns the elements from this iterable that satisfy a condition.
    */
+  public final @NotNull JBIterable<E> filter(@NotNull java.util.function.Predicate<? super E> predicate) {
+    return intercept(iterator -> JBIterator.from(iterator).filter(Stateful.copy(predicate)));
+  }
+
+  /**
+   * Returns the elements from this iterable that satisfy a condition.
+   */
+  @ApiStatus.Obsolete
   public final @NotNull JBIterable<E> filter(@NotNull Condition<? super E> condition) {
-    return intercept(iterator -> JBIterator.from(iterator).filter(Stateful.copy(condition)));
+    return filter((java.util.function.Predicate<? super E>) condition);
   }
 
   /**
@@ -391,16 +400,29 @@ public abstract class JBIterable<E> implements Iterable<E> {
     return intercept(iterator -> JBIterator.from(iterator).take(count));
   }
 
+  public final @NotNull JBIterable<E> takeWhile(@NotNull java.util.function.Predicate<? super E> predicate) {
+    return intercept(iterator -> JBIterator.from(iterator).takeWhile(Stateful.copy(predicate)));
+  }
+
+  @ApiStatus.Obsolete
   public final @NotNull JBIterable<E> takeWhile(@NotNull Condition<? super E> condition) {
-    return intercept(iterator -> JBIterator.from(iterator).takeWhile(Stateful.copy(condition)));
+    return takeWhile((java.util.function.Predicate<? super E>) condition);
   }
 
   public final @NotNull JBIterable<E> skip(int count) {
     return intercept(iterator -> JBIterator.from(iterator).skip(count));
   }
 
+  public final @NotNull JBIterable<E> skipWhile(@NotNull java.util.function.Predicate<? super E> predicate) {
+    return intercept(iterator -> JBIterator.from(iterator).skipWhile(Stateful.copy(predicate)));
+  }
+
+  /**
+   * @deprecated use {@link JBIterable#skipWhile(java.util.function.Predicate)} instead
+   */
+  @Deprecated
   public final @NotNull JBIterable<E> skipWhile(@NotNull Condition<? super E> condition) {
-    return intercept(iterator -> JBIterator.from(iterator).skipWhile(Stateful.copy(condition)));
+    return skipWhile((java.util.function.Predicate<? super E>) condition);
   }
 
   /**
@@ -593,22 +615,40 @@ public abstract class JBIterable<E> implements Iterable<E> {
   /**
    * Returns the first matching element.
    */
+  public final @Nullable E find(@NotNull java.util.function.Predicate<? super E> predicate) {
+    return filter(predicate).first();
+  }
+
+  /**
+   * Returns the first matching element.
+   */
+  @ApiStatus.Obsolete
   public final @Nullable E find(@NotNull Condition<? super E> condition) {
-    return filter(condition).first();
+    return find((java.util.function.Predicate<? super E>) condition);
   }
 
   /**
    * Returns the index of the matching element.
    */
-  public final int indexOf(@NotNull Condition<? super E> condition) {
+  public final int indexOf(@NotNull java.util.function.Predicate<? super E> predicate) {
     int index = 0;
     for (E e : this) {
-      if (condition.value(e)) {
+      if (predicate.test(e)) {
         return index;
       }
       index++;
     }
     return -1;
+  }
+
+  /**
+   * Returns the index of the matching element.
+   *
+   * @deprecated use {@link JBIterable#indexOf(java.util.function.Predicate)} instead
+   */
+  @Deprecated
+  public final int indexOf(@NotNull Condition<? super E> condition) {
+    return indexOf((java.util.function.Predicate<? super E>) condition);
   }
 
   /**
@@ -688,9 +728,9 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * Splits this {@code JBIterable} into iterable of iterables with separators matched by the specified condition.
    * All iterations are performed in-place without data copying.
    */
-  public final @NotNull JBIterable<@NotNull JBIterable<E>> split(@NotNull Split mode, @NotNull Condition<? super E> separator) {
+  public final @NotNull JBIterable<@NotNull JBIterable<E>> split(@NotNull Split mode, @NotNull java.util.function.Predicate<? super E> separator) {
     return intercept(orig -> {
-      Condition<? super E> condition = Stateful.copy(separator);
+      java.util.function.Predicate<? super E> predicate = Stateful.copy(separator);
       return new JBIterator<JBIterable<E>>() {
         JBIterator<E> it;
         E stored;
@@ -717,7 +757,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
           E tmp = stored;
           stored = null;
           return of(tmp).append(once((it = JBIterator.wrap(orig)).takeWhile(e -> {
-            boolean sep = condition.value(e);
+            boolean sep = predicate.test(e);
             int st0 = st;
             st = st0 < 0 && sep ? -2 : st0 > 0 && !sep ? 2 : sep ? -1 : 1;
             boolean result;
@@ -746,6 +786,15 @@ public abstract class JBIterable<E> implements Iterable<E> {
         }
       };
     });
+  }
+
+  /**
+   * Splits this {@code JBIterable} into iterable of iterables with separators matched by the specified condition.
+   * All iterations are performed in-place without data copying.
+   */
+  @ApiStatus.Obsolete
+  public final @NotNull JBIterable<@NotNull JBIterable<E>> split(@NotNull Split mode, @NotNull Condition<? super E> separator) {
+    return split(mode, (java.util.function.Predicate<? super E>) separator);
   }
 
   /**
