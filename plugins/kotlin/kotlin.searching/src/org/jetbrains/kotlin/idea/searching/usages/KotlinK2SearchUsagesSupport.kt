@@ -251,6 +251,10 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         return when (val element = method.unwrapped) {
             is PsiMethod -> element.findDeepestSuperMethods().toList()
             is KtCallableDeclaration -> analyze(element) {
+                // it's not possible to create symbol for function type parameter, so we need to process this case separately
+                // see KTIJ-25760
+                if (method is KtParameter && method.isFunctionTypeParameter) return emptyList()
+
                 val symbol = element.getSymbol() as? KtCallableSymbol ?: return emptyList()
 
                 val allSuperMethods = symbol.getAllOverriddenSymbols()

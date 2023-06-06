@@ -2259,6 +2259,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
+            public static class TestKotlinFunctionTypeParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinFunctionTypeParameterUsages.0.kt")
+                public void testKotlinFunctionTypeParameterUsages() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinFunctionTypeParameterUsages.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestKotlinHighlightParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
