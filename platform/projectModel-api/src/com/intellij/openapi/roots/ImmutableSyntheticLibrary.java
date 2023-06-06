@@ -10,20 +10,21 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 @ApiStatus.Internal
 class ImmutableSyntheticLibrary extends SyntheticLibrary {
   private final List<VirtualFile> mySourceRoots;
   private final List<VirtualFile> myBinaryRoots;
   private final Set<VirtualFile> myExcludedRoots;
-  private final Condition<? super VirtualFile> myExcludeCondition;
+  private final Predicate<? super VirtualFile> myExcludeCondition;
   private final int hashCode;
 
   ImmutableSyntheticLibrary(@Nullable String comparisonId,
                             @NotNull List<? extends VirtualFile> sourceRoots,
                             @NotNull List<? extends VirtualFile> binaryRoots,
                             @NotNull Set<? extends VirtualFile> excludedRoots,
-                            @Nullable Condition<? super VirtualFile> excludeCondition,
+                            @Nullable Predicate<? super VirtualFile> excludeCondition,
                             @Nullable ExcludeFileCondition constantCondition) {
     super(comparisonId, constantCondition);
     mySourceRoots = immutableOrEmptyList(sourceRoots);
@@ -31,6 +32,19 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
     myExcludedRoots = ContainerUtil.unmodifiableOrEmptySet(excludedRoots);
     myExcludeCondition = excludeCondition;
     hashCode = Objects.hash(mySourceRoots, myBinaryRoots, myExcludedRoots, myExcludeCondition);
+  }
+
+  /**
+   * @deprecated use {@link ImmutableSyntheticLibrary#ImmutableSyntheticLibrary(String, List, List, Set, Predicate, ExcludeFileCondition)} instead
+   */
+  @Deprecated
+  ImmutableSyntheticLibrary(@Nullable String comparisonId,
+                            @NotNull List<? extends VirtualFile> sourceRoots,
+                            @NotNull List<? extends VirtualFile> binaryRoots,
+                            @NotNull Set<? extends VirtualFile> excludedRoots,
+                            @Nullable Condition<? super VirtualFile> excludeCondition,
+                            @Nullable ExcludeFileCondition constantCondition) {
+    this(comparisonId, sourceRoots, binaryRoots, excludedRoots, (Predicate<? super VirtualFile>) excludeCondition, constantCondition);
   }
 
   @NotNull
