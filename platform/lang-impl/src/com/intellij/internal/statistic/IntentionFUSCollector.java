@@ -10,9 +10,8 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.eventLog.events.EventId3;
-import com.intellij.internal.statistic.eventLog.events.EventPair;
-import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -28,12 +27,12 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public final class IntentionFUSCollector extends CounterUsagesCollector {
-  private final static EventLogGroup GROUP = new EventLogGroup("intentions", 58);
+  private final static EventLogGroup GROUP = new EventLogGroup("intentions", 59);
   private final static EventId3<Class<?>, PluginInfo, Language> CALLED =
     GROUP.registerEvent("called", EventFields.Class("id"), EventFields.PluginInfo, EventFields.Language);
   private final static EventId3<Class<?>, PluginInfo, Language> SHOWN =
     GROUP.registerEvent("shown", EventFields.Class("id"), EventFields.PluginInfo, EventFields.Language);
-  private static final VarargEventId POPUP_DELAY = GROUP.registerVarargEvent("popup_delay", EventFields.DurationMs, EventFields.FileType);
+  private static final EventId2<Long, FileType> POPUP_DELAY = GROUP.registerEvent("popup_delay", EventFields.DurationMs, EventFields.FileType);
 
   @Override
   public EventLogGroup getGroup() {
@@ -84,7 +83,7 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
    * Report time between Alt-Enter invocation and the intention popup appearing onscreen
    */
   public static void reportPopupDelay(@NotNull Project project, long delayMs, @NotNull FileType fileType) {
-    POPUP_DELAY.log(project, new EventPair<>(EventFields.DurationMs, delayMs), new EventPair<>(EventFields.FileType, fileType));
+    POPUP_DELAY.log(project, delayMs, fileType);
   }
 }
 
