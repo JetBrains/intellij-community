@@ -8,6 +8,35 @@ attrib
 az
 brew
 cargo
+cargo bench
+cargo build
+cargo check
+cargo clean
+cargo doc
+cargo fetch
+cargo fix
+cargo run
+cargo rustc
+cargo rustdoc
+cargo test
+cargo report
+cargo add
+cargo generate-lockfile
+cargo locale-project
+cargo metadata
+cargo pkgid
+cargo remove
+cargo tree
+cargo update
+cargo vendor
+cargo verify-project
+cargo init
+cargo install
+cargo new
+cargo search
+cargo uninstall
+cargo help
+cargo version
 cat
 cd
 chkdsk
