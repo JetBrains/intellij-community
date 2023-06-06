@@ -89,6 +89,7 @@ import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
+import kotlin.system.measureTimeMillis
 
 @Suppress("OVERRIDE_DEPRECATION")
 @Internal
@@ -312,6 +313,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   protected open fun closeProject(project: Project, saveProject: Boolean = true, dispose: Boolean = true, checkCanClose: Boolean): Boolean {
+    val projectCloseStartedMs = System.currentTimeMillis()
+
     val app = ApplicationManager.getApplication()
     check(!app.isWriteAccessAllowed) {
       "Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful"
@@ -359,20 +362,26 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
     closePublisher.projectClosingBeforeSave(project)
     publisher.projectClosingBeforeSave(project)
-    if (saveProject) {
-      FileDocumentManager.getInstance().saveAllDocuments()
-      SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project)
+
+    val projectSaveSettingsDurationMs = measureTimeMillis {
+      if (saveProject) {
+        FileDocumentManager.getInstance().saveAllDocuments()
+        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project)
+      }
     }
 
     if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
       return false
     }
 
-    // somebody can start progress here, do not wrap in write action
-    fireProjectClosing(project)
-    if (project is ProjectImpl) {
-      cancelAndJoinBlocking(project)
+    val projectClosingDurationMs = measureTimeMillis {
+      // somebody can start progress here, do not wrap in write action
+      fireProjectClosing(project)
+      if (project is ProjectImpl) {
+        cancelAndJoinBlocking(project)
+      }
     }
+
     app.runWriteAction {
       removeFromOpened(project)
       @Suppress("GrazieInspection")
@@ -388,9 +397,17 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         ZipHandler.clearFileAccessorCache()
       }
       LaterInvocator.purgeExpiredItems()
-      if (dispose) {
-        Disposer.dispose(project)
+
+      val projectDisposeDurationMs = measureTimeMillis {
+        if (dispose) {
+          Disposer.dispose(project)
+        }
       }
+      LifecycleUsageTriggerCollector.onProjectClosedAndDisposed(project,
+                                                                projectCloseStartedMs,
+                                                                projectSaveSettingsDurationMs,
+                                                                projectClosingDurationMs,
+                                                                projectDisposeDurationMs)
     }
     return true
   }
@@ -1016,7 +1033,6 @@ private fun fireProjectClosed(project: Project) {
     LOG.debug("projectClosed")
   }
 
-  LifecycleUsageTriggerCollector.onProjectClosed(project)
   closePublisher.projectClosed(project)
   publisher.projectClosed(project)
   @Suppress("DEPRECATION")
