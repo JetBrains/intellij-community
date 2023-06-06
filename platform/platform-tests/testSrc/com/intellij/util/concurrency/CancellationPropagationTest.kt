@@ -18,6 +18,9 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import com.intellij.util.timeoutRunBlocking
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import org.junit.jupiter.api.Assertions.*
@@ -583,4 +586,198 @@ class CancellationPropagationTest {
     job.join()
     assertTrue(cancelled)
   }
+
+  @SystemProperty("intellij.progress.task.ignoreHeadless", "true")
+  @Test
+  fun `Tasks are awaited`() = timeoutRunBlocking {
+    doTest {
+      object : Task.Modal(null, "", true) {
+        override fun run(indicator: ProgressIndicator) {
+          it()
+        }
+      }.queue()
+    }
+  }
+
+  class MyException : RuntimeException("intentional error")
+
+  @Test
+  fun `blockingContextScope saves error`(): Unit =
+    timeoutRunBlocking {
+      try {
+        blockingContextScope {
+          ApplicationManager.getApplication().executeOnPooledThread {
+            throw MyException()
+          }
+        }
+      }
+      catch (e: TestLoggerAssertionError) {
+        // TODO: We need to reconsider approach to context propagation in executors
+        // the capturing should occur after top-level error-handling in the stack,
+        // because cancellation framework changes thrown exceptions
+        // desired outcome: the catch arm should catch MyException, but not TestLoggerAssertionError
+        assertInstanceOf<MyException>(e.cause)
+      }
+    }
+
+
+  @Test
+  fun `blockingContextScope fails with exception even in cancelled state`(): Unit = timeoutRunBlocking {
+    // this scenario represents a case where an error occurs during the cleanup after cancellation
+    // we should not silently swallow the error, since it is important to know that the cleanup went wrong
+    try {
+      blockingContextScope {
+        val job = currentThreadContext().job
+        ApplicationManager.getApplication().executeOnPooledThread {
+          try {
+            job.cancel()
+            Cancellation.checkCancelled()
+            fail("should be cancelled")
+          }
+          catch (e: ProcessCanceledException) {
+            throw MyException()
+          }
+        }
+      }
+    }
+    catch (e: TestLoggerAssertionError) {
+      // TODO: the same as in `blockingContextScope save error`
+      assertInstanceOf<MyException>(e.cause)
+    }
+  }
+
+  @Test
+  fun `merging update queue waits its children`(): Unit = timeoutRunBlocking {
+    val queue = MergingUpdateQueue("test queue", 200, true, null)
+    val allowCompleteUpdate = arrayOf(AtomicBoolean(false), AtomicBoolean(false))
+    val updateCompleted = arrayOf(AtomicBoolean(false), AtomicBoolean(false))
+
+    val queueingDone = Job()
+    val blockingScopeJob = withRootJob {
+      val currentJob = currentThreadContext().job
+
+      for (i in 0..1) {
+        queue.queue(Update.create(i) {
+          while (!allowCompleteUpdate[i].get()) {
+            // wait for permission
+          }
+          assert(currentJob.isActive) // parent is not finished
+          assertCurrentJobIsChildOf(currentJob)
+          updateCompleted[i].set(true)
+        })
+      }
+
+      queueingDone.complete()
+    }
+
+    queueingDone.join()
+    assertTrue(blockingScopeJob.isActive)
+    repeat(2) { assertFalse(updateCompleted[it].get()) } // updates are not finished
+
+    delay(400)
+    assertTrue(blockingScopeJob.isActive)
+    repeat(2) { assertFalse(updateCompleted[it].get()) } // updates are not finished even after queue starts processing
+
+    allowCompleteUpdate[0].set(true)
+    delay(100)
+    assertTrue(updateCompleted[0].get()) // first activity should be finished
+    assertFalse(updateCompleted[1].get()) // second activity is running
+    assertTrue(blockingScopeJob.isActive)
+
+    allowCompleteUpdate[1].set(true)
+    blockingScopeJob.join()
+    assertTrue(updateCompleted[1].get())
+    assertTrue(queue.isEmpty)
+  }
+
+  @OptIn(DelicateCoroutinesApi::class)
+  @Test
+  fun `merging update queue cancels spawned tasks`() {
+    val errorMessage = "intentionally failed"
+    val currentHandler = Thread.getDefaultUncaughtExceptionHandler()
+    try {
+      Thread.setDefaultUncaughtExceptionHandler { t, e ->
+        assertTrue(EDT.isEdt(t))
+        assertEquals(errorMessage, e.message)
+      }
+      LoggedErrorProcessor.executeWith<IllegalStateException>(object : LoggedErrorProcessor() {
+        override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): MutableSet<Action> {
+          assertEquals(errorMessage, t!!.message)
+          return Action.NONE
+        }
+      })
+      {
+        runBlocking {
+          val queue = MergingUpdateQueue("test queue", 100, true, null)
+          var updateAllowedToComplete by AtomicReference(false)
+          var secondUpdateExecuted by AtomicReference(false)
+          var immortalExecuted by AtomicReference(false)
+          val immortalSemaphore = Job(null)
+
+          supervisorScope {
+            val queuingDone = Job()
+            val deferred = GlobalScope.async {
+              blockingContextScope {
+                queue.queue(Update.create("id") {
+                  while (!updateAllowedToComplete) {
+                    // wait for permission
+                  }
+                  throw IllegalStateException(errorMessage)
+                })
+                queue.queue(Update.create("id2") {
+                  secondUpdateExecuted = true
+                })
+                queuingDone.complete()
+              }
+            }
+            queue.queue(Update.create("immortal") {
+              immortalExecuted = true
+              immortalSemaphore.complete()
+            })
+
+            queuingDone.join()
+            assertTrue(deferred.isActive)
+
+            updateAllowedToComplete = true
+            try {
+              deferred.await()
+              fail<Unit>("The first update should throw")
+            }
+            catch (e: IllegalStateException) {
+              assertEquals("intentionally failed", e.message)
+            }
+            assertTrue(queue.isEmpty) // all the tasks were processed
+            assertFalse(secondUpdateExecuted) // this task should not be executed
+            immortalSemaphore.join()
+            assertTrue(immortalExecuted) // but other tasks do not get cancelled
+          }
+          pumpEDT()
+        }
+      }
+    }
+    finally {
+      Thread.setDefaultUncaughtExceptionHandler(currentHandler)
+    }
+  }
+
+  @Test
+  fun `eating cancels tasks`(): Unit = timeoutRunBlocking {
+    val queue = MergingUpdateQueue("test queue", 100, true, null)
+    var firstExecuted by AtomicReference(false)
+    var secondExecuted by AtomicReference(false)
+
+    blockingContextScope {
+      queue.queue(Update.create("id") {
+        firstExecuted = true
+      })
+      queue.queue(Update.create("id") {
+        secondExecuted = true
+      })
+    }
+    // so `blockingContextScope` exists after all its spawned tasks exit
+    assert(queue.isEmpty)
+    assertFalse(firstExecuted) // eaten by the second
+    assertTrue(secondExecuted) // not eaten and executed
+  }
+
 }
