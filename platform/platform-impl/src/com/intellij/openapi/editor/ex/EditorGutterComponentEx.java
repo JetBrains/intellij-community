@@ -81,8 +81,14 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract void setForceShowRightFreePaintersArea(boolean value);
 
+  /**
+   * Set the desired left area width or reset by passing <code>-1</code> value.
+   */
   public abstract void setLeftFreePaintersAreaWidth(int widthInPixels);
 
+  /**
+   * Set the desired right area width or reset by passing <code>-1</code> value.
+   */
   public abstract void setRightFreePaintersAreaWidth(int widthInPixels);
 
   public abstract void setInitialIconAreaWidth(int width);
