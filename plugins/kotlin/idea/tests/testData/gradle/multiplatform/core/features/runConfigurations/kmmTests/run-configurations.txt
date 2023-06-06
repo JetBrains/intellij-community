@@ -14,7 +14,6 @@ project.commonTest
     tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "CommonTest"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: CommonTest
     name: CommonTest.test in commonTest - failure
@@ -22,7 +21,6 @@ project.commonTest
     tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "CommonTest.test in commonTest - failure"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: CommonTest
     name: CommonTest.test in commonTest - success
@@ -30,7 +28,6 @@ project.commonTest
     tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "CommonTest.test in commonTest - success"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
 
 project.iosArm64Main
@@ -50,7 +47,6 @@ project.iosTest
     tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "IosTest"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: IosTest
     name: IosTest.test in iosTest - failure
@@ -58,7 +54,6 @@ project.iosTest
     tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "IosTest.test in iosTest - failure"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: IosTest
     name: IosTest.test in iosTest - success
@@ -66,7 +61,6 @@ project.iosTest
     tasks: [:cleanIosSimulatorArm64Test, :iosSimulatorArm64Test, --tests, "IosTest.test in iosTest - success"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
 
 project.iosX64Main
@@ -82,7 +76,6 @@ project.jvmTest
     tasks: [:cleanJvmTest, :jvmTest, --tests, "JvmTest"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: JvmTest
     name: JvmTest.test in jvmTest - failure
@@ -90,7 +83,6 @@ project.jvmTest
     tasks: [:cleanJvmTest, :jvmTest, --tests, "JvmTest.test in jvmTest - failure"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
     fqName: JvmTest
     name: JvmTest.test in jvmTest - success
@@ -98,7 +90,6 @@ project.jvmTest
     tasks: [:cleanJvmTest, :jvmTest, --tests, "JvmTest.test in jvmTest - success"]
     scriptParameters:
     isDebugAllEnabled: false
-    isRunAsTest: true
 
 
 project.nativeMain
@@ -112,4 +103,3 @@ Test configuration:
 - Showing runConfiguration detail: tasks
 - Showing runConfiguration detail: scriptParameters
 - Showing runConfiguration detail: isDebugAllEnabled
-- Showing runConfiguration detail: isRunAsTest

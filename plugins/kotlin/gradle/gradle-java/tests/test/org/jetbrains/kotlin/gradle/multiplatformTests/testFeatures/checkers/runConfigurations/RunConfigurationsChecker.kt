@@ -30,7 +30,6 @@ object RunConfigurationsChecker : WorkspaceModelChecker<RunConfigurationsCheckCo
             includeDetail("tasks") { (configuration as? GradleRunConfiguration)?.settings?.taskNames }
             includeDetail("scriptParameters") { (configuration as? GradleRunConfiguration)?.settings?.scriptParameters }
             includeDetail("isDebugAllEnabled") { (configuration as? GradleRunConfiguration)?.isDebugAllEnabled }
-            includeDetail("isRunAsTest") { (configuration as? GradleRunConfiguration)?.isRunAsTest }
         }
     }
 
