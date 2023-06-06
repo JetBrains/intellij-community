@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 
 public class BuildUsageCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("build.jps", 1);
+  private static final EventLogGroup GROUP = new EventLogGroup("build.jps", 2);
   private static final EventId1<Long> REBUILD_COMPLETED = GROUP.registerEvent("rebuild.completed", EventFields.DurationMs);
   private static final EventId1<Long> BUILD_COMPLETED = GROUP.registerEvent("build.completed", EventFields.DurationMs);
   private static final EventId1<Long> AUTO_BUILD_COMPLETED = GROUP.registerEvent("autobuild.completed", EventFields.DurationMs);
