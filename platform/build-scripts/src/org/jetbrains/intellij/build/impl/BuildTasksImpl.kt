@@ -1018,10 +1018,9 @@ private suspend fun checkClassFiles(targetFile: Path, context: BuildContext) {
   }
 
   if (forbiddenSubPaths.isNotEmpty() || forbiddenSubPathExceptions.isNotEmpty()) {
-    require(context.productProperties.scrambleMainJar) {
-      "productProperties.scrambleMainJar is set to false, but scrambling-specific productProperties are not empty " +
-      "(forbiddenClassFileSubPaths=$forbiddenSubPaths, forbiddenClassFileSubPathExceptions=$forbiddenSubPathExceptions)"
-    }
+    val forbiddenString = forbiddenSubPaths.let { "(${it.size}): ${it.joinToString()}" }
+    val exceptionsString = forbiddenSubPathExceptions.let { "(${it.size}): ${it.joinToString()}" }
+    context.messages.warning("checkClassFiles: forbiddenSubPaths $forbiddenString, exceptions $exceptionsString")
   }
 
   if (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty()) {
