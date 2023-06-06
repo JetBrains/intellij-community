@@ -168,7 +168,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     @RequiresEdt
     fun importMavenProjectsEdt(): List<Module> {
       val importResult = this.doImport()
-      VirtualFileManager.getInstance().syncRefresh()
+      getVirtualFileManager().syncRefresh()
       performPostImportTasks(importResult.postTasks)
       return importResult.createdModules
     }
@@ -177,7 +177,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     suspend fun importMavenProjectsBg(): List<Module> {
       val importResult = withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
         val importResult = blockingContext { doImport() }
-        val fm = VirtualFileManager.getInstance()
+        val fm = getVirtualFileManager()
         val noBackgroundMode = MavenUtil.isNoBackgroundMode()
         val shouldKeepTasksAsynchronousInHeadlessMode = CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
         if (noBackgroundMode && !shouldKeepTasksAsynchronousInHeadlessMode) {
@@ -525,7 +525,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
     }
 
-    withContext(Dispatchers.EDT) { VirtualFileManager.getInstance().asyncRefresh() }
+    withContext(Dispatchers.EDT) { getVirtualFileManager().asyncRefresh() }
 
     return result
   }
@@ -552,5 +552,12 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     finally {
       downloadConsole.finishDownload()
     }
+  }
+
+  private fun getVirtualFileManager() : VirtualFileManager {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return ApplicationManager.getApplication().getService(VirtualFileManager::class.java)
+    }
+    return VirtualFileManager.getInstance()
   }
 }
