@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.function.Predicate;
 
 /**
  * {@link #remove} throws {@link IllegalStateException} if called after {@link #hasNext}
@@ -14,15 +15,23 @@ import java.util.NoSuchElementException;
  */
 public final class FilteringIterator<Dom, E extends Dom> implements PeekableIterator<E> {
   private final Iterator<? extends Dom> myDelegate;
-  private final Condition<? super Dom> myCondition;
+  private final Predicate<? super Dom> myCondition;
   private boolean myNextObtained;
   private boolean myCurrentIsValid;
   private Dom myCurrent;
   private Boolean myCurrentPassedFilter;
 
-  public FilteringIterator(@NotNull Iterator<? extends Dom> delegate, @NotNull Condition<? super Dom> condition) {
+  public FilteringIterator(@NotNull Iterator<? extends Dom> delegate, @NotNull Predicate<? super Dom> predicate) {
     myDelegate = delegate;
-    myCondition = condition;
+    myCondition = predicate;
+  }
+
+  /**
+   * @deprecated use {@link FilteringIterator#FilteringIterator(Iterator, Predicate)} instead
+   */
+  @Deprecated
+  public FilteringIterator(@NotNull Iterator<? extends Dom> delegate, @NotNull Condition<? super Dom> condition) {
+    this(delegate, (Predicate<? super Dom>) condition);
   }
 
   private void obtainNext() {
@@ -56,7 +65,7 @@ public final class FilteringIterator<Dom, E extends Dom> implements PeekableIter
     if (myCurrentPassedFilter != null) {
       return myCurrentPassedFilter;
     }
-    boolean passed = myCondition.value(myCurrent);
+    boolean passed = myCondition.test(myCurrent);
     myCurrentPassedFilter = passed;
     return passed;
   }
