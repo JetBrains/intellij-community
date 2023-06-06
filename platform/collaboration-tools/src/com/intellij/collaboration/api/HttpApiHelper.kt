@@ -21,6 +21,7 @@ interface HttpApiHelper {
   fun request(uri: URI): HttpRequest.Builder
 
   suspend fun <T> sendAndAwaitCancellable(request: HttpRequest, bodyHandler: HttpResponse.BodyHandler<T>): HttpResponse<out T>
+  suspend fun sendAndAwaitCancellable(request: HttpRequest): HttpResponse<out Unit>
 
   suspend fun loadImage(request: HttpRequest): HttpResponse<out Image>
 }
@@ -60,6 +61,11 @@ private class HttpApiHelperImpl(
       throw ce
     }
   }
+
+  override suspend fun sendAndAwaitCancellable(request: HttpRequest): HttpResponse<out Unit> =
+    sendAndAwaitCancellable(request, InflatedStreamReadingBodyHandler { responseInfo, stream ->
+      HttpClientUtil.readSuccessResponseWithLogging(logger, request, responseInfo, stream) {}
+    })
 
   override suspend fun loadImage(request: HttpRequest): HttpResponse<out Image> {
     val bodyHandler = InflatedStreamReadingBodyHandler { responseInfo, stream ->

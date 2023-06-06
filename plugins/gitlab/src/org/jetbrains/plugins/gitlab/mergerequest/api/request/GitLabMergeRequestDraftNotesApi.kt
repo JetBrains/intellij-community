@@ -26,7 +26,7 @@ suspend fun GitLabApi.Rest.updateDraftNote(project: GitLabProjectCoordinates,
       "note" to body
     )))
     .build()
-  return sendAndAwaitCancellable(request, BodyHandlers.replacing(Unit))
+  return sendAndAwaitCancellable(request)
 }
 
 suspend fun GitLabApi.Rest.deleteDraftNote(project: GitLabProjectCoordinates,
@@ -35,7 +35,7 @@ suspend fun GitLabApi.Rest.deleteDraftNote(project: GitLabProjectCoordinates,
   : HttpResponse<out Unit> {
   val uri = getMergeRequestDraftNotesUri(project, mr).resolveRelative(noteId.toString())
   val request = request(uri).DELETE().build()
-  return sendAndAwaitCancellable(request, BodyHandlers.replacing(Unit))
+  return sendAndAwaitCancellable(request)
 }
 
 suspend fun GitLabApi.Rest.submitDraftNotes(project: GitLabProjectCoordinates,
@@ -43,5 +43,5 @@ suspend fun GitLabApi.Rest.submitDraftNotes(project: GitLabProjectCoordinates,
   : HttpResponse<out Unit> {
   val uri = getMergeRequestDraftNotesUri(project, mr).resolveRelative("bulk_publish")
   val request = request(uri).POST(BodyPublishers.noBody()).build()
-  return sendAndAwaitCancellable(request, BodyHandlers.replacing(Unit))
+  return sendAndAwaitCancellable(request)
 }
