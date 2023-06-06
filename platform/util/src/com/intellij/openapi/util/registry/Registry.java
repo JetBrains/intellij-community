@@ -3,12 +3,10 @@ package com.intellij.openapi.util.registry;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.MathUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.io.IOException;
@@ -185,22 +183,28 @@ public final class Registry  {
     return state;
   }
 
-  @ApiStatus.Internal
-  public static @NotNull Map<String, String> loadState(@Nullable Element state, @Nullable Map<String, String> earlyAccess) {
-    Registry registry = ourInstance;
+  private static @NotNull Map<String, String> fromState(@NotNull Element state){
+    Map<String, String> map = new HashMap<>();
+    for (Element eachEntry : state.getChildren("entry")) {
+      String key = eachEntry.getAttributeValue("key");
+      String value = eachEntry.getAttributeValue("value");
+      if (key != null && value != null) {
+        map.put(key, value);
+      }
+    }
+    return map;
+  }
 
+  private static @NotNull Map<String, String> loadStateInternal(@NotNull Registry registry, @Nullable Element state, @Nullable Map<String, String> earlyAccess){
     Map<String, String> userProperties = registry.myUserProperties;
     userProperties.clear();
     if (state != null) {
-      for (Element eachEntry : state.getChildren("entry")) {
-        String key = eachEntry.getAttributeValue("key");
-        String value = eachEntry.getAttributeValue("value");
-        if (key != null && value != null) {
-          RegistryValue registryValue = registry.doGet(key);
-          if (registryValue.isChangedFromDefault(value, registry)) {
-            userProperties.put(key, value);
-            registryValue.resetCache();
-          }
+      Map<String, String> map = fromState(state);
+      for (Map.Entry<String, String> entry : map.entrySet()) {
+        RegistryValue registryValue = registry.doGet(entry.getKey());
+        if (registryValue.isChangedFromDefault(entry.getValue(), registry)) {
+          userProperties.put(entry.getKey(), entry.getValue());
+          registryValue.resetCache();
         }
       }
     }
@@ -211,6 +215,40 @@ public final class Registry  {
     }
     registry.isLoaded = true;
     return userProperties;
+  }
+
+  private static @NotNull Map<String, String> updateStateInternal(@NotNull Registry registry, @Nullable Element state) {
+    Map<String, String> userProperties = registry.myUserProperties;
+    if (state == null) {
+      userProperties.clear();
+      return userProperties;
+    }
+    Map<String, String> map = fromState(state);
+    Set<String> keys2process = new HashSet<>(userProperties.keySet());
+    for (Map.Entry<String, String> entry : map.entrySet()) {
+      RegistryValue registryValue = registry.doGet(entry.getKey());
+      String currentValue = registryValue.get(entry.getKey(), null, true);
+      if (!StringUtil.equals(currentValue, entry.getValue())) {
+        registryValue.setValue(entry.getValue());
+      }
+      keys2process.remove(entry.getKey());
+    }
+    //keys that are not in the state, we need to reset them to default value
+    for (String key : keys2process) {
+      registry.doGet(key).resetToDefault();
+    }
+
+    return userProperties;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Map<String, String> loadState(@Nullable Element state, @Nullable Map<String, String> earlyAccess) {
+    Registry registry = ourInstance;
+    if (!registry.isLoaded) {
+      return loadStateInternal(registry, state, earlyAccess);
+    } else {
+      return updateStateInternal(registry, state);
+    }
   }
 
   @ApiStatus.Internal
@@ -310,5 +348,12 @@ public final class Registry  {
 
   @NotNull RegistryValueListener getValueChangeListener() {
     return valueChangeListener;
+  }
+
+  @TestOnly
+  void reset(){
+    myUserProperties.clear();
+    myValues.clear();
+    isLoaded = false;
   }
 }
