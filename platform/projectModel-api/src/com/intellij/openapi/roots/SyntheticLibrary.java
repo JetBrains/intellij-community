@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 
 /**
  * A lightweight library definition comparing to {@link com.intellij.openapi.roots.libraries.Library}.
@@ -154,28 +155,46 @@ public abstract class SyntheticLibrary {
 
   @NotNull
   public static SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots) {
-    return newImmutableLibrary(sourceRoots, Collections.emptySet(), null);
+    return newImmutableLibrary(sourceRoots, null, Collections.emptySet());
+  }
+
+  public static SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
+                                                     @Nullable Predicate<? super VirtualFile> excludeCondition,
+                                                     @NotNull Set<? extends VirtualFile> excludedRoots) {
+    return newImmutableLibrary(sourceRoots, Collections.emptyList(), excludeCondition, excludedRoots);
   }
 
   /**
    * @see SyntheticLibrary#newImmutableLibrary(String, List, List, Set, ExcludeFileCondition)
+   * @deprecated use {@link SyntheticLibrary#newImmutableLibrary(List, Predicate, Set)}
    */
+  @Deprecated
   @NotNull
   public static SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
                                                      @NotNull Set<? extends VirtualFile> excludedRoots,
                                                      @Nullable Condition<? super VirtualFile> excludeCondition) {
-    return newImmutableLibrary(sourceRoots, Collections.emptyList(), excludedRoots, excludeCondition);
+    return newImmutableLibrary(sourceRoots, excludeCondition, excludedRoots);
+  }
+
+  @NotNull
+  public static SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
+                                                     @NotNull List<? extends VirtualFile> binaryRoots,
+                                                     @Nullable Predicate<? super VirtualFile> excludeCondition,
+                                                     @NotNull Set<? extends VirtualFile> excludedRoots) {
+    return new ImmutableSyntheticLibrary(null, sourceRoots, binaryRoots, excludedRoots, excludeCondition, null);
   }
 
   /**
    * @see SyntheticLibrary#newImmutableLibrary(String, List, List, Set, ExcludeFileCondition)
+   * @deprecated use {@link SyntheticLibrary#newImmutableLibrary(List, List, Predicate, Set)} instead
    */
+  @Deprecated
   @NotNull
   public static SyntheticLibrary newImmutableLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
                                                      @NotNull List<? extends VirtualFile> binaryRoots,
                                                      @NotNull Set<? extends VirtualFile> excludedRoots,
                                                      @Nullable Condition<? super VirtualFile> excludeCondition) {
-    return new ImmutableSyntheticLibrary(null, sourceRoots, binaryRoots, excludedRoots, excludeCondition, null);
+    return newImmutableLibrary(sourceRoots, binaryRoots, excludeCondition, excludedRoots);
   }
 
   /**
@@ -192,7 +211,7 @@ public abstract class SyntheticLibrary {
                                                      @NotNull List<? extends VirtualFile> binaryRoots,
                                                      @NotNull Set<? extends VirtualFile> excludedRoots,
                                                      @Nullable ExcludeFileCondition excludeCondition) {
-    return new ImmutableSyntheticLibrary(comparisonId, sourceRoots, binaryRoots, excludedRoots, null, excludeCondition);
+    return new ImmutableSyntheticLibrary(comparisonId, sourceRoots, binaryRoots, excludedRoots, (Predicate<? super VirtualFile>) null, excludeCondition);
   }
 
   @NotNull

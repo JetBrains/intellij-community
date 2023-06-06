@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class JavaSyntheticLibrary extends ImmutableSyntheticLibrary {
 
@@ -13,6 +14,6 @@ public class JavaSyntheticLibrary extends ImmutableSyntheticLibrary {
                               @NotNull List<? extends VirtualFile> sourceRoots,
                               @NotNull List<? extends VirtualFile> binaryRoots,
                               @NotNull Set<? extends VirtualFile> excludedRoots) {
-    super(comparisonId, sourceRoots, binaryRoots, excludedRoots, null, null);
+    super(comparisonId, sourceRoots, binaryRoots, excludedRoots, (Predicate<? super VirtualFile>) null, null);
   }
 }
