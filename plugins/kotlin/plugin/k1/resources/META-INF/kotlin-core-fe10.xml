@@ -78,8 +78,6 @@
     <codeInsight.blockingMethodChecker
             implementation="org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingMethodChecker"/>
 
-    <typeDeclarationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinTypeDeclarationProvider"/>
-
     <codeInsight.implementMethod language="kotlin"
                                  implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler"/>
     <codeInsight.overrideMethod language="kotlin"
