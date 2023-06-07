@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.getValue
 import com.intellij.util.setValue

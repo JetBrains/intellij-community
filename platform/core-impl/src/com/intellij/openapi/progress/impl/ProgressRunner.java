@@ -454,15 +454,6 @@ public final class ProgressRunner<R> {
         }
         return Unit.INSTANCE;
       });
-      // completion of the future completes the Job
-      resultFuture.whenComplete((result, throwable) -> {
-        if (throwable == null) {
-          childJob.complete();
-        }
-        else {
-          childJob.completeExceptionally(throwable);
-        }
-      });
     }
     progressIndicatorFuture.whenComplete((progressIndicator, throwable) -> {
       if (throwable != null) {
@@ -480,7 +471,11 @@ public final class ProgressRunner<R> {
       Runnable contextRunnable = childContext.equals(EmptyCoroutineContext.INSTANCE) ? runnable : (ContextAwareRunnable)() -> {
         CoroutineContext effectiveContext = childContext.plus(asContextElement(progressIndicator.getModalityState()));
         try (AccessToken ignored = ThreadContext.installThreadContext(effectiveContext, false)) {
-          runnable.run();
+          if (childJob != null) {
+            Propagation.runAsCoroutine(childJob, runnable);
+          } else {
+            runnable.run();
+          }
         }
       };
       switch (myThreadToUse) {
