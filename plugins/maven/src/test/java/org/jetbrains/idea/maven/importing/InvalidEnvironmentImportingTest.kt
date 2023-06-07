@@ -23,9 +23,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   private val myEvents: MutableList<BuildEvent> = ArrayList()
 
   public override fun setUp() {
-    if (!isWorkspaceImport) {
-      MavenUtil.setNoBackgroundMode()
-    }
+    MavenUtil.setUpdateSuspendable()
     super.setUp()
     myTestSyncViewManager = object : SyncViewManager(myProject) {
       override fun onEvent(buildId: Any, event: BuildEvent) {
@@ -39,7 +37,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   override fun tearDown() {
     RunAll.runAll(
       { super.tearDown() },
-      { MavenUtil.resetNoBackgroundMode() },
+      { MavenUtil.resetUpdateSuspendable() },
     )
   }
 
