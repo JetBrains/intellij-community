@@ -8,6 +8,7 @@ import com.intellij.BundleBase
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.diagnostic.*
 import com.intellij.ide.*
+import com.intellij.ide.bootstrap.InitAppContext
 import com.intellij.ide.bootstrap.preloadCriticalServices
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
 import com.intellij.ide.gdpr.EndUserAgreement

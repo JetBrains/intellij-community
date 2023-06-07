@@ -8,6 +8,7 @@ package com.intellij.idea
 import com.intellij.diagnostic.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
+import com.intellij.ide.bootstrap.InitAppContext
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.plugins.PluginSet
