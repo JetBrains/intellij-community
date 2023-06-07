@@ -539,7 +539,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     ExtendableTextComponent.Extension leftExt = new ExtendableTextComponent.Extension() {
       @Override
       public Icon getIcon(boolean hovered) {
-        return AllIcons.Actions.SearchWithHistory;
+        return Registry.is("search.everywhere.footer.extended.info") ? AllIcons.Actions.SearchWithHistory : AllIcons.Actions.Search;
       }
 
       @Override
