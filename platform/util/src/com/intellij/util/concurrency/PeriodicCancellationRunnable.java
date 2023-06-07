@@ -4,6 +4,8 @@ package com.intellij.util.concurrency;
 import kotlinx.coroutines.CompletableJob;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.util.concurrency.Propagation.runAsCoroutine;
+
 final class PeriodicCancellationRunnable implements Runnable {
 
   private final @NotNull CompletableJob myJob;
@@ -16,13 +18,10 @@ final class PeriodicCancellationRunnable implements Runnable {
 
   @Override
   public void run() {
-    try {
+    // don't complete the job, it can be either failed, or cancelled
+    runAsCoroutine(myJob, false, () -> {
       myRunnable.run();
-      // don't complete the job, it can be either failed, or cancelled
-    }
-    catch (Throwable e) {
-      myJob.completeExceptionally(e);
-      throw e;
-    }
+      return null;
+    });
   }
 }
