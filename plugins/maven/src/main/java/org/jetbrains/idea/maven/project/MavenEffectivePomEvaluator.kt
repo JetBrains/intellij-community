@@ -2,19 +2,19 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getWslFile
 import org.jetbrains.idea.maven.utils.MavenWslUtil.resolveWslAware
-import org.jetbrains.idea.maven.utils.withBackgroundProgressIfApplicable
 import java.io.File
 
 class MavenEffectivePomEvaluator {
   companion object {
     @JvmStatic
     suspend fun evaluateEffectivePom(project: Project, mavenProject: MavenProject): String? {
-      return withBackgroundProgressIfApplicable(
+      return withBackgroundProgress(
         project, MavenProjectBundle.message("maven.project.importing.evaluating.effective.pom"), true) {
         val baseDir = MavenUtil.getBaseDir(mavenProject.directoryFile).toString()
         val embeddersManager = MavenProjectsManager.getInstance(project).embeddersManager
@@ -26,11 +26,11 @@ class MavenEffectivePomEvaluator {
             wsl.getWslFile(File(virtualFile.path))
           }
           val res = embedder.evaluateEffectivePom(projectFile!!, profiles.enabledProfiles, profiles.disabledProfiles)
-          return@withBackgroundProgressIfApplicable res!!
+          return@withBackgroundProgress res!!
         }
         catch (e: Exception) {
           MavenLog.LOG.error(e)
-          return@withBackgroundProgressIfApplicable null
+          return@withBackgroundProgress null
         }
       }
     }

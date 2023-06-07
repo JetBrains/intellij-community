@@ -5,14 +5,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.progress.withBackgroundProgress
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -46,22 +42,4 @@ fun performInBackground(action: suspend () -> Unit) {
       action()
     }
   }
-}
-
-/**
- * If [MavenUtil.isNoBackgroundMode] is true, call the action directly.
- * If it is false, call the action inside [withBackgroundProgress].
- * Calling [withBackgroundProgress] in "no background mode" leads to deadlocks.
- * "No background mode" should eventually be eliminated, and then all
- * [withBackgroundProgressIfApplicable] usages should be replaced with [withBackgroundProgress].
- */
-@ApiStatus.Experimental
-suspend fun <T> withBackgroundProgressIfApplicable(
-  project: Project,
-  title: @NlsContexts.ProgressTitle String,
-  cancellable: Boolean,
-  action: suspend CoroutineScope.() -> T
-): T {
-  if (MavenUtil.isNoBackgroundMode()) return action(CoroutineScope(SupervisorJob()))
-  return withBackgroundProgress(project, title, cancellable, action)
 }

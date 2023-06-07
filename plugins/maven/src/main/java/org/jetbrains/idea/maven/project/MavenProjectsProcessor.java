@@ -56,26 +56,18 @@ public class MavenProjectsProcessor {
   public void scheduleTask(MavenProjectsProcessorTask task) {
     if (myQueue.contains(task)) return;
     myQueue.add(task);
-
-    if (!MavenUtil.isNoBackgroundMode()) {
-      startProcessing();
-    }
+    startProcessing();
   }
 
   public void waitForCompletion() {
     if (isStopped) return;
 
-    if (MavenUtil.isNoBackgroundMode()) {
-      startProcessing();
-    }
-    else {
-      final Semaphore semaphore = new Semaphore();
-      semaphore.down();
-      scheduleTask(new MavenProjectsProcessorWaitForCompletionTask(semaphore));
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    scheduleTask(new MavenProjectsProcessorWaitForCompletionTask(semaphore));
 
-      while (true) {
-        if (isStopped || semaphore.waitFor(1000)) return;
-      }
+    while (true) {
+      if (isStopped || semaphore.waitFor(1000)) return;
     }
   }
 

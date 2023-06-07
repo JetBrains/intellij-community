@@ -5,7 +5,6 @@ import com.intellij.build.SyncViewManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
@@ -15,7 +14,6 @@ import com.intellij.openapi.externalSystem.statistics.importActivityStarted
 import com.intellij.openapi.externalSystem.statistics.runImportActivity
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.*
-import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -178,16 +176,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       val importResult = withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
         val importResult = blockingContext { doImport() }
         val fm = getVirtualFileManager()
-        val noBackgroundMode = MavenUtil.isNoBackgroundMode()
-        val shouldKeepTasksAsynchronousInHeadlessMode = CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
-        if (noBackgroundMode && !shouldKeepTasksAsynchronousInHeadlessMode) {
-          writeAction {
-            fm.syncRefresh()
-          }
-        }
-        else {
-          fm.asyncRefresh()
-        }
+        fm.asyncRefresh()
         return@withBackgroundProgress importResult
       }
       withBackgroundProgress(project, MavenProjectBundle.message("maven.post.processing"), true) {
@@ -290,7 +279,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private suspend fun resolveAndImport(projectsToResolve: Collection<MavenProject>): List<Module> {
     val resolver = MavenProjectResolver.getInstance(project)
 
-    val resolutionResult = withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.resolving"), true) {
+    val resolutionResult = withBackgroundProgress(myProject, MavenProjectBundle.message("maven.resolving"), true) {
       runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorResolvingTask::class.java) {
         withRawProgressReporter {
           coroutineToIndicator {
@@ -309,7 +298,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     // TODO: plugins and artifacts can be resolved in parallel with import
     val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
     val pluginResolver = MavenPluginResolver(projectsTree)
-    withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
+    withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
       runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorPluginsResolvingTask::class.java) {
         withRawProgressReporter {
           coroutineToIndicator {
@@ -363,7 +352,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     MavenSyncConsole.startTransaction(myProject)
     try {
       val mavenProgressIndicator = MavenProgressIndicator(project, Supplier { syncConsole })
-      withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.reading"), false) {
+      withBackgroundProgress(myProject, MavenProjectBundle.message("maven.reading"), false) {
         runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
           withRawProgressReporter {
             coroutineToIndicator {
@@ -437,7 +426,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     MavenSyncConsole.startTransaction(myProject)
     try {
       val mavenProgressIndicator = MavenProgressIndicator(project, Supplier { syncConsole })
-      withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.reading"), false) {
+      withBackgroundProgress(myProject, MavenProjectBundle.message("maven.reading"), false) {
         runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
           withRawProgressReporter {
             coroutineToIndicator {
@@ -517,7 +506,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                          docs: Boolean): MavenArtifactDownloader.DownloadResult {
     if (!sources && !docs) return MavenArtifactDownloader.DownloadResult()
 
-    val result = withBackgroundProgressIfApplicable(myProject, MavenProjectBundle.message("maven.downloading"), true) {
+    val result = withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading"), true) {
       withRawProgressReporter {
         coroutineToIndicator {
           doDownloadArtifacts(projects, artifacts, sources, docs)

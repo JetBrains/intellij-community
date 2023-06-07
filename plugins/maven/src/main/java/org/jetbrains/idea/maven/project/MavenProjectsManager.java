@@ -520,13 +520,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return myEmbeddersManager;
   }
 
-  @ApiStatus.Internal
-  public void waitForResolvingCompletion() {
-    if (MavenUtil.isNoBackgroundMode()) {
-      waitForReadingCompletion();
-    }
-  }
-
   private boolean isInitialized() {
     return !initLock.isLocked() && isInitialized.get();
   }
@@ -983,11 +976,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void runWhenFullyOpen(final Runnable runnable) {
     if (!isInitialized()) return; // may be called from scheduleImport after project started closing and before it is closed.
-
-    if (isNoBackgroundMode()) {
-      runnable.run();
-      return;
-    }
 
     final Ref<Runnable> wrapper = new Ref<>();
     wrapper.set((DumbAwareRunnable)() -> {
