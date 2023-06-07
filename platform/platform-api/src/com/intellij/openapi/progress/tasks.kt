@@ -100,7 +100,7 @@ fun <T> runBlockingModal(
  * Switches to [Dispatchers.EDT][com.intellij.openapi.application.EDT] are allowed inside the action,
  * as they are automatically scheduled with the correct modality, which is the newly entered one.
  *
- * ### Difference with [withModalProgressIndicator].
+ * ### Difference with [withModalProgress].
  *
  * This method blocks the called and doesn't return until the [action] is completed.
  * Runnables, scheduled by various `invokeLater` calls within the given modality, are processed by the nested event loop.
