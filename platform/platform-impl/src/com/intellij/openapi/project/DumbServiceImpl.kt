@@ -35,6 +35,7 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.DeprecationStripePanel
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Async
 import org.jetbrains.annotations.TestOnly
@@ -464,7 +465,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     return myModificationCount
   }
 
-  private enum class State {
+  internal fun stateAsFlow(): StateFlow<State> = myState
+
+  internal enum class State {
     SMART,
     DUMB
   }
