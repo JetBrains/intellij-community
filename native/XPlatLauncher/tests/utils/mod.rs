@@ -25,7 +25,7 @@ pub enum LauncherLocation { Standard, RemoteDev }
 pub struct TestEnvironment<'a> {
     pub dist_root: PathBuf,
     pub project_dir: PathBuf,
-    pub launcher_path: PathBuf,
+    launcher_path: PathBuf,
     shared_env: &'a TestEnvironmentShared,
     test_root_dir: TempDir,
     to_delete: Vec<PathBuf>
@@ -35,6 +35,12 @@ impl<'a> TestEnvironment<'a> {
     pub fn create_jbr_link(&self, link_name: &str) -> PathBuf {
         let link = self.dist_root.join(link_name);
         symlink(&self.shared_env.jbr_root, &link).unwrap();
+        link
+    }
+
+    pub fn create_launcher_link(&self, link_name: &str) -> PathBuf {
+        let link = self.project_dir.join(link_name);
+        symlink(&self.launcher_path, &link).unwrap();
         link
     }
 
@@ -210,23 +216,25 @@ fn layout_launcher(
     shared_env: &TestEnvironmentShared
 ) -> Result<(PathBuf, PathBuf)> {
     // .
-    // ├── bin/
-    // │   └── xplat-launcher | remote-dev-server
-    // │   └── xplat64.vmoptions
-    // │   └── idea.properties
-    // ├── lib/
-    // │   └── app.jar
-    // │   └── boot-linux.jar
-    // ├── jbr/
-    // └── product-info.json
+    // └── XPlatLauncher
+    //     ├── bin/
+    //     │   └── xplat-launcher | remote-dev-server
+    //     │   └── xplat64.vmoptions
+    //     │   └── idea.properties
+    //     ├── lib/
+    //     │   └── app.jar
+    //     │   └── boot-linux.jar
+    //     ├── jbr/
+    //     └── product-info.json
 
     let launcher_rel_path = match launcher_location {
         LauncherLocation::Standard => "bin/xplat-launcher",
         LauncherLocation::RemoteDev => "bin/remote-dev-server"
     };
+    let dist_root = target_dir.join("XPlatLauncher");
 
     layout_launcher_impl(
-        target_dir,
+        &dist_root,
         vec![
             "bin/idea.properties",
             "lib/boot-linux.jar"
@@ -241,7 +249,8 @@ fn layout_launcher(
         &shared_env.jbr_root
     )?;
 
-    Ok((target_dir.to_path_buf(), target_dir.join(launcher_rel_path)))
+    let launcher_path = dist_root.join(launcher_rel_path);
+    Ok((dist_root, launcher_path))
 }
 
 #[cfg(target_os = "macos")]
@@ -304,23 +313,25 @@ fn layout_launcher(
     shared_env: &TestEnvironmentShared
 ) -> Result<(PathBuf, PathBuf)> {
     // .
-    // ├── bin/
-    // │   └── xplat-launcher.exe | remote-dev-server.exe
-    // │   └── xplat64.exe.vmoptions
-    // │   └── idea.properties
-    // ├── lib/
-    // │   └── app.jar
-    // │   └── boot-windows.jar
-    // ├── jbr/
-    // └── product-info.json
+    // └── XPlatLauncher
+    //     ├── bin/
+    //     │   └── xplat-launcher.exe | remote-dev-server.exe
+    //     │   └── xplat64.exe.vmoptions
+    //     │   └── idea.properties
+    //     ├── lib/
+    //     │   └── app.jar
+    //     │   └── boot-windows.jar
+    //     ├── jbr/
+    //     └── product-info.json
 
     let launcher_rel_path = match launcher_location {
         LauncherLocation::Standard => "bin\\xplat-launcher.exe",
         LauncherLocation::RemoteDev => "bin\\remote-dev-server.exe"
     };
+    let dist_root = target_dir.join("XPlatLauncher");
 
     layout_launcher_impl(
-        target_dir,
+        &dist_root,
         vec![
             "bin\\idea.properties",
             "lib\\boot-windows.jar"
@@ -335,7 +346,8 @@ fn layout_launcher(
         &shared_env.jbr_root
     )?;
 
-    Ok((target_dir.to_path_buf(), target_dir.join(launcher_rel_path)))
+    let launcher_path = dist_root.join(launcher_rel_path);
+    Ok((dist_root, launcher_path))
 }
 
 fn layout_launcher_impl(
@@ -365,7 +377,7 @@ fn layout_launcher_impl(
 }
 
 #[cfg(target_family = "unix")]
-pub fn symlink(original: &Path, link: &Path) -> Result<()> {
+fn symlink(original: &Path, link: &Path) -> Result<()> {
     std::os::unix::fs::symlink(original, link)
         .with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
 
@@ -373,8 +385,9 @@ pub fn symlink(original: &Path, link: &Path) -> Result<()> {
 }
 
 #[cfg(target_os = "windows")]
-pub fn symlink(original: &Path, link: &Path) -> Result<()> {
-    std::os::windows::fs::symlink_dir(original, link)
+fn symlink(original: &Path, link: &Path) -> Result<()> {
+    if original.is_dir() { std::os::windows::fs::symlink_dir(original, link) }
+    else { std::os::windows::fs::symlink_file(original, link) }
         .with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
 
     Ok(())

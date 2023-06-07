@@ -314,8 +314,7 @@ mod tests {
     fn launching_via_external_symlink() {
         let test = prepare_test_env(LauncherLocation::Standard);
 
-        let ext_link = test.project_dir.join("launcher_link");
-        symlink(&test.launcher_path, &ext_link).unwrap();
+        let ext_link = test.create_launcher_link("launcher_link");
 
         let run_result = std::process::Command::new(&ext_link)
             .env(xplat_launcher::DEBUG_MODE_ENV_VAR, "1")
