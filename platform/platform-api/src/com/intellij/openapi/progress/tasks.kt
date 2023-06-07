@@ -169,6 +169,7 @@ suspend fun <T> withBackgroundProgressIndicator(
   title: @ProgressTitle String,
   action: suspend CoroutineScope.() -> T
 ): T {
+  @Suppress("DEPRECATION")
   return withBackgroundProgressIndicator(project, title, cancellable = true, action)
 }
 
@@ -185,6 +186,7 @@ suspend fun <T> withBackgroundProgressIndicator(
   action: suspend CoroutineScope.() -> T
 ): T {
   val cancellation = if (cancellable) TaskCancellation.cancellable() else TaskCancellation.nonCancellable()
+  @Suppress("DEPRECATION")
   return withBackgroundProgressIndicator(project, title, cancellation, action)
 }
 
@@ -216,6 +218,7 @@ suspend fun <T> withModalProgressIndicator(
   title: @ProgressTitle String,
   action: suspend CoroutineScope.() -> T,
 ): T {
+  @Suppress("DEPRECATION")
   return withModalProgressIndicator(owner = ModalTaskOwner.project(project), title = title, action = action)
 }
 
@@ -249,6 +252,7 @@ fun <T> runBlockingModalWithRawProgressReporter(
   title: @ProgressTitle String,
   action: suspend CoroutineScope.() -> T,
 ): T {
+  @Suppress("DEPRECATION")
   return runBlockingModalWithRawProgressReporter(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
 }
 
