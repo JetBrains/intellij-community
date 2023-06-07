@@ -366,7 +366,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     // with the main dispatcher for non-technical reasons
     mainScope.launch {
-      appStarter.start(InitAppContext(context = asyncScope.coroutineContext, args = args, appDeferred = appDeferred))
+      appStarter.start(InitAppContext(context = mainScope.coroutineContext + Dispatchers.Default + rootTask(), args = args, appDeferred = appDeferred))
     }
   }
 
