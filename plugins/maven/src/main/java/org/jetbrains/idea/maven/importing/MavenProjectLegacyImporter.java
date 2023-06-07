@@ -293,8 +293,11 @@ public final class MavenProjectLegacyImporter extends MavenProjectImporterLegacy
     if (obsoleteModules.isEmpty()) {
       return false;
     }
+    String message = MavenProjectBundle.message("maven.import.message.delete.obsolete", formatModules(obsoleteModules));
+    MavenLog.LOG.warn("Asking about deleting obsolete modules. " + message);
     if (null != answerToDeleteObsoleteModulesQuestion) {
       var delete = answerToDeleteObsoleteModulesQuestion;
+      MavenLog.LOG.warn("This should only happen in tests. Delete obsolete modules: " + delete);
       answerToDeleteObsoleteModulesQuestion = null;
       return delete;
     }
@@ -302,8 +305,7 @@ public final class MavenProjectLegacyImporter extends MavenProjectImporterLegacy
       final int[] result = new int[1];
       MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(),
                               () -> result[0] = Messages.showYesNoDialog(myProject,
-                                                                         MavenProjectBundle.message("maven.import.message.delete.obsolete",
-                                                                                                    formatModules(obsoleteModules)),
+                                                                         message,
                                                                          MavenProjectBundle.message("maven.project.import.title"),
                                                                          Messages.getQuestionIcon()));
 

@@ -5,7 +5,6 @@ import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.replaceService
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectResolver
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -13,25 +12,19 @@ import org.junit.Test
 
 class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
   override fun setUp() {
-    if (!isWorkspaceImport) {
-      MavenUtil.setNoBackgroundMode()
-    }
+    MavenUtil.setUpdateSuspendable()
     super.setUp()
   }
 
   override fun tearDown() {
     RunAll.runAll(
       { super.tearDown() },
-      { MavenUtil.resetNoBackgroundMode() },
+      { MavenUtil.resetUpdateSuspendable() },
     )
   }
 
   @Test
   fun `test maven import modules properly named`() {
-    val previewModule = MavenImportUtil.createPreviewModule(myProject, myProjectRoot)
-
-    myProjectsManager.addManagedFilesWithProfiles(listOf(myProjectRoot), MavenExplicitProfiles(emptyList(), emptyList()), previewModule)
-
     val parentFile = createProjectPom("""
                 <groupId>group</groupId>
                 <artifactId>parent</artifactId>
