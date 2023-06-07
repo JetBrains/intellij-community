@@ -53,7 +53,7 @@ interface ExternalSystemProjectNotificationAware {
   companion object {
     @JvmField
     @Topic.AppLevel
-    val TOPIC = Topic.create("ExternalSystemProjectNotificationAware", Listener::class.java)
+    val TOPIC: Topic<Listener> = Topic.create("ExternalSystemProjectNotificationAware", Listener::class.java)
 
     @JvmStatic
     fun getInstance(project: Project): ExternalSystemProjectNotificationAware =
@@ -63,7 +63,7 @@ interface ExternalSystemProjectNotificationAware {
      * Function for simple subscription onto notification change events
      * @see ExternalSystemProjectNotificationAware.Listener.onNotificationChanged
      */
-    fun whenNotificationChanged(project: Project, listener: () -> Unit) = whenNotificationChanged(project, null, listener)
+    fun whenNotificationChanged(project: Project, listener: () -> Unit): Unit = whenNotificationChanged(project, null, listener)
     fun whenNotificationChanged(project: Project, parentDisposable: Disposable?, listener: () -> Unit) {
       val aProject = project
       val messageBus = ApplicationManager.getApplication().messageBus

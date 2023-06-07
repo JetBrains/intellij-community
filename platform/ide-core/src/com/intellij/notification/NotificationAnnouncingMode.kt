@@ -7,7 +7,7 @@ enum class NotificationAnnouncingMode(val stringValue: String) {
   HIGH("high");
 
   companion object {
-    const val ATTRIBUTE = "notificationsAnnouncingMode"
+    const val ATTRIBUTE: String = "notificationsAnnouncingMode"
 
     @JvmStatic
     fun get(stringValue: String?): NotificationAnnouncingMode? = stringValue?.let {
