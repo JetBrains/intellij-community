@@ -157,6 +157,7 @@ fun <T> runBlockingModal(
 
 private fun taskSupport(): TaskSupport = ApplicationManager.getApplication().service()
 
+//<editor-fold desc="Deprecated stuff">
 @Deprecated(
   message = "This function installs `RawProgressReporter` into action context. " +
             "Migrate to `ProgressReporter` via `withBackgroundProgress`, " +
@@ -269,3 +270,4 @@ fun <T> runBlockingModalWithRawProgressReporter(
     withRawProgressReporter(action)
   }
 }
+//</editor-fold>
