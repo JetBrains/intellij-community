@@ -25,9 +25,9 @@ internal class GitLabFiltersPanelFactory(
     StringBuilder().apply {
       if (searchQuery != null) append(""""$searchQuery"""").append(" ")
       if (state != null) append("""state:"${getShortText(state)}"""").append(" ")
-      if (author != null) append("""author:"${author}"""").append(" ")
-      if (assignee != null) append("""assignee:"${assignee}"""").append(" ")
-      if (reviewer != null) append("""reviewer:"${reviewer}"""").append(" ")
+      if (author != null) append("""author:"${author.username}"""").append(" ")
+      if (assignee != null) append("""assignee:"${assignee.username}"""").append(" ")
+      if (reviewer != null) append("""reviewer:"${reviewer.username}"""").append(" ")
     }.toString()
   }
 
