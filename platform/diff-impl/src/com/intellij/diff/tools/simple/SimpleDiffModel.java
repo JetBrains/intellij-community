@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,7 +23,7 @@ public class SimpleDiffModel {
   @NotNull private final List<SimpleDiffChange> myAllChanges = new ArrayList<>();
   @NotNull private ThreeState myIsContentsEqual = ThreeState.UNSURE;
 
-  @NotNull private final List<SimpleDiffChangeUi> myPresentations = new ArrayList<>();
+  @NotNull private final List<@Nullable SimpleDiffChangeUi> myPresentations = new ArrayList<>();
 
   @NotNull private final SimpleAlignedDiffModel myAlignedDiffModel;
 
@@ -114,15 +115,16 @@ public class SimpleDiffModel {
   }
 
   private static class MyPaintable implements DiffDividerDrawUtil.DividerPaintable {
-    private final @NotNull List<? extends SimpleDiffChangeUi> myPresentations;
+    private final @NotNull List<@Nullable SimpleDiffChangeUi> myPresentations;
 
-    private MyPaintable(@NotNull List<? extends SimpleDiffChangeUi> presentations) {
+    private MyPaintable(@NotNull List<@Nullable SimpleDiffChangeUi> presentations) {
       myPresentations = presentations;
     }
 
     @Override
     public void process(@NotNull DiffDividerDrawUtil.DividerPaintable.Handler handler) {
       for (SimpleDiffChangeUi diffChange : myPresentations) {
+        if (diffChange == null) continue;
         boolean keepWalk = diffChange.drawDivider(handler);
         if (!keepWalk) return;
       }
