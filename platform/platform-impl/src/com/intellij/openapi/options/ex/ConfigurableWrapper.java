@@ -145,8 +145,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
       Configurable configurable = cast(Configurable.class, this);
       if (configurable != null) {
         String name = configurable.getDisplayName();
-        if (!loaded && LOG.isDebugEnabled()) {
-          LOG.debug("XML does not provide displayName for " + configurable.getClass());
+        if (!loaded) {
+          LOG.error("No displayName is specified for configurable: " + configurable.getClass().getName());
         }
         return name;
       }

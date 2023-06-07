@@ -305,10 +305,12 @@
                               language="Python"/>
 
     <applicationConfigurable groupId="tools" instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
-                             id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
+                             id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
+                             key="external.documentation.python.plugin"/>
     <applicationConfigurable parentId="project.propDebugger"
                              instance="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersConfigurable"
-                             id="debugger.dataViews.python.type.renderers"/>
+                             id="debugger.dataViews.python.type.renderers"
+                             key="configurable.PyUserTypeRenderersConfigurable.display.name"/>
     <projectConfigurable groupId="tools" instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          bundle="messages.PyBundle"

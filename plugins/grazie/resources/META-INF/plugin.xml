@@ -49,10 +49,12 @@
                      implementationClass="com.intellij.grazie.ide.inspection.detection.LanguageDetectionInspection"
                      level="WARNING" key="grazie.detection.inspection.text"/>
 
-    <applicationConfigurable parentId="editor" instance="com.intellij.grazie.ide.ui.proofreading.ProofreadConfigurable" id="proofread"/>
+    <applicationConfigurable parentId="editor" instance="com.intellij.grazie.ide.ui.proofreading.ProofreadConfigurable" id="proofread"
+                             key="configurable.group.proofread.settings.display.name" bundle="messages.OptionsBundle"/>
 
     <applicationConfigurable parentId="proofread" instance="com.intellij.grazie.ide.ui.grammar.GrazieConfigurable"
-                             id="reference.settingsdialog.project.grazie"/>
+                             id="reference.settingsdialog.project.grazie"
+                             key="grazie.settings.page.name" bundle="messages.GrazieBundle"/>
 
     <search.optionContributor implementation="com.intellij.grazie.ide.ui.search.GrazieSearchableOptionContributor"/>
 

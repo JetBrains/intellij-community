@@ -131,6 +131,7 @@
     <lang.jvm.ignoreAnnotationParamSupport implementation="de.plushnikov.intellij.plugin.provider.LombokDefaultAnnotationParamSupport"/>
     <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
     <projectConfigurable groupId="language"
+                         key="plugin.settings.title" bundle="messages.LombokBundle"
                          instance="de.plushnikov.intellij.plugin.settings.ProjectSettingsPage"/>
 
     <treeGenerator implementation="de.plushnikov.intellij.plugin.extension.LombokLightMethodTreeGenerator"/>

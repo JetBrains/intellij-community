@@ -1076,7 +1076,8 @@
                          id="File.Encoding"
                          provider="com.intellij.openapi.vfs.encoding.FileEncodingConfigurableProvider"/>
     <projectConfigurable groupId="appearance" groupWeight="112" instance="com.intellij.ui.tabs.FileColorsConfigurable"
-                         id="reference.settings.ide.settings.file-colors"/>
+                         id="reference.settings.ide.settings.file-colors"
+                         key="configurable.file.colors" bundle="messages.IdeBundle"/>
 
     <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.PlaybackDebugger"/>
     <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.ActionTracer"/>
