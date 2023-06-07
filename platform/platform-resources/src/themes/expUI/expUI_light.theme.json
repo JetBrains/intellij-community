@@ -672,66 +672,66 @@
 
     "RecentProject": {
       "Color1": {
-        "MainToolbarGradientStart": "#CE443C",
+        "MainToolbarGradientStart": "#654B40",
         "Avatar": {
-          "Start": "#DB3D3C",
-          "End": "#FF8E42"
+          "Start": "#E08855",
+          "End": "#E9806F"
         }
       },
       "Color2": {
-        "MainToolbarGradientStart": "#E27237",
+        "MainToolbarGradientStart": "#534C33",
         "Avatar": {
-          "Start": "#F57236",
-          "End": "#FCBA3F"
+          "Start": "#B08B14",
+          "End": "#BB7F19"
         }
       },
       "Color3": {
-        "MainToolbarGradientStart": "#2DBCAD",
+        "MainToolbarGradientStart": "#505139",
         "Avatar": {
-          "Start": "#2BC8BB",
-          "End": "#36EBAE"
+          "Start": "#A1A359",
+          "End": "#87AA59"
         }
       },
       "Color4": {
-        "MainToolbarGradientStart": "#3895E1",
+        "MainToolbarGradientStart": "#31515F",
         "Avatar": {
-          "Start": "#359AF2",
-          "End": "#57DBFF"
+          "Start": "#3B92B8",
+          "End": "#6183EC"
         }
       },
       "Color5": {
-        "MainToolbarGradientStart": "#7B75E8",
+        "MainToolbarGradientStart": "#344C7D",
         "Avatar": {
-          "Start": "#8379FB",
-          "End": "#85A8FF"
+          "Start": "#3574F0",
+          "End": "#7A64F0"
         }
       },
       "Color6": {
-        "MainToolbarGradientStart": "#7854AD",
+        "MainToolbarGradientStart": "#5D354A",
         "Avatar": {
-          "Start": "#7E54B5",
-          "End": "#9486FF"
+          "Start": "#C84D8F",
+          "End": "#A956CF"
         }
       },
       "Color7": {
-        "MainToolbarGradientStart": "#8F4593",
+        "MainToolbarGradientStart": "#4F3E65",
         "Avatar": {
-          "Start": "#D63CC8",
-          "End": "#F582B9"
+          "Start": "#955AE0",
+          "End": "#A84DE0"
         }
       },
       "Color8": {
-        "MainToolbarGradientStart": "#C840B9",
+        "MainToolbarGradientStart": "#1D4744",
         "Avatar": {
-          "Start": "#954294",
-          "End": "#C87DFF"
+          "Start": "#24A394",
+          "End": "#279CCD"
         }
       },
       "Color9": {
-        "MainToolbarGradientStart": "#D75370",
+        "MainToolbarGradientStart": "#3E5540",
         "Avatar": {
-          "Start": "#E75371",
-          "End": "#FF78B5"
+          "Start": "#5FAD65",
+          "End": "#3D968B"
         }
       }
     },
