@@ -10,13 +10,13 @@ import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 
-public final class ShutDownTracker implements Runnable {
+public final class ShutDownTracker {
   private final Deque<Runnable> myShutdownTasks = new ConcurrentLinkedDeque<>();
   private final Deque<Runnable> myCachesShutdownTasks = new ConcurrentLinkedDeque<>();
   private final Thread myThread;
 
   private ShutDownTracker() {
-    myThread = new Thread(this, "Shutdown tracker");
+    myThread = new Thread(() -> run(), "Shutdown tracker");
     Runtime.getRuntime().addShutdownHook(myThread);
   }
 
@@ -32,7 +32,7 @@ public final class ShutDownTracker implements Runnable {
     return getInstance().myThread.isAlive();
   }
 
-  @Override
+  @ApiStatus.Internal
   public void run() {
     while (true) {
       Runnable task = getNextTask();
