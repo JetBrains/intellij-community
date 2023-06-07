@@ -325,6 +325,30 @@ fun CoroutineScope.startApplication(args: List<String>,
     app to preloadCriticalServicesJob
   }
 
+  val appLoaded = launch {
+    appRegistered.join()
+
+    // only here as the last - it is a heavy-weight (~350ms) activity, let's first schedule more important tasks
+    if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
+      launch(CoroutineName("coroutine debug probes init")) {
+        enableCoroutineDump()
+        JBR.getJstack()?.includeInfoFrom {
+          """
+    $COROUTINE_DUMP_HEADER
+    ${dumpCoroutines(stripDump = false)}
+    """
+        }
+      }
+    }
+
+    val (app, preloadCriticalServicesJob) = appDeferred.await()
+    initApplicationImpl(args = args.filterNot { CommandLineArgs.isKnownArgument(it) },
+                        initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization"),
+                        app = app,
+                        preloadCriticalServicesJob = preloadCriticalServicesJob,
+                        asyncScope = asyncScope)
+  }
+
   launch {
     // required for appStarter.prepareStart
     appInfoDeferred.join()
@@ -362,20 +386,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     // with the main dispatcher for non-technical reasons
     mainScope.launch {
-      appStarter.start(InitAppContext(context = asyncScope.coroutineContext, args = args, appDeferred = appDeferred, appRegistered = appRegistered))
-    }
-  }
-
-  // only here as the last - it is a heavy-weight (~350ms) activity, let's first schedule more important tasks
-  if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
-    launch(CoroutineName("coroutine debug probes init")) {
-      enableCoroutineDump()
-      JBR.getJstack()?.includeInfoFrom {
-        """
-$COROUTINE_DUMP_HEADER
-${dumpCoroutines(stripDump = false)}
-"""
-      }
+      appStarter.start(InitAppContext(appRegistered = appRegistered, appLoaded = appLoaded))
     }
   }
 }

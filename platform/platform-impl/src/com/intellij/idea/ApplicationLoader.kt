@@ -48,21 +48,16 @@ private val LOG: Logger
 
 fun initApplication(context: InitAppContext) {
   context.appRegistered.complete(Unit)
-  runBlocking(context.context) {
-    val (app, preloadCriticalServicesJob) = context.appDeferred.await()
-    initApplicationImpl(args = context.args.filterNot { CommandLineArgs.isKnownArgument(it) },
-                        initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization"),
-                        app = app as ApplicationImpl,
-                        preloadCriticalServicesJob = preloadCriticalServicesJob,
-                        asyncScope = this)
+  runBlocking {
+    context.appLoaded.join()
   }
 }
 
-private suspend fun initApplicationImpl(args: List<String>,
-                                        initAppActivity: Activity,
-                                        app: ApplicationImpl,
-                                        asyncScope: CoroutineScope,
-                                        preloadCriticalServicesJob: Deferred<Job>) {
+internal suspend fun initApplicationImpl(args: List<String>,
+                                         initAppActivity: Activity,
+                                         app: ApplicationImpl,
+                                         asyncScope: CoroutineScope,
+                                         preloadCriticalServicesJob: Deferred<Job>) {
   val deferredStarter = subtask("app starter creation") {
     createAppStarterAsync(args)
   }
