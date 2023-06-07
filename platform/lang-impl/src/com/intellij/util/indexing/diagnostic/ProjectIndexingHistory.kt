@@ -18,6 +18,8 @@ typealias BytesNumber = Long
  * Extend this extension point to receive project scanning & indexing statistics
  * (e.g.: indexed file count, indexation speed, etc.) after each **dumb** indexation task was performed.
  */
+@ApiStatus.ScheduledForRemoval
+@Deprecated(message = "Use ProjectIndexingActivityHistoryListener instead")
 interface ProjectIndexingHistoryListener {
   companion object {
     @Topic.AppLevel
@@ -26,6 +28,26 @@ interface ProjectIndexingHistoryListener {
   fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) {}
 
   fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory)
+}
+
+/**
+ * Extend this extension point to receive project scanning & indexing statistics
+ * (e.g.: indexed file count, indexation speed, etc.) after each scanning or **dumb** indexation task was performed.
+ */
+interface ProjectIndexingActivityHistoryListener {
+  companion object {
+    @Topic.AppLevel
+    val TOPIC: Topic<ProjectIndexingActivityHistoryListener> = Topic(ProjectIndexingActivityHistoryListener::class.java,
+                                                                     Topic.BroadcastDirection.NONE)
+  }
+
+  fun onStartedScanning(projectScanningHistory: ProjectScanningHistory) {}
+
+  fun onFinishedScanning(projectScanningHistory: ProjectScanningHistory) {}
+
+  fun onStartedDumbIndexing(projectDumbIndexingHistory: ProjectDumbIndexingHistory) {}
+
+  fun onFinishedDumbIndexing(projectDumbIndexingHistory: ProjectDumbIndexingHistory) {}
 }
 
 @ApiStatus.Obsolete

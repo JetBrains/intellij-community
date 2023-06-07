@@ -4,7 +4,6 @@ package com.intellij.warmup
 import com.intellij.ide.environment.impl.EnvironmentUtil
 import com.intellij.ide.warmup.WarmupStatus
 import com.intellij.idea.AppExitCodes
-import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
@@ -14,8 +13,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.platform.util.ArgsParser
 import com.intellij.util.SystemProperties
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryListener
+import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistory
+import com.intellij.util.indexing.diagnostic.ProjectIndexingActivityHistoryListener
 import com.intellij.warmup.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flow
@@ -88,11 +87,12 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
     initLogger(args)
 
     var totalIndexedFiles = 0
-    application.messageBus.connect().subscribe(ProjectIndexingHistoryListener.TOPIC, object : ProjectIndexingHistoryListener {
-      override fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory) {
-        totalIndexedFiles += projectIndexingHistory.totalStatsPerFileType.values.sumOf { it.totalNumberOfFiles }
+    val handler = object : ProjectIndexingActivityHistoryListener {
+      override fun onFinishedDumbIndexing(projectDumbIndexingHistory: ProjectDumbIndexingHistory) {
+        totalIndexedFiles += projectDumbIndexingHistory.totalStatsPerFileType.values.sumOf { it.totalNumberOfFiles }
       }
-    })
+    }
+    application.messageBus.connect().subscribe(ProjectIndexingActivityHistoryListener.TOPIC, handler)
 
     val project = withLoggingProgresses {
       blockingContext {
