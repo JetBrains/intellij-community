@@ -11,7 +11,6 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.PathMacros
-import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.service
@@ -129,8 +128,10 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: C
 
   if (!app.isHeadlessEnvironment && !app.isUnitTestMode && System.getProperty("enable.activity.preloading", "true").toBoolean()) {
     asyncScope.launch(CoroutineName("preloadingActivity executing")) {
-      val extensionPoint = app.extensionArea.getExtensionPoint<PreloadingActivity>("com.intellij.preloadingActivity")
-      ExtensionPointName<PreloadingActivity>("com.intellij.preloadingActivity").processExtensions { preloadingActivity, pluginDescriptor ->
+      @Suppress("DEPRECATION")
+      val extensionPoint = app.extensionArea.getExtensionPoint<com.intellij.openapi.application.PreloadingActivity>("com.intellij.preloadingActivity")
+      @Suppress("DEPRECATION")
+      ExtensionPointName<com.intellij.openapi.application.PreloadingActivity>("com.intellij.preloadingActivity").processExtensions { preloadingActivity, pluginDescriptor ->
         launch {
           executePreloadActivity(preloadingActivity, pluginDescriptor)
         }
@@ -140,7 +141,8 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: C
   }
 }
 
-private suspend fun executePreloadActivity(activity: PreloadingActivity, descriptor: PluginDescriptor) {
+@Suppress("DEPRECATION")
+private suspend fun executePreloadActivity(activity: com.intellij.openapi.application.PreloadingActivity, descriptor: PluginDescriptor) {
   val measureActivity = StartUpMeasurer.startActivity(activity.javaClass.name, ActivityCategory.PRELOAD_ACTIVITY, descriptor.pluginId.idString)
   try {
     activity.execute()
@@ -149,7 +151,7 @@ private suspend fun executePreloadActivity(activity: PreloadingActivity, descrip
     throw e
   }
   catch (e: Throwable) {
-    logger<PreloadingActivity>().error(PluginException("cannot execute preloading activity ${activity.javaClass.name}", e, descriptor.pluginId))
+    logger<com.intellij.openapi.application.PreloadingActivity>().error(PluginException("cannot execute preloading activity ${activity.javaClass.name}", e, descriptor.pluginId))
   }
   finally {
     measureActivity.end()

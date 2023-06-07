@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -15,8 +15,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PreloadingActivity;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -673,15 +671,6 @@ public final class TypedHandler extends TypedActionHandlerBase {
             LOG.error(e);
           }
         });
-      }
-    }
-  }
-
-  static final class TypedHandlerDelegatePreloader extends PreloadingActivity {
-    @Override
-    public void preload() {
-      if (!ApplicationManagerEx.getApplicationEx().isLightEditMode()) {
-        TypedHandlerDelegate.EP_NAME.getExtensionList();
       }
     }
   }
