@@ -34,7 +34,7 @@ class LangManager : SimplePersistentStateComponent<LangManager.State>(State()) {
     val langSupportBeans = languages
     val onlyLang =
       langSupportBeans.singleOrNull()
-      ?: langSupportBeans.singleOrNull { it.defaultProductName == productName }
+      ?: langSupportBeans.singleOrNull { it.defaultProductName?.split(",")?.contains(productName) ?: false }
       ?: langSupportBeans.firstOrNull()?.also {
         if (!ApplicationManager.getApplication().isUnitTestMode) {
           logger<LangManager>().warn("No default language for $productName. Selected ${it.language}.")
