@@ -189,7 +189,7 @@ public final class SearchEverywhereHeader {
     var tabIdToTab = separateTabContributors
       .stream()
       .collect(Collectors.groupingBy(
-        SearchEverywhereContributor::getDefaultTabId,
+        SearchEverywhereContributor::getGroupName,
         Collectors.collectingAndThen(Collectors.toList(), contributorList -> {
           return createMultipleContributorsTab(contributorList, onChanged);
         })
@@ -197,7 +197,7 @@ public final class SearchEverywhereHeader {
 
     var addedTabs = new HashSet<String>();
     for (var contributor : separateTabContributors) {
-      String tabId = contributor.getDefaultTabId();
+      String tabId = contributor.getGroupName();
       if (!addedTabs.contains(tabId)) {
         res.add(tabIdToTab.get(tabId));
         addedTabs.add(tabId);
@@ -308,7 +308,7 @@ public final class SearchEverywhereHeader {
       allActions.addAll(contributor.getActions(onChanged));
     });
 
-    String tabId = contributors.get(0).getDefaultTabId();
+    String tabId = contributors.get(0).getGroupName();
     return new SETab(tabId, contributors.get(0).getGroupName(), contributors, allActions, null);
   }
 

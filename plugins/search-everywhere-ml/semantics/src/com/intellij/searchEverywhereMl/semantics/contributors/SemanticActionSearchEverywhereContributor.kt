@@ -1,6 +1,5 @@
 package com.intellij.searchEverywhereMl.semantics.contributors
 
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory
@@ -10,7 +9,6 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -34,7 +32,7 @@ class SemanticActionSearchEverywhereContributor(
   project: Project?,
   contextComponent: Component?,
   editor: Editor?
-) : WeightedSearchEverywhereContributor<GotoActionModel.MatchedValue>, LightEditCompatible {
+) : WeightedSearchEverywhereContributor<GotoActionModel.MatchedValue>, LightEditCompatible, SemanticSearchEverywhereContributor {
 
   private val delegateContributor = ActionSearchEverywhereContributor(project, contextComponent, editor)
 
@@ -55,13 +53,13 @@ class SemanticActionSearchEverywhereContributor(
 
   override fun getSearchProviderId(): String = SemanticActionSearchEverywhereContributor::class.java.simpleName
 
-  override fun getGroupName() = IdeBundle.message("search.everywhere.group.name.actions")
+  override fun getGroupName() = delegateContributor.groupName
 
-  override fun getSortWeight() = 400
+  override fun getSortWeight() = delegateContributor.sortWeight
 
-  override fun showInFindResults() = false
+  override fun showInFindResults() = delegateContributor.showInFindResults()
 
-  override fun isShownInSeparateTab() = true
+  override fun isShownInSeparateTab() = delegateContributor.isShownInSeparateTab
 
   override fun processSelectedItem(selected: GotoActionModel.MatchedValue, modifiers: Int, searchText: String): Boolean {
     return delegateContributor.processSelectedItem(selected, modifiers, searchText)
@@ -76,8 +74,6 @@ class SemanticActionSearchEverywhereContributor(
       panel
     }
   }
-
-  override fun isSemantic() = true
 
   override fun fetchWeightedElements(pattern: String,
                                      progressIndicator: ProgressIndicator,
@@ -99,9 +95,7 @@ class SemanticActionSearchEverywhereContributor(
     )
   }
 
-  override fun getDataForItem(element: GotoActionModel.MatchedValue, dataId: String): Any? {
-    return delegateContributor.getDataForItem(element, dataId)
-  }
+  override fun getDataForItem(element: GotoActionModel.MatchedValue, dataId: String) = delegateContributor.getDataForItem(element, dataId)
 
   companion object {
     class Factory : SearchEverywhereContributorFactory<GotoActionModel.MatchedValue> {

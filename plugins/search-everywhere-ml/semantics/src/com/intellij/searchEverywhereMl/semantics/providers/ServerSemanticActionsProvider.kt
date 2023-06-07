@@ -26,10 +26,7 @@ class ServerSemanticActionsProvider(val model: GotoActionModel) : SemanticAction
       "similarity_threshold" to SIMILARITY_THRESHOLD
     ))
 
-    val responseJson: String? = sendRequest("$URL_BASE/$SEARCH_ENDPOINT/", requestJson)
-    if (responseJson == null) {
-      return Collections.emptyList()
-    }
+    val responseJson: String = sendRequest("$URL_BASE/$SEARCH_ENDPOINT/", requestJson) ?: return emptyList()
 
     val modelResponse: ModelResponse = mapper.readValue(responseJson)
 
@@ -39,7 +36,7 @@ class ServerSemanticActionsProvider(val model: GotoActionModel) : SemanticAction
   companion object {
     private const val SEARCH_ENDPOINT = "search"
 
-    private const val ITEMS_LIMIT = 20
+    private const val ITEMS_LIMIT = 10
     private const val SIMILARITY_THRESHOLD = 0.5
   }
 }

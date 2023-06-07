@@ -18,7 +18,7 @@ abstract class SemanticActionsProvider: SemanticItemsProvider<GotoActionModel.Ma
   private val MIN_WEIGHT = 0
   private val MAX_WEIGHT = 100_000
 
-  fun createItemDescriptor(
+  protected fun createItemDescriptor(
     actionId: String, similarityScore: Double,
     pattern: String, model: GotoActionModel): FoundItemDescriptor<GotoActionModel.MatchedValue>? {
 

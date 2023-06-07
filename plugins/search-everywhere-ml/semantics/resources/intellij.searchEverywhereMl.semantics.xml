@@ -2,8 +2,6 @@
 
   <resource-bundle>messages.searchEverywhereMlSemanticsBundle</resource-bundle>
 
-  <incompatible-with>com.intellij.modules.androidstudio</incompatible-with>
-
   <extensions defaultExtensionNs="com.intellij">
     <searchEverywhereContributor
       implementation="com.intellij.searchEverywhereMl.semantics.contributors.SemanticActionSearchEverywhereContributor$Companion$Factory" />

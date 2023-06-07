@@ -346,6 +346,7 @@ class MixedResultsSearcher implements SESearcher {
               } else if (oldElement.isSemantic()) {
                 toRemove.add(oldElementInfo);
                 newElement.mergeWith(oldElement);
+                // Do not add a new element more than once:
                 if (!isNewElementAdded) {
                   toAdd.add(prepareFoundElementInfo(newElement, newElementInfo.contributor, priority));
                   isNewElementAdded = true;

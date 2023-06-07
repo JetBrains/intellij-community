@@ -7,7 +7,7 @@ import java.net.URL
 
 private val LOG = Logger.getInstance("SearchEverywhereSemanticRequests")
 
-fun sendRequest(url: String, requestBody: String): String? {
+internal fun sendRequest(url: String, requestBody: String): String? {
   val parsedUrl = URL(url).toString()
   return try {
     HttpRequests.post(parsedUrl, "application/json; charset=UTF-8").tuner {

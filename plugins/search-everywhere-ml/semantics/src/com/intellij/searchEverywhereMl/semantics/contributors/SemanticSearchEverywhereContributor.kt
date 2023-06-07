@@ -1,0 +1,3 @@
+package com.intellij.searchEverywhereMl.semantics.contributors
+
+interface SemanticSearchEverywhereContributor

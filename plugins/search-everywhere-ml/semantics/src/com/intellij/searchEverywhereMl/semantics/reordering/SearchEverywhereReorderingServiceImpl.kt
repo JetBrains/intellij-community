@@ -3,6 +3,7 @@ package com.intellij.searchEverywhereMl.semantics.reordering
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereReorderingService
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.searchEverywhereMl.semantics.contributors.SemanticSearchEverywhereContributor
 
 class SearchEverywhereReorderingServiceImpl: SearchEverywhereReorderingService() {
   override fun isEnabled(): Boolean {
@@ -14,7 +15,7 @@ class SearchEverywhereReorderingServiceImpl: SearchEverywhereReorderingService()
       return
     }
 
-    val (semantic, classic) = items.partition { it.contributor.isSemantic }
+    val (semantic, classic) = items.partition { it.contributor is SemanticSearchEverywhereContributor }
     if (classic.isEmpty() || semantic.isEmpty()) {
       return
     }
