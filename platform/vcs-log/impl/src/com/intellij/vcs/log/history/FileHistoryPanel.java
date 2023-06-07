@@ -241,26 +241,27 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       .ifEq(QuickActionProvider.KEY).thenGet(() -> new ComponentQuickActionProvider(this))
       .ifEq(PlatformCoreDataKeys.BGT_DATA_PROVIDER).thenGet(() -> {
         List<VcsCommitMetadata> details = myGraphTable.getSelection().getCachedMetadata();
-        return (slowId) -> getSlowData(slowId, details);
+        FileHistoryModel modelSnapshot = myFileHistoryModel.createSnapshot();
+        return (slowId) -> getSlowData(slowId, modelSnapshot, details);
       })
       .orNull();
   }
 
-  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<VcsCommitMetadata> details) {
+  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull FileHistoryModel model, @NotNull List<VcsCommitMetadata> details) {
     return ValueKey.match(dataId)
       .ifEq(VcsDataKeys.VCS_FILE_REVISION).thenGet(() -> {
         if (details.isEmpty()) return null;
-        return myFileHistoryModel.createRevision(getFirstItem(details));
+        return model.createRevision(getFirstItem(details));
       })
       .ifEq(VcsDataKeys.VCS_FILE_REVISIONS).thenGet(() -> {
         if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-        return ContainerUtil.mapNotNull(details, myFileHistoryModel::createRevision).toArray(new VcsFileRevision[0]);
+        return ContainerUtil.mapNotNull(details, model::createRevision).toArray(new VcsFileRevision[0]);
       })
       .ifEq(CommonDataKeys.VIRTUAL_FILE).thenGet(myFilePath::getVirtualFile)
       .ifEq(VcsDataKeys.VCS_VIRTUAL_FILE).thenGet(() -> {
         if (details.isEmpty()) return null;
         VcsCommitMetadata detail = Objects.requireNonNull(getFirstItem(details));
-        return FileHistoryUtil.createVcsVirtualFile(myFileHistoryModel.createRevision(detail));
+        return FileHistoryUtil.createVcsVirtualFile(model.createRevision(detail));
       })
       .orNull();
   }
