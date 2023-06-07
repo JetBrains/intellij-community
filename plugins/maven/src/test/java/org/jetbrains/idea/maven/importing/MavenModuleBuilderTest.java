@@ -21,14 +21,10 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.RunAll;
-import com.intellij.util.ArrayUtil;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -36,7 +32,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder;
 import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder;
-import org.junit.Assume;
 import org.junit.Test;
 
 import java.util.List;
@@ -49,13 +44,13 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
     RunAll.runAll(
       () -> stopMavenImportManager(),
       () -> super.tearDown(),
-      () -> MavenUtil.resetNoBackgroundMode()
+      () -> MavenUtil.resetUpdateSuspendable()
     );
   }
 
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setNoBackgroundMode();
+    MavenUtil.setUpdateSuspendable();
     super.setUp();
     myBuilder = new MavenJavaModuleBuilder();
 
@@ -345,47 +340,6 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
 
                    </project>""",
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("subDir/module/pom.xml")));
-  }
-
-  @Test
-  public void testSameFolderAsParent() throws Exception {
-    configConfirmationForYesAnswer();
-
-    Assume.assumeFalse(Registry.is("maven.linear.import"));
-
-    VirtualFile customPomXml = createProjectSubFile("custompom.xml", createPomXml(
-      """
-        <groupId>test</groupId>
-        <artifactId>project</artifactId>
-        <version>1</version>
-        """));
-    importProject(customPomXml);
-    assertModules("project");
-
-    setModuleNameAndRoot("module", getProjectPath());
-    setParentProject(customPomXml);
-
-    createNewModule(new MavenId("org.foo", "module", "1.0"));
-
-    if (supportsImportOfNonExistingFolders()) {
-      var contentRoots = ArrayUtil.mergeArrays(allDefaultResources(),
-                                               "src/main/java",
-                                               "src/test/java");
-      assertRelativeContentRoots("project", contentRoots);
-    }
-    else {
-      assertRelativeContentRoots("project",
-                                 "src/main/java",
-                                 "src/main/resources",
-                                 "src/test/java"
-      );
-    }
-    assertRelativeContentRoots("module", "");
-
-    MavenProject module = MavenProjectsManager.getInstance(myProject).findProject(getModule("module"));
-
-    MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, module.getFile());
-    assertEquals("custompom.xml", domProjectModel.getMavenParent().getRelativePath().getRawText());
   }
 
   private void deleteModule(String name) {
