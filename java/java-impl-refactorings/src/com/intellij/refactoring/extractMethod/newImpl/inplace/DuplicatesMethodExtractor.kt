@@ -77,6 +77,7 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
   }
 
   fun replaceDuplicates(editor: Editor, method: PsiMethod) {
+    val prepareTimeStart = System.currentTimeMillis()
     val project = editor.project ?: return
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
     val calls = callsToReplace?.map { it.element!! } ?: return
@@ -120,6 +121,8 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val targetCl
     val confirmChange: () -> Boolean = changeSignatureDefault?.let { default -> {default} } ?: ::confirmChangeSignature
     val isGoodSignatureChange = isGoodSignatureChange(extractOptions.elements, extractOptions.inputParameters,
                                                       parametrizedExtraction.callElements, updatedParameters)
+    val prepareTimeEnd = System.currentTimeMillis()
+    InplaceExtractMethodCollector.duplicatesSearched.log(prepareTimeEnd - prepareTimeStart)
     val changeSignature = duplicates.size > exactDuplicates.size && isGoodSignatureChange && confirmChange()
     duplicates = if (changeSignature) duplicatesWithUnifiedParameters else exactDuplicates
     val parameters = if (changeSignature) updatedParameters else extractOptions.inputParameters

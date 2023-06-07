@@ -3,21 +3,31 @@ package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.IntEventField
+import com.intellij.internal.statistic.eventLog.events.LongEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 class InplaceExtractMethodCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("extract.method.inplace", 2)
+    private val GROUP = EventLogGroup("extract.method.inplace", 3)
 
 
     @JvmField val settingsChange = EventFields.Enum("settingsChange", ExtractMethodSettingChange::class.java) { it.fusName }
     @JvmField val changedOnHide = EventFields.Boolean("changedOnHide")
     @JvmField val nameChanged = EventFields.Boolean("nameChanged")
     @JvmField val linkUsed = EventFields.Boolean("linkUsed")
+    @JvmField val prepareTargetPlacesMs = LongEventField("prepare_target_places_ms")
+    @JvmField val prepareTemplateMs = LongEventField("prepare_template_ms")
+    @JvmField val prepareTotalMs = LongEventField("prepare_total_ms")
+    @JvmField val numberOfTargetPlaces = IntEventField("number_of_target_places")
 
     @JvmField val show = GROUP.registerEvent("showPopup", EventFields.InputEvent)
+    @JvmField val duplicatesSearched = GROUP.registerEvent("duplicates_searched", EventFields.DurationMs)
+    @JvmField val previewUpdated = GROUP.registerEvent("preview_updated", EventFields.DurationMs)
+    @JvmField val templateShown = GROUP.registerVarargEvent("template_shown", prepareTargetPlacesMs,
+                                                            numberOfTargetPlaces, prepareTemplateMs, prepareTotalMs)
     @JvmField val hide = GROUP.registerEvent("hidePopup", changedOnHide)
     @JvmField val openExtractDialog = GROUP.registerEvent("openExtractDialog", linkUsed)
     @JvmField val executed = GROUP.registerEvent("executed", nameChanged)

@@ -185,6 +185,7 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   private fun restartInplace() {
+    val startTime = System.currentTimeMillis()
     val identifierRange = callIdentifierRange?.range
     val methodName = if (identifierRange != null) editor.document.getText(identifierRange) else null
     TemplateManagerImpl.getTemplateState(editor)?.gotoEnd(true)
@@ -195,6 +196,8 @@ class InplaceMethodExtractor(private val editor: Editor,
         inplaceExtractor.setMethodName(methodName)
       }
     }
+    val endTime = System.currentTimeMillis()
+    InplaceExtractMethodCollector.previewUpdated.log(endTime - startTime)
   }
 
 }
