@@ -337,7 +337,6 @@ public class Alarm implements Disposable {
     private Request(@NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis, @Nullable CoroutineContext context, @Nullable CompletableJob job) {
       synchronized (LOCK) {
         myTask = task;
-
         myContext = context;
         myJob = job;
         myModalityState = modalityState;
@@ -371,7 +370,7 @@ public class Alarm implements Disposable {
           try (AccessToken ignored = ClientId.withClientId(myClientId)) {
             if (myContext != null) {
               try (AccessToken ignored2 = ThreadContext.installThreadContext(myContext, true)) {
-                QueueProcessor.runSafely(task);
+                QueueProcessor.runSafely(myJob == null ? task : () -> Propagation.runAsCoroutine(myJob, task));
               }
             } else {
               QueueProcessor.runSafely(task);
@@ -404,6 +403,9 @@ public class Alarm implements Disposable {
      */
     private @Nullable Runnable cancel() {
       Future<?> future = myFuture;
+      if (myJob != null) {
+        myJob.cancel(null);
+      }
       if (future != null) {
         future.cancel(false);
         myFuture = null;
