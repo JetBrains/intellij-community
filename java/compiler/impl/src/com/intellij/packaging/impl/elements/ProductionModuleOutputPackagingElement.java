@@ -17,6 +17,7 @@ import com.intellij.platform.workspaceModel.storage.MutableEntityStorage;
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExtensionsKt;
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId;
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleOutputPackagingElementEntity;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -64,10 +65,13 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
     String moduleName = this.getModuleName();
     ModuleOutputPackagingElementEntity addedEntity;
     if (moduleName != null) {
-      addedEntity = ExtensionsKt.addModuleOutputPackagingElementEntity(diff, new ModuleId(moduleName), source);
+      addedEntity = diff.addEntity(ModuleOutputPackagingElementEntity.create(source, entityBuilder -> {
+        entityBuilder.setModule(new ModuleId(moduleName));
+        return Unit.INSTANCE;
+      }));
     }
     else {
-      addedEntity = ExtensionsKt.addModuleOutputPackagingElementEntity(diff, null, source);
+      addedEntity = diff.addEntity(ModuleOutputPackagingElementEntity.create(source));
     }
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
     return addedEntity;

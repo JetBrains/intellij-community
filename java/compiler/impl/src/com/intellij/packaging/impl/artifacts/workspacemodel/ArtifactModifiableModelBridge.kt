@@ -25,7 +25,6 @@ import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ArtifactEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ArtifactId
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.addArtifactEntity
 import com.intellij.platform.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 
@@ -134,10 +133,10 @@ class ArtifactModifiableModelBridge(
     }
 
     val outputUrl = outputPath?.let { fileManager.fromPath(it) }
-    val artifactEntity = diff.addArtifactEntity(
-      uniqueName, artifactType.id, false,
-      outputUrl, rootElementEntity, source
-    )
+    val artifactEntity = diff addEntity ArtifactEntity(uniqueName, artifactType.id, false, source) {
+      this.outputUrl = outputUrl
+      this.rootElement = rootElementEntity
+    }
 
     val symbolicId = artifactEntity.symbolicId
     val modifiableArtifact = ArtifactBridge(symbolicId, versionedOnBuilder, project, eventDispatcher, null)
