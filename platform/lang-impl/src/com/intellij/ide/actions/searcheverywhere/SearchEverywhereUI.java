@@ -18,6 +18,7 @@ import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsag
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchPerformanceTracker;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -41,6 +42,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -57,6 +59,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
@@ -536,7 +539,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     ExtendableTextComponent.Extension leftExt = new ExtendableTextComponent.Extension() {
       @Override
       public Icon getIcon(boolean hovered) {
-        return AllIcons.Actions.Search;
+        return AllIcons.Actions.SearchWithHistory;
       }
 
       @Override
@@ -548,11 +551,37 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       public int getIconGap() {
         return JBUIScale.scale(ExperimentalUI.isNewUI() ? 6 : 10);
       }
+
+      @Override
+      public Runnable getActionOnClick(@NotNull InputEvent inputEvent) {
+        if (!Registry.is("search.everywhere.footer.extended.info")) return null;
+
+        Rectangle bounds = ((TextFieldWithPopupHandlerUI)mySearchField.getUI()).getExtensionIconBounds(this);
+        Point point = bounds.getLocation();
+        point.y += bounds.width + JBUIScale.scale(2);
+        RelativePoint relativePoint = new RelativePoint(mySearchField, point);
+        return () -> showPopup(relativePoint);
+      }
     };
     res.addExtension(leftExt);
     res.putClientProperty(SEARCH_EVERYWHERE_SEARCH_FILED_KEY, true);
     res.setLayout(new BorderLayout());
     return res;
+  }
+
+  private void showPopup(@NotNull RelativePoint relativePoint) {
+    List<String> items = ((SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject)).getHistoryItems();
+    if (items.isEmpty()) return;
+
+    JBPopupFactory.getInstance().createPopupChooserBuilder(items)
+      .setMovable(false)
+      .setRequestFocus(true)
+      .setItemChosenCallback(text -> {
+        mySearchField.setText(text);
+        mySearchField.selectAll();
+      })
+      .createPopup()
+      .show(relativePoint);
   }
 
   @Override
