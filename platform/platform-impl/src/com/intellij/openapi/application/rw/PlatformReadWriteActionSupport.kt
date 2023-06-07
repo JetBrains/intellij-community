@@ -2,12 +2,12 @@
 package com.intellij.openapi.application.rw
 
 import com.intellij.ide.lightEdit.LightEdit
-import com.intellij.openapi.application.ReadActionSupport
+import com.intellij.openapi.application.ReadWriteActionSupport
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 
-internal class PlatformReadActionSupport : ReadActionSupport {
+internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
 
   override fun smartModeConstraint(project: Project): ReadConstraint {
     check(!LightEdit.owns(project)) {

@@ -6,7 +6,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-interface ReadActionSupport {
+interface ReadWriteActionSupport {
 
   fun smartModeConstraint(project: Project): ReadConstraint
 

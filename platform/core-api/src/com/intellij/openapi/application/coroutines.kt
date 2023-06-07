@@ -144,7 +144,7 @@ suspend fun <T> writeAction(action: () -> T): T {
   }
 }
 
-private fun readActionSupport() = ApplicationManager.getApplication().getService(ReadActionSupport::class.java)
+private fun readActionSupport() = ApplicationManager.getApplication().getService(ReadWriteActionSupport::class.java)
 
 @Suppress("CONFLICTING_OVERLOADS")
 @Deprecated("Moved to modality.kt", level = DeprecationLevel.HIDDEN)

@@ -1424,8 +1424,8 @@
 
     <applicationService serviceInterface="com.intellij.openapi.application.CoroutineSupport"
                         serviceImplementation="com.intellij.openapi.application.impl.PlatformCoroutineSupport"/>
-    <applicationService serviceInterface="com.intellij.openapi.application.ReadActionSupport"
-                        serviceImplementation="com.intellij.openapi.application.rw.PlatformReadActionSupport"/>
+    <applicationService serviceInterface="com.intellij.openapi.application.ReadWriteActionSupport"
+                        serviceImplementation="com.intellij.openapi.application.rw.PlatformReadWriteActionSupport"/>
 
     <persistentFsConnectionListener implementation="com.intellij.openapi.vfs.impl.jar.ArchiveCachesCleaner"/>
     <applicationService serviceInterface="com.intellij.openapi.progress.TaskSupport"
