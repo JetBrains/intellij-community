@@ -17,6 +17,7 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.impl.ProcessStreamsSynchronizer;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -419,7 +420,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Process process = targetEnvironment.createProcess(commandLine, progressIndicator);
     // TODO [Targets API] [major] The command line should be prefixed with the interpreter identifier (f.e. Docker container id)
     String commandLineString = StringUtil.join(commandLine.getCommandPresentation(targetEnvironment), " ");
-    processHandler = createProcessHandler(process, commandLineString, targetEnvironment, commandLine);
+    processHandler = createPtyAwaredProcessHandler(process, commandLineString, targetEnvironment, commandLine);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }
@@ -474,6 +475,18 @@ public abstract class PythonCommandLineState extends CommandLineState {
    */
   protected ProcessHandler doCreateProcess(GeneralCommandLine commandLine) throws ExecutionException {
     return PythonProcessRunner.createProcess(commandLine);
+  }
+
+  @NotNull
+  private ProcessHandler createPtyAwaredProcessHandler(@NotNull Process process,
+                                                       @NotNull String commandLineString,
+                                                       @NotNull TargetEnvironment targetEnvironment,
+                                                       @NotNull TargetedCommandLine commandLine) {
+    ProcessHandler processHandler = createProcessHandler(process, commandLineString, targetEnvironment, commandLine);
+    if (processHandler instanceof OSProcessHandler osProcessHandler) {
+      osProcessHandler.setHasPty(myRunWithPty);
+    }
+    return processHandler;
   }
 
   @NotNull
