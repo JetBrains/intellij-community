@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.bind
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.mapCases
@@ -47,7 +48,7 @@ interface VfsSnapshot {
       val VirtualFileSnapshot.isDeleted: DefinedState<Boolean> get() =
         flags.observeState().fmap { PersistentFSRecordAccessor.hasDeletedFlag(it) }
 
-      fun Collection<VirtualFileSnapshot>.notDeleted(keepIfNotAvailable: Boolean = false) =
+      fun <T: VirtualFileSnapshot> Collection<T>.notDeleted(keepIfNotAvailable: Boolean = false) =
         filter { it.isDeleted.mapCases({ keepIfNotAvailable }) { !it } }
     }
 
@@ -88,7 +89,7 @@ interface VfsSnapshot {
           }
         }
 
-      inline fun <R> observe(onNotAvailable: (cause: Throwable) -> R, onReady: (value: T) -> R): R =
+      inline fun <R> observe(onNotAvailable: (cause: NotEnoughInformationCause) -> R, onReady: (value: T) -> R): R =
         observeState().mapCases(onNotAvailable, onReady)
 
       fun get(): T = observe(onNotAvailable = { throw AssertionError("property expected to be Ready", it.cause) }) { it }
@@ -134,7 +135,7 @@ interface VfsSnapshot {
         }
 
         companion object {
-          inline fun <T, R> DefinedState<T>.mapCases(onNotAvailable: (cause: Throwable) -> R, onReady: (value: T) -> R): R = when (this) {
+          inline fun <T, R> DefinedState<T>.mapCases(onNotAvailable: (cause: NotEnoughInformationCause) -> R, onReady: (value: T) -> R): R = when (this) {
             is Ready<T> -> onReady(value)
             is NotAvailable -> onNotAvailable(cause)
           }
