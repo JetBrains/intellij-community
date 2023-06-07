@@ -163,6 +163,12 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
     }
   }
 
+  @Override
+  public void forcePostprocessFormat(@NotNull PsiFile psiFile, @NotNull Disposable disposable) {
+    psiFile.getViewProvider().putUserData(FORCE_POSTPROCESS_FORMAT, true);
+    Disposer.register(disposable, () -> psiFile.getViewProvider().putUserData(FORCE_POSTPROCESS_FORMAT, null));
+  }
+
   private void incrementPostponedCounter() {
     getContext().myPostponedCounter++;
   }
