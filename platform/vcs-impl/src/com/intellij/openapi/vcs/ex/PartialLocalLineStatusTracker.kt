@@ -515,14 +515,9 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       var hasIncluded = false
       var hasExcluded = false
       blocks.forEach {
-        when (it.excludedFromCommit) {
-          RangeExclusionState.Included -> hasIncluded = true
-          RangeExclusionState.Excluded -> hasExcluded = true
-          is RangeExclusionState.Partial -> {
-            hasIncluded = true
-            hasExcluded = true
-          }
-        }
+        val exclusionState = it.excludedFromCommit
+        if (exclusionState.hasIncluded) hasIncluded = true
+        if (exclusionState.hasExcluded) hasExcluded = true
       }
       return@readLock hasIncluded && hasExcluded
     }
@@ -537,7 +532,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   override fun hasPartialChangesToCommit(): Boolean {
     return documentTracker.readLock {
-      affectedChangeLists.size > 1 || blocks.any { it.excludedFromCommit != RangeExclusionState.Included }
+      affectedChangeLists.size > 1 || blocks.any { !it.excludedFromCommit.isFullyIncluded }
     }
   }
 
@@ -753,14 +748,9 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     documentTracker.readLock {
       for (block in blocks) {
         if (block.marker == marker) {
-          when (block.excludedFromCommit) {
-            RangeExclusionState.Included -> hasIncluded = true
-            RangeExclusionState.Excluded -> hasExcluded = true
-            is RangeExclusionState.Partial -> {
-              hasIncluded = true
-              hasExcluded = true
-            }
-          }
+          val exclusionState = block.excludedFromCommit
+          if (exclusionState.hasIncluded) hasIncluded = true
+          if (exclusionState.hasExcluded) hasExcluded = true
         }
       }
     }

@@ -1217,15 +1217,22 @@ private fun createRange(side: Side, start: Int, end: Int, otherStart: Int, other
 }
 
 sealed class RangeExclusionState {
+  abstract val hasExcluded: Boolean
+  abstract val hasIncluded: Boolean
+
   abstract val isFullyExcluded: Boolean
   abstract val isFullyIncluded: Boolean
 
   object Included : RangeExclusionState() {
+    override val hasExcluded: Boolean = false
+    override val hasIncluded: Boolean = true
     override val isFullyExcluded: Boolean = false
     override val isFullyIncluded: Boolean = true
   }
 
   object Excluded : RangeExclusionState() {
+    override val hasExcluded: Boolean = true
+    override val hasIncluded: Boolean = false
     override val isFullyExcluded: Boolean = true
     override val isFullyIncluded: Boolean = false
   }
@@ -1244,15 +1251,17 @@ sealed class RangeExclusionState {
       }
     }
 
+    override val hasExcluded: Boolean
+      get() = includedDeletions.nextClearBit(0) < deletionsCount ||
+              includedAdditions.nextClearBit(0) < additionsCount
+    override val hasIncluded: Boolean
+      get() = !includedDeletions.isEmpty || !includedAdditions.isEmpty
+
     override val isFullyExcluded: Boolean
-      get() {
-        return includedDeletions.isEmpty && includedAdditions.isEmpty
-      }
+      get() = !hasIncluded
 
     override val isFullyIncluded: Boolean
-      get() {
-        return includedDeletionsCount == deletionsCount && includedAdditionsCount == additionsCount
-      }
+      get() = !hasExcluded
 
     val includedDeletionsCount: Int get() = includedDeletions.cardinality()
     val includedAdditionsCount: Int get() = includedAdditions.cardinality()
