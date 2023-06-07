@@ -3,14 +3,14 @@
 @file:Internal
 @file:Suppress("RAW_RUN_BLOCKING")
 
-package com.intellij.idea
+package com.intellij.ide.bootstrap
 
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.subtask
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
-import com.intellij.ide.bootstrap.InitAppContext
 import com.intellij.ide.plugins.PluginManagerMain
+import com.intellij.idea.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -41,7 +41,7 @@ import kotlin.system.exitProcess
 
 @Suppress("SSBasedInspection")
 private val LOG: Logger
-  get() = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
+  get() = Logger.getInstance("#com.intellij.ide.bootstrap.ApplicationLoader")
 
 fun initApplication(context: InitAppContext) {
   context.appRegistered.complete(Unit)

@@ -9,6 +9,7 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.diagnostic.*
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.InitAppContext
+import com.intellij.ide.bootstrap.initApplicationImpl
 import com.intellij.ide.bootstrap.initServiceContainer
 import com.intellij.ide.bootstrap.preInitApp
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
