@@ -109,11 +109,11 @@ internal class UILatencyLogger : CounterUsagesCollector() {
     @JvmField
     val COLD_START: BooleanEventField = Boolean("cold_start")
     @JvmField
-    val POPUP_LATENCY: VarargEventId = GROUP.registerVarargEvent("popup.latency",
-                                                       EventFields.DurationMs,
-                                                       EventFields.ActionPlace,
-                                                       COLD_START,
-                                                       EventFields.Language)
+    val ACTION_POPUP_LATENCY: VarargEventId = GROUP.registerVarargEvent("popup.latency",
+                                                                        EventFields.DurationMs,
+                                                                        EventFields.ActionPlace,
+                                                                        COLD_START,
+                                                                        EventFields.Language)
   }
 
   override fun getGroup(): EventLogGroup = GROUP
