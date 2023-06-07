@@ -10,11 +10,13 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.AttributesOpe
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.ContentsOperation.Companion.contentRecordId
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation.Companion.fileId
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTagsMask.Companion.union
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.ExtendedVfsSnapshot.ExtendedVirtualFileSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.FillInVfsSnapshot.FillInVirtualFileSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.FillInVfsSnapshot.FillInVirtualFileSnapshot.FillInProperty
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.FillInVfsSnapshot.SnapshotFiller
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.FillInVfsSnapshot.SnapshotFiller.Companion.fillUntilDefined
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.FillInVfsSnapshot.SnapshotFiller.Companion.finish
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsChronicle.ContentRestorationSequence
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsChronicle.ContentRestorationSequence.Companion.restoreContent
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.ContentOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.PropertyOverwriteRule
@@ -46,7 +48,7 @@ class SinglePassVfsTimeMachine(
   private val attributeEnumerator: SimpleStringPersistentEnumerator,
   private val payloadReader: (PayloadRef) -> DefinedState<ByteArray>
 ) : VfsTimeMachine {
-  override fun getSnapshot(point: OperationLogStorage.Iterator): VfsSnapshot {
+  override fun getSnapshot(point: OperationLogStorage.Iterator): ExtendedVfsSnapshot {
     val snapshot = FillInVfsSnapshot(point, logContext, id2filename, attributeEnumerator, payloadReader)
     val filler = EverythingSnapshotFiller(snapshot)
     snapshot.filler = filler
@@ -124,7 +126,7 @@ class SinglePassVfsTimeMachine(
                 throw AssertionError("operation $this does not allocate record")
               if (result.hasValue) setValue(true)
             },
-            FillInVirtualFileSnapshot::recordAllocationSeen
+            FillInVirtualFileSnapshot::recordAllocationExists
           )
         )
 
@@ -143,7 +145,7 @@ class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
                         private val id2filename: (Int) -> String?,
                         private val attributeEnumerator: SimpleStringPersistentEnumerator,
                         private val payloadReader: (PayloadRef) -> DefinedState<ByteArray>
-) : VfsSnapshot {
+) : ExtendedVfsSnapshot {
   fun interface SnapshotFiller {
     /** Must not observe properties to avoid deadlock possibility -- only fillIn can be used */
     fun fillUntil(condition: () -> Boolean)
@@ -177,7 +179,7 @@ class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
   }
 
   // access must be synchronized
-  inner class FillInVirtualFileSnapshot(override val fileId: Int) : VirtualFileSnapshot {
+  inner class FillInVirtualFileSnapshot(override val fileId: Int) : ExtendedVirtualFileSnapshot {
     override val nameId = FillInProperty<Int>()
     override val parentId = FillInProperty<Int>()
     override val length = FillInProperty<Long>()
@@ -193,7 +195,7 @@ class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
       if (it == 0) null else getFileById(it)
     }
 
-    val attributeDataMap = FillInProperty<Map<Int, PayloadRef>> {
+    override val attributeDataMap = FillInProperty<Map<Int, PayloadRef>> {
       formingAttributesDataMap.toImmutableMap().let(State::Ready) // there may be no DELETE ATTRS operation
         .also { formingAttributesDataMap.clear() }
     }
@@ -201,17 +203,18 @@ class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
     internal var attributesFinished = false // DELETE ATTRS operation met
     internal val formingAttributesDataMap = mutableMapOf<Int, PayloadRef>()
 
-    val recordAllocationSeen = FillInProperty<Boolean> { false.let(State::Ready) }
+    override val recordAllocationExists = FillInProperty<Boolean> { false.let(State::Ready) }
 
-    // content is not here because content record id may be not known at the moment we encounter content operation
-
-    override fun getContent(): DefinedState<ByteArray> = contentRecordId.observeState().bind {
+    override val contentRestorationSequence: Property<ContentRestorationSequence> = contentRecordId.bind {
       if (it == 0) return@bind State.NotAvailable(NotEnoughInformationCause("VFS didn't cache file's content"))
       val restorationSeq = getContentRestorationSequenceBuilderFor(it)
       filler?.fillUntil { restorationSeq.isFormed }
-      restorationSeq.buildIfInitialIsPresent()?.restoreContent(payloadReader)
+      restorationSeq.buildIfInitialIsPresent()?.let(State::Ready) // TODO clear builder to not waste memory
         ?: State.NotAvailable(NotEnoughInformationCause("Initial content wasn't found for contentRecordId $it"))
     }
+
+    override fun getContent(): DefinedState<ByteArray> =
+      contentRestorationSequence.observeState().bind { it.restoreContent(payloadReader) }
 
     override fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?> {
       val attrId = logContext.enumerateAttribute(fileAttribute)
@@ -231,7 +234,7 @@ class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
           childrenIds.add(it.fileId)
         }
       }
-      return RecoveredChildrenIds.of(childrenIds, recordAllocationSeen.get()).let(State::Ready)
+      return RecoveredChildrenIds.of(childrenIds, recordAllocationExists.get()).let(State::Ready)
     }
 
     inner class FillInProperty<T>(
