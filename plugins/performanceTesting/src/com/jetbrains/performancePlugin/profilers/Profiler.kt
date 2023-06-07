@@ -55,6 +55,12 @@ interface Profiler {
 
   fun stopProfileWithNotification(arguments: String): String
 
+  suspend fun stopProfileAsyncWithNotification(arguments: String): String {
+    return blockingContext {
+      stopProfileWithNotification(arguments)
+    }
+  }
+
   @Throws(IOException::class)
   fun compressResults(pathToResult: String, archiveName: String): File?
 

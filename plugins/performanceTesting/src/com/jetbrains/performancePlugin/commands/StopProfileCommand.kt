@@ -23,7 +23,7 @@ internal class StopProfileCommand(text: String, line: Int) : PlaybackCommandCoro
       "Profiling hasn't been started"
     }
 
-    val reportPath = getCurrentProfilerHandler().stopProfileWithNotification(extractCommandArgument(PREFIX))
+    val reportPath = getCurrentProfilerHandler().stopProfileAsyncWithNotification(extractCommandArgument(PREFIX))
     profilerController.reportsPath = reportPath
     profilerController.isStoppedByScript = true
   }
