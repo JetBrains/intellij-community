@@ -11,6 +11,7 @@ import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
+import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorState;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -33,7 +34,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setNoBackgroundMode();
+    MavenUtil.setUpdateSuspendable();
     super.setUp();
     ServiceContainerUtil.replaceService(myProject, ToolWindowManager.class, new ToolWindowHeadlessManagerImpl(myProject) {
       @Override
@@ -52,7 +53,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
   @Override
   protected void tearDown() throws Exception {
-    MavenUtil.resetNoBackgroundMode();
+    MavenUtil.resetUpdateSuspendable();
     myNavigator = null;
     myStructure = null;
     super.tearDown();
@@ -79,7 +80,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
 
     myProjectsManager.fireActivatedInTests();
-    //waitForMavenUtilRunnablesComplete();
+    waitForMavenUtilRunnablesComplete();
     assertEquals(1, getRootNodes().size());
     assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
   }
@@ -194,10 +195,12 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     assertEquals(1, getRootNodes().size());
     MavenUtil.cleanAllRunnables();
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     myProjectsManager.removeManagedFiles(Collections.singletonList(myProjectPom));
     waitForImportCompletion();
-    //waitForMavenUtilRunnablesComplete();
+    waitForMavenUtilRunnablesComplete();
     assertEmpty(myProjectsManager.getRootProjects());
     assertEquals(0, getRootNodes().size());
   }
@@ -238,11 +241,11 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().get(0).getProjectNodesInTests().size());
 
     myNavigator.setGroupModules(false);
-    //waitForMavenUtilRunnablesComplete();
+    waitForMavenUtilRunnablesComplete();
     assertEquals(3, getRootNodes().size());
 
     myNavigator.setGroupModules(true);
-    //waitForMavenUtilRunnablesComplete();
+    waitForMavenUtilRunnablesComplete();
     assertEquals(1, getRootNodes().size());
     assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().size());
     assertEquals(1, getRootNodes().get(0).getProjectNodesInTests().get(0).getProjectNodesInTests().size());
@@ -271,14 +274,14 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     myProjectsManager.getProjectsTree().setIgnoredFilesPaths(Arrays.asList(m.getPath()));
 
     myNavigator.setShowIgnored(true);
-    //waitForMavenUtilRunnablesComplete();
+    waitForMavenUtilRunnablesComplete();
     assertTrue(getRootNodes().get(0).isVisible());
-    assertEquals(2, getRootNodes().get(0).getChildren().length);
+    assertEquals(3, getRootNodes().get(0).getChildren().length); // Lifecycle, Plugins, m
 
     myNavigator.setShowIgnored(false);
-    //waitForMavenUtilRunnablesComplete();
+    waitForMavenUtilRunnablesComplete();
     assertTrue(getRootNodes().get(0).isVisible());
-    assertEquals(1, getRootNodes().get(0).getChildren().length);
+    assertEquals(2, getRootNodes().get(0).getChildren().length); // Lifecycle, Plugins
   }
 
   @Test
@@ -311,7 +314,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     assertEquals(1, projectNode.getProjectNodesInTests().size());
 
     myNavigator.setShowIgnored(false);
-    //waitForMavenUtilRunnablesComplete();
+    waitForMavenUtilRunnablesComplete();
     assertEquals(2, getRootNodes().size());
     assertEquals(1, myStructure.getRootElement().getChildren().length); // only one of them is visible
     projectNode = (ProjectNode)myStructure.getRootElement().getChildren()[0];
@@ -379,7 +382,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     newState.groupStructurally = false;
     myNavigator.loadState(newState);
 
-    //waitForMavenUtilRunnablesComplete();
+    waitForMavenUtilRunnablesComplete();
     assertEquals(2, getRootNodes().size());
   }
 
@@ -495,7 +498,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
         myNavigator.scheduleStructureUpdate();
       }).get(10, TimeUnit.SECONDS);
 
-      //waitForMavenUtilRunnablesComplete();
+      waitForMavenUtilRunnablesComplete();
     }
     else {
       myProjectsManager.addManagedFiles(Arrays.asList(files));
