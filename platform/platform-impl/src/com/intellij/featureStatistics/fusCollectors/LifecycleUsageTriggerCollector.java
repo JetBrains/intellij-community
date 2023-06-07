@@ -41,6 +41,7 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final EventId2<Long, Boolean> PROJECT_OPENING_FINISHED =
     LIFECYCLE.registerEvent("project.opening.finished", EventFields.Long("duration_ms"), EventFields.Boolean("project_tab"));
   private static final EventId PROJECT_OPENED = LIFECYCLE.registerEvent("project.opened");
+  private static final EventId PROJECT_CLOSED = LIFECYCLE.registerEvent("project.closed"); // actually called before closed and disposed
 
   private static final EventField<Long> PROJECT_TOTAL_CLOSE_DURATION_FIELD = EventFields.Long("total_duration_ms");
   private static final EventField<Long> PROJECT_SAVE_DURATION_FIELD = EventFields.Long("save_duration_ms");
@@ -113,7 +114,11 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     PROJECT_OPENED.log(project);
   }
 
-  public static void onProjectClosedAndDisposed(Project project,
+  public static void onBeforeProjectClosed(@NotNull Project project) {
+    PROJECT_CLOSED.log(project);
+  }
+
+  public static void onProjectClosedAndDisposed(@NotNull Project project,
                                                 long closeStartedMs,
                                                 long saveSettingsDurationMs,
                                                 long closingDurationMs,

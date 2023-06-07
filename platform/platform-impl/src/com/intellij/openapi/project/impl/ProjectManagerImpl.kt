@@ -42,8 +42,11 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -1033,6 +1036,7 @@ private fun fireProjectClosed(project: Project) {
     LOG.debug("projectClosed")
   }
 
+  LifecycleUsageTriggerCollector.onBeforeProjectClosed(project)
   closePublisher.projectClosed(project)
   publisher.projectClosed(project)
   @Suppress("DEPRECATION")
