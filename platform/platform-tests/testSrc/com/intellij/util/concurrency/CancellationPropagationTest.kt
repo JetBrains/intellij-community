@@ -13,6 +13,7 @@ import com.intellij.openapi.application.impl.withModality
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.getValue
@@ -780,4 +781,90 @@ class CancellationPropagationTest {
     assertTrue(secondExecuted) // not eaten and executed
   }
 
+
+  @Test
+  fun `non-blocking read action is awaited`() = timeoutRunBlocking {
+    var allowedToCompleteRA by AtomicReference(false)
+    val readActionCompletedSemaphore = Semaphore(1)
+    val allowedToCompleteFinishOnUi = Semaphore(1)
+    val finishedOnUi = Semaphore(1)
+    val allowedToCompleteOnProcessed = Semaphore(1)
+    val finishedOnProcessed = Semaphore(1)
+    val allowedToCompleteThenAsync = Semaphore(1)
+    val finishedThenAsync = Semaphore(1)
+    var timesCancelled by AtomicReference(0)
+    val readActionScheduled = Semaphore(1)
+    val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Test NBRA", 1)
+    val job = withRootJob { job ->
+      ReadAction.nonBlocking(Callable {
+        while (!allowedToCompleteRA) {
+          try {
+            ProgressManager.checkCanceled()
+          }
+          catch (e: ProcessCanceledException) {
+            assertTrue(job.isActive)
+            timesCancelled += 1
+            throw e
+          }
+        }
+        readActionCompletedSemaphore.up()
+      }).finishOnUiThread(ModalityState.defaultModalityState()) {
+        assertTrue(job.isActive)
+        allowedToCompleteFinishOnUi.timeoutWaitUp()
+        finishedOnUi.up()
+      }.submit(executor)
+        .onSuccess {
+          assertTrue(job.isActive)
+          allowedToCompleteOnProcessed.timeoutWaitUp()
+          finishedOnProcessed.up()
+        }.then {
+          assertTrue(job.isActive)
+          allowedToCompleteThenAsync.timeoutWaitUp()
+          finishedThenAsync.up()
+        }
+      readActionScheduled.up()
+    }
+    readActionScheduled.timeoutWaitUp()
+    assertTrue(job.isActive)
+    assertEquals(0, timesCancelled)
+    writeAction {
+      // immediately return, just to cancel and reschedule read action
+    }
+    assertEquals(1, timesCancelled)
+    allowedToCompleteRA = true
+    readActionCompletedSemaphore.timeoutWaitUp()
+    assertTrue(job.isActive)
+    allowedToCompleteOnProcessed.up()
+    finishedOnProcessed.timeoutWaitUp()
+    assertTrue(job.isActive)
+    allowedToCompleteThenAsync.up()
+    finishedThenAsync.timeoutWaitUp()
+    assertTrue(job.isActive)
+    allowedToCompleteFinishOnUi.up()
+    finishedOnUi.timeoutWaitUp()
+    job.join()
+    assertFalse(job.isCancelled)
+  }
+
+  @Test
+  fun `synchronous non-blocking read action is awaited`() = timeoutRunBlocking {
+    val dummyDisposable = Disposer.newDisposable()
+    var allowedToCompleteRA by AtomicReference(false)
+    val readActionCompletedSemaphore = Semaphore(1)
+    val job = withRootJob { job ->
+      ReadAction.nonBlocking(Callable {
+        while (!allowedToCompleteRA) {
+          assertTrue(job.isActive)
+        }
+        readActionCompletedSemaphore.up()
+      }).expireWith(dummyDisposable)
+        .executeSynchronously()
+    }
+    assertTrue(job.isActive)
+    allowedToCompleteRA = true
+    readActionCompletedSemaphore.timeoutWaitUp()
+    job.join()
+    Disposer.dispose(dummyDisposable)
+    assertFalse(job.isCancelled)
+  }
 }
