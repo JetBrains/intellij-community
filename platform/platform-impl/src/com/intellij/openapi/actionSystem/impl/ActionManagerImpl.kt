@@ -57,6 +57,7 @@ import com.intellij.util.DefaultBundleService
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.createChildContext
+import com.intellij.util.concurrency.runAsCoroutine
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.xml.dom.XmlElement
@@ -64,7 +65,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentHashSetOf
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.CompletableJob
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -183,6 +184,10 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   override fun removeTimerListener(listener: TimerListener) {
+    if (listener is CapturingListener) {
+      listener.myJob?.cancel(null)
+    }
+
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
@@ -1289,10 +1294,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   private class CapturingListener(val myTimerListener: TimerListener) : TimerListener by myTimerListener {
     private val myContext: CoroutineContext
 
-    /**
-     * The job is needed here for future cancellation purposes
-     */
-    private val myJob: Job?
+    val myJob: CompletableJob?
 
     init {
       val (context, job) = createChildContext()
@@ -1302,7 +1304,13 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
 
     override fun run() {
       installThreadContext(myContext).use {
-        myTimerListener.run()
+        if (myJob != null) {
+          // this is a periodic runnable that is invoked on timer, it should not complete parent job
+          runAsCoroutine(myJob, false, myTimerListener::run)
+        }
+        else {
+          myTimerListener.run()
+        }
       }
     }
   }
