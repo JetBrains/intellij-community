@@ -6,6 +6,8 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.TestApplication
@@ -18,8 +20,6 @@ import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.toVirtualFileUrl
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
