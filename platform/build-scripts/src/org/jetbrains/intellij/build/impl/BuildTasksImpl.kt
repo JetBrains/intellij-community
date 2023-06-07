@@ -177,7 +177,7 @@ val SUPPORTED_DISTRIBUTIONS: PersistentList<SupportedDistribution> = persistentL
 )
 
 private fun isSourceFile(path: String): Boolean {
-  return path.endsWith(".java") || path.endsWith(".groovy") || path.endsWith(".kt")
+  return path.endsWith(".java") && path != "module-info.java" || path.endsWith(".groovy") || path.endsWith(".kt")
 }
 
 private fun getLocalArtifactRepositoryRoot(global: JpsGlobal): Path {
