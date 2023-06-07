@@ -725,7 +725,12 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                                                                 @NotNull List<OldSwitchStatementBranch> branches) {
     for (int i = 0, size = branches.size(); i < size; i++) {
       OldSwitchStatementBranch branch = branches.get(i);
-      if (!isConvertibleBranch(branch, i != size - 1)) return null;
+      if (!isConvertibleBranch(branch, i != size - 1) &&
+          //example:
+          //case 0: break
+          !(!branch.isFallthrough() && branch.getStatements().length == 0)) {
+        return null;
+      }
     }
     List<SwitchBranch> switchRules = new ArrayList<>();
     for (int i = 0, branchesSize = branches.size(); i < branchesSize; i++) {
@@ -934,7 +939,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       while (true) {
         withPrevious.add(current);
         current = current.myPreviousSwitchBranch;
-        if (current == null || current.myStatements.length != 0) {
+        if (current == null || current.myStatements.length != 0 || !current.myIsFallthrough) {
           return withPrevious;
         }
       }
