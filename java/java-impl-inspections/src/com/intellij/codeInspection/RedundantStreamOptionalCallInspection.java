@@ -368,7 +368,8 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       return isBoxUnboxMethod(call.resolveMethod());
     }
     if (!allowBoxUnbox || !(expression instanceof PsiMethodReferenceExpression methodRef)) return false;
-    if (!BOX_UNBOX_NAMES.contains(methodRef.getReferenceName())) return false;
+    String referenceName = methodRef.getReferenceName();
+    if (referenceName == null || !BOX_UNBOX_NAMES.contains(referenceName)) return false;
     PsiMethod method = tryCast(methodRef.resolve(), PsiMethod.class);
     return isBoxUnboxMethod(method);
   }
