@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.dom.model.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,7 +33,7 @@ import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIE
 import static org.jetbrains.concurrency.Promise.State.PENDING;
 
 public abstract class MavenCoordinateCompletionContributor extends CompletionContributor {
-  
+
   public static final Key<String> MAVEN_COORDINATE_COMPLETION_PREFIX_KEY = Key.create("MAVEN_COORDINATE_COMPLETION_PREFIX_KEY");
 
   private final String myTagId;
@@ -71,7 +70,7 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
                              @NotNull Promise<Integer> promise,
                              @NotNull String completionPrefix) {
     while (promise.getState() == PENDING || !cld.isEmpty()) {
-      ProgressManager.checkCanceled();
+      //ProgressManager.checkCanceled();
       RepositoryArtifactData item = cld.poll();
       if (item instanceof MavenRepositoryArtifactInfo) {
         fillResult(coordinates, result, (MavenRepositoryArtifactInfo)item, completionPrefix);
