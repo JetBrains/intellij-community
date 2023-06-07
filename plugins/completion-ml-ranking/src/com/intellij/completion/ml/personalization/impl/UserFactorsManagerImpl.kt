@@ -63,6 +63,13 @@ class UserFactorsManagerImpl : UserFactorsManager {
 
         register(TemplatesRatio())
 
+        for (duration in HALF_LIFE_DURATIONS) {
+          register(FullLineSmoothedAcceptanceRate(duration))
+        }
+        register(FullLineLastSelectionTime())
+        register(FullLineLastShowUpTime())
+        register(FullLineWasSelected())
+
         for (type in PrefixMatchingType.values())
             register(PrefixMatchingTypeRatio(type))
     }
