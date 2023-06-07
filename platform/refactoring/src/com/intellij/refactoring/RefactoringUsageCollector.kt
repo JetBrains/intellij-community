@@ -2,14 +2,12 @@
 package com.intellij.refactoring
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.ClassEventField
-import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.VarargEventId
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 class RefactoringUsageCollector : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("refactoring", 2)
+    private val GROUP = EventLogGroup("refactoring", 3)
 
     @JvmField
     val HANDLER: ClassEventField = EventFields.Class("handler")
@@ -18,8 +16,19 @@ class RefactoringUsageCollector : CounterUsagesCollector() {
     val ELEMENT: ClassEventField = EventFields.Class("element")
 
     @JvmField
-    val HANDLER_INVOKED: VarargEventId = GROUP.registerVarargEvent("handler.invoked", EventFields.Language,
-                                                                   HANDLER, ELEMENT)
+    val PROCESSOR: ClassEventField = EventFields.Class("processor")
+
+    @JvmField
+    val CANCELLED: BooleanEventField = EventFields.Boolean("cancelled")
+
+    @JvmField
+    val HANDLER_INVOKED: VarargEventId = GROUP.registerVarargEvent("handler.invoked", EventFields.Language, HANDLER, ELEMENT)
+
+    @JvmField
+    val USAGES_SEARCHED = GROUP.registerEvent("usages_searched", PROCESSOR, CANCELLED, EventFields.DurationMs)
+
+    @JvmField
+    val EXECUTED = GROUP.registerEvent("executed", PROCESSOR, EventFields.DurationMs)
 
   }
 
