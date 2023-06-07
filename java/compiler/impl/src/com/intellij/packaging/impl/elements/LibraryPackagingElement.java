@@ -232,7 +232,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
 
     LibraryFilesPackagingElementEntity entity;
     if (myLibraryName == null) {
-      entity = ExtensionsKt.addLibraryFilesPackagingElementEntity(diff, null, source);
+      entity = diff.addEntity(LibraryFilesPackagingElementEntity.create(source));
     }
     else {
       LibraryId id;
@@ -245,7 +245,10 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       else {
         id = new LibraryId(myLibraryName, new LibraryTableId.GlobalLibraryTableId(myLevel));
       }
-      entity = ExtensionsKt.addLibraryFilesPackagingElementEntity(diff, id, source);
+      entity = diff.addEntity(LibraryFilesPackagingElementEntity.create(source, o -> {
+        o.setLibrary(id);
+        return Unit.INSTANCE;
+      }));
     }
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;

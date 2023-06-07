@@ -149,10 +149,13 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     VirtualFileUrlManager fileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(project);
     VirtualFileUrl fileUrl = fileUrlManager.fromPath(filePath);
     if (renamedOutputFileName != null) {
-      addedEntity = ExtensionsKt.addFileCopyPackagingElementEntity(diff, fileUrl, renamedOutputFileName, source);
+      addedEntity = diff.addEntity(FileCopyPackagingElementEntity.create(fileUrl, source, entityBuilder -> {
+        entityBuilder.setRenamedOutputFileName(renamedOutputFileName);
+        return Unit.INSTANCE;
+      }));
     }
     else {
-      addedEntity = ExtensionsKt.addFileCopyPackagingElementEntity(diff, fileUrl, null, source);
+      addedEntity = diff.addEntity(FileCopyPackagingElementEntity.create(fileUrl, source));
     }
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
     return addedEntity;

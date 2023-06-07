@@ -7,15 +7,14 @@ import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.ui.DirectoryElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.platform.workspaceModel.storage.EntitySource;
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.DirectoryPackagingElementEntity;
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.platform.workspaceModel.storage.EntitySource;
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.DirectoryPackagingElementEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +102,10 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
     });
 
     Objects.requireNonNull(this.myDirectoryName, "directoryName is not specified");
-    var entity = ExtensionsKt.addDirectoryPackagingElementEntity(diff, this.myDirectoryName, children, source);
+    var entity = diff.addEntity(DirectoryPackagingElementEntity.create(this.myDirectoryName, source, entityBuilder -> {
+      entityBuilder.setChildren(children);
+      return Unit.INSTANCE;
+    }));
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;
   }

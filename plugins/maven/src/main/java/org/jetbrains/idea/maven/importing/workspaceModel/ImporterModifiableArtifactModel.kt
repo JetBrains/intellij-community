@@ -16,10 +16,7 @@ import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.addArtifactEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.addArtifactPropertiesEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.modifyEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
@@ -161,10 +158,10 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
       val rootElement = artifact.rootElement
       val rootElementEntity = rootElement.getOrAddEntity(storage, source, project) as CompositePackagingElementEntity
 
-      val artifactEntity = storage.addArtifactEntity(
-        artifact.name, artifact.artifactType.id, false,
-        artifact.getOutputUrl(), rootElementEntity, source
-      )
+      val artifactEntity = storage addEntity ArtifactEntity(artifact.name, artifact.artifactType.id, false, source) {
+        this.outputUrl = artifact.getOutputUrl()
+        this.rootElement = rootElementEntity
+      }
 
       for (provider in artifact.propertiesProviders) {
         val properties = artifact.getProperties(provider)
@@ -184,7 +181,10 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
           val existingProperty = artifactEntity.customProperties.find { it.providerType == provider.id }
 
           if (existingProperty == null) {
-            storage.addArtifactPropertiesEntity(artifactEntity, provider.id, tag, artifactEntity.entitySource)
+            storage addEntity ArtifactPropertiesEntity(provider.id, artifactEntity.entitySource) {
+              this.artifact = artifactEntity
+              this.propertiesXmlTag = tag
+            }
           }
           else {
             storage.modifyEntity(existingProperty) {

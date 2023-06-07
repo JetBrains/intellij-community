@@ -9,14 +9,14 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.platform.workspaceModel.storage.EntitySource;
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ArtifactRootElementEntity;
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -88,7 +88,10 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
       return (PackagingElementEntity)o.getOrAddEntity(diff, source, project);
     });
 
-    ArtifactRootElementEntity entity = ExtensionsKt.addArtifactRootElementEntity(diff, children, source);
+    ArtifactRootElementEntity entity = diff.addEntity(ArtifactRootElementEntity.create(source, entityBuilder -> {
+      entityBuilder.setChildren(children);
+      return Unit.INSTANCE;
+    }));
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;
   }

@@ -15,7 +15,7 @@ import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.addModuleSourcePackagingElementEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleSourcePackagingElementEntity
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 
@@ -46,10 +46,12 @@ class ProductionModuleSourcePackagingElement : ModulePackagingElementBase {
 
     val moduleName = this.moduleName
     val addedEntity = if (moduleName != null) {
-      diff.addModuleSourcePackagingElementEntity(ModuleId(moduleName), source)
+      diff addEntity ModuleSourcePackagingElementEntity(source) {
+        module = ModuleId(moduleName)
+      }
     }
     else {
-      diff.addModuleSourcePackagingElementEntity(null, source)
+      diff addEntity ModuleSourcePackagingElementEntity(source)
     }
     diff.mutableElements.addMapping(addedEntity, this)
     return addedEntity

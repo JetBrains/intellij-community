@@ -31,9 +31,14 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
     val fileVirtualUrl = VirtualFileUrlManager.getInstance(project).fromPath(file.path)
     runWriteAction {
       WorkspaceModel.getInstance(project).updateProjectModel {
-        val fileCopy = it.addFileCopyPackagingElementEntity(fileVirtualUrl, null, MySource)
-        val rootElement = it.addArtifactRootElementEntity(listOf(fileCopy), MySource)
-        it.addArtifactEntity("MyArtifact", PlainArtifactType.ID, false, outputVirtualUrl, rootElement, MySource)
+        val fileCopy = it addEntity FileCopyPackagingElementEntity(fileVirtualUrl, MySource)
+        val rootElement = it addEntity ArtifactRootElementEntity(MySource) {
+          children = listOf(fileCopy)
+        }
+        it addEntity ArtifactEntity("MyArtifact", PlainArtifactType.ID, false, MySource) {
+          outputUrl = outputVirtualUrl
+          this.rootElement = rootElement
+        }
       }
     }
     runWriteAction {
