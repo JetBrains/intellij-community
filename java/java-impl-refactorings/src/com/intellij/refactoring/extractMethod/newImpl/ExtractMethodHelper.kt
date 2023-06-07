@@ -283,7 +283,7 @@ object ExtractMethodHelper {
   private fun getPhysicalPsiRange(expression: PsiExpression?): PsiRange? {
     val range: TextRange = expression?.getUserData(ElementToWorkOn.TEXT_RANGE)?.textRange ?: return null
     val parent: PsiElement = expression.getUserData(ElementToWorkOn.PARENT) ?: return null
-    val rangeParent = PsiTreeUtil.findFirstParent(parent) { element -> range in element.textRange } ?: return null
+    val rangeParent = PsiTreeUtil.findFirstParent({ element -> range in element.textRange }, parent) ?: return null
     if (rangeParent.textRange in range) return PsiRange(rangeParent.parent, rangeParent, rangeParent)
     val children = rangeParent.children
     val first = children.firstOrNull { child -> child.textRange in range } ?: return null
