@@ -79,7 +79,7 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
     override fun getContainingAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String?>? {
         val sourcePsi = uElement?.sourcePsi ?: return null
 
-        val parent = sourcePsi.parent ?: return super.getContainingAnnotationEntry(uElement)
+        val parent = sourcePsi.parent ?: return null
         if (parent is KtAnnotationEntry) {
             return super.getContainingAnnotationEntry(uElement)
         }
