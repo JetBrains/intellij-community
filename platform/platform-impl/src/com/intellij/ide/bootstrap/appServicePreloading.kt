@@ -29,56 +29,59 @@ import kotlinx.coroutines.*
 import java.util.concurrent.CancellationException
 
 fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: CoroutineScope, appRegistered: Job) {
-  launch(CoroutineName("PathMacros preloading")) {
+  val pathMacroJob = launch(CoroutineName("PathMacros preloading")) {
     // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
     app.serviceAsync<PathMacros>()
   }
 
-  launch {
+  val registryManagerJob = asyncScope.launch {
+    pathMacroJob.join()
+    app.serviceAsync<RegistryManager>()
+  }
+
+  val managingFsJob = launch {
     // loading is started by StartupUtil, here we just "join" it
     subtask("ManagingFS preloading") { app.serviceAsync<ManagingFS>() }
 
     // PlatformVirtualFileManager also wants ManagingFS
     launch { app.serviceAsync<VirtualFileManager>() }
 
-    launch {
-      // loading is started above, here we just "join" it
-      app.serviceAsync<PathMacros>()
-
-      // required for indexing tasks (see JavaSourceModuleNameIndex, for example)
-      // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
-      app.serviceAsync<PropertiesComponent>()
-
-      // FileTypeManager requires appStarter execution
-      launch {
-        appRegistered.join()
-        postAppRegistered(app, asyncScope)
-      }
-
-      asyncScope.launch {
-        // wants PropertiesComponent
-        launch { app.serviceAsync<DebugLogManager>() }
-
-        app.serviceAsync<RegistryManager>()
-        // wants RegistryManager
-        if (!app.isHeadlessEnvironment) {
-          app.serviceAsync<PerformanceWatcher>()
-          // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
-          PerformanceWatcher.getInstance()
-        }
-      }
-    }
-
     // LocalHistory wants ManagingFS.
     // It should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner.
     asyncScope.launch { app.getServiceAsyncIfDefined(LocalHistory::class.java) }
   }
 
+  launch {
+    pathMacroJob.join()
+
+    // required for indexing tasks (see JavaSourceModuleNameIndex, for example)
+    // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
+    app.serviceAsync<PropertiesComponent>()
+
+    // FileTypeManager requires appStarter execution
+    launch {
+      appRegistered.join()
+      postAppRegistered(app, asyncScope, managingFsJob)
+    }
+
+    asyncScope.launch {
+      // wants PropertiesComponent
+      launch { app.serviceAsync<DebugLogManager>() }
+
+      // wants RegistryManager
+      if (!app.isHeadlessEnvironment) {
+        registryManagerJob.join()
+        app.serviceAsync<PerformanceWatcher>()
+        // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
+        PerformanceWatcher.getInstance()
+      }
+    }
+  }
+
   if (!app.isHeadlessEnvironment) {
     asyncScope.launch {
-      // loading is started above, here we just "join" it
       // KeymapManager is a PersistentStateComponent
-      app.serviceAsync<PathMacros>()
+      pathMacroJob.join()
 
       launch(CoroutineName("UISettings preloading")) { app.serviceAsync<UISettings>() }
       launch(CoroutineName("CustomActionsSchema preloading")) { app.serviceAsync<CustomActionsSchema>() }
@@ -95,8 +98,10 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
   }
 }
 
-private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: CoroutineScope) {
+private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: CoroutineScope, managingFsJob: Job) {
   launch {
+    managingFsJob.join()
+
     // ProjectJdkTable wants FileTypeManager and VirtualFilePointerManager
     coroutineScope {
       launch { app.serviceAsync<FileTypeManager>() }
