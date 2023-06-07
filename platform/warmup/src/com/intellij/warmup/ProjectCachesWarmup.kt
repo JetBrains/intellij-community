@@ -88,8 +88,8 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
 
     var totalIndexedFiles = 0
     val handler = object : ProjectIndexingActivityHistoryListener {
-      override fun onFinishedDumbIndexing(projectDumbIndexingHistory: ProjectDumbIndexingHistory) {
-        totalIndexedFiles += projectDumbIndexingHistory.totalStatsPerFileType.values.sumOf { it.totalNumberOfFiles }
+      override fun onFinishedDumbIndexing(history: ProjectDumbIndexingHistory) {
+        totalIndexedFiles += history.totalStatsPerFileType.values.sumOf { it.totalNumberOfFiles }
       }
     }
     application.messageBus.connect().subscribe(ProjectIndexingActivityHistoryListener.TOPIC, handler)

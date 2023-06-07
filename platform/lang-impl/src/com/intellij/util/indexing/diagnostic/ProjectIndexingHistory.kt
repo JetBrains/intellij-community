@@ -41,13 +41,13 @@ interface ProjectIndexingActivityHistoryListener {
                                                                      Topic.BroadcastDirection.NONE)
   }
 
-  fun onStartedScanning(projectScanningHistory: ProjectScanningHistory) {}
+  fun onStartedScanning(history: ProjectScanningHistory) {}
 
-  fun onFinishedScanning(projectScanningHistory: ProjectScanningHistory) {}
+  fun onFinishedScanning(history: ProjectScanningHistory) {}
 
-  fun onStartedDumbIndexing(projectDumbIndexingHistory: ProjectDumbIndexingHistory) {}
+  fun onStartedDumbIndexing(history: ProjectDumbIndexingHistory) {}
 
-  fun onFinishedDumbIndexing(projectDumbIndexingHistory: ProjectDumbIndexingHistory) {}
+  fun onFinishedDumbIndexing(history: ProjectDumbIndexingHistory) {}
 }
 
 @ApiStatus.Obsolete
