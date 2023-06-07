@@ -338,6 +338,29 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
           return null;
         });
 
+        if (exclusionState.getDeletionsCount() == 0) {
+          myHighlighters.addAll(
+            new DiffDrawUtil.LineHighlighterBuilder(myViewer.getEditor(Side.LEFT),
+                                                    changeStart1,
+                                                    changeStart1,
+                                                    TextDiffType.INSERTED)
+              .withExcludedInEditor(myChange.isSkipped())
+              .withExcludedInGutter(false)
+              .withAlignedSides(myViewer.needAlignChanges())
+              .done());
+        }
+        if (exclusionState.getAdditionsCount() == 0) {
+          myHighlighters.addAll(
+            new DiffDrawUtil.LineHighlighterBuilder(myViewer.getEditor(Side.RIGHT),
+                                                    changeStart2,
+                                                    changeStart2,
+                                                    TextDiffType.DELETED)
+              .withExcludedInEditor(myChange.isSkipped())
+              .withExcludedInGutter(false)
+              .withAlignedSides(myViewer.needAlignChanges())
+              .done());
+        }
+
         // do not draw ">>"
         // doInstallActionHighlighters();
       }
@@ -355,14 +378,32 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         int endLine2 = myChange.getEndLine(Side.RIGHT);
 
         if (myViewer.needAlignChanges()) {
-          return handler.processAligned(startLine1, endLine1, startLine2, startLine2, TextDiffType.DELETED) &&
-                 handler.processAligned(endLine1, endLine1, startLine2, endLine2, TextDiffType.INSERTED);
+          if (startLine1 != endLine1) {
+            if (!handler.processAligned(startLine1, endLine1, startLine2, startLine2, TextDiffType.DELETED)) {
+              return false;
+            }
+          }
+          if (startLine2 != endLine2) {
+            if (!handler.processAligned(endLine1, endLine1, startLine2, endLine2, TextDiffType.INSERTED)) {
+              return false;
+            }
+          }
+          return true;
         }
         else {
-          return handler.processExcludable(startLine1, endLine1, startLine2, startLine2, TextDiffType.DELETED,
-                                           myChange.isExcluded(), myChange.isSkipped()) &&
-                 handler.processExcludable(endLine1, endLine1, startLine2, endLine2, TextDiffType.INSERTED,
-                                           myChange.isExcluded(), myChange.isSkipped());
+          if (startLine1 != endLine1) {
+            if (!handler.processExcludable(startLine1, endLine1, startLine2, startLine2, TextDiffType.DELETED,
+                                           myChange.isExcluded(), myChange.isSkipped())) {
+              return false;
+            }
+          }
+          if (startLine2 != endLine2) {
+            if (!handler.processExcludable(endLine1, endLine1, startLine2, endLine2, TextDiffType.INSERTED,
+                                           myChange.isExcluded(), myChange.isSkipped())) {
+              return false;
+            }
+          }
+          return true;
         }
       }
       else {
