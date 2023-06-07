@@ -380,21 +380,6 @@ pub fn symlink(original: &Path, link: &Path) -> Result<()> {
     Ok(())
 }
 
-#[cfg(target_os = "linux")]
-pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home.join("bin/java")
-}
-
-#[cfg(target_os = "windows")]
-pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home.join("bin\\java.exe")
-}
-
-#[cfg(target_os = "macos")]
-pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home.join("Contents/Home/bin/java")
-}
-
 fn get_custom_config_dir() -> PathBuf {
     get_config_home().unwrap().join("JetBrains").join("XPlatLauncherTest")
 }
