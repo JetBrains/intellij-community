@@ -14,6 +14,7 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vcs.VcsException
@@ -239,7 +240,12 @@ private fun GitRepository.workingCopySize(): Long = try {
   val root = this.root.toNioPath().toFile()
   root.walk()
     .onEnter { it.name != GitUtil.DOT_GIT && !isInnerRepo(root, it) }
-    .filter { it.isFile }
+    .onEach {
+      ProgressManager.checkCanceled()
+    }
+    .filter {
+      it.isFile
+    }
     .map { it.length() }
     .sumWithLimits() // don't calculate working copy size over 4 gb to reduce CPU usage
 }
