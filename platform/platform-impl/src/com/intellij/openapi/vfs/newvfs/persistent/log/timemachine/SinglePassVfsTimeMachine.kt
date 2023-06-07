@@ -214,7 +214,7 @@ class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
     }
 
     override fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?> {
-      val attrId = logContext.stringEnumerator.enumerate(fileAttribute.id)
+      val attrId = logContext.enumerateAttribute(fileAttribute)
       val attrDataRef = attributeDataMap.getOrNull()?.get(attrId) ?: return State.NotAvailable()
       return payloadReader(attrDataRef).fmap {
         PersistentFSAttributeAccessor.validateAttributeVersion(
