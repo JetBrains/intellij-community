@@ -37,6 +37,8 @@ cargo search
 cargo uninstall
 cargo help
 cargo version
+cargo fmt
+cargo miri
 cat
 cd
 chkdsk
