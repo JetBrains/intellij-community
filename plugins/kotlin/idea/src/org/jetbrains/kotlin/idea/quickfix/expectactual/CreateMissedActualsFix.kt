@@ -108,7 +108,7 @@ class CreateMissedActualsFix(
 
             when {
               name == "main" && it.isAndroidModule() && !it.isTestModule -> "androidMain"
-              name == "unitTest" && it.isAndroidModule() && it.isTestModule -> "androidTest"
+              name == "unitTest" && it.isAndroidModule() && it.isTestModule -> "androidUnitTest"
               else -> name
             }
         }
@@ -296,8 +296,12 @@ private class CreateMissedActualsDialog(
 
 private fun getNewFilePathForModule(commonFilePath: String, module: Module, simpleModuleNames: Map<Module, String>): Path {
     val simpleName = simpleModuleNames[module].orEmpty()
-    val suffixToRemove = listOf("Main", "Test").firstOrNull { simpleName.endsWith(it) }.orEmpty()
-    val modulePlatformName = simpleName.removeSuffix(suffixToRemove).takeIf { it.isNotBlank() }
+    val modulePlatformName = when {
+        simpleName == "androidUnitTest" || simpleName == "androidInstrumentedTest" -> "android"
+        simpleName.endsWith("Main") -> simpleName.removeSuffix("Main")
+        simpleName.endsWith("Test") -> simpleName.removeSuffix("Test")
+        else -> simpleName
+    }.takeIf { it.isNotBlank() }
     return Path(
         commonFilePath.removePrefix(File.separator).removeSuffix(".kt") +
                 modulePlatformName?.let { ".$it" }.orEmpty() + ".kt"
