@@ -142,6 +142,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   override fun updateUI() {
     super.updateUI()
+    customTitleBar?.putProperty("controls.dark", ColorUtil.isDark(background))
     if (ExperimentalUI.isNewUI()) {
       preferredSize = preferredSize.apply {
         height = JBUI.scale(
