@@ -150,7 +150,7 @@ class PersistentFSTreeAccessor {
     try {
       PersistentFSConnection connection = myFSConnection;
 
-      //TODO RC: with non-strict names enumerator it is possible root==NULL_ID here -> what will happens?
+      //TODO RC: with non-strict names enumerator it is possible rootNameId==NULL_ID here -> what will happens?
       int rootNameId = connection.getNames().tryEnumerate(rootUrl);
 
       int[] names = ArrayUtilRt.EMPTY_INT_ARRAY;
@@ -195,6 +195,7 @@ class PersistentFSTreeAccessor {
         names = ArrayUtil.insert(names, -index - 1, rootNameId);
 
         saveNameIdSequenceWithDeltas(names, ids, output);
+        //FIXME RC: assign myFSConnection.records[newRootFileId].nameId = rootNameId
         return newRootFileId;
       }
     }

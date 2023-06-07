@@ -10,9 +10,14 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
-final class CheckSanityAction extends AnAction {
+final class CheckVFSHealthAction extends AnAction {
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    VFSHealthChecker checker = new VFSHealthChecker(FSRecords.implOrFail(), FSRecords.LOG);
+    VFSHealthChecker.VFSHealthCheckReport report = checker.checkHealth();
+    FSRecords.LOG.info("VFS health check report: " + report);
+
+    //run an old version still -- to compare:
     FSRecords.checkSanity();
   }
 

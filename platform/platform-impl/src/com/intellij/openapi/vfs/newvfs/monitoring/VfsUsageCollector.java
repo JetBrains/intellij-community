@@ -10,12 +10,12 @@ import com.intellij.openapi.vfs.newvfs.persistent.VFSNeedsRebuildException.Rebui
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.Long;
+
 import static com.intellij.internal.statistic.eventLog.events.EventFields.Boolean;
 import static com.intellij.internal.statistic.eventLog.events.EventFields.Enum;
 import static com.intellij.internal.statistic.eventLog.events.EventFields.Long;
 import static com.intellij.internal.statistic.eventLog.events.EventFields.*;
-
-import java.lang.Long;
 
 @ApiStatus.Internal
 public final class VfsUsageCollector extends CounterUsagesCollector {
@@ -99,6 +99,9 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
   /* ================== EVENT_VFS_HEALTH_CHECK: ====================================================== */
 
+  /** ={@link FSRecords#getCreationTimestamp()} */
+  private static final LongEventField FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS = Long("vfs_creation_timestamp_ms");
+  /** How long the check have taken */
   private static final LongEventField FIELD_HEALTH_CHECK_DURATION_MS = Long("check_duration_ms");
 
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CHECKED = Int("file_records_checked");
@@ -108,8 +111,8 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_UNRESOLVABLE = Int("file_records_name_unresolvable");
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_NOT_NULL = Int("file_records_content_not_null");
   /** Number of file-records there contentId can't be resolved against NamesEnumerator */
-  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE =
-    Int("file_records_content_unresolvable");
+  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE = Int("file_records_content_unresolvable");
+  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_NULL_PARENTS = Int("file_records_null_parents");
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_CHECKED = Int("file_records_children_checked");
   /** Number of file-records with children.parent != this */
   private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_INCONSISTENT = Int("file_records_children_inconsistent");
@@ -132,6 +135,8 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
   private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_CHECKED = Int("roots_checked");
   private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_WITH_PARENTS = Int("roots_with_parents");
+  /** root.isDeleted=true, but record is still in ROOTS catalog */
+  private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_DELETED_BUT_NOT_REMOVED = Int("roots_deleted_but_not_removed");
   private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_ERRORS = Int("roots_errors");
 
   private static final IntEventField FIELD_HEALTH_CHECK_ATTRIBUTES_ERRORS = Int("attributes_errors");
@@ -139,7 +144,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
   private static final VarargEventId EVENT_VFS_HEALTH_CHECK = GROUP_VFS.registerVarargEvent(
     "health_check",
-    FIELD_CREATION_TIMESTAMP,
+    FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS,
 
     FIELD_HEALTH_CHECK_DURATION_MS,
 
@@ -149,6 +154,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
     FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_UNRESOLVABLE,
     FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_NOT_NULL,
     FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE,
+    FIELD_HEALTH_CHECK_FILE_RECORDS_NULL_PARENTS,
     FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_CHECKED,
     FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_INCONSISTENT,
     FIELD_HEALTH_CHECK_FILE_RECORDS_GENERAL_ERRORS,
@@ -164,6 +170,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
     FIELD_HEALTH_CHECK_ROOTS_CHECKED,
     FIELD_HEALTH_CHECK_ROOTS_WITH_PARENTS,
+    FIELD_HEALTH_CHECK_ROOTS_DELETED_BUT_NOT_REMOVED,
     FIELD_HEALTH_CHECK_ROOTS_ERRORS,
 
     FIELD_HEALTH_CHECK_ATTRIBUTES_ERRORS
@@ -240,7 +247,8 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   }
 
 
-  public static void logVfsHealthCheck(long checkDurationMs,
+  public static void logVfsHealthCheck(long creationTimestampMs,
+                                       long checkDurationMs,
                                        int fileRecordsChecked,
                                        int fileRecordsDeleted,
                                        int fileRecordsNameIdsNull,
@@ -260,11 +268,13 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
                                        int rootsChecked,
                                        int rootsWithParents,
+                                       int rootsDeletedButNotRemoved,
                                        int rootsGeneralErrors,
 
                                        int contentRecordsChecked,
                                        int contentGeneralErrors) {
     EVENT_VFS_HEALTH_CHECK.log(
+      FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS.with(creationTimestampMs),
       FIELD_HEALTH_CHECK_DURATION_MS.with(checkDurationMs),
 
       FIELD_HEALTH_CHECK_FILE_RECORDS_CHECKED.with(fileRecordsChecked),
@@ -273,6 +283,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
       FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_UNRESOLVABLE.with(fileRecordsNameIdsUnresolvable),
       FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_NOT_NULL.with(fileRecordsContentIdsNotNull),
       FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE.with(fileRecordsContentIdsUnresolvable),
+      FIELD_HEALTH_CHECK_FILE_RECORDS_NULL_PARENTS.with(fileRecordsChildrenChecked),
       FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_CHECKED.with(fileRecordsChildrenChecked),
       FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_INCONSISTENT.with(fileRecordsInconsistentParentChildRelationships),
       FIELD_HEALTH_CHECK_FILE_RECORDS_GENERAL_ERRORS.with(fileRecordsGeneralErrors),
@@ -285,6 +296,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
       FIELD_HEALTH_CHECK_ROOTS_CHECKED.with(rootsChecked),
       FIELD_HEALTH_CHECK_ROOTS_WITH_PARENTS.with(rootsWithParents),
+      FIELD_HEALTH_CHECK_ROOTS_DELETED_BUT_NOT_REMOVED.with(rootsDeletedButNotRemoved),
       FIELD_HEALTH_CHECK_ROOTS_ERRORS.with(rootsGeneralErrors),
 
       FIELD_HEALTH_CHECK_CONTENTS_CHECKED.with(contentRecordsChecked),

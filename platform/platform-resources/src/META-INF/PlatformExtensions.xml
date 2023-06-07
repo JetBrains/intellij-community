@@ -1465,7 +1465,7 @@
 
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.opentelemetry.JVMStatsToOTelReporter"/>
 
-    <backgroundPostStartupActivity implementation="com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckStarter"/>
+    <applicationInitializedListener implementation="com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckServiceStarter"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.openapi.vfs.newvfs.monitoring.VFSInitializationConditionsToFusReporter"/>
 
