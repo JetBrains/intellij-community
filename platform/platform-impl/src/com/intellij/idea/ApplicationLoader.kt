@@ -16,19 +16,15 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
-import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
@@ -53,6 +49,7 @@ private val LOG: Logger
   get() = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 fun initApplication(context: InitAppContext) {
+  context.appRegistered.complete(Unit)
   runBlocking(context.context) {
     val (app, preloadCriticalServicesJob) = context.appDeferred.await()
     initApplicationImpl(args = context.args.filterNot { CommandLineArgs.isKnownArgument(it) },
@@ -75,20 +72,6 @@ private suspend fun initApplicationImpl(args: List<String>,
   }
 
   val appInitializedListeners = subtask("app preloading") {
-    // FileTypeManager requires appStarter execution
-    launch {
-      preloadCriticalServicesJob.await().join()
-
-      // ProjectJdkTable wants FileTypeManager and VirtualFilePointerManager
-      coroutineScope {
-        launch { app.serviceAsync<FileTypeManager>() }
-        // wants ManagingFS
-        launch { app.serviceAsync<VirtualFilePointerManager>() }
-      }
-
-      app.serviceAsync<ProjectJdkTable>()
-    }
-
     launch(CoroutineName("app service preloading (sync)")) {
       app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this, asyncScope = asyncScope)
     }
@@ -116,6 +99,8 @@ private suspend fun initApplicationImpl(args: List<String>,
     asyncScope.launch {
       addActivateAndWindowsCliListeners()
     }
+
+    preloadCriticalServicesJob.await().join()
 
     appInitListeners.await()
   }

@@ -15,15 +15,16 @@ import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import kotlinx.coroutines.*
 
-fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: CoroutineScope) {
+fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: CoroutineScope, appRegistered: Job) {
   launch(CoroutineName("PathMacros preloading")) {
     // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
     app.serviceAsync<PathMacros>()
@@ -43,6 +44,20 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
       // required for indexing tasks (see JavaSourceModuleNameIndex, for example)
       // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
       app.serviceAsync<PropertiesComponent>()
+
+      // FileTypeManager requires appStarter execution
+      launch {
+        appRegistered.join()
+
+        // ProjectJdkTable wants FileTypeManager and VirtualFilePointerManager
+        coroutineScope {
+          launch { app.serviceAsync<FileTypeManager>() }
+          // wants ManagingFS
+          launch { app.serviceAsync<VirtualFilePointerManager>() }
+        }
+
+        app.serviceAsync<ProjectJdkTable>()
+      }
 
       asyncScope.launch {
         // wants PropertiesComponent

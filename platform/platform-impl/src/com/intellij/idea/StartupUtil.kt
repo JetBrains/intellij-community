@@ -270,6 +270,8 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
+  val appRegistered = CompletableDeferred<Unit>()
+
   val appDeferred = async {
     checkSystemDirJob.join()
 
@@ -302,6 +304,7 @@ fun CoroutineScope.startApplication(args: List<String>,
       preInitApp(app = app,
                  asyncScope = asyncScope,
                  log = log,
+                 appRegistered = appRegistered,
                  initLafJob = initLafJob,
                  pluginSetDeferred = pluginSetDeferred,
                  euaTaskDeferred = euaTaskDeferred)
@@ -359,7 +362,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     // with the main dispatcher for non-technical reasons
     mainScope.launch {
-      appStarter.start(InitAppContext(context = asyncScope.coroutineContext, args = args, appDeferred = appDeferred))
+      appStarter.start(InitAppContext(context = asyncScope.coroutineContext, args = args, appDeferred = appDeferred, appRegistered = appRegistered))
     }
   }
 
@@ -381,6 +384,7 @@ private suspend fun preInitApp(app: ApplicationImpl,
                                asyncScope: CoroutineScope,
                                log: Logger,
                                initLafJob: Job,
+                               appRegistered: Job,
                                pluginSetDeferred: CompletableDeferred<Deferred<PluginSet>>,
                                euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?): Job {
   val pluginSet = subtask("plugin descriptor init waiting") {
@@ -408,7 +412,7 @@ private suspend fun preInitApp(app: ApplicationImpl,
   initConfigurationStore(app)
 
   val preloadCriticalServicesJob = asyncScope.launch(CoroutineName("critical services preloading")) {
-    preloadCriticalServices(app, asyncScope)
+    preloadCriticalServices(app = app, asyncScope = asyncScope, appRegistered = appRegistered)
   }
 
   if (!app.isHeadlessEnvironment) {

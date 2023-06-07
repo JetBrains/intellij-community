@@ -2,6 +2,7 @@
 package com.intellij.ide.bootstrap
 
 import com.intellij.openapi.application.Application
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
@@ -12,4 +13,5 @@ class InitAppContext(
   @JvmField val context: CoroutineContext,
   @JvmField val args: List<String>,
   @JvmField val appDeferred: Deferred<Pair<Application, Deferred<Job>>>,
+  @JvmField val appRegistered: CompletableDeferred<Unit>,
 )
