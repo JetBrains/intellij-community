@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.RunAll;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -28,13 +29,13 @@ public class MavenModuleBuilderSameFolderAsParentTest extends MavenMultiVersionI
     RunAll.runAll(
       () -> stopMavenImportManager(),
       () -> super.tearDown(),
-      () -> MavenUtil.resetNoBackgroundMode()
+      () -> MavenUtil.resetUpdateSuspendable()
     );
   }
 
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setNoBackgroundMode();
+    MavenUtil.setUpdateSuspendable();
     super.setUp();
     myBuilder = new MavenJavaModuleBuilder();
 
@@ -62,6 +63,16 @@ public class MavenModuleBuilderSameFolderAsParentTest extends MavenMultiVersionI
     });
 
     resolveDependenciesAndImport();
+  }
+
+  @Override
+  protected void resolveDependenciesAndImport() {
+    if (isNewImportingProcess) {
+      importProject();
+      return;
+    }
+
+    myProjectsManager.resolveAndImportMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
   }
 
   @Test
