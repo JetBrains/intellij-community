@@ -11,7 +11,7 @@ import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.actions.SearchEverywhereClassifier
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.createContext
-import com.intellij.ide.actions.searcheverywhere.footer.createPsiExtendedInfo
+import com.intellij.ide.actions.searcheverywhere.footer.createTextExtendedInfo
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeModel
 import com.intellij.openapi.Disposable
@@ -208,7 +208,7 @@ class TextSearchContributor(
     if (this::onDispose.isInitialized) onDispose()
   }
 
-  override fun createExtendedInfo() = createPsiExtendedInfo()
+  override fun createExtendedInfo() = createTextExtendedInfo()
 
   companion object {
     private const val ID = "TextSearchContributor"
