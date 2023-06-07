@@ -172,7 +172,7 @@ private fun bootstrap(startupTimings: MutableList<Any>) {
   }
 
   addBootstrapTiming("classloader init", startupTimings)
-  initClassLoader(AppMode.isRemoteDevHost())
+  initClassLoader(AppMode.isRemoteDevHost() && !isLuxEnabled())
 }
 
 fun initClassLoader(addCwmLibs: Boolean) {
