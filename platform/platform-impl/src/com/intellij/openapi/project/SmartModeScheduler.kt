@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Async
@@ -53,7 +54,7 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
   private val projectOpening: AtomicBoolean = AtomicBoolean(true)
 
   // DumbService starts in dumb mode and then becomes smart
-  private val projectDumb: AtomicBoolean = AtomicBoolean(true)
+  private val projectDumb: StateFlow<DumbServiceImpl.State> = (project.service<DumbService>() as DumbServiceImpl).stateAsFlow()
 
   // There is no race: scanning task is queued from "required for smart mode" dumb task, and scanner immediately becomes "running".
   // Even if listener still has not received "running" event, direct check of the state should say that scanning executor is running
@@ -73,7 +74,17 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
     sc.launch {
       projectScanning.collect {
         blockingContext {
+          // we don't pass current value to the method because the value might have already outdated
           onFilesScanningChanged()
+        }
+      }
+    }
+
+    sc.launch {
+      projectDumb.collect {
+        blockingContext {
+          // we don't pass current value to the method because the value might have already outdated
+          onDumbModeChanged()
         }
       }
     }
@@ -85,9 +96,8 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
   }
 
   private fun onFilesScanningChanged() = onStateChanged { }
+  private fun onDumbModeChanged(): Unit = onStateChanged { }
   internal fun onProjectOpened(): Unit = onStateChanged { projectOpening.set(false) }
-  internal fun onEnteredDumbMode(): Unit = onStateChanged { projectDumb.set(true) }
-  internal fun onExitDumbMode(): Unit = onStateChanged { projectDumb.set(false) }
 
   private fun onStateChanged(updateState: () -> Unit) {
     updateState()
@@ -146,7 +156,7 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
   private fun isSmart() = (getCurrentMode() == 0)
   fun getCurrentMode(): Int =
     (if (projectScanning.value) SCANNING else 0) +
-    (if (projectDumb.get()) DUMB else 0) +
+    (if (projectDumb.value == DumbServiceImpl.State.DUMB) DUMB else 0) +
     (if (projectOpening.get()) OPENING else 0)
 
   fun clear() {
@@ -163,11 +173,6 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
         project.service<SmartModeScheduler>().onProjectOpened()
       }
     }
-  }
-
-  class SmartModeSchedulerDumbModeListener(private val project: Project) : DumbService.DumbModeListener {
-    override fun enteredDumbMode(): Unit = project.service<SmartModeScheduler>().onEnteredDumbMode()
-    override fun exitDumbMode(): Unit = project.service<SmartModeScheduler>().onExitDumbMode()
   }
 
   companion object {
