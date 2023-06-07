@@ -34,6 +34,11 @@ internal class ProcessHandlerWithPyPositionConverter(process: Process,
 
   override fun getFileMappings(): List<PathMappingSettings.PathMapping> = emptyList()
 
-  override fun readerOptions(): BaseOutputReader.Options =
-    if (isMostlySilentProcess) BaseOutputReader.Options.forMostlySilentProcess() else super.readerOptions()
+  override fun readerOptions(): BaseOutputReader.Options {
+    return if (isMostlySilentProcess && !hasPty()) {
+      BaseOutputReader.Options.forMostlySilentProcess()
+    } else {
+      super.readerOptions()
+    }
+  }
 }
