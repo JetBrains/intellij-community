@@ -34,20 +34,20 @@ import com.intellij.util.application
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.DeprecationStripePanel
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Async
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
 import javax.swing.JComponent
 
 @ApiStatus.Internal
 open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private val myProject: Project,
                                                                          publisher: DumbModeListener) : DumbService(), Disposable, ModificationTracker, DumbServiceBalloon.Service {
-  private val myState: AtomicReference<State>
+  private val myState: MutableStateFlow<State>
 
   override val project: Project = myProject
   override var isAlternativeResolveEnabled: Boolean
@@ -86,8 +86,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
      */
     override fun beforeFirstTask(): Boolean {
       // if a queue has already been emptied by modal dumb progress, DumbServiceGuiExecutor will not invoke processing on empty queue
-      LOG.assertTrue(myState.get() == State.DUMB,
-                     "State should be DUMB, but was " + myState.get())
+      LOG.assertTrue(myState.value == State.DUMB,
+                     "State should be DUMB, but was " + myState.value)
       return true
     }
 
@@ -127,7 +127,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     myAlternativeResolveTracker = DumbServiceAlternativeResolveTracker()
     // any project starts in dumb mode (except default project which is always smart)
     // we assume that queueStartupActivitiesRequiredForSmartMode will be invoked to advance DUMB > SMART
-    myState = AtomicReference(if (myProject.isDefault) State.SMART else State.DUMB)
+    myState = MutableStateFlow(if (myProject.isDefault) State.SMART else State.DUMB)
 
     // the first dumb mode should end in non-modal context
     myCancellableLaterEdtInvoker.setDumbStartModality(ModalityState.nonModal())
@@ -172,12 +172,12 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
         LOG.error("To avoid race conditions isDumb method should be used only under read action or in EDT thread.",
                   IllegalStateException())
       }
-      return myState.get() == State.DUMB
+      return myState.value == State.DUMB
     }
     @TestOnly set(dumb) {
       ApplicationManager.getApplication().assertIsDispatchThread()
       if (dumb) {
-        myState.set(State.DUMB)
+        myState.value = State.DUMB
         myPublisher.enteredDumbMode()
       }
       else {
@@ -248,7 +248,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   private fun enterDumbModeIfSmart(modality: ModalityState, trace: Throwable) {
     application.assertWriteIntentLockAcquired()
-    if (myState.get() == State.DUMB) return // don't event start unneeded write action
+    if (myState.value == State.DUMB) return // don't event start unneeded write action
 
     val entered = WriteAction.compute<Boolean, RuntimeException> {
       if (!myState.compareAndSet(State.SMART, State.DUMB)) {
@@ -267,7 +267,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   private fun enterSmartModeIfDumb() {
     application.assertWriteIntentLockAcquired()
-    if (myState.get() == State.SMART) return // don't event start unneeded write action
+    if (myState.value == State.SMART) return // don't event start unneeded write action
 
     val entered = WriteAction.compute<Boolean, RuntimeException> {
       if (!myState.compareAndSet(State.DUMB, State.SMART)) {
@@ -307,7 +307,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     LOG.info("Purge dumb task queue")
     val currentThread = Thread.currentThread()
     val initialThreadName = currentThread.name
-    ConcurrencyUtil.runUnderThreadName(initialThreadName + " [DumbService.cancelAllTasksAndWait(state = " + myState.get() + ")]") {
+    ConcurrencyUtil.runUnderThreadName(initialThreadName + " [DumbService.cancelAllTasksAndWait(state = " + myState.value + ")]") {
 
       // isRunning will be false eventually, because we are on EDT, and no new task can be queued outside the EDT
       // (we only wait for currently running task to terminate).
@@ -412,19 +412,19 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   override fun completeJustSubmittedTasks() {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     LOG.assertTrue(myProject.isInitialized, "Project should have been initialized")
-    while (myState.get() == State.DUMB) {
+    while (myState.value == State.DUMB) {
       val queueProcessedUnderModalProgress = processQueueUnderModalProgress()
       if (!queueProcessedUnderModalProgress) {
         // processQueueUnderModalProgress did nothing (i.e. processing is being done under non-modal indicator)
         break
       }
     }
-    if (myState.get() == State.SMART) { // we can reach this statement in dumb mode if queue is processed in background
+    if (myState.value == State.SMART) { // we can reach this statement in dumb mode if queue is processed in background
       // DumbServiceSyncTaskQueue does not respect threading policies: it can add tasks outside of EDT
       // and process them without switching to dumb mode. This behavior has to be fixed, but for now just ignore
       // it, because it has been working like this for years already.
       // Reproducing in test: com.jetbrains.cidr.lang.refactoring.OCRenameMoveFileTest
-      LOG.assertTrue(isSynchronousTaskExecution || myTaskQueue.isEmpty, "Task queue is not empty. Current state is " + myState.get())
+      LOG.assertTrue(isSynchronousTaskExecution || myTaskQueue.isEmpty, "Task queue is not empty. Current state is " + myState.value)
     }
   }
 
