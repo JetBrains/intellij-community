@@ -25,7 +25,7 @@ pub enum LauncherLocation { Standard, RemoteDev }
 pub struct TestEnvironment<'a> {
     pub dist_root: PathBuf,
     pub project_dir: PathBuf,
-    launcher_path: PathBuf,
+    pub launcher_path: PathBuf,
     shared_env: &'a TestEnvironmentShared,
     test_root_dir: TempDir,
     to_delete: Vec<PathBuf>
@@ -160,10 +160,11 @@ fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation, with_jbr: bool
     let shared_env = unsafe { SHARED.as_ref() }.expect("Shared test environment should have already been initialized");
 
     let temp_dir = Builder::new().prefix("xplat_launcher_test_").tempdir().context("Failed to create temp directory")?;
+    let temp_path = temp_dir.path().canonicalize()?.strip_ns_prefix()?;
 
-    let (dist_root, launcher_path) = layout_launcher(launcher_location, with_jbr, temp_dir.path(), shared_env)?;
+    let (dist_root, launcher_path) = layout_launcher(launcher_location, with_jbr, &temp_path, shared_env)?;
 
-    let project_dir = temp_dir.path().join("_project");
+    let project_dir = temp_path.join("_project");
     fs::create_dir_all(&project_dir)?;
 
     Ok(TestEnvironment { dist_root, project_dir, launcher_path, shared_env, test_root_dir: temp_dir, to_delete: Vec::new() })
@@ -364,7 +365,7 @@ fn layout_launcher_impl(
 }
 
 #[cfg(target_family = "unix")]
-fn symlink(original: &Path, link: &Path) -> Result<()> {
+pub fn symlink(original: &Path, link: &Path) -> Result<()> {
     std::os::unix::fs::symlink(original, link)
         .with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
 
@@ -372,7 +373,7 @@ fn symlink(original: &Path, link: &Path) -> Result<()> {
 }
 
 #[cfg(target_os = "windows")]
-fn symlink(original: &Path, link: &Path) -> Result<()> {
+pub fn symlink(original: &Path, link: &Path) -> Result<()> {
     std::os::windows::fs::symlink_dir(original, link)
         .with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
 
