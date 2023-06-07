@@ -2,7 +2,7 @@
 package com.theoryinpractice.testng;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.lookup.LookupValueFactory;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.reference.PsiMemberReference;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -74,9 +74,9 @@ public class DataProviderTestReference extends PsiReferenceBase<PsiLiteral> impl
         if (dataProviderAnnotation != null) {
           final PsiAnnotationMemberValue memberValue = dataProviderAnnotation.findDeclaredAttributeValue("dataProvider");
           if (memberValue != null) {
-            list.add(LookupValueFactory.createLookupValue(StringUtil.unquoteString(memberValue.getText()), null));
+            list.add(LookupElementBuilder.create(memberValue));
           } else {
-            list.add(LookupValueFactory.createLookupValue(method.getName(), null));
+            list.add(LookupElementBuilder.create(method));
           }
         }
       }
