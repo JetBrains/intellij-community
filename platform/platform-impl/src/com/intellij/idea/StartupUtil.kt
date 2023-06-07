@@ -9,6 +9,7 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.diagnostic.*
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.InitAppContext
+import com.intellij.ide.bootstrap.initServiceContainer
 import com.intellij.ide.bootstrap.preInitApp
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
 import com.intellij.ide.gdpr.EndUserAgreement
@@ -50,7 +51,6 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
-import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.ide.BuiltInServerManager
@@ -263,7 +263,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
-  val appRegistered = CompletableDeferred<Unit>()
+  val appRegisteredJob = CompletableDeferred<Unit>()
 
   val appDeferred = async {
     checkSystemDirJob.join()
@@ -283,35 +283,19 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
+  val initServiceContainerJob = launch {
+    initServiceContainer(app = appDeferred.await(), pluginSetDeferred = pluginSetDeferred)
+  }
+
   val preloadCriticalServicesJob = async {
-    val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
-      null
-    }
-    else {
-      async(CoroutineName("eua document")) {
-        prepareShowEuaIfNeededTask(document = euaDocumentDeferred.await(), asyncScope = this@startApplication)
-      }
-    }
-
-    launch(CoroutineName("telemetry waiting")) {
-      try {
-        telemetryInitJob.join()
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        logDeferred.await().error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
-      }
-    }
-
     preInitApp(app = appDeferred.await(),
                asyncScope = asyncScope,
-               log = logDeferred.await(),
-               appRegistered = appRegistered,
+               initServiceContainerJob = initServiceContainerJob,
                initLafJob = initLafJob,
-               pluginSetDeferred = pluginSetDeferred,
-               euaTaskDeferred = euaTaskDeferred)
+               telemetryInitJob = telemetryInitJob,
+               log = logDeferred.await(),
+               appRegisteredJob = appRegisteredJob,
+               euaDocumentDeferred = euaDocumentDeferred)
   }
 
   val appLoaded = launch {
@@ -330,7 +314,8 @@ fun CoroutineScope.startApplication(args: List<String>,
       }
     }
 
-    appRegistered.join()
+    appRegisteredJob.join()
+    initServiceContainerJob.join()
 
     initApplicationImpl(args = args.filterNot { CommandLineArgs.isKnownArgument(it) },
                         initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization"),
@@ -376,7 +361,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     // with the main dispatcher for non-technical reasons
     mainScope.launch {
-      appStarter.start(InitAppContext(appRegistered = appRegistered, appLoaded = appLoaded))
+      appStarter.start(InitAppContext(appRegistered = appRegisteredJob, appLoaded = appLoaded))
     }
   }
 }

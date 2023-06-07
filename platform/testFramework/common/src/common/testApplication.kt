@@ -11,13 +11,13 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.enableCoroutineDump
+import com.intellij.ide.bootstrap.initConfigurationStore
 import com.intellij.ide.bootstrap.preloadCriticalServices
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.idea.AppMode
 import com.intellij.idea.callAppInitialized
 import com.intellij.idea.getAppInitializedListeners
-import com.intellij.idea.initConfigurationStore
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT

@@ -5,10 +5,13 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.subtask
 import com.intellij.ide.ApplicationLoadListener
+import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
+import com.intellij.idea.AppMode
 import com.intellij.idea.AppStarter
+import com.intellij.idea.prepareShowEuaIfNeededTask
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -23,13 +26,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
 
-internal suspend fun preInitApp(app: ApplicationImpl,
-                                asyncScope: CoroutineScope,
-                                log: Logger,
-                                initLafJob: Job,
-                                appRegistered: Job,
-                                pluginSetDeferred: CompletableDeferred<Deferred<PluginSet>>,
-                                euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?): Job {
+internal suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferred: CompletableDeferred<Deferred<PluginSet>>) {
   val pluginSet = subtask("plugin descriptor init waiting") {
     pluginSetDeferred.await().await()
   }
@@ -40,51 +37,83 @@ internal suspend fun preInitApp(app: ApplicationImpl,
                            precomputedExtensionModel = null,
                            listenerCallbacks = null)
   }
+}
 
-  val loadIconMapping = if (app.isHeadlessEnvironment) {
-    null
-  }
-  else {
-    asyncScope.launch(CoroutineName("icon mapping loading")) {
-      runCatching {
-        app.service<IconMapLoader>().preloadIconMapping()
-      }.getOrLogException(log)
+internal suspend fun preInitApp(app: ApplicationImpl,
+                                asyncScope: CoroutineScope,
+                                log: Logger,
+                                initServiceContainerJob: Job,
+                                initLafJob: Job,
+                                appRegisteredJob: Job,
+                                telemetryInitJob: Job,
+                                euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
+  coroutineScope {
+    val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
+      null
     }
-  }
-
-  initConfigurationStore(app)
-
-  val preloadCriticalServicesJob = asyncScope.launch(CoroutineName("critical services preloading")) {
-    preloadCriticalServices(app = app, asyncScope = asyncScope, appRegistered = appRegistered)
-  }
-
-  if (!app.isHeadlessEnvironment) {
-    asyncScope.launch(CoroutineName("FUS class preloading")) {
-      // preload FUS classes (IDEA-301206)
-      ActionsEventLogGroup.GROUP.id
+    else {
+      async(CoroutineName("eua document")) {
+        prepareShowEuaIfNeededTask(document = euaDocumentDeferred.await(), asyncScope = asyncScope)
+      }
     }
-  }
 
-  // LaF must be initialized before app init because icons maybe requested and, as a result,
-  // a scale must be already initialized (especially important for Linux)
-  subtask("init laf waiting") {
-    initLafJob.join()
-  }
-
-  euaTaskDeferred?.await()?.invoke()
-
-  asyncScope.launch {
-    loadIconMapping?.join()
-    subtask("laf initialization", RawSwingDispatcher) {
-      app.serviceAsync<LafManager>()
+    launch(CoroutineName("telemetry waiting")) {
+      try {
+        telemetryInitJob.join()
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        log.error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
+      }
     }
+
+    initServiceContainerJob.join()
+
+    val loadIconMapping = if (app.isHeadlessEnvironment) {
+      null
+    }
+    else {
+      launch(CoroutineName("icon mapping loading")) {
+        runCatching {
+          app.service<IconMapLoader>().preloadIconMapping()
+        }.getOrLogException(log)
+      }
+    }
+
+    initConfigurationStore(app)
+
+    launch(CoroutineName("critical services preloading")) {
+      preloadCriticalServices(app = app, asyncScope = asyncScope, appRegistered = appRegisteredJob)
+    }
+
     if (!app.isHeadlessEnvironment) {
-      // preload only when LafManager is ready
-      app.serviceAsync<EditorColorsManager>()
+      asyncScope.launch(CoroutineName("FUS class preloading")) {
+        // preload FUS classes (IDEA-301206)
+        ActionsEventLogGroup.GROUP.id
+      }
+    }
+
+    // LaF must be initialized before app init because icons maybe requested and, as a result,
+    // a scale must be already initialized (especially important for Linux)
+    subtask("init laf waiting") {
+      initLafJob.join()
+    }
+
+    euaTaskDeferred?.await()?.invoke()
+
+    asyncScope.launch {
+      loadIconMapping?.join()
+      subtask("laf initialization", RawSwingDispatcher) {
+        app.serviceAsync<LafManager>()
+      }
+      if (!app.isHeadlessEnvironment) {
+        // preload only when LafManager is ready
+        app.serviceAsync<EditorColorsManager>()
+      }
     }
   }
-
-  return preloadCriticalServicesJob
 }
 
 @VisibleForTesting

@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bootstrap
 
-import com.intellij.diagnostic.DebugLogManager
-import com.intellij.diagnostic.PerformanceWatcher
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.*
 import com.intellij.history.LocalHistory
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ScreenReaderStateManager
@@ -13,9 +11,14 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.PathMacros
+import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -24,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import kotlinx.coroutines.*
+import java.util.concurrent.CancellationException
 
 fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: CoroutineScope, appRegistered: Job) {
   launch(CoroutineName("PathMacros preloading")) {
@@ -109,5 +113,45 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: C
                         activityPrefix = "",
                         syncScope = this,
                         asyncScope = asyncScope)
+  }
+
+  launch {
+    val loadComponentInEdtTask = subtask("old component init task creating") {
+      app.createInitOldComponentsTask()
+    }
+    if (loadComponentInEdtTask != null) {
+      withContext(RawSwingDispatcher + CoroutineName("old component init")) {
+        loadComponentInEdtTask()
+      }
+    }
+    StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
+  }
+
+  if (!app.isHeadlessEnvironment && !app.isUnitTestMode && System.getProperty("enable.activity.preloading", "true").toBoolean()) {
+    asyncScope.launch(CoroutineName("preloadingActivity executing")) {
+      val extensionPoint = app.extensionArea.getExtensionPoint<PreloadingActivity>("com.intellij.preloadingActivity")
+      ExtensionPointName<PreloadingActivity>("com.intellij.preloadingActivity").processExtensions { preloadingActivity, pluginDescriptor ->
+        launch {
+          executePreloadActivity(preloadingActivity, pluginDescriptor)
+        }
+      }
+      extensionPoint.reset()
+    }
+  }
+}
+
+private suspend fun executePreloadActivity(activity: PreloadingActivity, descriptor: PluginDescriptor) {
+  val measureActivity = StartUpMeasurer.startActivity(activity.javaClass.name, ActivityCategory.PRELOAD_ACTIVITY, descriptor.pluginId.idString)
+  try {
+    activity.execute()
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    logger<PreloadingActivity>().error(PluginException("cannot execute preloading activity ${activity.javaClass.name}", e, descriptor.pluginId))
+  }
+  finally {
+    measureActivity.end()
   }
 }

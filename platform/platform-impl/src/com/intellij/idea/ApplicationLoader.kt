@@ -5,7 +5,8 @@
 
 package com.intellij.idea
 
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.Activity
+import com.intellij.diagnostic.subtask
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.InitAppContext
@@ -13,10 +14,7 @@ import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
 import com.intellij.openapi.progress.blockingContext
@@ -37,7 +35,6 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
 import kotlin.system.exitProcess
@@ -57,7 +54,7 @@ internal suspend fun initApplicationImpl(args: List<String>,
                                          initAppActivity: Activity,
                                          app: ApplicationImpl,
                                          asyncScope: CoroutineScope,
-                                         preloadCriticalServicesJob: Deferred<Job>) {
+                                         preloadCriticalServicesJob: Job) {
   val deferredStarter = subtask("app starter creation") {
     createAppStarterAsync(args)
   }
@@ -67,27 +64,20 @@ internal suspend fun initApplicationImpl(args: List<String>,
       getAppInitializedListeners(app)
     }
 
-    launch {
-      initAppActivity.runChild("old component init task creating", app::createInitOldComponentsTask)?.let { loadComponentInEdtTask ->
-        val placeOnEventQueueActivity = initAppActivity.startChild("place on event queue")
-        withContext(RawSwingDispatcher) {
-          placeOnEventQueueActivity.end()
-          loadComponentInEdtTask()
-        }
-      }
-      StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
-    }
-
     // doesn't block app start-up
     asyncScope.launch(CoroutineName("post app init tasks")) {
       runPostAppInitTasks(app)
     }
 
+    preloadCriticalServicesJob.join()
+
     asyncScope.launch {
       addActivateAndWindowsCliListeners()
     }
 
-    preloadCriticalServicesJob.await().join()
+    asyncScope.launch {
+      PluginManagerMain.checkThirdPartyPluginsAllowed()
+    }
 
     appInitListeners.await()
   }
@@ -142,35 +132,19 @@ private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
     }
   }
 
-  launch {
-    PluginManagerMain.checkThirdPartyPluginsAllowed()
-  }
-
   if (app.isHeadlessEnvironment) {
     return
   }
 
   launch(CoroutineName("icons preloading") + Dispatchers.IO) {
-    blockingContext {
-      if (app.isInternal) {
-        IconLoader.setStrictGlobally(true)
-      }
+    if (app.isInternal) {
+      IconLoader.setStrictGlobally(true)
+    }
 
+    blockingContext {
       AsyncProcessIcon("")
       AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
       AnimatedIcon.FS()
-    }
-  }
-
-  launch {
-    if (!app.isUnitTestMode && System.getProperty("enable.activity.preloading", "true").toBoolean()) {
-      val extensionPoint = app.extensionArea.getExtensionPoint<PreloadingActivity>("com.intellij.preloadingActivity")
-      ExtensionPointName<PreloadingActivity>("com.intellij.preloadingActivity").processExtensions { preloadingActivity, pluginDescriptor ->
-        launch {
-          executePreloadActivity(preloadingActivity, pluginDescriptor)
-        }
-      }
-      extensionPoint.reset()
     }
   }
 }
@@ -290,27 +264,5 @@ fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedList
     launch {
       listener.execute(asyncScope)
     }
-  }
-}
-
-private suspend fun executePreloadActivity(activity: PreloadingActivity, descriptor: PluginDescriptor?) {
-  val measureActivity = if (descriptor == null) {
-    null
-  }
-  else {
-    StartUpMeasurer.startActivity(activity.javaClass.name, ActivityCategory.PRELOAD_ACTIVITY, descriptor.pluginId.idString)
-  }
-
-  try {
-    activity.execute()
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Throwable) {
-    LOG.error("cannot execute preloading activity ${activity.javaClass.name}", e)
-  }
-  finally {
-    measureActivity?.end()
   }
 }
