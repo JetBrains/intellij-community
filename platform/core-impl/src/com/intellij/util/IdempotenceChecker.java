@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveResult;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -22,13 +23,17 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 
 public final class IdempotenceChecker {
   private static final Logger LOG = Logger.getInstance(IdempotenceChecker.class);
   private static final Set<Class<?>> ourReportedValueClasses = Collections.synchronizedSet(new HashSet<>());
   private static final ThreadLocal<Integer> ourRandomCheckNesting = ThreadLocal.withInitial(() -> 0);
   @SuppressWarnings("SSBasedInspection") private static final ThreadLocal<List<String>> ourLog = new ThreadLocal<>();
-  private static final RegistryValue ourRateCheckProperty = Registry.get("platform.random.idempotence.check.rate");
+
+  private static final Supplier<RegistryValue> rateCheckProperty = new SynchronizedClearableLazy<>(() -> {
+    return Registry.get("platform.random.idempotence.check.rate");
+  });
 
   /**
    * Perform some basic checks whether the two given objects are equivalent and interchangeable,
@@ -337,7 +342,7 @@ public final class IdempotenceChecker {
    */
   @TestOnly
   public static void disableRandomChecksUntil(@NotNull Disposable parentDisposable) {
-    ourRateCheckProperty.setValue(0, parentDisposable);
+    rateCheckProperty.get().setValue(0, parentDisposable);
   }
 
   /**
@@ -363,7 +368,7 @@ public final class IdempotenceChecker {
   }
 
   private static boolean shouldPerformRandomCheck() {
-    int rate = ourRateCheckProperty.asInteger();
+    int rate = rateCheckProperty.get().asInteger();
     return rate > 0 && ThreadLocalRandom.current().nextInt(rate) == 0;
   }
 
