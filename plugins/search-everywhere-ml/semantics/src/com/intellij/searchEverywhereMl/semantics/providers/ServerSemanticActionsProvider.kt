@@ -18,10 +18,6 @@ class ServerSemanticActionsProvider(val model: GotoActionModel) : SemanticAction
   else {
     Registry.stringValue("search.everywhere.ml.semantic.actions.local.host")
   }
-  private val SEARCH_ENDPOINT = "search"
-
-  private val ITEMS_LIMIT = 20
-  private val SIMILARITY_THRESHOLD = 0.5
 
   override fun search(pattern: String): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
     val requestJson: String = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapOf(
@@ -38,6 +34,13 @@ class ServerSemanticActionsProvider(val model: GotoActionModel) : SemanticAction
     val modelResponse: ModelResponse = mapper.readValue(responseJson)
 
     return modelResponse.nearestCandidates.mapNotNull { createItemDescriptor(it.actionId, it.similarityScore, pattern, model) }
+  }
+
+  companion object {
+    private const val SEARCH_ENDPOINT = "search"
+
+    private const val ITEMS_LIMIT = 20
+    private const val SIMILARITY_THRESHOLD = 0.5
   }
 }
 
