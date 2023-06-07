@@ -8,14 +8,6 @@ project.consumer.androidTest
 project.consumer.commonMain
 
 project.consumer.commonTest
-    fqName: null
-    name: Consumer_commonTest_usagesKt.useCommonTest
-    type: Gradle
-    tasks: [:consumer:cleanTestDebugUnitTest, :consumer:testDebugUnitTest, --tests, "test.Consumer_commonTest_usagesKt.useCommonTest"]
-    scriptParameters:
-    isDebugAllEnabled: false
-    isRunAsTest: true
-
 
 project.consumer.jvmAndAndroidMain
 
