@@ -168,7 +168,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
       catch (t: Throwable) {
         task.close()
         mySingleTaskExecutor.clearScheduledFlag()
-        LOG.error("Failed to start background index update task")
+        LOG.error("Failed to start background index update task", t)
         throw t
       }
     }
