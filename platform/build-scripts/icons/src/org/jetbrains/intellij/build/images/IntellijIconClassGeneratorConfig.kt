@@ -108,6 +108,7 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       "intellij.ml.llm.core" -> IntellijIconClassGeneratorModuleConfig(className = "MLLlmCoreIcons", packageName = "com.intellij.ml.llm.core")
 
       "intellij.dts" -> IntellijIconClassGeneratorModuleConfig(className = "DtsIcons", packageName = "com.intellij.dts")
+      "intellij.editSuggestion" -> IntellijIconClassGeneratorModuleConfig(className="EditSuggestionsIcons", packageName = "com.intellij.editSuggestion")
 
       else -> super.getConfigForModule(moduleName)
     }
