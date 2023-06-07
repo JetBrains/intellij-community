@@ -222,7 +222,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
   }
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
-  override fun getButtonArc(): JBValue = JBValue.Float(8f)
+  override fun getButtonArc(): JBValue = JBValue.Float(10f)
 }
 
 internal const val MINIMAL_POPUP_WIDTH = 270
@@ -353,7 +353,7 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
       JBUI.size(16, JBUI.CurrentTheme.RunWidget.toolbarHeight())
     }) {
 
-      override fun getMargins(): Insets = JBInsets.create(0, 8)
+      override fun getMargins(): Insets = JBInsets(0, 10, 0, 6)
       override fun iconTextSpace(): Int = ToolbarComboWidgetUiSizes.gapAfterLeftIcons
       override fun shallPaintDownArrow() = true
       override fun getDownArrowIcon(): Icon = PreparedIcon(super.getDownArrowIcon())
