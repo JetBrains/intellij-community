@@ -102,16 +102,13 @@ open class IdeStatusBarImpl internal constructor(
   private val children = LinkedHashSet<IdeStatusBarImpl>()
   private val listeners = EventDispatcher.create(StatusBarListener::class.java)
 
-  private val progressFlow = lazy { MutableSharedFlow<FlowItem>() }
-  private val progressFlowEmissionScope by lazy { MainScope().apply { Disposer.register(disposable) { cancel() } } }
+  private val progressFlow = MutableSharedFlow<ProgressSetChangeEvent>(replay = 1, extraBufferCapacity = Int.MAX_VALUE)
 
   companion object {
     internal val HOVERED_WIDGET_ID: DataKey<String> = DataKey.create("HOVERED_WIDGET_ID")
     internal val WIDGET_EFFECT_KEY: Key<WidgetEffect> = Key.create("TextPanel.widgetEffect")
 
     const val NAVBAR_WIDGET_KEY: String = "NavBar"
-
-    private val EMPTY_PROGRESS = ProgressState(null, null, -1.0)
   }
 
   override fun findChild(c: Component): StatusBar {
@@ -169,7 +166,7 @@ open class IdeStatusBarImpl internal constructor(
     rightPanel.border = JBUI.Borders.emptyLeft(1)
     add(rightPanel, BorderLayout.EAST)
 
-    infoAndProgressPanel = InfoAndProgressPanel(UISettings.shadowInstance)
+    infoAndProgressPanel = InfoAndProgressPanel(UISettings.shadowInstance, this)
     ClientProperty.put(infoAndProgressPanel.component, WIDGET_ID, infoAndProgressPanel.ID())
     centerPanel.add(infoAndProgressPanel.component)
     widgetMap.put(infoAndProgressPanel.ID(), WidgetBean(widget = infoAndProgressPanel,
@@ -433,16 +430,19 @@ open class IdeStatusBarImpl internal constructor(
   override fun getInfo(): @NlsContexts.StatusBarText String? = info
 
   override fun addProgress(indicator: ProgressIndicatorEx, info: TaskInfo) {
+    notifyProgressAdded(indicator, info)
     infoAndProgressPanel.addProgress(indicator, info)
-    notifyListeners(indicator, info)
   }
 
-  private fun notifyListeners(indicator: ProgressIndicatorEx, info: TaskInfo) {
+  private fun notifyProgressAdded(indicator: ProgressIndicatorEx, info: TaskInfo) {
     EDT.assertIsEdt()
+    check(progressFlow.tryEmit(ProgressSetChangeEvent(Triple(info, indicator, ClientId.current), infoAndProgressPanel.backgroundProcesses)))
+  }
 
-    if (progressFlow.isInitialized()) {
-      emit(createVisibleProgress(indicator, info, ClientId.current), null)
-    }
+  @ApiStatus.Internal
+  fun notifyProgressRemoved() {
+    EDT.assertIsEdt()
+    check(progressFlow.tryEmit(ProgressSetChangeEvent(null, infoAndProgressPanel.backgroundProcesses)))
   }
 
   /**
@@ -453,70 +453,20 @@ open class IdeStatusBarImpl internal constructor(
    * corrected for potential future usages.
    */
   @ApiStatus.Internal
-  fun getVisibleProcessFlow(): Flow<VisibleProgress> {
-    EDT.assertIsEdt()
-
-    var subscriberToken: Any? = object {}
-
-    // to get a consistent result, we emit the existing items into the same flow,
-    // accompanying them with a token designating target subscriber
-    backgroundProcesses.forEach {
-      emit(createVisibleProgress(it.second as ProgressIndicatorEx, it.first, ClientId.localId), subscriberToken)
-    }
-    emit(null, subscriberToken) // marker item, indicating the end of existing items
-
-    return progressFlow.value.filter { it.subscriberToken == subscriberToken }.mapNotNull { item ->
-      item.progress.also {
-        if (it == null) {
-          subscriberToken = null
-        }
+  fun getVisibleProcessFlow(): Flow<VisibleProgress> = flow {
+    var firstTime = true
+    progressFlow.collect { event ->
+      if (firstTime) {
+        firstTime = false
+        event.existingVisibleProgresses.forEach { emit(it) }
       }
+      event.newVisibleProgress?.let { emit(it) }
     }
   }
 
-  private fun emit(progress: VisibleProgress?, subscriberToken: Any?) {
-    progressFlow.value.apply {
-      progressFlowEmissionScope.launch {
-        emit(FlowItem(progress, subscriberToken))
-      }
-    }
-  }
-
-  private fun createVisibleProgress(indicator: ProgressIndicatorEx, info: TaskInfo, clientId: ClientId): VisibleProgress {
-    val stateFlow = MutableStateFlow(EMPTY_PROGRESS)
-    val updater = {
-      stateFlow.value = ProgressState(indicator.text, indicator.text2, if (indicator.isIndeterminate) -1.0 else indicator.fraction)
-    }
-
-    val activeFlow = MutableStateFlow(true)
-    val finisher = { activeFlow.value = false }
-
-    indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
-      override fun onProgressChange() {
-        super.onProgressChange()
-        updater.invoke()
-      }
-
-      override fun finish(task: TaskInfo) {
-        super.finish(task)
-        if (task == info) {
-          finisher.invoke()
-        }
-      }
-    })
-    if (indicator.isFinished(info)) {
-      finisher.invoke()
-    }
-    else {
-      updater.invoke()
-    }
-    val stateFlowTillCompletion = stateFlow
-      .combine(activeFlow) { state, active -> state.takeIf { active } }
-      .takeWhile { it != null }.map { it!! }
-    return VisibleProgress(info.title, clientId, { indicator.cancel() }.takeIf { info.isCancellable }, stateFlowTillCompletion)
-  }
-
-  override fun getBackgroundProcesses(): List<Pair<TaskInfo, ProgressIndicator>> = infoAndProgressPanel.backgroundProcesses
+  @Suppress("UNCHECKED_CAST")
+  override fun getBackgroundProcesses(): List<Pair<TaskInfo, ProgressIndicator>> =
+    infoAndProgressPanel.backgroundProcesses as List<Pair<TaskInfo, ProgressIndicator>>
 
   override fun setProcessWindowOpen(open: Boolean) {
     infoAndProgressPanel.isProcessWindowOpen = open
@@ -1042,4 +992,48 @@ class VisibleProgress(val title: @NlsContexts.ProgressTitle String,
   }
 }
 
-private class FlowItem(val progress: VisibleProgress?, val subscriberToken: Any?)
+private val EMPTY_PROGRESS = ProgressState(null, null, -1.0)
+
+private fun createVisibleProgress(indicator: ProgressIndicatorEx, info: TaskInfo, clientId: ClientId): VisibleProgress {
+  val stateFlow = MutableStateFlow(EMPTY_PROGRESS)
+  val updater = {
+    stateFlow.value = ProgressState(indicator.text, indicator.text2, if (indicator.isIndeterminate) -1.0 else indicator.fraction)
+  }
+
+  val activeFlow = MutableStateFlow(true)
+  val finisher = { activeFlow.value = false }
+
+  indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
+    override fun onProgressChange() {
+      super.onProgressChange()
+      updater.invoke()
+    }
+
+    override fun finish(task: TaskInfo) {
+      super.finish(task)
+      if (task == info) {
+        finisher.invoke()
+      }
+    }
+  })
+  if (indicator.isFinished(info)) {
+    finisher.invoke()
+  }
+  else {
+    updater.invoke()
+  }
+  val stateFlowTillCompletion = stateFlow
+    .combine(activeFlow) { state, active -> state.takeIf { active } }
+    .takeWhile { it != null }.map { it!! }
+  return VisibleProgress(info.title, clientId, { indicator.cancel() }.takeIf { info.isCancellable }, stateFlowTillCompletion)
+}
+
+private class ProgressSetChangeEvent(private val newProgress: Triple<TaskInfo, ProgressIndicatorEx, ClientId>?,
+                                     private val existingProgresses: List<Pair<TaskInfo, ProgressIndicatorEx>>) {
+  val newVisibleProgress by lazy {
+    newProgress?.let { createVisibleProgress(it.second, it.first, it.third) }
+  }
+  val existingVisibleProgresses by lazy {
+    existingProgresses.map { createVisibleProgress(it.second, it.first, ClientId.localId) }
+  }
+}
