@@ -11,6 +11,9 @@
     <searchEverywhereReorderingService
       implementation="com.intellij.searchEverywhereMl.semantics.reordering.SearchEverywhereReorderingServiceImpl" />
 
+    <postStartupActivity
+      implementation="com.intellij.searchEverywhereMl.semantics.services.LocalSemanticActionsService$SearchServiceInitializer"/>
+
     <registryKey defaultValue="true"
                  description="Use remote model for Action candidates retrieval"
                  key="search.everywhere.ml.semantic.actions.use.server.model"/>
@@ -20,7 +23,7 @@
                  key="search.everywhere.ml.semantic.actions.use.remote.model"/>
 
     <registryKey defaultValue="http://localhost:8239/actions/similarity"
-                 description="Remote semantic model host for the Actions tab"
+                 description="Local semantic model host for the Actions tab"
                  key="search.everywhere.ml.semantic.actions.local.host"/>
 
     <registryKey defaultValue="https://se-semantics.labs.jb.gg/actions/similarity"

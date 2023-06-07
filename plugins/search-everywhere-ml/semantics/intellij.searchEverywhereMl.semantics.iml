@@ -14,5 +14,89 @@
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module-library">
+      <library name="ai.grazie.utils.common" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.utils:utils-common-jvm:0.2.165" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.2.165/utils-common-jvm-0.2.165.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.2.165/utils-common-jvm-0.2.165-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.utils.ki" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.utils:utils-ki-jvm:0.2.165" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-ki-jvm/0.2.165/utils-ki-jvm-0.2.165.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-ki-jvm/0.2.165/utils-ki-jvm-0.2.165-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.model.nlp.encoder" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-nlp-jvm:0.2.165" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-nlp-jvm/0.2.165/model-nlp-jvm-0.2.165.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-nlp-jvm/0.2.165/model-nlp-jvm-0.2.165-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.emb" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-emb-jvm:0.2.165" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0.2.165/model-emb-jvm-0.2.165.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0.2.165/model-emb-jvm-0.2.165-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.nlp.encoder" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-encoder-engine-jvm:0.2.165" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-encoder-engine-jvm/0.2.165/nlp-encoder-engine-jvm-0.2.165.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-encoder-engine-jvm/0.2.165/nlp-encoder-engine-jvm-0.2.165-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.nlp.encoder" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-encoder-bert-base-uncased-jvm:0.2.165" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-encoder-bert-base-uncased-jvm/0.2.165/nlp-encoder-bert-base-uncased-jvm-0.2.165.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-encoder-bert-base-uncased-jvm/0.2.165/nlp-encoder-bert-base-uncased-jvm-0.2.165-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.emb.local" type="repository">
+        <properties include-transitive-deps="true" maven-id="ai.grazie.emb:meta-emb-engine-local-jvm:0.2.165" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/emb/meta-emb-engine-local-jvm/0.2.165/meta-emb-engine-local-jvm-0.2.165.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/emb/meta-emb-engine-local-jvm/0.2.165/meta-emb-engine-local-jvm-0.2.165-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>
