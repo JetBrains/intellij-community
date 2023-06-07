@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.FillingLineMarkerRenderer;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -41,7 +41,6 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +53,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
 
-public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMarkerRendererWithErrorStripe {
+public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, FillingLineMarkerRenderer, LineMarkerRendererWithErrorStripe {
   private static final int THICKNESS = 8;
   private final TextAttributesKey myKey;
   private final String myClassName;
@@ -82,26 +81,29 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     mySubCoverageActive = subCoverageActive;
   }
 
-  private int getCurrentLineNumber(@NotNull Editor editor, Point mousePosition) {
-    if (myLineNumber > -1) return myLineNumber;
-    return editor.xyToLogicalPosition(mousePosition).line;
+  private int getLineNumber() {
+    assert myLineNumber > -1;
+    return myLineNumber;
   }
 
   @Override
-  public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-    final TextAttributes color = editor.getColorsScheme().getAttributes(myKey);
-    Color bgColor = color.getBackgroundColor();
-    if (bgColor == null) {
-      bgColor = color.getForegroundColor();
-    }
-    if (bgColor != null) {
-      g.setColor(bgColor);
-      g.fillRect(r.x, r.y, Math.min(r.width, JBUI.scale(8)), r.height);
-    }
-    final LineData lineData = getLineData(getCurrentLineNumber(editor, new Point(0, r.y)));
+  public @Nullable Icon getIcon() {
+    final LineData lineData = getLineData(getLineNumber());
     if (lineData != null && lineData.isCoveredByOneTest()) {
-      AllIcons.Gutter.Unique.paintIcon(editor.getComponent(), g, r.x, r.y);
+      return AllIcons.Gutter.Unique;
     }
+    return null;
+  }
+
+  @Override
+  public @NotNull TextAttributesKey getTextAttributesKey() {
+    return myKey;
+  }
+
+  @Nullable
+  @Override
+  public Integer getMaxWidth() {
+    return THICKNESS;
   }
 
   public static CoverageLineMarkerRenderer getRenderer(int lineNumber,
@@ -146,7 +148,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     final JRootPane rootPane = comp.getRootPane();
     final JLayeredPane layeredPane = rootPane.getLayeredPane();
     final Point point = SwingUtilities.convertPoint(comp, THICKNESS, e.getY(), layeredPane);
-    showHint(editor, point, getCurrentLineNumber(editor, e.getPoint()));
+    showHint(editor, point, getLineNumber());
   }
 
   private void showHint(final Editor editor, final Point mousePosition, final int lineNumber) {
