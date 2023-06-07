@@ -329,6 +329,8 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
   }
 }
 
+private val indexingActivitySessionIdSequencer = AtomicLong()
+
 @ApiStatus.Internal
 data class ProjectScanningHistoryImpl(override val project: Project,
                                       override val scanningReason: String?,
@@ -360,6 +362,8 @@ data class ProjectScanningHistoryImpl(override val project: Project,
       }
     }
   }
+
+  override val indexingActivitySessionId: Long = indexingActivitySessionIdSequencer.getAndIncrement()
 
   override val scanningSessionId: Long = scanningSessionIdSequencer.getAndIncrement()
 
@@ -568,11 +572,8 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
 @ApiStatus.Internal
 data class ProjectDumbIndexingHistoryImpl(override val project: Project) : ProjectDumbIndexingHistory {
-  private companion object {
-    val indexingSessionIdSequencer = AtomicLong()
-  }
 
-  override val indexingSessionId: Long = indexingSessionIdSequencer.getAndIncrement()
+  override val indexingActivitySessionId: Long = indexingActivitySessionIdSequencer.getAndIncrement()
 
   private val biggestContributorsPerFileTypeLimit = 10
 
