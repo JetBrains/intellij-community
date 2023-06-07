@@ -271,7 +271,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    */
   @Override
   protected @NotNull BaseOutputReader.Options readerOptions() {
-    return hasPty() ? BaseOutputReader.Options.BLOCKING : super.readerOptions();  // blocking read in case of PTY-based process
+    return hasPty() ? BaseOutputReader.Options.forTerminalPtyProcess() : super.readerOptions();  // blocking read in case of PTY-based process
   }
 
   /**
