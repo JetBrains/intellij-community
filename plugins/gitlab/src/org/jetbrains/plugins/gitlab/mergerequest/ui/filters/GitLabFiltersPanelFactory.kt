@@ -28,6 +28,7 @@ internal class GitLabFiltersPanelFactory(
       if (author != null) append("""author:"${author.username}"""").append(" ")
       if (assignee != null) append("""assignee:"${assignee.username}"""").append(" ")
       if (reviewer != null) append("""reviewer:"${reviewer.username}"""").append(" ")
+      if (label != null) append("""label:"${label.title}"""").append(" ")
     }.toString()
   }
 
