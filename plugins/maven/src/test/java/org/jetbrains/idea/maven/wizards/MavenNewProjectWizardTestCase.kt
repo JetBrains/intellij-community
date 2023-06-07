@@ -35,7 +35,7 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
 
   override fun setUp() {
     super.setUp()
-    MavenUtil.setNoBackgroundMode()
+    MavenUtil.setUpdateSuspendable()
     testDisposable = Disposer.newDisposable()
 
     mySdk = ExternalSystemJdkProvider.getInstance().internalJdk
@@ -54,7 +54,7 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
     runAll(
       { Disposer.dispose(testDisposable) },
       { super.tearDown() },
-      { MavenUtil.resetNoBackgroundMode() },
+      { MavenUtil.resetUpdateSuspendable() },
     )
   }
 
