@@ -37,7 +37,8 @@ internal class ProjectIndexingHistoryFusReporterListener : ProjectIndexingActivi
       times.dumbModeWithPausesDuration.toMillis(),
       times.dumbModeWithoutPausesDuration.toMillis(),
       history.scanningStatistics.sumOf { statistics -> statistics.numberOfScannedFiles },
-      history.scanningStatistics.sumOf { statistics -> statistics.numberOfFilesFullyIndexedByInfrastructureExtensions }
+      history.scanningStatistics.sumOf { statistics -> statistics.numberOfFilesFullyIndexedByInfrastructureExtensions },
+      times.wasInterrupted
     )
   }
 
@@ -50,20 +51,22 @@ internal class ProjectIndexingHistoryFusReporterListener : ProjectIndexingActivi
   }
 
   override fun onFinishedDumbIndexing(history: ProjectDumbIndexingHistory) {
-    val totalTimeWithPausesMillis = history.times.totalUpdatingTime.toMillis()
-    val pausesMillis = history.times.pausedDuration.toMillis()
+    val times = history.times
+    val totalTimeWithPausesMillis = times.totalUpdatingTime.toMillis()
+    val pausesMillis = times.pausedDuration.toMillis()
     ProjectIndexingHistoryFusHandler.reportDumbIndexingFinished(
       history.project,
       history.indexingActivitySessionId,
-      history.times.scanningIds.toList(),
+      times.scanningIds.toList(),
       pausesMillis != 0L,
       totalTimeWithPausesMillis,
       totalTimeWithPausesMillis - pausesMillis,
-      history.times.contentLoadingVisibleDuration.toMillis(),
-      history.times.separateValueApplicationVisibleTime.toMillis(),
+      times.contentLoadingVisibleDuration.toMillis(),
+      times.separateValueApplicationVisibleTime.toMillis(),
       history.providerStatistics.sumOf { statistics -> statistics.totalNumberOfIndexedFiles },
       history.providerStatistics.sumOf { statistics -> statistics.totalNumberOfFilesFullyIndexedByExtensions } +
-      (history.refreshedScanningStatistics?.numberOfFilesFullyIndexedByInfrastructureExtensions ?: 0)
+      (history.refreshedScanningStatistics?.numberOfFilesFullyIndexedByInfrastructureExtensions ?: 0),
+      times.wasInterrupted
     )
   }
 }
@@ -86,6 +89,7 @@ private object ProjectIndexingHistoryFusHandler {
 
   private val numberOfHandledFiles = EventFields.Int("number_of_handled_files")
   private val numberOfFilesIndexedByExtensions = EventFields.Int("number_of_files_indexed_by_extensions")
+  private val isCancelled = EventFields.Boolean("is_cancelled")
 
   private val indexingStarted = GROUP.registerVarargEvent(
     "started",
@@ -107,7 +111,8 @@ private object ProjectIndexingHistoryFusHandler {
     dumbTimeWithPauses,
     dumbTimeWithoutPauses,
     numberOfHandledFiles,
-    numberOfFilesIndexedByExtensions
+    numberOfFilesIndexedByExtensions,
+    isCancelled
   )
 
   fun reportActivityStarted(project: Project, indexingSessionId: Long, type: IndexingActivityType) {
@@ -129,7 +134,8 @@ private object ProjectIndexingHistoryFusHandler {
     dumbTimeWithPauses: Long,
     dumbTimeWithoutPauses: Long,
     numberOfHandledFiles: Int,
-    numberOfFilesIndexedByExtensions: Int
+    numberOfFilesIndexedByExtensions: Int,
+    isCancelled: Boolean
   ) {
     indexingActivityFinished.log(
       project,
@@ -143,7 +149,8 @@ private object ProjectIndexingHistoryFusHandler {
       this.dumbTimeWithPauses.with(dumbTimeWithPauses),
       this.dumbTimeWithoutPauses.with(dumbTimeWithoutPauses),
       this.numberOfHandledFiles.with(numberOfHandledFiles),
-      this.numberOfFilesIndexedByExtensions.with(StatisticsUtil.roundToHighestDigit(numberOfFilesIndexedByExtensions))
+      this.numberOfFilesIndexedByExtensions.with(StatisticsUtil.roundToHighestDigit(numberOfFilesIndexedByExtensions)),
+      this.isCancelled.with(isCancelled)
     )
   }
 
@@ -157,7 +164,8 @@ private object ProjectIndexingHistoryFusHandler {
     contentLoadingTimeWithPauses: Long,
     indexingWritingTimeWithPauses: Long,
     numberOfHandledFiles: Int,
-    numberOfFilesIndexedByExtensions: Int
+    numberOfFilesIndexedByExtensions: Int,
+    isCancelled: Boolean
   ) {
     indexingActivityFinished.log(
       project,
@@ -172,7 +180,8 @@ private object ProjectIndexingHistoryFusHandler {
       this.dumbTimeWithPauses.with(totalTimeWithPauses),
       this.dumbTimeWithoutPauses.with(totalTimeWithoutPauses),
       this.numberOfHandledFiles.with(numberOfHandledFiles),
-      this.numberOfFilesIndexedByExtensions.with(StatisticsUtil.roundToHighestDigit(numberOfFilesIndexedByExtensions))
+      this.numberOfFilesIndexedByExtensions.with(StatisticsUtil.roundToHighestDigit(numberOfFilesIndexedByExtensions)),
+      this.isCancelled.with(isCancelled)
     )
   }
 }

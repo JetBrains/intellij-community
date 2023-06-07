@@ -260,10 +260,10 @@ class IndexDiagnosticDumper : Disposable {
   @ApiStatus.ScheduledForRemoval
   fun onIndexingFinished(projectIndexingHistory: ProjectIndexingHistoryImpl) {
     try {
+      projectIndexingHistory.indexingFinished()
       if (projectIndexingHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
         return
       }
-      projectIndexingHistory.indexingFinished()
       if (shouldDumpOldDiagnostics && (!ApplicationManager.getApplication().isUnitTestMode || shouldDumpInUnitTestMode)) {
         unsavedOldIndexingHistories.add(projectIndexingHistory)
         NonUrgentExecutor.getInstance().execute { dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory) }
@@ -284,13 +284,13 @@ class IndexDiagnosticDumper : Disposable {
 
   fun onScanningFinished(projectScanningHistory: ProjectScanningHistoryImpl) {
     try {
+      projectScanningHistory.scanningFinished()
       if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
         return
       }
       if (projectScanningHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
         return
       }
-      projectScanningHistory.scanningFinished()
       unsavedIndexingActivityHistories.add(projectScanningHistory)
       NonUrgentExecutor.getInstance().execute { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectScanningHistory) }
     }
