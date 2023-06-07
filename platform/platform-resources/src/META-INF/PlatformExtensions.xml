@@ -1484,6 +1484,8 @@
     <registryKey key="highlighting.passes.cache"
                  defaultValue="false"
                  description="Enables highlighting passes cache"/>
+
+    <actionConfigurationCustomizer implementation="com.intellij.openapi.project.impl.SeparateProcessActionsCustomizer" />
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
