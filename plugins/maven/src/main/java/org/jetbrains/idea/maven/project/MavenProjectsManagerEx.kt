@@ -240,19 +240,19 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   override fun listenForSettingsChanges() {
     importingSettings.addListener(object : MavenImportingSettings.Listener {
       override fun createModuleGroupsChanged() {
-        runBlockingCancellableUnderIndicator {
+        performInBackground {
           importSettings(true)
         }
       }
 
       override fun createModuleForAggregatorsChanged() {
-        runBlockingCancellableUnderIndicator {
+        performInBackground {
           importSettings(false)
-      }
+        }
       }
 
       override fun updateAllProjectStructure() {
-        runBlockingCancellableUnderIndicator {
+        performInBackground {
           importAllProjects()
         }
       }
