@@ -107,6 +107,7 @@ open class XDebuggerPinToTopManager {
 
     private fun disposeCurrentNodeHoverSubscription() {
         Disposer.dispose(myNodeHoverLifetime ?: return)
+        myNodeHoverLifetime = null
         myPinToTopIconAlarm.cancelAllRequests()
     }
 
