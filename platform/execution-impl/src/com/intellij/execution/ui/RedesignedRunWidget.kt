@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -71,7 +72,7 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
 
 private val runToolbarDataKey = Key.create<Boolean>("run-toolbar-data")
 
-private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
+private class RedesignedRunToolbarWrapper : DumbAwareAction(), CustomComponentAction {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent): Unit = error("Should not be invoked")
