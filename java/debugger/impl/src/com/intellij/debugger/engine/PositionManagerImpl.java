@@ -187,7 +187,9 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       if (ret != null) {
         byte[] bytecodes = method.bytecodes();
         int bytecodeOffs = Math.toIntExact(location.codeIndex());
-        if (0 <= bytecodeOffs && bytecodeOffs < bytecodes.length) {
+        // Implicit return instruction at the end of bytecode should not be treated as conditional return.
+        // (Note that we also relay on the fact that all return instructions have no operands.)
+        if (0 <= bytecodeOffs && bytecodeOffs < bytecodes.length - 1) {
           int opcode = bytecodes[bytecodeOffs] & 0xFF;
           if (Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
             sourcePosition = SourcePosition.createFromOffset(sourcePosition.getFile(), ret.getTextOffset());

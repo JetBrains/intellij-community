@@ -238,12 +238,13 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     return DebuggerUtilsEx.getContainingMethod(position);
   }
 
-  public static Stream<Location> collectInlineReturnLocations(@NotNull Method method, int lineNumber) {
+  public static Stream<Location> collectInlineConditionalReturnLocations(@NotNull Method method, int lineNumber) {
     assert lineNumber > 0;
     class Visitor extends MethodVisitor implements MethodBytecodeUtil.InstructionOffsetReader {
       final SmartList<Integer> returnOffsets = new SmartList<>();
       private int bytecodeOffset = -1;
       private boolean lineMatched;
+      private boolean lastAddedReturnIsLastInstruction;
 
       protected Visitor() {
         super(Opcodes.API_VERSION);
@@ -261,14 +262,21 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
       @Override
       public void visitInsn(int opcode) {
+        lastAddedReturnIsLastInstruction = false;
         if (lineMatched && Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
           assert bytecodeOffset >= 0;
           returnOffsets.add(bytecodeOffset);
+          lastAddedReturnIsLastInstruction = true;
         }
       }
     }
     Visitor visitor = new Visitor();
     MethodBytecodeUtil.visit(method, visitor, true);
+    if (visitor.lastAddedReturnIsLastInstruction && visitor.returnOffsets.size() >= 2) {
+      // Return at the end of the method is likely to be implicitly generated,
+      // it is not the conditional return we were looking for, drop it.
+      visitor.returnOffsets.remove(visitor.returnOffsets.size() - 1);
+    }
     return visitor.returnOffsets.stream().map(offs -> method.locationOfCodeIndex(offs));
   }
 
