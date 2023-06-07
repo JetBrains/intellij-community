@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -17,14 +18,16 @@ import kotlin.coroutines.resume
 
 fun Application.withModality(action: () -> Unit) {
   val modalEntity = Any()
-  invokeAndWait(Runnable {
+  invokeAndWait(ContextAwareRunnable {
     LaterInvocator.enterModal(modalEntity)
   }, ModalityState.any())
   try {
     action()
   }
   finally {
-    invokeAndWait(Runnable {
+    // This runnable should not be a target of prompt cancellation,
+    // hence the `ContextAwareRunnable`
+    invokeAndWait(ContextAwareRunnable {
       LaterInvocator.leaveModal(modalEntity)
     }, ModalityState.any())
   }

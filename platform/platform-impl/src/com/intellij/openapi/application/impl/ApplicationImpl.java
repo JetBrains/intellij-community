@@ -469,8 +469,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       throw new IllegalStateException("Calling invokeAndWait from read-action leads to possible deadlock.");
     }
 
-    Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, modalityState);
-    LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(AppScheduledExecutorService.capturePropagationAndCancellationContext(r)));
+    Runnable r = myTransactionGuard.wrapLaterInvocation(AppScheduledExecutorService.capturePropagationAndCancellationContext(runnable), modalityState);
+    LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(r));
   }
 
   private @NotNull Runnable wrapWithRunIntendedWriteAction(@NotNull Runnable runnable) {
