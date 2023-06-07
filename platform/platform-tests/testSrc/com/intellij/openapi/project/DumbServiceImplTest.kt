@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbServiceImpl.Companion.IDEA_FORCE_DUMB_QUEUE_TASKS
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.psi.PsiManager
@@ -32,6 +33,7 @@ import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.messages.Topic
+import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.ui.UIUtil
 import org.junit.*
 import org.junit.Assert.*
@@ -92,6 +94,44 @@ class DumbServiceImplTest {
   @After
   fun tearDown() {
     Disposer.dispose(testDisposable)
+  }
+
+  @Test
+  fun `test runWhenSmart not invoked in dumb mode`() {
+    val toStringAlphabeticOrderComparator = Comparator<Any?> { s1, s2 ->
+      Strings.compare(s1?.toString(), s2?.toString(), false)
+    }
+
+    var invokedWhileDumb = false
+    project.messageBus.connect(testDisposable).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
+      override fun enteredDumbMode() {
+        dumbService.runWhenSmart {
+          invokedWhileDumb = dumbService.isDumb
+        }
+      }
+    })
+
+    // Perform dumb task to initialize DumbService.DUMB_MODE lazy subscribers
+    queueEmptyDumbTaskOnEdtAndWaitForSmartMode()
+
+    // sort subscribers such that SmartModeScheduler is the last in the list
+    (project.messageBus as MessageBusImpl).sortSubscribers(DumbService.DUMB_MODE, toStringAlphabeticOrderComparator)
+    queueEmptyDumbTaskOnEdtAndWaitForSmartMode()
+    assertFalse("runWhenSmart should only be invoked in smart mode", invokedWhileDumb)
+
+    // sort subscribers such that SmartModeScheduler is the first in the list
+    (project.messageBus as MessageBusImpl).sortSubscribers(DumbService.DUMB_MODE, toStringAlphabeticOrderComparator.reversed())
+    queueEmptyDumbTaskOnEdtAndWaitForSmartMode()
+    assertFalse("runWhenSmart should only be invoked in smart mode", invokedWhileDumb)
+  }
+
+  private fun queueEmptyDumbTaskOnEdtAndWaitForSmartMode() {
+    runInEdtAndWait {
+      dumbService.queueTask(object : DumbModeTask() {
+        override fun performInDumbMode(indicator: ProgressIndicator) = Unit
+      })
+    }
+    waitForSmartModeFiveSecondsOrThrow()
   }
 
   @Test
