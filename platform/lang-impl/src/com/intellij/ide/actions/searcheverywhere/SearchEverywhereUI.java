@@ -586,6 +586,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   @Override
   protected @NotNull JPanel createFooterPanel(@NotNull JPanel panel) {
+    if (!Registry.is("search.everywhere.footer.extended.info")) return super.createFooterPanel(panel);
+
     myExtendedInfoPanel = new JPanel(new BorderLayout());
     myExtendedInfoComponent = createExtendedInfoComponent();
     if (myExtendedInfoComponent != null) {
