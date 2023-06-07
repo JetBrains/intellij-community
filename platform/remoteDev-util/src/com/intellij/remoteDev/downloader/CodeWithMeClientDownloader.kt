@@ -84,9 +84,11 @@ object CodeWithMeClientDownloader {
       { !isJbrSymlink(it) && (!it.isDirectory() || isSymlink(it)) }
     }
 
-    if (!SystemInfoRt.isMac) return universalFilter
-
-    return { it.name != ".DS_Store" && universalFilter.invoke(it) }
+    when {
+      SystemInfoRt.isMac -> return { it.name != ".DS_Store" && universalFilter.invoke(it) }
+      SystemInfoRt.isWindows -> return { !it.name.equals("Thumbs.db", ignoreCase = true) && universalFilter.invoke(it) }
+      else -> return universalFilter
+    }
   }
 
   private const val minimumClientBuildWithBundledJre = "223.4374"
