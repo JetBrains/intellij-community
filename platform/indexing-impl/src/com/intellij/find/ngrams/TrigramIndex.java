@@ -78,12 +78,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
 
   @Override
   public int getVersion() {
-    return 3;
-  }
-
-  @Override
-  public boolean hasSnapshotMapping() {
-    return true;
+    return 4;
   }
 
   @Override
