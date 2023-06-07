@@ -826,13 +826,17 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     val includedAdditions = BitSet()
     val includedDeletions = BitSet()
 
+    val updatedSet = side.selectNotNull(includedDeletions, includedAdditions)
+
     val previousState = block.excludedFromCommit
     if (previousState is RangeExclusionState.Partial) {
       previousState.validate(deletionsCount, additionsCount)
       previousState.copyIncludedInto(includedDeletions, includedAdditions)
     }
+    if (previousState is RangeExclusionState.Included && isExcluded) {
+      updatedSet.set(0, side.select(deletionsCount, additionsCount))
+    }
 
-    val updatedSet = side.selectNotNull(includedDeletions, includedAdditions)
     iterateIncludedRangesBetween(lines, blockStart, blockEnd) { start, end ->
       updatedSet.set(start - blockStart, end - blockStart, !isExcluded)
     }
