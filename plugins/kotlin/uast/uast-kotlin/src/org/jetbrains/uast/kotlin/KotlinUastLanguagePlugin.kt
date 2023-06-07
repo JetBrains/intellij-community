@@ -3,9 +3,9 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -147,17 +147,33 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
     override val analysisPlugin: UastAnalysisPlugin?
         get() = UastAnalysisPlugin.byLanguage(KotlinLanguage.INSTANCE)
 
-    override fun getContainingAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String?>? {
+    override fun getContainingAnnotationEntry(uElement: UElement?, annotationsHint: Collection<String>): Pair<UAnnotation, String?>? {
         val sourcePsi = uElement?.sourcePsi ?: return null
 
         val parent = sourcePsi.parent ?: return null
         if (parent is KtAnnotationEntry) {
-            return super.getContainingAnnotationEntry(uElement)
+            if (!isOneOfNames(parent, annotationsHint)) return null
+
+            return super.getContainingAnnotationEntry(uElement, annotationsHint)
         }
 
         val annotationEntry = parent.getParentOfType<KtAnnotationEntry>(true, KtDeclaration::class.java)
         if (annotationEntry == null) return null
 
-        return super.getContainingAnnotationEntry(uElement)
+        if (!isOneOfNames(annotationEntry, annotationsHint)) return null
+
+        return super.getContainingAnnotationEntry(uElement, annotationsHint)
+    }
+
+    private fun isOneOfNames(annotationEntry: KtAnnotationEntry, annotations: Collection<String>): Boolean {
+        if (annotations.isEmpty()) return true
+        val shortName = annotationEntry.shortName?.identifier ?: return false
+
+        for (annotation in annotations) {
+            if (StringUtil.getShortName(annotation) == shortName) {
+                return true
+            }
+        }
+        return false
     }
 }

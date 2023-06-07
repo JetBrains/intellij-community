@@ -92,7 +92,7 @@ interface UastLanguagePlugin {
     return (convertElementWithParent(element, null) as? UVariable)?.uastInitializer
   }
 
-  fun getContainingAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String?>? {
+  fun getContainingAnnotationEntry(uElement: UElement?, annotationsHint: Collection<String>): Pair<UAnnotation, String?>? {
     return getContainingUAnnotationEntry(uElement)
   }
 

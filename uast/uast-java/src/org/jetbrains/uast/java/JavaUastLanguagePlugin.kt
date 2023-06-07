@@ -196,21 +196,33 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
       else -> ClassSetsWrapper(uastTypes.map2Array { getPossibleSourceTypes(it) })
     }
 
-  override fun getContainingAnnotationEntry(uElement: UElement?): Pair<UAnnotation, String?>? {
+  override fun getContainingAnnotationEntry(uElement: UElement?, annotationsHint: Collection<String>): Pair<UAnnotation, String?>? {
     val sourcePsi = uElement?.sourcePsi ?: return null
     if (sourcePsi is PsiNameValuePair) {
-      return super.getContainingAnnotationEntry(uElement)
+      if (!isOneOfNames(sourcePsi, annotationsHint)) return null
+
+      return super.getContainingAnnotationEntry(uElement, annotationsHint)
     }
 
     val parent = sourcePsi.parent ?: return null
     if (parent is PsiNameValuePair) {
-      return super.getContainingAnnotationEntry(uElement)
+      if (!isOneOfNames(parent, annotationsHint)) return null
+
+      return super.getContainingAnnotationEntry(uElement, annotationsHint)
     }
 
     val annotationEntry = PsiTreeUtil.getParentOfType(parent, PsiNameValuePair::class.java, true, PsiMember::class.java)
     if (annotationEntry == null) return null
 
-    return super.getContainingAnnotationEntry(uElement)
+    if (!isOneOfNames(annotationEntry, annotationsHint)) return null
+
+    return super.getContainingAnnotationEntry(uElement, annotationsHint)
+  }
+
+  private fun isOneOfNames(annotationEntry: PsiNameValuePair, annotationsHint: Collection<String>): Boolean {
+    if (annotationsHint.isEmpty()) return true
+    val qualifiedName = PsiTreeUtil.getParentOfType(annotationEntry, PsiAnnotation::class.java)?.qualifiedName
+    return annotationsHint.contains(qualifiedName)
   }
 }
 
