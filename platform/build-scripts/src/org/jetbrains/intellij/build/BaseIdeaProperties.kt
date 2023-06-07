@@ -145,6 +145,7 @@ abstract class BaseIdeaProperties : ProductProperties() {
         "intellij.platform.testFramework.common",
         "intellij.platform.testFramework.junit5",
         "intellij.platform.testFramework",
+        "intellij.platform.debugger.testFramework",
         "intellij.platform.uast.testFramework",
         "intellij.tools.testsBootstrap",
       )) {
