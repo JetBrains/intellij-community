@@ -332,9 +332,9 @@ fun CoroutineScope.startApplication(args: List<String>,
       appStarterDeferred.await()
     }
 
-    mainScope.launch {
+    withContext(mainScope.coroutineContext) {
       appStarter.prepareStart(args)
-    }.join()
+    }
 
     if (!isHeadless && configImportNeededDeferred.await()) {
       initLafJob.join()
