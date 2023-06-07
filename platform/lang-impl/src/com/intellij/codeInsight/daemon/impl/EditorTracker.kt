@@ -192,8 +192,7 @@ open class EditorTracker(@JvmField protected val project: Project) : Disposable 
       activeEditors = emptyList()
     }
     else {
-      // copy list - list here is a mutable one, but we should return immutable
-      activeEditors = java.util.List.copyOf(list)
+      activeEditors = list.filter { !it.isDisposed && it.contentComponent.isShowing }
     }
   }
 
