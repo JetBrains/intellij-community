@@ -9,9 +9,7 @@ import com.intellij.diagnostic.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.InitAppContext
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
-import com.intellij.ide.plugins.PluginSet
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -54,7 +52,6 @@ fun initApplication(context: InitAppContext) {
     val (app, preloadCriticalServicesJob) = context.appDeferred.await()
     initApplicationImpl(args = context.args.filterNot { CommandLineArgs.isKnownArgument(it) },
                         initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization"),
-                        pluginSet = PluginManagerCore.getPluginSet(),
                         app = app as ApplicationImpl,
                         preloadCriticalServicesJob = preloadCriticalServicesJob,
                         asyncScope = this)
@@ -63,7 +60,6 @@ fun initApplication(context: InitAppContext) {
 
 private suspend fun initApplicationImpl(args: List<String>,
                                         initAppActivity: Activity,
-                                        pluginSet: PluginSet,
                                         app: ApplicationImpl,
                                         asyncScope: CoroutineScope,
                                         preloadCriticalServicesJob: Deferred<Job>) {
@@ -72,10 +68,6 @@ private suspend fun initApplicationImpl(args: List<String>,
   }
 
   val appInitializedListeners = subtask("app preloading") {
-    launch(CoroutineName("app service preloading (sync)")) {
-      app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this, asyncScope = asyncScope)
-    }
-
     val appInitListeners = async(CoroutineName("app init listener preload")) {
       getAppInitializedListeners(app)
     }

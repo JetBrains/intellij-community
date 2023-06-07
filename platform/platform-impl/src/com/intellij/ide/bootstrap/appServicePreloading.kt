@@ -7,6 +7,7 @@ import com.intellij.diagnostic.subtask
 import com.intellij.history.LocalHistory
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ScreenReaderStateManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.util.PropertiesComponent
@@ -48,15 +49,7 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
       // FileTypeManager requires appStarter execution
       launch {
         appRegistered.join()
-
-        // ProjectJdkTable wants FileTypeManager and VirtualFilePointerManager
-        coroutineScope {
-          launch { app.serviceAsync<FileTypeManager>() }
-          // wants ManagingFS
-          launch { app.serviceAsync<VirtualFilePointerManager>() }
-        }
-
-        app.serviceAsync<ProjectJdkTable>()
+        postAppRegistered(app, asyncScope)
       }
 
       asyncScope.launch {
@@ -96,5 +89,25 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
       // serviceAsync is not supported for light services
       app.service<ScreenReaderStateManager>()
     }
+  }
+}
+
+private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: CoroutineScope) {
+  launch {
+    // ProjectJdkTable wants FileTypeManager and VirtualFilePointerManager
+    coroutineScope {
+      launch { app.serviceAsync<FileTypeManager>() }
+      // wants ManagingFS
+      launch { app.serviceAsync<VirtualFilePointerManager>() }
+    }
+
+    app.serviceAsync<ProjectJdkTable>()
+  }
+
+  launch(CoroutineName("app service preloading (sync)")) {
+    app.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                        activityPrefix = "",
+                        syncScope = this,
+                        asyncScope = asyncScope)
   }
 }
