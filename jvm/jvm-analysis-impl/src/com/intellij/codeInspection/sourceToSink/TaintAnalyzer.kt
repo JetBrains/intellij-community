@@ -47,7 +47,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       depthNestedMethods = 1,
       next = true,
       untilTaintValue = untilTaintValue,
-      parameterOfPrivateMethodIsUntainted = myTaintValueFactory.getConfiguration().parameterOfPrivateMethodIsUntainted)
+      parameterOfPrivateMethodIsUntainted = myTaintValueFactory.getConfiguration().parameterOfPrivateMethodIsUntainted,
+      privateOrFinalFieldSafe = myTaintValueFactory.getConfiguration().privateOrFinalFieldSafe)
     return fromExpressionInner(expression, context)
   }
 
@@ -74,7 +75,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     //mark for propagation tree that it is a leaf
     val checkPropagationNext: Boolean,
     val untilTaintValue: TaintValue,
-    val parameterOfPrivateMethodIsUntainted: Boolean) {
+    val parameterOfPrivateMethodIsUntainted: Boolean,
+    val privateOrFinalFieldSafe: Boolean) {
     companion object {
       fun create(processOuterMethodAsQualifierAndArguments: Boolean,
                  processInnerMethodAsQualifierAndArguments: Boolean,
@@ -87,7 +89,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
                  depthNestedMethods: Int,
                  next: Boolean,
                  untilTaintValue: TaintValue,
-                 parameterOfPrivateMethodIsUntainted: Boolean): AnalyzeContext {
+                 parameterOfPrivateMethodIsUntainted: Boolean,
+                 privateOrFinalFieldSafe: Boolean): AnalyzeContext {
         return AnalyzeContext(processOuterMethodAsQualifierAndArguments = processOuterMethodAsQualifierAndArguments,
                               processInnerMethodAsQualifierAndArguments = processInnerMethodAsQualifierAndArguments,
                               file = file,
@@ -100,7 +103,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
                               checkPropagationNext = next,
                               untilTaintValue = untilTaintValue,
                               collectMarkedByDefault = true,
-                              parameterOfPrivateMethodIsUntainted = parameterOfPrivateMethodIsUntainted)
+                              parameterOfPrivateMethodIsUntainted = parameterOfPrivateMethodIsUntainted,
+                              privateOrFinalFieldSafe = privateOrFinalFieldSafe)
       }
     }
 
@@ -490,6 +494,10 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     }
 
     if (equalFiles) {
+      if (analyzeContext.privateOrFinalFieldSafe &&
+          (jvmModifiersOwner.hasModifier(JvmModifier.PRIVATE) || jvmModifiersOwner.hasModifier(JvmModifier.FINAL))) {
+        return TaintValue.UNTAINTED
+      }
       val isImmutable = (ClassUtils.isImmutable(uElement.type) ||
                          (target is PsiModifierListOwner && Mutability.getMutability(target) in setOf(Mutability.UNMODIFIABLE,
                                                                                                       Mutability.UNMODIFIABLE_VIEW)))
@@ -621,6 +629,9 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       }
       is UClassLiteralExpression -> {
         return TaintValue.UNTAINTED
+      }
+      is UBinaryExpressionWithType -> {
+        return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.operand, analyzeContext.minusPart()) }
       }
       is UResolvable -> {
         if (uExpression is UPostfixExpression && uExpression.operator.text == "!!") {
