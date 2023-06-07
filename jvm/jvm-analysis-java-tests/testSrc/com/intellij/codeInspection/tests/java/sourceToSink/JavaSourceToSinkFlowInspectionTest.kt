@@ -96,6 +96,16 @@ class JavaSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() 
     myFixture.testHighlighting("StaticPropagation.java")
   }
 
+  fun `test forEachLoop`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("ForEachLoop.java")
+  }
+
+  fun `test lambdaWithForEachLoop`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("LambdaWithForEachLoop.java")
+  }
+
   fun testLimits() {
     prepareCheckFramework()
     myFixture.addClass("""

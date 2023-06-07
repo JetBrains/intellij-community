@@ -3,6 +3,7 @@ package com.intellij.codeInspection.sourceToSink
 
 import com.intellij.codeInspection.dataFlow.HardcodedContracts
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
+import com.intellij.codeInspection.dataFlow.Mutability
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.psi.*
@@ -21,7 +22,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
   private val myCurrentParameters: MutableMap<PsiElement, TaintValue> = HashMap()
   private val myVisitedMethods: MutableMap<Pair<PsiElement, List<TaintValue>>, TaintValue> = HashMap()
   private val myNonMarkedElements: MutableList<NonMarkedElement> = ArrayList()
-
+  private val safeLambdaClass = listOf("java.lang.Iterable", "java.util.Collection", "java.util.Map",
+                                       "kotlin.collections.CollectionsKt___CollectionsKt")
   private val skipClasses: Set<String> = myTaintValueFactory.getConfiguration()
     .skipClasses
     .filterNotNull()
@@ -169,6 +171,13 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     val sourceTarget = uResolvable.resolve()
     if (sourceTarget == null) {
       return fromCall(expression, analyzeContext) ?: TaintValue.UNKNOWN
+    }
+    //foreach kotlin
+    if (sourceTarget !is PsiModifierListOwner && sourceTarget.parent.toUElement() is UForEachExpression) {
+      val uForEachExpression = sourceTarget.parent.toUElement() as UForEachExpression
+      return TaintValue.UNTAINTED.joinUntil(analyzeContext.untilTaintValue) {
+        fromExpressionWithoutCollection(uForEachExpression.iteratedValue, analyzeContext)
+      }
     }
     var taintValue: TaintValue = myTaintValueFactory.fromElement(sourceTarget) ?: TaintValue.UNKNOWN
     if (taintValue != TaintValue.UNKNOWN) return taintValue
@@ -387,6 +396,38 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       return fromExpressionWithoutCollection(expression.receiver, analyzeContext)
     }
     var taintValue = TaintValue.UNTAINTED // by default
+
+    //foreach
+    val forEach = uParameter.sourcePsi?.parent.toUElement() as? UForEachExpression
+    if (forEach != null && uParameter.sourcePsi != null && forEach.parameter?.sourcePsi == uParameter.sourcePsi) {
+      return taintValue.joinUntil(analyzeContext.untilTaintValue) {
+        fromExpressionWithoutCollection(forEach.iteratedValue, analyzeContext)
+      }
+    }
+
+    //as parameter in lambda
+    val lambda = uParameter.sourcePsi?.parent?.parent.toUElement() as? ULambdaExpression
+    if (lambda != null && lambda.uastParent is UCallExpression && lambda.sourcePsi != null) {
+      val targetPsi = lambda.sourcePsi
+      val callExpression = lambda.uastParent as? UCallExpression ?: return TaintValue.TAINTED
+      val valueArguments = callExpression.valueArguments
+      if (analyzeContext.processOuterMethodAsQualifierAndArguments &&
+          valueArguments.map { it.sourcePsi }.contains(targetPsi) &&
+          safeLambdaClass.contains((callExpression.resolve() as PsiMember).containingClass?.qualifiedName ?: "")
+      ) {
+        taintValue = taintValue.joinUntil(analyzeContext.untilTaintValue) {
+          fromExpressionWithoutCollection(callExpression.receiver, analyzeContext)
+        }
+        for (valueArgument in valueArguments) {
+          if (targetPsi != null && valueArgument.sourcePsi == targetPsi) continue
+          taintValue = taintValue.joinUntil(analyzeContext.untilTaintValue) {
+            fromExpressionWithoutCollection(valueArgument, analyzeContext)
+          }
+        }
+        return taintValue
+      }
+    }
+
     val uMethod = (uParameter.uastParent as? UMethod) ?: return TaintValue.UNKNOWN
     val methodJavaPsi = uMethod.javaPsi
 
@@ -447,15 +488,23 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         skipClass(expression.receiver.getExpressionType())) {
       return TaintValue.UNTAINTED
     }
-    if (equalFiles &&
-        (jvmModifiersOwner.hasModifier(JvmModifier.FINAL) &&
-         (uElement.uastInitializer != null || fieldAssignedOnlyWithLiterals(uElement, analyzeContext)) ||
-         (jvmModifiersOwner.hasModifier(JvmModifier.PRIVATE) && fieldAssignedOnlyWithLiterals(uElement, analyzeContext)))) {
-      val uastInitializer = uElement.uastInitializer
-      if (uastInitializer == null) return TaintValue.UNTAINTED
-      return fromExpressionWithoutCollection(uElement.uastInitializer, analyzeContext.notCheckPropagationNext())
+
+    if (equalFiles) {
+      val isImmutable = (ClassUtils.isImmutable(uElement.type) ||
+                         (target is PsiModifierListOwner && Mutability.getMutability(target) in setOf(Mutability.UNMODIFIABLE,
+                                                                                                      Mutability.UNMODIFIABLE_VIEW)))
+      if (isImmutable &&
+          ((jvmModifiersOwner.hasModifier(JvmModifier.FINAL) && (uElement.uastInitializer != null || fieldAssignedOnlyWithLiterals(uElement,
+                                                                                                                                   analyzeContext))) ||
+           (jvmModifiersOwner.hasModifier(JvmModifier.PRIVATE) && fieldAssignedOnlyWithLiterals(uElement, analyzeContext)))) {
+        val uastInitializer = uElement.uastInitializer
+        if (uastInitializer == null) return TaintValue.UNTAINTED
+        return fromExpressionWithoutCollection(uElement.uastInitializer, analyzeContext.notCheckPropagationNext())
+      }
     }
-    if (!equalFiles && jvmModifiersOwner.hasModifier(JvmModifier.FINAL) && jvmModifiersOwner.hasModifier(JvmModifier.STATIC)) {
+
+    if (!equalFiles && ClassUtils.isImmutable(uElement.type) &&
+        jvmModifiersOwner.hasModifier(JvmModifier.FINAL) && jvmModifiersOwner.hasModifier(JvmModifier.STATIC)) {
       //simplify and not to check
       return TaintValue.UNTAINTED
     }
@@ -574,6 +623,9 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         return TaintValue.UNTAINTED
       }
       is UResolvable -> {
+        if (uExpression is UPostfixExpression && uExpression.operator.text == "!!") {
+          return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.operand, analyzeContext.minusPart()) }
+        }
         return withCache(uExpression) { analyzeInner(uExpression, analyzeContext.minusInside()) }
       }
       is UUnaryExpression -> {
