@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
+import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.util.io.DataEnumerator
 import kotlinx.coroutines.CoroutineScope
 
@@ -12,4 +13,7 @@ interface VfsLogContext {
 
   fun enqueueOperationWrite(tag: VfsOperationTag, compute: VfsLogContext.() -> VfsOperation<*>): Unit =
     operationLogStorage.enqueueOperationWrite(coroutineScope, tag) { compute() }
+
+  fun enumerateAttribute(attribute: FileAttribute): Int = stringEnumerator.enumerate(attribute.id)
+  fun deenumerateAttribute(attributeIdEnumerated: Int): String? = stringEnumerator.valueOf(attributeIdEnumerated)
 }

@@ -123,7 +123,7 @@ class CacheAwarePerPropertyVfsSnapshot(
       }
 
     override fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?> {
-      val attrId = logContext.stringEnumerator.enumerate(fileAttribute.id)
+      val attrId = logContext.enumerateAttribute(fileAttribute)
       val attrData = VfsChronicle.lookupAttributeData(point(), fileId, attrId)
       if (!attrData.found) return State.NotAvailable()
       val payloadRef = attrData.value

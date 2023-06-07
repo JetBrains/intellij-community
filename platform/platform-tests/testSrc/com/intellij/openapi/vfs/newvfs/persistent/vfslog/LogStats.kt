@@ -78,7 +78,7 @@ private fun calcStats(log: VfsLog): Stats {
               stats.tagsCount.compute(it.operation.tag, ::incStat)
               when (val op = it.operation) {
                 is VfsOperation.AttributesOperation.WriteAttribute -> {
-                  val attributeId = stringEnumerator.valueOf(op.attributeIdEnumerated)
+                  val attributeId = deenumerateAttribute(op.attributeIdEnumerated)
                   if (attributeId == null) stats.nullEnumeratedString.incrementAndGet()
                   //else {
                   //  attrCount[attributeId] = attrCount.getOrDefault(attributeId, 0) + 1
