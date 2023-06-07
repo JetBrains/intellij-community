@@ -622,9 +622,8 @@ class CancellationPropagationTest {
       }
     }
 
-
   @Test
-  fun `blockingContextScope fails with exception even in cancelled state`(): Unit = timeoutRunBlocking {
+  fun `blockingContextScope fails with exception even in cancelled state`() : Unit = timeoutRunBlocking {
     // this scenario represents a case where an error occurs during the cleanup after cancellation
     // we should not silently swallow the error, since it is important to know that the cleanup went wrong
     try {
@@ -637,14 +636,13 @@ class CancellationPropagationTest {
             fail("should be cancelled")
           }
           catch (e: ProcessCanceledException) {
-            throw MyException()
+            throw RuntimeException("intentional")
           }
         }
       }
     }
-    catch (e: TestLoggerAssertionError) {
-      // TODO: the same as in `blockingContextScope save error`
-      assertInstanceOf<MyException>(e.cause)
+    catch (e: RuntimeException) {
+      assertEquals("intentional", e.message)
     }
   }
 
