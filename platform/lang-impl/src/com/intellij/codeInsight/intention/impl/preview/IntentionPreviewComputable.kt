@@ -28,7 +28,6 @@ import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
@@ -206,29 +205,30 @@ internal class IntentionPreviewComputable(private val project: Project,
 
   private fun setupEditor(editorCopy: IntentionPreviewEditor, origFile: PsiFile, origEditor: Editor) {
     ProgressManager.checkCanceled()
-    val selection: TextRange
     val caretOffset: Int
+    val selectionStart: Int
+    val selectionEnd: Int
     if (origFile != originalFile) { // injection
       val manager = InjectedLanguageManager.getInstance(project)
       val selectionModel = origEditor.selectionModel
-      val start = manager.mapInjectedOffsetToUnescaped(origFile, selectionModel.selectionStart)
-      val end = if (selectionModel.selectionEnd == selectionModel.selectionStart) start
+      selectionStart = manager.mapInjectedOffsetToUnescaped(origFile, selectionModel.selectionStart)
+      selectionEnd = if (selectionModel.selectionEnd == selectionModel.selectionStart) selectionStart
       else
         manager.mapInjectedOffsetToUnescaped(origFile, selectionModel.selectionEnd)
-      selection = TextRange(start, end)
       val caretModel = origEditor.caretModel
       caretOffset = when (caretModel.offset) {
-        selectionModel.selectionStart -> start
-        selectionModel.selectionEnd -> end
+        selectionModel.selectionStart -> selectionStart
+        selectionModel.selectionEnd -> selectionEnd
         else -> manager.mapInjectedOffsetToUnescaped(origFile, caretModel.offset)
       }
     }
     else {
-      selection = TextRange(originalEditor.selectionModel.selectionStart, originalEditor.selectionModel.selectionEnd)
+      selectionStart = originalEditor.selectionModel.selectionStart
+      selectionEnd = originalEditor.selectionModel.selectionEnd
       caretOffset = originalEditor.caretModel.offset
     }
     editorCopy.caretModel.moveToOffset(caretOffset)
-    editorCopy.selectionModel.setSelection(selection.startOffset, selection.endOffset)
+    editorCopy.selectionModel.setSelection(selectionStart, selectionEnd)
   }
 }
 
