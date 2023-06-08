@@ -18,6 +18,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.nio.file.Files
@@ -126,44 +127,53 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         val images = imageCollector.collect(module, includePhantom = true)
         imageCollector.printUsedIconRobots()
 
-        val firstRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).firstOrNull() ?: return emptyList()
+        val sourceRoots = module.getSourceRoots(JavaSourceRootType.SOURCE).sortedByDescending { it.properties.isForGeneratedSources }
+        val sourceRoot = sourceRoots.firstOrNull() ?: return emptyList()
 
-        val firstRootDir = Path.of(JpsPathUtil.urlToPath(firstRoot.url)).resolve("icons")
-        var oldClassName: String?
-        if (Files.isDirectory(firstRootDir)) {
-          oldClassName = findIconClass(firstRootDir)
-        }
-        else {
-          oldClassName = null
-        }
+        val possiblePackageNames = listOfNotNull(
+          moduleConfig?.packageName,
+          getPluginPackageIfPossible(module),
+          "icons",
+        )
+        val existingIconsClass = findExistingIconsClass(sourceRoots, possiblePackageNames)
+        val packageName = existingIconsClass?.packageName ?: possiblePackageNames.first()
+        val targetRoot = sourceRoot.path.resolve(packageName.replace('.', File.separatorChar))
 
-        val generatedRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).find { it.properties.isForGeneratedSources }
-        val packageName = moduleConfig?.packageName ?: getPluginPackageIfPossible(module) ?: "icons"
-        val targetRoot = (generatedRoot ?: firstRoot).file.toPath().resolve(packageName.replace('.', File.separatorChar))
-
-        if (generatedRoot != null && oldClassName != null && firstRoot != generatedRoot) {
-          val oldFile = firstRootDir.resolve("$oldClassName.java")
-          println("deleting $oldFile from source root which isn't marked as 'generated'")
+        if (existingIconsClass != null && !existingIconsClass.sourceRoot.properties.isForGeneratedSources 
+            && sourceRoot.properties.isForGeneratedSources && images.isNotEmpty()) {
+          val oldFile = existingIconsClass.filePath
+          println("deleting $oldFile from source root which isn't marked as 'generated', it'll be recreated under the proper root")
           Files.delete(oldFile)
         }
 
-        val className= moduleConfig?.className ?: run {
-          if (oldClassName == null) {
-            try {
-              oldClassName = findIconClass(targetRoot)
-            }
-            catch (ignored: NoSuchFileException) {
-            }
-          }
-
-          oldClassName ?: directoryName(module).let {
-            if (it.endsWith("Icons")) it else "${it}Icons"
-          }
-        }
+        val className = moduleConfig?.className 
+                        ?: existingIconsClass?.className
+                        ?: "${directoryName(module).removeSuffix("Icons")}Icons"
         val outFile = targetRoot.resolve("$className.java")
-        return listOf(IconClassInfo(true, packageName, className.toString(), outFile, images))
+        return listOf(IconClassInfo(true, packageName, className, outFile, images))
       }
     }
+  }
+
+  private data class ExistingIconsClass(
+    val sourceRoot: JpsTypedModuleSourceRoot<JavaSourceRootProperties>,
+    val filePath: Path,
+    val packageName: String,
+    val className: String
+  )
+  
+  private fun findExistingIconsClass(sourceRoots: List<JpsTypedModuleSourceRoot<JavaSourceRootProperties>>,
+                                     possiblePackageNames: List<String>): ExistingIconsClass? {
+    for (sourceRoot in sourceRoots) {
+      for (packageName in possiblePackageNames) {
+        val directory = sourceRoot.path.resolve(packageName.replace('.', File.separatorChar))
+        val className = findIconClass(directory)
+        if (className != null) {
+          return ExistingIconsClass(sourceRoot, directory.resolve("$className.java"), packageName, className)
+        }
+      }
+    }
+    return null
   }
 
   fun processModule(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?) {
