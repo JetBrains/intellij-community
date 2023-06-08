@@ -97,8 +97,10 @@ class FacetModelBridgeTest {
 
     val moduleEntity = builder addEntity ModuleEntity(name = "test", dependencies = emptyList(), entitySource = source)
 
-    builder.addFacetEntity("MyFacet", "MockFacetId", """<configuration data="foo" />""", moduleEntity,
-                           null, source)
+    builder addEntity FacetEntity("MyFacet", moduleEntity.symbolicId, "MockFacetId", source) {
+      configurationXmlTag = """<configuration data="foo" />"""
+      module = moduleEntity
+    }
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toSnapshot()) {
       val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
@@ -126,15 +128,18 @@ class FacetModelBridgeTest {
 
     val moduleEntity = builder addEntity ModuleEntity(name = "test", dependencies = emptyList(), entitySource = source)
 
-    builder.addFacetEntity("AnotherMockFacet", "AnotherMockFacetId", """
-      <AnotherFacetConfigProperties>
-        <firstElement>
-          <field>Android</field>
-        </firstElement>
-        <secondElement>
-          <field>Spring</field>
-        </secondElement>
-      </AnotherFacetConfigProperties>""", moduleEntity, null, source)
+    builder addEntity FacetEntity("AnotherMockFacet", moduleEntity.symbolicId, "AnotherMockFacetId", source) {
+      configurationXmlTag = """
+        <AnotherFacetConfigProperties>
+          <firstElement>
+            <field>Android</field>
+          </firstElement>
+          <secondElement>
+            <field>Spring</field>
+          </secondElement>
+        </AnotherFacetConfigProperties>"""
+      module = moduleEntity
+    }
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toSnapshot()) {
       val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
