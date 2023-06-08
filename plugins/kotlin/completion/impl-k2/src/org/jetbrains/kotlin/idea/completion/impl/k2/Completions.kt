@@ -157,6 +157,14 @@ private fun FirExpressionNameReferencePositionContext.allowsOnlyNamedArguments()
     if (valueArgument.getArgumentName() != null) return false
 
     val call = callElement.resolveCall()?.singleCallOrNull<KtFunctionCall<*>>() ?: return false
+
+    if (CallParameterInfoProvider.isJavaArgumentWithNonDefaultName(
+            call.partiallyAppliedSymbol.signature,
+            call.argumentMapping,
+            valueArgument
+        )
+    ) return true
+
     val firstArgumentInNamedMode = CallParameterInfoProvider.firstArgumentInNamedMode(
         callElement,
         call.partiallyAppliedSymbol.signature,

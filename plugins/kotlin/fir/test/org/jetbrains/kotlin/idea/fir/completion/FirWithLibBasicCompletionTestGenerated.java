@@ -23,6 +23,21 @@ public class FirWithLibBasicCompletionTestGenerated extends AbstractFirWithLibBa
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("JavaAnnotationWithDefaultArgumentAtFirstPosition.kt")
+    public void testJavaAnnotationWithDefaultArgumentAtFirstPosition() throws Exception {
+        runTest("../completion/testData/basic/withLib/JavaAnnotationWithDefaultArgumentAtFirstPosition.kt");
+    }
+
+    @TestMetadata("JavaAnnotationWithDefaultArgumentAtSecondPosition.kt")
+    public void testJavaAnnotationWithDefaultArgumentAtSecondPosition() throws Exception {
+        runTest("../completion/testData/basic/withLib/JavaAnnotationWithDefaultArgumentAtSecondPosition.kt");
+    }
+
+    @TestMetadata("JavaAnnotationWithoutDefaultMethod.kt")
+    public void testJavaAnnotationWithoutDefaultMethod() throws Exception {
+        runTest("../completion/testData/basic/withLib/JavaAnnotationWithoutDefaultMethod.kt");
+    }
+
     @TestMetadata("NamedArgumentsJava.kt")
     public void testNamedArgumentsJava() throws Exception {
         runTest("../completion/testData/basic/withLib/NamedArgumentsJava.kt");
