@@ -154,31 +154,27 @@ public final class MavenProjectsManagerWatcher {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-      try {
-        projectsManager.updateAllMavenProjectsSync(spec);
-        promise.setResult(null);
-      }
-      catch (Exception e) {
-        promise.setError(e);
-      }
+      updateAllMavenProjectsSync(spec, promise);
     }
     else {
       AppExecutorUtil.getAppExecutorService().execute(() -> {
-        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-        try {
-          projectsManager.updateAllMavenProjectsSync(spec);
-          promise.setResult(null);
-        }
-        catch (Exception e) {
-          promise.setError(e);
-        }
+        updateAllMavenProjectsSync(spec, promise);
       });
     }
 
     return promise;
   }
 
+  private void updateAllMavenProjectsSync(MavenImportSpec spec, AsyncPromise<Void> promise) {
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+    try {
+      projectsManager.updateAllMavenProjectsSync(spec);
+      promise.setResult(null);
+    }
+    catch (Exception e) {
+      promise.setError(e);
+    }
+  }
 
   private Promise<Void> scheduleUpdateSuspendable(MavenImportSpec spec,
                                                   List<VirtualFile> filesToUpdate,
@@ -187,14 +183,7 @@ public final class MavenProjectsManagerWatcher {
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-        try {
-          projectsManager.updateMavenProjectsSync(spec, filesToUpdate, filesToDelete);
-          promise.setResult(null);
-        }
-        catch (Exception e) {
-          promise.setError(e);
-        }
+        updateMavenProjectsSync(spec, filesToUpdate, filesToDelete, promise);
       }
       else {
         MavenLog.LOG.warn("updateAllMavenProjectsSync skipped in write action");
@@ -202,18 +191,25 @@ public final class MavenProjectsManagerWatcher {
     }
     else {
       AppExecutorUtil.getAppExecutorService().execute(() -> {
-        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-        try {
-          projectsManager.updateMavenProjectsSync(spec, filesToUpdate, filesToDelete);
-          promise.setResult(null);
-        }
-        catch (Exception e) {
-          promise.setError(e);
-        }
+        updateMavenProjectsSync(spec, filesToUpdate, filesToDelete, promise);
       });
     }
 
     return promise;
+  }
+
+  private void updateMavenProjectsSync(MavenImportSpec spec,
+                                       List<VirtualFile> filesToUpdate,
+                                       List<VirtualFile> filesToDelete,
+                                       AsyncPromise<Void> promise) {
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+    try {
+      projectsManager.updateMavenProjectsSync(spec, filesToUpdate, filesToDelete);
+      promise.setResult(null);
+    }
+    catch (Exception e) {
+      promise.setError(e);
+    }
   }
 
   public Promise<Void> scheduleUpdate(@NotNull List<VirtualFile> filesToUpdate,
