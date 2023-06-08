@@ -432,6 +432,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       myActive = false;
       finishActivity();
       clearWaiter();
+      cancelAllUpdates();
     }
     finally {
       if (ourQueues != null) {
