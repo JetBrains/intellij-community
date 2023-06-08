@@ -27,7 +27,6 @@ import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.lang.ZipFilePool;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Deferred;
-import kotlinx.coroutines.GlobalScope;
 import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.*;
 
@@ -447,7 +446,6 @@ public final class PluginManagerCore {
    */
   @ApiStatus.Internal
   public static @NotNull CompletableFuture<List<IdeaPluginDescriptorImpl>> getEnabledPluginRawList() {
-    scheduleDescriptorLoading(GlobalScope.INSTANCE, null);
     return FutureKt.asCompletableFuture(initFuture).thenApply(it -> it.enabledPlugins);
   }
 
