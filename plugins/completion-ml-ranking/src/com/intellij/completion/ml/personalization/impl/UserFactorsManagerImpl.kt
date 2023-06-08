@@ -66,8 +66,8 @@ class UserFactorsManagerImpl : UserFactorsManager {
         for (duration in HALF_LIFE_DURATIONS) {
           register(FullLineSmoothedAcceptanceRate(duration))
         }
-        register(FullLineLastSelectionTime())
-        register(FullLineLastShowUpTime())
+        register(FullLineTimeSinceLastSelection())
+        register(FullLineTimeSinceLastShowUp())
         register(FullLineWasSelected())
 
         for (type in PrefixMatchingType.values())
