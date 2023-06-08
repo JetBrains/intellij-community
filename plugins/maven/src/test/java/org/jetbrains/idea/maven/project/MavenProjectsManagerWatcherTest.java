@@ -31,6 +31,7 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
 
   @Override
   protected void setUp() throws Exception {
+    MavenUtil.setNotUpdateSuspendable();
     super.setUp();
     myProjectsManager = MavenProjectsManager.getInstance(myProject);
     myNotificationAware = AutoImportProjectNotificationAware.getInstance(myProject);
@@ -44,6 +45,12 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
     createProjectPom(createPomContent("test", "project"));
     importProject();
     //addManagedFiles(myProjectPom);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    MavenUtil.resetNotUpdateSuspendable();
+    super.tearDown();
   }
 
   @Test

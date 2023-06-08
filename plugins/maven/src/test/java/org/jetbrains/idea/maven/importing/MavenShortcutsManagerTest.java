@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -8,10 +9,10 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.tasks.MavenKeymapExtension;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -23,6 +24,9 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
 
   @Override
   protected void setUp() throws Exception {
+    if (!isWorkspaceImport()) {
+      MavenUtil.setNotUpdateSuspendable();
+    }
     super.setUp();
     myShortcutsManager = MavenShortcutsManager.getInstance(myProject);
     myShortcutsManager.doInit(myProject);
@@ -32,6 +36,7 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
   @Override
   public void tearDown() throws Exception {
     try {
+      MavenUtil.resetNotUpdateSuspendable();
       MavenKeymapExtension.clearActions(myProject);
     }
     catch (Throwable e) {

@@ -269,12 +269,20 @@ public class MavenUtil {
 
   @TestOnly
   public static void setUpdateSuspendable() {
+  }
+
+  @TestOnly
+  public static void setNotUpdateSuspendable() {
+    updateSuspendable = false;
+  }
+
+  @TestOnly
+  public static void resetNotUpdateSuspendable() {
     updateSuspendable = true;
   }
 
   @TestOnly
   public static void resetUpdateSuspendable() {
-    updateSuspendable = false;
   }
 
   @ApiStatus.Internal
@@ -282,7 +290,7 @@ public class MavenUtil {
     return updateSuspendable;
   }
 
-  private static volatile boolean updateSuspendable = false;
+  private static volatile boolean updateSuspendable = true;
 
   public static boolean isInModalContext() {
     return LaterInvocator.isInModalContext();
