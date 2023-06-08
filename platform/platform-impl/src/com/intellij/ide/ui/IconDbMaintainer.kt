@@ -2,8 +2,8 @@
 package com.intellij.ide.ui
 
 import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.bootstrap.getSvgIconCacheFile
 import com.intellij.ide.caches.CachesInvalidator
-import com.intellij.idea.getSvgIconCacheFile
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.ui.svg.getSvgIconCacheInvalidMarkerFile
