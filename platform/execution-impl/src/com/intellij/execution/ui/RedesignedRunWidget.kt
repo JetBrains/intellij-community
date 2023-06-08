@@ -26,6 +26,9 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHeaderBackgroundColor
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.lightThemeDarkHeaderDisableFilter
 import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
@@ -42,6 +45,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
 import java.awt.*
 import java.awt.event.InputEvent
+import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
@@ -258,8 +262,11 @@ private abstract class TogglePopupAction : ToggleAction {
   abstract fun getActionGroup(e: AnActionEvent): ActionGroup?
 }
 
-private class InactiveStopActionPlaceholder : DecorativeElement(), DumbAware {
+private class InactiveStopActionPlaceholder : DecorativeElement(), DumbAware, CustomComponentAction {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  private val NOT_FIRST_UPDATE = Key.create<Boolean>("notFirstUpdate")
+  private val PROJECT = Key.create<Project>("justProject")
 
   override fun update(e: AnActionEvent) {
     e.presentation.icon = EmptyIcon.ICON_16
@@ -270,6 +277,24 @@ private class InactiveStopActionPlaceholder : DecorativeElement(), DumbAware {
     else {
       e.presentation.isEnabledAndVisible = false
     }
+    e.presentation.putClientProperty(PROJECT, e.project)
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    val defaultMinimumButtonSize = presentation.getClientProperty(CustomComponentAction.MINIMAL_DEMENTION_SUPPLIER)
+                                   ?: Supplier { ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE }
+    return ActionButton(this, presentation, ActionPlaces.NEW_UI_RUN_TOOLBAR, defaultMinimumButtonSize)
+  }
+
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    if (presentation.getClientProperty(NOT_FIRST_UPDATE) == true) {
+      return
+    }
+    val project = presentation.getClientProperty(PROJECT) ?: return
+    presentation.putClientProperty(NOT_FIRST_UPDATE, true)
+
+    val ideRootPane: IdeRootPane = (WindowManager.getInstance() as WindowManagerImpl).getProjectFrameRootPane(project) ?: return
+    ideRootPane.makeComponentToBeMouseTransparentInTitleBar(component)
   }
 }
 

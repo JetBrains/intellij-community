@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
 import com.jetbrains.WindowDecorations
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
@@ -75,7 +76,9 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
   protected var myActive = false
 
   private var customFrameTopBorder: CustomFrameTopBorder? = null
-  protected val customTitleBar: WindowDecorations.CustomTitleBar?
+
+  @ApiStatus.Internal
+  val customTitleBar: WindowDecorations.CustomTitleBar?
 
   private val icon: Icon
     get() = getFrameIcon()

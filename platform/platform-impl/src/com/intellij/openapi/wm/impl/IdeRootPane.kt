@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.MenuFrameHeade
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationPath
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SelectedEditorFilePath
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ToolbarFrameHeader
+import com.intellij.openapi.wm.impl.headertoolbar.HeaderClickTransparentListener
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
@@ -50,7 +51,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.JBR
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseMotionAdapter
@@ -462,6 +462,15 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
 
     (helper as? DecoratedHelper)?.selectedEditorFilePath?.project = project
+  }
+
+
+  fun makeComponentToBeMouseTransparentInTitleBar(component: JComponent) {
+    val customTitleBar = ((helper as? DecoratedHelper)?.customFrameTitlePane as? ToolbarFrameHeader)?.customTitleBar ?: return
+
+    val listener = HeaderClickTransparentListener(customTitleBar)
+    component.addMouseListener(listener)
+    component.addMouseMotionListener(listener)
   }
 
   @RequiresEdt
