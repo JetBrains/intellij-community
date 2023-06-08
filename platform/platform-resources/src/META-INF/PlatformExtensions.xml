@@ -6,7 +6,9 @@
       headlessImplementation="com.intellij.diagnostic.startUpPerformanceReporter.HeadlessStartUpPerformanceService"
     />
 
+<!-- Android Studio: b/282808067
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+Android Studio: b/282808067 -->
     <appStarter id="save" implementation="com.intellij.openapi.application.SaveStarter"/>
     <appStarter id="exit" implementation="com.intellij.openapi.application.ExitStarter"/>
     <appStarter id="diff" implementation="com.intellij.diff.applications.DiffApplication"/>
