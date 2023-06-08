@@ -1446,6 +1446,9 @@
     <projectService serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
                     serviceImplementation="com.intellij.internal.performanceTests.DummyProjectInitializationDiagnosticService"/>
 
+    <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.InspectionProfilerDataHolder"
+                    serviceImplementation="com.intellij.codeInsight.daemon.impl.InspectionProfilerDataHolderImpl" />
+
     <!-- Minimap -->
     <registryKey key="editor.minimap.enabled" defaultValue="false" description="Enables Minimap"/>
     <editorFactoryListener implementation="com.intellij.ide.minimap.MinimapEditorFactoryListener"/>
