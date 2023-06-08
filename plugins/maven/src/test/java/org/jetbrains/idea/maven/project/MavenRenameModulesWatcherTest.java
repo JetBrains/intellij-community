@@ -17,18 +17,9 @@ import java.util.List;
 public class MavenRenameModulesWatcherTest extends MavenDomTestCase {
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setUpdateSuspendable();
     super.setUp();
     myProjectsManager.initForTests();
     myProjectsManager.listenForExternalChanges();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    RunAll.runAll(
-      () -> super.tearDown(),
-      () -> MavenUtil.resetUpdateSuspendable()
-    );
   }
 
   private void renameModule(@NotNull String oldName, @NotNull String newName) {

@@ -29,19 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class MavenMultiProjectImportTest extends ProjectWizardTestCase<AbstractProjectWizard> {
 
-  @Override
-  protected void setUp() throws Exception {
-    MavenUtil.setUpdateSuspendable();
-    super.setUp();
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    RunAll.runAll(
-      () -> super.tearDown(),
-      () -> MavenUtil.resetUpdateSuspendable()
-    );
-  }
   private Path myDir;
 
   public void testIndicesForDifferentProjectsShouldBeSameInstance() {

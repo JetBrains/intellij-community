@@ -13,17 +13,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 
 class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
-  override fun setUp() {
-    MavenUtil.setUpdateSuspendable()
-    super.setUp()
-  }
 
-  override fun tearDown() {
-    RunAll.runAll(
-      { super.tearDown() },
-      { MavenUtil.resetUpdateSuspendable() },
-    )
-  }
   @Test
   fun testFilesSavedOnAction() {
     val projectPom = createProjectPom("<groupId>test</groupId>" +

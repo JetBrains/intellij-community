@@ -28,14 +28,12 @@ public class MavenModuleBuilderSameFolderAsParentTest extends MavenMultiVersionI
   protected void tearDown() throws Exception {
     RunAll.runAll(
       () -> stopMavenImportManager(),
-      () -> super.tearDown(),
-      () -> MavenUtil.resetUpdateSuspendable()
+      () -> super.tearDown()
     );
   }
 
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setUpdateSuspendable();
     super.setUp();
     myBuilder = new MavenJavaModuleBuilder();
 

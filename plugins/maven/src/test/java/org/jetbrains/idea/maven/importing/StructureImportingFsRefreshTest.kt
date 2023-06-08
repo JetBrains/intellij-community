@@ -16,17 +16,6 @@ import org.junit.Test
 import java.io.File
 
 class StructureImportingFsRefreshTest : MavenMultiVersionImportingTestCase() {
-  override fun setUp() {
-    MavenUtil.setUpdateSuspendable()
-    super.setUp()
-  }
-
-  override fun tearDown() {
-    runAll(
-      { super.tearDown() },
-      { MavenUtil.resetUpdateSuspendable() }
-    )
-  }
 
   @Test
   fun testRefreshFSAfterImport() {

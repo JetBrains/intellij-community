@@ -34,7 +34,6 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setUpdateSuspendable();
     super.setUp();
     ServiceContainerUtil.replaceService(myProject, ToolWindowManager.class, new ToolWindowHeadlessManagerImpl(myProject) {
       @Override
@@ -53,7 +52,6 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
   @Override
   protected void tearDown() throws Exception {
-    MavenUtil.resetUpdateSuspendable();
     myNavigator = null;
     myStructure = null;
     super.tearDown();

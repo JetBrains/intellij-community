@@ -25,17 +25,6 @@ import java.io.File;
 import java.util.Arrays;
 
 public class DependenciesManagementTest extends MavenMultiVersionImportingTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    MavenUtil.setUpdateSuspendable();
-    super.setUp();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    MavenUtil.resetUpdateSuspendable();
-    super.tearDown();
-  }
 
   @Test
   public void testImportingDependencies() throws Exception {

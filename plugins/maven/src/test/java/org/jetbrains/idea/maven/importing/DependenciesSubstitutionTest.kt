@@ -14,18 +14,6 @@ import org.junit.Test
 
 open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
 
-  override fun setUp() {
-    MavenUtil.setUpdateSuspendable()
-    super.setUp()
-  }
-
-  override fun tearDown() {
-    RunAll.runAll(
-      { super.tearDown() },
-      { MavenUtil.resetUpdateSuspendable() },
-    )
-  }
-
   @Test
   fun `simple library substitution`() {
     val value = Registry.get("external.system.substitute.library.dependencies")

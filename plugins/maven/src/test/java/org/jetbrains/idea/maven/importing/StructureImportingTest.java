@@ -26,19 +26,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    MavenUtil.setUpdateSuspendable();
-    super.setUp();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    RunAll.runAll(
-      () -> super.tearDown(),
-      () -> MavenUtil.resetUpdateSuspendable()
-    );
-  }
 
   @Test
   public void testInheritProjectJdkForModules() {

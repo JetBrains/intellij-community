@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ReimportingTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setUpdateSuspendable();
     super.setUp();
     createProjectPom("""
                        <groupId>test</groupId>
@@ -51,12 +50,6 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
       <version>1</version>
       """);
     importProject();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    MavenUtil.resetUpdateSuspendable();
-    super.tearDown();
   }
 
   @Test

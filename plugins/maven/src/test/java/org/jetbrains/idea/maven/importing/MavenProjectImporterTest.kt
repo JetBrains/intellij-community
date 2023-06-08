@@ -11,17 +11,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 
 class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
-  override fun setUp() {
-    MavenUtil.setUpdateSuspendable()
-    super.setUp()
-  }
-
-  override fun tearDown() {
-    RunAll.runAll(
-      { super.tearDown() },
-      { MavenUtil.resetUpdateSuspendable() },
-    )
-  }
 
   @Test
   fun `test maven import modules properly named`() {

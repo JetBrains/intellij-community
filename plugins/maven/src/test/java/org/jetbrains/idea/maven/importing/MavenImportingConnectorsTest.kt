@@ -19,17 +19,6 @@ import java.io.File
 class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
   protected lateinit var myAnotherProjectRoot: VirtualFile
 
-  override fun setUp() {
-    MavenUtil.setUpdateSuspendable()
-    super.setUp()
-  }
-  override fun tearDown() {
-    RunAll.runAll(
-      { super.tearDown() },
-      { MavenUtil.resetUpdateSuspendable() },
-    )
-  }
-
   @Throws(Exception::class)
   override fun setUpInWriteAction() {
     super.setUpInWriteAction()

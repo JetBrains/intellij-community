@@ -23,7 +23,6 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   private val myEvents: MutableList<BuildEvent> = ArrayList()
 
   public override fun setUp() {
-    MavenUtil.setUpdateSuspendable()
     super.setUp()
     myTestSyncViewManager = object : SyncViewManager(myProject) {
       override fun onEvent(buildId: Any, event: BuildEvent) {
@@ -32,13 +31,6 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     }
     myProject.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
     setupTestManagerForLegacyImport()
-  }
-
-  override fun tearDown() {
-    RunAll.runAll(
-      { super.tearDown() },
-      { MavenUtil.resetUpdateSuspendable() },
-    )
   }
 
   private fun setupTestManagerForLegacyImport() {

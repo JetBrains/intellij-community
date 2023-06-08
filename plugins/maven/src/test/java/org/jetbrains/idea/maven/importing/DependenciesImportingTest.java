@@ -33,18 +33,9 @@ import java.util.List;
 public class DependenciesImportingTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setUpdateSuspendable();
     super.setUp();
     myProjectsManager.initForTests();
     myProjectsManager.listenForExternalChanges();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    RunAll.runAll(
-      () -> super.tearDown(),
-      () -> MavenUtil.resetUpdateSuspendable()
-    );
   }
 
   @Test

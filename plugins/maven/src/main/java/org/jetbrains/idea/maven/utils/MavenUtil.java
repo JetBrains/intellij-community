@@ -268,10 +268,6 @@ public class MavenUtil {
   }
 
   @TestOnly
-  public static void setUpdateSuspendable() {
-  }
-
-  @TestOnly
   public static void setNotUpdateSuspendable() {
     updateSuspendable = false;
   }
@@ -279,10 +275,6 @@ public class MavenUtil {
   @TestOnly
   public static void resetNotUpdateSuspendable() {
     updateSuspendable = true;
-  }
-
-  @TestOnly
-  public static void resetUpdateSuspendable() {
   }
 
   @ApiStatus.Internal
