@@ -53,15 +53,15 @@ class FullLineSmoothedAcceptanceRate(private val duration: Duration)
   override fun compute(reader: FullLineFactorsReader): String = reader.smoothedAcceptanceRate(duration).toString()
 }
 
-class FullLineLastSelectionTime
-  : UserFactorBase<FullLineFactorsReader>("fullLineLastSelectionTime", UserFactorDescriptions.FULL_LINE_FACTORS) {
-  override fun compute(reader: FullLineFactorsReader): String? = reader.lastSelectionTimeToday()?.let(::secondsToInstantString)
+class FullLineTimeSinceLastSelection
+  : UserFactorBase<FullLineFactorsReader>("fullLineTimeSinceLastSelection", UserFactorDescriptions.FULL_LINE_FACTORS) {
+  override fun compute(reader: FullLineFactorsReader): String? = reader.lastSelectionTimeToday()?.let(::timeSince)
 
 }
 
-class FullLineLastShowUpTime
-  : UserFactorBase<FullLineFactorsReader>("fullLineLastShowUpTime", UserFactorDescriptions.FULL_LINE_FACTORS) {
-  override fun compute(reader: FullLineFactorsReader): String? = reader.lastShowUpTimeToday()?.let(::secondsToInstantString)
+class FullLineTimeSinceLastShowUp
+  : UserFactorBase<FullLineFactorsReader>("fullLineTimeSinceLastShowUp", UserFactorDescriptions.FULL_LINE_FACTORS) {
+  override fun compute(reader: FullLineFactorsReader): String? = reader.lastShowUpTimeToday()?.let(::timeSince)
 }
 
 class FullLineWasSelected
@@ -113,4 +113,4 @@ private fun globallySmoothedRatio(quotient: Double?, divisor: Double?) =
   if (divisor == null) GLOBAL_ACCEPTANCE_RATE
   else ((quotient ?: 0.0) + GLOBAL_ACCEPTANCE_RATE * GLOBAL_ALPHA) / (divisor + GLOBAL_ALPHA)
 
-private fun secondsToInstantString(seconds: Double) = Instant.ofEpochSecond(seconds.toLong()).toString()
+private fun timeSince(epochSeconds: Double) = (Instant.now().epochSecond - epochSeconds.toLong()).toString()
