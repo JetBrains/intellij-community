@@ -8,9 +8,11 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
@@ -309,6 +311,58 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     }
   }
 
+  @NotNull
+  private static List<SwitchBranch> rearrangeBranches(@NotNull List<SwitchBranch> branches,
+                                                      @NotNull PsiElement context) {
+    if (branches.isEmpty()) {
+      return branches;
+    }
+    boolean java20plus = PsiUtil.getLanguageLevel(context).isAtLeast(LanguageLevel.JDK_20_PREVIEW);
+    if (!java20plus) {
+      return branches;
+    }
+    List<SwitchBranch> result = new ArrayList<>();
+    for (SwitchBranch branch : branches) {
+      if (branch.myIsDefault) {
+        result.add(branch);
+        continue;
+      }
+      List<? extends PsiCaseLabelElement> caseExpressions = branch.myCaseExpressions;
+      if (caseExpressions == null) {
+        result.add(branch);
+        continue;
+      }
+      PsiCaseLabelElement nullLabel = findNullLabel(caseExpressions);
+      if (nullLabel == null) {
+        result.add(branch);
+        continue;
+      }
+      int index = caseExpressions.indexOf(nullLabel);
+      if (index == -1) {
+        result.add(branch);
+        continue;
+      }
+      List<? extends PsiCaseLabelElement> otherCases = new ArrayList<>(caseExpressions);
+      otherCases.remove(nullLabel);
+      SwitchBranch nullBranch = new SwitchBranch(branch.myIsDefault, List.of(nullLabel), branch.myRuleResult, branch.myUsedElements);
+      SwitchBranch otherBranch = new SwitchBranch(branch.myIsDefault, otherCases, branch.myRuleResult, branch.myUsedElements);
+      if (index == 0) {
+        result.add(nullBranch);
+        result.add(otherBranch);
+      }
+      else {
+        result.add(otherBranch);
+        result.add(nullBranch);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  private static PsiCaseLabelElement findNullLabel(@NotNull List<? extends PsiCaseLabelElement> expressions) {
+    return ContainerUtil.find(expressions, label -> label instanceof PsiLiteralExpression literal && literal.textMatches("null"));
+  }
+
   private static final class ReturningSwitchReplacer implements SwitchReplacer {
     @NotNull final PsiStatement myStatement;
     final List<SwitchBranch> myNewBranches;
@@ -324,7 +378,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                                     boolean isInfo,
                                     int maxNumberStatementsInBranch) {
       myStatement = statement;
-      myNewBranches = newBranches;
+      myNewBranches = rearrangeBranches(newBranches, statement);
       myReturnToDelete = returnToDelete;
       myStatementsToDelete = statementsToDelete;
       myIsInfo = isInfo;
@@ -486,7 +540,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                                            int maxNumberStatementsInBranch) {
       myVariableToAssign = variableToAssign;
       myStatement = statement;
-      myNewBranches = newBranches;
+      myNewBranches = rearrangeBranches(newBranches, statement);
       myIsRightAfterDeclaration = isRightAfterDeclaration;
       myIsInfo = isInfo;
       myMaxNumberStatementsInBranch = maxNumberStatementsInBranch;
@@ -690,7 +744,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     private SwitchStatementReplacer(@NotNull PsiStatement statement,
                                     @NotNull List<SwitchBranch> ruleResults) {
       myStatement = statement;
-      myExpressionBranches = ruleResults;
+      myExpressionBranches = rearrangeBranches(ruleResults, statement);
     }
 
     @Override
@@ -836,11 +890,6 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       }
       myRuleResult = ruleResult;
       myUsedElements = usedElements;
-    }
-
-    @Nullable
-    private static PsiCaseLabelElement findNullLabel(@NotNull List<? extends PsiCaseLabelElement> expressions) {
-      return ContainerUtil.find(expressions, label -> label instanceof PsiLiteralExpression literal && literal.textMatches("null"));
     }
 
     private String generate(CommentTracker ct) {
