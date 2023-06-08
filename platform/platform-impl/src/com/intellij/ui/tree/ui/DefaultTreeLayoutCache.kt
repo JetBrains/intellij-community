@@ -659,10 +659,13 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       checkY()
       checkVisibleSubtrees()
       if (messages.isNotEmpty()) {
-        LOG.debug("DefaultTreeLayoutCache invariants are broken in $location. Details follow if the TRACE level is enabled")
+        val details = StringBuilder()
+        details.append("DefaultTreeLayoutCache invariants are broken in $location:\n")
         for (message in messages) {
-          LOG.trace(message)
+          details.append(message).append('\n')
         }
+        // Log as ERROR to get a notification, but it still only happens when DEBUG is enabled, for performance reasons.
+        LOG.error(Exception(details.toString()))
       }
     }
 
