@@ -13,6 +13,12 @@ import com.intellij.platform.workspaceModel.storage.ObjBuilder
 import com.intellij.platform.workspaceModel.storage.Type
 import com.intellij.platform.workspaceModel.storage.annotations.Abstract
 import com.intellij.platform.workspaceModel.storage.annotations.Child
+import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+
+data class ArtifactId(val name: @NlsSafe String) : SymbolicEntityId<ArtifactEntity> {
+  override val presentableName: String
+    get() = name
+}
 
 interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
     val name: String
@@ -609,4 +615,41 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
 fun MutableEntityStorage.modifyEntity(entity: CustomPackagingElementEntity,
                                       modification: CustomPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
   CustomPackagingElementEntity.Builder::class.java, entity, modification)
+//endregion
+
+/**
+ * This entity stores order of artifacts in ipr file. This is needed to ensure that artifact tags are saved in the same order to avoid
+ * unnecessary modifications of ipr file.
+ */
+interface ArtifactsOrderEntity : WorkspaceEntity {
+  val orderOfArtifacts: List<@NlsSafe String>
+
+  //region generated code
+  @GeneratedCodeApiVersion(1)
+  interface Builder : ArtifactsOrderEntity, WorkspaceEntity.Builder<ArtifactsOrderEntity>, ObjBuilder<ArtifactsOrderEntity> {
+    override var entitySource: EntitySource
+    override var orderOfArtifacts: MutableList<String>
+  }
+
+  companion object : Type<ArtifactsOrderEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    operator fun invoke(orderOfArtifacts: List<String>,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): ArtifactsOrderEntity {
+      val builder = builder()
+      builder.orderOfArtifacts = orderOfArtifacts.toMutableWorkspaceList()
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
+  }
+  //endregion
+
+}
+
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: ArtifactsOrderEntity, modification: ArtifactsOrderEntity.Builder.() -> Unit) = modifyEntity(
+  ArtifactsOrderEntity.Builder::class.java, entity, modification)
 //endregion

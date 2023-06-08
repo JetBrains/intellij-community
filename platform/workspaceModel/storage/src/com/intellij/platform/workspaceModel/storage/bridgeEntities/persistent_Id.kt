@@ -25,11 +25,6 @@ data class FacetId(val name: @NlsSafe String, val type: @NonNls String, val pare
     get() = name
 }
 
-data class ArtifactId(val name: @NlsSafe String) : SymbolicEntityId<ArtifactEntity> {
-  override val presentableName: String
-    get() = name
-}
-
 @Open
 sealed class ModuleDependencyItem : Serializable {
   @Open
