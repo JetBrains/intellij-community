@@ -49,6 +49,11 @@ public final class LogFileTypeIndex extends FileTypeIndexImplBase {
   }
 
   @Override
+  public boolean isDirty() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content) {
     try {
       int fileTypeId = getFileTypeId(content == null ? null : content.getFileType());

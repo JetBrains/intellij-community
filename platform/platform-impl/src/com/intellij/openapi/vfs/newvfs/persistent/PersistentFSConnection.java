@@ -533,6 +533,11 @@ public final class PersistentFSConnection {
       }
     }
 
+    @Override
+    public boolean hasSomethingToFlush() {
+      return isDirty();
+    }
+
     private static int competingThreads() {
       //TODO RC: this is a bit of a hack -- I rely on the implicit knowledge that now all storages use
       //         PagedFileStorage under the hood, and PFS uses StorageLockContext default instance. This

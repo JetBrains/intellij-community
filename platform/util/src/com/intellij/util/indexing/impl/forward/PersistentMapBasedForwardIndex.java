@@ -52,6 +52,11 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex, MeasurableI
   }
 
   @Override
+  public boolean isDirty() {
+    return myPersistentMap.isDirty();
+  }
+
+  @Override
   public int keysCountApproximately() {
     return MeasurableIndexStore.keysCountApproximatelyIfPossible(myPersistentMap);
   }

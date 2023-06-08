@@ -65,6 +65,10 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
     myPersistentVersionEnumerator.flush();
   }
 
+  public boolean isDirty() {
+    return myPersistentVersionEnumerator.isDirty();
+  }
+
   private static Path versionMapRoot() {
     return Paths.get(".perFileVersion", INDEXED_VERSIONS);
   }

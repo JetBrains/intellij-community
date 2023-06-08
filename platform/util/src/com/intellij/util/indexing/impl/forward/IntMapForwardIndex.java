@@ -47,6 +47,11 @@ public class IntMapForwardIndex implements IntForwardIndex, MeasurableIndexStore
   }
 
   @Override
+  public boolean isDirty() {
+    return myPersistentMap.isDirty();
+  }
+
+  @Override
   public int keysCountApproximately() {
     if (myPersistentMap instanceof MeasurableIndexStore) {
       return ((MeasurableIndexStore)myPersistentMap).keysCountApproximately();

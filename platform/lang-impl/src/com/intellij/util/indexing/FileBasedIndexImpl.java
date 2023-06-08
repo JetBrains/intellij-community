@@ -2302,6 +2302,21 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
 
     @Override
+    public boolean hasSomethingToFlush() {
+      if (IndexingStamp.isDirty()) return true;
+
+      IndexConfiguration indexes = getState();
+      for (ID<?, ?> indexId : indexes.getIndexIDs()) {
+        UpdatableIndex<?, ?, FileContent, ?> index = indexes.getIndex(indexId);
+        if (index != null && index.isDirty()) {
+          return true;
+        }
+      }
+
+      return SnapshotHashEnumeratorService.getInstance().isDirty();
+    }
+
+    @Override
     protected boolean betterPostponeFlushNow() {
       if (HeavyProcessLatch.INSTANCE.isRunning()) {
         return true;

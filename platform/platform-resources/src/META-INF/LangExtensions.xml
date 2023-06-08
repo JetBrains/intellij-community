@@ -1401,6 +1401,8 @@
                             implementation="com.intellij.ide.actions.SettingsEntryPointAction$StatusBarManager" order="last"/>
     <statusBarWidgetFactory id="SmartModeIndicator"
                             implementation="com.intellij.openapi.wm.impl.status.SmartModeIndicatorWidgetFactory"/>
+    <statusBarWidgetFactory id="IndexesAndVfsFlushIndicator"
+                            implementation="com.intellij.openapi.wm.impl.status.IndexesAndVfsFlushIndicatorWidgetFactory"/>
 
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.DetectableIndentOptionsProvider" order="last"/>
     <lang.formatter.restriction implementation="com.intellij.formatting.ExcludedFileFormattingRestriction"/>

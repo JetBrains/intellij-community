@@ -440,5 +440,9 @@ public final class IndexingStamp {
     }
   }
 
+  static boolean isDirty() {
+    return !ourFinishedFiles.isEmpty();
+  }
+
   private static final StripedLock ourLock = new StripedLock();
 }
