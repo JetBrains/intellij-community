@@ -57,10 +57,18 @@ class ReplaceBySourceTest {
 
     val moduleEntity = builder addEntity ModuleEntity("name", emptyList(), source)
     val contentRootEntity = builder.addContentRootEntity(virtualFileManager.fromUrl(fileUrl), emptyList(), emptyList(), moduleEntity)
-    builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromUrl(fileUrl2), "", source)
-    builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromUrl(fileUrl3), "", source)
-    builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromUrl(fileUrl4), "", source)
-    builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromUrl(fileUrl5), "", source)
+    builder addEntity SourceRootEntity(virtualFileManager.fromUrl(fileUrl2), "", source) {
+      contentRoot = contentRootEntity
+    }
+    builder addEntity SourceRootEntity(virtualFileManager.fromUrl(fileUrl3), "", source) {
+      contentRoot = contentRootEntity
+    }
+    builder addEntity SourceRootEntity(virtualFileManager.fromUrl(fileUrl4), "", source) {
+      contentRoot = contentRootEntity
+    }
+    builder addEntity SourceRootEntity(virtualFileManager.fromUrl(fileUrl5), "", source) {
+      contentRoot = contentRootEntity
+    }
     return builder
   }
 

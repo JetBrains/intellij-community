@@ -16,21 +16,6 @@ import java.util.*
  * - If you want to use this function - use the code inside this function
  */
 @Obsolete
-fun MutableEntityStorage.addSourceRootEntity(contentRoot: ContentRootEntity,
-                                             url: VirtualFileUrl,
-                                             rootType: @NonNls String,
-                                             source: EntitySource): SourceRootEntity {
-  return this addEntity SourceRootEntity(url, rootType, source) {
-    this.contentRoot = contentRoot
-  }
-}
-
-/**
- * This helper function is now obsolete:
- * - If you use this function - inline it
- * - If you want to use this function - use the code inside this function
- */
-@Obsolete
 fun MutableEntityStorage.addContentRootEntity(url: VirtualFileUrl,
                                               excludedUrls: List<VirtualFileUrl>,
                                               excludedPatterns: List<@NlsSafe String>,
