@@ -939,10 +939,21 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   private suspend fun closeAndDisposeKeepingFrame(project: Project): Boolean {
     return withContext(Dispatchers.EDT) {
-      blockingContext {
-        (WindowManager.getInstance() as WindowManagerImpl).withFrameReuseEnabled().use {
-          closeProject(project, checkCanClose = true)
+      try {
+        blockingContext {
+          (WindowManager.getInstance() as WindowManagerImpl).withFrameReuseEnabled().use {
+            closeProject(project, checkCanClose = true)
+          }
         }
+      }
+      catch (ce: CancellationException) {
+        ensureActive()
+        LOG.error(ce) // log manual CEs
+        true
+      }
+      catch (t: Throwable) {
+        LOG.error(t)
+        true
       }
     }
   }
