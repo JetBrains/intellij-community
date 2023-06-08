@@ -154,19 +154,15 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
 
     @Override
     public Object @NotNull [] getVariants() {
-      List<Object> list = new ArrayList<>();
-
       InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
-      DependsOnGroupsInspection inspection = (DependsOnGroupsInspection)inspectionProfile.getUnwrappedTool(
-        DependsOnGroupsInspection.SHORT_NAME, myElement);
-
+      DependsOnGroupsInspection inspection = (DependsOnGroupsInspection)inspectionProfile
+        .getUnwrappedTool(DependsOnGroupsInspection.SHORT_NAME, myElement);
+      if (inspection == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+      List<Object> list = new ArrayList<>();
       for (String groupName : inspection.groups) {
         list.add(LookupElementBuilder.create(groupName));
       }
-
-      if (!list.isEmpty()) {
-        return list.toArray();
-      }
+      if (!list.isEmpty()) return list.toArray();
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
   }
