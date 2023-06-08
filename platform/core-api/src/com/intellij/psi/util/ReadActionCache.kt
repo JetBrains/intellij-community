@@ -20,6 +20,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see ReadActionCachedValue
  */
 @ApiStatus.Experimental
+@ApiStatus.Internal
 interface ReadActionCache {
 
   /**
