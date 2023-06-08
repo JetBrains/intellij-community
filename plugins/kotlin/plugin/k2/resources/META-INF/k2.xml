@@ -204,9 +204,6 @@
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService"/>
-
-    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex"/>
-    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex"/>
   </extensions>
 
   <content>
