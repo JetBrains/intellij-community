@@ -37,6 +37,10 @@ suspend fun <T> withBackgroundProgress(
  * The progress is not shown in the UI immediately to avoid flickering,
  * i.e. the user won't see anything if the [action] completes within the given timeout.
  *
+ * ### Threading
+ *
+ * The [action] is run with the calling coroutine dispatcher.
+ *
  * @param project in which frame the progress should be shown
  * @param cancellation controls the UI appearance, e.g. [TaskCancellation.nonCancellable] or [TaskCancellation.cancellable]
  * @throws CancellationException if the calling coroutine was cancelled, or if the indicator was cancelled by the user in the UI
