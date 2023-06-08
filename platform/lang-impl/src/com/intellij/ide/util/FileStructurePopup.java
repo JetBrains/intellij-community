@@ -21,7 +21,11 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.eventLog.events.LongEventField;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.navigation.LocationPresentation;
@@ -124,9 +128,11 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
   private final TreeExpander myTreeExpander;
   private final CopyPasteDelegator myCopyPasteDelegator;
 
+  private final long constructorCallTime = System.nanoTime();
+  private long showTime;
+
   private boolean myCanClose = true;
   private boolean myDisposed;
-
   /**
    * @noinspection unused
    * @deprecated use {@link #FileStructurePopup(Project, FileEditor, StructureViewModel)}
@@ -294,9 +300,10 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
 
-    return rebuildAndSelect(false, myInitialElement).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
+    return rebuildAndSelect(false, myInitialElement, null).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
       installUpdater();
+      showTime = System.nanoTime();
     }));
   }
 
@@ -436,6 +443,10 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
   @Override
   public void dispose() {
     myDisposed = true;
+    if (showTime != 0) {
+      FileStructurePopupTimeTracker.logShowTime(System.nanoTime() - showTime);
+    }
+    FileStructurePopupTimeTracker.logPopupLifeTime(System.nanoTime() - constructorCallTime);
   }
 
   private static boolean isShouldNarrowDown() {
@@ -805,11 +816,16 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
   private @NotNull Promise<Void> rebuild(boolean refilterOnly) {
     Object selection = JBIterable.of(myTree.getSelectionPaths())
                                  .filterMap(o -> StructureViewComponent.unwrapValue(o.getLastPathComponent())).first();
-    return rebuildAndSelect(refilterOnly, selection).then(o -> null);
+    return rebuildAndSelect(refilterOnly, selection, null).then(o -> null);
   }
 
-  private @NotNull Promise<TreePath> rebuildAndSelect(boolean refilterOnly, Object selection) {
+  private @NotNull Promise<TreePath> rebuildAndSelect(boolean refilterOnly, Object selection, @Nullable Long rebuildStartTime) {
+    if (rebuildStartTime == null) {
+      rebuildStartTime = System.nanoTime();
+    }
+
     AsyncPromise<TreePath> result = new AsyncPromise<>();
+    Long finalLastRebuildStartTime = rebuildStartTime;
     myStructureTreeModel.getInvoker().invoke(() -> {
       if (refilterOnly) {
         myFilteringStructure.refilter();
@@ -824,12 +840,13 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
               TreeUtil.ensureSelection(myTree);
               mySpeedSearch.refreshSelection();
               result.setResult(p);
+              FileStructurePopupTimeTracker.logRebuildTime(System.nanoTime() - finalLastRebuildStartTime);
             }));
         });
       }
       else {
         myTreeStructure.rebuildTree();
-        myStructureTreeModel.invalidateAsync().thenRun(() -> rebuildAndSelect(true, selection).processed(result));
+        myStructureTreeModel.invalidateAsync().thenRun(() -> rebuildAndSelect(true, selection, finalLastRebuildStartTime).processed(result));
       }
     }).onError(throwable -> result.setError(throwable));
     return result;
@@ -1119,5 +1136,29 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
         rebuild(true);
       }
     }
+  }
+}
+
+final class FileStructurePopupTimeTracker extends CounterUsagesCollector {
+  private final static EventLogGroup GROUP = new EventLogGroup("com.intellij.ide.util.file-structure-popup", 1);
+  private final static EventId1<Long> LIFE = GROUP.registerEvent("popup_life", new LongEventField("time"));
+  private final static EventId1<Long> SHOW = GROUP.registerEvent("show_data", new LongEventField("time"));
+  private final static EventId1<Long> REBUILD = GROUP.registerEvent("fill_data", new LongEventField("time"));
+
+  static void logRebuildTime(long elapsedTime) {
+    REBUILD.log(elapsedTime);
+  }
+
+  static void logShowTime(long elapsedTime) {
+    SHOW.log(elapsedTime);
+  }
+
+  static void logPopupLifeTime(long elapsedTime) {
+    LIFE.log(elapsedTime);
+  }
+
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 }

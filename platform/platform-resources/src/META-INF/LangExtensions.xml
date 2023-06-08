@@ -1137,6 +1137,7 @@
                     serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProjectErrorsCollector"/>
     <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewIconUpdater"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStatsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.util.FileStructurePopupTimeTracker"/>
 
     <projectViewPane implementation="com.intellij.ide.scopeView.ScopeViewPane"/>
 
