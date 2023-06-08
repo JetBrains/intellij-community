@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -299,7 +300,7 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
 
   @Override
   protected void performCleanup() {
-    ApplicationManager.getApplication().invokeLater(() -> myEditorState.revert());
+    myEditorState.revert();
   }
 
   @Override
