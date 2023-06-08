@@ -72,16 +72,13 @@ internal open class IconsClassGenerator(private val projectHome: Path,
   }
 
   internal open fun getIconClassInfo(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?): List<IconClassInfo> {
-    val packageName: String
-    val className: CharSequence
-    val outFile: Path
     when (module.name) {
       "intellij.platform.icons" -> {
-        packageName = "com.intellij.icons"
-        className = "AllIcons"
+        val packageName = "com.intellij.icons"
+        val className = "AllIcons"
 
         val dir = utilUi.getSourceRoots(JavaSourceRootType.SOURCE).first().path.toAbsolutePath().resolve("com/intellij/icons")
-        outFile = dir.resolve("$className.java")
+        val outFile = dir.resolve("$className.java")
 
         val imageCollector = ImageCollector(projectHome = projectHome, moduleConfig = moduleConfig)
         val images = imageCollector.collect(module = module, includePhantom = true)
@@ -91,7 +88,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         return listOf(
           IconClassInfo(customLoad = true,
                         packageName = packageName,
-                        className = className.toString(),
+                        className = className,
                         outFile = outFile,
                         images = others),
           IconClassInfo(customLoad = true,
@@ -102,7 +99,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         )
       }
       "intellij.android.artwork" -> {
-        packageName = "icons"
+        val packageName = "icons"
 
         val sourceRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).single().file.absolutePath
         val resourceRoot = module.getSourceRoots(JavaResourceRootType.RESOURCE).single()
@@ -125,7 +122,9 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         )
       }
       else -> {
-        packageName = moduleConfig?.packageName ?: getPluginPackageIfPossible(module) ?: "icons"
+        val imageCollector = ImageCollector(projectHome, moduleConfig = moduleConfig)
+        val images = imageCollector.collect(module, includePhantom = true)
+        imageCollector.printUsedIconRobots()
 
         val firstRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).firstOrNull() ?: return emptyList()
 
@@ -139,6 +138,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         }
 
         val generatedRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).find { it.properties.isForGeneratedSources }
+        val packageName = moduleConfig?.packageName ?: getPluginPackageIfPossible(module) ?: "icons"
         val targetRoot = (generatedRoot ?: firstRoot).file.toPath().resolve(packageName.replace('.', File.separatorChar))
 
         if (generatedRoot != null && oldClassName != null && firstRoot != generatedRoot) {
@@ -147,7 +147,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
           Files.delete(oldFile)
         }
 
-        if (moduleConfig?.className == null) {
+        val className= moduleConfig?.className ?: run {
           if (oldClassName == null) {
             try {
               oldClassName = findIconClass(targetRoot)
@@ -156,21 +156,14 @@ internal open class IconsClassGenerator(private val projectHome: Path,
             }
           }
 
-          className = oldClassName ?: directoryName(module).let {
+          oldClassName ?: directoryName(module).let {
             if (it.endsWith("Icons")) it else "${it}Icons"
           }
         }
-        else {
-          className = moduleConfig.className
-        }
-        outFile = targetRoot.resolve("$className.java")
+        val outFile = targetRoot.resolve("$className.java")
+        return listOf(IconClassInfo(true, packageName, className.toString(), outFile, images))
       }
     }
-
-    val imageCollector = ImageCollector(projectHome, moduleConfig = moduleConfig)
-    val images = imageCollector.collect(module, includePhantom = true)
-    imageCollector.printUsedIconRobots()
-    return listOf(IconClassInfo(true, packageName, className.toString(), outFile, images))
   }
 
   fun processModule(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?) {
