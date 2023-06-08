@@ -1,5 +1,6 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.workspaceModel.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
@@ -10,6 +11,7 @@ import com.intellij.platform.workspaceModel.jps.UnloadedModulesNameHolder
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -108,8 +110,10 @@ class JpsProjectSaveAfterChangesTest {
       builder.modifyEntity(module) {
         type = "JAVA_MODULE"
       }
-      val contentRootEntity = builder.addContentRootEntity(configLocation.baseDirectoryUrl.append("new"), emptyList(),
-                                                           emptyList(), module)
+      val contentRootEntity = builder addEntity ContentRootEntity(configLocation.baseDirectoryUrl.append("new"),
+                                                                  emptyList<@NlsSafe String>(), module.entitySource) {
+        this@ContentRootEntity.module = module
+      }
       val sourceRootEntity = builder addEntity SourceRootEntity(configLocation.baseDirectoryUrl.append("new"),
                                                                 "java-source", source) {
         contentRoot = contentRootEntity

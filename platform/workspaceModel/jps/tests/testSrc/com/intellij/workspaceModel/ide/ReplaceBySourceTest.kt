@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.testFramework.ApplicationRule
@@ -56,7 +57,10 @@ class ReplaceBySourceTest {
 
 
     val moduleEntity = builder addEntity ModuleEntity("name", emptyList(), source)
-    val contentRootEntity = builder.addContentRootEntity(virtualFileManager.fromUrl(fileUrl), emptyList(), emptyList(), moduleEntity)
+    val contentRootEntity = builder addEntity ContentRootEntity(virtualFileManager.fromUrl(fileUrl), emptyList<@NlsSafe String>(),
+                                                                moduleEntity.entitySource) {
+      module = moduleEntity
+    }
     builder addEntity SourceRootEntity(virtualFileManager.fromUrl(fileUrl2), "", source) {
       contentRoot = contentRootEntity
     }

@@ -16,24 +16,6 @@ import java.util.*
  * - If you want to use this function - use the code inside this function
  */
 @Obsolete
-fun MutableEntityStorage.addContentRootEntity(url: VirtualFileUrl,
-                                              excludedUrls: List<VirtualFileUrl>,
-                                              excludedPatterns: List<@NlsSafe String>,
-                                              module: ModuleEntity,
-                                              source: EntitySource = module.entitySource): ContentRootEntity {
-  val excludes = excludedUrls.map { this addEntity ExcludeUrlEntity(it, source) }
-  return this addEntity ContentRootEntity(url, excludedPatterns, source) {
-    this.excludedUrls = excludes
-    this.module = module
-  }
-}
-
-/**
- * This helper function is now obsolete:
- * - If you use this function - inline it
- * - If you want to use this function - use the code inside this function
- */
-@Obsolete
 fun MutableEntityStorage.addLibraryEntity(name: @NlsSafe String, tableId: LibraryTableId, roots: List<LibraryRoot>,
                                           excludedRoots: List<VirtualFileUrl>, source: EntitySource): LibraryEntity {
   val excludes = excludedRoots.map { this addEntity ExcludeUrlEntity(it, source) }
