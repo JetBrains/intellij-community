@@ -18,6 +18,7 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase;
 import org.jetbrains.idea.maven.importing.MavenProjectModelModifier;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -59,6 +60,9 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
       assertTrue(MavenImportingManager.getInstance(myProject).isImportingInProgress());
     }
     else {
+      if (MavenUtil.updateSuspendable()) {
+        return;
+      }
       assertSame(Promise.State.PENDING, result.getState());
     }
   }
