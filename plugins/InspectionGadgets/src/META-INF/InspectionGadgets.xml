@@ -1792,6 +1792,12 @@
                      key="unpredictable.big.decimal.constructor.call.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.numeric.issues" enabledByDefault="true" implementationClass="com.siyeh.ig.numeric.UnpredictableBigDecimalConstructorCallInspection"
                      level="WARNING" cleanupTool="true"/>
+    <localInspection groupPath="Java" language="JAVA"
+                     suppressId="lossy-conversions"
+                     key="inspection.lossy.conversion.compound.assignment.name" bundle="messages.InspectionGadgetsBundle"
+                     groupKey="group.names.numeric.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.numeric.LossyConversionCompoundAssignmentInspection" />
 
     <!--group.names.packaging.issues-->
     <globalInspection groupPath="Java" language="JAVA" shortName="ClassOnlyUsedInOnePackage" bundle="messages.InspectionGadgetsBundle"
