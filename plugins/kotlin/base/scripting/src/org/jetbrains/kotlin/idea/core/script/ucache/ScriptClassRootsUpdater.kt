@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
+import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
@@ -109,7 +110,7 @@ abstract class ScriptClassRootsUpdater(
      */
     fun invalidate(synchronous: Boolean = false) {
         lock.withLock {
-            checkInTransaction()
+            checkHasTransactionToHappen()
             invalidated = true
             if (synchronous) {
                 syncUpdateRequired = true
@@ -121,12 +122,19 @@ abstract class ScriptClassRootsUpdater(
         update { invalidate() }
     }
 
-    fun isInTransaction(): Boolean {
+    /**
+     * Indicates if there is an update to happen.
+     * This method considers both scheduled async and ongoing sync translations.
+     *
+     * @return true if there is scheduled async or ongoing synchronous transaction.
+     * @see performUpdate
+     */
+    fun isTransactionAboutToHappen(): Boolean {
         return concurrentUpdates.get() > 0
     }
 
-    fun checkInTransaction() {
-        check(isInTransaction())
+    fun checkHasTransactionToHappen() {
+        check(isTransactionAboutToHappen())
     }
 
     inline fun <T> update(body: () -> T): T {
@@ -161,7 +169,7 @@ abstract class ScriptClassRootsUpdater(
 
     private fun scheduleUpdateIfInvalid() {
         lock.withLock {
-            if (!invalidated) return
+            invalidated.ifFalse { return }
             invalidated = false
 
             val isSync = (syncUpdateRequired || isUnitTestMode()).also {
