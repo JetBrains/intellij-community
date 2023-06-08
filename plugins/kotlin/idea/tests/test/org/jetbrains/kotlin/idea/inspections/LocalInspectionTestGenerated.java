@@ -7677,9 +7677,29 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/multiLineWithOneLineInitializer.kt");
         }
 
+        @TestMetadata("notApplicableElvis.kt")
+        public void testNotApplicableElvis() throws Exception {
+            runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableElvis.kt");
+        }
+
+        @TestMetadata("notApplicableIf.kt")
+        public void testNotApplicableIf() throws Exception {
+            runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableIf.kt");
+        }
+
+        @TestMetadata("notApplicableIf2.kt")
+        public void testNotApplicableIf2() throws Exception {
+            runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableIf2.kt");
+        }
+
         @TestMetadata("notApplicableInBinaryExpression.kt")
         public void testNotApplicableInBinaryExpression() throws Exception {
             runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableInBinaryExpression.kt");
+        }
+
+        @TestMetadata("notApplicableLambda.kt")
+        public void testNotApplicableLambda() throws Exception {
+            runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableLambda.kt");
         }
 
         @TestMetadata("notApplicableMultiLineWithOneLineInitializer.kt")
@@ -7702,6 +7722,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableSideEffect.kt");
         }
 
+        @TestMetadata("notApplicableTry.kt")
+        public void testNotApplicableTry() throws Exception {
+            runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableTry.kt");
+        }
+
         @TestMetadata("notApplicableUsedInOtherScope.kt")
         public void testNotApplicableUsedInOtherScope() throws Exception {
             runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableUsedInOtherScope.kt");
@@ -7710,6 +7735,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("notApplicableVar.kt")
         public void testNotApplicableVar() throws Exception {
             runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableVar.kt");
+        }
+
+        @TestMetadata("notApplicableWhen.kt")
+        public void testNotApplicableWhen() throws Exception {
+            runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableWhen.kt");
         }
 
         @TestMetadata("simple.kt")
