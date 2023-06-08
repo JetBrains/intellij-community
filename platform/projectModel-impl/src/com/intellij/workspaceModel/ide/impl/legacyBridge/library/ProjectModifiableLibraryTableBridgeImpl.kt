@@ -62,13 +62,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
       LOG.error("Project library with name '$name' already exists.")
     }
 
-    val libraryEntity = diff.addLibraryEntity(
-      roots = emptyList(),
-      tableId = libraryTableId,
-      name = name,
-      excludedRoots = emptyList(),
-      source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource)
-    )
+    val libraryEntity = diff addEntity LibraryEntity(name, libraryTableId, emptyList(), LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource))
 
     if (type != null) {
       diff.addLibraryPropertiesEntity(

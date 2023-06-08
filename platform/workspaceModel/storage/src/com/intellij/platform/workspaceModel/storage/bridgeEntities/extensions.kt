@@ -11,31 +11,6 @@ import org.jetbrains.annotations.NonNls
 import java.util.*
 
 /**
- * This helper function is now obsolete:
- * - If you use this function - inline it
- * - If you want to use this function - use the code inside this function
- */
-@Obsolete
-fun MutableEntityStorage.addLibraryEntity(name: @NlsSafe String, tableId: LibraryTableId, roots: List<LibraryRoot>,
-                                          excludedRoots: List<VirtualFileUrl>, source: EntitySource): LibraryEntity {
-  val excludes = excludedRoots.map { this addEntity ExcludeUrlEntity(it, source) }
-  return addLibraryEntityWithExcludes(name, tableId, roots, excludes, source)
-}
-
-/**
- * This helper function is now obsolete:
- * - If you use this function - inline it
- * - If you want to use this function - use the code inside this function
- */
-@Obsolete
-fun MutableEntityStorage.addLibraryEntityWithExcludes(name: @NlsSafe String, tableId: LibraryTableId, roots: List<LibraryRoot>,
-                                                      excludedRoots: List<ExcludeUrlEntity>, source: EntitySource): LibraryEntity {
-  return this addEntity LibraryEntity(name, tableId, roots, source) {
-    this.excludedRoots = excludedRoots
-  }
-}
-
-/**
  * [LibraryPropertiesEntity] has the same entity source as [LibraryEntity].
  * [LibraryPropertiesEntityData] contains assertion for that. Please update an assertion in case you need a different entity source for these
  *   entities.

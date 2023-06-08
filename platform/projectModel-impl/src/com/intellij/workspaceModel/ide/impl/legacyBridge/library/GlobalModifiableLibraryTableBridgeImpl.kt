@@ -36,13 +36,8 @@ internal class GlobalModifiableLibraryTableBridgeImpl(private val libraryTable: 
 
     val libraryTableId = LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL)
 
-    val libraryEntity = diff.addLibraryEntity(
-      roots = emptyList(),
-      tableId = libraryTableId,
-      name = name,
-      excludedRoots = emptyList(),
-      source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForGlobalLibrary()
-    )
+    val libraryEntity = diff addEntity LibraryEntity(name, libraryTableId, emptyList(),
+                                                     LegacyBridgeJpsEntitySourceFactory.createEntitySourceForGlobalLibrary())
 
     if (type != null) {
       diff.addLibraryPropertiesEntity(

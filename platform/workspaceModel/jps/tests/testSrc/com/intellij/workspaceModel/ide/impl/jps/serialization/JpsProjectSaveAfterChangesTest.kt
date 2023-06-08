@@ -88,7 +88,7 @@ class JpsProjectSaveAfterChangesTest {
         virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
         LibraryRootTypeId.COMPILED)
       val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(configLocation)
-      builder.addLibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), emptyList(), source)
+      builder addEntity LibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), source)
       builder.entities(LibraryEntity::class.java).forEach { libraryEntity ->
         val virtualFileUrl = libraryEntity.roots.first().url
         val entitiesByUrl = builder.getMutableVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl)

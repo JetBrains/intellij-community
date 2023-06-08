@@ -399,13 +399,11 @@ class ModuleRootsInProjectFileIndexTest {
     val urlManager = VirtualFileUrlManager.getInstance(projectModel.project)
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+        val module = it.resolve(ModuleId(module.name))!!
         it addEntity ContentRootEntity(urlManager.fromUrl(rootUrl),
                                        emptyList<@NlsSafe String>(),
                                        module.entitySource) {
-          excludedUrls = listOf<VirtualFileUrl>(urlManager.fromUrl(excludedUrl)).map<VirtualFileUrl, ExcludeUrlEntity> {
-            this@addContentRootEntity addEntity ExcludeUrlEntity(it, module.entitySource)
-          }
-          module = it.resolve(ModuleId(module.name))!!
+          this.module = module
         }
       }
     }

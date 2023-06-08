@@ -18,6 +18,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: ModifiableRootModelBridgeImpl)
@@ -66,13 +67,10 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       LibraryId(existsName, tableId) in modifiableModel.diff
     }
 
-    val libraryEntity = modifiableModel.diff.addLibraryEntity(
-      roots = emptyList(),
-      tableId = tableId,
-      name = libraryEntityName,
-      excludedRoots = emptyList(),
-      source = modifiableModel.moduleEntity.entitySource
-    )
+    val libraryEntity = modifiableModel.diff addEntity LibraryEntity(name = libraryEntityName,
+                                                                     tableId = tableId,
+                                                                     roots = emptyList(),
+                                                                     entitySource = modifiableModel.moduleEntity.entitySource)
 
     if (type != null) {
       modifiableModel.diff.addLibraryPropertiesEntity(
@@ -114,13 +112,13 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       LibraryId(existsName, tableId) in modifiableModel.diff
     }
     val originalEntity = original.librarySnapshot.libraryEntity
-    val libraryEntity = modifiableModel.diff.addLibraryEntityWithExcludes(
-      roots = originalEntity.roots,
-      tableId = tableId,
-      name = libraryEntityName,
-      excludedRoots = originalEntity.excludedRoots,
-      source = modifiableModel.moduleEntity.entitySource
-    )
+    val libraryEntity = modifiableModel.diff addEntity LibraryEntity(name = libraryEntityName,
+                                                                     tableId = tableId,
+                                                                     roots = originalEntity.roots,
+                                                                     entitySource = modifiableModel.moduleEntity.entitySource
+    ) {
+      excludedRoots = originalEntity.excludedRoots
+    }
 
     val originalProperties = originalEntity.libraryProperties
     if (originalProperties != null) {
