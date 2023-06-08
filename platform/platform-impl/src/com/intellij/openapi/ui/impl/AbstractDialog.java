@@ -41,7 +41,7 @@ interface AbstractDialog extends Disposable {
   /**
    * @deprecated use {@link #setModalityType(Dialog.ModalityType)}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   void setModal(boolean b);
 
   void toFront();
@@ -96,7 +96,7 @@ interface AbstractDialog extends Disposable {
   /**
    * @deprecated use {@link #getModalityType()}
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated
   boolean isModal();
 
   void setModalityType(Dialog.ModalityType modalityType);
