@@ -451,9 +451,9 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    class A:
                        pass
 
-                   assert isinstance(A(), <error descr="'Generic' cannot be used with instance and class checks">Generic</error>)
+                   assert isinstance(A(), Generic)
                    B = Generic
-                   assert issubclass(A, <error descr="'Generic' cannot be used with instance and class checks">B</error>)
+                   assert issubclass(A, B)
 
                    assert isinstance(A(), <error descr="'Generic' cannot be used with instance and class checks">Generic[T]</error>)
                    assert issubclass(A, <error descr="'Generic' cannot be used with instance and class checks">B[T]</error>)
@@ -1311,6 +1311,41 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    class C:
                        def m(self: C):
                            obj: <warning descr="Cannot use 'Self' if 'self' parameter is not 'Self' annotated">Self</warning> = None
+                   """);
+  }
+
+  // PY-36317
+  public void testDictSubscriptionNotReportedAsParametrizedGeneric() {
+    doTestByText("""
+                   keys_and_types = {
+                       'comment': (str, type(None)),
+                       'from_budget': (bool, type(None)),
+                       'to_member': (int, type(None)),
+                       'survey_request': (int, type(None)),
+                   }
+                                      
+                   def type_is_valid(test_key, test_value):
+                       return isinstance(test_value, keys_and_types[test_key])
+                   """);
+  }
+
+  // PY-36317
+  public void testTupleSubscriptionNotReportedAsParametrizedGeneric() {
+    doTestByText("""
+                   tuple_of_types = (str, bool, int)
+                   
+                   def my_is_instance(value, index: int) -> bool:
+                       return isinstance(value, tuple_of_types[index])
+                   """);
+  }
+
+  // PY-36317
+  public void testPlainDictTypeSubscriptionNotReportedAsParametrizedGeneric() {
+    doTestByText("""
+                   def foo(d: dict, s: dict):
+                       for key in s.keys():
+                           if not isinstance(d[key], s[key]):
+                               raise TypeError
                    """);
   }
 
