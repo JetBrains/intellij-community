@@ -90,7 +90,7 @@ internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualF
         entry.key?.let {
           listOf(GroupNode(node, it, entry.value))
         }
-        ?: getNodesForProblems(entry.value.map { Pair(node, it) })
+        ?: getNodesForProblems(node, entry.value)
     }
   }
 }
