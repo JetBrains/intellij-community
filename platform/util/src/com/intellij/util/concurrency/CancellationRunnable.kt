@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
-import kotlinx.coroutines.CompletableJob
-import java.util.concurrent.CancellationException
+import kotlinx.coroutines.*
+import java.lang.Runnable
 
 /**
  * A Runnable, which, when run, associates the calling thread with a job,
@@ -11,18 +11,9 @@ import java.util.concurrent.CancellationException
  * @see CancellationCallable
  */
 internal class CancellationRunnable(private val myJob: CompletableJob, private val myRunnable: Runnable) : Runnable {
+
   override fun run() {
-    try {
-      myRunnable.run()
-      myJob.complete()
-    }
-    catch (e: CancellationException) {
-      myJob.completeExceptionally(e)
-    }
-    catch (e: Throwable) {
-      myJob.completeExceptionally(e)
-      throw e
-    }
+    runAsCoroutine(myJob, myRunnable)
   }
 
   override fun toString(): String {
