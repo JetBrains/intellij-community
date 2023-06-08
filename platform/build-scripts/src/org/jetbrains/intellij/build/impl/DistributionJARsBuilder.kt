@@ -807,7 +807,7 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout,
     return false
   }
 
-  if (bundlingRestrictions.includeInNightlyOnly && context.buildNumber.count { it == '.' } > 1) {
+  if (bundlingRestrictions.includeInNightlyOnly && !context.options.isNightlyBuild) {
     return false
   }
 
