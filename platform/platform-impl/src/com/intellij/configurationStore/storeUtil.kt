@@ -11,6 +11,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -210,6 +211,22 @@ fun getPerOsSettingsStorageFolderName(): String {
     else -> if (SystemInfoRt.isUnix) "unix" else "other_os"
   }
 }
+
+/**
+ * Converts fileSpec passed to [StreamProvider]'s methods to a relative path from the root config directory.
+ */
+@Internal
+fun getFileRelativeToRootConfig(fileSpecPassedToProvider: String): String {
+  // For PersistentStateComponents the fileSpec is passed without the 'options' folder, e.g. 'editor.xml' or 'mac/keymaps.xml'
+  // OTOH for schemas it is passed together with the containing folder, e.g. 'keymaps/mykeymap.xml'
+  return if (!fileSpecPassedToProvider.contains("/") || fileSpecPassedToProvider.startsWith(getPerOsSettingsStorageFolderName() + "/")) {
+    "${PathManager.OPTIONS_DIRECTORY}/$fileSpecPassedToProvider"
+  }
+  else {
+    fileSpecPassedToProvider
+  }
+}
+
 
 /**
  * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
