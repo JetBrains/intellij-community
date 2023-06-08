@@ -5,7 +5,6 @@ package com.theoryinpractice.testng;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.reference.PsiMemberReference;
 import com.intellij.openapi.project.Project;
@@ -162,7 +161,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
         DependsOnGroupsInspection.SHORT_NAME, myElement);
 
       for (String groupName : inspection.groups) {
-        list.add(LookupValueFactory.createLookupValue(groupName, null));
+        list.add(LookupElementBuilder.create(groupName));
       }
 
       if (!list.isEmpty()) {
