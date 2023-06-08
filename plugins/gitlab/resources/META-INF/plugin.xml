@@ -73,6 +73,8 @@
       implementation="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabAccountsStatisticsCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
+
+    <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.gitlab.ui.action.GitLabAnnotationGutterActionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
@@ -82,7 +84,7 @@
 
   <actions>
     <action id="GitLab.Open.Settings.Page" class="org.jetbrains.plugins.gitlab.GitLabOpenSettingsPageAction"/>
-    
+
     <action id="GitLab.Merge.Request.List.Refresh"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestListRefreshAction"
             use-shortcut-of="Refresh"
@@ -136,5 +138,20 @@
     </group>
     <action id="GitLab.MergeRequest.Review.Submit"
             class="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestDiffSubmitReviewAction"/>
+
+    <group id="GitLab.Open.In.Browser" class="org.jetbrains.plugins.gitlab.ui.action.GitLabOpenInBrowserActionGroup"
+           icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
+      <override-text place="EditorTabPopup"/>
+      <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
+      <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
+      <override-text place="FavoritesPopup" use-text-of-place="EditorTabPopup"/>
+      <add-to-group group-id="Git.Hosting.Open.In.Browser.Group"/>
+    </group>
+
+    <group id="GitLab.Copy.Link" class="org.jetbrains.plugins.gitlab.ui.action.GitLabCopyLinkActionGroup"
+           icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
+      <override-text place="CopyReferencePopup"/>
+      <add-to-group group-id="Git.Hosting.Copy.Link.Group"/>
+    </group>
   </actions>
 </idea-plugin>
