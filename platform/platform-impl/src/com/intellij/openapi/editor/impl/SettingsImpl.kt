@@ -179,8 +179,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (`val` == myIsRightMarginShown) return
 
     myIsRightMarginShown = `val`
-    myDispatcher.multicaster.isRightMarginShownChanged(`val`)
     fireEditorRefresh()
+    myDispatcher.multicaster.isRightMarginShownChanged(`val`)
   }
 
   override fun isWhitespacesShown(): Boolean {
@@ -251,8 +251,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (`val` == myIndentGuidesShown) return
 
     myIndentGuidesShown = `val`
-    myDispatcher.multicaster.isIndentGuidesShownChanged(`val`)
     fireEditorRefresh()
+    myDispatcher.multicaster.isIndentGuidesShownChanged(`val`)
   }
 
   override fun isLineNumbersShown(): Boolean {
@@ -263,8 +263,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (`val` == myAreLineNumbersShown) return
 
     myAreLineNumbersShown = `val`
-    myDispatcher.multicaster.isLineNumbersShownChanged(`val`)
     fireEditorRefresh()
+    myDispatcher.multicaster.isLineNumbersShownChanged(`val`)
   }
 
   override fun areGutterIconsShown(): Boolean {
@@ -275,8 +275,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (`val` == myGutterIconsShown) return
 
     myGutterIconsShown = `val`
-    myDispatcher.multicaster.areGutterIconsShownChanged(`val`)
     fireEditorRefresh()
+    myDispatcher.multicaster.areGutterIconsShownChanged(`val`)
   }
 
   override fun getRightMargin(project: Project?): Int = rightMargin.getValue(project)
@@ -317,8 +317,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
 
     
     myAdditionalLinesCount = additionalLinesCount
-    myDispatcher.multicaster.additionalLinesCountChanged(additionalLinesCount)
     fireEditorRefresh()
+    myDispatcher.multicaster.additionalLinesCountChanged(additionalLinesCount)
   }
 
   override fun getAdditionalColumnsCount(): Int {
@@ -330,8 +330,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
 
     
     myAdditionalColumnsCount = additionalColumnsCount
-    myDispatcher.multicaster.additionalColumnsCountChanged(additionalColumnsCount)
     fireEditorRefresh()
+    myDispatcher.multicaster.additionalColumnsCountChanged(additionalColumnsCount)
   }
 
   override fun isLineMarkerAreaShown(): Boolean {
@@ -342,8 +342,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (myLineMarkerAreaShown == lineMarkerAreaShown) return
 
     myLineMarkerAreaShown = lineMarkerAreaShown
-    myDispatcher.multicaster.isLineMarkerAreaShownChanged(lineMarkerAreaShown)
     fireEditorRefresh()
+    myDispatcher.multicaster.isLineMarkerAreaShownChanged(lineMarkerAreaShown)
   }
 
   override fun isFoldingOutlineShown(): Boolean {
@@ -354,8 +354,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (`val` == myIsFoldingOutlineShown) return
 
     myIsFoldingOutlineShown = `val`
-    myDispatcher.multicaster.isFoldingOutlineShownChanged(`val`)
     fireEditorRefresh()
+    myDispatcher.multicaster.isFoldingOutlineShownChanged(`val`)
   }
 
   override fun isAutoCodeFoldingEnabled(): Boolean {
@@ -387,8 +387,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (`val` == myUseTabCharacter) return
 
     myUseTabCharacter = `val`
-    myDispatcher.multicaster.isUseTabCharacterChanged(`val`)
     fireEditorRefresh()
+    myDispatcher.multicaster.isUseTabCharacterChanged(`val`)
   }
 
   fun reinitSettings() {
@@ -447,8 +447,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (`val` == myIsSmartHome) return
 
     myIsSmartHome = `val`
-    myDispatcher.multicaster.isSmartHomeChanged(`val`)
     fireEditorRefresh()
+    myDispatcher.multicaster.isSmartHomeChanged(`val`)
   }
 
   override fun getVerticalScrollOffset(): Int {
@@ -459,8 +459,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (myVerticalScrollOffset == `val`) return
 
     myVerticalScrollOffset = `val`
-    myDispatcher.multicaster.verticalScrollOffsetChanged(`val`)
     fireEditorRefresh()
+    myDispatcher.multicaster.verticalScrollOffsetChanged(`val`)
   }
 
   override fun getVerticalScrollJump(): Int {
@@ -482,8 +482,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (myHorizontalScrollOffset == `val`) return
 
     myHorizontalScrollOffset = `val`
-    myDispatcher.multicaster.horizontalScrollOffsetChanged(`val`)
     fireEditorRefresh()
+    myDispatcher.multicaster.horizontalScrollOffsetChanged(`val`)
   }
 
   override fun getHorizontalScrollJump(): Int {
@@ -508,8 +508,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (allow == myIsVirtualSpace) return
 
     myIsVirtualSpace = allow
-    myDispatcher.multicaster.isVirtualSpaceChanged(allow)
     fireEditorRefresh()
+    myDispatcher.multicaster.isVirtualSpaceChanged(allow)
   }
 
   override fun isAdditionalPageAtBottom(): Boolean {
@@ -532,8 +532,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (allow == myIsCaretInsideTabs) return
 
     myIsCaretInsideTabs = allow
-    myDispatcher.multicaster.isCaretInsideTabsChanged(allow)
     fireEditorRefresh()
+    myDispatcher.multicaster.isCaretInsideTabsChanged(allow)
   }
 
   override fun isBlockCursor(): Boolean {
@@ -559,8 +559,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (`val` == myCaretRowShown) return
 
     myCaretRowShown = `val`
-    myDispatcher.multicaster.isCaretRowShownChanged(`val`)
     fireEditorRefresh()
+    myDispatcher.multicaster.isCaretRowShownChanged(`val`)
   }
 
   override fun getLineCursorWidth(): Int {
@@ -614,8 +614,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (`val` == myIsCaretBlinking) return
 
     myIsCaretBlinking = `val`
-    myDispatcher.multicaster.isBlinkCaretChanged(`val`)
     fireEditorRefresh()
+    myDispatcher.multicaster.isBlinkCaretChanged(`val`)
   }
 
   override fun getCaretBlinkPeriod(): Int {
@@ -626,8 +626,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (blinkPeriod == myCaretBlinkingPeriod) return
 
     myCaretBlinkingPeriod = blinkPeriod
-    myDispatcher.multicaster.caretBlinkPeriodChanged(blinkPeriod)
     fireEditorRefresh()
+    myDispatcher.multicaster.caretBlinkPeriodChanged(blinkPeriod)
   }
 
   override fun isDndEnabled(): Boolean {
@@ -709,8 +709,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (use == myUseSoftWraps) return
 
     myUseSoftWraps = use
-    myDispatcher.multicaster.isUseSoftWrapsChanged(use)
     fireEditorRefresh()
+    myDispatcher.multicaster.isUseSoftWrapsChanged(use)
   }
 
   fun setUseSoftWrapsQuiet() {
@@ -813,8 +813,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     showingSpecialCharacters = value
     val newState = isShowingSpecialChars
     if (newState != oldState) {
-      myDispatcher.multicaster.isShowingSpecialCharsChanged(newState)
       fireEditorRefresh()
+      myDispatcher.multicaster.isShowingSpecialCharsChanged(newState)
     }
   }
 
