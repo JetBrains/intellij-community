@@ -16,7 +16,6 @@ import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 
@@ -77,15 +76,15 @@ class CompilerModuleExtensionBridge(
                        ?: error("Could not find entity for $module, ${module.hashCode()}, diff: ${entityStorage.base}")
     val moduleSource = moduleEntity.entitySource
 
-    val oldJavaSettings = javaSettings ?: diff.addJavaModuleSettingsEntity(
-      inheritedCompilerOutput = true,
-      excludeOutput = true,
-      compilerOutputForTests = null,
-      compilerOutput = null,
-      languageLevelId = null,
-      module = moduleEntity,
-      source = moduleSource
-    )
+    val oldJavaSettings = javaSettings ?: diff addEntity JavaModuleSettingsEntity(inheritedCompilerOutput = true,
+                                                                                  excludeOutput = true,
+                                                                                  entitySource = moduleSource
+    ) {
+      compilerOutput = null
+      compilerOutputForTests = null
+      languageLevelId = null
+      module = moduleEntity
+    }
 
     diff.modifyEntity(JavaModuleSettingsEntity.Builder::class.java, oldJavaSettings, updater)
     changed = true

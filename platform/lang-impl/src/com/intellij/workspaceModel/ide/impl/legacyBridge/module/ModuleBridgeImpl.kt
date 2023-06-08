@@ -32,13 +32,11 @@ import com.intellij.platform.workspaceModel.storage.EntityChange
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.modifyEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import io.opentelemetry.api.metrics.Meter
+import java.util.HashMap
 import java.util.concurrent.atomic.AtomicLong
 
 @Suppress("OVERRIDE_DEPRECATION")
@@ -164,7 +162,9 @@ internal class ModuleBridgeImpl(
         val customImlData = entity.customImlData
         if (customImlData == null) {
           if (value != null) {
-            diff.addModuleCustomImlDataEntity(null, mapOf(key to value), entity, entity.entitySource)
+            diff addEntity ModuleCustomImlDataEntity(HashMap(mapOf(key to value)), entity.entitySource) {
+              module = entity
+            }
           }
         }
         else {

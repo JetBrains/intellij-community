@@ -7,18 +7,13 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.addJavaSourceRootEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.asJavaResourceRoot
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootType
-import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.modifyEntity
 
 internal abstract class ContentFolderBridge(private val entry: ContentEntryBridge, private val contentFolderUrl: VirtualFileUrl) : ContentFolder {
   override fun getContentEntry(): ContentEntryBridge = entry
@@ -89,7 +84,9 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
       if (javaResourceRoot != null) return
 
       updater { diff ->
-        diff.addJavaSourceRootEntity(sourceRootEntity, false, packagePrefix)
+        diff addEntity JavaSourceRootPropertiesEntity(false, packagePrefix, sourceRootEntity.entitySource) {
+          sourceRoot = sourceRootEntity
+        }
       }
     }
     else {
