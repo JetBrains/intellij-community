@@ -106,7 +106,7 @@ fun <T> withModalProgressBlocking(
  *
  * ### Difference with [withModalProgress].
  *
- * This method blocks the called and doesn't return until the [action] is completed.
+ * This method blocks the caller and doesn't return until the [action] is completed.
  * Runnables, scheduled by various `invokeLater` calls within the given modality, are processed by the nested event loop.
  *
  * Usually the usage look like this:
