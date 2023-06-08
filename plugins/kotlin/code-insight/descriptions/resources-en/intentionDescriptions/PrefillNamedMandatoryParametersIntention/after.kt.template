@@ -1,0 +1,10 @@
+fun foo() = <spot>Test(
+    a = TODO(),
+    b = TODO(),
+)</spot>
+
+data class Test(
+    val a: String,
+    val b: Int,
+    val c: String = "foo"
+)

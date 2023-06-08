@@ -1,0 +1,8 @@
+fun foo(a: String, b: Int) {}
+
+fun bar() {
+    foo(<caret>
+        a = TODO(),
+        b = TODO(),
+    )
+}
