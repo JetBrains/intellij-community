@@ -149,15 +149,6 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   preloadLafClasses()
 
-  val asyncScope = this@startApplication
-
-  val schedulePluginDescriptorLoading = launch {
-    // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
-    launch(Dispatchers.IO) {
-      Java11Shim.INSTANCE = Java11ShimImpl()
-    }
-  }
-
   // LookAndFeel type is not specified to avoid class loading
   val initLafJob = launch {
     initAwtToolkitAndEventQueueJob.join()
@@ -165,6 +156,10 @@ fun CoroutineScope.startApplication(args: List<String>,
     withContext(RawSwingDispatcher) {
       initUi()
     }
+  }
+
+  launch {
+    Java11Shim.INSTANCE = Java11ShimImpl()
   }
 
   launch {
@@ -200,7 +195,6 @@ fun CoroutineScope.startApplication(args: List<String>,
       }
     }
 
-    // must happen after initUi
     updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
   }
 
@@ -208,6 +202,32 @@ fun CoroutineScope.startApplication(args: List<String>,
                                         appInfoDeferred = appInfoDeferred,
                                         initUiDeferred = initLafJob,
                                         args = args)
+
+  val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
+
+  val asyncScope = this@startApplication
+
+  val pluginSetDeferred = async {
+    // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
+    if (configImportNeededDeferred.await() && !isHeadless) {
+      initLafJob.join()
+      val log = logDeferred.await()
+      importConfig(
+        args = args,
+        log = log,
+        appStarter = appStarterDeferred.await(),
+        euaDocumentDeferred = euaDocumentDeferred,
+      )
+
+      if (ConfigImportHelper.isNewUser() && !PlatformUtils.isRider() && System.getProperty("ide.experimental.ui") == null) {
+        runCatching {
+          EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true"))
+        }.getOrLogException(log)
+      }
+    }
+
+    PluginManagerCore.scheduleDescriptorLoading(asyncScope, zipFilePoolDeferred)
+  }
 
   // async - handle error separately
   val telemetryInitJob = launch {
@@ -230,17 +250,13 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  val rwLockHolderDeferred = async {
-    // configure EDT thread
-    initAwtToolkitAndEventQueueJob.join()
-    RwLockHolder(EDT.getEventDispatchThread())
-  }
-
-  val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
-
-  val appRegisteredJob = CompletableDeferred<Unit>()
-
   val appDeferred = async {
+    val rwLockHolderDeferred = async {
+      // configure EDT thread
+      initAwtToolkitAndEventQueueJob.join()
+      RwLockHolder(EDT.getEventDispatchThread())
+    }
+
     checkSystemDirJob.join()
 
     if (!configImportNeededDeferred.await()) {
@@ -258,35 +274,11 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  val pluginSetDeferred = async {
-    val configImportNeeded = configImportNeededDeferred.await()
-    if (!configImportNeeded || isHeadless) {
-      return@async PluginManagerCore.scheduleDescriptorLoading(asyncScope, zipFilePoolDeferred).await()
-    }
-
-    initLafJob.join()
-    val log = logDeferred.await()
-    importConfig(
-      args = args,
-      log = log,
-      appStarter = appStarterDeferred.await(),
-      euaDocumentDeferred = euaDocumentDeferred,
-    )
-
-    val result = PluginManagerCore.scheduleDescriptorLoading(asyncScope, zipFilePoolDeferred)
-
-    if (ConfigImportHelper.isNewUser() && !PlatformUtils.isRider() && System.getProperty("ide.experimental.ui") == null) {
-      runCatching {
-        EarlyAccessRegistryManager.setAndFlush(hashMapOf("ide.experimental.ui" to "true"))
-      }.getOrLogException(log)
-    }
-
-    result.await()
-  }
-
   val initServiceContainerJob = launch {
     initServiceContainer(app = appDeferred.await(), pluginSetDeferred = pluginSetDeferred)
   }
+
+  val appRegisteredJob = CompletableDeferred<Unit>()
 
   val preloadCriticalServicesJob = async {
     preInitApp(app = appDeferred.await(),
@@ -338,7 +330,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
 
     // must be scheduled before starting app
-    schedulePluginDescriptorLoading.join()
+    pluginSetDeferred.join()
 
     // with the main dispatcher for non-technical reasons
     mainScope.launch {

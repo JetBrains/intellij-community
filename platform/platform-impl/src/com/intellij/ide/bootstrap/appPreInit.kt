@@ -26,9 +26,9 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
 
-internal suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferred: Deferred<PluginSet>) {
+internal suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferred: Deferred<Deferred<PluginSet>>) {
   val pluginSet = subtask("plugin descriptor init waiting") {
-    pluginSetDeferred.await()
+    pluginSetDeferred.await().await()
   }
 
   subtask("app component registration") {
