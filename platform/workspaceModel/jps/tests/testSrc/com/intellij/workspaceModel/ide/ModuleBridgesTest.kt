@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.workspaceModel.jps.JpsEntitySourceFactory
@@ -38,6 +39,7 @@ import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.toBuilder
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -92,7 +94,12 @@ class ModuleBridgesTest {
 
       WorkspaceModel.getInstance(project).updateProjectModel {
         val moduleEntity = module.findModuleEntity(it)!!
-        it.addContentRootEntity(contentRootUrl, emptyList(), emptyList(), moduleEntity)
+        it addEntity ContentRootEntity(contentRootUrl, emptyList<@NlsSafe String>(), module.entitySource) {
+          excludedUrls = emptyList<VirtualFileUrl>().map<VirtualFileUrl, ExcludeUrlEntity> {
+            this@addContentRootEntity addEntity ExcludeUrlEntity(it, module.entitySource)
+          }
+          this@ContentRootEntity.module = moduleEntity
+        }
       }
 
       assertArrayEquals(
@@ -380,7 +387,12 @@ class ModuleBridgesTest {
       projectModel.updateProjectModel {
         val moduleEntity = it addEntity ModuleEntity("name", emptyList(),
                                                      JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
-        val contentRootEntity = it.addContentRootEntity(virtualFileUrl, emptyList(), emptyList(), moduleEntity)
+        val contentRootEntity = it addEntity ContentRootEntity(virtualFileUrl, emptyList<@NlsSafe String>(), module.entitySource) {
+          excludedUrls = emptyList<VirtualFileUrl>().map<VirtualFileUrl, ExcludeUrlEntity> {
+            this@addContentRootEntity addEntity ExcludeUrlEntity(it, module.entitySource)
+          }
+          module = moduleEntity
+        }
         it addEntity SourceRootEntity(virtualFileUrl, "",
                                       JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation)) {
           contentRoot = contentRootEntity
