@@ -381,8 +381,10 @@ class ModuleBridgesTest {
         val moduleEntity = it addEntity ModuleEntity("name", emptyList(),
                                                      JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
         val contentRootEntity = it.addContentRootEntity(virtualFileUrl, emptyList(), emptyList(), moduleEntity)
-        it.addSourceRootEntity(contentRootEntity, virtualFileUrl, "",
-                               JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
+        it addEntity SourceRootEntity(virtualFileUrl, "",
+                                      JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation)) {
+          contentRoot = contentRootEntity
+        }
       }
 
       val module = moduleManager.findModuleByName("name")
