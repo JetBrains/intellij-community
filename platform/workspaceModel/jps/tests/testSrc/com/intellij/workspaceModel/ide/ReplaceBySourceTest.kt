@@ -7,10 +7,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.addContentRootEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.addModuleEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.addSourceRootEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.*
 
@@ -58,7 +55,7 @@ class ReplaceBySourceTest {
     val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
 
 
-    val moduleEntity = builder.addModuleEntity("name", emptyList(), source)
+    val moduleEntity = builder addEntity ModuleEntity("name", emptyList(), source)
     val contentRootEntity = builder.addContentRootEntity(virtualFileManager.fromUrl(fileUrl), emptyList(), emptyList(), moduleEntity)
     builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromUrl(fileUrl2), "", source)
     builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromUrl(fileUrl3), "", source)

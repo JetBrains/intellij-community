@@ -257,8 +257,8 @@ class ModuleBridgesTest {
       val projectModel = WorkspaceModel.getInstance(project)
 
       projectModel.updateProjectModel {
-        it.addModuleEntity("name", emptyList(),
-                           JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, getJpsProjectConfigLocation(project)!!))
+        it addEntity ModuleEntity("name", emptyList(),
+                                  JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, getJpsProjectConfigLocation(project)!!))
       }
 
       assertNotNull(moduleManager.findModuleByName("name"))
@@ -266,8 +266,8 @@ class ModuleBridgesTest {
       projectModel.updateProjectModel {
         val moduleEntity = it.entities(ModuleEntity::class.java).single()
         it.removeEntity(moduleEntity)
-        it.addModuleEntity("name", emptyList(),
-                           JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, getJpsProjectConfigLocation(project)!!))
+        it addEntity ModuleEntity("name", emptyList(),
+                                  JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, getJpsProjectConfigLocation(project)!!))
       }
 
       assertEquals(1, moduleManager.modules.size)
@@ -304,8 +304,8 @@ class ModuleBridgesTest {
     )
 
     projectModel.updateProjectModel {
-      it.addModuleEntity("name", emptyList(),
-                         JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, getJpsProjectConfigLocation(project)!!))
+      it addEntity ModuleEntity("name", emptyList(),
+                                JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, getJpsProjectConfigLocation(project)!!))
     }
 
     assertNotNull(moduleManager.findModuleByName("name"))
@@ -378,8 +378,8 @@ class ModuleBridgesTest {
       val projectLocation = getJpsProjectConfigLocation(project)!!
       val virtualFileUrl = dir.toVirtualFileUrl(virtualFileManager)
       projectModel.updateProjectModel {
-        val moduleEntity = it.addModuleEntity("name", emptyList(),
-                                              JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
+        val moduleEntity = it addEntity ModuleEntity("name", emptyList(),
+                                                     JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
         val contentRootEntity = it.addContentRootEntity(virtualFileUrl, emptyList(), emptyList(), moduleEntity)
         it.addSourceRootEntity(contentRootEntity, virtualFileUrl, "",
                                JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
@@ -479,7 +479,7 @@ class ModuleBridgesTest {
     val iprFile = tempDir.resolve("testProject.ipr")
     val configLocation = toConfigLocation(iprFile, virtualFileManager)
     val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
-    val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
+    val moduleEntity = builder addEntity ModuleEntity(name = "test", dependencies = emptyList(), entitySource = source)
     val moduleLibraryEntity = builder.addLibraryEntity(
       name = "some",
       tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.symbolicId),

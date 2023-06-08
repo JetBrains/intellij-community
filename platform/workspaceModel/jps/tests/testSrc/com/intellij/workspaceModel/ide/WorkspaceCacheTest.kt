@@ -21,7 +21,6 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
 import com.intellij.platform.workspaceModel.storage.EntityStorageSerializer
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.platform.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.runBlocking
@@ -105,7 +104,7 @@ class WorkspaceCacheTest {
     ApplicationManager.getApplication().invokeAndWait {
       ApplicationManager.getApplication().runWriteAction {
         WorkspaceModel.getInstance(project).updateProjectModel {
-          it.addModuleEntity("MyTestModule", emptyList(), MySource)
+          it addEntity ModuleEntity("MyTestModule", emptyList(), MySource)
         }
       }
     }
@@ -130,7 +129,7 @@ class WorkspaceCacheTest {
     ApplicationManager.getApplication().invokeAndWait {
       ApplicationManager.getApplication().runWriteAction {
         WorkspaceModel.getInstance(project).updateProjectModel {
-          it.addModuleEntity("MyTestModule", emptyList(), MySource)
+          it addEntity ModuleEntity("MyTestModule", emptyList(), MySource)
         }
       }
     }

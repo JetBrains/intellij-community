@@ -74,8 +74,9 @@ class SaveFacetsTest {
       JpsProjectFileEntitySource.FileInDirectory(moduleDir, getJpsProjectConfigLocation(projectModel.project)!!))
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-        val moduleEntity = it.addModuleEntity("foo", listOf(ModuleDependencyItem.ModuleSourceDependency), source, null)
-        it.addModuleCustomImlDataEntity(null, mapOf(JpsProjectLoader.CLASSPATH_ATTRIBUTE to SampleCustomModuleRootsSerializer.ID), moduleEntity,
+        val moduleEntity = it addEntity ModuleEntity("foo", listOf(ModuleDependencyItem.ModuleSourceDependency), source)
+        it.addModuleCustomImlDataEntity(null, mapOf(JpsProjectLoader.CLASSPATH_ATTRIBUTE to SampleCustomModuleRootsSerializer.ID),
+                                        moduleEntity,
                                         source)
         moduleEntity
       }
