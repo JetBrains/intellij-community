@@ -3,11 +3,13 @@ package com.intellij.platform.workspaceModel.storage.tests
 
 import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
 import com.intellij.platform.workspaceModel.storage.SerializationResult
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.platform.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.platform.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.Assert.*
 import org.junit.Before
@@ -123,7 +125,7 @@ class EntityStorageSerializationTest {
     val builder = createEmptyBuilder()
 
     // Do not replace ArrayList() with emptyList(). This must be a new object for this test
-    builder.addLibraryEntity("myName", LibraryTableId.ProjectLibraryTableId, ArrayList(), ArrayList(), MySource)
+    builder addEntity LibraryEntity("myName", LibraryTableId.ProjectLibraryTableId, ArrayList(), MySource)
 
     withTempFile { file ->
       serializer.serializeCache(file, builder.toSnapshot())

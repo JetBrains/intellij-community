@@ -94,10 +94,7 @@ class ModuleBridgesTest {
 
       WorkspaceModel.getInstance(project).updateProjectModel {
         val moduleEntity = module.findModuleEntity(it)!!
-        it addEntity ContentRootEntity(contentRootUrl, emptyList<@NlsSafe String>(), module.entitySource) {
-          excludedUrls = emptyList<VirtualFileUrl>().map<VirtualFileUrl, ExcludeUrlEntity> {
-            this@addContentRootEntity addEntity ExcludeUrlEntity(it, module.entitySource)
-          }
+        it addEntity ContentRootEntity(contentRootUrl, emptyList<@NlsSafe String>(), moduleEntity.entitySource) {
           this@ContentRootEntity.module = moduleEntity
         }
       }
@@ -387,10 +384,7 @@ class ModuleBridgesTest {
       projectModel.updateProjectModel {
         val moduleEntity = it addEntity ModuleEntity("name", emptyList(),
                                                      JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
-        val contentRootEntity = it addEntity ContentRootEntity(virtualFileUrl, emptyList<@NlsSafe String>(), module.entitySource) {
-          excludedUrls = emptyList<VirtualFileUrl>().map<VirtualFileUrl, ExcludeUrlEntity> {
-            this@addContentRootEntity addEntity ExcludeUrlEntity(it, module.entitySource)
-          }
+        val contentRootEntity = it addEntity ContentRootEntity(virtualFileUrl, emptyList<@NlsSafe String>(), moduleEntity.entitySource) {
           module = moduleEntity
         }
         it addEntity SourceRootEntity(virtualFileUrl, "",
@@ -494,13 +488,11 @@ class ModuleBridgesTest {
     val configLocation = toConfigLocation(iprFile, virtualFileManager)
     val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
     val moduleEntity = builder addEntity ModuleEntity(name = "test", dependencies = emptyList(), entitySource = source)
-    val moduleLibraryEntity = builder.addLibraryEntity(
-      name = "some",
-      tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.symbolicId),
-      roots = listOf(LibraryRoot(tempDir.toVirtualFileUrl(virtualFileManager), LibraryRootTypeId.COMPILED)),
-      excludedRoots = emptyList(),
-      source = source
-    )
+    val moduleLibraryEntity = builder addEntity LibraryEntity(name = "some",
+                                                              tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.symbolicId),
+                                                              roots = listOf(LibraryRoot(tempDir.toVirtualFileUrl(virtualFileManager),
+                                                                                         LibraryRootTypeId.COMPILED)),
+                                                              entitySource = source)
     builder.modifyEntity(moduleEntity) {
       dependencies = listOf(
         ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.symbolicId, false,
@@ -533,13 +525,11 @@ class ModuleBridgesTest {
 
     val iprFile = tempDir.resolve("testProject.ipr")
     val jarUrl = tempDir.resolve("a.jar").toVirtualFileUrl(virtualFileManager)
-    builder.addLibraryEntity(
-      name = "my_lib",
-      tableId = LibraryTableId.ProjectLibraryTableId,
-      roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId.COMPILED)),
-      excludedRoots = emptyList(),
-      source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager))
-    )
+    val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager))
+    builder addEntity LibraryEntity(name = "my_lib",
+                                    tableId = LibraryTableId.ProjectLibraryTableId,
+                                    roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId.COMPILED)),
+                                    entitySource = source)
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toSnapshot()) {
       val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)

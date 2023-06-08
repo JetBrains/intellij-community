@@ -512,7 +512,7 @@ class ModifiableRootModelBridgeImpl(
 
       if (customImlDataEntity?.rootManagerTagCustomData != elementAsString) {
         when {
-          customImlDataEntity == null && !JDOMUtil.isEmpty(element) -> diff addEntity ModuleCustomImlDataEntity(HashMap(m = emptyMap()),
+          customImlDataEntity == null && !JDOMUtil.isEmpty(element) -> diff addEntity ModuleCustomImlDataEntity(HashMap(),
                                                                                                                 moduleEntity.entitySource
           ) {
             rootManagerTagCustomData = elementAsString
