@@ -949,6 +949,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/findParameterUsages/kotlinFunctionParameterUsages.0.kt");
             }
 
+            @TestMetadata("kotlinFunctionTypeParameterUsages.0.kt")
+            public void testKotlinFunctionTypeParameterUsages() throws Exception {
+                runTest("testData/findUsages/kotlin/findParameterUsages/kotlinFunctionTypeParameterUsages.0.kt");
+            }
+
             @TestMetadata("kotlinHighlightParameterUsages.0.kt")
             public void testKotlinHighlightParameterUsages() throws Exception {
                 runTest("testData/findUsages/kotlin/findParameterUsages/kotlinHighlightParameterUsages.0.kt");

@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
-import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.config.*
@@ -68,8 +68,8 @@ sealed class EnableUnsupportedFeatureFix(
                     null
             }
 
-            val fileIndex = ModuleRootManager.getInstance(module).fileIndex
-            val forTests = file.originalFile.virtualFile?.let { fileIndex.getKotlinSourceRootType(it) } == TestSourceKotlinRootType
+            val projectFileIndex = ProjectFileIndex.getInstance(project)
+            val forTests = file.originalFile.virtualFile?.let(projectFileIndex::getKotlinSourceRootType) == TestSourceKotlinRootType
 
             ApplicationManager.getApplication().invokeLater {
                 WriteCommandAction.runWriteCommandAction(
