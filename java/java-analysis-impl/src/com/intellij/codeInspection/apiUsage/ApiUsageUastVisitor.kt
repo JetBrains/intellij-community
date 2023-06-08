@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.apiUsage
 
 import com.intellij.lang.java.JavaLanguage
@@ -241,7 +241,7 @@ open class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor)
       //a reference to the functional interface will be added by compiler
       val resolved = PsiUtil.resolveGenericsClassInType(node.functionalInterfaceType).element
       if (resolved != null) {
-        apiUsageProcessor.processReference(node, resolved, null)
+        apiUsageProcessor.processLambda(node, resolved)
       }
     }
     return true
