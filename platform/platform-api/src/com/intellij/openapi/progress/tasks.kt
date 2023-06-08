@@ -97,6 +97,10 @@ fun <T> withModalProgressBlocking(
  * The progress dialog is not shown in the UI immediately to avoid flickering,
  * i.e. the user won't see anything if the [action] completes within the given timeout.
  *
+ * ### Threading
+ *
+ * **Important**: the [action] is run with [Dispatchers.Default][kotlinx.coroutines.Dispatchers.Default].
+ *
  * Switches to [Dispatchers.EDT][com.intellij.openapi.application.EDT] are allowed inside the action,
  * as they are automatically scheduled with the correct modality, which is the newly entered one.
  *
