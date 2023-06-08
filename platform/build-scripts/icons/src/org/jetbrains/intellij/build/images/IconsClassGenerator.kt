@@ -133,6 +133,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         val possiblePackageNames = listOfNotNull(
           moduleConfig?.packageName,
           getPluginPackageIfPossible(module),
+          "com.${module.name}.icons",
           "icons",
         )
         val existingIconsClass = findExistingIconsClass(sourceRoots, possiblePackageNames)
@@ -704,7 +705,7 @@ private fun getPluginPackageIfPossible(module: JpsModule): String? {
     }
 
     try {
-      return readXmlAsModel(Files.newInputStream(pluginXml)).getAttributeValue("package") ?: "icons"
+      return readXmlAsModel(Files.newInputStream(pluginXml)).getAttributeValue("package")
     }
     catch (ignore: NoSuchFileException) {
     }
