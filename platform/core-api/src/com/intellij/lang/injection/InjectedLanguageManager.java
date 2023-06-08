@@ -72,7 +72,11 @@ public abstract class InjectedLanguageManager {
   @NotNull
   public abstract List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit);
 
-  public abstract boolean isInjectedFragment(@NotNull PsiFile injectedFile);
+  public boolean isInjectedFragment(@NotNull PsiFile injectedFile) {
+    return isInjectedViewProvider(injectedFile.getViewProvider());
+  }
+
+  public abstract boolean isInjectedViewProvider(@NotNull FileViewProvider viewProvider);
 
   /**
    * Finds PSI element in injected fragment (if any) at the given offset in the host file.<p/>

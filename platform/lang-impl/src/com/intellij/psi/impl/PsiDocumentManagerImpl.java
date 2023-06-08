@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FileContentUtil;
+import com.intellij.util.InjectionUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
@@ -151,11 +152,20 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
 
   @Override
   public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
-    if (doc instanceof DocumentWindow) {
-      doc = ((DocumentWindow)doc).getDelegate();
-    }
     PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(myProject);
-    FileViewProvider viewProvider = getCachedViewProvider(doc);
+    FileViewProvider viewProvider;
+    if (doc instanceof DocumentWindow) {
+      Document topDoc = ((DocumentWindow)doc).getDelegate();
+      FileViewProvider topViewProvider = getCachedViewProvider(topDoc);
+      if (topViewProvider != null && InjectionUtils.shouldFormatOnlyInjectedCode(topViewProvider)) {
+        viewProvider = getCachedViewProvider(doc);
+      } else {
+        viewProvider = topViewProvider;
+      }
+    } else {
+      viewProvider = getCachedViewProvider(doc);
+    }
+
     if (viewProvider != null && component != null) {
       component.doPostponedFormatting(viewProvider);
     }
