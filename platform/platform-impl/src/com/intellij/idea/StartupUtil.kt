@@ -12,7 +12,6 @@ import com.intellij.ide.bootstrap.InitAppContext
 import com.intellij.ide.bootstrap.initApplicationImpl
 import com.intellij.ide.bootstrap.initServiceContainer
 import com.intellij.ide.bootstrap.preInitApp
-import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
@@ -57,7 +56,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.io.BuiltInServer
 import sun.awt.AWTAutoShutdown
-import java.awt.EventQueue
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
@@ -920,24 +918,6 @@ private fun logPath(path: String): String {
   catch (ignored: InvalidPathException) {
   }
   return "$path -> ?"
-}
-
-@OptIn(DelicateCoroutinesApi::class)
-fun runStartupWizard() {
-  val stepsDialogName = ApplicationInfoImpl.getShadowInstance().welcomeWizardDialog ?: return
-  try {
-    val dialogClass = Class.forName(stepsDialogName)
-    val ctor = dialogClass.getConstructor(AppStarter::class.java)
-    EventQueue.invokeAndWait {
-      (ctor.newInstance(null) as CommonCustomizeIDEWizardDialog).showIfNeeded()
-    }
-  }
-  catch (e: Throwable) {
-    StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e)
-    return
-  }
-  PluginManagerCore.invalidatePlugins()
-  PluginManagerCore.scheduleDescriptorLoading(GlobalScope)
 }
 
 // the method must be called on EDT
