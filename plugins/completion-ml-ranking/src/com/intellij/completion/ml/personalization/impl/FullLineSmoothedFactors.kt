@@ -71,11 +71,12 @@ class FullLineWasSelected
 
 private fun DailyAggregatedDoubleFactor.aggregateSmoothed(duration: Duration): Map<String, Double> {
   val result = mutableMapOf<String, Double>()
-  val now = Instant.now().epochSecond.toDouble()
-  for (onDate in availableDays().mapNotNull(this::onDate)) {
-    for (name in SMOOTHED_VALUES) {
-      val lastTime = onDate[lastTime(name)]
-      val smoothedCountName = smoothedCount(name, duration)
+  for (name in SMOOTHED_VALUES) {
+    val lastTimeName = lastTime(name)
+    val smoothedCountName = smoothedCount(name, duration)
+    val now = getLastTimeOrNow(lastTimeName)
+    for (onDate in availableDays().mapNotNull(this::onDate)) {
+      val lastTime = onDate[lastTimeName]
       val smoothedCount = onDate[smoothedCountName]
       if (lastTime != null && smoothedCount != null) {
         result.compute(smoothedCountName) { _, old ->
@@ -84,9 +85,11 @@ private fun DailyAggregatedDoubleFactor.aggregateSmoothed(duration: Duration): M
       }
     }
   }
-
   return result
 }
+
+private fun DailyAggregatedDoubleFactor.getLastTimeOrNow(name: String) = onDate(DateUtil.today())?.get(name)
+                                                                         ?: Instant.now().epochSecond.toDouble()
 
 private fun MutableDoubleFactor.smoothedUpdate(name: String) {
   val last_time = lastTime(name)
@@ -106,8 +109,9 @@ private fun MutableDoubleFactor.wasSelected(boolean: Boolean) {
   }
 }
 
-private fun smoothValue(duration: Double, halfLifeDuration: Duration, value: Double) = 0.5.pow(
-  duration / halfLifeDuration.toDouble(DurationUnit.SECONDS)) * value
+private fun smoothValue(duration: Double, halfLifeDuration: Duration, value: Double) =
+  if (duration == 0.0) value
+  else 0.5.pow(duration / halfLifeDuration.toDouble(DurationUnit.SECONDS)) * value
 
 private fun globallySmoothedRatio(quotient: Double?, divisor: Double?) =
   if (divisor == null) GLOBAL_ACCEPTANCE_RATE
