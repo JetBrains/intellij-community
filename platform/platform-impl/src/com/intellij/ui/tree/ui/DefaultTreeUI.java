@@ -18,6 +18,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -586,6 +587,12 @@ public class DefaultTreeUI extends BasicTreeUI {
 
   @Override
   protected AbstractLayoutCache createLayoutCache() {
+    if (is("ide.tree.experimental.layout.cache", false)) {
+      return new DefaultTreeLayoutCache(path -> {
+        handleAutoExpand(path);
+        return Unit.INSTANCE;
+      });
+    }
     if (isLargeModel() && getRowHeight() > 0) {
       return new FixedHeightLayoutCache();
     }
