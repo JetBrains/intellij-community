@@ -56,7 +56,7 @@ open class JDIEval(
                     "(Ljava/lang/String;)Ljava/lang/Class;",
                     true
                 ),
-                listOf(vm.mirrorOf(classType.jdiName).asValue())
+                listOf(loadString(classType.jdiName))
             )
         } else {
             return invokeStaticMethod(
@@ -67,7 +67,7 @@ open class JDIEval(
                     true
                 ),
                 listOf(
-                    vm.mirrorOf(classType.jdiName).asValue(),
+                    loadString(classType.jdiName),
                     boolean(true),
                     classLoader.asValue()
                 )
@@ -412,7 +412,7 @@ open class JDIEval(
                 "(Ljava/lang/String;[L${CLASS.internalName};)Ljava/lang/reflect/Method;",
                 true
             ),
-            listOf(vm.mirrorOf(methodDesc.name).asValue(), *methodDesc.parameterTypes.map { loadClass(it) }.toTypedArray())
+            listOf(loadString(methodDesc.name), *methodDesc.parameterTypes.map { loadClass(it) }.toTypedArray())
         )
 
         invokeMethod(
