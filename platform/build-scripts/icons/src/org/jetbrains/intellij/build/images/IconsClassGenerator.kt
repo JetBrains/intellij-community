@@ -20,7 +20,10 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
@@ -128,15 +131,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
 
         val firstRootDir = Path.of(JpsPathUtil.urlToPath(firstRoot.url)).resolve("icons")
         var oldClassName: String?
-        // this is added to remove unneeded empty directories created by previous version of this script
         if (Files.isDirectory(firstRootDir)) {
-          try {
-            Files.delete(firstRootDir)
-            println("deleting empty directory $firstRootDir")
-          }
-          catch (ignore: DirectoryNotEmptyException) {
-          }
-
           oldClassName = findIconClass(firstRootDir)
         }
         else {
