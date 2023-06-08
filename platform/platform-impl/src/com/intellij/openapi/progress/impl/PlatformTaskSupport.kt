@@ -35,6 +35,7 @@ import java.awt.EventQueue
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
 @Internal
@@ -101,9 +102,11 @@ class PlatformTaskSupport : TaskSupport {
       "Trying to enter modality from modal-unaware modality state (ModalityState.any). " +
       "This may lead to deadlocks, and indicates a problem with scoping."
     }
+    @OptIn(ExperimentalStdlibApi::class)
+    val dispatcher = currentCoroutineContext()[CoroutineDispatcher.Key]
     return withContext(Dispatchers.EDT) {
       val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
-      withModalProgressBlockingInternal(cs = this, descriptor, action)
+      withModalProgressBlockingInternal(cs = this, dispatcher, descriptor, action)
     }
   }
 
@@ -116,7 +119,7 @@ class PlatformTaskSupport : TaskSupport {
     val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
     val scope = CoroutineScope(ctx + ClientId.coroutineContext())
     try {
-      withModalProgressBlockingInternal(cs = scope, descriptor, action)
+      withModalProgressBlockingInternal(cs = scope, dispatcher = null, descriptor, action)
     }
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)
@@ -125,6 +128,7 @@ class PlatformTaskSupport : TaskSupport {
 
   private fun <T> withModalProgressBlockingInternal(
     cs: CoroutineScope,
+    dispatcher: CoroutineDispatcher?,
     descriptor: ModalIndicatorDescriptor,
     action: suspend CoroutineScope.() -> T,
   ): T {
@@ -135,7 +139,8 @@ class PlatformTaskSupport : TaskSupport {
           progressStarted(descriptor.title, descriptor.cancellation, reporter.progressState)
           val showIndicatorJob = showModalIndicator(descriptor, reporter.progressState, deferredDialog)
           try {
-            withContext(reporter.asContextElement(), action)
+            val dispatcherCtx = dispatcher ?: EmptyCoroutineContext
+            withContext(reporter.asContextElement() + dispatcherCtx, action)
           }
           finally {
             showIndicatorJob.cancel()
