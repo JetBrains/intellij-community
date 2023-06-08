@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplica
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -63,7 +64,7 @@ object CastExpressionFixFactories {
         createFix(diagnostic.isMismatchDueToNullability, diagnostic.actualType, diagnostic.expectedType, diagnostic.psi)
     }
     val initializerTypeMismatch = diagnosticFixFactory(KtFirDiagnostic.InitializerTypeMismatch::class, applicator) { diagnostic ->
-        val initializer = diagnostic.psi.initializer ?: return@diagnosticFixFactory emptyList()
+        val initializer = (diagnostic.psi as? KtProperty)?.initializer ?: return@diagnosticFixFactory emptyList()
         createFix(
             diagnostic.isMismatchDueToNullability,
             diagnostic.actualType,
