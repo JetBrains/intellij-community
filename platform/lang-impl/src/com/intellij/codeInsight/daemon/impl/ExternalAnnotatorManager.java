@@ -20,7 +20,7 @@ public final class ExternalAnnotatorManager implements Disposable {
   }
 
   private final MergingUpdateQueue myExternalActivitiesQueue =
-    new MergingUpdateQueue("ExternalActivitiesQueue", 300, true, MergingUpdateQueue.ANY_COMPONENT, this,
+    new MergingUpdateQueue("ExternalActivitiesQueue", ApplicationManager.getApplication().isUnitTestMode() ? 0 : 300, true, MergingUpdateQueue.ANY_COMPONENT, this,
                            null, false);
 
   @Override
