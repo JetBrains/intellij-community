@@ -15,7 +15,6 @@ import com.intellij.ide.bootstrap.preInitApp
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.ide.ui.laf.IntelliJLaf
@@ -171,14 +170,10 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   val asyncScope = this@startApplication
 
-  val pluginSetDeferred = CompletableDeferred<Deferred<PluginSet>>()
   val schedulePluginDescriptorLoading = launch {
     // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
     launch(Dispatchers.IO) {
       Java11Shim.INSTANCE = Java11ShimImpl()
-    }
-    if (!configImportNeededDeferred.await()) {
-      pluginSetDeferred.complete(PluginManagerCore.scheduleDescriptorLoading(asyncScope, zipFilePoolDeferred))
     }
   }
 
@@ -282,6 +277,32 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
+  val pluginSetDeferred = async {
+    val configImportNeeded = configImportNeededDeferred.await()
+    if (!configImportNeeded || isHeadless) {
+      return@async PluginManagerCore.scheduleDescriptorLoading(asyncScope, zipFilePoolDeferred).await()
+    }
+
+    initLafJob.join()
+    val log = logDeferred.await()
+    importConfig(
+      args = args,
+      log = log,
+      appStarter = appStarterDeferred.await(),
+      euaDocumentDeferred = euaDocumentDeferred,
+    )
+
+    val result = PluginManagerCore.scheduleDescriptorLoading(asyncScope, zipFilePoolDeferred)
+
+    if (ConfigImportHelper.isNewUser() && !PlatformUtils.isRider() && System.getProperty("ide.experimental.ui") == null) {
+      runCatching {
+        EarlyAccessRegistryManager.setAndFlush(hashMapOf("ide.experimental.ui" to "true"))
+      }.getOrLogException(log)
+    }
+
+    result.await()
+  }
+
   val initServiceContainerJob = launch {
     initServiceContainer(app = appDeferred.await(), pluginSetDeferred = pluginSetDeferred)
   }
@@ -335,28 +356,8 @@ fun CoroutineScope.startApplication(args: List<String>,
       appStarter.prepareStart(args)
     }
 
-    if (!isHeadless && configImportNeededDeferred.await()) {
-      initLafJob.join()
-      val log = logDeferred.await()
-      importConfig(
-        args = args,
-        log = log,
-        appStarter = appStarterDeferred.await(),
-        euaDocumentDeferred = euaDocumentDeferred,
-      )
-
-      pluginSetDeferred.complete(PluginManagerCore.scheduleDescriptorLoading(asyncScope, zipFilePoolDeferred))
-
-      if (ConfigImportHelper.isNewUser() && !PlatformUtils.isRider() && System.getProperty("ide.experimental.ui") == null) {
-        runCatching {
-          EarlyAccessRegistryManager.setAndFlush(hashMapOf("ide.experimental.ui" to "true"))
-        }.getOrLogException(log)
-      }
-    }
-    else {
-      // must be scheduled before starting app
-      schedulePluginDescriptorLoading.join()
-    }
+    // must be scheduled before starting app
+    schedulePluginDescriptorLoading.join()
 
     // with the main dispatcher for non-technical reasons
     mainScope.launch {
