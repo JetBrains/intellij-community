@@ -12,7 +12,6 @@ import com.intellij.platform.workspaceModel.storage.EntityChange
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.addModuleEntity
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
@@ -57,7 +56,7 @@ class WorkspaceModelAsyncTest {
     }
 
     workspaceModel.update("Test add new module asynchronously") {
-      it.addModuleEntity(moduleName, emptyList(), object : EntitySource {})
+      it addEntity ModuleEntity(moduleName, emptyList(), object : EntitySource {})
     }
 
     job.join()
@@ -81,7 +80,7 @@ class WorkspaceModelAsyncTest {
     writeAction {
       assertEquals(true, application.isWriteAccessAllowed)
       workspaceModel.updateProjectModel("Test add new module synchronously") {
-        it.addModuleEntity(moduleName, emptyList(), object : EntitySource {})
+        it addEntity ModuleEntity(moduleName, emptyList(), object : EntitySource {})
       }
     }
 
@@ -106,7 +105,7 @@ class WorkspaceModelAsyncTest {
 
     val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
     workspaceModel.update("Test add new module asynchronously") {
-      it.addModuleEntity(moduleName, emptyList(), object : EntitySource {})
+      it addEntity ModuleEntity(moduleName, emptyList(), object : EntitySource {})
     }
   }
 
@@ -130,7 +129,7 @@ class WorkspaceModelAsyncTest {
     runInEdtAndWait {
       runWriteActionAndWait {
         workspaceModel.updateProjectModel("Test add new module asynchronously") {
-          it.addModuleEntity(moduleName, emptyList(), object : EntitySource {})
+          it addEntity ModuleEntity(moduleName, emptyList(), object : EntitySource {})
         }
       }
     }
@@ -154,7 +153,7 @@ class WorkspaceModelAsyncTest {
     moduleNames.map { moduleName ->
       launch {
         workspaceModel.update("Test add new module asynchronously") {
-          it.addModuleEntity(moduleName, emptyList(), object : EntitySource {})
+          it addEntity ModuleEntity(moduleName, emptyList(), object : EntitySource {})
         }
       }
     }.joinAll()

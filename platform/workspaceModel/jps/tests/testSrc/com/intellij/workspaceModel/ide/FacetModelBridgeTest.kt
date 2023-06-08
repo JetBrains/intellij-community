@@ -95,7 +95,7 @@ class FacetModelBridgeTest {
     val configLocation = toConfigLocation(iprFile, virtualFileManager)
     val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
 
-    val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
+    val moduleEntity = builder addEntity ModuleEntity(name = "test", dependencies = emptyList(), entitySource = source)
 
     builder.addFacetEntity("MyFacet", "MockFacetId", """<configuration data="foo" />""", moduleEntity,
                            null, source)
@@ -124,7 +124,7 @@ class FacetModelBridgeTest {
     val configLocation = toConfigLocation(iprFile, virtualFileManager)
     val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
 
-    val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
+    val moduleEntity = builder addEntity ModuleEntity(name = "test", dependencies = emptyList(), entitySource = source)
 
     builder.addFacetEntity("AnotherMockFacet", "AnotherMockFacetId", """
       <AnotherFacetConfigProperties>

@@ -14,7 +14,6 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.addModuleEntity
 import junit.framework.Assert.*
 import org.junit.Assert
 import org.junit.ClassRule
@@ -53,7 +52,7 @@ class WorkspaceModelTest {
   fun `async model update`() {
     val model = WorkspaceModel.getInstance(projectModel.project)
     val builderSnapshot = model.getBuilderSnapshot()
-    builderSnapshot.builder.addModuleEntity("MyModule", emptyList(), object : EntitySource {})
+    builderSnapshot.builder addEntity ModuleEntity("MyModule", emptyList(), object : EntitySource {})
 
     val replacement = builderSnapshot.getStorageReplacement()
 
@@ -71,13 +70,13 @@ class WorkspaceModelTest {
   fun `async model update with fail`() {
     val model = WorkspaceModel.getInstance(projectModel.project)
     val builderSnapshot = model.getBuilderSnapshot()
-    builderSnapshot.builder.addModuleEntity("MyModule", emptyList(), object : EntitySource {})
+    builderSnapshot.builder addEntity ModuleEntity("MyModule", emptyList(), object : EntitySource {})
 
     val replacement = builderSnapshot.getStorageReplacement()
 
     runWriteActionAndWait {
       model.updateProjectModel {
-        it.addModuleEntity("AnotherModule", emptyList(), object : EntitySource {})
+        it addEntity ModuleEntity("AnotherModule", emptyList(), object : EntitySource {})
       }
     }
 
@@ -105,13 +104,13 @@ class WorkspaceModelTest {
 
     runWriteActionAndWait {
       model.updateProjectModel {
-        it.addModuleEntity(firstModuleName, emptyList(), object : EntitySource {})
+        it addEntity ModuleEntity(firstModuleName, emptyList(), object : EntitySource {})
       }
     }
 
     runWriteActionAndWait {
       model.updateProjectModel {
-        it.addModuleEntity(secondModuleName, emptyList(), object : EntitySource {})
+        it addEntity ModuleEntity(secondModuleName, emptyList(), object : EntitySource {})
       }
     }
 

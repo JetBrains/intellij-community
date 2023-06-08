@@ -16,21 +16,6 @@ import java.util.*
  * - If you want to use this function - use the code inside this function
  */
 @Obsolete
-fun MutableEntityStorage.addModuleEntity(name: @NlsSafe String,
-                                         dependencies: List<ModuleDependencyItem>,
-                                         source: EntitySource,
-                                         type: @NonNls String? = null): ModuleEntity {
-  return this addEntity ModuleEntity(name, dependencies, source) {
-    this.type = type
-  }
-}
-
-/**
- * This helper function is now obsolete:
- * - If you use this function - inline it
- * - If you want to use this function - use the code inside this function
- */
-@Obsolete
 fun MutableEntityStorage.addJavaModuleSettingsEntity(inheritedCompilerOutput: Boolean,
                                                      excludeOutput: Boolean,
                                                      compilerOutput: VirtualFileUrl?,

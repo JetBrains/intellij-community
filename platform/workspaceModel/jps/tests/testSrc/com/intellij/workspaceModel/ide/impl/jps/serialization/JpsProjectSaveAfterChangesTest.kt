@@ -104,7 +104,7 @@ class JpsProjectSaveAfterChangesTest {
       val builder = if (unloadedHolder.isUnloaded("newModule")) unloadedEntitiesBuilder else mainBuilder
       val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
       val dependencies = listOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency)
-      val module = builder.addModuleEntity("newModule", dependencies, source)
+      val module = builder addEntity ModuleEntity("newModule", dependencies, source)
       builder.modifyEntity(module) {
         type = "JAVA_MODULE"
       }

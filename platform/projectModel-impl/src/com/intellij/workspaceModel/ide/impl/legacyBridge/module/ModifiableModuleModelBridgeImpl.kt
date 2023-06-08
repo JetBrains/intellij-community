@@ -58,10 +58,9 @@ internal class ModifiableModuleModelBridgeImpl(
   override fun getModules(): Array<Module> = currentModuleSet.toTypedArray()
 
   override fun newNonPersistentModule(moduleName: String, moduleTypeId: String): Module {
-    val moduleEntity = diff.addModuleEntity(
-      name = moduleName,
-      dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
-      source = NonPersistentEntitySource
+    val moduleEntity = diff addEntity ModuleEntity(name = moduleName,
+                                                   dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
+                                                   entitySource = NonPersistentEntitySource
     )
 
     val module = moduleManager.createModule(moduleEntity.symbolicId, moduleName, null, entityStorageOnDiff, diff)
@@ -98,12 +97,12 @@ internal class ModifiableModuleModelBridgeImpl(
       externalSource = null,
     )
 
-    val moduleEntity = diff.addModuleEntity(
-      name = moduleName,
-      dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
-      type = moduleTypeId,
-      source = entitySource
-    )
+    val moduleEntity = diff addEntity ModuleEntity(name = moduleName,
+                                                   dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
+                                                   entitySource = entitySource
+    ) {
+      type = moduleTypeId
+    }
 
     val moduleInstance = createModuleInstance(moduleEntity, true)
     newModuleTimeMs.addElapsedTimeMs(start)
