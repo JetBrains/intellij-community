@@ -36,7 +36,7 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
   }
 
   private static boolean javaPluginIsApplied(Project project) {
-    return JavaPluginUtil.getJavaPluginConvention(project) != null
+    return JavaPluginUtil.getJavaPluginAccessor(project).isJavaPluginApplied()
   }
 
   private static List<ExternalTestSourceMapping> getMapping(Project project) {
@@ -45,7 +45,7 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
       taskToClassesDirs.put(task, getClassesDirs(task))
     })
 
-    def sourceSetContainer = JavaPluginUtil.getSourceSetContainer(project)
+    def sourceSetContainer = JavaPluginUtil.getJavaPluginAccessor(project).sourceSetContainer
     if (sourceSetContainer == null) return Collections.emptyList()
     def classesDirToSourceDirs = new LinkedHashMap<String, Set<String>>()
     for (sourceSet in sourceSetContainer) {
