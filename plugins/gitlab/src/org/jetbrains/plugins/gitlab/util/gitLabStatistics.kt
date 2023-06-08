@@ -34,12 +34,12 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", 1)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", 2)
 
   /**
    * Server returned 5** error
    */
-  private val SERVER_ERROR_EVENT = COUNTERS_GROUP.registerEvent("api.error.server",
+  private val SERVER_ERROR_EVENT = COUNTERS_GROUP.registerEvent("api.server.error.occurred",
                                                                 EventFields.Enum("requestName", GitLabApiRequestName::class.java),
                                                                 EventFields.Boolean("isDefaultServer"),
                                                                 EventFields.Version)
@@ -51,7 +51,7 @@ internal object GitLabStatistics {
    * Server returned error about missing GQL fields
    */
   private val GQL_MODEL_ERROR_EVENT =
-    COUNTERS_GROUP.registerEvent("api.error.gql.model",
+    COUNTERS_GROUP.registerEvent("api.gql.model.error.occurred",
                                  EventFields.Enum("query", GitLabGQLQuery::class.java),
                                  EventFields.Version)
 
@@ -62,7 +62,7 @@ internal object GitLabStatistics {
    * Error occurred during response parsing
    */
   private val JSON_DESERIALIZATION_ERROR_EVENT =
-    COUNTERS_GROUP.registerEvent("api.error.json.deserialization",
+    COUNTERS_GROUP.registerEvent("api.json.deserialization.error.occurred",
                                  EventFields.Class("class"),
                                  EventFields.Version)
 
@@ -73,12 +73,12 @@ internal object GitLabStatistics {
     override fun getGroup(): EventLogGroup = COUNTERS_GROUP
   }
 
-  private val FILTER_SEARCH_PRESENT = EventFields.Boolean("search")
-  private val FILTER_STATE_PRESENT = EventFields.Boolean("state")
-  private val FILTER_AUTHOR_PRESENT = EventFields.Boolean("author")
-  private val FILTER_ASSIGNEE_PRESENT = EventFields.Boolean("assignee")
-  private val FILTER_REVIEWER_PRESENT = EventFields.Boolean("reviewer")
-  private val FILTER_LABEL_PRESENT = EventFields.Boolean("label")
+  private val FILTER_SEARCH_PRESENT = EventFields.Boolean("hasSearch")
+  private val FILTER_STATE_PRESENT = EventFields.Boolean("hasState")
+  private val FILTER_AUTHOR_PRESENT = EventFields.Boolean("hasAuthor")
+  private val FILTER_ASSIGNEE_PRESENT = EventFields.Boolean("hasAssignee")
+  private val FILTER_REVIEWER_PRESENT = EventFields.Boolean("hasReviewer")
+  private val FILTER_LABEL_PRESENT = EventFields.Boolean("hasLabel")
 
   /**
    * Merge requests list filters applied
