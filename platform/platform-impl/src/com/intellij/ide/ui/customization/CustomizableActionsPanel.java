@@ -531,9 +531,13 @@ public class CustomizableActionsPanel {
               ActionUrl url = new ActionUrl(getGroupPath(new TreePath(node.getPath()), true), action, ADDED, newActionPosition);
               addCustomizedAction(url);
               DefaultMutableTreeNode newNode = addPathToActionsTree(myActionsTree, url);
-              if (newNode != null && action instanceof String) {
-                Icon icon = CustomizationUtil.getIconForPath(ActionManager.getInstance(),mySelectedSchema.getIconPath((String)action));
-                newNode.setUserObject(Pair.create(action, icon));
+              if (newNode != null && action instanceof String actionId) {
+                String path = mySelectedSchema.getIconPath(actionId);
+                if (path.isEmpty()) {
+                  path = actionId;
+                }
+                Icon icon = CustomizationUtil.getIconForPath(ActionManager.getInstance(), path);
+                newNode.setUserObject(Pair.create(actionId, icon));
               }
             }
 
