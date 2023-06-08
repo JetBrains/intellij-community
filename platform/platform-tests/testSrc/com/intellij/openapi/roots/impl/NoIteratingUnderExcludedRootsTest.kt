@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
@@ -162,6 +163,52 @@ class NoIteratingUnderExcludedRootsTest {
     }
   }
 
+  @Test
+  fun testExcludeOnMoveEvent() {
+    val fooDir = VfsTestUtil.createDir(moduleRoot, "foo")
+    excludeFolder(excludedDir)
+    checkIterate(moduleRoot, moduleRoot, fooDir)
+
+    VirtualFileManager.getInstance().addAsyncFileListener(AsyncFileListener { events ->
+      return@AsyncFileListener object : ChangeApplier {
+        override fun afterVfsChange() {
+          excludeIfMoveEvent(events, fooDir, excludedDir.name)
+        }
+      }
+    }, testDisposable)
+    WriteAction.run<Throwable> {
+      excludedDir.move(null, fooDir)
+    }
+    checkIterate(moduleRoot, moduleRoot, fooDir)
+  }
+
+  @Test
+  fun testExcludeOnEarlyMoveEvent() {
+    val fooDir = VfsTestUtil.createDir(moduleRoot, "foo")
+    excludeFolder(excludedDir)
+    checkIterate(moduleRoot, moduleRoot, fooDir)
+    listenEarlyAfterVfsChanges(object : BulkFileListener {
+      override fun after(events: List<VFileEvent>) {
+        excludeIfMoveEvent(events, fooDir, excludedDir.name)
+      }
+    })
+    WriteAction.run<Throwable> {
+      excludedDir.move(null, fooDir)
+    }
+    checkIterate(moduleRoot, moduleRoot, fooDir)
+  }
+
+  private fun excludeIfMoveEvent(events: List<VFileEvent>, newParent: VirtualFile, fileName: String) {
+    for (event in events) {
+      if (event is VFileMoveEvent) {
+        val file = event.file
+        if (file.parent == newParent && file.name == fileName) {
+          excludeFolder(file)
+        }
+      }
+    }
+  }
+
   private fun excludeFolder(folderToExclude: VirtualFile) {
     WriteAction.run<Throwable> {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel("exclude") {
@@ -209,16 +256,23 @@ private class EarlyVfsEventProcessor(parentDisposable: Disposable,
   }
 
   fun processIfPossible(event: VFileEvent) {
-    if (event is VFileCreateEvent) {
-      processWhenAvailable(event.parent, event.childName) {
-        afterVfsChangeProcessor(event)
+    when (event) {
+      is VFileCreateEvent -> {
+        processWhenAvailable(event.parent, event.childName) {
+          afterVfsChangeProcessor(event)
+        }
       }
-    }
-    if (event is VFilePropertyChangeEvent) {
-      val parent = event.file.parent
-      val newName = event.newValue as? String
-      if (parent != null && newName != null) {
-        processWhenAvailable(parent, newName) {
+      is VFilePropertyChangeEvent -> {
+        val parent = event.file.parent
+        val newName = event.newValue as? String
+        if (parent != null && newName != null) {
+          processWhenAvailable(parent, newName) {
+            afterVfsChangeProcessor(event)
+          }
+        }
+      }
+      is VFileMoveEvent -> {
+        processWhenAvailable(event.newParent, event.file.name) {
           afterVfsChangeProcessor(event)
         }
       }
