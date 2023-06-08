@@ -312,11 +312,11 @@ internal class ModifiableModuleModelBridgeImpl(
     // TODO How to deduplicate with ModuleCustomImlDataEntity ?
     if (moduleGroupEntity?.path != groupPathList) {
       when {
-        moduleGroupEntity == null && groupPathList != null -> diff.addModuleGroupPathEntity(
-          module = moduleEntity,
-          path = groupPathList,
-          source = moduleEntity.entitySource
-        )
+        moduleGroupEntity == null && groupPathList != null -> diff addEntity ModuleGroupPathEntity(path = groupPathList,
+                                                                                                   entitySource = moduleEntity.entitySource
+        ) {
+          this.module = moduleEntity
+        }
 
         moduleGroupEntity == null && groupPathList == null -> Unit
 

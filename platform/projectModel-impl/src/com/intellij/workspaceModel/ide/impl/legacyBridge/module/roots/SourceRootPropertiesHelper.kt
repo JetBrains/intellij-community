@@ -103,23 +103,25 @@ object SourceRootPropertiesHelper {
                                                     properties: P,
                                                     serializer: JpsModuleSourceRootPropertiesSerializer<P>) {
     when (serializer.typeId) {
-      JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> diff.addJavaSourceRootEntity(
-        sourceRoot = sourceRootEntity,
+      JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> diff addEntity JavaSourceRootPropertiesEntity(
         generated = (properties as JavaSourceRootProperties).isForGeneratedSources,
-        packagePrefix = properties.packagePrefix
-      )
+        packagePrefix = properties.packagePrefix,
+        entitySource = sourceRootEntity.entitySource) {
+        sourceRoot = sourceRootEntity
+      }
 
-      JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID, JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID -> diff.addJavaResourceRootEntity(
-        sourceRoot = sourceRootEntity,
+      JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID, JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID -> diff addEntity JavaResourceRootPropertiesEntity(
         generated = (properties as JavaResourceRootProperties).isForGeneratedSources,
-        relativeOutputPath = properties.relativeOutputPath
-      )
+        relativeOutputPath = properties.relativeOutputPath,
+        entitySource = sourceRootEntity.entitySource) {
+        sourceRoot = sourceRootEntity
+      }
 
       else -> if (properties !is JpsDummyElement) {
-        diff.addCustomSourceRootPropertiesEntity(
-          sourceRoot = sourceRootEntity,
-          propertiesXmlTag = savePropertiesToString(serializer, properties)
-        )
+        diff addEntity CustomSourceRootPropertiesEntity(propertiesXmlTag = savePropertiesToString(serializer, properties),
+                                                        entitySource = sourceRootEntity.entitySource) {
+          sourceRoot = sourceRootEntity
+        }
       }
     }
   }

@@ -26,6 +26,7 @@ import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import java.util.HashMap
 
 class SaveFacetsTest {
   companion object {
@@ -75,9 +76,10 @@ class SaveFacetsTest {
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
         val moduleEntity = it addEntity ModuleEntity("foo", listOf(ModuleDependencyItem.ModuleSourceDependency), source)
-        it.addModuleCustomImlDataEntity(null, mapOf(JpsProjectLoader.CLASSPATH_ATTRIBUTE to SampleCustomModuleRootsSerializer.ID),
-                                        moduleEntity,
-                                        source)
+        it addEntity ModuleCustomImlDataEntity(HashMap(mapOf(JpsProjectLoader.CLASSPATH_ATTRIBUTE to SampleCustomModuleRootsSerializer.ID)),
+                                               source) {
+          module = moduleEntity
+        }
         moduleEntity
       }
     }

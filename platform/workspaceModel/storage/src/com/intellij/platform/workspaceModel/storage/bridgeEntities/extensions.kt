@@ -16,106 +16,12 @@ import java.util.*
  * - If you want to use this function - use the code inside this function
  */
 @Obsolete
-fun MutableEntityStorage.addJavaModuleSettingsEntity(inheritedCompilerOutput: Boolean,
-                                                     excludeOutput: Boolean,
-                                                     compilerOutput: VirtualFileUrl?,
-                                                     compilerOutputForTests: VirtualFileUrl?,
-                                                     languageLevelId: @NonNls String?,
-                                                     module: ModuleEntity,
-                                                     source: EntitySource): JavaModuleSettingsEntity {
-  return this addEntity JavaModuleSettingsEntity(inheritedCompilerOutput, excludeOutput, source) {
-    this.compilerOutput = compilerOutput
-    this.compilerOutputForTests = compilerOutputForTests
-    this.languageLevelId = languageLevelId
-    this.module = module
-  }
-}
-
-/**
- * This helper function is now obsolete:
- * - If you use this function - inline it
- * - If you want to use this function - use the code inside this function
- */
-@Obsolete
-fun MutableEntityStorage.addModuleCustomImlDataEntity(rootManagerTagCustomData: @NonNls String?,
-                                                      customModuleOptions: Map<String, String>,
-                                                      module: ModuleEntity,
-                                                      source: EntitySource): ModuleCustomImlDataEntity {
-  return this addEntity ModuleCustomImlDataEntity(HashMap(customModuleOptions), source) {
-    this.rootManagerTagCustomData = rootManagerTagCustomData
-    this.module = module
-  }
-}
-
-/**
- * This helper function is now obsolete:
- * - If you use this function - inline it
- * - If you want to use this function - use the code inside this function
- */
-@Obsolete
-fun MutableEntityStorage.addModuleGroupPathEntity(path: List<@NlsSafe String>,
-                                                  module: ModuleEntity,
-                                                  source: EntitySource): ModuleGroupPathEntity {
-  return this addEntity ModuleGroupPathEntity(path, source) {
-    this.module = module
-  }
-}
-
-/**
- * This helper function is now obsolete:
- * - If you use this function - inline it
- * - If you want to use this function - use the code inside this function
- */
-@Obsolete
 fun MutableEntityStorage.addSourceRootEntity(contentRoot: ContentRootEntity,
                                              url: VirtualFileUrl,
                                              rootType: @NonNls String,
                                              source: EntitySource): SourceRootEntity {
   return this addEntity SourceRootEntity(url, rootType, source) {
     this.contentRoot = contentRoot
-  }
-}
-
-/**
- * [JavaSourceRootPropertiesEntity] has the same entity source as [SourceRootEntity].
- *
- * This helper function is now obsolete:
- * - If you use this function - inline it
- * - If you want to use this function - use the code inside this function
- */
-@Obsolete
-fun MutableEntityStorage.addJavaSourceRootEntity(sourceRoot: SourceRootEntity,
-                                                 generated: Boolean,
-                                                 packagePrefix: @NlsSafe String): JavaSourceRootPropertiesEntity {
-  return this addEntity JavaSourceRootPropertiesEntity(generated, packagePrefix, sourceRoot.entitySource) {
-    this.sourceRoot = sourceRoot
-  }
-}
-
-/**
- * This helper function is now obsolete:
- * - If you use this function - inline it
- * - If you want to use this function - use the code inside this function
- */
-@Obsolete
-fun MutableEntityStorage.addJavaResourceRootEntity(sourceRoot: SourceRootEntity,
-                                                   generated: Boolean,
-                                                   relativeOutputPath: @NlsSafe String): JavaResourceRootPropertiesEntity {
-  return this addEntity JavaResourceRootPropertiesEntity(generated, relativeOutputPath, sourceRoot.entitySource) {
-    this.sourceRoot = sourceRoot
-  }
-}
-
-/**
- * This helper function is now obsolete:
- * - If you use this function - inline it
- * - If you want to use this function - use the code inside this function
- */
-@Obsolete
-fun MutableEntityStorage.addCustomSourceRootPropertiesEntity(sourceRoot: SourceRootEntity,
-                                                             propertiesXmlTag: @NonNls String): CustomSourceRootPropertiesEntity {
-  return this addEntity CustomSourceRootPropertiesEntity(propertiesXmlTag, sourceRoot.entitySource) {
-    this.sourceRoot = sourceRoot
   }
 }
 

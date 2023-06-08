@@ -11,7 +11,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
 import com.intellij.platform.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.modifyEntity
 
 class LanguageLevelModuleExtensionBridge private constructor(private val module: ModuleBridge,
@@ -31,9 +31,11 @@ class LanguageLevelModuleExtensionBridge private constructor(private val module:
       }
     }
     else if (languageLevel != null) {
-      diff.addJavaModuleSettingsEntity(inheritedCompilerOutput = true, excludeOutput = true, compilerOutput = null,
-                                       compilerOutputForTests = null, languageLevelId = languageLevel.name, module = moduleEntity,
-                                       source = moduleEntity.entitySource)
+      diff addEntity JavaModuleSettingsEntity(inheritedCompilerOutput = true, excludeOutput = true,
+                                              entitySource = moduleEntity.entitySource) {
+        languageLevelId = languageLevel.name
+        module = moduleEntity
+      }
     }
   }
 
