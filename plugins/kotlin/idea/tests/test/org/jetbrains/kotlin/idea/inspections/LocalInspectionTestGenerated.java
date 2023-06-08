@@ -9779,6 +9779,41 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantOverride/dataClass.kt");
         }
 
+        @TestMetadata("dataClassEquals.kt")
+        public void testDataClassEquals() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/dataClassEquals.kt");
+        }
+
+        @TestMetadata("dataClassHashCode.kt")
+        public void testDataClassHashCode() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/dataClassHashCode.kt");
+        }
+
+        @TestMetadata("dataClassHashToString.kt")
+        public void testDataClassHashToString() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/dataClassHashToString.kt");
+        }
+
+        @TestMetadata("dataObject.kt")
+        public void testDataObject() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/dataObject.kt");
+        }
+
+        @TestMetadata("dataObjectEquals.kt")
+        public void testDataObjectEquals() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/dataObjectEquals.kt");
+        }
+
+        @TestMetadata("dataObjectHashCode.kt")
+        public void testDataObjectHashCode() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/dataObjectHashCode.kt");
+        }
+
+        @TestMetadata("dataObjectToString.kt")
+        public void testDataObjectToString() throws Exception {
+            runTest("testData/inspectionsLocal/redundantOverride/dataObjectToString.kt");
+        }
+
         @TestMetadata("delegatedMemberHidesSuperTypeOverride.kt")
         public void testDelegatedMemberHidesSuperTypeOverride() throws Exception {
             runTest("testData/inspectionsLocal/redundantOverride/delegatedMemberHidesSuperTypeOverride.kt");

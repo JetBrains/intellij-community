@@ -3,5 +3,4 @@ open class Foo {
 }
 
 data class D(val i: Int) : Foo() {
-    <caret>override fun foo(): Int = super.foo()
 }

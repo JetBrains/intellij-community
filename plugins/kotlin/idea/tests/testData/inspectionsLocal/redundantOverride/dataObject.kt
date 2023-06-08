@@ -1,7 +1,8 @@
+// LANGUAGE_VERSION: 1.9
 open class Foo {
     open fun foo() = 1
 }
 
-data class D(val i: Int) : Foo() {
+data object D : Foo() {
     <caret>override fun foo(): Int = super.foo()
 }
