@@ -123,20 +123,12 @@ public final class MavenProjectsManagerWatcher {
    * if project is closed)
    */
   public Promise<Void> scheduleUpdateAll(MavenImportSpec spec) {
-    return scheduleUpdateAll(spec, false);
-  }
-
-  /**
-   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
-   * if project is closed)
-   */
-  public Promise<Void> scheduleUpdateAll(MavenImportSpec spec, boolean forceUpdateInBackground) {
     if (MavenUtil.isLinearImportEnabled()) {
       return MavenImportingManager.getInstance(myProject).scheduleImportAll(spec).getFinishPromise().then(it -> null);
     }
 
     if (MavenUtil.updateSuspendable()) {
-      return scheduleUpdateAllSuspendable(spec, forceUpdateInBackground);
+      return scheduleUpdateAllSuspendable(spec);
     }
 
     final AsyncPromise<Void> promise = new AsyncPromise<>();
@@ -158,11 +150,10 @@ public final class MavenProjectsManagerWatcher {
    * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
    * if project is closed)
    */
-  private Promise<Void> scheduleUpdateAllSuspendable(MavenImportSpec spec, boolean forceUpdateInBackground) {
+  private Promise<Void> scheduleUpdateAllSuspendable(MavenImportSpec spec) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
 
-    if (ApplicationManager.getApplication().isUnitTestMode()
-      && !forceUpdateInBackground) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
       try {
         projectsManager.updateAllMavenProjectsSync(spec);
@@ -191,12 +182,10 @@ public final class MavenProjectsManagerWatcher {
 
   private Promise<Void> scheduleUpdateSuspendable(MavenImportSpec spec,
                                                   List<VirtualFile> filesToUpdate,
-                                                  List<VirtualFile> filesToDelete,
-                                                  boolean forceUpdateInBackground) {
+                                                  List<VirtualFile> filesToDelete) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
 
-    if (ApplicationManager.getApplication().isUnitTestMode()
-        && !forceUpdateInBackground) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
         MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
         try {
@@ -230,20 +219,13 @@ public final class MavenProjectsManagerWatcher {
   public Promise<Void> scheduleUpdate(@NotNull List<VirtualFile> filesToUpdate,
                                       @NotNull List<VirtualFile> filesToDelete,
                                       MavenImportSpec spec) {
-    return scheduleUpdate(filesToUpdate, filesToDelete, spec, false);
-  }
-
-  public Promise<Void> scheduleUpdate(@NotNull List<VirtualFile> filesToUpdate,
-                                      @NotNull List<VirtualFile> filesToDelete,
-                                      MavenImportSpec spec,
-                                      boolean forceUpdateInBackground) {
 
     if (MavenUtil.isLinearImportEnabled()) {
       return MavenImportingManager.getInstance(myProject).scheduleUpdate(filesToUpdate, filesToDelete, spec).getFinishPromise().then(it -> null);
     }
 
     if (MavenUtil.updateSuspendable()) {
-      return scheduleUpdateSuspendable(spec, filesToUpdate, filesToDelete, forceUpdateInBackground);
+      return scheduleUpdateSuspendable(spec, filesToUpdate, filesToDelete);
     }
 
     final AsyncPromise<Void> promise = new AsyncPromise<>();
