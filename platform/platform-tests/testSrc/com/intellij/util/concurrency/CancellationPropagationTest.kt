@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.getValue
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.lang.reflect.Method
+import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -636,13 +638,13 @@ class CancellationPropagationTest {
             fail("should be cancelled")
           }
           catch (e: ProcessCanceledException) {
-            throw RuntimeException("intentional")
+            throw MyException()
           }
         }
       }
-    }
-    catch (e: RuntimeException) {
-      assertEquals("intentional", e.message)
+    } catch (e : TestLoggerAssertionError) {
+      // TODO: the same as in `blockingContextScope save error`
+      assertInstanceOf<MyException>(e.cause)
     }
   }
 

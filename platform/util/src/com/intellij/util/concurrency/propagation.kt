@@ -10,6 +10,7 @@ import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.SchedulingWrapper.MyScheduledFutureTask
 import kotlinx.coroutines.*
@@ -25,7 +26,6 @@ import kotlin.Long
 import kotlin.OptIn
 import kotlin.Pair
 import kotlin.Suppress
-import kotlin.Throwable
 import kotlin.Unit
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.Continuation
@@ -73,7 +73,7 @@ internal val isCheckContextAssertions: Boolean
   get() = Holder.checkIdeAssertion
 
 @Internal
-class BlockingJob(val blockingJob: CompletableJob) : AbstractCoroutineContextElement(BlockingJob) {
+class BlockingJob(val blockingJob: Job) : AbstractCoroutineContextElement(BlockingJob) {
   companion object : CoroutineContext.Key<BlockingJob>
 }
 
@@ -100,16 +100,6 @@ fun createChildContext(): Pair<CoroutineContext, CompletableJob?> {
     if (parentBlockingJob != null) {
       val parentJob = parentBlockingJob.blockingJob
       val childJob = Job(parent = parentJob)
-      // the job from `BlockingJob` is `SupervisorJob`, so we need to handle incoming exceptions manually
-      childJob.invokeOnCompletion {
-        when (it) {
-          null -> Unit
-          is ProcessCanceledException -> Unit
-          is CancellationException -> Unit
-          // any other kind of exception is not related to control flow
-          else -> parentJob.completeExceptionally(it)
-        }
-      }
       Pair(parentBlockingJob + childJob, childJob)
     }
     else {
@@ -167,22 +157,31 @@ private fun isContextAwareComputation(runnable: Any) : Boolean {
 @Internal
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 fun <T> runAsCoroutine(job: CompletableJob, completeOnFinish: Boolean = true, action: () -> T): T {
+  val originalPCE : Ref<ProcessCanceledException> = Ref(null)
   val deferred = GlobalScope.async(
-    // we need to have job in CoroutineContext so that `Deferred` becomes its child and properly delays cancellation
+    // we need to have a job in CoroutineContext so that `Deferred` becomes its child and properly delays cancellation
     context = job,
     start = CoroutineStart.UNDISPATCHED) {
-    action()
+    try {
+      action()
+    } catch (e : ProcessCanceledException) {
+      // A raw PCE scares coroutine framework. Instead, we should message coroutines that we intend to cancel an activity, not fail it.
+      originalPCE.set(e)
+      throw CancellationException("Masking ProcessCancelledException: ${e.message}", e)
+    }
   }
   deferred.invokeOnCompletion {
     when (it) {
       null -> if (completeOnFinish) {
         job.complete()
       }
-      // `deferred` is an integral part of `Job`, so manual cancellation within `action` should lead to the cancellation of `Job`
+      // `deferred` is an integral part of `job`, so manual cancellation within `action` should lead to the cancellation of `job`
       is CancellationException -> job.cancel(it)
       // Regular exceptions and PCE get propagated to `job` via parent-child relations between Jobs
     }
   }
+  // Since this function is called strictly in blocking context, we need to preserve the PCE that was thrown
+  originalPCE.get()?.let { throw it }
   return deferred.getCompleted()
 }
 
@@ -255,6 +254,9 @@ private fun <T> cancelIfExpired(expiredCondition: Condition<in T>, childJob: Job
 }
 
 internal fun <V> capturePropagationAndCancellationContext(callable: Callable<V>): FutureTask<V> {
+  if (isContextAwareComputation(callable)) {
+    return FutureTask(callable)
+  }
   val (childContext, childJob) = createChildContext()
   var callable = callable
   if (childContext != EmptyCoroutineContext) {
