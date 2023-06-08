@@ -4,6 +4,8 @@
 package org.jetbrains.intellij.build.images
 
 import com.dynatrace.hash4j.hashing.Hashing
+import com.intellij.openapi.util.io.isAncestor
+import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.icons.loadPng
 import com.intellij.ui.svg.getSvgDocumentSize
@@ -25,10 +27,12 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.time.LocalDate
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import javax.xml.stream.XMLStreamException
+import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 
 internal data class ModifiedClass(@JvmField val module: JpsModule,
@@ -67,6 +71,14 @@ internal open class IconsClassGenerator(private val projectHome: Path,
   private val processedPhantom = AtomicInteger()
   private val modifiedClasses = CopyOnWriteArrayList<ModifiedClass>()
   private val obsoleteClasses = CopyOnWriteArrayList<Path>()
+  
+  private val openSourceRoot: Path? by lazy {
+    val communityFolderMarkerFile = "intellij.idea.community.main.iml"
+    if (projectHome.resolve(communityFolderMarkerFile).exists()) return@lazy projectHome
+    val communityRoot = projectHome.resolve("community")
+    if (communityRoot.resolve(communityFolderMarkerFile).exists()) return@lazy communityRoot
+    return@lazy null
+  }
 
   private val utilUi: JpsModule by lazy {
     modules.find { it.name == "intellij.platform.util.ui" } ?: error("Can't load module 'util'")
@@ -189,7 +201,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       }
 
       classCode.setLength(0)
-      val newText = writeClass(copyrightComment = getCopyrightComment(oldText), info = iconClassInfo, result = classCode)
+      val newText = writeClass(copyrightComment = getCopyrightComment(oldText, module), info = iconClassInfo, result = classCode)
       if (newText.isNullOrEmpty()) {
         if (Files.exists(outFile)) {
           obsoleteClasses.add(outFile)
@@ -254,9 +266,13 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     return null
   }
 
-  private fun getCopyrightComment(text: String?): String {
+  private fun getCopyrightComment(text: String?, module: JpsModule): String {
     if (text == null) {
-      return "// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.\n"
+      if (openSourceRoot == null || module.contentRootsList.urls.any { 
+        !openSourceRoot!!.isAncestor(JpsPathUtil.urlToOsPath(it).toNioPath(), false) 
+      }) return ""
+      
+      return "// Copyright 2000-${LocalDate.now().year} JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.\n"
     }
     val i = text.indexOf("package ")
     if (i == -1) {
