@@ -37,7 +37,7 @@ import javax.swing.*;
  * </pre>
  *
  * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
- * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
+ * @see com.intellij.openapi.progress.TasksKt#withModalProgress
  * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
  * @see ProgressManager#run(Task)
  */
@@ -249,7 +249,7 @@ public abstract class Task implements TaskInfo, Progressive {
  }
 
   /**
-   * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
+   * @see com.intellij.openapi.progress.TasksKt#withModalProgress
    * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
    */
   public abstract static class Modal extends Task {
@@ -270,7 +270,7 @@ public abstract class Task implements TaskInfo, Progressive {
 
   /**
    * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
-   * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
+   * @see com.intellij.openapi.progress.TasksKt#withModalProgress
    * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
    */
   public abstract static class ConditionalModal extends Backgroundable {

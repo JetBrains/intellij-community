@@ -702,7 +702,7 @@ object ProjectUtil {
 @ScheduledForRemoval
 @Deprecated(
   "Use runBlockingModal on EDT with proper owner and title, " +
-  "or runBlockingCancellable(+withBackgroundProgressIndicator with proper title) on BGT"
+  "or runBlockingCancellable(+withBackgroundProgress with proper title) on BGT"
 )
 fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
   if (ApplicationManager.getApplication().isDispatchThread) {

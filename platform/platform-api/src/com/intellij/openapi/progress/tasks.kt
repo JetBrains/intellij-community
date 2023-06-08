@@ -115,7 +115,7 @@ fun <T> runBlockingModal(
  *
  *     // the coroutine will schedule modal action,
  *     // which will enter the modality some time later
- *     withModalProgressIndicator(...) {
+ *     withModalProgress(...) {
  *
  *       // continue execution on Dispatchers.Default
  *       ...
