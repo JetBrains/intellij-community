@@ -18,7 +18,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: ModifiableRootModelBridgeImpl)
@@ -73,12 +72,12 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
                                                                      entitySource = modifiableModel.moduleEntity.entitySource)
 
     if (type != null) {
-      modifiableModel.diff.addLibraryPropertiesEntity(
-        library = libraryEntity,
-        libraryType = type.kindId,
+      modifiableModel.diff addEntity LibraryPropertiesEntity(libraryType = type.kindId,
+                                                             entitySource = libraryEntity.entitySource) {
+        library = libraryEntity
         propertiesXmlTag = LegacyBridgeModifiableBase.serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG,
                                                                                  type.createDefaultProperties())
-      )
+      }
     }
 
     return createAndAddLibrary(libraryEntity, false, ModuleDependencyItem.DependencyScope.COMPILE)
@@ -122,11 +121,11 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
 
     val originalProperties = originalEntity.libraryProperties
     if (originalProperties != null) {
-      modifiableModel.diff.addLibraryPropertiesEntity(
-        library = libraryEntity,
-        libraryType = originalProperties.libraryType,
+      modifiableModel.diff addEntity LibraryPropertiesEntity(libraryType = originalProperties.libraryType,
+                                                             entitySource = libraryEntity.entitySource) {
+        library = libraryEntity
         propertiesXmlTag = originalProperties.propertiesXmlTag
-      )
+      }
     }
     return createAndAddLibrary(libraryEntity, exported, scope)
   }

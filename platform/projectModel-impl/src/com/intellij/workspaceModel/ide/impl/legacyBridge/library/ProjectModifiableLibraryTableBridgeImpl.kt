@@ -65,11 +65,11 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
     val libraryEntity = diff addEntity LibraryEntity(name, libraryTableId, emptyList(), LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource))
 
     if (type != null) {
-      diff.addLibraryPropertiesEntity(
-        library = libraryEntity,
-        libraryType = type.kindId,
+      diff addEntity LibraryPropertiesEntity(libraryType = type.kindId,
+                                             entitySource = libraryEntity.entitySource) {
+        library = libraryEntity
         propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, type.createDefaultProperties())
-      )
+      }
     }
 
     val library = LibraryBridgeImpl(

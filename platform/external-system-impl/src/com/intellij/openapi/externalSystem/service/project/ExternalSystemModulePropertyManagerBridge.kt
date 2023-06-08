@@ -16,7 +16,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.getOrCreateExternalSystemModuleOptions
 import org.jetbrains.jps.model.serialization.SerializationConstants
 
 class ExternalSystemModulePropertyManagerBridge(private val module: Module) : ExternalSystemModulePropertyManager() {
@@ -37,14 +36,26 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
     module as ModuleBridge
     if (moduleDiff != null) {
       val moduleEntity = module.findModuleEntity(moduleDiff) ?: return
-      val options = moduleDiff.getOrCreateExternalSystemModuleOptions(moduleEntity, moduleEntity.entitySource)
+      val options = moduleEntity.exModuleOptions ?: moduleDiff.run {
+        val entity = ExternalSystemModuleOptionsEntity(moduleEntity.entitySource) {
+          module = moduleEntity
+        }
+        moduleDiff.addEntity(entity)
+        entity
+      }
       moduleDiff.modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, options, action)
     }
     else {
       WriteAction.runAndWait<RuntimeException> {
         WorkspaceModel.getInstance(module.project).updateProjectModel("Modify external system module options") { builder ->
           val moduleEntity = module.findModuleEntity(builder) ?: return@updateProjectModel
-          val options = builder.getOrCreateExternalSystemModuleOptions(moduleEntity, moduleEntity.entitySource)
+          val options = moduleEntity.exModuleOptions ?: builder.run {
+            val entity = ExternalSystemModuleOptionsEntity(moduleEntity.entitySource) {
+              module = moduleEntity
+            }
+            builder.addEntity(entity)
+            entity
+          }
           builder.modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, options, action)
         }
       }

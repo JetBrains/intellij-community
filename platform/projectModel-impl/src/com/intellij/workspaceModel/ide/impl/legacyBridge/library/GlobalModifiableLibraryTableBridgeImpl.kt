@@ -40,12 +40,12 @@ internal class GlobalModifiableLibraryTableBridgeImpl(private val libraryTable: 
                                                      LegacyBridgeJpsEntitySourceFactory.createEntitySourceForGlobalLibrary())
 
     if (type != null) {
-      diff.addLibraryPropertiesEntity(
-        library = libraryEntity,
-        libraryType = type.kindId,
+      diff addEntity LibraryPropertiesEntity(libraryType = type.kindId,
+                                             entitySource = libraryEntity.entitySource) {
+        library = libraryEntity
         propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG,
-                                                                                 type.createDefaultProperties())
-      )
+                                                      type.createDefaultProperties())
+      }
     }
 
     val library = LibraryBridgeImpl(
