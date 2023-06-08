@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.project.Project
@@ -9,18 +9,11 @@ inline fun runModalTask(@Nls(capitalization = Nls.Capitalization.Title) title: S
                         project: Project? = null,
                         cancellable: Boolean = true,
                         crossinline task: (indicator: ProgressIndicator) -> Unit) {
-  ProgressManager.getInstance().run(createModalTask(title = title, project = project, cancellable = cancellable, task = task))
-}
-
-inline fun createModalTask(@Nls(capitalization = Nls.Capitalization.Title) title: String,
-                           project: Project? = null,
-                           cancellable: Boolean = true,
-                           crossinline task: (indicator: ProgressIndicator) -> Unit): Task.Modal {
-  return object : Task.Modal(project, title, cancellable) {
+  ProgressManager.getInstance().run(object : Task.Modal(project, title, cancellable) {
     override fun run(indicator: ProgressIndicator) {
       task(indicator)
     }
-  }
+  })
 }
 
 inline fun runBackgroundableTask(@NlsContexts.ProgressTitle title: String,
