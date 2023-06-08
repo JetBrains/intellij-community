@@ -239,7 +239,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             }
           }
           else if (children.isNotEmpty()) {
-            inconsistentParentChildRelationships++; //MAYBE RC: dedicated counter for that kind of errors?
+            inconsistentParentChildRelationships++ //MAYBE RC: dedicated counter for that kind of errors?
             log.info("file[#$fileId]{$fileName}: !directory (flags: ${Integer.toBinaryString(flags)}) but has children(${children.size})")
           }
 
@@ -260,9 +260,15 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
       try {
         val rootIds = impl.treeAccessor().listRoots()
         val records = impl.connection().records
+        val recordsCount = records.recordsCount()
         rootsCount = rootIds.size
 
         for (rootId in rootIds) {
+          if (rootId < FSRecords.MIN_REGULAR_FILE_ID || rootId >= recordsCount) {
+            generalErrors++ //MAYBE RC: dedicated counter for that kind of errors?
+            log.info("root[#$rootId]: is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$recordsCount) ")
+            continue
+          }
           val rootParentId = records.getParent(rootId)
           if (rootParentId != FSRecords.NULL_FILE_ID) {
             //FIXME RC: seems like it happens regularly -- how could?
