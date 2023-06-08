@@ -302,14 +302,12 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
 
   override fun setRightMargin(rightMargin: Int) {
     this.rightMargin.setValue(rightMargin)
-    myDispatcher.multicaster.rightMarginChanged(rightMargin)
   }
 
   override fun getSoftMargins(): List<Int> = softMargins.getValue(null)
 
   override fun setSoftMargins(softMargins: List<Int>?) {
     this.softMargins.setValue(softMargins?.toList())
-    myDispatcher.multicaster.softMarginsChanged(getSoftMargins())
   }
 
   override fun getAdditionalLinesCount(): Int = myAdditionalLinesCount
@@ -439,7 +437,6 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
 
   override fun setTabSize(tabSize: Int) {
     this.tabSize.setValue(tabSize)
-    myDispatcher.multicaster.tabSizeChanged(tabSize)
   }
 
   override fun isSmartHome(): Boolean {
@@ -853,6 +850,8 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     }
 
     fun setValue(overwrittenValue: T?) {
+      val oldGetValueResult = this.overwrittenValue ?: cachedValue ?: defaultValue
+
       synchronized(VALUE_LOCK) {
         if (this.overwrittenValue == overwrittenValue) {
           return
@@ -860,6 +859,11 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
         this.overwrittenValue = overwrittenValue
       }
       fireEditorRefresh()
+
+      val newGetValueResult = this.overwrittenValue ?: cachedValue ?: defaultValue
+      if (newGetValueResult != oldGetValueResult) {
+        fireValueChanged(newGetValueResult)
+      }
     }
 
     fun getValue(project: Project?): T {
@@ -903,9 +907,9 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
                 cachedValue = result
                 defaultValue = result
               }
+              fireEditorRefresh(false)
               if (isGetValueResultChanged) {
                 fireValueChanged(result)
-                fireEditorRefresh(false)
               }
             }
           }
