@@ -26,4 +26,13 @@ class KotlinObsoleteApiUsageInspectionTest : ObsoleteApiUsageInspectionTestBase(
       }      
     """.trimIndent())
   }
+
+  fun `test generic reference`() {
+    myFixture.addClass("@org.jetbrains.annotations.ApiStatus.Obsolete public interface I<T> {}")
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+class U {
+  fun u(i: <warning descr="Obsolete API is used">I</warning><Int>) = i
+}
+""".trimIndent())
+  }
 }
