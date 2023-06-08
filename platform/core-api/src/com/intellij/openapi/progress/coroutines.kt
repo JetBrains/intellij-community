@@ -234,16 +234,8 @@ suspend fun <T> blockingContext(action: () -> T): T {
  * @see [blockingContext]
  * @see [coroutineScope]
  */
-suspend fun <T> blockingContextScope(action: () -> T): T {
-  // `SupervisorJob`, because we need to treat `ProcessCancelledException` as `CancellationException`
-  val rootJob = SupervisorJob(coroutineContext.job)
-  val value = blockingContext(coroutineContext + rootJob + BlockingJob(rootJob), action)
-  // We cannot complete this job right away.
-  // After the call .complete() the job goes into `Completing` state and ignores subsequent .complete() and .completeExceptionally()
-  // It prevents the `rootJob` from completing with an exception from one of its children.
-  rootJob.children.forEach { it.join() }
-  rootJob.complete()
-  return value
+suspend fun <T> blockingContextScope(action: () -> T): T = coroutineScope {
+  blockingContext(coroutineContext + BlockingJob(coroutineContext.job), action)
 }
 
 @Internal
