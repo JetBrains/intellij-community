@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.configuration.ui
 
@@ -9,8 +9,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.TaskCancellation
 import com.intellij.openapi.progress.progressStep
-import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.progress.withBackgroundProgress
+import com.intellij.openapi.progress.withModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.startup.ProjectActivity
@@ -46,7 +46,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
     }
 
     fun performProjectPostOpenActionsInEdt() {
-        runBlockingModal(project, KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings")) {
+        withModalProgressBlocking(project, KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings")) {
             doPerformProjectPostOpenActions()
         }
     }

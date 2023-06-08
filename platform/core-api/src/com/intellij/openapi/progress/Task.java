@@ -38,7 +38,7 @@ import javax.swing.*;
  *
  * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
  * @see com.intellij.openapi.progress.TasksKt#withModalProgress
- * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
+ * @see com.intellij.openapi.progress.TasksKt#withModalProgressBlocking
  * @see ProgressManager#run(Task)
  */
 public abstract class Task implements TaskInfo, Progressive {
@@ -250,7 +250,7 @@ public abstract class Task implements TaskInfo, Progressive {
 
   /**
    * @see com.intellij.openapi.progress.TasksKt#withModalProgress
-   * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
+   * @see com.intellij.openapi.progress.TasksKt#withModalProgressBlocking
    */
   public abstract static class Modal extends Task {
     public Modal(@Nullable Project project, @DialogTitle @NotNull String title, boolean canBeCancelled) {
@@ -271,7 +271,7 @@ public abstract class Task implements TaskInfo, Progressive {
   /**
    * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
    * @see com.intellij.openapi.progress.TasksKt#withModalProgress
-   * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
+   * @see com.intellij.openapi.progress.TasksKt#withModalProgressBlocking
    */
   public abstract static class ConditionalModal extends Backgroundable {
     public ConditionalModal(@Nullable Project project,
@@ -335,7 +335,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   /**
-   * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
+   * @see com.intellij.openapi.progress.TasksKt#withModalProgressBlocking
    */
   public abstract static class WithResult<T, E extends Exception> extends Task.Modal {
     private volatile T myResult;

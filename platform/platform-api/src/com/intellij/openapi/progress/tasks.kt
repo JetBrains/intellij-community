@@ -83,12 +83,12 @@ suspend fun <T> withModalProgress(
 
 @RequiresBlockingContext
 @RequiresEdt
-fun <T> runBlockingModal(
+fun <T> withModalProgressBlocking(
   project: Project,
   title: @ProgressTitle String,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  return runBlockingModal(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
+  return withModalProgressBlocking(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
 }
 
 /**
@@ -124,14 +124,14 @@ fun <T> runBlockingModal(
  * }
  * ```
  *
- * [runBlockingModal] is designed for cases when the caller requires the modality,
+ * [withModalProgressBlocking] is designed for cases when the caller requires the modality,
  * and the caller cannot afford to let go of the current EDT event:
  * ```
  * // on EDT
  * fun actionPerformed() {
  *
  *   // will enter the new modality synchronously in the current EDT event
- *   runBlockingModal(...) {
+ *   withModalProgressBlocking(...) {
  *
  *     // continue execution on Dispatchers.Default
  *     ...
@@ -146,13 +146,13 @@ fun <T> runBlockingModal(
  */
 @RequiresBlockingContext
 @RequiresEdt
-fun <T> runBlockingModal(
+fun <T> withModalProgressBlocking(
   owner: ModalTaskOwner,
   title: @ProgressTitle String,
   cancellation: TaskCancellation = TaskCancellation.cancellable(),
   action: suspend CoroutineScope.() -> T,
 ): T {
-  return taskSupport().runBlockingModalInternal(owner, title, cancellation, action)
+  return taskSupport().withModalProgressBlockingInternal(owner, title, cancellation, action)
 }
 
 private fun taskSupport(): TaskSupport = ApplicationManager.getApplication().service()
@@ -241,9 +241,9 @@ suspend fun <T> withModalProgressIndicator(
 
 @Deprecated(
   message = "This function installs `RawProgressReporter` into action context. " +
-            "Migrate to `ProgressReporter` via `runBlockingModal`, " +
+            "Migrate to `ProgressReporter` via `withModalProgressBlocking`, " +
             "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
-  replaceWith = ReplaceWith("runBlockingModal(project, title) { withRawProgressReporter(action) }"),
+  replaceWith = ReplaceWith("withModalProgressBlocking(project, title) { withRawProgressReporter(action) }"),
 )
 @RequiresBlockingContext
 @RequiresEdt
@@ -258,9 +258,9 @@ fun <T> runBlockingModalWithRawProgressReporter(
 
 @Deprecated(
   message = "This function installs `RawProgressReporter` into action context. " +
-            "Migrate to `ProgressReporter` via `runBlockingModal`, " +
+            "Migrate to `ProgressReporter` via `withModalProgressBlocking`, " +
             "and use `withRawProgressReporter` to switch to raw reporter only if needed.",
-  replaceWith = ReplaceWith("runBlockingModal(owner, title, cancellation) { withRawProgressReporter(action) }"),
+  replaceWith = ReplaceWith("withModalProgressBlocking(owner, title, cancellation) { withRawProgressReporter(action) }"),
 )
 @RequiresBlockingContext
 @RequiresEdt
@@ -270,8 +270,43 @@ fun <T> runBlockingModalWithRawProgressReporter(
   cancellation: TaskCancellation = TaskCancellation.cancellable(),
   action: suspend CoroutineScope.() -> T,
 ): T {
-  return taskSupport().runBlockingModalInternal(owner, title, cancellation) {
+  return taskSupport().withModalProgressBlockingInternal(owner, title, cancellation) {
     withRawProgressReporter(action)
   }
+}
+
+@Deprecated(
+  message = "Function was renamed to `withModalProgressBlocking`",
+  replaceWith = ReplaceWith(
+    "withModalProgressBlocking(project, title, action)",
+    "com.intellij.openapi.progress.withModalProgressBlocking",
+  ),
+)
+@RequiresBlockingContext
+@RequiresEdt
+fun <T> runBlockingModal(
+  project: Project,
+  title: @ProgressTitle String,
+  action: suspend CoroutineScope.() -> T,
+): T {
+  return withModalProgressBlocking(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
+}
+
+@Deprecated(
+  message = "Function was renamed to `withModalProgressBlocking`",
+  replaceWith = ReplaceWith(
+    "withModalProgressBlocking(owner, title, cancellation, action)",
+    "com.intellij.openapi.progress.withModalProgressBlocking",
+  ),
+)
+@RequiresBlockingContext
+@RequiresEdt
+fun <T> runBlockingModal(
+  owner: ModalTaskOwner,
+  title: @ProgressTitle String,
+  cancellation: TaskCancellation = TaskCancellation.cancellable(),
+  action: suspend CoroutineScope.() -> T,
+): T {
+  return withModalProgressBlocking(owner, title, cancellation, action)
 }
 //</editor-fold>

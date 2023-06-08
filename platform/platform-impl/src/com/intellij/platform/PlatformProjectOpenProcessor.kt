@@ -18,7 +18,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.withModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ModuleRootManager
@@ -327,7 +327,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmStatic
     @RequiresEdt
     fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
-      return runBlockingModal(project, "") {
+      return withModalProgressBlocking(project, "") {
         attachToProjectAsync(projectToClose = project, projectDir = projectDir, callback = callback)
       }
     }

@@ -325,7 +325,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
     // unit tests
     if (ApplicationManager.getApplication().isDispatchThread) {
-      runBlockingModal(project, MavenProjectBundle.message("maven.reading")) {
+      withModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
         updateMavenProjects(spec, filesToUpdate, filesToDelete)
       }
     }
@@ -401,7 +401,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         readAllMavenProjects(spec, mavenProgressIndicator)
       }
       else {
-        runBlockingModal(project, MavenProjectBundle.message("maven.reading")) {
+        withModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
           updateAllMavenProjects(spec)
         }
       }

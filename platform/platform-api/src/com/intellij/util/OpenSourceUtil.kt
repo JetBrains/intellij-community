@@ -9,7 +9,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.withModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
@@ -21,7 +21,7 @@ internal fun openSourcesFrom(context: DataContext, requestFocus: Boolean) {
   val project = context.getData(CommonDataKeys.PROJECT) ?: return
   val asyncContext = IdeUiService.getInstance().createAsyncDataContext(context)
   val options = NavigationOptions.defaultOptions().requestFocus(requestFocus)
-  runBlockingModal(project, IdeBundle.message("progress.title.preparing.navigation")) {
+  withModalProgressBlocking(project, IdeBundle.message("progress.title.preparing.navigation")) {
     NavigationService.getInstance(project).navigate(asyncContext, options)
   }
 }
@@ -32,7 +32,7 @@ internal fun navigate(project: Project, requestFocus: Boolean, tryNotToScroll: B
   }
   val filteredNavigatables = navigatables.filterNotNull()
   val options = NavigationOptions.defaultOptions().requestFocus(requestFocus).preserveCaret(tryNotToScroll)
-  return runBlockingModal(project, IdeBundle.message("progress.title.preparing.navigation")) {
+  return withModalProgressBlocking(project, IdeBundle.message("progress.title.preparing.navigation")) {
     NavigationService.getInstance(project).navigate(filteredNavigatables, options)
   }
 }
@@ -46,7 +46,7 @@ internal fun navigate(project: Project, requestFocus: Boolean, tryNotToScroll: B
  */
 internal fun navigateToSource(project: Project, requestFocus: Boolean, tryNotToScroll: Boolean, navigatable: Navigatable): Boolean {
   val options = NavigationOptions.defaultOptions().requestFocus(requestFocus).preserveCaret(tryNotToScroll)
-  return runBlockingModal(project, IdeBundle.message("progress.title.preparing.navigation")) {
+  return withModalProgressBlocking(project, IdeBundle.message("progress.title.preparing.navigation")) {
     NavigationService.getInstance(project).navigate(navigatable, options)
   }
 }

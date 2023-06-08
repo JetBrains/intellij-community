@@ -19,7 +19,7 @@ import org.junit.jupiter.api.assertThrows
 import kotlin.coroutines.ContinuationInterceptor
 
 /**
- * @see RunBlockingModalTest
+ * @see WithModalProgressBlockingTest
  */
 class WithModalProgressTest : ModalCoroutineTest() {
 
