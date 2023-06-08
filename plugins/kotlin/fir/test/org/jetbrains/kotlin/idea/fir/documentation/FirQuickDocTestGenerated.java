@@ -98,6 +98,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         runTest("testData/quickDoc/Formatting.kt");
     }
 
+    @TestMetadata("FunctionTypeParameter.kt")
+    public void testFunctionTypeParameter() throws Exception {
+        runTest("testData/quickDoc/FunctionTypeParameter.kt");
+    }
+
     @TestMetadata("IndentedCodeBlock.kt")
     public void testIndentedCodeBlock() throws Exception {
         runTest("testData/quickDoc/IndentedCodeBlock.kt");

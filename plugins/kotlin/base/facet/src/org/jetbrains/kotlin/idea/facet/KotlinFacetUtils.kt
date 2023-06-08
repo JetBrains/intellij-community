@@ -178,7 +178,6 @@ fun applyCompilerArgumentsToFacet(
             K2JVMCompilerArguments::noStdlib.name,
             K2JVMCompilerArguments::allowNoSourceFiles.name,
             K2JVMCompilerArguments::jvmDefault.name,
-            K2JVMCompilerArguments::useIR.name,
             K2JVMCompilerArguments::reportPerf.name,
             K2JVMCompilerArguments::noKotlinNothingValueException.name,
             K2JVMCompilerArguments::noOptimizedCallableReferences,

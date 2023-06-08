@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinProjectStructureUtils")
 
 package org.jetbrains.kotlin.idea.base.projectStructure
@@ -11,6 +11,7 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.FileIndex
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
@@ -36,7 +37,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.util.runWithAlternativeResolveEnabled
 import org.jetbrains.kotlin.psi.UserDataProperty
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Frontend10ApiUsage
 val KtModule.moduleInfo: IdeaModuleInfo
@@ -54,7 +54,7 @@ val KtSourceModule.ideaModule: Module
 
 fun Module.getMainKtSourceModule(): KtSourceModule? {
     val moduleInfo = productionSourceInfo ?: return null
-    return ProjectStructureProviderIdeImpl.getInstance(project).getKtModuleByModuleInfo(moduleInfo) as KtSourceModule
+    return moduleInfo.toKtModuleOfType<KtSourceModule>()
 }
 
 val ModuleInfo.kotlinSourceRootType: KotlinSourceRootType?
@@ -120,6 +120,24 @@ val JpsModuleSourceRootType<*>.sourceRootType: KotlinSourceRootType?
         else -> null
     }
 
+
+fun ProjectFileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSourceRootType? {
+    // Ignore injected files
+    if (virtualFile is VirtualFileWindow) {
+        return null
+    }
+
+    return runReadAction {
+        val sourceRootType = getContainingSourceRootType(virtualFile) ?: return@runReadAction null
+        when (sourceRootType) {
+          in testRootTypes -> TestSourceKotlinRootType
+          in sourceRootTypes -> SourceKotlinRootType
+          else -> null
+        }
+    }
+}
+
+@Deprecated("use ProjectFileIndex.getKotlinSourceRootType(VirtualFile)")
 fun FileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSourceRootType? {
     // Ignore injected files
     if (virtualFile is VirtualFileWindow) {
@@ -148,12 +166,12 @@ fun GlobalSearchScope.hasKotlinJvmRuntime(project: Project): Boolean {
 }
 
 fun ModuleInfo.findSdkAcrossDependencies(): SdkInfo? {
-    val project = this.safeAs<IdeaModuleInfo>()?.project ?: return null
+    val project = (this as? IdeaModuleInfo)?.project ?: return null
     return SdkInfoCache.getInstance(project).findOrGetCachedSdk(this)
 }
 
 fun IdeaModuleInfo.findJvmStdlibAcrossDependencies(): LibraryInfo? {
-    val project = project ?: return null
+    val project = project
     return KotlinStdlibCache.getInstance(project).findStdlibInModuleDependencies(this)
 }
 

@@ -31,6 +31,7 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExportableOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -44,6 +45,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.containers.addIfNotNull
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle.message
@@ -327,12 +329,11 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
             val classModule = ModuleUtilCore.findModuleForPsiElement(findMainClassFile) ?: module
             val virtualFileForMainFun = findMainClassFile.virtualFile ?: throw CantRunException(noFunctionFoundMessage(findMainClassFile))
             val fileIndex = ModuleRootManager.getInstance(classModule).fileIndex
-            if (fileIndex.isInSourceContent(virtualFileForMainFun)) {
-                return if (fileIndex.getKotlinSourceRootType(virtualFileForMainFun) == TestSourceKotlinRootType) {
-                    JavaParameters.JDK_AND_CLASSES_AND_TESTS
-                } else {
-                    JavaParameters.JDK_AND_CLASSES
-                }
+            val projectFileIndex = ProjectFileIndex.getInstance(configurationModule.project)
+            when (projectFileIndex.getKotlinSourceRootType(virtualFileForMainFun)) {
+                TestSourceKotlinRootType -> return JavaParameters.JDK_AND_CLASSES_AND_TESTS
+                SourceKotlinRootType -> return JavaParameters.JDK_AND_CLASSES
+                else -> {}
             }
             val entriesForFile = fileIndex.getOrderEntriesForFile(virtualFileForMainFun)
             for (entry in entriesForFile) {
