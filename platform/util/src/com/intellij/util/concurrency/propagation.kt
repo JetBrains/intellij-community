@@ -149,7 +149,7 @@ private fun isContextAwareComputation(runnable: Any) : Boolean {
 }
 
 /**
- * Runs [action] under [job], where any external cancellation of [job] is delayed until [action] is finished.
+ * Runs [action] under [job], where transition from `Cancelling` to `Cancelled` state of [job] is delayed until [action] is completed.
  *
  * Consider the following code
  * ```
@@ -160,7 +160,7 @@ private fun isContextAwareComputation(runnable: Any) : Boolean {
  *   throw NPE
  * }
  * ```
- * When `throw NPE` is reached, it is important to resume `blockingContextScope` when spawned `executeOnPooledThread` terminates exceptionally.
+ * When `throw NPE` is reached, it is important to not resume `blockingContextScope` until `executeOnPooledThread` is completed.
  * This is why we reuse coroutine algorithms to ensure proper cancellation in our structured concurrency framework.
  * In the case above, the lambda in `executeOnPooledThread` needs to be executed under `runAsCoroutine`
  */
