@@ -34,11 +34,6 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
     app.serviceAsync<PathMacros>()
   }
 
-  val registryManagerJob = asyncScope.launch {
-    pathMacroJob.join()
-    app.serviceAsync<RegistryManager>()
-  }
-
   val managingFsJob = launch {
     // loading is started by StartupUtil, here we just "join" it
     subtask("ManagingFS preloading") { app.serviceAsync<ManagingFS>() }
@@ -66,35 +61,39 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
 
     asyncScope.launch {
       // wants PropertiesComponent
-      launch { app.serviceAsync<DebugLogManager>() }
-
-      // wants RegistryManager
-      if (!app.isHeadlessEnvironment) {
-        registryManagerJob.join()
-        app.serviceAsync<PerformanceWatcher>()
-        // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
-        PerformanceWatcher.getInstance()
-      }
+      app.serviceAsync<DebugLogManager>()
     }
   }
 
-  if (!app.isHeadlessEnvironment) {
-    asyncScope.launch {
-      // KeymapManager is a PersistentStateComponent
+  asyncScope.launch {
+    launch {
       pathMacroJob.join()
-
-      launch(CoroutineName("UISettings preloading")) { app.serviceAsync<UISettings>() }
-      launch(CoroutineName("CustomActionsSchema preloading")) { app.serviceAsync<CustomActionsSchema>() }
-      // wants PathMacros
-      launch(CoroutineName("GeneralSettings preloading")) { app.serviceAsync<GeneralSettings>() }
-
-      // ActionManager uses KeymapManager
-      subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
-      subtask("ActionManager preloading") { app.serviceAsync<ActionManager>() }
-
-      // serviceAsync is not supported for light services
-      app.service<ScreenReaderStateManager>()
+      app.serviceAsync<RegistryManager>()
     }
+
+    if (app.isHeadlessEnvironment) {
+      return@launch
+    }
+
+    launch {
+      app.serviceAsync<PerformanceWatcher>()
+      // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
+      PerformanceWatcher.getInstance()
+    }
+
+    pathMacroJob.join()
+
+    launch(CoroutineName("UISettings preloading")) { app.serviceAsync<UISettings>() }
+    launch(CoroutineName("CustomActionsSchema preloading")) { app.serviceAsync<CustomActionsSchema>() }
+    // wants PathMacros
+    launch(CoroutineName("GeneralSettings preloading")) { app.serviceAsync<GeneralSettings>() }
+
+    // ActionManager uses KeymapManager
+    subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
+    subtask("ActionManager preloading") { app.serviceAsync<ActionManager>() }
+
+    // serviceAsync is not supported for light services
+    app.service<ScreenReaderStateManager>()
   }
 }
 

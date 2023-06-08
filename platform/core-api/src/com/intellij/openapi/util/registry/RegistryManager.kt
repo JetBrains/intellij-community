@@ -20,15 +20,6 @@ interface RegistryManager {
     @JvmField
     // only afterValueChanged is dispatched
     val TOPIC: Topic<RegistryValueListener> = Topic(RegistryValueListener::class.java, Topic.BroadcastDirection.NONE, true)
-
-    @ApiStatus.Experimental
-    @ApiStatus.Internal
-    fun CoroutineScope.executeWhenReady(task: (RegistryManager) -> Unit) {
-      launch {
-        val registryManager = ApplicationManager.getApplication().serviceAsync<RegistryManager>()
-        task(registryManager)
-      }
-    }
   }
 
   fun `is`(key: String): Boolean
@@ -40,4 +31,22 @@ interface RegistryManager {
   fun intValue(key: String, defaultValue: Int): Int
 
   fun get(key: String): RegistryValue
+}
+
+@ApiStatus.Experimental
+@ApiStatus.Internal
+fun CoroutineScope.useRegistryManagerWhenReady(task: suspend (RegistryManager) -> Unit) {
+  launch {
+    val registryManager = ApplicationManager.getApplication().serviceAsync<RegistryManager>()
+    task(registryManager)
+  }
+}
+
+@ApiStatus.Experimental
+@ApiStatus.Internal
+fun CoroutineScope.useRegistryManagerWhenReadyJavaAdapter(task: (RegistryManager) -> Unit) {
+  launch {
+    val registryManager = ApplicationManager.getApplication().serviceAsync<RegistryManager>()
+    task(registryManager)
+  }
 }

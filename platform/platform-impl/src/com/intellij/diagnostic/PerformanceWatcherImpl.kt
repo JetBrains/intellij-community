@@ -15,6 +15,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.SystemInfo
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.util.registry.useRegistryManagerWhenReady
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -74,55 +76,67 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   private var sampleJob: Job? = null
   private var currentEdtEventChecker: FreezeCheckerTask? = null
   private val jitWatcher = JitWatcher()
-  private val _unresponsiveInterval: RegistryValue
+  private val unresponsiveIntervalLazy by lazy {
+    RegistryManager.getInstance().get("performance.watcher.unresponsive.interval.ms")
+  }
 
   init {
-    val registryManager = RegistryManager.getInstance()
-    val unresponsiveInterval = registryManager.get("performance.watcher.unresponsive.interval.ms")
-    this._unresponsiveInterval = unresponsiveInterval
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-      val cancelingListener = object : RegistryValueListener {
-        override fun afterValueChanged(value: RegistryValue) {
-          LOG.info("on UI freezes more than $unresponsiveInterval ms will dump threads each $dumpInterval ms for $maxDumpDuration ms max")
-          val samplingIntervalMs = samplingInterval
-          sampleJob?.cancel()
-          @Suppress("KotlinConstantConditions")
-          sampleJob = if (samplingIntervalMs <= 0) {
-            null
-          }
-          else {
-            coroutineScope.launch(limitedDispatcher) {
-              while (true) {
-                delay(samplingIntervalMs)
-                samplePerformance(samplingIntervalMs)
-              }
-            }
-          }
+      coroutineScope.launch {
+        useRegistryManagerWhenReady { registryManager ->
+          val unresponsiveInterval = unresponsiveIntervalLazy
+          init(unresponsiveInterval, registryManager)
         }
       }
-      unresponsiveInterval.addListener(cancelingListener, this)
-      if (ApplicationInfoImpl.getShadowInstance().isEAP) {
-        coroutineScope.launch {
-          val reasonableThreadPoolSize = registryManager.get("reasonable.application.thread.pool.size")
-          val service = AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService
-          val allAvailableProcessors = Runtime.getRuntime().availableProcessors()
-          service.setNewThreadListener { _, _ ->
-            val executorSize = service.backendPoolExecutorSize
-            if (executorSize > reasonableThreadPoolSize.asInteger() + allAvailableProcessors) {
-              val message = "Too many threads: $executorSize created in the global Application pool. " +
-                            "($reasonableThreadPoolSize, available processors: $allAvailableProcessors)"
-              val file = doDumpThreads("newPooledThread/", true, message, true)
-              LOG.info(message + if (file == null) "" else "; thread dump is saved to '$file'")
-            }
-          }
-        }
-      }
-      reportCrashesIfAny()
-      coroutineScope.launch(Dispatchers.IO) {
-        cleanOldFiles(logDir, 0)
-      }
-      cancelingListener.afterValueChanged(unresponsiveInterval)
     }
+  }
+
+  private suspend fun init(unresponsiveInterval: RegistryValue, registryManager: RegistryManager) {
+    val cancelingListener = object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        LOG.info("on UI freezes more than ${unresponsiveInterval} ms will dump threads each $dumpInterval ms for $maxDumpDuration ms max")
+        val samplingIntervalMs = samplingInterval
+        sampleJob?.cancel()
+        @Suppress("KotlinConstantConditions")
+        sampleJob = if (samplingIntervalMs <= 0) {
+          null
+        }
+        else {
+          coroutineScope.launch(limitedDispatcher) {
+            while (true) {
+              delay(samplingIntervalMs)
+              samplePerformance(samplingIntervalMs)
+            }
+          }
+        }
+      }
+    }
+    unresponsiveInterval.addListener(cancelingListener, this)
+    if (ApplicationInfoImpl.getShadowInstance().isEAP) {
+      coroutineScope.launch {
+        val reasonableThreadPoolSize = registryManager.get("reasonable.application.thread.pool.size")
+        val service = AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService
+        val allAvailableProcessors = Runtime.getRuntime().availableProcessors()
+        service.setNewThreadListener { _, _ ->
+          val executorSize = service.backendPoolExecutorSize
+          if (executorSize > reasonableThreadPoolSize.asInteger() + allAvailableProcessors) {
+            val message = "Too many threads: $executorSize created in the global Application pool. " +
+                          "($reasonableThreadPoolSize, available processors: $allAvailableProcessors)"
+            val file = doDumpThreads("newPooledThread/", true, message, true)
+            LOG.info(message + if (file == null) "" else "; thread dump is saved to '$file'")
+          }
+        }
+      }
+    }
+
+    runCatching {
+      reportCrashesIfAny()
+    }.getOrLogException(LOG)
+
+    withContext(Dispatchers.IO) {
+      cleanOldFiles(logDir, 0)
+    }
+    cancelingListener.afterValueChanged(unresponsiveInterval)
   }
 
   override suspend fun processUnfinishedFreeze(consumer: suspend (Path, Int) -> Unit) {
@@ -195,7 +209,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   /** defines the freeze (ms)  */
   override val unresponsiveInterval: Int
     get() {
-      val value = _unresponsiveInterval.asInteger()
+      val value = unresponsiveIntervalLazy.asInteger()
       return if (value <= 0) 0 else value.coerceIn(500, 20000)
     }
 
@@ -454,72 +468,71 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   }
 }
 
-private fun reportCrashesIfAny() {
+private suspend fun reportCrashesIfAny() {
   val systemDir = Path.of(PathManager.getSystemPath())
-  try {
-    val appInfoFile = systemDir.resolve(APP_INFO_FILE_NAME)
-    val pidFile = systemDir.resolve(PID_FILE_NAME)
-    // TODO: check jre in app info, not the current
-    // Only report if on JetBrains jre
-    if (SystemInfo.isJetBrainsJvm && Files.isRegularFile(appInfoFile) && Files.isRegularFile(pidFile)) {
-      val pid = Files.readString(pidFile)
-      val crashFiles = ((File(SystemProperties.getUserHome()).listFiles { file ->
-        file.name.startsWith("java_error_in") && file.name.endsWith("$pid.log") && file.isFile
-      }) ?: arrayOfNulls(0))
-      val appInfoFileLastModified = Files.getLastModifiedTime(appInfoFile).toMillis()
-      for (file in crashFiles) {
-        if (file!!.lastModified() > appInfoFileLastModified) {
-          if (file.length() > 5 * FileUtilRt.MEGABYTE) {
-            LOG.info("Crash file $file is too big to report")
-            break
-          }
-          val content = Files.readString(file.toPath())
-          // TODO: maybe we need to notify the user
-          if (content.contains("fuck_the_regulations")) {
-            break
-          }
-          val attachment = Attachment("crash.txt", content)
-          attachment.isIncluded = true
-
-          // include plugins list
-          val plugins = PluginManagerCore.getLoadedPlugins()
-            .asSequence()
-            .filter { it.isEnabled && !it.isBundled }
-            .map(::getPluginInfoByDescriptor)
-            .filter(PluginInfo::isSafeToReport)
-            .map { "${it.id} (${it.version})" }
-            .joinToString(separator = "\n", "Extra plugins:\n")
-          val pluginAttachment = Attachment("plugins.txt", plugins)
-          attachment.isIncluded = true
-          val attachments = mutableListOf(attachment, pluginAttachment)
-
-          // look for extended crash logs
-          val extraLog = findExtraLogFile(pid, appInfoFileLastModified)
-          if (extraLog != null) {
-            val jbrErrContent = Files.readString(extraLog)
-            // Detect crashes caused by OOME
-            if (jbrErrContent.contains("java.lang.OutOfMemoryError: Java heap space")) {
-              LowMemoryNotifier.showNotification(VMOptions.MemoryKind.HEAP, true)
-            }
-            val extraAttachment = Attachment("jbr_err.txt", jbrErrContent)
-            extraAttachment.isIncluded = true
-            attachments.add(extraAttachment)
-          }
-          val message = content.substringBefore("---------------  P R O C E S S  ---------------")
-          val event = LogMessage.eventOf(JBRCrash(), message, attachments)
-          IdeaFreezeReporter.setAppInfo(event, Files.readString(appInfoFile))
-          IdeaFreezeReporter.report(event)
-          LifecycleUsageTriggerCollector.onCrashDetected()
+  val appInfoFile = systemDir.resolve(APP_INFO_FILE_NAME)
+  val pidFile = systemDir.resolve(PID_FILE_NAME)
+  // TODO: check jre in app info, not the current
+  // Only report if on JetBrains jre
+  if (SystemInfo.isJetBrainsJvm && Files.isRegularFile(appInfoFile) && Files.isRegularFile(pidFile)) {
+    val pid = Files.readString(pidFile)
+    val crashFiles = ((File(SystemProperties.getUserHome()).listFiles { file ->
+      file.name.startsWith("java_error_in") && file.name.endsWith("$pid.log") && file.isFile
+    }) ?: arrayOfNulls(0))
+    val appInfoFileLastModified = Files.getLastModifiedTime(appInfoFile).toMillis()
+    for (file in crashFiles) {
+      if (file!!.lastModified() > appInfoFileLastModified) {
+        if (file.length() > 5 * FileUtilRt.MEGABYTE) {
+          LOG.info("Crash file $file is too big to report")
           break
         }
+
+        val content = Files.readString(file.toPath())
+        // TODO: maybe we need to notify the user
+        if (content.contains("fuck_the_regulations")) {
+          break
+        }
+
+        val attachment = Attachment("crash.txt", content)
+        attachment.isIncluded = true
+
+        // include plugins list
+        val plugins = PluginManagerCore.getLoadedPlugins()
+          .asSequence()
+          .filter { it.isEnabled && !it.isBundled }
+          .map(::getPluginInfoByDescriptor)
+          .filter(PluginInfo::isSafeToReport)
+          .map { "${it.id} (${it.version})" }
+          .joinToString(separator = "\n", "Extra plugins:\n")
+        val pluginAttachment = Attachment("plugins.txt", plugins)
+        attachment.isIncluded = true
+        val attachments = mutableListOf(attachment, pluginAttachment)
+
+        // look for extended crash logs
+        val extraLog = findExtraLogFile(pid, appInfoFileLastModified)
+        if (extraLog != null) {
+          val jbrErrContent = Files.readString(extraLog)
+          // Detect crashes caused by OOME
+          if (jbrErrContent.contains("java.lang.OutOfMemoryError: Java heap space")) {
+            LowMemoryNotifier.showNotification(VMOptions.MemoryKind.HEAP, true)
+          }
+          val extraAttachment = Attachment("jbr_err.txt", jbrErrContent)
+          extraAttachment.isIncluded = true
+          attachments.add(extraAttachment)
+        }
+        val message = content.substringBefore("---------------  P R O C E S S  ---------------")
+        val event = LogMessage.eventOf(JBRCrash(), message, attachments)
+        IdeaFreezeReporter.setAppInfo(event, Files.readString(appInfoFile))
+        IdeaFreezeReporter.report(event)
+        LifecycleUsageTriggerCollector.onCrashDetected()
+        break
       }
     }
-    IdeaFreezeReporter.saveAppInfo(appInfoFile, true)
+  }
+  IdeaFreezeReporter.saveAppInfo(appInfoFile, true)
+  withContext(Dispatchers.IO) {
     Files.createDirectories(pidFile.parent)
     Files.writeString(pidFile, OSProcessUtil.getApplicationPid())
-  }
-  catch (e: IOException) {
-    LOG.info(e)
   }
 }
 
@@ -566,7 +579,6 @@ private fun ageInDays(file: Path): Long {
 }
 
 /** for [PerformanceListener.uiResponded] events (ms)  */
-@Suppress("ConstPropertyName")
 private const val samplingInterval = 1000L
 
 private fun buildName(): String = ApplicationInfo.getInstance().build.asString()
