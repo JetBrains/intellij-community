@@ -145,7 +145,7 @@ fun <T> withModalProgressBlocking(
  *
  * @param owner in which frame the progress should be shown
  * @param cancellation controls the UI appearance, e.g. [TaskCancellation.nonCancellable] or [TaskCancellation.cancellable]
- * @throws CancellationException if the calling coroutine was cancelled,
+ * @throws ProcessCanceledException if the calling coroutine was cancelled,
  * or if the indicator was cancelled by the user in the UI
  */
 @RequiresBlockingContext
