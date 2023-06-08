@@ -3,8 +3,20 @@ package com.intellij.openapi.progress
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Nls
 
+/**
+ * Migrate to [withModalProgress] or [withModalProgressBlocking]:
+ * ```
+ * launch {
+ *   withModalProgress(project, title) {
+ *     ...
+ *   }
+ * }
+ * ```
+ */
+@Obsolete
 inline fun runModalTask(@Nls(capitalization = Nls.Capitalization.Title) title: String,
                         project: Project? = null,
                         cancellable: Boolean = true,
@@ -16,6 +28,17 @@ inline fun runModalTask(@Nls(capitalization = Nls.Capitalization.Title) title: S
   })
 }
 
+/**
+ * Migrate to [withBackgroundProgress]:
+ * ```
+ * launch {
+ *   withBackgroundProgress(project, title, cancellable) {
+ *     ...
+ *   }
+ * }
+ * ```
+ */
+@Obsolete
 inline fun runBackgroundableTask(@NlsContexts.ProgressTitle title: String,
                                  project: Project? = null,
                                  cancellable: Boolean = true,
