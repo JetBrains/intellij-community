@@ -61,11 +61,7 @@ public final class PyPostfixUtils {
   }
 
   public static PostfixTemplateExpressionSelector selectorTopmost() {
-    return selectorTopmost(Conditions.alwaysTrue());
-  }
-
-  public static PostfixTemplateExpressionSelector selectorTopmost(Condition<? super PsiElement> additionalFilter) {
-    return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
+    return new PostfixTemplateExpressionSelectorBase(null) {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
         PyExpressionStatement exprStatement = PsiTreeUtil.getNonStrictParentOfType(context, PyExpressionStatement.class);
