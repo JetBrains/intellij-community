@@ -181,9 +181,9 @@ public class HighlightInfo implements Segment {
                           @Nullable Boolean needsUpdateOnTyping,
                           boolean isFileLevelAnnotation,
                           int navigationShift,
-                          ProblemGroup problemGroup,
+                          @Nullable ProblemGroup problemGroup,
                           @Nullable String inspectionToolId,
-                          GutterMark gutterIconRenderer,
+                          @Nullable GutterMark gutterIconRenderer,
                           int group,
                           @Nullable PsiReference unresolvedReference,
                           @Nullable PsiElement psiElement) {

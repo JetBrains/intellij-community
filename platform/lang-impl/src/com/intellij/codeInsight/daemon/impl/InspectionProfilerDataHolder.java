@@ -23,20 +23,22 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * Stores CPU profiler data for inspection run session and retrieve it later during the inspection pass
+ * to optimize "run inspection tool-to-warning onscreen" latency
+ */
 @Service(Service.Level.PROJECT)
-// stores CPU profiler data for inspections run session
 final class InspectionProfilerDataHolder {
   private static final Logger LOG = Logger.getInstance(InspectionProfilerDataHolder.class);
+  // store all data locally to be able to clear fast
+  private final Map<PsiFile, InspectionFileData> data = Collections.synchronizedMap(new FixedHashMap<>(10));
 
   /**
-   * @param latencies       ERROR,WARNING,OTHER
+   * @param latencies       array of 3 elements for (ERROR,WARNING,OTHER) latency infos
    * @param favoriteElement tool id -> PsiElement which produced some diagnostics during last run
    */
   private record InspectionFileData(@NotNull Latencies @NotNull [] latencies, @NotNull Map<String, PsiElement> favoriteElement) {
   }
-
-  // store all data locally to be able to clear fast
-  private final Map<PsiFile, InspectionFileData> data = Collections.synchronizedMap(new FixedHashMap<>(10));
 
   static InspectionProfilerDataHolder getInstance(@NotNull Project project) {
     return project.getService(InspectionProfilerDataHolder.class);
