@@ -1205,7 +1205,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                                        editor -> editor.isDisposed() ? null: textEditorProvider.getTextEditor(editor));
     }
 
-    if (application.getCurrentModalityState() != ModalityState.NON_MODAL) {
+    if (ModalityState.current() != ModalityState.NON_MODAL) {
       return activeTextEditors;
     }
 

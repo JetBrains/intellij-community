@@ -3,6 +3,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.project.DumbService;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -57,6 +58,8 @@ public abstract class ModalityState {
   /**
    * @return the modality state corresponding to the currently opened modal dialogs. Can only be invoked on AWT thread.
    */
+  @SuppressWarnings("deprecation")
+  @RequiresEdt
   public static @NotNull ModalityState current() {
     return ApplicationManager.getApplication().getCurrentModalityState();
   }

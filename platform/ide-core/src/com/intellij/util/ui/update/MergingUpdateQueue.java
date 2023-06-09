@@ -311,7 +311,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       return true;
     }
 
-    ModalityState current = ApplicationManager.getApplication().getCurrentModalityState();
+    ModalityState current = ModalityState.current();
     ModalityState modalityState = getModalityState();
     return !current.dominates(modalityState);
   }

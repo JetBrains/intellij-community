@@ -409,8 +409,12 @@ public interface Application extends ComponentManager {
    * Please use {@link ModalityState#current()} instead.
    *
    * @return the current modality state.
+   * @deprecated for attention
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @RequiresEdt
+  @ApiStatus.Internal
   @NotNull ModalityState getCurrentModalityState();
 
   /**
