@@ -305,7 +305,7 @@ private fun <T> contextToIndicator(ctx: CoroutineContext, action: () -> T): T {
 
 private fun CoroutineContext.createIndicator(): ProgressIndicator {
   val contextModality = contextModality()
-                        ?: ModalityState.NON_MODAL
+                        ?: ModalityState.nonModal()
   if (progressReporter != null) {
     LOG.error(IllegalStateException(
       "Current context has `ProgressReporter`. " +

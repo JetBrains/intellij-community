@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.CommonBundle
@@ -679,7 +679,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         else {
           inProgress.add(InProgressEntry(environment.executor.id, environment.runner.runnerId))
           ReadAction.nonBlocking(Callable { RunManagerImpl.canRunConfiguration(environment) })
-            .finishOnUiThread(ModalityState.NON_MODAL) { canRun ->
+            .finishOnUiThread(ModalityState.nonModal()) { canRun ->
               inProgress.remove(InProgressEntry(environment.executor.id, environment.runner.runnerId))
               if (canRun) {
                 executeConfiguration(environment, environment.runner, assignNewId, this.project, environment.runnerAndConfigurationSettings)
@@ -704,7 +704,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
   private fun editConfigurationUntilSuccess(environment: ExecutionEnvironment, assignNewId: Boolean) {
     ReadAction.nonBlocking(Callable { RunManagerImpl.canRunConfiguration(environment) })
-      .finishOnUiThread(ModalityState.NON_MODAL) { canRun ->
+      .finishOnUiThread(ModalityState.nonModal()) { canRun ->
         val runAnyway = if (!canRun) {
           val message = ExecutionBundle.message("dialog.message.configuration.still.incorrect.do.you.want.to.edit.it.again")
           val title = ExecutionBundle.message("dialog.title.change.configuration.settings")

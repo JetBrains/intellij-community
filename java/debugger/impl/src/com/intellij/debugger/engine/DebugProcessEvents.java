@@ -632,7 +632,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
             final String displayName = requestor instanceof Breakpoint ? ((Breakpoint<?>)requestor).getDisplayName() : requestor.getClass().getSimpleName();
             final String message = JavaDebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", displayName, ex.getMessage());
             considerRequestHit[0] = Messages.showYesNoDialog(getProject(), message, ex.getTitle(), Messages.getQuestionIcon()) == Messages.YES;
-          }, ModalityState.NON_MODAL);
+          }, ModalityState.nonModal());
           requestHit = considerRequestHit[0];
           resumePreferred = !requestHit;
         }

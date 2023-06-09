@@ -406,7 +406,7 @@ private fun openFileFromCommandLine(project: Project, file: Path, line: Int, col
         PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
       }
       navigatable.navigate(true)
-    }, ModalityState.NON_MODAL, project.disposed)
+    }, ModalityState.nonModal(), project.disposed)
   }
 }
 

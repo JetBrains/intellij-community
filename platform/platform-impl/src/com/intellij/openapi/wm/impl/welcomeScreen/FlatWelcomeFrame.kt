@@ -163,7 +163,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     UIUtil.decorateWindowHeader(getRootPane())
     ToolbarUtil.setTransparentTitleBar(this, getRootPane()) { runnable -> Disposer.register(this) { runnable.run() } }
     app.invokeLater({ (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).dispatchEarlyNotifications() },
-                    ModalityState.NON_MODAL)
+                    ModalityState.nonModal())
   }
 
   protected open fun setupCloseAction() {

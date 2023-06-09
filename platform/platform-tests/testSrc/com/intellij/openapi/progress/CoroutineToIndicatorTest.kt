@@ -24,13 +24,13 @@ class CoroutineToIndicatorTest : CancellationTest() {
     val modality = ModalityStateEx()
 
     withContext(modality.asContextElement()) {
-      assertSame(ModalityState.NON_MODAL, ModalityState.defaultModalityState())
+      assertSame(ModalityState.nonModal(), ModalityState.defaultModalityState())
       coroutineToIndicator {
         assertNull(Cancellation.currentJob())
         assertNotNull(ProgressManager.getGlobalProgressIndicator())
         assertSame(modality, ModalityState.defaultModalityState())
       }
-      assertSame(ModalityState.NON_MODAL, ModalityState.defaultModalityState())
+      assertSame(ModalityState.nonModal(), ModalityState.defaultModalityState())
     }
 
     assertNull(Cancellation.currentJob())

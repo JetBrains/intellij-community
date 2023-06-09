@@ -458,7 +458,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   @NotNull
   public ModalityState getModalityState() {
     if (myModalityStateComponent == null) {
-      return ModalityState.NON_MODAL;
+      return ModalityState.nonModal();
     }
     return ModalityState.stateForComponent(myModalityStateComponent);
   }

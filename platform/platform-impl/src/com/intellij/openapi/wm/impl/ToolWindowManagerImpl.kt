@@ -612,7 +612,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     ApplicationManager.getApplication().assertIsDispatchThread()
 
     val activity = UiActivity.Focus("toolWindow:$id")
-    UiActivityMonitor.getInstance().addActivity(project, activity, ModalityState.NON_MODAL)
+    UiActivityMonitor.getInstance().addActivity(project, activity, ModalityState.nonModal())
 
     activateToolWindow(idToEntry.get(id)!!, getRegisteredMutableInfoOrLogError(id), autoFocusContents, source)
 
@@ -1401,7 +1401,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   override fun invokeLater(runnable: Runnable) {
     if (!toolWindowSetInitializer.addToPendingTasksIfNotInitialized(runnable)) {
-      coroutineScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         runnable.run()
       }
     }

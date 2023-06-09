@@ -131,7 +131,7 @@ class CancellationPropagationTest {
           val runnable = Runnable {
             fail()
           }
-          ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, Conditions.alwaysFalse<Nothing?>())
+          ApplicationManager.getApplication().invokeLater(runnable, ModalityState.nonModal(), Conditions.alwaysFalse<Nothing?>())
           assertReferenced(LaterInvocator::class.java, runnable) // the runnable is queued
           this@launch.cancel()
         }
@@ -148,7 +148,7 @@ class CancellationPropagationTest {
         val runnable = Runnable {
           fail()
         }
-        ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, Condition<Nothing?> { expired.get() })
+        ApplicationManager.getApplication().invokeLater(runnable, ModalityState.nonModal(), Condition<Nothing?> { expired.get() })
         assertReferenced(LaterInvocator::class.java, runnable) // the runnable is queued
         expired.set(true)
       }

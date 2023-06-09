@@ -221,7 +221,7 @@ class ThreadContextPropagationTest {
         object : Task.Modal(null, "", true) {
           override fun run(indicator: ProgressIndicator) {
             finished.completeWith(runCatching {
-              assertFalse(currentThreadContextModality() == ModalityState.NON_MODAL)
+              assertFalse(currentThreadContextModality() == ModalityState.nonModal())
               assertSame(currentThreadContextModality(), indicator.modalityState)
               assertSame(currentThreadContextModality(), ModalityState.defaultModalityState())
             })

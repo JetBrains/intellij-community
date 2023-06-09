@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -740,11 +740,11 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     public void scheduleRefresh() {
-      scheduleRefreshWithDelay(100, ModalityState.NON_MODAL);
+      scheduleRefreshWithDelay(100, ModalityState.nonModal());
     }
 
     private void scheduleRefreshNow() {
-      scheduleRefreshWithDelay(0, ModalityState.NON_MODAL);
+      scheduleRefreshWithDelay(0, ModalityState.nonModal());
     }
 
     @CalledInAny
@@ -820,7 +820,7 @@ public class ChangesViewManager implements ChangesViewEx,
       myView.setPaintBusy(true);
       ApplicationManager.getApplication().invokeLater(() -> {
         scheduleRefreshNow();
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     }
 
     @RequiresEdt
@@ -898,11 +898,11 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void invokeLater(Runnable runnable) {
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.nonModal(), myProject.getDisposed());
     }
 
     private void invokeLaterIfNeeded(Runnable runnable) {
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, myProject.getDisposed(), runnable);
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), myProject.getDisposed(), runnable);
     }
 
     private class MyChangeListListener extends ChangeListAdapter {

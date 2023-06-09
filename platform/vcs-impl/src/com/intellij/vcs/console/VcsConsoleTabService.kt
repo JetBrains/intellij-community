@@ -100,7 +100,7 @@ internal class VcsConsoleTabServiceImpl(val project: Project) : VcsConsoleTabSer
     line.print(consoleView)
 
     if (Registry.`is`("vcs.showConsole")) {
-      runInEdt(ModalityState.NON_MODAL) {
+      runInEdt(ModalityState.nonModal()) {
         showConsoleTab(false, null)
       }
     }

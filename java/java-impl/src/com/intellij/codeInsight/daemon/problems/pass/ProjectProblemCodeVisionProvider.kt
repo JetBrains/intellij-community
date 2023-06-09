@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.problems.pass
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
@@ -130,7 +130,7 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
                      UpdateHighlightersUtil.setHighlightersToEditor(project, editor.document, 0, fileTextLength,
                                                                     highlighters, colorsScheme, -1)
                    },
-                   ModalityState.NON_MODAL
+                   ModalityState.nonModal()
       )
   }
 

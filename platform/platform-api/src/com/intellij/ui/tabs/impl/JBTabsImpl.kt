@@ -1344,7 +1344,7 @@ open class JBTabsImpl(private var project: Project?,
                                                           focusManager.requestFocusInProject(this,
                                                                                              project)
                                                         }
-                                                      }, ModalityState.NON_MODAL)
+                                                      }, ModalityState.nonModal())
       removeDeferred()
     }
   }

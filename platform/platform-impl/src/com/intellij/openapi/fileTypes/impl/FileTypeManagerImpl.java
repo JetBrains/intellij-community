@@ -178,7 +178,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       @Override
       public void onSchemeDeleted(@NotNull FileTypeWithDescriptor scheme) {
-        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, () -> {
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), () -> {
           Application app = ApplicationManager.getApplication();
           app.runWriteAction(() -> fireBeforeFileTypesChanged());
           myPatternsTable.removeAllAssociations(scheme);

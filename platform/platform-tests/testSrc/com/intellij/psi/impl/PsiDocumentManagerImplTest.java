@@ -472,13 +472,13 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
       LaterInvocator.enterModal(dialog);
     });
-    assertNotSame(ModalityState.NON_MODAL, ModalityState.current());
+    assertNotSame(ModalityState.nonModal(), ModalityState.current());
 
     // may or may not be committed until exit modal dialog
     waitForCommits();
 
     LaterInvocator.leaveModal(dialog);
-    assertEquals(ModalityState.NON_MODAL, ModalityState.current());
+    assertEquals(ModalityState.nonModal(), ModalityState.current());
 
     // must commit
     waitForCommits();
@@ -491,7 +491,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       LaterInvocator.enterModal(dialog);
       document.setText("yyy");
     });
-    assertNotSame(ModalityState.NON_MODAL, ModalityState.current());
+    assertNotSame(ModalityState.nonModal(), ModalityState.current());
 
     // must commit
     waitForCommits();
@@ -537,7 +537,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
       LaterInvocator.enterModal(dialog);
     });
-    assertNotSame(ModalityState.NON_MODAL, ModalityState.current());
+    assertNotSame(ModalityState.nonModal(), ModalityState.current());
 
 
     // may or may not commit in background by default when modality changed

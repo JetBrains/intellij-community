@@ -222,7 +222,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         // Hide tool window only if model roots became empty and there were some services shown before update.
         toolWindow.hide();
       }
-    }, ModalityState.NON_MODAL, myProject.getDisposed());
+    }, ModalityState.nonModal(), myProject.getDisposed());
   }
 
   boolean shouldBeAvailable() {

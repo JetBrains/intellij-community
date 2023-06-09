@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.toolwindow
 
 import com.intellij.icons.AllIcons
@@ -213,7 +213,7 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
 
     searchAlarm = SingleAlarm({
       service.handleSearch(searchTextField.text.trim())
-    }, 500, service, ThreadToUse.SWING_THREAD, ModalityState.NON_MODAL)
+    }, 500, service, ThreadToUse.SWING_THREAD, ModalityState.nonModal())
 
     searchTextField.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {

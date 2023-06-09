@@ -39,7 +39,7 @@ public final class LaterInvocator {
   // Per-project modal entities
   private static final Map<Project, List<Dialog>> projectToModalEntities = new WeakHashMap<>(); // accessed in EDT only
   private static final Map<Project, Stack<ModalityState>> projectToModalEntitiesStack = new WeakHashMap<>(); // accessed in EDT only
-  private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.NON_MODAL);// guarded by ourModalityStack
+  private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.nonModal());// guarded by ourModalityStack
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster =
     EventDispatcher.create(ModalityStateListener.class);
   private static final FlushQueue ourEdtQueue = new FlushQueue();
@@ -63,7 +63,7 @@ public final class LaterInvocator {
       }
 
       Window owner = window.getOwner();
-      ModalityStateEx ownerState = owner == null ? (ModalityStateEx)ModalityState.NON_MODAL : modalityStateForWindow(owner);
+      ModalityStateEx ownerState = owner == null ? (ModalityStateEx)ModalityState.nonModal() : modalityStateForWindow(owner);
       return isModalDialog(window) ? ownerState.appendEntity(window) : ownerState;
     });
   }
@@ -180,7 +180,7 @@ public final class LaterInvocator {
     List<Dialog> modalEntitiesList = projectToModalEntities.computeIfAbsent(project, __->ContainerUtil.createLockFreeCopyOnWriteList());
     modalEntitiesList.add(dialog);
 
-    Stack<ModalityState> modalEntitiesStack = projectToModalEntitiesStack.computeIfAbsent(project, __->new Stack<>(ModalityState.NON_MODAL));
+    Stack<ModalityState> modalEntitiesStack = projectToModalEntitiesStack.computeIfAbsent(project, __->new Stack<>(ModalityState.nonModal()));
     modalEntitiesStack.push(new ModalityStateEx(ourModalEntities));
   }
 
@@ -259,7 +259,7 @@ public final class LaterInvocator {
     while (!ourModalEntities.isEmpty()) {
       leaveModal(ourModalEntities.get(ourModalEntities.size() - 1));
     }
-    LOG.assertTrue(getCurrentModalityState() == ModalityState.NON_MODAL, getCurrentModalityState());
+    LOG.assertTrue(getCurrentModalityState() == ModalityState.nonModal(), getCurrentModalityState());
     reincludeSkippedItemsAndRequestFlush();
   }
 
@@ -272,7 +272,7 @@ public final class LaterInvocator {
   public static void forceLeaveAllModals() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ModalityStateEx currentState = getCurrentModalityState();
-    if (currentState != ModalityState.NON_MODAL) {
+    if (currentState != ModalityState.nonModal()) {
       currentState.cancelAllEntities();
       // let event queue pump once before trying to cancel next modal
       invokeLater(ModalityState.any(), Conditions.alwaysFalse(), () -> forceLeaveAllModals());

@@ -106,7 +106,7 @@ public class ShowFilePathAction extends DumbAwareAction {
         if (vFile.isDirectory()) return AllIcons.Nodes.Folder;
         return FileTypeManager.getInstance().getFileTypeByFile(vFile).getIcon();
       }))
-      .finishOnUiThread(ModalityState.NON_MODAL, icons -> action.accept(createPopup(files, icons)))
+      .finishOnUiThread(ModalityState.nonModal(), icons -> action.accept(createPopup(files, icons)))
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 

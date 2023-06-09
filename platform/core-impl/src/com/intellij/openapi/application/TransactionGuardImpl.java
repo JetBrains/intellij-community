@@ -30,7 +30,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
   private boolean myErrorReported;
 
   public TransactionGuardImpl() {
-    myWriteSafeModalities.put(ModalityState.NON_MODAL, true);
+    myWriteSafeModalities.put(ModalityState.nonModal(), true);
     myWritingAllowed = SwingUtilities.isEventDispatchThread(); // consider app startup a user activity
   }
 
@@ -38,7 +38,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
   public void submitTransaction(@NotNull Disposable parentDisposable,
                                 @Nullable TransactionId expectedContext,
                                 @NotNull Runnable transaction) {
-    ModalityState modality = expectedContext == null ? ModalityState.NON_MODAL : ((TransactionIdImpl)expectedContext).myModality;
+    ModalityState modality = expectedContext == null ? ModalityState.nonModal() : ((TransactionIdImpl)expectedContext).myModality;
     Application app = ApplicationManager.getApplication();
     if (app.isWriteIntentLockAcquired() && myWritingAllowed && !ModalityState.current().dominates(modality)) {
       if (!Disposer.isDisposed(parentDisposable)) {
@@ -159,7 +159,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
   @Override
   public void submitTransactionLater(final @NotNull Disposable parentDisposable, final @NotNull Runnable transaction) {
     TransactionIdImpl ctx = getContextTransaction();
-    ApplicationManager.getApplication().invokeLaterOnWriteThread(transaction, ctx == null ? ModalityState.NON_MODAL : ctx.myModality);
+    ApplicationManager.getApplication().invokeLaterOnWriteThread(transaction, ctx == null ? ModalityState.nonModal() : ctx.myModality);
   }
 
   @Override

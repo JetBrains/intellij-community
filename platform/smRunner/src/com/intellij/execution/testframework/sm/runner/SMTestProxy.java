@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
@@ -282,7 +282,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     ReadAction.nonBlocking(() -> getNavigatable())
       .expireWith(this)
       .coalesceBy(this)
-      .finishOnUiThread(ModalityState.NON_MODAL, navigatable -> {
+      .finishOnUiThread(ModalityState.nonModal(), navigatable -> {
       if (navigatable != null) {
         navigatable.navigate(requestFocus);
       }

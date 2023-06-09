@@ -71,7 +71,7 @@ final class RefreshSessionImpl extends RefreshSession {
 
   private static ModalityState getSafeModalityState() {
     ModalityState state = ModalityState.defaultModalityState();
-    return state != ModalityState.any() ? state : ModalityState.NON_MODAL;
+    return state != ModalityState.any() ? state : ModalityState.nonModal();
   }
 
   @Override

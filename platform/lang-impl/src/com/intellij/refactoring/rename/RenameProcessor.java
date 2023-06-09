@@ -505,7 +505,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
             };
             statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, listener);
           }
-        }, ModalityState.NON_MODAL);
+        }, ModalityState.nonModal());
       }
     }
   }

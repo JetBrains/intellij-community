@@ -83,7 +83,7 @@ class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingOptionsPro
 
   override fun apply() {
     super.apply()
-    ApplicationManager.getApplication().invokeLater({ applyCodeFoldingSettingsChanges() }, ModalityState.NON_MODAL)
+    ApplicationManager.getApplication().invokeLater({ applyCodeFoldingSettingsChanges() }, ModalityState.nonModal())
   }
 
   private fun sortByTitle(p: CodeFoldingOptionsProvider): String {

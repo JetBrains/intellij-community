@@ -392,7 +392,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
   override fun runWhenProjectIsInitialized(action: Runnable) {
     if (DumbService.isDumbAware(action)) {
-      runAfterOpened { ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed, action) }
+      runAfterOpened { ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), project.disposed, action) }
     }
     else if (!LightEdit.owns(project)) {
       runAfterOpened { DumbService.getInstance(project).runWhenSmart(action) }

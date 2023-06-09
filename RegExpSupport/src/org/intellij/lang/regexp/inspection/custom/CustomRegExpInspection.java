@@ -159,7 +159,7 @@ public class CustomRegExpInspection extends LocalInspectionTool implements Dynam
       else {
         HighlightDisplayKey.register(shortName, () -> name, suppressId, SHORT_NAME);
       }
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.nonModal());
   }
 
   private static boolean isMetaDataChanged(@NotNull RegExpInspectionConfiguration configuration, @NotNull HighlightDisplayKey key) {

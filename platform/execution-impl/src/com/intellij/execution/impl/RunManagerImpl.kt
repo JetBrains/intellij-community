@@ -409,7 +409,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
             // Project is being loaded. Finally we can set the right RC as 'selected' in the RC combo box.
             // Need to set selectedConfiguration in EDT to avoid deadlock with ExecutionTargetManagerImpl or similar implementations of runConfigurationSelected()
             StartupManager.getInstance(project).runAfterOpened {
-              ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed, Runnable {
+              ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), project.disposed, Runnable {
                 // Empty string means that there's no information about initially selected RC in workspace.xml
                 // => IDE should select any if still none selected (CLion could have set the selected RC itself).
                 if (selectedConfiguration == null || notYetAppliedInitialSelectedConfigurationId != "") {

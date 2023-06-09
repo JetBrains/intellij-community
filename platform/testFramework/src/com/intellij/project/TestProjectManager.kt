@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.project
@@ -111,7 +111,7 @@ open class TestProjectManager : ProjectManagerImpl() {
       val projectFilePath = if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.directoryStorePath!! else store.projectFilePath
       for (p in openProjects) {
         if (ProjectUtil.isSameProject(projectFilePath, p)) {
-          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL) { ProjectUtil.focusProjectWindow(p, false) }
+          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal()) { ProjectUtil.focusProjectWindow(p, false) }
           return false
         }
       }

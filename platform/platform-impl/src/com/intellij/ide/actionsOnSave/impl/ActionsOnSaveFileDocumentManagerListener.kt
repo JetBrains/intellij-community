@@ -92,7 +92,7 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
     val processingAlreadyScheduled = !documentsToProcess.isEmpty()
     documentsToProcess.addAll(documents)
     if (!processingAlreadyScheduled) {
-      service<CurrentActionHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+      service<CurrentActionHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         processSavedDocuments()
       }
     }

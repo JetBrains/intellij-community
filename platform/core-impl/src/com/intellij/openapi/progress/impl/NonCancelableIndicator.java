@@ -104,7 +104,7 @@ class NonCancelableIndicator implements NonCancelableSection, StandardProgressIn
 
   @Override
   public @NotNull ModalityState getModalityState() {
-    return ModalityState.NON_MODAL;
+    return ModalityState.nonModal();
   }
 
   @Override

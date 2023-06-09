@@ -258,7 +258,7 @@ object ProjectUtil {
       return null
     }
     StartupManager.getInstance(project).runAfterOpened {
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed) {
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), project.disposed) {
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)
         toolWindow?.activate(null)
       }

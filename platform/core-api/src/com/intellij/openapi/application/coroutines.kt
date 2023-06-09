@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.progress.blockingContext
@@ -152,7 +152,7 @@ fun ModalityState.asContextElement(): CoroutineContext = asContextElement()
 
 /**
  * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
- * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.NON_MODAL] modality state.
+ * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.nonModal] modality state.
  *
  * This dispatcher is also installed as [Dispatchers.Main].
  * Use [Dispatchers.EDT] when in doubt, use [Dispatchers.Main] if the coroutine doesn't care about IJ model,

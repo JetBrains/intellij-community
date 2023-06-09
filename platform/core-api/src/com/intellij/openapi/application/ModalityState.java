@@ -38,10 +38,9 @@ import java.awt.*;
  */
 public abstract class ModalityState {
   /**
-   * State when no modal dialogs are open.
-   *
-   * @see Application#getNoneModalityState()
+   * @deprecated use {@link #nonModal()} instead
    */
+  @Deprecated
   @NotNull public static final ModalityState NON_MODAL;
 
   static {
@@ -91,7 +90,7 @@ public abstract class ModalityState {
 
   /**
    * When invoked on AWT thread, returns {@link #current()}. When invoked in the thread of some modal progress, returns modality state
-   * corresponding to that progress' dialog. Otherwise, returns {@link #NON_MODAL}.
+   * corresponding to that progress' dialog. Otherwise, returns {@link #nonModal()}.
    */
   @RequiresBlockingContext
   public static @NotNull ModalityState defaultModalityState() {

@@ -301,11 +301,11 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   }
 
   private suspend fun doScheduledRefresh() {
-    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+    withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
       blockingContext {
         eventPublisher.beforeRefresh()
         refreshOpenFiles()
-        maybeRefresh(ModalityState.NON_MODAL)
+        maybeRefresh(ModalityState.nonModal())
       }
     }
   }
