@@ -175,13 +175,13 @@ internal class GitLabReviewTabComponentFactory(
         val account = req.account
         if (account == null) {
           val (newAccount, token) = GitLabLoginUtil.logInViaToken(project, selectors, req.repo.repository.serverPath) { server, name ->
-            req.accounts.none { it.server == server || it.name == name }
+            GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
           } ?: return@collect
           req.login(newAccount, token)
         }
         else {
           val token = GitLabLoginUtil.updateToken(project, selectors, account) { server, name ->
-            req.accounts.none { it.server == server || it.name == name }
+            GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
           } ?: return@collect
           req.login(account, token)
         }
