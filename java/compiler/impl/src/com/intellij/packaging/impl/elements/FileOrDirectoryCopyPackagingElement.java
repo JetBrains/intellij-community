@@ -23,7 +23,7 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.workspaceModel.ide.VirtualFileUrls;
-import com.intellij.java.model.FileOrDirectoryPackagingElementEntity;
+import com.intellij.java.workspaceModel.entities.FileOrDirectoryPackagingElementEntity;
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager;
 import kotlin.Unit;

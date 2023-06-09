@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide.property
 
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.java.model.javaSettings
+import com.intellij.java.workspaceModel.entities.javaSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ExternalStorageConfigurationManager

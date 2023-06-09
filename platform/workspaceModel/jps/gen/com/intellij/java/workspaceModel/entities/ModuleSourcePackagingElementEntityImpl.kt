@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.model
+package com.intellij.java.workspaceModel.entities
 
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
@@ -23,7 +23,7 @@ import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractMany
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ModuleOutputPackagingElementEntityImpl(val dataSource: ModuleOutputPackagingElementEntityData) : ModuleOutputPackagingElementEntity, WorkspaceEntityBase() {
+open class ModuleSourcePackagingElementEntityImpl(val dataSource: ModuleSourcePackagingElementEntityData) : ModuleSourcePackagingElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -49,9 +49,9 @@ open class ModuleOutputPackagingElementEntityImpl(val dataSource: ModuleOutputPa
     return connections
   }
 
-  class Builder(result: ModuleOutputPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ModuleOutputPackagingElementEntity, ModuleOutputPackagingElementEntityData>(
-    result), ModuleOutputPackagingElementEntity.Builder {
-    constructor() : this(ModuleOutputPackagingElementEntityData())
+  class Builder(result: ModuleSourcePackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ModuleSourcePackagingElementEntity, ModuleSourcePackagingElementEntityData>(
+    result), ModuleSourcePackagingElementEntity.Builder {
+    constructor() : this(ModuleSourcePackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -60,7 +60,7 @@ open class ModuleOutputPackagingElementEntityImpl(val dataSource: ModuleOutputPa
           return
         }
         else {
-          error("Entity ModuleOutputPackagingElementEntity is already created in a different builder")
+          error("Entity ModuleSourcePackagingElementEntity is already created in a different builder")
         }
       }
 
@@ -90,7 +90,7 @@ open class ModuleOutputPackagingElementEntityImpl(val dataSource: ModuleOutputPa
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as ModuleOutputPackagingElementEntity
+      dataSource as ModuleSourcePackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.module != dataSource?.module) this.module = dataSource.module
       updateChildToParentReferences(parents)
@@ -154,11 +154,11 @@ open class ModuleOutputPackagingElementEntityImpl(val dataSource: ModuleOutputPa
 
       }
 
-    override fun getEntityClass(): Class<ModuleOutputPackagingElementEntity> = ModuleOutputPackagingElementEntity::class.java
+    override fun getEntityClass(): Class<ModuleSourcePackagingElementEntity> = ModuleSourcePackagingElementEntity::class.java
   }
 }
 
-class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputPackagingElementEntity>(), SoftLinkable {
+class ModuleSourcePackagingElementEntityData : WorkspaceEntityData<ModuleSourcePackagingElementEntity>(), SoftLinkable {
   var module: ModuleId? = null
 
 
@@ -214,17 +214,17 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ModuleOutputPackagingElementEntity> {
-    val modifiable = ModuleOutputPackagingElementEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ModuleSourcePackagingElementEntity> {
+    val modifiable = ModuleSourcePackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ModuleOutputPackagingElementEntity {
+  override fun createEntity(snapshot: EntityStorage): ModuleSourcePackagingElementEntity {
     return getCached(snapshot) {
-      val entity = ModuleOutputPackagingElementEntityImpl(this)
+      val entity = ModuleSourcePackagingElementEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -232,7 +232,7 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return ModuleOutputPackagingElementEntity::class.java
+    return ModuleSourcePackagingElementEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -242,8 +242,8 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return ModuleOutputPackagingElementEntity(entitySource) {
-      this.module = this@ModuleOutputPackagingElementEntityData.module
+    return ModuleSourcePackagingElementEntity(entitySource) {
+      this.module = this@ModuleSourcePackagingElementEntityData.module
       this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
     }
   }
@@ -257,7 +257,7 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ModuleOutputPackagingElementEntityData
+    other as ModuleSourcePackagingElementEntityData
 
     if (this.entitySource != other.entitySource) return false
     if (this.module != other.module) return false
@@ -268,7 +268,7 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ModuleOutputPackagingElementEntityData
+    other as ModuleSourcePackagingElementEntityData
 
     if (this.module != other.module) return false
     return true

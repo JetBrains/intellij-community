@@ -8,7 +8,7 @@ import com.intellij.compiler.artifacts.TestPackagingElementBuilder
 import com.intellij.compiler.artifacts.propertybased.*
 import com.intellij.compiler.artifacts.propertybased.artifactEntity
 import com.intellij.concurrency.JobSchedulerImpl
-import com.intellij.java.model.*
+import com.intellij.java.workspaceModel.entities.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
@@ -37,7 +37,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
-import com.intellij.java.model.modifyEntity
+import com.intellij.java.workspaceModel.entities.modifyEntity
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase
 import org.junit.runner.RunWith

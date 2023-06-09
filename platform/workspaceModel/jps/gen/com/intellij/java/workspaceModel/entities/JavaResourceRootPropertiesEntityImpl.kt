@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.model
+package com.intellij.java.workspaceModel.entities
 
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
@@ -8,39 +8,37 @@ import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
 import com.intellij.platform.workspaceModel.storage.impl.EntityLink
 import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspaceModel.storage.impl.extractOneToAbstractManyParent
-import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractManyParentOfChild
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspaceModel.storage.impl.extractOneToManyParent
+import com.intellij.platform.workspaceModel.storage.impl.updateOneToManyParentOfChild
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: ExtractedDirectoryPackagingElementEntityData) : ExtractedDirectoryPackagingElementEntity, WorkspaceEntityBase() {
+open class JavaResourceRootPropertiesEntityImpl(val dataSource: JavaResourceRootPropertiesEntityData) : JavaResourceRootPropertiesEntity, WorkspaceEntityBase() {
 
   companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
-                                                                                PackagingElementEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
+    internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
+                                                                              JavaResourceRootPropertiesEntity::class.java,
+                                                                              ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     val connections = listOf<ConnectionId>(
-      PARENTENTITY_CONNECTION_ID,
+      SOURCEROOT_CONNECTION_ID,
     )
 
   }
 
-  override val parentEntity: CompositePackagingElementEntity?
-    get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
+  override val sourceRoot: SourceRootEntity
+    get() = snapshot.extractOneToManyParent(SOURCEROOT_CONNECTION_ID, this)!!
 
-  override val filePath: VirtualFileUrl
-    get() = dataSource.filePath
-
-  override val pathInArchive: String
-    get() = dataSource.pathInArchive
+  override val generated: Boolean get() = dataSource.generated
+  override val relativeOutputPath: String
+    get() = dataSource.relativeOutputPath
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -49,9 +47,9 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
     return connections
   }
 
-  class Builder(result: ExtractedDirectoryPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ExtractedDirectoryPackagingElementEntity, ExtractedDirectoryPackagingElementEntityData>(
-    result), ExtractedDirectoryPackagingElementEntity.Builder {
-    constructor() : this(ExtractedDirectoryPackagingElementEntityData())
+  class Builder(result: JavaResourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<JavaResourceRootPropertiesEntity, JavaResourceRootPropertiesEntityData>(
+    result), JavaResourceRootPropertiesEntity.Builder {
+    constructor() : this(JavaResourceRootPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -60,7 +58,7 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
           return
         }
         else {
-          error("Entity ExtractedDirectoryPackagingElementEntity is already created in a different builder")
+          error("Entity JavaResourceRootPropertiesEntity is already created in a different builder")
         }
       }
 
@@ -82,11 +80,18 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isFilePathInitialized()) {
-        error("Field FileOrDirectoryPackagingElementEntity#filePath should be initialized")
+      if (_diff != null) {
+        if (_diff.extractOneToManyParent<WorkspaceEntityBase>(SOURCEROOT_CONNECTION_ID, this) == null) {
+          error("Field JavaResourceRootPropertiesEntity#sourceRoot should be initialized")
+        }
       }
-      if (!getEntityData().isPathInArchiveInitialized()) {
-        error("Field ExtractedDirectoryPackagingElementEntity#pathInArchive should be initialized")
+      else {
+        if (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] == null) {
+          error("Field JavaResourceRootPropertiesEntity#sourceRoot should be initialized")
+        }
+      }
+      if (!getEntityData().isRelativeOutputPathInitialized()) {
+        error("Field JavaResourceRootPropertiesEntity#relativeOutputPath should be initialized")
       }
     }
 
@@ -96,10 +101,10 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as ExtractedDirectoryPackagingElementEntity
+      dataSource as JavaResourceRootPropertiesEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.filePath != dataSource.filePath) this.filePath = dataSource.filePath
-      if (this.pathInArchive != dataSource.pathInArchive) this.pathInArchive = dataSource.pathInArchive
+      if (this.generated != dataSource.generated) this.generated = dataSource.generated
+      if (this.relativeOutputPath != dataSource.relativeOutputPath) this.relativeOutputPath = dataSource.relativeOutputPath
       updateChildToParentReferences(parents)
     }
 
@@ -113,15 +118,15 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
 
       }
 
-    override var parentEntity: CompositePackagingElementEntity?
+    override var sourceRoot: SourceRootEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                                PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity
+          _diff.extractOneToManyParent(SOURCEROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                      SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity
+          this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
         }
       }
       set(value) {
@@ -130,68 +135,66 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+            val data = (value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+            value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToAbstractManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
+          _diff.updateOneToManyParentOfChild(SOURCEROOT_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+            val data = (value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+            value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
 
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] = value
         }
-        changedProperty.add("parentEntity")
+        changedProperty.add("sourceRoot")
       }
 
-    override var filePath: VirtualFileUrl
-      get() = getEntityData().filePath
+    override var generated: Boolean
+      get() = getEntityData().generated
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).filePath = value
-        changedProperty.add("filePath")
-        val _diff = diff
-        if (_diff != null) index(this, "filePath", value)
+        getEntityData(true).generated = value
+        changedProperty.add("generated")
       }
 
-    override var pathInArchive: String
-      get() = getEntityData().pathInArchive
+    override var relativeOutputPath: String
+      get() = getEntityData().relativeOutputPath
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).pathInArchive = value
-        changedProperty.add("pathInArchive")
+        getEntityData(true).relativeOutputPath = value
+        changedProperty.add("relativeOutputPath")
       }
 
-    override fun getEntityClass(): Class<ExtractedDirectoryPackagingElementEntity> = ExtractedDirectoryPackagingElementEntity::class.java
+    override fun getEntityClass(): Class<JavaResourceRootPropertiesEntity> = JavaResourceRootPropertiesEntity::class.java
   }
 }
 
-class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<ExtractedDirectoryPackagingElementEntity>() {
-  lateinit var filePath: VirtualFileUrl
-  lateinit var pathInArchive: String
+class JavaResourceRootPropertiesEntityData : WorkspaceEntityData<JavaResourceRootPropertiesEntity>() {
+  var generated: Boolean = false
+  lateinit var relativeOutputPath: String
 
-  fun isFilePathInitialized(): Boolean = ::filePath.isInitialized
-  fun isPathInArchiveInitialized(): Boolean = ::pathInArchive.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ExtractedDirectoryPackagingElementEntity> {
-    val modifiable = ExtractedDirectoryPackagingElementEntityImpl.Builder(null)
+  fun isRelativeOutputPathInitialized(): Boolean = ::relativeOutputPath.isInitialized
+
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<JavaResourceRootPropertiesEntity> {
+    val modifiable = JavaResourceRootPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ExtractedDirectoryPackagingElementEntity {
+  override fun createEntity(snapshot: EntityStorage): JavaResourceRootPropertiesEntity {
     return getCached(snapshot) {
-      val entity = ExtractedDirectoryPackagingElementEntityImpl(this)
+      val entity = JavaResourceRootPropertiesEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -199,7 +202,7 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return ExtractedDirectoryPackagingElementEntity::class.java
+    return JavaResourceRootPropertiesEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -209,13 +212,14 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return ExtractedDirectoryPackagingElementEntity(filePath, pathInArchive, entitySource) {
-      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+    return JavaResourceRootPropertiesEntity(generated, relativeOutputPath, entitySource) {
+      parents.filterIsInstance<SourceRootEntity>().singleOrNull()?.let { this.sourceRoot = it }
     }
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
     val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(SourceRootEntity::class.java)
     return res
   }
 
@@ -223,11 +227,11 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ExtractedDirectoryPackagingElementEntityData
+    other as JavaResourceRootPropertiesEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.filePath != other.filePath) return false
-    if (this.pathInArchive != other.pathInArchive) return false
+    if (this.generated != other.generated) return false
+    if (this.relativeOutputPath != other.relativeOutputPath) return false
     return true
   }
 
@@ -235,29 +239,28 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ExtractedDirectoryPackagingElementEntityData
+    other as JavaResourceRootPropertiesEntityData
 
-    if (this.filePath != other.filePath) return false
-    if (this.pathInArchive != other.pathInArchive) return false
+    if (this.generated != other.generated) return false
+    if (this.relativeOutputPath != other.relativeOutputPath) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + filePath.hashCode()
-    result = 31 * result + pathInArchive.hashCode()
+    result = 31 * result + generated.hashCode()
+    result = 31 * result + relativeOutputPath.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + filePath.hashCode()
-    result = 31 * result + pathInArchive.hashCode()
+    result = 31 * result + generated.hashCode()
+    result = 31 * result + relativeOutputPath.hashCode()
     return result
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.filePath?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
+    collector.sameForAllEntities = true
   }
 }

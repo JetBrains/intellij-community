@@ -1,9 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.model
+package com.intellij.java.workspaceModel.entities
 
-import com.intellij.java.model.CompositePackagingElementEntity
-import com.intellij.java.model.DirectoryCopyPackagingElementEntity
-import com.intellij.java.model.PackagingElementEntity
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage
@@ -11,36 +8,37 @@ import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
 import com.intellij.platform.workspaceModel.storage.impl.EntityLink
 import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspaceModel.storage.impl.extractOneToAbstractManyParent
-import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractManyParentOfChild
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspaceModel.storage.impl.extractOneToManyParent
+import com.intellij.platform.workspaceModel.storage.impl.updateOneToManyParentOfChild
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopyPackagingElementEntityData) : DirectoryCopyPackagingElementEntity, WorkspaceEntityBase() {
+open class JavaSourceRootPropertiesEntityImpl(val dataSource: JavaSourceRootPropertiesEntityData) : JavaSourceRootPropertiesEntity, WorkspaceEntityBase() {
 
   companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
-                                                                                PackagingElementEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
+    internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
+                                                                              JavaSourceRootPropertiesEntity::class.java,
+                                                                              ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     val connections = listOf<ConnectionId>(
-      PARENTENTITY_CONNECTION_ID,
+      SOURCEROOT_CONNECTION_ID,
     )
 
   }
 
-  override val parentEntity: CompositePackagingElementEntity?
-    get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
+  override val sourceRoot: SourceRootEntity
+    get() = snapshot.extractOneToManyParent(SOURCEROOT_CONNECTION_ID, this)!!
 
-  override val filePath: VirtualFileUrl
-    get() = dataSource.filePath
+  override val generated: Boolean get() = dataSource.generated
+  override val packagePrefix: String
+    get() = dataSource.packagePrefix
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -49,9 +47,9 @@ open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopy
     return connections
   }
 
-  class Builder(result: DirectoryCopyPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<DirectoryCopyPackagingElementEntity, DirectoryCopyPackagingElementEntityData>(
-    result), DirectoryCopyPackagingElementEntity.Builder {
-    constructor() : this(DirectoryCopyPackagingElementEntityData())
+  class Builder(result: JavaSourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<JavaSourceRootPropertiesEntity, JavaSourceRootPropertiesEntityData>(
+    result), JavaSourceRootPropertiesEntity.Builder {
+    constructor() : this(JavaSourceRootPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -60,7 +58,7 @@ open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopy
           return
         }
         else {
-          error("Entity DirectoryCopyPackagingElementEntity is already created in a different builder")
+          error("Entity JavaSourceRootPropertiesEntity is already created in a different builder")
         }
       }
 
@@ -82,8 +80,18 @@ open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopy
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isFilePathInitialized()) {
-        error("Field FileOrDirectoryPackagingElementEntity#filePath should be initialized")
+      if (_diff != null) {
+        if (_diff.extractOneToManyParent<WorkspaceEntityBase>(SOURCEROOT_CONNECTION_ID, this) == null) {
+          error("Field JavaSourceRootPropertiesEntity#sourceRoot should be initialized")
+        }
+      }
+      else {
+        if (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] == null) {
+          error("Field JavaSourceRootPropertiesEntity#sourceRoot should be initialized")
+        }
+      }
+      if (!getEntityData().isPackagePrefixInitialized()) {
+        error("Field JavaSourceRootPropertiesEntity#packagePrefix should be initialized")
       }
     }
 
@@ -93,9 +101,10 @@ open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopy
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as DirectoryCopyPackagingElementEntity
+      dataSource as JavaSourceRootPropertiesEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.filePath != dataSource.filePath) this.filePath = dataSource.filePath
+      if (this.generated != dataSource.generated) this.generated = dataSource.generated
+      if (this.packagePrefix != dataSource.packagePrefix) this.packagePrefix = dataSource.packagePrefix
       updateChildToParentReferences(parents)
     }
 
@@ -109,15 +118,15 @@ open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopy
 
       }
 
-    override var parentEntity: CompositePackagingElementEntity?
+    override var sourceRoot: SourceRootEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                                PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity
+          _diff.extractOneToManyParent(SOURCEROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                      SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity
+          this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
         }
       }
       set(value) {
@@ -126,58 +135,66 @@ open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopy
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+            val data = (value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+            value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToAbstractManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
+          _diff.updateOneToManyParentOfChild(SOURCEROOT_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+            val data = (value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+            value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
 
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] = value
         }
-        changedProperty.add("parentEntity")
+        changedProperty.add("sourceRoot")
       }
 
-    override var filePath: VirtualFileUrl
-      get() = getEntityData().filePath
+    override var generated: Boolean
+      get() = getEntityData().generated
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).filePath = value
-        changedProperty.add("filePath")
-        val _diff = diff
-        if (_diff != null) index(this, "filePath", value)
+        getEntityData(true).generated = value
+        changedProperty.add("generated")
       }
 
-    override fun getEntityClass(): Class<DirectoryCopyPackagingElementEntity> = DirectoryCopyPackagingElementEntity::class.java
+    override var packagePrefix: String
+      get() = getEntityData().packagePrefix
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).packagePrefix = value
+        changedProperty.add("packagePrefix")
+      }
+
+    override fun getEntityClass(): Class<JavaSourceRootPropertiesEntity> = JavaSourceRootPropertiesEntity::class.java
   }
 }
 
-class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCopyPackagingElementEntity>() {
-  lateinit var filePath: VirtualFileUrl
+class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSourceRootPropertiesEntity>() {
+  var generated: Boolean = false
+  lateinit var packagePrefix: String
 
-  fun isFilePathInitialized(): Boolean = ::filePath.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<DirectoryCopyPackagingElementEntity> {
-    val modifiable = DirectoryCopyPackagingElementEntityImpl.Builder(null)
+  fun isPackagePrefixInitialized(): Boolean = ::packagePrefix.isInitialized
+
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<JavaSourceRootPropertiesEntity> {
+    val modifiable = JavaSourceRootPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): DirectoryCopyPackagingElementEntity {
+  override fun createEntity(snapshot: EntityStorage): JavaSourceRootPropertiesEntity {
     return getCached(snapshot) {
-      val entity = DirectoryCopyPackagingElementEntityImpl(this)
+      val entity = JavaSourceRootPropertiesEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -185,7 +202,7 @@ class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCop
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return DirectoryCopyPackagingElementEntity::class.java
+    return JavaSourceRootPropertiesEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -195,13 +212,14 @@ class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCop
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return DirectoryCopyPackagingElementEntity(filePath, entitySource) {
-      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+    return JavaSourceRootPropertiesEntity(generated, packagePrefix, entitySource) {
+      parents.filterIsInstance<SourceRootEntity>().singleOrNull()?.let { this.sourceRoot = it }
     }
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
     val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(SourceRootEntity::class.java)
     return res
   }
 
@@ -209,10 +227,11 @@ class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCop
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as DirectoryCopyPackagingElementEntityData
+    other as JavaSourceRootPropertiesEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.filePath != other.filePath) return false
+    if (this.generated != other.generated) return false
+    if (this.packagePrefix != other.packagePrefix) return false
     return true
   }
 
@@ -220,26 +239,28 @@ class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCop
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as DirectoryCopyPackagingElementEntityData
+    other as JavaSourceRootPropertiesEntityData
 
-    if (this.filePath != other.filePath) return false
+    if (this.generated != other.generated) return false
+    if (this.packagePrefix != other.packagePrefix) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + filePath.hashCode()
+    result = 31 * result + generated.hashCode()
+    result = 31 * result + packagePrefix.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + filePath.hashCode()
+    result = 31 * result + generated.hashCode()
+    result = 31 * result + packagePrefix.hashCode()
     return result
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.filePath?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
+    collector.sameForAllEntities = true
   }
 }

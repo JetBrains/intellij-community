@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.model
+package com.intellij.java.workspaceModel.entities
 
-import com.intellij.java.model.ArtifactEntity
-import com.intellij.java.model.ArtifactRootElementEntity
-import com.intellij.java.model.CompositePackagingElementEntity
-import com.intellij.java.model.PackagingElementEntity
+import com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntity
+import com.intellij.java.workspaceModel.entities.ArtifactEntity
+import com.intellij.java.workspaceModel.entities.CompositePackagingElementEntity
+import com.intellij.java.workspaceModel.entities.PackagingElementEntity
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage
@@ -28,7 +28,7 @@ import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractOneP
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEntityData) : ArtifactRootElementEntity, WorkspaceEntityBase() {
+open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingElementEntityData) : ArchivePackagingElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -42,32 +42,38 @@ open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEnti
                                                                             ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
 
     val connections = listOf<ConnectionId>(
-      PARENTENTITY_CONNECTION_ID,
-      ARTIFACT_CONNECTION_ID,
-      CHILDREN_CONNECTION_ID,
+      com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.PARENTENTITY_CONNECTION_ID,
+      com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.ARTIFACT_CONNECTION_ID,
+      com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.CHILDREN_CONNECTION_ID,
     )
 
   }
 
   override val parentEntity: CompositePackagingElementEntity?
-    get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
+    get() = snapshot.extractOneToAbstractManyParent(
+      com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.PARENTENTITY_CONNECTION_ID, this)
 
   override val artifact: ArtifactEntity?
-    get() = snapshot.extractOneToAbstractOneParent(ARTIFACT_CONNECTION_ID, this)
+    get() = snapshot.extractOneToAbstractOneParent(
+      com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.ARTIFACT_CONNECTION_ID, this)
 
   override val children: List<PackagingElementEntity>
-    get() = snapshot.extractOneToAbstractManyChildren<PackagingElementEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
+    get() = snapshot.extractOneToAbstractManyChildren<PackagingElementEntity>(
+      com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.CHILDREN_CONNECTION_ID, this)!!.toList()
+
+  override val fileName: String
+    get() = dataSource.fileName
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
 
   override fun connectionIdList(): List<ConnectionId> {
-    return connections
+    return com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.connections
   }
 
-  class Builder(result: ArtifactRootElementEntityData?) : ModifiableWorkspaceEntityBase<ArtifactRootElementEntity, ArtifactRootElementEntityData>(
-    result), ArtifactRootElementEntity.Builder {
-    constructor() : this(ArtifactRootElementEntityData())
+  class Builder(result: com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ArchivePackagingElementEntity, com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityData>(
+    result), ArchivePackagingElementEntity.Builder {
+    constructor() : this(com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -76,7 +82,7 @@ open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEnti
           return
         }
         else {
-          error("Entity ArtifactRootElementEntity is already created in a different builder")
+          error("Entity ArchivePackagingElementEntity is already created in a different builder")
         }
       }
 
@@ -100,25 +106,31 @@ open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEnti
       }
       // Check initialization for list with ref type
       if (_diff != null) {
-        if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
+        if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(
+            com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.CHILDREN_CONNECTION_ID, this) == null) {
           error("Field CompositePackagingElementEntity#children should be initialized")
         }
       }
       else {
-        if (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] == null) {
+        if (this.entityLinks[EntityLink(true,
+                                        com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.CHILDREN_CONNECTION_ID)] == null) {
           error("Field CompositePackagingElementEntity#children should be initialized")
         }
+      }
+      if (!getEntityData().isFileNameInitialized()) {
+        error("Field ArchivePackagingElementEntity#fileName should be initialized")
       }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
-      return connections
+      return com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.connections
     }
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as ArtifactRootElementEntity
+      dataSource as ArchivePackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
+      if (this.fileName != dataSource.fileName) this.fileName = dataSource.fileName
       updateChildToParentReferences(parents)
     }
 
@@ -136,11 +148,13 @@ open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEnti
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                                PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity
+          _diff.extractOneToAbstractManyParent(
+            com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                                                                                   com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity
+          this.entityLinks[EntityLink(false,
+                                      com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.PARENTENTITY_CONNECTION_ID)] as? CompositePackagingElementEntity
         }
       }
       set(value) {
@@ -149,24 +163,30 @@ open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEnti
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+            val data = (value.entityLinks[EntityLink(true,
+                                                     com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+            value.entityLinks[EntityLink(true,
+                                         com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.PARENTENTITY_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToAbstractManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
+          _diff.updateOneToAbstractManyParentOfChild(
+            com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.PARENTENTITY_CONNECTION_ID, this, value)
         }
         else {
           // Setting backref of the list
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
-            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+            val data = (value.entityLinks[EntityLink(true,
+                                                     com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+            value.entityLinks[EntityLink(true,
+                                         com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.PARENTENTITY_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
 
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(false,
+                                      com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
       }
@@ -175,11 +195,13 @@ open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEnti
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractOneParent(ARTIFACT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                           ARTIFACT_CONNECTION_ID)] as? ArtifactEntity
+          _diff.extractOneToAbstractOneParent(
+            com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.ARTIFACT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                                                                               com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.ARTIFACT_CONNECTION_ID)] as? ArtifactEntity
         }
         else {
-          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] as? ArtifactEntity
+          this.entityLinks[EntityLink(false,
+                                      com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.ARTIFACT_CONNECTION_ID)] as? ArtifactEntity
         }
       }
       set(value) {
@@ -187,21 +209,25 @@ open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEnti
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, ARTIFACT_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(true,
+                                         com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.ARTIFACT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToAbstractOneParentOfChild(ARTIFACT_CONNECTION_ID, this, value)
+          _diff.updateOneToAbstractOneParentOfChild(
+            com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.ARTIFACT_CONNECTION_ID, this, value)
         }
         else {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, ARTIFACT_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(true,
+                                         com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.ARTIFACT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
 
-          this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(false,
+                                      com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.ARTIFACT_CONNECTION_ID)] = value
         }
         changedProperty.add("artifact")
       }
@@ -210,13 +236,15 @@ open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEnti
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractManyChildren<PackagingElementEntity>(CHILDREN_CONNECTION_ID,
-                                                                         this)!!.toList() + (this.entityLinks[EntityLink(true,
-                                                                                                                         CHILDREN_CONNECTION_ID)] as? List<PackagingElementEntity>
+          _diff.extractOneToAbstractManyChildren<PackagingElementEntity>(
+            com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.CHILDREN_CONNECTION_ID,
+            this)!!.toList() + (this.entityLinks[EntityLink(true,
+                                                            com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.CHILDREN_CONNECTION_ID)] as? List<PackagingElementEntity>
                                                                                              ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<PackagingElementEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true,
+                                      com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.CHILDREN_CONNECTION_ID)] as List<PackagingElementEntity> ?: emptyList()
         }
       }
       set(value) {
@@ -228,45 +256,59 @@ open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEnti
             if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
               // Backref setup before adding to store an abstract entity
               if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+                item_value.entityLinks[EntityLink(false,
+                                                  com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.CHILDREN_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
               _diff.addEntity(item_value)
             }
           }
-          _diff.updateOneToAbstractManyChildrenOfParent(CHILDREN_CONNECTION_ID, this, value.asSequence())
+          _diff.updateOneToAbstractManyChildrenOfParent(
+            com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.CHILDREN_CONNECTION_ID, this, value.asSequence())
         }
         else {
           for (item_value in value) {
             if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-              item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
+              item_value.entityLinks[EntityLink(false,
+                                                com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.CHILDREN_CONNECTION_ID)] = this
             }
             // else you're attaching a new entity to an existing entity that is not modifiable
           }
 
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(true,
+                                      com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Companion.CHILDREN_CONNECTION_ID)] = value
         }
         changedProperty.add("children")
       }
 
-    override fun getEntityClass(): Class<ArtifactRootElementEntity> = ArtifactRootElementEntity::class.java
+    override var fileName: String
+      get() = getEntityData().fileName
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).fileName = value
+        changedProperty.add("fileName")
+      }
+
+    override fun getEntityClass(): Class<ArchivePackagingElementEntity> = ArchivePackagingElementEntity::class.java
   }
 }
 
-class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEntity>() {
+class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingElementEntity>() {
+  lateinit var fileName: String
 
+  fun isFileNameInitialized(): Boolean = ::fileName.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ArtifactRootElementEntity> {
-    val modifiable = ArtifactRootElementEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ArchivePackagingElementEntity> {
+    val modifiable = com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ArtifactRootElementEntity {
+  override fun createEntity(snapshot: EntityStorage): ArchivePackagingElementEntity {
     return getCached(snapshot) {
-      val entity = ArtifactRootElementEntityImpl(this)
+      val entity = com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -274,7 +316,7 @@ class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEnt
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return ArtifactRootElementEntity::class.java
+    return ArchivePackagingElementEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -284,7 +326,7 @@ class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEnt
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return ArtifactRootElementEntity(entitySource) {
+    return ArchivePackagingElementEntity(fileName, entitySource) {
       this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
       this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
     }
@@ -299,9 +341,10 @@ class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEnt
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ArtifactRootElementEntityData
+    other as com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityData
 
     if (this.entitySource != other.entitySource) return false
+    if (this.fileName != other.fileName) return false
     return true
   }
 
@@ -309,18 +352,21 @@ class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEnt
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ArtifactRootElementEntityData
+    other as com.intellij.java.workspaceModel.entities.ArchivePackagingElementEntityData
 
+    if (this.fileName != other.fileName) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
+    result = 31 * result + fileName.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
+    result = 31 * result + fileName.hashCode()
     return result
   }
 

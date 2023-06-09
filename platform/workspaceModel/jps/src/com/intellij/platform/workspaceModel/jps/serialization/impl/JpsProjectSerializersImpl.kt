@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspaceModel.jps.serialization.impl
 
-import com.intellij.java.model.ArtifactEntity
-import com.intellij.java.model.ArtifactId
+import com.intellij.java.workspaceModel.entities.ArtifactEntity
+import com.intellij.java.workspaceModel.entities.ArtifactId
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs

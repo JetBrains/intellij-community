@@ -1,6 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.model
+package com.intellij.java.workspaceModel.entities
 
+import com.intellij.java.workspaceModel.entities.ArtifactId
+import com.intellij.java.workspaceModel.entities.ArtifactOutputPackagingElementEntity
+import com.intellij.java.workspaceModel.entities.CompositePackagingElementEntity
+import com.intellij.java.workspaceModel.entities.PackagingElementEntity
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage
@@ -9,7 +13,6 @@ import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.SymbolicEntityId
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
 import com.intellij.platform.workspaceModel.storage.impl.EntityLink
 import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -23,7 +26,7 @@ import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractMany
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class LibraryFilesPackagingElementEntityImpl(val dataSource: LibraryFilesPackagingElementEntityData) : LibraryFilesPackagingElementEntity, WorkspaceEntityBase() {
+open class ArtifactOutputPackagingElementEntityImpl(val dataSource: ArtifactOutputPackagingElementEntityData) : ArtifactOutputPackagingElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -39,8 +42,8 @@ open class LibraryFilesPackagingElementEntityImpl(val dataSource: LibraryFilesPa
   override val parentEntity: CompositePackagingElementEntity?
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
 
-  override val library: LibraryId?
-    get() = dataSource.library
+  override val artifact: ArtifactId?
+    get() = dataSource.artifact
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -49,9 +52,9 @@ open class LibraryFilesPackagingElementEntityImpl(val dataSource: LibraryFilesPa
     return connections
   }
 
-  class Builder(result: LibraryFilesPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<LibraryFilesPackagingElementEntity, LibraryFilesPackagingElementEntityData>(
-    result), LibraryFilesPackagingElementEntity.Builder {
-    constructor() : this(LibraryFilesPackagingElementEntityData())
+  class Builder(result: ArtifactOutputPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ArtifactOutputPackagingElementEntity, ArtifactOutputPackagingElementEntityData>(
+    result), ArtifactOutputPackagingElementEntity.Builder {
+    constructor() : this(ArtifactOutputPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -60,7 +63,7 @@ open class LibraryFilesPackagingElementEntityImpl(val dataSource: LibraryFilesPa
           return
         }
         else {
-          error("Entity LibraryFilesPackagingElementEntity is already created in a different builder")
+          error("Entity ArtifactOutputPackagingElementEntity is already created in a different builder")
         }
       }
 
@@ -90,9 +93,9 @@ open class LibraryFilesPackagingElementEntityImpl(val dataSource: LibraryFilesPa
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as LibraryFilesPackagingElementEntity
+      dataSource as ArtifactOutputPackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.library != dataSource?.library) this.library = dataSource.library
+      if (this.artifact != dataSource?.artifact) this.artifact = dataSource.artifact
       updateChildToParentReferences(parents)
     }
 
@@ -145,47 +148,47 @@ open class LibraryFilesPackagingElementEntityImpl(val dataSource: LibraryFilesPa
         changedProperty.add("parentEntity")
       }
 
-    override var library: LibraryId?
-      get() = getEntityData().library
+    override var artifact: ArtifactId?
+      get() = getEntityData().artifact
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).library = value
-        changedProperty.add("library")
+        getEntityData(true).artifact = value
+        changedProperty.add("artifact")
 
       }
 
-    override fun getEntityClass(): Class<LibraryFilesPackagingElementEntity> = LibraryFilesPackagingElementEntity::class.java
+    override fun getEntityClass(): Class<ArtifactOutputPackagingElementEntity> = ArtifactOutputPackagingElementEntity::class.java
   }
 }
 
-class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesPackagingElementEntity>(), SoftLinkable {
-  var library: LibraryId? = null
+class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOutputPackagingElementEntity>(), SoftLinkable {
+  var artifact: ArtifactId? = null
 
 
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
-    val optionalLink_library = library
-    if (optionalLink_library != null) {
-      result.add(optionalLink_library)
+    val optionalLink_artifact = artifact
+    if (optionalLink_artifact != null) {
+      result.add(optionalLink_artifact)
     }
     return result
   }
 
   override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-    val optionalLink_library = library
-    if (optionalLink_library != null) {
-      index.index(this, optionalLink_library)
+    val optionalLink_artifact = artifact
+    if (optionalLink_artifact != null) {
+      index.index(this, optionalLink_artifact)
     }
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     // TODO verify logic
     val mutablePreviousSet = HashSet(prev)
-    val optionalLink_library = library
-    if (optionalLink_library != null) {
-      val removedItem_optionalLink_library = mutablePreviousSet.remove(optionalLink_library)
-      if (!removedItem_optionalLink_library) {
-        index.index(this, optionalLink_library)
+    val optionalLink_artifact = artifact
+    if (optionalLink_artifact != null) {
+      val removedItem_optionalLink_artifact = mutablePreviousSet.remove(optionalLink_artifact)
+      if (!removedItem_optionalLink_artifact) {
+        index.index(this, optionalLink_artifact)
       }
     }
     for (removed in mutablePreviousSet) {
@@ -195,36 +198,36 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
 
   override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
     var changed = false
-    var library_data_optional = if (library != null) {
-      val library___data = if (library!! == oldLink) {
+    var artifact_data_optional = if (artifact != null) {
+      val artifact___data = if (artifact!! == oldLink) {
         changed = true
-        newLink as LibraryId
+        newLink as ArtifactId
       }
       else {
         null
       }
-      library___data
+      artifact___data
     }
     else {
       null
     }
-    if (library_data_optional != null) {
-      library = library_data_optional
+    if (artifact_data_optional != null) {
+      artifact = artifact_data_optional
     }
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<LibraryFilesPackagingElementEntity> {
-    val modifiable = LibraryFilesPackagingElementEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ArtifactOutputPackagingElementEntity> {
+    val modifiable = ArtifactOutputPackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): LibraryFilesPackagingElementEntity {
+  override fun createEntity(snapshot: EntityStorage): ArtifactOutputPackagingElementEntity {
     return getCached(snapshot) {
-      val entity = LibraryFilesPackagingElementEntityImpl(this)
+      val entity = ArtifactOutputPackagingElementEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -232,7 +235,7 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return LibraryFilesPackagingElementEntity::class.java
+    return ArtifactOutputPackagingElementEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -242,8 +245,8 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return LibraryFilesPackagingElementEntity(entitySource) {
-      this.library = this@LibraryFilesPackagingElementEntityData.library
+    return ArtifactOutputPackagingElementEntity(entitySource) {
+      this.artifact = this@ArtifactOutputPackagingElementEntityData.artifact
       this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
     }
   }
@@ -257,10 +260,10 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as LibraryFilesPackagingElementEntityData
+    other as ArtifactOutputPackagingElementEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.library != other.library) return false
+    if (this.artifact != other.artifact) return false
     return true
   }
 
@@ -268,31 +271,26 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as LibraryFilesPackagingElementEntityData
+    other as ArtifactOutputPackagingElementEntityData
 
-    if (this.library != other.library) return false
+    if (this.artifact != other.artifact) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + library.hashCode()
+    result = 31 * result + artifact.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + library.hashCode()
+    result = 31 * result + artifact.hashCode()
     return result
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(LibraryTableId::class.java)
-    collector.add(LibraryTableId.ModuleLibraryTableId::class.java)
-    collector.add(ModuleId::class.java)
-    collector.add(LibraryTableId.GlobalLibraryTableId::class.java)
-    collector.add(LibraryId::class.java)
-    collector.addObject(LibraryTableId.ProjectLibraryTableId::class.java)
+    collector.add(ArtifactId::class.java)
     collector.sameForAllEntities = true
   }
 }

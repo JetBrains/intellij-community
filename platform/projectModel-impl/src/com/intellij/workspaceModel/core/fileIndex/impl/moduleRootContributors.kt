@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
-import com.intellij.java.model.JavaResourceRootPropertiesEntity
-import com.intellij.java.model.JavaSourceRootPropertiesEntity
-import com.intellij.java.model.asJavaResourceRoot
-import com.intellij.java.model.asJavaSourceRoot
+import com.intellij.java.workspaceModel.entities.JavaResourceRootPropertiesEntity
+import com.intellij.java.workspaceModel.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspaceModel.entities.asJavaResourceRoot
+import com.intellij.java.workspaceModel.entities.asJavaSourceRoot
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.core.fileIndex.*

@@ -2,7 +2,7 @@
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
 import com.intellij.configurationStore.deserializeInto
-import com.intellij.java.model.*
+import com.intellij.java.workspaceModel.entities.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil

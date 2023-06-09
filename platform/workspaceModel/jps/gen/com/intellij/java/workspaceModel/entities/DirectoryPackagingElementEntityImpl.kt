@@ -1,10 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.model
+package com.intellij.java.workspaceModel.entities
 
-import com.intellij.java.model.ArchivePackagingElementEntity
-import com.intellij.java.model.ArtifactEntity
-import com.intellij.java.model.CompositePackagingElementEntity
-import com.intellij.java.model.PackagingElementEntity
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage
@@ -28,7 +24,7 @@ import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractOneP
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingElementEntityData) : ArchivePackagingElementEntity, WorkspaceEntityBase() {
+open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagingElementEntityData) : DirectoryPackagingElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -58,8 +54,8 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
   override val children: List<PackagingElementEntity>
     get() = snapshot.extractOneToAbstractManyChildren<PackagingElementEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
-  override val fileName: String
-    get() = dataSource.fileName
+  override val directoryName: String
+    get() = dataSource.directoryName
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -68,9 +64,9 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
     return connections
   }
 
-  class Builder(result: ArchivePackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ArchivePackagingElementEntity, ArchivePackagingElementEntityData>(
-    result), ArchivePackagingElementEntity.Builder {
-    constructor() : this(ArchivePackagingElementEntityData())
+  class Builder(result: DirectoryPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<DirectoryPackagingElementEntity, DirectoryPackagingElementEntityData>(
+    result), DirectoryPackagingElementEntity.Builder {
+    constructor() : this(DirectoryPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -79,7 +75,7 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
           return
         }
         else {
-          error("Entity ArchivePackagingElementEntity is already created in a different builder")
+          error("Entity DirectoryPackagingElementEntity is already created in a different builder")
         }
       }
 
@@ -112,8 +108,8 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
           error("Field CompositePackagingElementEntity#children should be initialized")
         }
       }
-      if (!getEntityData().isFileNameInitialized()) {
-        error("Field ArchivePackagingElementEntity#fileName should be initialized")
+      if (!getEntityData().isDirectoryNameInitialized()) {
+        error("Field DirectoryPackagingElementEntity#directoryName should be initialized")
       }
     }
 
@@ -123,9 +119,9 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as ArchivePackagingElementEntity
+      dataSource as DirectoryPackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.fileName != dataSource.fileName) this.fileName = dataSource.fileName
+      if (this.directoryName != dataSource.directoryName) this.directoryName = dataSource.directoryName
       updateChildToParentReferences(parents)
     }
 
@@ -256,34 +252,34 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
         changedProperty.add("children")
       }
 
-    override var fileName: String
-      get() = getEntityData().fileName
+    override var directoryName: String
+      get() = getEntityData().directoryName
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).fileName = value
-        changedProperty.add("fileName")
+        getEntityData(true).directoryName = value
+        changedProperty.add("directoryName")
       }
 
-    override fun getEntityClass(): Class<ArchivePackagingElementEntity> = ArchivePackagingElementEntity::class.java
+    override fun getEntityClass(): Class<DirectoryPackagingElementEntity> = DirectoryPackagingElementEntity::class.java
   }
 }
 
-class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingElementEntity>() {
-  lateinit var fileName: String
+class DirectoryPackagingElementEntityData : WorkspaceEntityData<DirectoryPackagingElementEntity>() {
+  lateinit var directoryName: String
 
-  fun isFileNameInitialized(): Boolean = ::fileName.isInitialized
+  fun isDirectoryNameInitialized(): Boolean = ::directoryName.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ArchivePackagingElementEntity> {
-    val modifiable = ArchivePackagingElementEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<DirectoryPackagingElementEntity> {
+    val modifiable = DirectoryPackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ArchivePackagingElementEntity {
+  override fun createEntity(snapshot: EntityStorage): DirectoryPackagingElementEntity {
     return getCached(snapshot) {
-      val entity = ArchivePackagingElementEntityImpl(this)
+      val entity = DirectoryPackagingElementEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -291,7 +287,7 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return ArchivePackagingElementEntity::class.java
+    return DirectoryPackagingElementEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -301,7 +297,7 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return ArchivePackagingElementEntity(fileName, entitySource) {
+    return DirectoryPackagingElementEntity(directoryName, entitySource) {
       this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
       this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
     }
@@ -316,10 +312,10 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ArchivePackagingElementEntityData
+    other as DirectoryPackagingElementEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.fileName != other.fileName) return false
+    if (this.directoryName != other.directoryName) return false
     return true
   }
 
@@ -327,21 +323,21 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ArchivePackagingElementEntityData
+    other as DirectoryPackagingElementEntityData
 
-    if (this.fileName != other.fileName) return false
+    if (this.directoryName != other.directoryName) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + fileName.hashCode()
+    result = 31 * result + directoryName.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + fileName.hashCode()
+    result = 31 * result + directoryName.hashCode()
     return result
   }
 

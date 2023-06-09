@@ -11,9 +11,9 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
 import com.intellij.platform.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.java.model.JavaModuleSettingsEntity
-import com.intellij.java.model.javaSettings
-import com.intellij.java.model.modifyEntity
+import com.intellij.java.workspaceModel.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspaceModel.entities.javaSettings
+import com.intellij.java.workspaceModel.entities.modifyEntity
 
 class LanguageLevelModuleExtensionBridge private constructor(private val module: ModuleBridge,
                                                              private val entityStorage: VersionedEntityStorage,
