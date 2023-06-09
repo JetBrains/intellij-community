@@ -270,7 +270,6 @@ internal class DefaultToolWindowLayoutBuilderImpl : DefaultToolWindowLayoutBuild
           addOrUpdate("Database") { weight = 0.25f }
           addOrUpdate("Gradle") { weight = 0.25f }
           addOrUpdate("Maven") { weight = 0.25f }
-          addOrUpdate("Web Inspector") { weight = 0.25f }
         }
         ToolWindowDescriptor.ToolWindowAnchor.BOTTOM -> {
           addOrUpdate("Version Control")
@@ -366,5 +365,4 @@ class DefaultToolWindowLayoutProviderToExtensionAdapter : DefaultToolWindowLayou
       }
     }
   }
-
 }
