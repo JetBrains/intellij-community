@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
@@ -36,37 +37,7 @@ public final class PythonHelpersLocator {
   private static final Logger LOG = Logger.getInstance(PythonHelpersLocator.class);
   private static final String PROPERTY_HELPERS_LOCATION = "idea.python.helpers.path";
 
-  /**
-   * Python creates *.pyc files near to *.py files after importing. It used to break patch updates from Toolbox on macOS
-   * due to signature mismatches: macOS refuses to launch such applications and users had to reinstall the IDE.
-   * There is no check for macOS though, since such problems may appear in other operating systems as well, and since it's a bad
-   * idea to modify the IDE distributive during running in general.
-   */
-  private static final LazyInitializer.LazyValue<@Nullable File> ourHelpersCopyRootDir =
-    new LazyInitializer.LazyValue<>(PythonHelpersLocator::initializeHelpersCopyRootDir);
-
-  private static @Nullable File initializeHelpersCopyRootDir() {
-    String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
-    final File pluginBaseDir = getPluginBaseDir(jarPath);
-    if (pluginBaseDir == null) {
-      return null;
-    }
-    try {
-      File rootDir = new File(
-        PathManager.getSystemPath(),
-        "python-helpers-" + ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode()
-      );
-      if (!rootDir.isDirectory()) {
-        FileUtil.copyDir(pluginBaseDir, rootDir, true);
-      }
-      return rootDir;
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException("Failed to create temporary directory for helpers", e);
-    }
-  }
-
-  private PythonHelpersLocator() {}
+  private PythonHelpersLocator() { }
 
   /**
    * @return the base directory under which various scripts, etc. are stored.
@@ -76,25 +47,25 @@ public final class PythonHelpersLocator {
     if (property != null) {
       return new File(property);
     }
-    return assertHelpersLayout(getHelperRoot("intellij.python.helpers", "/python/helpers"));
+    return assertHelpersLayout(getHelperRoot(ModuleHelpers.COMMUNITY));
   }
 
   public static @NotNull Path getHelpersProRoot() {
-    return assertHelpersProLayout(getHelperRoot("intellij.python.helpers.pro", "/../python/helpers-pro")).toPath().normalize();
+    return assertHelpersProLayout(getHelperRoot(ModuleHelpers.PRO)).toPath().normalize();
   }
 
-  private static @NotNull File getHelperRoot(@NotNull String moduleName, @NotNull String relativePath) {
+  private static @NotNull File getHelperRoot(@NotNull ModuleHelpers moduleHelpers) {
     if (PluginManagerCore.isRunningFromSources()) {
-      return new File(PathManager.getCommunityHomePath() + relativePath);
+      return new File(PathManager.getCommunityHomePath(), moduleHelpers.myCommunityRepoRelativePath);
     }
     else {
-      @Nullable File helpersRootDir = ourHelpersCopyRootDir.get();
+      @Nullable File helpersRootDir = moduleHelpers.copyRoot.get();
       if (helpersRootDir != null) {
-        return new File(helpersRootDir, PathUtil.getFileName(relativePath));
+        return helpersRootDir;
       }
       else {
         @NonNls String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
-        return new File(new File(jarPath).getParentFile(), moduleName);
+        return new File(new File(jarPath).getParentFile(), moduleHelpers.myModuleName);
       }
     }
   }
@@ -149,12 +120,57 @@ public final class PythonHelpersLocator {
     return new File(getHelpersRoot(), resourceName);
   }
 
-
   public static String getPythonCommunityPath() {
     File pathFromUltimate = new File(PathManager.getHomePath(), "community/python");
     if (pathFromUltimate.exists()) {
       return pathFromUltimate.getPath();
     }
     return new File(PathManager.getHomePath(), "python").getPath();
+  }
+
+  private enum ModuleHelpers {
+    COMMUNITY("intellij.python.helpers", "helpers", "python/helpers"),
+    PRO("intellij.python.helpers.pro", "helpers-pro", "../python/helpers-pro");
+
+    final String myModuleName;
+    final String myCommunityRepoRelativePath;
+
+    /**
+     * Python creates *.pyc files near to *.py files after importing. It used to break patch updates from Toolbox on macOS
+     * due to signature mismatches: macOS refuses to launch such applications and users had to reinstall the IDE.
+     * There is no check for macOS though, since such problems may appear in other operating systems as well, and since it's a bad
+     * idea to modify the IDE distributive during running in general.
+     */
+    final LazyInitializer.LazyValue<@Nullable File> copyRoot;
+
+    ModuleHelpers(@NotNull String moduleName, @NotNull String pluginRelativePath, @NotNull String communityRelativePath) {
+      myModuleName = moduleName;
+      myCommunityRepoRelativePath = communityRelativePath;
+
+      copyRoot = new LazyInitializer.LazyValue<>(() -> {
+        String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
+        final File pluginBaseDir = getPluginBaseDir(jarPath);
+        if (pluginBaseDir == null) {
+          return null;
+        }
+        try {
+          File rootDir = new File(
+            new File(
+              PathManager.getSystemPath(),
+              "python-helpers-" + ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode()
+            ),
+            moduleName
+          );
+          if (!rootDir.isDirectory()) {
+            NioFiles.createDirectories(rootDir.toPath().getParent());
+            FileUtil.copyDir(new File(pluginBaseDir, pluginRelativePath), rootDir, true);
+          }
+          return rootDir;
+        }
+        catch (IOException e) {
+          throw new UncheckedIOException("Failed to create temporary directory for helpers", e);
+        }
+      });
+    }
   }
 }
