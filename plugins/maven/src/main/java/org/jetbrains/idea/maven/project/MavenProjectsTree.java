@@ -1228,7 +1228,12 @@ public final class MavenProjectsTree {
   }
 
   public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {
-    myListeners.add(l, disposable);
+    if (!myListeners.contains(l)) {
+      myListeners.add(l, disposable);
+    }
+    else {
+      MavenLog.LOG.warn("Trying to add the same listener twice");
+    }
   }
 
   @ApiStatus.Internal
