@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.workspaceModel.storage.bridgeEntities
+package com.intellij.platform.workspaceModel.jps.entities
 
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
@@ -8,6 +8,8 @@ import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
 import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
 import com.intellij.platform.workspaceModel.storage.impl.EntityLink
 import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -16,14 +18,13 @@ import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspaceModel.storage.impl.updateOneToOneParentOfChild
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEntityBase() {
+open class LibraryPropertiesEntityImpl(val dataSource: LibraryPropertiesEntityData) : LibraryPropertiesEntity, WorkspaceEntityBase() {
 
   companion object {
-    internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, SdkEntity::class.java,
+    internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryPropertiesEntity::class.java,
                                                                            ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     val connections = listOf<ConnectionId>(
@@ -35,8 +36,11 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
   override val library: LibraryEntity
     get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
 
-  override val homeUrl: VirtualFileUrl
-    get() = dataSource.homeUrl
+  override val libraryType: String
+    get() = dataSource.libraryType
+
+  override val propertiesXmlTag: String?
+    get() = dataSource.propertiesXmlTag
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -45,8 +49,9 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
     return connections
   }
 
-  class Builder(result: SdkEntityData?) : ModifiableWorkspaceEntityBase<SdkEntity, SdkEntityData>(result), SdkEntity.Builder {
-    constructor() : this(SdkEntityData())
+  class Builder(result: LibraryPropertiesEntityData?) : ModifiableWorkspaceEntityBase<LibraryPropertiesEntity, LibraryPropertiesEntityData>(
+    result), LibraryPropertiesEntity.Builder {
+    constructor() : this(LibraryPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -55,7 +60,7 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
           return
         }
         else {
-          error("Entity SdkEntity is already created in a different builder")
+          error("Entity LibraryPropertiesEntity is already created in a different builder")
         }
       }
 
@@ -67,7 +72,6 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
       // Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
 
-      index(this, "homeUrl", this.homeUrl)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -80,16 +84,16 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
       }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(LIBRARY_CONNECTION_ID, this) == null) {
-          error("Field SdkEntity#library should be initialized")
+          error("Field LibraryPropertiesEntity#library should be initialized")
         }
       }
       else {
         if (this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] == null) {
-          error("Field SdkEntity#library should be initialized")
+          error("Field LibraryPropertiesEntity#library should be initialized")
         }
       }
-      if (!getEntityData().isHomeUrlInitialized()) {
-        error("Field SdkEntity#homeUrl should be initialized")
+      if (!getEntityData().isLibraryTypeInitialized()) {
+        error("Field LibraryPropertiesEntity#libraryType should be initialized")
       }
     }
 
@@ -99,9 +103,10 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as SdkEntity
+      dataSource as LibraryPropertiesEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.homeUrl != dataSource.homeUrl) this.homeUrl = dataSource.homeUrl
+      if (this.libraryType != dataSource.libraryType) this.libraryType = dataSource.libraryType
+      if (this.propertiesXmlTag != dataSource?.propertiesXmlTag) this.propertiesXmlTag = dataSource.propertiesXmlTag
       updateChildToParentReferences(parents)
     }
 
@@ -150,36 +155,43 @@ open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEn
         changedProperty.add("library")
       }
 
-    override var homeUrl: VirtualFileUrl
-      get() = getEntityData().homeUrl
+    override var libraryType: String
+      get() = getEntityData().libraryType
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).homeUrl = value
-        changedProperty.add("homeUrl")
-        val _diff = diff
-        if (_diff != null) index(this, "homeUrl", value)
+        getEntityData(true).libraryType = value
+        changedProperty.add("libraryType")
       }
 
-    override fun getEntityClass(): Class<SdkEntity> = SdkEntity::class.java
+    override var propertiesXmlTag: String?
+      get() = getEntityData().propertiesXmlTag
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).propertiesXmlTag = value
+        changedProperty.add("propertiesXmlTag")
+      }
+
+    override fun getEntityClass(): Class<LibraryPropertiesEntity> = LibraryPropertiesEntity::class.java
   }
 }
 
-class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
-  lateinit var homeUrl: VirtualFileUrl
+class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>() {
+  lateinit var libraryType: String
+  var propertiesXmlTag: String? = null
 
-  fun isHomeUrlInitialized(): Boolean = ::homeUrl.isInitialized
+  fun isLibraryTypeInitialized(): Boolean = ::libraryType.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SdkEntity> {
-    val modifiable = SdkEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<LibraryPropertiesEntity> {
+    val modifiable = LibraryPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): SdkEntity {
+  override fun createEntity(snapshot: EntityStorage): LibraryPropertiesEntity {
     return getCached(snapshot) {
-      val entity = SdkEntityImpl(this)
+      val entity = LibraryPropertiesEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -187,7 +199,7 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return SdkEntity::class.java
+    return LibraryPropertiesEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -197,7 +209,8 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return SdkEntity(homeUrl, entitySource) {
+    return LibraryPropertiesEntity(libraryType, entitySource) {
+      this.propertiesXmlTag = this@LibraryPropertiesEntityData.propertiesXmlTag
       parents.filterIsInstance<LibraryEntity>().singleOrNull()?.let { this.library = it }
     }
   }
@@ -212,10 +225,11 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as SdkEntityData
+    other as LibraryPropertiesEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.homeUrl != other.homeUrl) return false
+    if (this.libraryType != other.libraryType) return false
+    if (this.propertiesXmlTag != other.propertiesXmlTag) return false
     return true
   }
 
@@ -223,26 +237,28 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as SdkEntityData
+    other as LibraryPropertiesEntityData
 
-    if (this.homeUrl != other.homeUrl) return false
+    if (this.libraryType != other.libraryType) return false
+    if (this.propertiesXmlTag != other.propertiesXmlTag) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + homeUrl.hashCode()
+    result = 31 * result + libraryType.hashCode()
+    result = 31 * result + propertiesXmlTag.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + homeUrl.hashCode()
+    result = 31 * result + libraryType.hashCode()
+    result = 31 * result + propertiesXmlTag.hashCode()
     return result
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.homeUrl?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
+    collector.sameForAllEntities = true
   }
 }

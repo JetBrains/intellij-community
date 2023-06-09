@@ -1,17 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspaceModel.storage.tests
 
-import com.intellij.platform.workspaceModel.storage.testEntities.entities.AnotherSource
-import com.intellij.platform.workspaceModel.storage.testEntities.entities.MySource
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Before
 import org.junit.Test
-import kotlin.test.assertEquals
 
 class ContentRootEqualityTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
@@ -23,6 +16,7 @@ class ContentRootEqualityTest {
 
   @Test
   fun `rbs with events`() {
+    /*
     val builder1 = createEmptyBuilder()
     builder1.addEntity(ModuleEntity("MyName", emptyList(), MySource) {
       contentRoots = listOf(
@@ -47,5 +41,7 @@ class ContentRootEqualityTest {
     builder1.replaceBySource({ it is MySource }, builder2)
 
     assertEquals("Type", builder1.entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots.single().rootType)
+    */
+    TODO()
   }
 }

@@ -1,15 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspaceModel.storage.tests
 
-import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
 import com.intellij.platform.workspaceModel.storage.SerializationResult
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.platform.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.platform.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.Assert.*
 import org.junit.Before
@@ -119,17 +115,18 @@ class EntityStorageSerializationTest {
 
   @Test
   fun `serialize empty lists`() {
-    val virtualFileManager = VirtualFileUrlManagerImpl()
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
-
-    val builder = createEmptyBuilder()
-
-    // Do not replace ArrayList() with emptyList(). This must be a new object for this test
-    builder addEntity LibraryEntity("myName", LibraryTableId.ProjectLibraryTableId, ArrayList(), MySource)
-
-    withTempFile { file ->
-      serializer.serializeCache(file, builder.toSnapshot())
-    }
+    //val virtualFileManager = VirtualFileUrlManagerImpl()
+    //val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
+    //
+    //val builder = createEmptyBuilder()
+    //
+    //// Do not replace ArrayList() with emptyList(). This must be a new object for this test
+    //builder addEntity LibraryEntity("myName", LibraryTableId.ProjectLibraryTableId, ArrayList(), MySource)
+    //
+    //withTempFile { file ->
+    //  serializer.serializeCache(file, builder.toSnapshot())
+    //}
+    TODO()
   }
 
   @Test

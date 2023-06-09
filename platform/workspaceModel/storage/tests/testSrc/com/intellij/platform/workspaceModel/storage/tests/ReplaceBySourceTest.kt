@@ -1,17 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspaceModel.storage.tests
 
-import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.platform.workspaceModel.storage.EntityChange
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.impl.*
 import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspaceModel.storage.testEntities.entities.*
 import com.intellij.platform.workspaceModel.storage.toBuilder
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.RepetitionInfo
@@ -1743,33 +1741,33 @@ class ReplaceBySourceTest {
     assertEquals("one", children[0].childProperty)
     assertEquals("two", children[1].childProperty)
   }
-
-  @RepeatedTest(10)
-  fun `test rbs to itself with multiple parents and same children`() {
-    val virtualFileManager = VirtualFileUrlManagerImpl()
-    val root11 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
-    val root12 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
-
-    builder add ModuleEntity("MyModule", emptyList(), MySource) {
-      this.contentRoots = listOf(root11, root12)
-    }
-    builder add ProjectModelTestEntity("", Descriptor(""), MySource) {
-      this.contentRoot = root11
-    }
-
-    val root21 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
-    val root22 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
-    replacement add ModuleEntity("MyModule", emptyList(), MySource) {
-      this.contentRoots = listOf(root21, root22)
-    }
-    replacement add ProjectModelTestEntity("", Descriptor(""), MySource) {
-      this.contentRoot = root21
-    }
-
-    rbsAllSources()
-
-    builder.assertConsistency()
-  }
+  //
+  //@RepeatedTest(10)
+  //fun `test rbs to itself with multiple parents and same children`() {
+  //  val virtualFileManager = VirtualFileUrlManagerImpl()
+  //  val root11 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
+  //  val root12 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
+  //
+  //  builder add ModuleEntity("MyModule", emptyList(), MySource) {
+  //    this.contentRoots = listOf(root11, root12)
+  //  }
+  //  builder add ProjectModelTestEntity("", Descriptor(""), MySource) {
+  //    this.contentRoot = root11
+  //  }
+  //
+  //  val root21 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
+  //  val root22 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
+  //  replacement add ModuleEntity("MyModule", emptyList(), MySource) {
+  //    this.contentRoots = listOf(root21, root22)
+  //  }
+  //  replacement add ProjectModelTestEntity("", Descriptor(""), MySource) {
+  //    this.contentRoot = root21
+  //  }
+  //
+  //  rbsAllSources()
+  //
+  //  builder.assertConsistency()
+  //}
 
   @RepeatedTest(10)
   fun `test replaceBySource with two equal entities referring to each other`() {

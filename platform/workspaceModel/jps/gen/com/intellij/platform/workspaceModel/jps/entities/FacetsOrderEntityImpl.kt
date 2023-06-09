@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.workspaceModel.storage.bridgeEntities
+package com.intellij.platform.workspaceModel.jps.entities
 
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
@@ -8,35 +8,38 @@ import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.FacetsOrderEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
 import com.intellij.platform.workspaceModel.storage.impl.EntityLink
 import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspaceModel.storage.impl.updateOneToOneParentOfChild
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class CustomSourceRootPropertiesEntityImpl(val dataSource: CustomSourceRootPropertiesEntityData) : CustomSourceRootPropertiesEntity, WorkspaceEntityBase() {
+open class FacetsOrderEntityImpl(val dataSource: FacetsOrderEntityData) : FacetsOrderEntity, WorkspaceEntityBase() {
 
   companion object {
-    internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
-                                                                              CustomSourceRootPropertiesEntity::class.java,
-                                                                              ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val MODULEENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetsOrderEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     val connections = listOf<ConnectionId>(
-      SOURCEROOT_CONNECTION_ID,
+      MODULEENTITY_CONNECTION_ID,
     )
 
   }
 
-  override val sourceRoot: SourceRootEntity
-    get() = snapshot.extractOneToOneParent(SOURCEROOT_CONNECTION_ID, this)!!
+  override val orderOfFacets: List<String>
+    get() = dataSource.orderOfFacets
 
-  override val propertiesXmlTag: String
-    get() = dataSource.propertiesXmlTag
+  override val moduleEntity: ModuleEntity
+    get() = snapshot.extractOneToOneParent(MODULEENTITY_CONNECTION_ID, this)!!
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -45,9 +48,9 @@ open class CustomSourceRootPropertiesEntityImpl(val dataSource: CustomSourceRoot
     return connections
   }
 
-  class Builder(result: CustomSourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<CustomSourceRootPropertiesEntity, CustomSourceRootPropertiesEntityData>(
-    result), CustomSourceRootPropertiesEntity.Builder {
-    constructor() : this(CustomSourceRootPropertiesEntityData())
+  class Builder(result: FacetsOrderEntityData?) : ModifiableWorkspaceEntityBase<FacetsOrderEntity, FacetsOrderEntityData>(
+    result), FacetsOrderEntity.Builder {
+    constructor() : this(FacetsOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -56,7 +59,7 @@ open class CustomSourceRootPropertiesEntityImpl(val dataSource: CustomSourceRoot
           return
         }
         else {
-          error("Entity CustomSourceRootPropertiesEntity is already created in a different builder")
+          error("Entity FacetsOrderEntity is already created in a different builder")
         }
       }
 
@@ -78,18 +81,18 @@ open class CustomSourceRootPropertiesEntityImpl(val dataSource: CustomSourceRoot
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
+      if (!getEntityData().isOrderOfFacetsInitialized()) {
+        error("Field FacetsOrderEntity#orderOfFacets should be initialized")
+      }
       if (_diff != null) {
-        if (_diff.extractOneToOneParent<WorkspaceEntityBase>(SOURCEROOT_CONNECTION_ID, this) == null) {
-          error("Field CustomSourceRootPropertiesEntity#sourceRoot should be initialized")
+        if (_diff.extractOneToOneParent<WorkspaceEntityBase>(MODULEENTITY_CONNECTION_ID, this) == null) {
+          error("Field FacetsOrderEntity#moduleEntity should be initialized")
         }
       }
       else {
-        if (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] == null) {
-          error("Field CustomSourceRootPropertiesEntity#sourceRoot should be initialized")
+        if (this.entityLinks[EntityLink(false, MODULEENTITY_CONNECTION_ID)] == null) {
+          error("Field FacetsOrderEntity#moduleEntity should be initialized")
         }
-      }
-      if (!getEntityData().isPropertiesXmlTagInitialized()) {
-        error("Field CustomSourceRootPropertiesEntity#propertiesXmlTag should be initialized")
       }
     }
 
@@ -97,11 +100,18 @@ open class CustomSourceRootPropertiesEntityImpl(val dataSource: CustomSourceRoot
       return connections
     }
 
+    override fun afterModification() {
+      val collection_orderOfFacets = getEntityData().orderOfFacets
+      if (collection_orderOfFacets is MutableWorkspaceList<*>) {
+        collection_orderOfFacets.cleanModificationUpdateAction()
+      }
+    }
+
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as CustomSourceRootPropertiesEntity
+      dataSource as FacetsOrderEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.propertiesXmlTag != dataSource.propertiesXmlTag) this.propertiesXmlTag = dataSource.propertiesXmlTag
+      if (this.orderOfFacets != dataSource.orderOfFacets) this.orderOfFacets = dataSource.orderOfFacets.toMutableList()
       updateChildToParentReferences(parents)
     }
 
@@ -115,15 +125,37 @@ open class CustomSourceRootPropertiesEntityImpl(val dataSource: CustomSourceRoot
 
       }
 
-    override var sourceRoot: SourceRootEntity
+    private val orderOfFacetsUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("orderOfFacets")
+    }
+    override var orderOfFacets: MutableList<String>
+      get() {
+        val collection_orderOfFacets = getEntityData().orderOfFacets
+        if (collection_orderOfFacets !is MutableWorkspaceList) return collection_orderOfFacets
+        if (diff == null || modifiable.get()) {
+          collection_orderOfFacets.setModificationUpdateAction(orderOfFacetsUpdater)
+        }
+        else {
+          collection_orderOfFacets.cleanModificationUpdateAction()
+        }
+        return collection_orderOfFacets
+      }
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).orderOfFacets = value
+        orderOfFacetsUpdater.invoke(value)
+      }
+
+    override var moduleEntity: ModuleEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(SOURCEROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                     SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
+          _diff.extractOneToOneParent(MODULEENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                       MODULEENTITY_CONNECTION_ID)]!! as ModuleEntity
         }
         else {
-          this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
+          this.entityLinks[EntityLink(false, MODULEENTITY_CONNECTION_ID)]!! as ModuleEntity
         }
       }
       set(value) {
@@ -131,61 +163,60 @@ open class CustomSourceRootPropertiesEntityImpl(val dataSource: CustomSourceRoot
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(true, MODULEENTITY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneParentOfChild(SOURCEROOT_CONNECTION_ID, this, value)
+          _diff.updateOneToOneParentOfChild(MODULEENTITY_CONNECTION_ID, this, value)
         }
         else {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(true, MODULEENTITY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
 
-          this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(false, MODULEENTITY_CONNECTION_ID)] = value
         }
-        changedProperty.add("sourceRoot")
+        changedProperty.add("moduleEntity")
       }
 
-    override var propertiesXmlTag: String
-      get() = getEntityData().propertiesXmlTag
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).propertiesXmlTag = value
-        changedProperty.add("propertiesXmlTag")
-      }
-
-    override fun getEntityClass(): Class<CustomSourceRootPropertiesEntity> = CustomSourceRootPropertiesEntity::class.java
+    override fun getEntityClass(): Class<FacetsOrderEntity> = FacetsOrderEntity::class.java
   }
 }
 
-class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRootPropertiesEntity>() {
-  lateinit var propertiesXmlTag: String
+class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
+  lateinit var orderOfFacets: MutableList<String>
 
-  fun isPropertiesXmlTagInitialized(): Boolean = ::propertiesXmlTag.isInitialized
+  fun isOrderOfFacetsInitialized(): Boolean = ::orderOfFacets.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<CustomSourceRootPropertiesEntity> {
-    val modifiable = CustomSourceRootPropertiesEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FacetsOrderEntity> {
+    val modifiable = FacetsOrderEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): CustomSourceRootPropertiesEntity {
+  override fun createEntity(snapshot: EntityStorage): FacetsOrderEntity {
     return getCached(snapshot) {
-      val entity = CustomSourceRootPropertiesEntityImpl(this)
+      val entity = FacetsOrderEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
     }
   }
 
+  override fun clone(): FacetsOrderEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as FacetsOrderEntityData
+    clonedEntity.orderOfFacets = clonedEntity.orderOfFacets.toMutableWorkspaceList()
+    return clonedEntity
+  }
+
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return CustomSourceRootPropertiesEntity::class.java
+    return FacetsOrderEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -195,14 +226,14 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return CustomSourceRootPropertiesEntity(propertiesXmlTag, entitySource) {
-      parents.filterIsInstance<SourceRootEntity>().singleOrNull()?.let { this.sourceRoot = it }
+    return FacetsOrderEntity(orderOfFacets, entitySource) {
+      parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.moduleEntity = it }
     }
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
     val res = mutableListOf<Class<out WorkspaceEntity>>()
-    res.add(SourceRootEntity::class.java)
+    res.add(ModuleEntity::class.java)
     return res
   }
 
@@ -210,10 +241,10 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as CustomSourceRootPropertiesEntityData
+    other as FacetsOrderEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.propertiesXmlTag != other.propertiesXmlTag) return false
+    if (this.orderOfFacets != other.orderOfFacets) return false
     return true
   }
 
@@ -221,25 +252,26 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as CustomSourceRootPropertiesEntityData
+    other as FacetsOrderEntityData
 
-    if (this.propertiesXmlTag != other.propertiesXmlTag) return false
+    if (this.orderOfFacets != other.orderOfFacets) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + propertiesXmlTag.hashCode()
+    result = 31 * result + orderOfFacets.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + propertiesXmlTag.hashCode()
+    result = 31 * result + orderOfFacets.hashCode()
     return result
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
+    this.orderOfFacets?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

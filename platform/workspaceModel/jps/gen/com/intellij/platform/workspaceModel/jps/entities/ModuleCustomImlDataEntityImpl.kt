@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.workspaceModel.storage.bridgeEntities
+package com.intellij.platform.workspaceModel.jps.entities
 
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
@@ -8,6 +8,8 @@ import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
 import com.intellij.platform.workspaceModel.storage.impl.EntityLink
 import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -19,26 +21,26 @@ import com.intellij.platform.workspaceModel.storage.impl.updateOneToOneParentOfC
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class LibraryPropertiesEntityImpl(val dataSource: LibraryPropertiesEntityData) : LibraryPropertiesEntity, WorkspaceEntityBase() {
+open class ModuleCustomImlDataEntityImpl(val dataSource: ModuleCustomImlDataEntityData) : ModuleCustomImlDataEntity, WorkspaceEntityBase() {
 
   companion object {
-    internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryPropertiesEntity::class.java,
-                                                                           ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleCustomImlDataEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     val connections = listOf<ConnectionId>(
-      LIBRARY_CONNECTION_ID,
+      MODULE_CONNECTION_ID,
     )
 
   }
 
-  override val library: LibraryEntity
-    get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
+  override val module: ModuleEntity
+    get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
-  override val libraryType: String
-    get() = dataSource.libraryType
+  override val rootManagerTagCustomData: String?
+    get() = dataSource.rootManagerTagCustomData
 
-  override val propertiesXmlTag: String?
-    get() = dataSource.propertiesXmlTag
+  override val customModuleOptions: Map<String, String>
+    get() = dataSource.customModuleOptions
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -47,9 +49,9 @@ open class LibraryPropertiesEntityImpl(val dataSource: LibraryPropertiesEntityDa
     return connections
   }
 
-  class Builder(result: LibraryPropertiesEntityData?) : ModifiableWorkspaceEntityBase<LibraryPropertiesEntity, LibraryPropertiesEntityData>(
-    result), LibraryPropertiesEntity.Builder {
-    constructor() : this(LibraryPropertiesEntityData())
+  class Builder(result: ModuleCustomImlDataEntityData?) : ModifiableWorkspaceEntityBase<ModuleCustomImlDataEntity, ModuleCustomImlDataEntityData>(
+    result), ModuleCustomImlDataEntity.Builder {
+    constructor() : this(ModuleCustomImlDataEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -58,7 +60,7 @@ open class LibraryPropertiesEntityImpl(val dataSource: LibraryPropertiesEntityDa
           return
         }
         else {
-          error("Entity LibraryPropertiesEntity is already created in a different builder")
+          error("Entity ModuleCustomImlDataEntity is already created in a different builder")
         }
       }
 
@@ -81,17 +83,17 @@ open class LibraryPropertiesEntityImpl(val dataSource: LibraryPropertiesEntityDa
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (_diff != null) {
-        if (_diff.extractOneToOneParent<WorkspaceEntityBase>(LIBRARY_CONNECTION_ID, this) == null) {
-          error("Field LibraryPropertiesEntity#library should be initialized")
+        if (_diff.extractOneToOneParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
+          error("Field ModuleCustomImlDataEntity#module should be initialized")
         }
       }
       else {
-        if (this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] == null) {
-          error("Field LibraryPropertiesEntity#library should be initialized")
+        if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
+          error("Field ModuleCustomImlDataEntity#module should be initialized")
         }
       }
-      if (!getEntityData().isLibraryTypeInitialized()) {
-        error("Field LibraryPropertiesEntity#libraryType should be initialized")
+      if (!getEntityData().isCustomModuleOptionsInitialized()) {
+        error("Field ModuleCustomImlDataEntity#customModuleOptions should be initialized")
       }
     }
 
@@ -101,10 +103,10 @@ open class LibraryPropertiesEntityImpl(val dataSource: LibraryPropertiesEntityDa
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as LibraryPropertiesEntity
+      dataSource as ModuleCustomImlDataEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.libraryType != dataSource.libraryType) this.libraryType = dataSource.libraryType
-      if (this.propertiesXmlTag != dataSource?.propertiesXmlTag) this.propertiesXmlTag = dataSource.propertiesXmlTag
+      if (this.rootManagerTagCustomData != dataSource?.rootManagerTagCustomData) this.rootManagerTagCustomData = dataSource.rootManagerTagCustomData
+      if (this.customModuleOptions != dataSource.customModuleOptions) this.customModuleOptions = dataSource.customModuleOptions.toMutableMap()
       updateChildToParentReferences(parents)
     }
 
@@ -118,15 +120,15 @@ open class LibraryPropertiesEntityImpl(val dataSource: LibraryPropertiesEntityDa
 
       }
 
-    override var library: LibraryEntity
+    override var module: ModuleEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(LIBRARY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                  LIBRARY_CONNECTION_ID)]!! as LibraryEntity
+          _diff.extractOneToOneParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                 MODULE_CONNECTION_ID)]!! as ModuleEntity
         }
         else {
-          this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)]!! as LibraryEntity
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
         }
       }
       set(value) {
@@ -134,62 +136,62 @@ open class LibraryPropertiesEntityImpl(val dataSource: LibraryPropertiesEntityDa
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneParentOfChild(LIBRARY_CONNECTION_ID, this, value)
+          _diff.updateOneToOneParentOfChild(MODULE_CONNECTION_ID, this, value)
         }
         else {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
 
-          this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
-        changedProperty.add("library")
+        changedProperty.add("module")
       }
 
-    override var libraryType: String
-      get() = getEntityData().libraryType
+    override var rootManagerTagCustomData: String?
+      get() = getEntityData().rootManagerTagCustomData
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).libraryType = value
-        changedProperty.add("libraryType")
+        getEntityData(true).rootManagerTagCustomData = value
+        changedProperty.add("rootManagerTagCustomData")
       }
 
-    override var propertiesXmlTag: String?
-      get() = getEntityData().propertiesXmlTag
+    override var customModuleOptions: Map<String, String>
+      get() = getEntityData().customModuleOptions
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).propertiesXmlTag = value
-        changedProperty.add("propertiesXmlTag")
+        getEntityData(true).customModuleOptions = value
+        changedProperty.add("customModuleOptions")
       }
 
-    override fun getEntityClass(): Class<LibraryPropertiesEntity> = LibraryPropertiesEntity::class.java
+    override fun getEntityClass(): Class<ModuleCustomImlDataEntity> = ModuleCustomImlDataEntity::class.java
   }
 }
 
-class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>() {
-  lateinit var libraryType: String
-  var propertiesXmlTag: String? = null
+class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEntity>() {
+  var rootManagerTagCustomData: String? = null
+  lateinit var customModuleOptions: Map<String, String>
 
-  fun isLibraryTypeInitialized(): Boolean = ::libraryType.isInitialized
+  fun isCustomModuleOptionsInitialized(): Boolean = ::customModuleOptions.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<LibraryPropertiesEntity> {
-    val modifiable = LibraryPropertiesEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ModuleCustomImlDataEntity> {
+    val modifiable = ModuleCustomImlDataEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): LibraryPropertiesEntity {
+  override fun createEntity(snapshot: EntityStorage): ModuleCustomImlDataEntity {
     return getCached(snapshot) {
-      val entity = LibraryPropertiesEntityImpl(this)
+      val entity = ModuleCustomImlDataEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -197,7 +199,7 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return LibraryPropertiesEntity::class.java
+    return ModuleCustomImlDataEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -207,15 +209,15 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return LibraryPropertiesEntity(libraryType, entitySource) {
-      this.propertiesXmlTag = this@LibraryPropertiesEntityData.propertiesXmlTag
-      parents.filterIsInstance<LibraryEntity>().singleOrNull()?.let { this.library = it }
+    return ModuleCustomImlDataEntity(customModuleOptions, entitySource) {
+      this.rootManagerTagCustomData = this@ModuleCustomImlDataEntityData.rootManagerTagCustomData
+      parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.module = it }
     }
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
     val res = mutableListOf<Class<out WorkspaceEntity>>()
-    res.add(LibraryEntity::class.java)
+    res.add(ModuleEntity::class.java)
     return res
   }
 
@@ -223,11 +225,11 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as LibraryPropertiesEntityData
+    other as ModuleCustomImlDataEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.libraryType != other.libraryType) return false
-    if (this.propertiesXmlTag != other.propertiesXmlTag) return false
+    if (this.rootManagerTagCustomData != other.rootManagerTagCustomData) return false
+    if (this.customModuleOptions != other.customModuleOptions) return false
     return true
   }
 
@@ -235,28 +237,29 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as LibraryPropertiesEntityData
+    other as ModuleCustomImlDataEntityData
 
-    if (this.libraryType != other.libraryType) return false
-    if (this.propertiesXmlTag != other.propertiesXmlTag) return false
+    if (this.rootManagerTagCustomData != other.rootManagerTagCustomData) return false
+    if (this.customModuleOptions != other.customModuleOptions) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + libraryType.hashCode()
-    result = 31 * result + propertiesXmlTag.hashCode()
+    result = 31 * result + rootManagerTagCustomData.hashCode()
+    result = 31 * result + customModuleOptions.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + libraryType.hashCode()
-    result = 31 * result + propertiesXmlTag.hashCode()
+    result = 31 * result + rootManagerTagCustomData.hashCode()
+    result = 31 * result + customModuleOptions.hashCode()
     return result
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
+    this.customModuleOptions?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }
