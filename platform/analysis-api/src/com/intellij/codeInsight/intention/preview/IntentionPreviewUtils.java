@@ -161,13 +161,10 @@ public final class IntentionPreviewUtils {
           return IntentionPreviewInfo.EMPTY;
         }
         VirtualFile vFile = modFile.file();
-        if (vFile.equals(file.getOriginalFile().getVirtualFile()) ||
-            vFile.equals(InjectedLanguageManager.getInstance(project).getTopLevelFile(file).getOriginalFile().getVirtualFile())) {
-          info = new IntentionPreviewInfo.Diff(modFile.oldText(), modFile.newText());
-        } else {
-          info = new IntentionPreviewInfo.CustomDiff(vFile.getFileType(), vFile.getName(), modFile.oldText(),
-                                                     modFile.newText());
-        }
+        var currentFile =
+          vFile.equals(file.getOriginalFile().getVirtualFile()) ||
+          vFile.equals(InjectedLanguageManager.getInstance(project).getTopLevelFile(file).getOriginalFile().getVirtualFile());
+        info = new IntentionPreviewInfo.CustomDiff(vFile.getFileType(), vFile.getName(), modFile.oldText(), modFile.newText(), currentFile);
       }
       else if (command instanceof ModNavigate navigate && navigate.caret() != -1) {
         PsiFile target = PsiManager.getInstance(project).findFile(navigate.file());

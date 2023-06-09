@@ -135,7 +135,8 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
   }
 
   private fun createDiffs(origText: String, modifiedText: String): String {
-    return fromCustomDiff(CustomDiff(JavaFileType.INSTANCE, origText, modifiedText)).createDiffs().map { diffInfo ->
+    return fromCustomDiff(CustomDiff(JavaFileType.INSTANCE, origText, modifiedText)).createDiffs().joinToString(
+      separator = "\n---------------------\n") { diffInfo ->
       val addends = diffInfo.fragments.flatMap { fragment ->
         listOf(fragment.start to when (fragment.type) {
           IntentionPreviewDiffResult.HighlightingType.ADDED -> "#+"
@@ -157,6 +158,6 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
       withHighlighters.split("\n").mapIndexed { index, s ->
         String.format("%-2d: ", diffInfo.startLine + index) + s
       }.joinToString(separator = "\n")
-    }.joinToString(separator = "\n---------------------\n")
+    }
   }
 }

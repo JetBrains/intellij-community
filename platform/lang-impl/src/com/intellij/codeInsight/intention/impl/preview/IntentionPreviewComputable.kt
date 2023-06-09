@@ -158,17 +158,6 @@ internal class IntentionPreviewComputable(private val project: Project,
           lineFragments = ComparisonManager.getInstance().compareLines(text, document.text, policy,
                                                                        DumbProgressIndicator.INSTANCE))
       }
-      is IntentionPreviewInfo.Diff -> {
-        IntentionPreviewDiffResult(
-          fileType = origFile.fileType,
-          newText = info.modifiedText(),
-          origText = info.originalText(),
-          policy = ComparisonPolicy.DEFAULT,
-          fileName = null,
-          normalDiff = true,
-          lineFragments = ComparisonManager.getInstance().compareLines(
-            info.originalText(), info.modifiedText(), ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE))
-      }
       IntentionPreviewInfo.EMPTY, IntentionPreviewInfo.FALLBACK_DIFF -> null
       is IntentionPreviewInfo.CustomDiff -> IntentionPreviewDiffResult.fromCustomDiff(info)
       else -> info

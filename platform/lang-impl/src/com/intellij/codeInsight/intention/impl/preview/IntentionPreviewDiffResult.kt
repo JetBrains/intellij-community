@@ -101,7 +101,7 @@ data class IntentionPreviewDiffResult(val fileType: FileType,
         ComparisonManager.getInstance().compareLines(result.originalText(), result.modifiedText(),
                                                      ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE),
         fileName = result.fileName(),
-        normalDiff = false,
+        normalDiff = result.isCurrentFile,
         policy = ComparisonPolicy.TRIM_WHITESPACES)
     }
   }

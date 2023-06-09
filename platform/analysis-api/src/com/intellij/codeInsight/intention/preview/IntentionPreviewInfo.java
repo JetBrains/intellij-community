@@ -79,36 +79,6 @@ public interface IntentionPreviewInfo {
   };
 
   /**
-   * Diff preview applied to the current file when new text is not actually written.
-   * Could be used as an alternative to {@link #DIFF} when we can generate the target text
-   * without actual PSI changes.
-   */
-  class Diff implements IntentionPreviewInfo {
-    private final @NotNull String myOrigText;
-    private final @NotNull String myModifiedText;
-
-    /**
-     * @param origText old text of the current file
-     * @param modifiedText new text for the current file
-     */
-    public Diff(@NotNull String origText, @NotNull String modifiedText) {
-      myOrigText = origText;
-      myModifiedText = modifiedText;
-    }
-
-    /**
-     * @return new text for the current file
-     */
-    public @NotNull String modifiedText() {
-      return myModifiedText;
-    }
-
-    public @NotNull String originalText() {
-      return myOrigText;
-    }
-  }
-  
-  /**
    * Diff preview where original text and new text are explicitly displayed.
    * Could be used to generate custom diff previews (e.g. when changes are to be applied to another file).
    * <p>
@@ -121,6 +91,7 @@ public interface IntentionPreviewInfo {
     private final @NotNull String myOrigText;
     private final @NotNull String myModifiedText;
     private final @Nullable String myFileName;
+    private final boolean myCurrentFile;
 
     /**
      * Construct a custom diff. Please prefer another constructor and specify a file name if it's applicable.
@@ -140,10 +111,30 @@ public interface IntentionPreviewInfo {
      * @param modifiedText changed file text
      */
     public CustomDiff(@NotNull FileType type, @Nullable String name, @NotNull String origText, @NotNull String modifiedText) {
+      this(type, name, origText, modifiedText, false);
+    }
+
+    /**
+     * @param type         file type, used for highlighting
+     * @param name         file name, can be displayed to user if specified
+     * @param origText     original file text
+     * @param modifiedText changed file text
+     * @param currentFile  if true then diff is built for the currently open file
+     */
+    public CustomDiff(@NotNull FileType type,
+                      @Nullable String name,
+                      @NotNull String origText,
+                      @NotNull String modifiedText,
+                      boolean currentFile) {
       myFileType = type;
       myFileName = name;
       myOrigText = origText;
       myModifiedText = modifiedText;
+      myCurrentFile = currentFile;
+    }
+
+    public boolean isCurrentFile() {
+      return myCurrentFile;
     }
 
     public @Nullable String fileName() {
