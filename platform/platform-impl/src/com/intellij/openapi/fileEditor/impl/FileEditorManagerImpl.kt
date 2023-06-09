@@ -1996,6 +1996,10 @@ open class FileEditorManagerImpl(
   }
 
   override fun refreshIcons() {
+    if (!initJob.isCompleted) {
+      return
+    }
+
     val openedFiles = openedFiles
     for (each in getAllSplitters()) {
       for (file in openedFiles) {
