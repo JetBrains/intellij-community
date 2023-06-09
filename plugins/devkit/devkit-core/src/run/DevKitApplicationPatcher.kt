@@ -109,7 +109,9 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     vmParameters.addProperty("fus.internal.test.mode", "true")
     vmParameters.addProperty("jbScreenMenuBar.enabled", "true")
     vmParameters.addProperty("jdk.attach.allowAttachSelf")
-    vmParameters.addProperty("idea.initially.ask.config", "true")
+    if (!vmParameters.hasParameter("idea.initially.ask.config")) {
+      vmParameters.addProperty("idea.initially.ask.config", "true")
+    }
   }
 
   override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean {
