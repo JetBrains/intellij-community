@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.ProjectTopics.PROJECT_ROOTS
-import com.intellij.java.model.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspaceModel.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.logger

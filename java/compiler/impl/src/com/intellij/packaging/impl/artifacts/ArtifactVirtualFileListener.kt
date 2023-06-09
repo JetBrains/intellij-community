@@ -20,8 +20,8 @@ import com.intellij.workspaceModel.ide.WorkspaceModel.Companion.getInstance
 import com.intellij.platform.workspaceModel.storage.CachedValue
 import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.ExternalEntityMapping
-import com.intellij.java.model.ArtifactEntity
-import com.intellij.java.model.FileOrDirectoryPackagingElementEntity
+import com.intellij.java.workspaceModel.entities.ArtifactEntity
+import com.intellij.java.workspaceModel.entities.FileOrDirectoryPackagingElementEntity
 
 internal class ArtifactVirtualFileListener(private val project: Project) : BulkFileListener {
   private val parentPathsToArtifacts: CachedValue<Map<String, List<ArtifactEntity>>> = CachedValue { storage: EntityStorage ->

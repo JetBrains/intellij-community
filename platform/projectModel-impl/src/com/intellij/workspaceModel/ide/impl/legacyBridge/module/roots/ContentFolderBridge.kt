@@ -1,9 +1,9 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
-import com.intellij.java.model.JavaSourceRootPropertiesEntity
-import com.intellij.java.model.asJavaResourceRoot
-import com.intellij.java.model.asJavaSourceRoot
-import com.intellij.java.model.modifyEntity
+import com.intellij.java.workspaceModel.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspaceModel.entities.asJavaResourceRoot
+import com.intellij.java.workspaceModel.entities.asJavaSourceRoot
+import com.intellij.java.workspaceModel.entities.modifyEntity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ContentFolder
 import com.intellij.openapi.roots.ExcludeFolder

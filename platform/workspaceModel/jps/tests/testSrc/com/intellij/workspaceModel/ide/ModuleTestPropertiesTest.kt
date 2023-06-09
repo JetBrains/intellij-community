@@ -12,7 +12,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.TestModulePropertiesEntity
-import com.intellij.java.model.modifyEntity
+import com.intellij.java.workspaceModel.entities.modifyEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.modifyEntity
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.ClassRule

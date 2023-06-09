@@ -11,8 +11,8 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.toElement
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.java.model.ArtifactEntity
-import com.intellij.java.model.PackagingElementEntity
+import com.intellij.java.workspaceModel.entities.ArtifactEntity
+import com.intellij.java.workspaceModel.entities.PackagingElementEntity
 import com.intellij.platform.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import org.junit.Assert
 

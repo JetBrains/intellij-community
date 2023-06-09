@@ -4,8 +4,8 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
 import com.intellij.idea.TestFor
-import com.intellij.java.model.JavaModuleSettingsEntity
-import com.intellij.java.model.javaSettings
+import com.intellij.java.workspaceModel.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspaceModel.entities.javaSettings
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.util.NlsSafe

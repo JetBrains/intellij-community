@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts.propertybased
 
-import com.intellij.java.model.*
+import com.intellij.java.workspaceModel.entities.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
@@ -28,7 +28,7 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.java.model.modifyEntity
+import com.intellij.java.workspaceModel.entities.modifyEntity
 import com.intellij.platform.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand

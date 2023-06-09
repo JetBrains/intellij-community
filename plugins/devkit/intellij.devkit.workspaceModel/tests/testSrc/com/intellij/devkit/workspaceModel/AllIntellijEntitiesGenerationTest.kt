@@ -21,8 +21,8 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import com.intellij.workspaceModel.ide.toVirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.CodeGeneratorVersions
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.java.model.JavaSourceRootPropertiesEntity
-import com.intellij.java.model.javaSourceRoots
+import com.intellij.java.workspaceModel.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspaceModel.entities.javaSourceRoots
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.platform.workspaceModel.storage.impl.url.toVirtualFileUrl

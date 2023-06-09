@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.model
+package com.intellij.java.workspaceModel.entities
 
-import com.intellij.java.model.ArtifactEntity
-import com.intellij.java.model.CompositePackagingElementEntity
-import com.intellij.java.model.CustomPackagingElementEntity
-import com.intellij.java.model.PackagingElementEntity
+import com.intellij.java.workspaceModel.entities.ArtifactEntity
+import com.intellij.java.workspaceModel.entities.CompositePackagingElementEntity
+import com.intellij.java.workspaceModel.entities.CustomPackagingElementEntity
+import com.intellij.java.workspaceModel.entities.PackagingElementEntity
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage

@@ -1,6 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.model
+package com.intellij.java.workspaceModel.entities
 
+import com.intellij.java.workspaceModel.entities.ArtifactEntity
+import com.intellij.java.workspaceModel.entities.ArtifactRootElementEntity
+import com.intellij.java.workspaceModel.entities.CompositePackagingElementEntity
+import com.intellij.java.workspaceModel.entities.PackagingElementEntity
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage
@@ -24,7 +28,7 @@ import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractOneP
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagingElementEntityData) : DirectoryPackagingElementEntity, WorkspaceEntityBase() {
+open class ArtifactRootElementEntityImpl(val dataSource: ArtifactRootElementEntityData) : ArtifactRootElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -54,9 +58,6 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
   override val children: List<PackagingElementEntity>
     get() = snapshot.extractOneToAbstractManyChildren<PackagingElementEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
-  override val directoryName: String
-    get() = dataSource.directoryName
-
   override val entitySource: EntitySource
     get() = dataSource.entitySource
 
@@ -64,9 +65,9 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
     return connections
   }
 
-  class Builder(result: DirectoryPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<DirectoryPackagingElementEntity, DirectoryPackagingElementEntityData>(
-    result), DirectoryPackagingElementEntity.Builder {
-    constructor() : this(DirectoryPackagingElementEntityData())
+  class Builder(result: ArtifactRootElementEntityData?) : ModifiableWorkspaceEntityBase<ArtifactRootElementEntity, ArtifactRootElementEntityData>(
+    result), ArtifactRootElementEntity.Builder {
+    constructor() : this(ArtifactRootElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -75,7 +76,7 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
           return
         }
         else {
-          error("Entity DirectoryPackagingElementEntity is already created in a different builder")
+          error("Entity ArtifactRootElementEntity is already created in a different builder")
         }
       }
 
@@ -108,9 +109,6 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
           error("Field CompositePackagingElementEntity#children should be initialized")
         }
       }
-      if (!getEntityData().isDirectoryNameInitialized()) {
-        error("Field DirectoryPackagingElementEntity#directoryName should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -119,9 +117,8 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as DirectoryPackagingElementEntity
+      dataSource as ArtifactRootElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.directoryName != dataSource.directoryName) this.directoryName = dataSource.directoryName
       updateChildToParentReferences(parents)
     }
 
@@ -252,34 +249,24 @@ open class DirectoryPackagingElementEntityImpl(val dataSource: DirectoryPackagin
         changedProperty.add("children")
       }
 
-    override var directoryName: String
-      get() = getEntityData().directoryName
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).directoryName = value
-        changedProperty.add("directoryName")
-      }
-
-    override fun getEntityClass(): Class<DirectoryPackagingElementEntity> = DirectoryPackagingElementEntity::class.java
+    override fun getEntityClass(): Class<ArtifactRootElementEntity> = ArtifactRootElementEntity::class.java
   }
 }
 
-class DirectoryPackagingElementEntityData : WorkspaceEntityData<DirectoryPackagingElementEntity>() {
-  lateinit var directoryName: String
+class ArtifactRootElementEntityData : WorkspaceEntityData<ArtifactRootElementEntity>() {
 
-  fun isDirectoryNameInitialized(): Boolean = ::directoryName.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<DirectoryPackagingElementEntity> {
-    val modifiable = DirectoryPackagingElementEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ArtifactRootElementEntity> {
+    val modifiable = ArtifactRootElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): DirectoryPackagingElementEntity {
+  override fun createEntity(snapshot: EntityStorage): ArtifactRootElementEntity {
     return getCached(snapshot) {
-      val entity = DirectoryPackagingElementEntityImpl(this)
+      val entity = ArtifactRootElementEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -287,7 +274,7 @@ class DirectoryPackagingElementEntityData : WorkspaceEntityData<DirectoryPackagi
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return DirectoryPackagingElementEntity::class.java
+    return ArtifactRootElementEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -297,7 +284,7 @@ class DirectoryPackagingElementEntityData : WorkspaceEntityData<DirectoryPackagi
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return DirectoryPackagingElementEntity(directoryName, entitySource) {
+    return ArtifactRootElementEntity(entitySource) {
       this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
       this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
     }
@@ -312,10 +299,9 @@ class DirectoryPackagingElementEntityData : WorkspaceEntityData<DirectoryPackagi
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as DirectoryPackagingElementEntityData
+    other as ArtifactRootElementEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.directoryName != other.directoryName) return false
     return true
   }
 
@@ -323,21 +309,18 @@ class DirectoryPackagingElementEntityData : WorkspaceEntityData<DirectoryPackagi
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as DirectoryPackagingElementEntityData
+    other as ArtifactRootElementEntityData
 
-    if (this.directoryName != other.directoryName) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + directoryName.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + directoryName.hashCode()
     return result
   }
 

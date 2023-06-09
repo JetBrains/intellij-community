@@ -2,10 +2,10 @@
 @file:JvmName("PackagingElementProcessing")
 package com.intellij.packaging.impl.artifacts
 
-import com.intellij.java.model.ArtifactEntity
-import com.intellij.java.model.CompositePackagingElementEntity
-import com.intellij.java.model.FileOrDirectoryPackagingElementEntity
-import com.intellij.java.model.PackagingElementEntity
+import com.intellij.java.workspaceModel.entities.ArtifactEntity
+import com.intellij.java.workspaceModel.entities.CompositePackagingElementEntity
+import com.intellij.java.workspaceModel.entities.FileOrDirectoryPackagingElementEntity
+import com.intellij.java.workspaceModel.entities.PackagingElementEntity
 
 fun processFileOrDirectoryCopyElements(artifact: ArtifactEntity, processor: (FileOrDirectoryPackagingElementEntity) -> Boolean) {
   val rootElement = artifact.rootElement ?: return

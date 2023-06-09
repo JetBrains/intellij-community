@@ -5,7 +5,7 @@ import com.intellij.configurationStore.serialize
 import com.intellij.externalSystem.ImportedLibraryProperties
 import com.intellij.externalSystem.ImportedLibraryType
 import com.intellij.java.library.MavenCoordinates
-import com.intellij.java.model.JavaModuleSettingsEntity
+import com.intellij.java.workspaceModel.entities.JavaModuleSettingsEntity
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.project.Project
