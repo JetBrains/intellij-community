@@ -6,7 +6,9 @@ import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.fragments.LineFragmentImpl
+import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.util.text.StringUtil
 import one.util.streamex.StreamEx
@@ -33,9 +35,10 @@ data class IntentionPreviewDiffResult(val fileType: FileType,
       val oldText = origText.substring(origStart, origEnd).trimStart('\n').trimEnd('\n').trimIndent()
 
       val deleted = newText.isBlank()
+      val shift = if (normalDiff) fragment.startLine1 else -1
       if (deleted) {
         if (oldText.isBlank()) return@mapNotNull null
-        return@mapNotNull DiffInfo(oldText, fragment.startLine1, fragment.endLine1 - fragment.startLine1,
+        return@mapNotNull DiffInfo(fileType, oldText, shift, fragment.endLine1 - fragment.startLine1,
                                    listOf(Fragment(HighlightingType.DELETED, 0, oldText.length)))
       }
 
@@ -46,13 +49,13 @@ data class IntentionPreviewDiffResult(val fileType: FileType,
                                                    DumbProgressIndicator.INSTANCE)
         if (words.all { word -> word.startOffset2 == word.endOffset2 }) {
           // only deleted
-          return@mapNotNull DiffInfo(oldText, fragment.startLine1, fragment.endLine1 - fragment.startLine1,
+          return@mapNotNull DiffInfo(fileType, oldText, shift, fragment.endLine1 - fragment.startLine1,
                                      words.map { word ->
                                        Fragment(HighlightingType.DELETED, word.startOffset1, word.endOffset1)
                                      })
         }
         else if (words.any { word -> word.startOffset2 == word.endOffset2 }) {
-          return@mapNotNull DiffInfo(newText, fragment.startLine1, fragment.endLine2 - fragment.startLine2,
+          return@mapNotNull DiffInfo(fileType, newText, shift, fragment.endLine2 - fragment.startLine2,
                                      listOf(Fragment(
                                        HighlightingType.UPDATED,
                                        words.first().startOffset2,
@@ -66,19 +69,44 @@ data class IntentionPreviewDiffResult(val fileType: FileType,
         }
       }
 
-      return@mapNotNull DiffInfo(newText, fragment.startLine1, fragment.endLine2 - fragment.startLine2, wordFragments)
+      return@mapNotNull DiffInfo(fileType, newText, shift, fragment.endLine2 - fragment.startLine2, wordFragments)
+    }
+    if (diffs.isNotEmpty()) {
+      return listOfNotNull(createFileNamePresentation()) + diffs
     }
     return diffs
+  }
+
+  private fun createFileNamePresentation(): DiffInfo? {
+    fileName ?: return null
+    val language = (fileType as? LanguageFileType)?.language ?: return null
+    val commenter = LanguageCommenters.INSTANCE.forLanguage(language) ?: return null
+    var comment: String? = null
+    val linePrefix = commenter.lineCommentPrefix
+    if (linePrefix != null) {
+      comment = "$linePrefix $fileName"
+    }
+    else {
+      val prefix = commenter.blockCommentPrefix
+      val suffix = commenter.blockCommentSuffix
+      if (prefix != null && suffix != null) {
+        comment = "$prefix $fileName $suffix"
+      }
+    }
+    comment ?: return null
+    return DiffInfo(fileType, comment, -1, comment.length, listOf())
   }
 
   enum class HighlightingType { ADDED, UPDATED, DELETED }
 
   data class Fragment(val type: HighlightingType, val start: Int, val end: Int)
 
-  data class DiffInfo(val fileText: String,
-                      val startLine: Int,
-                      val length: Int,
-                      val fragments: List<Fragment>)
+  data class DiffInfo(
+    val fileType: FileType,
+    val fileText: String,
+    val startLine: Int,
+    val length: Int,
+    val fragments: List<Fragment>)
 
   private fun squash(lines: List<LineFragment>): List<LineFragment> = StreamEx.of(lines)
     .collapse({ f1, f2 -> f2.startLine1 - f1.endLine1 == 1 && f2.startLine2 - f1.endLine2 == 1 },
@@ -92,6 +120,16 @@ data class IntentionPreviewDiffResult(val fileType: FileType,
   }
 
   companion object {
+    fun create(fileType: FileType,
+               newText: String,
+               origText: String,
+               lineFragments: List<LineFragment>,
+               normalDiff: Boolean = true,
+               fileName: String? = null,
+               policy: ComparisonPolicy): IntentionPreviewDiffResult {
+      return IntentionPreviewDiffResult(fileType, newText, origText, lineFragments, normalDiff, fileName, policy)
+    }
+    
     @JvmStatic
     fun fromCustomDiff(result: IntentionPreviewInfo.CustomDiff): IntentionPreviewDiffResult {
       return IntentionPreviewDiffResult(
@@ -101,7 +139,7 @@ data class IntentionPreviewDiffResult(val fileType: FileType,
         ComparisonManager.getInstance().compareLines(result.originalText(), result.modifiedText(),
                                                      ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE),
         fileName = result.fileName(),
-        normalDiff = result.isCurrentFile,
+        normalDiff = result.showLineNumbers(),
         policy = ComparisonPolicy.TRIM_WHITESPACES)
     }
   }

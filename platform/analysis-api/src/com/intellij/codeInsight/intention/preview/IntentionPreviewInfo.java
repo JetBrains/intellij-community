@@ -91,7 +91,7 @@ public interface IntentionPreviewInfo {
     private final @NotNull String myOrigText;
     private final @NotNull String myModifiedText;
     private final @Nullable String myFileName;
-    private final boolean myCurrentFile;
+    private final boolean myLineNumbers;
 
     /**
      * Construct a custom diff. Please prefer another constructor and specify a file name if it's applicable.
@@ -119,22 +119,22 @@ public interface IntentionPreviewInfo {
      * @param name         file name, can be displayed to user if specified
      * @param origText     original file text
      * @param modifiedText changed file text
-     * @param currentFile  if true then diff is built for the currently open file
+     * @param lineNumbers  if true then diff will display line numbers
      */
     public CustomDiff(@NotNull FileType type,
                       @Nullable String name,
                       @NotNull String origText,
                       @NotNull String modifiedText,
-                      boolean currentFile) {
+                      boolean lineNumbers) {
       myFileType = type;
       myFileName = name;
       myOrigText = origText;
       myModifiedText = modifiedText;
-      myCurrentFile = currentFile;
+      myLineNumbers = lineNumbers;
     }
 
-    public boolean isCurrentFile() {
-      return myCurrentFile;
+    public boolean showLineNumbers() {
+      return myLineNumbers;
     }
 
     public @Nullable String fileName() {

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.preview
 
-import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -12,12 +11,10 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.JBUI
-import java.awt.Color
 
-internal class IntentionPreviewModel {
+internal class IntentionPreviewEditorFactory {
   companion object {
 
     fun createEditors(project: Project, result: IntentionPreviewDiffResult?): List<EditorEx> {
@@ -25,38 +22,14 @@ internal class IntentionPreviewModel {
 
       val diffs = result.createDiffs()
       if (diffs.isNotEmpty()) {
-        val last = diffs.last()
-        val maxLine = if (result.normalDiff) last.startLine + last.length else -1
-        val fileName = result.fileName
-        val editors = diffs.map { it.createEditor(project, result.fileType, maxLine) }
-        val fileNameEditor = createFileNamePresentation(fileName, result, project)
-        return listOfNotNull(fileNameEditor) + editors
+        val maxLine = diffs.maxOfOrNull { diff -> 
+          if (diff.startLine == -1) 0 else diff.startLine + diff.length } ?: 0
+        return diffs.map { it.createEditor(project, maxLine) }
       }
       return emptyList()
     }
 
-    private fun createFileNamePresentation(fileName: String?, result: IntentionPreviewDiffResult, project: Project): EditorEx? {
-      fileName ?: return null
-      val language = (result.fileType as? LanguageFileType)?.language ?: return null
-      val commenter = LanguageCommenters.INSTANCE.forLanguage(language) ?: return null
-      var comment: String? = null
-      val linePrefix = commenter.lineCommentPrefix
-      if (linePrefix != null) {
-        comment = "$linePrefix $fileName"
-      }
-      else {
-        val prefix = commenter.blockCommentPrefix
-        val suffix = commenter.blockCommentSuffix
-        if (prefix != null && suffix != null) {
-          comment = "$prefix $fileName $suffix"
-        }
-      }
-      comment ?: return null
-      return IntentionPreviewDiffResult.DiffInfo(comment, 0, comment.length, listOf())
-        .createEditor(project, result.fileType, -1)
-    }
-
-    private fun IntentionPreviewDiffResult.DiffInfo.createEditor(project: Project, fileType: FileType, maxLine: Int): EditorEx {
+    private fun IntentionPreviewDiffResult.DiffInfo.createEditor(project: Project, maxLine: Int): EditorEx {
       val editor = createEditor(project, fileType, fileText, startLine, maxLine)
       for (fragment in fragments) {
         val attr = when (fragment.type) {
@@ -77,7 +50,7 @@ internal class IntentionPreviewModel {
         .apply { setBorder(JBUI.Borders.empty(0, 10)) }
 
       editor.settings.apply {
-        isLineNumbersShown = maxLine != -1
+        isLineNumbersShown = lineShift != -1
         isCaretRowShown = false
         isLineMarkerAreaShown = false
         isFoldingOutlineShown = false
@@ -88,7 +61,7 @@ internal class IntentionPreviewModel {
         isAdditionalPageAtBottom = false
       }
 
-      editor.backgroundColor = getEditorBackground()
+      editor.backgroundColor = EditorColorsManager.getInstance().globalScheme.defaultBackground
       editor.colorsScheme.setColor(EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR,
                                    editor.colorsScheme.getColor(EditorColors.LINE_NUMBERS_COLOR))
 
@@ -97,7 +70,7 @@ internal class IntentionPreviewModel {
 
       editor.gutterComponentEx.apply {
         isPaintBackground = false
-        if (maxLine != -1) {
+        if (lineShift != -1) {
           setLineNumberConverter(object : LineNumberConverter {
             override fun convert(editor: Editor, line: Int): Int = line + lineShift
             override fun getMaxLineNumber(editor: Editor): Int = maxLine
@@ -108,8 +81,5 @@ internal class IntentionPreviewModel {
       return editor
     }
 
-    private fun getEditorBackground(): Color {
-      return EditorColorsManager.getInstance().globalScheme.defaultBackground
-    }
   }
 }
