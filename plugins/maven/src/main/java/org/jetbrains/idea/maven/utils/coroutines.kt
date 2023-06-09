@@ -2,9 +2,8 @@
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -19,14 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 @RequiresBackgroundThread
 @RequiresBlockingContext
 @ApiStatus.Experimental
-fun <T> runBlockingCancellableUnderIndicator(action: suspend CoroutineScope.() -> T): T {
-  val process: () -> T = {
-    runBlockingCancellable {
-      return@runBlockingCancellable action()
-    }
-  }
-  return ProgressManager.getInstance().runProcess(process, EmptyProgressIndicator())
-}
+fun <T> runBlockingCancellableUnderIndicator(action: suspend CoroutineScope.() -> T): T = runBlockingMaybeCancellable(action)
 
 @ApiStatus.Experimental
 fun performInBackground(action: suspend () -> Unit) {
