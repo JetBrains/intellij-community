@@ -282,6 +282,12 @@ object CommunityRepositoryModules {
     },
     plugin("intellij.editorconfig") { spec ->
       spec.withProjectLibrary("ec4j-core")
+    },
+    plugin(
+      "intellij.turboComplete",
+    ) { spec ->
+      spec.bundlingRestrictions.includeInEapOnly = true
+      spec.withModule("intellij.turboComplete.languages.kotlin")
     }
   )
 

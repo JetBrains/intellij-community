@@ -119,6 +119,27 @@ class ReferenceVariantsCollector(
         consumer(extensions)
     }
 
+    data class ReferenceVariantsCollectors(
+        val basic: Lazy<ReferenceVariants>,
+        val extensions: Lazy<ReferenceVariants>
+    )
+
+    fun makeReferenceVariantsCollectors(descriptorKindFilter: DescriptorKindFilter): ReferenceVariantsCollectors {
+        val config = configuration(descriptorKindFilter)
+
+        val basic = lazy {
+            assert(!isCollectingFinished)
+            collectBasicVariants(config).fixDescriptors()
+        }
+
+        val extensions = lazy {
+            assert(!isCollectingFinished)
+            collectExtensionVariants(config, basic.value).fixDescriptors()
+        }
+
+        return ReferenceVariantsCollectors(basic, extensions)
+    }
+
     private fun collectBasicVariants(filterConfiguration: FilterConfiguration): ReferenceVariants {
         val variants = doCollectBasicVariants(filterConfiguration)
         collectedImported += variants.imported

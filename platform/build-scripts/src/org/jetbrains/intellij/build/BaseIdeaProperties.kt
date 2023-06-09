@@ -101,6 +101,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.keymap.visualStudio",
   "intellij.keymap.netbeans",
   "intellij.performanceTesting",
+  "intellij.turboComplete",
 )
 
 val CE_CLASS_VERSIONS: PersistentMap<String, String> = BASE_CLASS_VERSIONS.putAll(persistentHashMapOf(
