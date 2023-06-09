@@ -29,6 +29,8 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
     }
 
     internal val NAME_LENGTH = EventFields.RoundedInt("nameLength")
+    internal val ML_SCORE_KEY = EventFields.Double("mlScore")
+
 
     internal val nameFeatureToField = hashMapOf<String, EventField<*>>(
       "prefix_same_start_count" to EventFields.Int("${PrefixMatchingUtil.baseName}SameStartCount"),
@@ -45,6 +47,10 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
       "prefix_exact" to EventFields.Boolean("${PrefixMatchingUtil.baseName}Exact"),
       "prefix_matched_last_word" to EventFields.Boolean("${PrefixMatchingUtil.baseName}MatchedLastWord"),
     )
+
+    internal fun addMlScore(mlScore: Double?, features: MutableList<EventPair<*>>) =
+      mlScore?.let { features.add(ML_SCORE_KEY.with(it)) }
+
 
     internal fun roundDouble(value: Double): Double {
       if (!value.isFinite()) return -1.0

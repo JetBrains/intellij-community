@@ -72,7 +72,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
 
 
     val elementId = session.itemIdProvider.getId(element)
-    val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.mixedListInfo)
+    val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.mixedListInfo, session.cachedContextInfo)
     val mlWeight = if (state.orderByMl) state.getMLWeight(session.cachedContextInfo, mlElementInfo) else null
 
     return if (isShowDiff()) {
