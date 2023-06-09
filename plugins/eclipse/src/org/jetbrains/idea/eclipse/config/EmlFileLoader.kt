@@ -2,6 +2,8 @@
 package org.jetbrains.idea.eclipse.config
 
 import com.intellij.java.model.JavaModuleSettingsEntity
+import com.intellij.java.model.JavaSourceRootPropertiesEntity
+import com.intellij.java.model.asJavaSourceRoot
 import com.intellij.java.model.javaSettings
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.roots.OrderRootType

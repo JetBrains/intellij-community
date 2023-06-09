@@ -72,8 +72,6 @@ interface SourceRootEntity : WorkspaceEntity {
     val rootType: @NonNls String
 
     @Child val customSourceRootProperties: CustomSourceRootPropertiesEntity?
-    val javaSourceRoots: List<@Child JavaSourceRootPropertiesEntity>
-    val javaResourceRoots: List<@Child JavaResourceRootPropertiesEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -83,8 +81,6 @@ interface SourceRootEntity : WorkspaceEntity {
     override var url: VirtualFileUrl
     override var rootType: String
     override var customSourceRootProperties: CustomSourceRootPropertiesEntity?
-    override var javaSourceRoots: List<JavaSourceRootPropertiesEntity>
-    override var javaResourceRoots: List<JavaResourceRootPropertiesEntity>
   }
 
   companion object : Type<SourceRootEntity, Builder>() {

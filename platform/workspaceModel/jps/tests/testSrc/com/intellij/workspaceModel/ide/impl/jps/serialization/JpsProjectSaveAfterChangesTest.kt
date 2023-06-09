@@ -1,6 +1,9 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.java.model.JavaModuleSettingsEntity
+import com.intellij.java.model.JavaSourceRootPropertiesEntity
+import com.intellij.java.model.asJavaSourceRoot
+import com.intellij.java.model.modifyEntity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.workspaceModel.jps.JpsEntitySourceFactory

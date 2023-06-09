@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.ProjectTopics.PROJECT_ROOTS
+import com.intellij.java.model.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.logger
@@ -39,7 +40,6 @@ import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.toBuilder
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking

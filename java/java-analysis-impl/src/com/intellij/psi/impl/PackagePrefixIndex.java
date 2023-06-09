@@ -17,7 +17,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtil
 import com.intellij.platform.workspaceModel.storage.EntityChange;
 import com.intellij.platform.workspaceModel.storage.EntityStorage;
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.JavaSourceRootPropertiesEntity;
+import com.intellij.java.model.JavaSourceRootPropertiesEntity;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -32,18 +32,10 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
     internal val CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
                                                                                               CustomSourceRootPropertiesEntity::class.java,
                                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, false)
-    internal val JAVASOURCEROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
-                                                                                   JavaSourceRootPropertiesEntity::class.java,
-                                                                                   ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val JAVARESOURCEROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
-                                                                                     JavaResourceRootPropertiesEntity::class.java,
-                                                                                     ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     val connections = listOf<ConnectionId>(
       CONTENTROOT_CONNECTION_ID,
       CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID,
-      JAVASOURCEROOTS_CONNECTION_ID,
-      JAVARESOURCEROOTS_CONNECTION_ID,
     )
 
   }
@@ -59,12 +51,6 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
 
   override val customSourceRootProperties: CustomSourceRootPropertiesEntity?
     get() = snapshot.extractOneToOneChild(CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID, this)
-
-  override val javaSourceRoots: List<JavaSourceRootPropertiesEntity>
-    get() = snapshot.extractOneToManyChildren<JavaSourceRootPropertiesEntity>(JAVASOURCEROOTS_CONNECTION_ID, this)!!.toList()
-
-  override val javaResourceRoots: List<JavaResourceRootPropertiesEntity>
-    get() = snapshot.extractOneToManyChildren<JavaResourceRootPropertiesEntity>(JAVARESOURCEROOTS_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -122,28 +108,6 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
       }
       if (!getEntityData().isRootTypeInitialized()) {
         error("Field SourceRootEntity#rootType should be initialized")
-      }
-      // Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(JAVASOURCEROOTS_CONNECTION_ID, this) == null) {
-          error("Field SourceRootEntity#javaSourceRoots should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, JAVASOURCEROOTS_CONNECTION_ID)] == null) {
-          error("Field SourceRootEntity#javaSourceRoots should be initialized")
-        }
-      }
-      // Check initialization for list with ref type
-      if (_diff != null) {
-        if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(JAVARESOURCEROOTS_CONNECTION_ID, this) == null) {
-          error("Field SourceRootEntity#javaResourceRoots should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, JAVARESOURCEROOTS_CONNECTION_ID)] == null) {
-          error("Field SourceRootEntity#javaResourceRoots should be initialized")
-        }
       }
     }
 
@@ -260,100 +224,6 @@ open class SourceRootEntityImpl(val dataSource: SourceRootEntityData) : SourceRo
           this.entityLinks[EntityLink(true, CUSTOMSOURCEROOTPROPERTIES_CONNECTION_ID)] = value
         }
         changedProperty.add("customSourceRootProperties")
-      }
-
-    // List of non-abstract referenced types
-    var _javaSourceRoots: List<JavaSourceRootPropertiesEntity>? = emptyList()
-    override var javaSourceRoots: List<JavaSourceRootPropertiesEntity>
-      get() {
-        // Getter of the list of non-abstract referenced types
-        val _diff = diff
-        return if (_diff != null) {
-          _diff.extractOneToManyChildren<JavaSourceRootPropertiesEntity>(JAVASOURCEROOTS_CONNECTION_ID,
-                                                                         this)!!.toList() + (this.entityLinks[EntityLink(true,
-                                                                                                                         JAVASOURCEROOTS_CONNECTION_ID)] as? List<JavaSourceRootPropertiesEntity>
-                                                                                             ?: emptyList())
-        }
-        else {
-          this.entityLinks[EntityLink(true, JAVASOURCEROOTS_CONNECTION_ID)] as? List<JavaSourceRootPropertiesEntity> ?: emptyList()
-        }
-      }
-      set(value) {
-        // Setter of the list of non-abstract referenced types
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null) {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
-              // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, JAVASOURCEROOTS_CONNECTION_ID)] = this
-              }
-              // else you're attaching a new entity to an existing entity that is not modifiable
-
-              _diff.addEntity(item_value)
-            }
-          }
-          _diff.updateOneToManyChildrenOfParent(JAVASOURCEROOTS_CONNECTION_ID, this, value)
-        }
-        else {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-              item_value.entityLinks[EntityLink(false, JAVASOURCEROOTS_CONNECTION_ID)] = this
-            }
-            // else you're attaching a new entity to an existing entity that is not modifiable
-          }
-
-          this.entityLinks[EntityLink(true, JAVASOURCEROOTS_CONNECTION_ID)] = value
-        }
-        changedProperty.add("javaSourceRoots")
-      }
-
-    // List of non-abstract referenced types
-    var _javaResourceRoots: List<JavaResourceRootPropertiesEntity>? = emptyList()
-    override var javaResourceRoots: List<JavaResourceRootPropertiesEntity>
-      get() {
-        // Getter of the list of non-abstract referenced types
-        val _diff = diff
-        return if (_diff != null) {
-          _diff.extractOneToManyChildren<JavaResourceRootPropertiesEntity>(JAVARESOURCEROOTS_CONNECTION_ID,
-                                                                           this)!!.toList() + (this.entityLinks[EntityLink(true,
-                                                                                                                           JAVARESOURCEROOTS_CONNECTION_ID)] as? List<JavaResourceRootPropertiesEntity>
-                                                                                               ?: emptyList())
-        }
-        else {
-          this.entityLinks[EntityLink(true, JAVARESOURCEROOTS_CONNECTION_ID)] as? List<JavaResourceRootPropertiesEntity> ?: emptyList()
-        }
-      }
-      set(value) {
-        // Setter of the list of non-abstract referenced types
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null) {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
-              // Backref setup before adding to store
-              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-                item_value.entityLinks[EntityLink(false, JAVARESOURCEROOTS_CONNECTION_ID)] = this
-              }
-              // else you're attaching a new entity to an existing entity that is not modifiable
-
-              _diff.addEntity(item_value)
-            }
-          }
-          _diff.updateOneToManyChildrenOfParent(JAVARESOURCEROOTS_CONNECTION_ID, this, value)
-        }
-        else {
-          for (item_value in value) {
-            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
-              item_value.entityLinks[EntityLink(false, JAVARESOURCEROOTS_CONNECTION_ID)] = this
-            }
-            // else you're attaching a new entity to an existing entity that is not modifiable
-          }
-
-          this.entityLinks[EntityLink(true, JAVARESOURCEROOTS_CONNECTION_ID)] = value
-        }
-        changedProperty.add("javaResourceRoots")
       }
 
     override fun getEntityClass(): Class<SourceRootEntity> = SourceRootEntity::class.java
