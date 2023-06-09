@@ -235,7 +235,7 @@ public abstract class Task implements TaskInfo, Progressive {
 
     @Override
     public void processSentToBackground() {
-      myBackgroundOption.processSentToBackground();
+      //myBackgroundOption.processSentToBackground();
     }
 
     @Override
