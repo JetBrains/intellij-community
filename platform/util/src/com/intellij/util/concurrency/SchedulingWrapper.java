@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
@@ -155,7 +156,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
     return backendExecutorService.awaitTermination(deadline - System.nanoTime(), TimeUnit.NANOSECONDS);
   }
 
-  class MyScheduledFutureTask<V> extends FutureTask<V> implements RunnableScheduledFuture<V> {
+  class MyScheduledFutureTask<V> extends FutureTask<V> implements RunnableScheduledFuture<V>, ContextAwareRunnable {
     /**
      * Sequence number to break ties FIFO
      */
@@ -305,12 +306,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
     // return false if this is the last task in the queue
     boolean executeMeInBackendExecutor() {
       if (!isDone()) {  // optimization: can be cancelled already
-        if (backendExecutorService instanceof ContextPropagatingExecutor) {
-          // scheduled tasks have already captured the context
-          ((ContextPropagatingExecutor)backendExecutorService).executeRaw(this);
-        } else {
-          backendExecutorService.execute(this);
-        }
+        backendExecutorService.execute(this);
       }
       return true;
     }

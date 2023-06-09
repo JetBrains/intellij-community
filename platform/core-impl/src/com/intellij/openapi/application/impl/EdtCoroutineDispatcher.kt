@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
@@ -27,12 +28,12 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
     val state = context.contextModality()
                 ?: ModalityState.NON_MODAL // dispatch with NON_MODAL by default
     val runnable = if (state === ModalityState.any()) {
-      block
+      ContextAwareRunnable(block::run)
     }
     else {
       DispatchedRunnable(context.job, block)
     }
-    ApplicationManager.getApplication().invokeLaterRaw(runnable, state, Conditions.alwaysFalse<Nothing?>())
+    ApplicationManager.getApplication().invokeLater(runnable, state, Conditions.alwaysFalse<Nothing?>())
   }
 
   companion object : EdtCoroutineDispatcher() {
