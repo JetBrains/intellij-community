@@ -21,8 +21,8 @@ import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider
 
 @Service(Service.Level.APP)
-internal class ActionsLanguageModel(private val actionsDictionary: ActionsDictionary = ActionsDictionaryImpl()) : Dictionary by actionsDictionary,
-                                                                                                                  FrequencyMetadata by actionsDictionary {
+internal class ActionsLanguageModel(private val actionDictionary: ActionDictionary = ActionDictionaryImpl()) : Dictionary by actionDictionary,
+                                                                                                               FrequencyMetadata by actionDictionary {
 
   companion object {
     /**
@@ -50,7 +50,7 @@ internal class ActionsLanguageModel(private val actionsDictionary: ActionsDictio
     .let { actionManager ->
       actionManager.actionIds
         .asSequence()
-        .mapNotNull { actionManager.getAction(it) }
+        .mapNotNull { actionManager.getActionOrStub(it) }
     }.filterNot { it is ActionGroup && !it.isSearchable }
     .mapNotNull { it.templateText }
 
@@ -60,11 +60,11 @@ internal class ActionsLanguageModel(private val actionsDictionary: ActionsDictio
     .filterIsInstance<SearchableConfigurable>()
     .map { it.displayName }
 
-  internal interface ActionsDictionary : Dictionary, FrequencyMetadata {
+  internal interface ActionDictionary : Dictionary, FrequencyMetadata {
     fun addWord(word: String)
   }
 
-  private class ActionsDictionaryImpl : ActionsDictionary {
+  private class ActionDictionaryImpl : ActionDictionary {
     private val words: MutableMap<String, Int> = HashMap(1500)
 
     override fun addWord(word: String) {
@@ -105,7 +105,7 @@ internal class ActionsLanguageModel(private val actionsDictionary: ActionsDictio
         .map { it.filter { c -> c.isLetterOrDigit() } }
         .filterNot { it.isEmpty() || it.isSingleCharacter() }
         .map { it.lowercase() }
-        .forEach(actionsDictionary::addWord)
+        .forEach(actionDictionary::addWord)
 
       isFinished = true
     }

@@ -40,7 +40,7 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
 
   override fun createComponent(): JComponent? = null
 
-  override fun isModified() = false
+  override fun isModified(): Boolean = false
 
   @Synchronized
   override fun addListener(listener: MutableConfigurableGroup.Listener) {

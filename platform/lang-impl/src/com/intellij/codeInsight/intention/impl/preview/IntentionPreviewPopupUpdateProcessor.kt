@@ -34,6 +34,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
 import java.awt.Dimension
+import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JWindow
@@ -86,8 +87,8 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
             size = Dimension(size.width.coerceAtLeast(MIN_WIDTH), size.height)
           }
           popup.content.preferredSize = size
-          adjustPosition(originalPopup)
           popup.size = size
+          adjustPosition(originalPopup, true)
         }
       })
       adjustPosition(originalPopup)
@@ -111,9 +112,18 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       .submit(AppExecutorUtil.getAppExecutorService())
   }
 
-  private fun adjustPosition(originalPopup: JBPopup?) {
+  private fun adjustPosition(originalPopup: JBPopup?, checkResizing: Boolean = false) {
     if (originalPopup != null && originalPopup.content.isShowing) {
-      PositionAdjuster(originalPopup.content).adjust(popup, RIGHT, LEFT)
+      val positionAdjuster = PositionAdjuster(originalPopup.content)
+      val previousDimension = PositionAdjuster.getPopupSize(popup)
+      val bounds: Rectangle = positionAdjuster.adjustBounds(previousDimension, arrayOf(RIGHT, LEFT))
+      val popupSize = popup.size
+      if (checkResizing && popupSize != null && bounds.width < MIN_WIDTH) {
+        hide()
+      }
+      else {
+        positionAdjuster.adjust(popup, previousDimension, bounds)
+      }
     }
   }
 
@@ -152,7 +162,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     originalPopup = popup
   }
 
-  fun isShown() = show && popupWindow?.isVisible != false
+  fun isShown(): Boolean = show && popupWindow?.isVisible != false
 
   fun hide() {
     if (::popup.isInitialized && !popup.isDisposed) {
@@ -221,8 +231,8 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   }
 
   companion object {
-    internal const val MAX_HEIGHT = 300
-    internal const val MIN_WIDTH = 300
+    internal const val MAX_HEIGHT: Int = 300
+    internal const val MIN_WIDTH: Int = 300
 
     fun getShortcutText(): String = KeymapUtil.getPreferredShortcutText(getShortcutSet().shortcuts)
     fun getShortcutSet(): ShortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_QUICK_JAVADOC)

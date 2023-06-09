@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
 import com.intellij.collaboration.async.mapCaching
+import com.intellij.collaboration.async.mapFiltered
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.childScope
@@ -42,21 +43,21 @@ private val LOG = logger<GitLabMergeRequestTimelineViewModel>()
 class LoadAllGitLabMergeRequestTimelineViewModel(
   parentCs: CoroutineScope,
   override val currentUser: GitLabUserDTO,
-  private val project: GitLabProject,
+  project: GitLabProject,
   mrId: GitLabMergeRequestId
 ) : GitLabMergeRequestTimelineViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default)
+  private val mrStore = project.mergeRequests
   private val loadingRequests = MutableSharedFlow<Unit>(1)
 
   private val mergeRequestFlow: Flow<Result<GitLabMergeRequest>> = loadingRequests.flatMapLatest {
-    project.mergeRequests.getShared(mrId)
+    mrStore.getShared(mrId)
   }.modelFlow(cs, LOG)
 
   override val timelineLoadingFlow: Flow<LoadingState> = channelFlow {
-    send(LoadingState.Loading)
-
     mergeRequestFlow.collectLatest { mrResult ->
+      send(LoadingState.Loading)
       coroutineScope {
         val result = try {
           val mr = mrResult.getOrThrow()
@@ -115,7 +116,8 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
         miles.map(GitLabMergeRequestTimelineItem::MilestoneEvent)
       }
 
-    return combine(simpleEvents, mr.systemNotes, mr.discussions, mr.standaloneDraftNotes) { events, systemNotes, discussions, draftNotes ->
+    val standaloneDraftNotes = mr.draftNotes.mapFiltered { it.discussionId == null }
+    return combine(simpleEvents, mr.systemNotes, mr.discussions, standaloneDraftNotes) { events, systemNotes, discussions, draftNotes ->
       (events +
        systemNotes.map { GitLabMergeRequestTimelineItem.SystemNote(it) } +
        discussions.map(GitLabMergeRequestTimelineItem::UserDiscussion)

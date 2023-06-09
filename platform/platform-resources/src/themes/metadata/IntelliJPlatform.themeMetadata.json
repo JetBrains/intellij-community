@@ -1370,6 +1370,11 @@
       "description": "A background of a hovered row in an unfocused tree if hover is allowed."
     },
     {
+      "key": "Tree.forceFocusedSelectionForeground",
+      "since": "2023.2",
+      "description": "Does it need to use Tree.selectionForeground instead of custom element foreground"
+    },
+    {
       "key": "Tree.Selection.arc",
       "since": "2023",
       "description": "Selection border corners radius in tree selection"

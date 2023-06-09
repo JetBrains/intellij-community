@@ -18,10 +18,10 @@ internal class ErrorReportConfigurable : PersistentStateComponent<DeveloperList>
     private val SERVICE_NAME = "$SERVICE_NAME_PREFIX — JetBrains Account"
 
     @JvmStatic
-    fun getInstance() = service<ErrorReportConfigurable>()
+    fun getInstance(): ErrorReportConfigurable = service<ErrorReportConfigurable>()
 
     @JvmStatic
-    fun getCredentials() = PasswordSafe.instance.get(CredentialAttributes(SERVICE_NAME))
+    fun getCredentials(): Credentials? = PasswordSafe.instance.get(CredentialAttributes(SERVICE_NAME))
 
     @JvmStatic
     fun saveCredentials(userName: String?, password: CharArray?) {
@@ -41,13 +41,13 @@ internal class ErrorReportConfigurable : PersistentStateComponent<DeveloperList>
     private fun getCredentialsState(): CredentialsState = lastCredentialsState ?: credentialsState(getCredentials())
   }
 
-  var developerList = DeveloperList()
+  var developerList: DeveloperList = DeveloperList()
     set(value) {
       field = value
       incModificationCount()
     }
 
-  override fun getState() = developerList
+  override fun getState(): DeveloperList = developerList
 
   override fun loadState(value: DeveloperList) {
     developerList = value
@@ -63,12 +63,12 @@ private const val UPDATE_INTERVAL = 24L * 60 * 60 * 1000
 
 @Serializable
 internal data class DeveloperList(val developers: List<Developer> = emptyList(), val timestamp: Long = 0) {
-  fun isUpToDateAt() = timestamp != 0L && (System.currentTimeMillis() - timestamp) < UPDATE_INTERVAL
+  fun isUpToDateAt(): Boolean = timestamp != 0L && (System.currentTimeMillis() - timestamp) < UPDATE_INTERVAL
 }
 
 @Serializable
 internal data class Developer(val id: Int, val displayText: String) {
   companion object {
-    val NULL = Developer(-1, "<none>")
+    val NULL: Developer = Developer(-1, "<none>")
   }
 }

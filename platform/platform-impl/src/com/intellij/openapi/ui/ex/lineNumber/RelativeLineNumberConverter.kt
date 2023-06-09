@@ -3,6 +3,7 @@ package com.intellij.openapi.ui.ex.lineNumber
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LineNumberConverter
+import com.intellij.openapi.editor.impl.RelativeLineHelper.getRelativeLine
 import kotlin.math.abs
 
 object RelativeLineNumberConverter : LineNumberConverter {
@@ -12,7 +13,7 @@ object RelativeLineNumberConverter : LineNumberConverter {
 
   override fun convert(editor: Editor, lineNumber: Int): Int {
     val caretLine = editor.caretModel.logicalPosition.line
-    return abs(caretLine - (lineNumber - 1))
+    return abs(getRelativeLine(editor, caretLine, lineNumber - 1))
   }
 
   override fun getMaxLineNumber(editor: Editor): Int {

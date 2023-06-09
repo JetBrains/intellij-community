@@ -12,7 +12,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.IdeActions.GROUP_MAIN_TOOLBAR_CENTER
 import com.intellij.openapi.actionSystem.IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -94,10 +93,6 @@ class StripeActionGroup: ActionGroup(), DumbAware {
           window.project.service<ButtonsRepaintService>().unTrackButton(this)
         }
 
-        override fun setLook(look: ActionButtonLook?) {
-          if (look is SquareStripeButtonLook) super.setLook(look)
-        }
-
         override fun getAlignment(anchor: ToolWindowAnchor, splitMode: Boolean): HelpTooltip.Alignment {
           return HelpTooltip.Alignment.BOTTOM
         }
@@ -120,10 +115,6 @@ class StripeActionGroup: ActionGroup(), DumbAware {
       return object : AbstractMoreSquareStripeButton(this) {
         init {
           setLook(SquareStripeButtonLook(this))
-        }
-
-        override fun setLook(look: ActionButtonLook?) {
-          if (look is SquareStripeButtonLook) super.setLook(look)
         }
 
         override val side: ToolWindowAnchor
@@ -169,57 +160,67 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     override fun dispose() {
     }
   }
+
 }
 
 class EnableStripeGroup : ToggleAction(), DumbAware {
-  private val customizedGroup get() = getGroupPath(GROUP_MAIN_TOOLBAR_NEW_UI, GROUP_MAIN_TOOLBAR_CENTER)
+  companion object {
+    private val customizedGroup get() = getGroupPath(GROUP_MAIN_TOOLBAR_NEW_UI, GROUP_MAIN_TOOLBAR_CENTER)
 
+    fun setSingleStripeEnabled(enabled: Boolean) {
+      updateActionGroup(enabled, customizedGroup ?: return, STRIPE_ACTION_GROUP_ID)
+      UISettings.getInstance().hideToolStripes = enabled
+    }
+
+    fun isSingleStripeEnabled() = customizedGroup?.let { isActionGroupAdded(it, STRIPE_ACTION_GROUP_ID) } == true
+
+    private fun isActionGroupAdded(groupPath: List<String>, actionId: String): Boolean {
+      return getInstance().getActions().find { it.groupPath == groupPath && matchesId(it.component, actionId) } != null
+    }
+
+    private fun updateActionGroup(add: Boolean, groupPath: List<String>, actionId: String) {
+      val globalSchema = getInstance()
+      val actions = globalSchema.getActions().toMutableList()
+      actions.removeIf { it.groupPath == groupPath && matchesId(it.component, actionId) }
+      if (add) {
+        actions.add(ActionUrl(ArrayList(groupPath), actionId, ActionUrl.ADDED, 0))
+      }
+      globalSchema.setActions(actions)
+      fireSchemaChanged()
+      setCustomizationSchemaForCurrentProjects()
+    }
+
+    private fun matchesId(component: Any?, actionId: String) = when (component) {
+      is AnAction -> ActionManager.getInstance().getId(component) == actionId
+      is Group -> component.id == actionId
+      else -> component == actionId
+    }
+
+    private fun getGroupPath(vararg ids: String): List<String>? {
+      val globalSchema = getInstance()
+      val groupPath = ArrayList<String>()
+      groupPath += "root"
+      for (id in ids) {
+        groupPath += getActionName(globalSchema, id) ?: return null
+      }
+      return groupPath
+    }
+
+    private fun getActionName(globalSchema: CustomActionsSchema, actionId: String): String? =
+      globalSchema.getDisplayName(actionId) ?: ActionManager.getInstance().getActionOrStub(actionId)?.templateText
+  }
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = NewUI.isEnabled() && customizedGroup != null
   }
 
   override fun isSelected(e: AnActionEvent): Boolean =
-    customizedGroup?.let { isActionGroupAdded(it, STRIPE_ACTION_GROUP_ID) } == true
+    isSingleStripeEnabled()
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    updateActionGroup(state, customizedGroup ?: return, STRIPE_ACTION_GROUP_ID)
-    UISettings.getInstance().hideToolStripes = state
+    setSingleStripeEnabled(state)
   }
 
-  private fun isActionGroupAdded(groupPath: List<String>, actionId: String): Boolean {
-    return getInstance().getActions().find { it.groupPath == groupPath && matchesId(it.component, actionId) } != null
-  }
-
-  private fun updateActionGroup(add: Boolean, groupPath: List<String>, actionId: String) {
-    val globalSchema = getInstance()
-    val actions = globalSchema.getActions().toMutableList()
-    actions.removeIf { it.groupPath == groupPath && matchesId(it.component, actionId) }
-    if (add) {
-      actions.add(ActionUrl(ArrayList(groupPath), actionId, ActionUrl.ADDED, 0))
-    }
-    globalSchema.setActions(actions)
-    fireSchemaChanged()
-    setCustomizationSchemaForCurrentProjects()
-  }
-
-  private fun matchesId(component: Any?, actionId: String) = when (component) {
-    is AnAction -> ActionManager.getInstance().getId(component) == actionId
-    is Group -> component.id == actionId
-    else -> component == actionId
-  }
-
-  private fun getGroupPath(vararg ids: String): List<String>? {
-    val globalSchema = getInstance()
-    val groupPath = ArrayList<String>()
-    groupPath += "root"
-    for (id in ids) {
-      groupPath += getActionName(globalSchema, id) ?: return null
-    }
-    return groupPath
-  }
-
-  private fun getActionName(globalSchema: CustomActionsSchema, actionId: String): String? =
-    globalSchema.getDisplayName(actionId) ?: ActionManager.getInstance().getActionOrStub(actionId)?.templateText
 }

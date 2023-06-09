@@ -12,6 +12,7 @@ import com.intellij.codeInsight.intention.impl.config.IntentionsMetadataService
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.ex.QuickFixWrapper
+import com.intellij.diagnostic.PluginException
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.ide.plugins.PluginManagerCore
@@ -27,7 +28,6 @@ import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
@@ -191,9 +191,9 @@ internal class IntentionPreviewComputable(private val project: Project,
     val unwrapped = IntentionActionDelegate.unwrap(action)
     val cls = (QuickFixWrapper.unwrap(unwrapped) ?: unwrapped)::class.java
     val loader = cls.classLoader
-    val thirdParty = loader !is PluginAwareClassLoader || !PluginManagerCore.isDevelopedByJetBrains(loader.pluginDescriptor)
-    if (!thirdParty) {
-      logger<IntentionPreviewComputable>().error("Intention preview fallback is used for action ${cls.name}|${action.familyName}")
+    if (loader is PluginAwareClassLoader && PluginManagerCore.isDevelopedByJetBrains(loader.pluginDescriptor)) {
+      logger<IntentionPreviewComputable>().error(
+        PluginException("Intention preview fallback is used for action ${cls.name}|${action.familyName}", loader.pluginId))
     }
     ProgressManager.checkCanceled()
     IntentionPreviewUtils.previewSession(editorCopy) {
@@ -205,29 +205,30 @@ internal class IntentionPreviewComputable(private val project: Project,
 
   private fun setupEditor(editorCopy: IntentionPreviewEditor, origFile: PsiFile, origEditor: Editor) {
     ProgressManager.checkCanceled()
-    val selection: TextRange
     val caretOffset: Int
+    val selectionStart: Int
+    val selectionEnd: Int
     if (origFile != originalFile) { // injection
       val manager = InjectedLanguageManager.getInstance(project)
       val selectionModel = origEditor.selectionModel
-      val start = manager.mapInjectedOffsetToUnescaped(origFile, selectionModel.selectionStart)
-      val end = if (selectionModel.selectionEnd == selectionModel.selectionStart) start
+      selectionStart = manager.mapInjectedOffsetToUnescaped(origFile, selectionModel.selectionStart)
+      selectionEnd = if (selectionModel.selectionEnd == selectionModel.selectionStart) selectionStart
       else
         manager.mapInjectedOffsetToUnescaped(origFile, selectionModel.selectionEnd)
-      selection = TextRange(start, end)
       val caretModel = origEditor.caretModel
       caretOffset = when (caretModel.offset) {
-        selectionModel.selectionStart -> start
-        selectionModel.selectionEnd -> end
+        selectionModel.selectionStart -> selectionStart
+        selectionModel.selectionEnd -> selectionEnd
         else -> manager.mapInjectedOffsetToUnescaped(origFile, caretModel.offset)
       }
     }
     else {
-      selection = TextRange(originalEditor.selectionModel.selectionStart, originalEditor.selectionModel.selectionEnd)
+      selectionStart = originalEditor.selectionModel.selectionStart
+      selectionEnd = originalEditor.selectionModel.selectionEnd
       caretOffset = originalEditor.caretModel.offset
     }
     editorCopy.caretModel.moveToOffset(caretOffset)
-    editorCopy.selectionModel.setSelection(selection.startOffset, selection.endOffset)
+    editorCopy.selectionModel.setSelection(selectionStart, selectionEnd)
   }
 }
 

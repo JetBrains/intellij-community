@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
@@ -172,7 +173,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   private static WindowManagerEx getWindowManager() {
     WindowManagerEx windowManager = null;
-    Application application = ApplicationManager.getApplication();
+    Application application = LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() ? ApplicationManager.getApplication() : null;
     if (application != null) {
       windowManager = WindowManagerEx.getInstanceEx();
     }
@@ -659,7 +660,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public void addNotify() {
       if (IdeFrameDecorator.isCustomDecorationActive()) {
-        JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true);
+        CustomHeader.enableCustomHeader(this);
       }
       super.addNotify();
       if (SystemInfo.isMacOSVentura && Registry.is("ide.mac.stage.manager.support", false)) {

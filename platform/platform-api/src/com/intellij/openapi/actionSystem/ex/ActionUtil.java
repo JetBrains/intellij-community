@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
@@ -120,7 +121,7 @@ public final class ActionUtil {
    */
   public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
     Presentation presentation = e.getPresentation();
-    if (LightEdit.owns(e.getProject()) && !LightEdit.isActionCompatible(action)) {
+    if (LightEdit.owns(e.getProject()) && !isActionLightEditCompatible(action)) {
       presentation.setEnabledAndVisible(false);
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, false);
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, false);
@@ -201,6 +202,11 @@ public final class ActionUtil {
     }
 
     return false;
+  }
+
+  private static boolean isActionLightEditCompatible(@NotNull AnAction action) {
+    if (action instanceof AnActionWrapper wrapper) return isActionLightEditCompatible(wrapper);
+    return (action instanceof ActionGroup) && action.isDumbAware() || action instanceof LightEditCompatible;
   }
 
   private static void assertDeprecatedActionGroupFlagsNotChanged(@NotNull ActionGroup group, @NotNull AnActionEvent event,

@@ -6,7 +6,7 @@ import training.learn.LessonsBundle
 import training.learn.lesson.general.navigation.SearchEverywhereLesson
 
 class JavaSearchEverywhereLesson : SearchEverywhereLesson() {
-  override val sampleFilePath = "src/RecentFilesDemo.java"
+  override val sampleFilePath: String = "src/RecentFilesDemo.java"
   override val resultFileName: String = "QuadraticEquationsSolver.java"
 
   override fun LessonContext.epilogue() {

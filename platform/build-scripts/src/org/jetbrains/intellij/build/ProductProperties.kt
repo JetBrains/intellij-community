@@ -106,6 +106,14 @@ abstract class ProductProperties {
   var additionalIdeJvmArguments: MutableList<String> = mutableListOf()
 
   /**
+   * Additional arguments which will be added to VM options for all operating systems.
+   * Difference between this property and [org.jetbrains.intellij.build.ProductProperties.additionalIdeJvmArguments] is this one could be
+   * used to put options to `*.vmoptions` file while arguments from [org.jetbrains.intellij.build.ProductProperties.additionalIdeJvmArguments]
+   * are used in command line in `*.sh` scripts or similar
+   */
+  var additionalVmOptions: PersistentList<String> = persistentListOf()
+
+  /**
    * The specified options will be used instead of/in addition to the default JVM memory options for all operating systems.
    */
   var customJvmMemoryOptions: PersistentMap<String, String> = persistentMapOf()
@@ -186,9 +194,16 @@ abstract class ProductProperties {
   var versionCheckerConfig: PersistentMap<String, String> = persistentMapOf()
 
   /**
-   * Strings which are forbidden as a part of resulting class file path
+   * Strings which are forbidden as a part of resulting class file path. E.g.:
+   * "license"
    */
   var forbiddenClassFileSubPaths: PersistentList<String> = persistentListOf()
+
+  /**
+   * Exceptions from forbiddenClassFileSubPaths. Must contain full string with the offending class, including the jar path. E.g.:
+   * "plugins/sample/lib/sample.jar!/com/sample/license/ThirdPartyLicensesDialog.class"
+   */
+  var forbiddenClassFileSubPathExceptions: PersistentList<String> = persistentListOf()
 
   /**
    * Paths to properties files the content of which should be appended to idea.properties file.

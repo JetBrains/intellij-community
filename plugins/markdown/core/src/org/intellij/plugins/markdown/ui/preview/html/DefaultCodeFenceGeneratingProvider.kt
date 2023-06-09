@@ -30,8 +30,7 @@ internal class DefaultCodeFenceGeneratingProvider(
         additionalLineProcessor = ::processCodeLine
       )
     }
-    val provider = cacheProviders.firstOrNull { it.isApplicable(language) }
-    val html = when (provider) {
+    val html = when (val provider = cacheProviders.firstOrNull { it.isApplicable(language) }) {
       null -> buildHighlightedFenceContent(
         codeFenceContent,
         highlightedRanges = emptyList(),

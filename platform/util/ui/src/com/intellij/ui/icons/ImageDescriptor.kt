@@ -16,24 +16,24 @@ class ImageDescriptor(
   @JvmField val isStroke: Boolean = false,
 ) {
   companion object {
-    const val HAS_2x = 1
-    const val HAS_DARK = 2
-    const val HAS_DARK_2x = 4
-    const val HAS_STROKE = 8
+    const val HAS_2x: Int = 1
+    const val HAS_DARK: Int = 2
+    const val HAS_DARK_2x: Int = 4
+    const val HAS_STROKE: Int = 8
 
     @JvmField
-    internal val STROKE_RETINA = ImageDescriptor(pathTransform = { p, e -> "${p}_stroke.$e" },
-                                                 scale = 2f,
-                                                 isSvg = false,
-                                                 isDark = false,
-                                                 isStroke = true)
+    internal val STROKE_RETINA: ImageDescriptor = ImageDescriptor(pathTransform = { p, e -> "${p}_stroke.$e" },
+                                                                  scale = 2f,
+                                                                  isSvg = false,
+                                                                  isDark = false,
+                                                                  isStroke = true)
 
     @JvmField
-    internal val STROKE_NON_RETINA = ImageDescriptor(pathTransform = { p, e -> "${p}_stroke.$e" },
-                                                     scale = 1f,
-                                                     isSvg = false,
-                                                     isDark = false,
-                                                     isStroke = true)
+    internal val STROKE_NON_RETINA: ImageDescriptor = ImageDescriptor(pathTransform = { p, e -> "${p}_stroke.$e" },
+                                                                      scale = 1f,
+                                                                      isSvg = false,
+                                                                      isDark = false,
+                                                                      isStroke = true)
   }
 
   internal fun toSvgMapper(): SvgCacheClassifier = SvgCacheClassifier(scale = scale, isDark = isDark, isStroke = isStroke)

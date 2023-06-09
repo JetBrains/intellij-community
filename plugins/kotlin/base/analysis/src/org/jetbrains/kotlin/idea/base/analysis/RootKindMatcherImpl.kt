@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragment
-import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol.BUILTINS_FILE_EXTENSION
+import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol
 import kotlin.script.experimental.api.ScriptAcceptedLocation
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.acceptedLocations
@@ -90,13 +90,13 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
         } else {
             val nameSequence = virtualFile.nameSequence
             if (nameSequence.endsWith(JavaFileType.DOT_DEFAULT_EXTENSION) ||
-                nameSequence.endsWith(KotlinFileType.EXTENSION) // TODO: change to  DOT_DEFAULT_EXTENSION
+                nameSequence.endsWith(KotlinFileType.DOT_DEFAULT_EXTENSION)
             ) {
                 canContainClassFiles = false
                 isBinary = false
             } else if (
                 nameSequence.endsWith(JavaClassFileType.DOT_DEFAULT_EXTENSION) ||
-                nameSequence.endsWith(BUILTINS_FILE_EXTENSION) || // TODO: change to  BUILTINS_DOT_FILE_EXTENSION
+                nameSequence.endsWith(BuiltInSerializerProtocol.DOT_DEFAULT_EXTENSION) ||
                 nameSequence.endsWith(MetadataPackageFragment.Companion.DOT_METADATA_FILE_EXTENSION)
             ) {
                 canContainClassFiles = false

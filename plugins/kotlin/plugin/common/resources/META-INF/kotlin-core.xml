@@ -124,11 +124,11 @@
 
     <projectPathMacroContributor implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"/>
 
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.update.KotlinPluginUpdateCheckerStartActivity"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$MyStartupActivity"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledRefresher"/>
 
+    <typeDeclarationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinTypeDeclarationProvider"/>
 
     <lang.foldingBuilder
             language="kotlin"
@@ -241,6 +241,11 @@
     <listener class="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$ModelChangeListener"
               topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
   </projectListeners>
+
+  <applicationListeners>
+    <listener class="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"
+              topic="com.intellij.openapi.project.ProjectCloseListener"/>
+  </applicationListeners>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <versionInfoProvider implementation="org.jetbrains.kotlin.idea.base.compilerPreferences.facet.KotlinVersionInfoProviderByModuleDependencies"/>

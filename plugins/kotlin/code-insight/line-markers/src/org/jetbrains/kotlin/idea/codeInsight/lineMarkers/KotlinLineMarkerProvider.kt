@@ -83,6 +83,7 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
 
         val isAbstract = CallableOverridingsTooltip.isAbstract(element, klass)
         val gutter = if (isAbstract) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
+        if (!gutter.isEnabled) return
         val icon = gutter.icon ?: return
 
         val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
@@ -121,6 +122,7 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
             val implements = callableSymbol is KtSymbolWithModality && callableSymbol.modality != Modality.ABSTRACT &&
                     allOverriddenSymbols.all { it is KtSymbolWithModality && it.modality == Modality.ABSTRACT }
             val gutter = if (implements) KotlinLineMarkerOptions.implementingOption else KotlinLineMarkerOptions.overridingOption
+            if (!gutter.isEnabled) return
             val anchor = declaration.nameIdentifier ?: declaration
             val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
                 anchor,
@@ -155,6 +157,7 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
         val anchor = element.nameIdentifier ?: element
         val isInterface = element.isInterface()
         val gutter = if (isInterface) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
+        if (!gutter.isEnabled) return
         val icon = gutter.icon ?: return
 
         val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(

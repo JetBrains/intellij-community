@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run
 
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.io.JsonReaderEx
@@ -15,8 +16,8 @@ import java.nio.file.Path
 internal fun loadProductInfo(ideaJdkHome: String): ProductInfo? {
   val ideHomePath = Path.of(ideaJdkHome)
   val productInfoJsonPath = when {
-    SystemInfo.isMac -> ideHomePath.resolve("Resources/product-info.json")
-    else -> ideHomePath.resolve("product-info.json")
+    SystemInfo.isMac -> ideHomePath.resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC)
+    else -> ideHomePath.resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME)
   }
   if (Files.notExists(productInfoJsonPath)) return null
 
@@ -29,6 +30,8 @@ internal fun loadProductInfo(ideaJdkHome: String): ProductInfo? {
     var additionalJvmArguments = launchMap["additionalJvmArguments"] as? MutableList<String> ?: return null
     additionalJvmArguments = additionalJvmArguments.map { s: String ->
       s.replace("\$APP_PACKAGE", ideaJdkHome)
+        .replace("\$IDE_HOME", ideaJdkHome)
+        .replace("%IDE_HOME%", ideaJdkHome)
         .replace("Contents/Contents", "Contents")
     }.toMutableList()
 

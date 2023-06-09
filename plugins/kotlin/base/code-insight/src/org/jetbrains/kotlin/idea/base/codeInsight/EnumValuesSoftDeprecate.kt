@@ -30,7 +30,7 @@ fun isSoftDeprecatedEnumValuesMethod(
 
 @ApiStatus.Internal
 fun KtAnalysisSession.getEntriesPropertyOfEnumClass(enumClassSymbol: KtClassOrObjectSymbol): KtCallableSymbol? =
-    enumClassSymbol.getStaticMemberScope().getCallableSymbols { it == StandardNames.ENUM_ENTRIES }.firstOrNull()
+    enumClassSymbol.getStaticMemberScope().getCallableSymbols(StandardNames.ENUM_ENTRIES).firstOrNull()
 
 @ApiStatus.Internal
 fun PsiElement.isEnumValuesSoftDeprecateEnabled(): Boolean = languageVersionSettings.isEnumValuesSoftDeprecateEnabled()

@@ -40,5 +40,5 @@ internal class IntentionPreviewLoadingDecorator(panel: JPanel, parent: Disposabl
     return nonOpaquePanel
   }
 
-  fun Color.withAlpha(alpha: Double) = ColorUtil.withAlpha(this, alpha)
+  fun Color.withAlpha(alpha: Double): Color = ColorUtil.withAlpha(this, alpha)
 }

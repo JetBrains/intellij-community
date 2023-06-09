@@ -399,6 +399,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/findClassUsages/javaDerivedInterfaceUsages2.0.kt");
             }
 
+            @TestMetadata("javaInterfaceAllUsages.0.kt")
+            public void testJavaInterfaceAllUsages() throws Exception {
+                runTest("testData/findUsages/kotlin/findClassUsages/javaInterfaceAllUsages.0.kt");
+            }
+
             @TestMetadata("kotlinAliasedClassAllUsages.0.kt")
             public void testKotlinAliasedClassAllUsages() throws Exception {
                 runTest("testData/findUsages/kotlin/findClassUsages/kotlinAliasedClassAllUsages.0.kt");
@@ -507,6 +512,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("kotlinInnerClassAllUsages.0.kt")
             public void testKotlinInnerClassAllUsages() throws Exception {
                 runTest("testData/findUsages/kotlin/findClassUsages/kotlinInnerClassAllUsages.0.kt");
+            }
+
+            @TestMetadata("kotlinInterfaceAllUsages.0.kt")
+            public void testKotlinInterfaceAllUsages() throws Exception {
+                runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceAllUsages.0.kt");
             }
 
             @TestMetadata("kotlinInterfaceDerivedAnonymousObjects.0.kt")
@@ -937,6 +947,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("kotlinFunctionParameterUsages.0.kt")
             public void testKotlinFunctionParameterUsages() throws Exception {
                 runTest("testData/findUsages/kotlin/findParameterUsages/kotlinFunctionParameterUsages.0.kt");
+            }
+
+            @TestMetadata("kotlinFunctionTypeParameterUsages.0.kt")
+            public void testKotlinFunctionTypeParameterUsages() throws Exception {
+                runTest("testData/findUsages/kotlin/findParameterUsages/kotlinFunctionTypeParameterUsages.0.kt");
             }
 
             @TestMetadata("kotlinHighlightParameterUsages.0.kt")

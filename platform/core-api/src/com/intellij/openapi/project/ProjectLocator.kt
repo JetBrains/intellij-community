@@ -5,24 +5,32 @@ package com.intellij.openapi.project
 
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.CachedSingletonsRegistry
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
-
-// called very often by StubUpdatingIndex
-private val instance = CachedSingletonsRegistry.lazy {
-  ApplicationManager.getApplication().service<ProjectLocator>()
-}
 
 private val preferredProjects = ThreadLocal.withInitial<MutableMap<VirtualFile, Project>> { HashMap() }
 
 @ApiStatus.NonExtendable
 abstract class ProjectLocator {
   companion object {
+    // called very often by StubUpdatingIndex
+    private var instance: ProjectLocator? = null
+
     @JvmStatic
-    fun getInstance(): ProjectLocator = instance.get()
+    fun getInstance(): ProjectLocator {
+      var instance = instance
+      if (instance == null) {
+        instance = ApplicationManager.getApplication().service<ProjectLocator>()
+        ProjectLocator.instance = instance
+      }
+      return instance
+    }
+
+    init {
+      ApplicationManager.registerCleaner { instance = null }
+    }
 
     /**
      * Execute `runnable`, making sure that within this computation every call to

@@ -68,17 +68,32 @@ class ResolutionAnchorCacheServiceImpl(
             }
 
     override fun getDependencyResolutionAnchors(libraryInfo: LibraryInfo): Set<ModuleSourceInfo> {
-        return resolutionAnchorDependenciesCache.getOrPut(libraryInfo) {
-            val allTransitiveLibraryDependencies = with(LibraryDependenciesCache.getInstance(project)) {
-                val directDependenciesOnLibraries = getLibraryDependencies(libraryInfo).libraries
-                directDependenciesOnLibraries.closure { libraryDependency ->
-                    checkCanceled()
-                    getLibraryDependencies(libraryDependency).libraries
-                }
-            }
-
-            allTransitiveLibraryDependencies.mapNotNullTo(mutableSetOf()) { resolutionAnchorsForLibraries[it] }
+        resolutionAnchorDependenciesCache[libraryInfo]?.let {
+            return it
         }
+
+        val allTransitiveLibraryDependencies = with(LibraryDependenciesCache.getInstance(project)) {
+            val directDependenciesOnLibraries = getLibraryDependencies(libraryInfo).libraries
+            directDependenciesOnLibraries.closure { libraryDependency ->
+                checkCanceled()
+                getLibraryDependencies(libraryDependency).libraries
+            }
+        }
+
+        val dependencyResolutionAnchors = allTransitiveLibraryDependencies.mapNotNullTo(mutableSetOf()) { resolutionAnchorsForLibraries[it] }
+        resolutionAnchorDependenciesCache.putIfAbsent(libraryInfo, dependencyResolutionAnchors)?.let {
+            // if value is already provided by the cache - no reasons for this thread to fill other values
+            return it
+        }
+        val platform = libraryInfo.platform
+        for (transitiveLibraryDependency in allTransitiveLibraryDependencies) {
+            // it's safe to use same dependencyResolutionAnchors for the same platform libraries
+            if (transitiveLibraryDependency.platform == platform) {
+                resolutionAnchorDependenciesCache.putIfAbsent(transitiveLibraryDependency, dependencyResolutionAnchors)
+            }
+        }
+
+        return dependencyResolutionAnchors
     }
 
     private fun associateModulesByNames(): Map<String, ModuleInfo> {

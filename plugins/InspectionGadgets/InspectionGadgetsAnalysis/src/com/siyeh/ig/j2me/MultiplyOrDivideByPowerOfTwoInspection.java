@@ -15,9 +15,10 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -25,17 +26,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class MultiplyOrDivideByPowerOfTwoInspection
   extends BaseInspection {
@@ -102,7 +100,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     if (expression instanceof PsiBinaryExpression binaryExpression) {
       final IElementType operationTokenType = binaryExpression.getOperationTokenType();
@@ -119,7 +117,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
     return new MultiplyByPowerOfTwoFix();
   }
 
-  private static class MultiplyByPowerOfTwoFix extends InspectionGadgetsFix {
+  private static class MultiplyByPowerOfTwoFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     public @NotNull String getFamilyName() {
@@ -128,8 +126,8 @@ public class MultiplyOrDivideByPowerOfTwoInspection
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiExpression expression = (PsiExpression)startElement;
       CommentTracker commentTracker = new CommentTracker();
       final String newExpression = calculateReplacementShift(expression, commentTracker);
       if (newExpression != null) {

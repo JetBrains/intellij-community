@@ -73,7 +73,7 @@ open class GraphicalColorPipette(private val parent: JComponent) : ColorPipette 
 
   override val pressedIcon: Icon = AllIcons.Ide.Pipette_rollover
 
-  override fun pick(callback: ColorPipette.Callback) = PickerDialog(parent, callback).pick()
+  override fun pick(callback: ColorPipette.Callback): Unit = PickerDialog(parent, callback).pick()
 }
 
 class GraphicalColorPipetteProvider : ColorPipetteProvider {

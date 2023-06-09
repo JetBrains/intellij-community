@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorCoreUtil
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.EditorSettings
+import com.intellij.openapi.editor.EditorSettings.LineNumerationType
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
@@ -29,7 +30,7 @@ import java.util.function.Supplier
 import kotlin.math.max
 
 private val LOG = logger<SettingsImpl>()
-internal const val EDITOR_SHOW_SPECIAL_CHARS = "editor.show.special.chars"
+internal const val EDITOR_SHOW_SPECIAL_CHARS: String = "editor.show.special.chars"
 
 class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: EditorKind?) : EditorSettings {
   private var languageSupplier: (() -> Language?)? = null
@@ -54,10 +55,10 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   private var myIsCaretBlinking: Boolean? = null
   private var myCaretBlinkingPeriod: Int? = null
   private var myIsRightMarginShown: Boolean? = null
-  private var myVerticalScrollOffset: Int? = null
-  private var myVerticalScrollJump: Int? = null
-  private var myHorizontalScrollOffset: Int? = null
-  private var myHorizontalScrollJump: Int? = null
+  private var myVerticalScrollOffset: Int = -1
+  private var myVerticalScrollJump: Int = -1
+  private var myHorizontalScrollOffset: Int = -1
+  private var myHorizontalScrollJump: Int = -1
   private var myAreLineNumbersShown: Boolean? = null
   private var myGutterIconsShown: Boolean? = null
   private var myIsFoldingOutlineShown: Boolean? = null
@@ -86,6 +87,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   private var myShowIntentionBulb: Boolean? = null
   private var showingSpecialCharacters: Boolean? = null
   private val myComputableSettings = ArrayList<CacheableBackgroundComputable<*>>()
+  private var myLineNumeration: EditorSettings.LineNumerationType? = null
 
   private val softMargins: CacheableBackgroundComputable<List<Int>> = object : CacheableBackgroundComputable<List<Int>>(emptyList()) {
     override fun computeValue(project: Project?): List<Int> {
@@ -417,7 +419,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   }
 
   override fun getVerticalScrollOffset(): Int {
-    return myVerticalScrollOffset ?: EditorSettingsExternalizable.getInstance().verticalScrollOffset
+    return if (myVerticalScrollOffset == -1) EditorSettingsExternalizable.getInstance().verticalScrollOffset else myVerticalScrollOffset
   }
 
   override fun setVerticalScrollOffset(`val`: Int) {
@@ -429,7 +431,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   }
 
   override fun getVerticalScrollJump(): Int {
-    return myVerticalScrollJump ?: EditorSettingsExternalizable.getInstance().verticalScrollJump
+    return if (myVerticalScrollJump == -1) EditorSettingsExternalizable.getInstance().verticalScrollJump else myVerticalScrollJump
   }
 
   override fun setVerticalScrollJump(`val`: Int) {
@@ -437,7 +439,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   }
 
   override fun getHorizontalScrollOffset(): Int {
-    return myHorizontalScrollOffset ?: EditorSettingsExternalizable.getInstance().horizontalScrollOffset
+    return if (myHorizontalScrollOffset == -1) EditorSettingsExternalizable.getInstance().horizontalScrollOffset else myHorizontalScrollOffset
   }
 
   override fun setHorizontalScrollOffset(`val`: Int) {
@@ -449,7 +451,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   }
 
   override fun getHorizontalScrollJump(): Int {
-    return myHorizontalScrollJump ?: EditorSettingsExternalizable.getInstance().horizontalScrollJump
+    return if (myHorizontalScrollJump == -1) EditorSettingsExternalizable.getInstance().horizontalScrollJump else myHorizontalScrollJump
   }
 
   override fun setHorizontalScrollJump(`val`: Int) {
@@ -729,6 +731,14 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     if (newState != oldState) {
       fireEditorRefresh()
     }
+  }
+
+  override fun getLineNumerationType(): EditorSettings.LineNumerationType {
+    return myLineNumeration ?: EditorSettingsExternalizable.getInstance().lineNumeration
+  }
+
+  override fun setLineNumerationType(value: LineNumerationType) {
+    myLineNumeration = value
   }
 
   override fun isInsertParenthesesAutomatically(): Boolean {

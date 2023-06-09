@@ -38,8 +38,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   static final int DATA_START = META_DATA_OFFSET + 16;
 
   protected final ResizeableMappedFile myCollisionResolutionStorage;
-  @NotNull
-  protected final AppendableObjectStorage<Data> myKeyStorage;
+  protected final @NotNull AppendableObjectStorage<Data> myKeyStorage;
   final KeyDescriptor<Data> myDataDescriptor;
   protected final Path myFile;
   private final Version myVersion;
@@ -210,13 +209,11 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  @NotNull
-  protected Lock getWriteLock() {
+  protected @NotNull Lock getWriteLock() {
     return myLock.writeLock();
   }
 
-  @NotNull
-  protected Lock getReadLock() {
+  protected @NotNull Lock getReadLock() {
     return USE_RW_LOCK ? myLock.readLock() : myLock.writeLock();
   }
 
@@ -238,8 +235,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   protected abstract void setupEmptyFile() throws IOException;
 
-  @NotNull
-  final RecordBufferHandler<PersistentEnumeratorBase<?>> getRecordHandler() {
+  final @NotNull RecordBufferHandler<PersistentEnumeratorBase<?>> getRecordHandler() {
     return myRecordHandler;
   }
 
@@ -326,7 +322,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  public boolean processAllDataObject(@NotNull final Processor<? super Data> processor, @Nullable final DataFilter filter)
+  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor, final @Nullable DataFilter filter)
     throws IOException {
     return traverseAllRecords(new RecordsProcessor() {
       @Override
@@ -339,8 +335,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     });
   }
 
-  @NotNull
-  public Collection<Data> getAllDataObjects(@Nullable final DataFilter filter) throws IOException {
+  public @NotNull Collection<Data> getAllDataObjects(final @Nullable DataFilter filter) throws IOException {
     final List<Data> values = new ArrayList<>();
     processAllDataObject(new CommonProcessors.CollectProcessor<>(values), filter);
     return values;

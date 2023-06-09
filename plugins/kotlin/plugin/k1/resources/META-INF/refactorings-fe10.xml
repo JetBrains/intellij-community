@@ -20,6 +20,8 @@
 
     <nameSuggestionProvider implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggestionProvider"/>
 
+    <lang.floatingToolbarFilter language="kotlin" implementationClass="com.intellij.ui.codeFloatingToolbar.FloatingToolbarFilter$ENABLED" />
+
     <lang.refactoringSupport
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider"/>

@@ -35,8 +35,18 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
+/**
+ * Implements filtering for a plugin class loader.
+ * This is needed to distinguish classes from different modules when they are packed to a single JAR file.
+ */
 @ApiStatus.Internal
 interface ResolveScopeManager {
+  /**
+   * Returns
+   * * `null` if the class loader should try loading the class from its own classpath first;
+   * * `""` if the class loader should skip searching for `name` in its own classpath and try loading it from the parent classloaders;
+   * * non-empty string describing an error if the class must not be requested from this class loader; an error will be thrown.
+   */
   fun isDefinitelyAlienClass(name: String, packagePrefix: String, force: Boolean): String?
 }
 

@@ -78,7 +78,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
-    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.extensions.GHHttpAuthDataProvider"/>
+    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.extensions.GHSilentHttpAuthDataProvider"/>
     <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.extensions.GHComHttpAuthDataProvider"/>
     <gitRepositoryHostingService implementation="org.jetbrains.plugins.github.extensions.GHRepositoryHostingService"/>
     <gitProtectedBranchProvider implementation="org.jetbrains.plugins.github.util.GithubProtectedBranchProvider"/>
@@ -143,6 +143,8 @@
     <group id="Github.PullRequest.Details.Popup">
       <reference id="Github.PullRequest.Details.Reload"/>
     </group>
+    <action id="Github.PullRequest.Branch.Checkout.Remote"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPRCheckoutRemoteBranchAction"/>
     <action id="Github.PullRequest.Comments.Reload"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadCommentsAction" use-shortcut-of="Refresh"/>
 

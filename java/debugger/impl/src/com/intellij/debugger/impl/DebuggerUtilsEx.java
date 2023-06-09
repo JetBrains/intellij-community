@@ -854,7 +854,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
       PsiFile psiFile = getPsiFile(position, project);
       if (psiFile != null) {
-        return SourcePosition.createFromLine(psiFile, position.getLine());
+        return SourcePosition.createFromOffset(psiFile, position.getOffset());
       }
     }
     return null;
@@ -1065,7 +1065,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @Nullable
-  public static PsiElement getFirstElementOnTheLine(PsiLambdaExpression lambda, Document document, int line) {
+  public static PsiElement getFirstElementOnTheLine(@NotNull PsiLambdaExpression lambda, Document document, int line) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
     if (!intersects(lineRange, lambda)) return null;

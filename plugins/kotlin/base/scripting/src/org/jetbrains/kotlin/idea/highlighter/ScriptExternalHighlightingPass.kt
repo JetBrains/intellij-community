@@ -54,7 +54,7 @@ class ScriptExternalHighlightingPass(
             annotation.create()
         }
 
-        BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, file.textLength, infos, colorsScheme, id)
+        BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, file, myDocument, 0, file.textLength, infos, id)
     }
 
     override fun doApplyInformationToEditor() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.Contract;
@@ -72,8 +72,7 @@ public final class BitUtil {
     assert (mask & mask - 1) == 0 : invalidMaskError(mask);
   }
 
-  @NotNull
-  private static String invalidMaskError(long mask) {
+  private static @NotNull String invalidMaskError(long mask) {
     return "Mask must have only one bit set, but got: " + Long.toBinaryString(mask);
   }
 }

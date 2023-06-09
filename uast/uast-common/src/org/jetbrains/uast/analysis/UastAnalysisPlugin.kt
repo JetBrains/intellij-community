@@ -15,7 +15,7 @@ interface UastAnalysisPlugin {
     private val extensionPointName = ExtensionPointName<UastAnalysisPlugin>("org.jetbrains.uast.analysis.uastAnalysisPlugin")
 
     @JvmStatic
-    fun byLanguage(language: Language) = extensionPointName.extensionList.firstOrNull { it.language == language }
+    fun byLanguage(language: Language): UastAnalysisPlugin? = extensionPointName.extensionList.firstOrNull { it.language == language }
   }
 
   /**

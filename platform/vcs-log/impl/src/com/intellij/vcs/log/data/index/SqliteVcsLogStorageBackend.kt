@@ -18,6 +18,7 @@ import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.*
 import com.intellij.vcs.log.history.EdgeData
 import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.impl.VcsRefImpl
 import com.intellij.vcs.log.util.StorageId
@@ -140,6 +141,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
                                           logId: String,
                                           roots: Set<VirtualFile>,
                                           private val logProviders: Map<VirtualFile, VcsLogProvider>,
+                                          private val errorHandler: VcsLogErrorHandler,
                                           disposable: Disposable) :
   VcsLogStorageBackend, VcsLogStorage {
 
@@ -578,6 +580,8 @@ internal class SqliteVcsLogStorageBackend(project: Project,
           return@runUnderConnection CommitId(hash, root)
         }
       }
+
+      errorHandler.handleError(VcsLogErrorHandler.Source.Storage, RuntimeException("Unknown commit index: $commitIndex"))
 
       return@runUnderConnection null
     }

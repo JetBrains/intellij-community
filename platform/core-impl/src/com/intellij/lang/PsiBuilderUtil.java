@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,17 +77,15 @@ public final class PsiBuilderUtil {
     }
   }
 
-  @NotNull
-  public static CharSequence rawTokenText(PsiBuilder builder, int index) {
-    return builder.getOriginalText().subSequence(builder.rawTokenTypeStart(index), builder.rawTokenTypeStart(index + 1));
+  public static @NotNull CharSequence rawTokenText(PsiBuilder builder, int index) {
+    return new CharSequenceSubSequence(builder.getOriginalText(), builder.rawTokenTypeStart(index), builder.rawTokenTypeStart(index + 1));
   }
 
   /**
    * tries to parse a code block with corresponding left and right braces.
    * @return collapsed marker of the block or `null` if there is no code block at all.
    */
-  @Nullable
-  public static PsiBuilder.Marker parseBlockLazy(@NotNull PsiBuilder builder,
+  public static @Nullable PsiBuilder.Marker parseBlockLazy(@NotNull PsiBuilder builder,
                                                  @NotNull IElementType leftBrace,
                                                  @NotNull IElementType rightBrace,
                                                  @NotNull IElementType codeBlock) {

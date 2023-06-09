@@ -16,7 +16,9 @@
 package com.siyeh.ig.bitwise;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.lang.java.parser.ExpressionParser;
@@ -27,7 +29,6 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,13 +57,13 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     Long val = ((LongRangeSet)infos[0]).getConstantValue();
     if (val == null) return null;
     return new ShiftOutOfRangeFix(val, ((Boolean)infos[1]).booleanValue());
   }
 
-  private static class ShiftOutOfRangeFix extends InspectionGadgetsFix {
+  private static class ShiftOutOfRangeFix extends PsiUpdateModCommandQuickFix {
     private final long myValue;
     private final boolean myLong;
 
@@ -85,8 +86,7 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiBinaryExpression binaryExpression = ObjectUtils.tryCast(element.getParent(), PsiBinaryExpression.class);
       if (binaryExpression == null) return;
       final PsiExpression rhs = binaryExpression.getROperand();

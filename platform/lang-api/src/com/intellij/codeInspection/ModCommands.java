@@ -6,6 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.InjectionEditService;
 import com.intellij.modcommand.*;
+import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -141,20 +143,20 @@ public final class ModCommands {
       manager.commitDocument(document);
       manager.doPostponedOperationsAndUnblockDocument(document);
       String newText = targetFile.getText();
-      ModCommand command = oldText.equals(newText) ? new ModNothing() : new ModUpdatePsiFile(origFile, oldText, newText);
       VirtualFile origVirtualFile = origFile.getOriginalFile().getVirtualFile();
-      if (origVirtualFile != null) {
-        int start = -1, end = -1, caret = -1;
-        if (context.mySelectionEnd <= newText.length()) {
-          start = context.mySelectionStart;
-          end = context.mySelectionEnd;
-        }
-        if (context.myCaretOffset <= newText.length()) {
-          caret = context.myCaretOffset;
-        }
-        if (start != -1 || end != -1 || caret != -1) {
-          command = command.andThen(new ModNavigate(origVirtualFile, start, end, caret));
-        }
+      if (origVirtualFile == null) return new ModNothing();
+      ModCommand command =
+        oldText.equals(newText) ? new ModNothing() : new ModUpdateFileText(origVirtualFile, oldText, newText, context.myFragments);
+      int start = -1, end = -1, caret = -1;
+      if (context.mySelectionEnd <= newText.length()) {
+        start = context.mySelectionStart;
+        end = context.mySelectionEnd;
+      }
+      if (context.myCaretOffset <= newText.length()) {
+        caret = context.myCaretOffset;
+      }
+      if (start != -1 || end != -1 || caret != -1) {
+        command = command.andThen(new ModNavigate(origVirtualFile, start, end, caret));
       }
       return command;
     }
@@ -218,6 +220,7 @@ public final class ModCommands {
     private final @NotNull Document myDocument;
     private final @Nullable PsiLanguageInjectionHost myHost;
     private final @NotNull PsiFile myCopyFile;
+    private final @NotNull List<Fragment> myFragments = new ArrayList<>();
     private int myCaretOffset, mySelectionStart, mySelectionEnd;
 
     private EditorUpdaterImpl(@NotNull ModCommandAction.ActionContext actionContext,
@@ -260,10 +263,7 @@ public final class ModCommands {
     }
     
     @Override
-    public void moveTo(@NotNull PsiElement element) {
-      validate(element);
-      myManager.doPostponedOperationsAndUnblockDocument(myDocument);
-      int offset = element.getTextRange().getStartOffset();
+    public void moveTo(int offset) {
       if (myHost != null) {
         InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myCopyFile.getProject());
         PsiFile file = findInjectedFile(instance, myHost);
@@ -271,6 +271,13 @@ public final class ModCommands {
         offset = instance.injectedToHost(file, offset);
       }
       myCaretOffset = offset;
+    }
+
+    @Override
+    public void moveTo(@NotNull PsiElement element) {
+      validate(element);
+      myManager.doPostponedOperationsAndUnblockDocument(myDocument);
+      moveTo(element.getTextRange().getStartOffset());
     }
 
     private PsiFile findInjectedFile(InjectedLanguageManager instance, PsiLanguageInjectionHost host) {
@@ -307,19 +314,40 @@ public final class ModCommands {
       myCaretOffset = updateOffset(event, myCaretOffset);
       mySelectionStart = updateOffset(event, mySelectionStart);
       mySelectionEnd = updateOffset(event, mySelectionEnd);
+      recordFragment(new Fragment(event.getOffset(), event.getOldLength(), event.getNewLength()));
+    }
+
+    private void recordFragment(@NotNull Fragment newFragment) {
+      int insertionPoint = 0;
+      int intersect = 0;
+      for (int i = myFragments.size() - 1; i >= 0; i--) {
+        Fragment fragment = myFragments.get(i);
+        if (fragment.offset() > newFragment.offset() + newFragment.oldLength()) {
+          myFragments.set(i, fragment.shift(newFragment.newLength() - newFragment.oldLength()));
+        } else if (fragment.intersects(newFragment)) {
+          intersect++;
+        } else {
+          insertionPoint = i + 1;
+          break;
+        }
+      }
+      List<Fragment> intersected = myFragments.subList(insertionPoint, insertionPoint + intersect);
+      if (!intersected.isEmpty()) {
+        Fragment first = intersected.get(0);
+        Fragment last = intersected.get(intersected.size() - 1);
+        int diff = intersected.stream().mapToInt(f -> f.newLength() - f.oldLength()).sum();
+        Fragment mergedFragment = new Fragment(first.offset(), last.offset() + last.newLength() - diff - first.offset(),
+                                               last.offset() + last.newLength() - first.offset());
+        newFragment = mergedFragment.mergeWithNext(newFragment);
+      }
+      intersected.clear();
+      intersected.add(newFragment);
     }
 
     private static int updateOffset(DocumentEvent event, int pos) {
-      int moveOffset = event.getMoveOffset();
       int offset = event.getOffset();
       int oldLength = event.getOldLength();
       int newLength = event.getNewLength();
-      if (moveOffset != offset) {
-        if (pos >= offset && pos <= offset + oldLength) return pos - offset + moveOffset;
-        if (pos >= moveOffset && pos < offset) return pos + oldLength;
-        if (pos > offset + oldLength && pos < moveOffset) return pos - oldLength;
-        return pos;
-      }
       if (pos <= offset) return pos;
       if (pos >= offset + oldLength) return pos + newLength - oldLength;
       return offset + newLength;

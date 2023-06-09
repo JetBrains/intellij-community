@@ -536,6 +536,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
     }
 
+    public RunnerAndConfigurationSettings getConfiguration() {
+      return myConfiguration;
+    }
+
     private void updateIcon(final Presentation presentation) {
       setConfigurationIcon(presentation, myConfiguration, myProject);
     }

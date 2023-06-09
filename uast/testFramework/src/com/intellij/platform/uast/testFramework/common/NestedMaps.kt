@@ -21,7 +21,7 @@ typealias MutableMap3<K1, K2, K3, V> = MutableMap2<K1, K2, MutableMap<K3, V>>
 /* ------------------------------------------------------------------------------------------- */
 //region MapK extensions
 
-internal inline fun <K, V, R> buildLinkedHashMapOf(pairs: Iterable<Pair<K, V>>, transformValue: (V) -> R) =
+internal inline fun <K, V, R> buildLinkedHashMapOf(pairs: Iterable<Pair<K, V>>, transformValue: (V) -> R): LinkedHashMap<K, R> =
   LinkedHashMap<K, R>().apply {
     for (pair in pairs)
       put(pair.first, transformValue(pair.second))
@@ -337,7 +337,7 @@ internal fun <A : Appendable> A.withMargin(margin: CharSequence,
     val newLineMargin = "\n" + margin
 
     override fun append(csq: CharSequence?): java.lang.Appendable {
-      this@withMargin.appendReplacing<A>(csq ?: "null", "\n", newLineMargin)
+      this@withMargin.appendReplacing(csq ?: "null", "\n", newLineMargin)
       return this
     }
 

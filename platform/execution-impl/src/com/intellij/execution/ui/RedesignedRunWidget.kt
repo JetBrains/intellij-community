@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui
 
 import com.intellij.execution.*
@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -25,6 +26,9 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHeaderBackgroundColor
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.lightThemeDarkHeaderDisableFilter
 import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
@@ -41,6 +45,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
 import java.awt.*
 import java.awt.event.InputEvent
+import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
@@ -71,7 +76,7 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
 
 private val runToolbarDataKey = Key.create<Boolean>("run-toolbar-data")
 
-private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
+private class RedesignedRunToolbarWrapper : DumbAwareAction(), CustomComponentAction {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent): Unit = error("Should not be invoked")
@@ -201,7 +206,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
           override fun getBottom() = 1.2
           override fun getRight() = 1.2
         }
-        resultIcon = TextHoledIcon(icon.allLayers[0], text, JBUIScale.scale(12.0f), JBUI.CurrentTheme.RunWidget.FOREGROUND, provider)
+        resultIcon = TextHoledIcon(icon.allLayers[0], text, JBUIScale.scale(12.0f), JBUI.CurrentTheme.RunWidget.RUNNING_ICON_COLOR, provider)
       }
     }
 
@@ -222,7 +227,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
   }
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
-  override fun getButtonArc(): JBValue = JBValue.Float(8f)
+  override fun getButtonArc(): JBValue = JBValue.Float(10f)
 }
 
 internal const val MINIMAL_POPUP_WIDTH = 270
@@ -257,8 +262,11 @@ private abstract class TogglePopupAction : ToggleAction {
   abstract fun getActionGroup(e: AnActionEvent): ActionGroup?
 }
 
-private class InactiveStopActionPlaceholder : DecorativeElement(), DumbAware {
+private class InactiveStopActionPlaceholder : DecorativeElement(), DumbAware, CustomComponentAction {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  private val NOT_FIRST_UPDATE = Key.create<Boolean>("notFirstUpdate")
+  private val PROJECT = Key.create<Project>("justProject")
 
   override fun update(e: AnActionEvent) {
     e.presentation.icon = EmptyIcon.ICON_16
@@ -269,6 +277,24 @@ private class InactiveStopActionPlaceholder : DecorativeElement(), DumbAware {
     else {
       e.presentation.isEnabledAndVisible = false
     }
+    e.presentation.putClientProperty(PROJECT, e.project)
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    val defaultMinimumButtonSize = presentation.getClientProperty(CustomComponentAction.MINIMAL_DEMENTION_SUPPLIER)
+                                   ?: Supplier { ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE }
+    return ActionButton(this, presentation, ActionPlaces.NEW_UI_RUN_TOOLBAR, defaultMinimumButtonSize)
+  }
+
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    if (presentation.getClientProperty(NOT_FIRST_UPDATE) == true) {
+      return
+    }
+    val project = presentation.getClientProperty(PROJECT) ?: return
+    presentation.putClientProperty(NOT_FIRST_UPDATE, true)
+
+    val ideRootPane: IdeRootPane = (WindowManager.getInstance() as WindowManagerImpl).getProjectFrameRootPane(project) ?: return
+    ideRootPane.makeComponentToBeMouseTransparentInTitleBar(component)
   }
 }
 
@@ -330,14 +356,11 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val action = ActionManager.getInstance().getAction("RunConfiguration")
-    val runConfigAction = action as? RunConfigurationsComboBoxAction ?: return
-    runConfigAction.update(e)
-    val icon = e.presentation.icon
-    if (icon != null) {
-      e.presentation.icon = adjustIconForHeader(icon)
+    (ActionManager.getInstance().getAction("RunConfiguration") as? RunConfigurationsComboBoxAction ?: return).update(e)
+    e.presentation.icon?.let {
+      e.presentation.icon = adjustIconForHeader(it)
     }
-    val configurationName = e.project?.let { RunManager.getInstance(it) }?.selectedConfiguration?.name
+    val configurationName = e.project?.let { RunManager.getInstanceIfCreated(it) }?.selectedConfiguration?.name
     if (configurationName?.length?.let { it > CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH } == true) {
       e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description.long",
                                                                    configurationName))
@@ -349,16 +372,14 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-  override fun displayTextInToolbar(): Boolean {
-    return true
-  }
+  override fun displayTextInToolbar(): Boolean = true
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return object : ActionButtonWithText(this, presentation, place, {
       JBUI.size(16, JBUI.CurrentTheme.RunWidget.toolbarHeight())
     }) {
 
-      override fun getMargins(): Insets = JBInsets.create(0, 8)
+      override fun getMargins(): Insets = JBInsets(0, 10, 0, 6)
       override fun iconTextSpace(): Int = ToolbarComboWidgetUiSizes.gapAfterLeftIcons
       override fun shallPaintDownArrow() = true
       override fun getDownArrowIcon(): Icon = PreparedIcon(super.getDownArrowIcon())

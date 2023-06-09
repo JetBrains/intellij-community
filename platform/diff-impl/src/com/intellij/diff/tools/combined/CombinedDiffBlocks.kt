@@ -103,8 +103,6 @@ private class CombinedSimpleDiffHeader(project: Project,
     toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     toolbar.component.background = UIUtil.getListBackground()
     toolbar.component.border = JBEmptyBorder(UIUtil.PANEL_SMALL_INSETS)
-    toolbarGroup.add(CombinedPrevNextFileAction(blockId, toolbar.component, false))
-    toolbarGroup.add(CombinedPrevNextFileAction(blockId, toolbar.component, true))
 
     return toolbar
   }
@@ -193,6 +191,7 @@ private class CombinedSimpleDiffBlock(project: Project,
     editors = viewer.editors
     body.setContent(viewer.component)
     header.setContent(if (viewer is CombinedDiffLoadingBlock) pathOnlyHeader else headerWithToolbar)
+    this.validate()
   }
 
   override fun getPreferredSize(): Dimension {
@@ -205,7 +204,7 @@ private class CombinedSimpleDiffBlock(project: Project,
       someError = maxOf(e.gutterComponentEx.preferredSize.height - body.targetComponent.preferredSize.height, someError)
     }
     if (someError > 0) {
-      preferredSize.height = preferredSize.height + someError
+      preferredSize.height += someError
     }
     return preferredSize
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -59,7 +60,7 @@ public class IdentifierHighlighterPass {
 
   /**
    * @param file may be injected fragment, in which case the {@code editor} must be corresponding injected editor and  {@code visibleRange} must have consistent offsets inside the injected document.
-   * In both cases, {@link #doCollectInformation()} will produce and apply HighlightInfos to the host file.
+   * In both cases, {@link #doCollectInformation(HighlightingSession)} will produce and apply HighlightInfos to the host file.
    */
   IdentifierHighlighterPass(@NotNull PsiFile file, @NotNull Editor editor, @NotNull TextRange visibleRange) {
     myFile = file;
@@ -68,7 +69,7 @@ public class IdentifierHighlighterPass {
     myVisibleRange = new ProperTextRange(visibleRange);
   }
 
-  public void doCollectInformation() {
+  public void doCollectInformation(@NotNull HighlightingSession hostSession) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     HighlightUsagesHandlerBase<PsiElement> highlightUsagesHandler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile, myVisibleRange);
@@ -101,8 +102,7 @@ public class IdentifierHighlighterPass {
       List<HighlightInfo> infos = virtSpace || isCaretOverCollapsedFoldRegion() ? Collections.emptyList() : getHighlights();
       PsiFile hostFile = InjectedLanguageManager.getInstance(myFile.getProject()).getTopLevelFile(myFile);
       Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
-      BackgroundUpdateHighlightersUtil.setHighlightersToSingleEditor(myFile.getProject(), hostEditor, 0, hostFile.getTextLength(), infos,
-                                                                     hostEditor.getColorsScheme(), getId());
+      BackgroundUpdateHighlightersUtil.setHighlightersInRange(hostFile.getTextRange(), infos, (MarkupModelEx)hostEditor.getMarkupModel(), getId(), hostSession);
     }
   }
 
@@ -157,8 +157,7 @@ public class IdentifierHighlighterPass {
    * @param target target psi element
    * @param psiElement psi element to search in
    */
-  @NotNull
-  public static Collection<TextRange> getUsages(@NotNull PsiElement target, PsiElement psiElement, boolean withDeclarations) {
+  public static @NotNull Collection<TextRange> getUsages(@NotNull PsiElement target, PsiElement psiElement, boolean withDeclarations) {
     List<TextRange> ranges = new ArrayList<>();
     getUsages(target, psiElement, withDeclarations, false, ranges, ranges);
     return ranges;
@@ -291,8 +290,7 @@ public class IdentifierHighlighterPass {
     BraceHighlightingHandler.showScopeHint(myEditor, myFile, leftBraceRange.getStartOffset(), leftBraceRange.getEndOffset());
   }
 
-  @NotNull
-  private List<HighlightInfo> getHighlights() {
+  private @NotNull List<HighlightInfo> getHighlights() {
     if (myReadAccessRanges.isEmpty() && myWriteAccessRanges.isEmpty() && myCodeBlockMarkerRanges.isEmpty()) {
       return Collections.emptyList();
     }
@@ -315,8 +313,7 @@ public class IdentifierHighlighterPass {
     return result;
   }
 
-  @NotNull
-  private HighlightInfo createHighlightInfo(@NotNull TextRange range, @NotNull HighlightInfoType type, @NotNull Set<Pair<Object, TextRange>> existingMarkupTooltips) {
+  private @NotNull HighlightInfo createHighlightInfo(@NotNull TextRange range, @NotNull HighlightInfoType type, @NotNull Set<Pair<Object, TextRange>> existingMarkupTooltips) {
     int start = range.getStartOffset();
     String tooltip = start <= myEditor.getDocument().getTextLength() ? HighlightHandlerBase.getLineTextErrorStripeTooltip(myEditor.getDocument(), start, false) : null;
     String unescapedTooltip = existingMarkupTooltips.contains(new Pair<Object, TextRange>(tooltip, range)) ? null : tooltip;

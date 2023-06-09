@@ -25,6 +25,6 @@ class InlineState private constructor(
 
     fun Editor.getInlineCompletionState(): InlineState? = getUserData(INLINE_COMPLETION_STATE)
     fun Editor.initOrGetInlineCompletionState(): InlineState = getInlineCompletionState() ?: InlineState().also { putUserData(INLINE_COMPLETION_STATE, it) }
-    fun Editor.resetInlineCompletionState() = putUserData(INLINE_COMPLETION_STATE, null)
+    fun Editor.resetInlineCompletionState(): Unit = putUserData(INLINE_COMPLETION_STATE, null)
   }
 }

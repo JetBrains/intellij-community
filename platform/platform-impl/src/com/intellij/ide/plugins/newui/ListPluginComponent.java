@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.plaf.ButtonUI;
 import java.awt.*;
@@ -60,6 +61,7 @@ public final class ListPluginComponent extends JPanel {
   private final boolean myMarketplace;
   private final boolean myIsAvailable;
   private @NotNull IdeaPluginDescriptor myPlugin;
+  private PluginNode myInstalledPluginMarketplaceNode;
   private final @NotNull PluginsGroup myGroup;
   private boolean myOnlyUpdateMode;
   private boolean myAfterUpdate;
@@ -136,6 +138,8 @@ public final class ListPluginComponent extends JPanel {
       showProgress(false);
     }
     updateColors(EventHandler.SelectionType.NONE);
+
+    putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, plugin.getName());
 
     UiInspectorUtil.registerProvider(this, new PluginIdUiInspectorContextProvider());
   }
@@ -1067,6 +1071,14 @@ public final class ListPluginComponent extends JPanel {
 
   public void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     myPlugin = plugin;
+  }
+
+  public synchronized @Nullable PluginNode getInstalledPluginMarketplaceNode() {
+    return myInstalledPluginMarketplaceNode;
+  }
+
+  public synchronized void setInstalledPluginMarketplaceNode(@NotNull PluginNode installedPluginMarketplaceNode) {
+    myInstalledPluginMarketplaceNode = installedPluginMarketplaceNode;
   }
 
   private @NotNull PluginEnableDisableAction getEnableDisableAction(@NotNull List<? extends ListPluginComponent> selection) {

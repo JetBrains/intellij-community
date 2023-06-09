@@ -30,32 +30,32 @@ class CompressibleTabsRow(infos: List<TabInfo>,
     val requiredLength = prefLengths.sum()
     val gapsLengths = tabs.tabHGap * (infos.size - 1)
 
-    val lengths = if (requiredLength > maxLength - gapsLengths) {
+    val result: CompressionResult = if (requiredLength > maxLength - gapsLengths) {
       calculateCompressibleLengths(data, prefLengths, requiredLength, maxLength - gapsLengths)
     }
-    else prefLengths
+    else CompressionResult(prefLengths, forcePaintBorders = false)
 
     var curX = x
     for ((index, info) in infos.withIndex()) {
       val label = tabs.infoToLabel.get(info)!!
-      val len = lengths[index]
+      val len = result.lengths[index]
+      label.isForcePaintBorders = result.forcePaintBorders
       tabs.layout(label, curX, y, len, data.rowHeight)
       curX += len + tabs.tabHGap
     }
   }
 
-  private fun calculateCompressibleLengths(data: MultiRowPassInfo, prefLengths: List<Int>, requiredLen: Int, maxLen: Int): List<Int> {
+  private fun calculateCompressibleLengths(data: MultiRowPassInfo,
+                                           prefLengths: List<Int>,
+                                           requiredLen: Int,
+                                           maxLen: Int): CompressionResult {
     val decreasedLengths = decreaseInsets(data, prefLengths, requiredLen, maxLen)
     return if (decreasedLengths.sum() > maxLen) {
       val resultLengths = decreaseMaxLengths(decreasedLengths, maxLen)
       val paintBorders = resultLengths.zip(decreasedLengths).all { it.first < it.second }
-      for (info in infos) {
-        val label = data.tabs.infoToLabel.get(info)!!
-        label.isForcePaintBorders = paintBorders
-      }
-      return resultLengths
+      return CompressionResult(resultLengths, paintBorders)
     }
-    else decreasedLengths
+    else CompressionResult(decreasedLengths, forcePaintBorders = false)
   }
 
   private fun decreaseInsets(data: MultiRowPassInfo, prefLengths: List<Int>, requiredLen: Int, maxLen: Int): List<Int> {
@@ -234,6 +234,8 @@ class CompressibleTabsRow(infos: List<TabInfo>,
                                  val extraLen: Int,
                                  val decreasedLen: Int,
                                  val actionsPosition: ActionsPosition)
+
+  private class CompressionResult(val lengths: List<Int>, val forcePaintBorders: Boolean)
 
   private data class TabInsets(val actionsPosition: ActionsPosition,
                                val cornerToText: Int,

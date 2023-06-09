@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
 import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
+import com.intellij.find.findInProject.FindInProjectState;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -60,10 +61,10 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.*;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
+import com.intellij.ui.dsl.listCellRenderer.LcrUtilsKt;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.popup.list.SelectablePanel;
-import com.intellij.ui.render.RendererPanelsUtilsKt;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
@@ -373,7 +374,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     FindSettings findSettings = FindSettings.getInstance();
     myScopeUI.applyTo(findSettings, mySelectedScope);
     myHelper.updateFindSettings();
-    applyTo(FindManager.getInstance(myProject).getFindInProjectModel());
+    FindModel model = FindManager.getInstance(myProject).getFindInProjectModel();
+    applyTo(model);
+    FindInProjectState.getInstance(myProject).save(model);
   }
 
   @NotNull
@@ -1956,7 +1959,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     private UsageTableCellRenderer() {
       if (ExperimentalUI.isNewUI()) {
         PopupUtil.configListRendererFixedHeight(this);
-        RendererPanelsUtilsKt.resetHorizontalInsets(myUsageRenderer);
+        LcrUtilsKt.stripHorizontalInsets(myUsageRenderer);
         Insets ipad = myFileAndLineNumber.getIpad();
         //noinspection UseDPIAwareInsets
         myFileAndLineNumber.setIpad(new Insets(ipad.top, JBUI.scale(4), ipad.bottom, 0));

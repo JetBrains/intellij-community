@@ -57,8 +57,7 @@ public final class TextRangeScalarUtil {
     return thisRange.intersects(startOffset(otherRange), endOffset(otherRange));
   }
 
-  @NotNull
-  public static TextRange create(long range) {
+  public static @NotNull TextRange create(long range) {
     return TextRange.create(startOffset(range), endOffset(range));
   }
 }

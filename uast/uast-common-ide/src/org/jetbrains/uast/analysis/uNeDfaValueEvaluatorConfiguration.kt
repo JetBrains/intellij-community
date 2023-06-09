@@ -38,7 +38,7 @@ data class DslLikeMethodDescriptor<T>(
   val methodPattern: ElementPattern<PsiMethod>,
   val lambdaDescriptor: DslLambdaDescriptor<T>
 ) {
-  fun accepts(method: PsiMethod?) = methodPattern.accepts(method)
+  fun accepts(method: PsiMethod?): Boolean = methodPattern.accepts(method)
 }
 
 fun interface BuilderMethodEvaluator<T : Any> {

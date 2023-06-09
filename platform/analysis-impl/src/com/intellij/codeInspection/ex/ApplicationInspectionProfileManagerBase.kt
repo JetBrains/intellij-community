@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -47,7 +48,7 @@ open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable cons
     })
   }
 
-  override val schemeManager = schemeManagerFactory.create(InspectionProfileManager.INSPECTION_DIR, object : InspectionProfileProcessor() {
+  override val schemeManager: SchemeManager<InspectionProfileImpl> = schemeManagerFactory.create(InspectionProfileManager.INSPECTION_DIR, object : InspectionProfileProcessor() {
     override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String) = fileNameWithoutExtension
 
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
@@ -73,7 +74,7 @@ open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable cons
     }
   }, settingsCategory = SettingsCategory.CODE)
 
-  protected val profilesAreInitialized by lazy {
+  protected val profilesAreInitialized: Unit by lazy {
     val app = ApplicationManager.getApplication()
     if (!(app.isUnitTestMode || app.isHeadlessEnvironment)) {
       BUNDLED_EP_NAME.processWithPluginDescriptor(BiConsumer { ep, pluginDescriptor ->
@@ -90,7 +91,7 @@ open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable cons
   }
 
   @Volatile
-  protected var LOAD_PROFILES = !ApplicationManager.getApplication().isUnitTestMode
+  protected var LOAD_PROFILES: Boolean = !ApplicationManager.getApplication().isUnitTestMode
 
   override fun getProfiles(): Collection<InspectionProfileImpl> {
     initProfiles()
@@ -151,6 +152,6 @@ open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable cons
     private val BUNDLED_EP_NAME = ExtensionPointName<BundledSchemeEP>("com.intellij.bundledInspectionProfile")
 
     @JvmStatic
-    fun getInstanceBase() = service<InspectionProfileManager>() as ApplicationInspectionProfileManagerBase
+    fun getInstanceBase(): ApplicationInspectionProfileManagerBase = service<InspectionProfileManager>() as ApplicationInspectionProfileManagerBase
   }
 }

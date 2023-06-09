@@ -78,7 +78,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
     val registryManager = RegistryManager.getInstance()
     setRegistryKeyIfNecessary(key = "ide.experimental.ui", value = true, registryManager = registryManager)
-    setRegistryKeyIfNecessary(key = "debugger.new.tool.window.layout", value = true, registryManager = registryManager)
     UISettings.getInstance().hideToolStripes = false
     resetLafSettingsToDefault()
   }
@@ -93,7 +92,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
     val registryManager = RegistryManager.getInstance()
     setRegistryKeyIfNecessary(key = "ide.experimental.ui", value = false, registryManager = registryManager)
-    setRegistryKeyIfNecessary(key = "debugger.new.tool.window.layout", value = false, registryManager = registryManager)
     resetLafSettingsToDefault()
   }
 

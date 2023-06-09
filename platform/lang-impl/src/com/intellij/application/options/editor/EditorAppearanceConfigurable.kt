@@ -9,8 +9,8 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable.LineNumerationType
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
@@ -72,13 +72,13 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
       row {
         checkBox(myCbShowLineNumbers)
         comboBox(
-          DefaultComboBoxModel(LineNumerationType.values()),
+          DefaultComboBoxModel(EditorSettings.LineNumerationType.values()),
           renderer = SimpleListCellRenderer.create("")
           {
             when (it) {
-              LineNumerationType.ABSOLUTE -> "Absolute"
-              LineNumerationType.RELATIVE -> "Relative"
-              LineNumerationType.HYBRID -> "Hybrid"
+              EditorSettings.LineNumerationType.ABSOLUTE -> "Absolute"
+              EditorSettings.LineNumerationType.RELATIVE -> "Relative"
+              EditorSettings.LineNumerationType.HYBRID -> "Hybrid"
               else -> "null"
             }
           }

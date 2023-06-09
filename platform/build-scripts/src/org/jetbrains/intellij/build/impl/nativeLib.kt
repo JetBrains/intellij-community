@@ -12,7 +12,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.io.W_CREATE_NEW
-import org.jetbrains.intellij.build.tasks.ZipSource
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path

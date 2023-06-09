@@ -551,7 +551,7 @@ class ResolveElementCache(
         val descriptor = analyzer.resolveToDescriptor(declaration) as ClassifierDescriptorWithTypeParameters
 
         for (parameterDescriptor in descriptor.declaredTypeParameters) {
-            ForceResolveUtil.forceResolveAllContents<TypeParameterDescriptor>(parameterDescriptor)
+            ForceResolveUtil.forceResolveAllContents(parameterDescriptor)
         }
 
         return resolveSession.trace

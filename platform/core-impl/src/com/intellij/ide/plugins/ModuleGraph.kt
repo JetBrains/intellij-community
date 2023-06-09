@@ -36,7 +36,7 @@ open class ModuleGraphBase protected constructor(
 
   override fun getOut(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependents(descriptor).iterator()
 
-  fun builder() = DFSTBuilder(this, null, true)
+  fun builder(): DFSTBuilder<IdeaPluginDescriptorImpl> = DFSTBuilder(this, null, true)
 
   internal fun sorted(builder: DFSTBuilder<IdeaPluginDescriptorImpl> = builder()): SortedModuleGraph {
     return SortedModuleGraph(

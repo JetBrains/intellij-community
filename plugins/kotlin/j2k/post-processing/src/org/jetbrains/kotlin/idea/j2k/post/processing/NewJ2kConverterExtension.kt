@@ -63,6 +63,7 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
 
                 configurators.size == 1 -> configurators.single().configure(project, emptyList())
                 else -> {
+                    @Suppress("DEPRECATION")
                     val resultIndex = Messages.showChooseDialog( //TODO a better dialog?
                         project,
                         KotlinNJ2KServicesBundle.message("converter.kotlin.not.configured.choose.configurator"),

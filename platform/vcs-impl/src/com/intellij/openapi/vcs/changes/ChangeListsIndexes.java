@@ -17,13 +17,11 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.BeforeAfter;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,30 +29,23 @@ import java.util.*;
 
 public class ChangeListsIndexes {
   private static final Logger LOG = Logger.getInstance(ChangeListsIndexes.class);
-  private final Map<FilePath, Data> myMap;
-  private final TreeSet<FilePath> myAffectedPaths;
-  private final Set<Change> myChanges;
+
+  private Map<FilePath, Data> myMap;
+  private Set<Change> myChanges;
 
   public ChangeListsIndexes() {
     myMap = new HashMap<>();
-    myAffectedPaths = new TreeSet<>(HierarchicalFilePathComparator.SYSTEM_CASE_SENSITIVE);
     myChanges = new HashSet<>();
   }
 
-  public ChangeListsIndexes(@NotNull ChangeListsIndexes idx) {
+  public void copyFrom(@NotNull ChangeListsIndexes idx) {
     myMap = new HashMap<>(idx.myMap);
-    myAffectedPaths = new TreeSet<>(idx.myAffectedPaths);
     myChanges = new HashSet<>(idx.myChanges);
   }
 
-  public void copyFrom(@NotNull ChangeListsIndexes idx) {
-    myMap.clear();
-    myAffectedPaths.clear();
-    myChanges.clear();
-
-    myMap.putAll(idx.myMap);
-    myAffectedPaths.addAll(idx.myAffectedPaths);
-    myChanges.addAll(idx.myChanges);
+  public void clear() {
+    myMap = new HashMap<>();
+    myChanges = new HashSet<>();
   }
 
 
@@ -64,15 +55,16 @@ public class ChangeListsIndexes {
                    @Nullable AbstractVcs key,
                    @NotNull VcsRevisionNumber number) {
     myMap.put(file, new Data(status, change, key, number));
-    myAffectedPaths.add(file);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Set status " + status + " for " + file);
     }
   }
 
-  private void remove(final FilePath file) {
+  private void remove(@NotNull FilePath file) {
     myMap.remove(file);
-    myAffectedPaths.remove(file);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Clear status for " + file);
+    }
   }
 
   @Nullable
@@ -96,7 +88,7 @@ public class ChangeListsIndexes {
     if (beforeRevision != null && afterRevision != null) {
       add(afterRevision.getFile(), change, change.getFileStatus(), key, beforeRevision.getRevisionNumber());
 
-      if (!Comparing.equal(beforeRevision.getFile(), afterRevision.getFile())) {
+      if (!Objects.equals(beforeRevision.getFile(), afterRevision.getFile())) {
         add(beforeRevision.getFile(), change, FileStatus.DELETED, key, beforeRevision.getRevisionNumber());
       }
     }
@@ -182,26 +174,13 @@ public class ChangeListsIndexes {
     }
   }
 
-  @NotNull
-  public ThreeState haveChangesUnder(@NotNull FilePath dir) {
-    FilePath changeCandidate = myAffectedPaths.ceiling(dir);
-    if (changeCandidate == null) return ThreeState.NO;
-    return FileUtil.isAncestorThreeState(dir.getPath(), changeCandidate.getPath(), false);
-  }
-
   private static BaseRevision createBaseRevision(@NotNull FilePath path, @NotNull Data data) {
     return new BaseRevision(data.vcs, data.revision, path);
   }
 
-  public void clear() {
-    myMap.clear();
-    myAffectedPaths.clear();
-    myChanges.clear();
-  }
-
   @NotNull
   public Set<FilePath> getAffectedPaths() {
-    return Collections.unmodifiableSet(myMap.keySet());
+    return myMap.keySet();
   }
 
   private static class Data {

@@ -39,8 +39,8 @@ import javax.net.ssl.*
 
 internal object ITNProxy {
   @OptIn(ExperimentalCoroutinesApi::class)
-  internal val cs = ApplicationManager.getApplication().coroutineScope + SupervisorJob() +
-                    Dispatchers.IO.limitedParallelism(2) + CoroutineName("ITNProxy call")
+  internal val cs: CoroutineScope = ApplicationManager.getApplication().coroutineScope + SupervisorJob() +
+                                    Dispatchers.IO.limitedParallelism(2) + CoroutineName("ITNProxy call")
 
   private const val DEFAULT_USER = "idea_anonymous"
   private const val DEFAULT_PASS = "guest"

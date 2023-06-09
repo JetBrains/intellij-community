@@ -41,7 +41,7 @@ public class XslZenCodingFilter extends ZenCodingFilter {
         return node;
       }
       ApplicationManager.getApplication().runWriteAction(() -> {
-        if (isOurTag(tag, node.getChildren().size() > 0)) {
+        if (isOurTag(tag, !node.getChildren().isEmpty())) {
           XmlAttribute attribute = tag.getAttribute(SELECT_ATTR_NAME);
           if (attribute != null) {
             attribute.delete();

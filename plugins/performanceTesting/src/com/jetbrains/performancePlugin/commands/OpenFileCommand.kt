@@ -51,7 +51,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
     val myOptions = runCatching {
       OpenFileCommandOptions().apply { Args.parse(this, extractCommandArgument(PREFIX).split(" ").toTypedArray()) }
     }.getOrNull()
-    val filePath = myOptions?.file ?:  text.split(' ', limit = 4)[1]
+    val filePath = myOptions?.file ?: text.split(' ', limit = 4)[1]
     val timeout = myOptions?.timeout ?: 0
     val suppressErrors = myOptions?.suppressErrors ?: false
 
@@ -71,11 +71,11 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
 
     // focus window
     withContext(Dispatchers.EDT) {
-      ProjectUtil.focusProjectWindow(project)
+      ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
     }
 
-    FileEditorManagerEx.getInstanceEx(project).openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
-      .waitForFullyLoaded()
+    FileEditorManagerEx.getInstanceEx(project).openFile(file = file,
+                                                        options = FileEditorOpenOptions(requestFocus = true)).waitForFullyLoaded()
 
     job.onError {
       spanRef.get()?.setAttribute("timeout", "true")

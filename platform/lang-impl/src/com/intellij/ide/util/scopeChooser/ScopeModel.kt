@@ -120,7 +120,7 @@ class ScopeModel(options: Set<Option>) {
       for (provider in SearchScopeProvider.EP_NAME.extensions) {
         val displayName = provider.displayName
         if (StringUtil.isEmpty(displayName)) continue
-        val scopes = SlowOperations.allowSlowOperations<List<SearchScope>, RuntimeException> {
+        val scopes = SlowOperations.knownIssue("IDEA-304699, EA-835226").use {
           provider.getSearchScopes(project, dataContext)
         }
         if (scopes.isEmpty()) continue

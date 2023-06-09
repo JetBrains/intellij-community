@@ -16,7 +16,7 @@ import com.intellij.ui.UIBundle
 abstract class ZoomIdeAction : AnAction(), DumbAware {
   protected val settingsUtils: UISettingsUtils = UISettingsUtils.getInstance()
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   protected fun fireUISettingsChanged() {
     IdeScaleIndicatorManager.indicateIfChanged {

@@ -16,7 +16,9 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -31,7 +33,6 @@ import com.intellij.util.graph.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -51,7 +52,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiMethod containingMethod = (PsiMethod)infos[0];
     if (!mayBeReplacedByIterativeMethod(containingMethod)) {
       return null;
@@ -72,7 +73,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
     return true;
   }
 
-  private static final class RemoveTailRecursionFix extends InspectionGadgetsFix {
+  private static final class RemoveTailRecursionFix extends PsiUpdateModCommandQuickFix {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -80,8 +81,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement tailCallToken = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement tailCallToken, @NotNull EditorUpdater updater) {
       final PsiMethod method =
         PsiTreeUtil.getParentOfType(tailCallToken, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (method == null) {

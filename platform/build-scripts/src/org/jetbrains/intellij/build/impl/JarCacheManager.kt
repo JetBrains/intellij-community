@@ -9,12 +9,11 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jetbrains.intellij.build.MAVEN_REPO
+import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.dependencies.CacheDirCleanup
-import org.jetbrains.intellij.build.tasks.MAVEN_REPO
-import org.jetbrains.intellij.build.tasks.ZipSource
 import java.math.BigInteger
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
@@ -25,6 +24,8 @@ import java.util.*
 
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".json"
+
+private const val cacheVersion: Byte = 2
 
 internal sealed interface JarCacheManager {
   suspend fun computeIfAbsent(item: JarDescriptor,
@@ -80,6 +81,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path) : JarCacheMa
     // 224 bit and not 256/512 - use a slightly shorter filename
     // xxh3 is not used as it is not secure and moreover, better to stick to JDK API
     val hash = sha3_224()
+    hash.update(cacheVersion)
     for (string in sourceToRelativePath.keys) {
       hash.update(string.encodeToByteArray())
       hash.update('-'.code.toByte())
@@ -89,7 +91,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path) : JarCacheMa
     val cacheName = targetFile.fileName.toString().removeSuffix(jarSuffix) +
                     "-" +
                     BigInteger(1, hash.digest()).toString(Character.MAX_RADIX)
-    val cacheFileName = cacheName.take(255 - jarSuffix.length) + jarSuffix
+    val cacheFileName = cacheName.take(255 - jarSuffix.length - 1) + jarSuffix
     val cacheFile = cacheDir.resolve(cacheFileName)
     val cacheMetadataFile = cacheDir.resolve(cacheName.take(255 - metaSuffix.length) + metaSuffix)
     if (checkCache(cacheMetadataFile = cacheMetadataFile,
@@ -108,7 +110,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path) : JarCacheMa
         ),
       )
 
-      // update file modification time to maintain FIFO caches i.e. in persistent cache folder on TeamCity agent and for CacheDirCleanup
+      // update file modification time to maintain FIFO caches i.e., in persistent cache folder on TeamCity agent and for CacheDirCleanup
       Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
       return
     }

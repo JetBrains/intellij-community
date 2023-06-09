@@ -342,7 +342,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public Font getFont() {
-      if (myFontSet) return super.getFont();
+      if (myFontSet && ExperimentalUI.isNewUI()) return super.getFont();
       return isSmallVariant() ? UIUtil.getToolbarFont() : StartupUiUtil.getLabelFont();
     }
 

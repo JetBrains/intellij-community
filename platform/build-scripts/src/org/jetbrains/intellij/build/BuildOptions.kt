@@ -218,6 +218,11 @@ class BuildOptions(
      */
     const val INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE = "intellij.build.compiled.classes.archive"
 
+    /**
+     * By default, calculated based on build number
+     */
+    const val INTELLIJ_BUILD_IS_NIGHTLY = "intellij.build.is.nightly"
+
     private val currentBuildTimeInSeconds = System.currentTimeMillis() / 1000
   }
 
@@ -263,9 +268,10 @@ class BuildOptions(
       }
     }
 
-  var buildMacArtifactsWithoutRuntime = SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITHOUT_RUNTIME,
-                                                                            SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
-  var buildMacArtifactsWithRuntime = SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITH_RUNTIME, true)
+  var buildMacArtifactsWithoutRuntime =
+    SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITHOUT_RUNTIME, SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
+  var buildMacArtifactsWithRuntime =
+    SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITH_RUNTIME, true)
 
   /**
    * Pass 'true' to this system property to produce .snap packages.
@@ -419,6 +425,8 @@ class BuildOptions(
   }
 
   var randomSeedNumber: Long = 0
+
+  var isNightlyBuild: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_IS_NIGHTLY, (buildNumber?.count { it == '.' } ?: 1) <= 1)
 
   init {
     val targetOsId = System.getProperty(TARGET_OS_PROPERTY, OS_ALL).lowercase()

@@ -78,7 +78,7 @@ class PyReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
       return CodeVisionInfo(PyBundle.message("inlay.hints.usages.text", min(result, limit), if (result > limit) 1 else 0),
                             result, result <= limit)
     }
-    return CodeVisionInfo(PyBundle.message("inlay.hints.usages.with.dynamic.text", result, dynamicResult), dynamicResult)
+    return CodeVisionInfo(PyBundle.message("inlay.hints.usages.with.dynamic.text", result, dynamicResult), result)
   }
 
   override fun getHint(element: PsiElement, file: PsiFile): String? {

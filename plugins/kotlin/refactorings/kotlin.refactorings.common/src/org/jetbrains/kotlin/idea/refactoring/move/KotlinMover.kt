@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.idea.base.psi.deleteSingle
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -22,12 +23,10 @@ interface KotlinMover : (KtNamedDeclaration, KtElement) -> KtNamedDeclaration {
                     .withAttachment("context", targetContainer.getElementTextWithContext())
             }.apply {
                 val container = originalElement.containingClassOrObject
-                if (container is KtObjectDeclaration &&
-                    container.isCompanion() &&
-                    container.declarations.singleOrNull() == originalElement &&
-                    KotlinMoveRefactoringSupport.getInstance()
-                        .findReferencesToHighlight(container, LocalSearchScope(container.containingFile))
-                        .isEmpty()
+                if (container is KtObjectDeclaration
+                    && container.isCompanion()
+                    && container.declarations.singleOrNull() == originalElement
+                    && ReferencesSearch.search(container, LocalSearchScope(container.containingFile)).findAll().isEmpty()
                 ) {
                     container.deleteSingle()
                 } else {

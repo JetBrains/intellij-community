@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -10,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiEditorUtil
@@ -20,6 +22,7 @@ import java.awt.BorderLayout
 import java.awt.Point
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.properties.Delegates
@@ -35,20 +38,22 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
   private var hint: LightweightHint? = null
   private var buttonSize: Int by Delegates.notNull()
   private var lastSelection: String? = null
-  private var isJustClosed = false
+  private var showToolbar = true
 
   init {
     registerListeners()
   }
 
-  fun isShown() = hint != null
+  open fun hideByOtherHints(): Boolean = false
+
+  fun isShown(): Boolean = hint != null
 
   fun hideIfShown() {
     hint?.hide()
   }
 
   fun showIfHidden() {
-    if (hint != null || !canBeShownAtCurrentSelection() || (!shouldReviveAfterClose() && isJustClosed)) {
+    if (hint != null || !canBeShownAtCurrentSelection() || (!shouldReviveAfterClose() && !showToolbar)) {
       return
     }
     createActionToolbar(editor.contentComponent) { toolbar ->
@@ -57,7 +62,7 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
       showOrUpdateLocation(hint)
       hint.addHintListener {
         this@FloatingToolbar.hint = null
-        isJustClosed = true
+        showToolbar = false
       }
     }
     hint = LightweightHint(JPanel(BorderLayout())).apply {
@@ -83,11 +88,12 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
   }
 
   private fun showOrUpdateLocation(hint: LightweightHint) {
+    val hideByOtherHintsMask = if (hideByOtherHints()) HintManager.HIDE_BY_OTHER_HINT else 0
     HintManagerImpl.getInstanceImpl().showEditorHint(
       hint,
       editor,
       getHintPosition(hint),
-      HintManager.HIDE_BY_ESCAPE or HintManager.UPDATE_BY_SCROLLING,
+      HintManager.HIDE_BY_ESCAPE or HintManager.UPDATE_BY_SCROLLING or hideByOtherHintsMask,
       0,
       true
     )
@@ -121,6 +127,11 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
   protected open fun hasIgnoredParent(element: PsiElement): Boolean {
     return false
   }
+
+  protected open fun disableForDoubleClickSelection(): Boolean {
+    return false
+  }
+
 
   protected open fun shouldReviveAfterClose(): Boolean = true
 
@@ -183,13 +194,19 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
       }
       if (hoverSelected) {
         showIfHidden()
+      } else {
+        if (!Registry.get("floating.codeToolbar.revive.selectionChangeOnly").asBoolean()) {
+          showToolbar = true
+        }
       }
     }
   }
 
   private inner class EditorSelectionListener : SelectionListener {
     override fun selectionChanged(e: SelectionEvent) {
-      isJustClosed = false
+      val event = IdeEventQueue.getInstance().trueCurrentEvent
+      val isDoubleClick = (event as? MouseEvent)?.clickCount == 2
+      showToolbar = !(disableForDoubleClickSelection() && isDoubleClick)
     }
   }
 

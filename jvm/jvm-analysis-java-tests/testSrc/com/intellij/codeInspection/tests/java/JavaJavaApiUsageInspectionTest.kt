@@ -100,7 +100,21 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
-  fun `test minimum since no higlighting`() {
+  fun `test no highlighting in javadoc`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_7)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class Javadoc {
+        /**
+         * {@link java.util.function.Predicate}
+         */
+        void test() {
+          return;
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test minimum since no highlighting`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_8)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.util.stream.IntStream;

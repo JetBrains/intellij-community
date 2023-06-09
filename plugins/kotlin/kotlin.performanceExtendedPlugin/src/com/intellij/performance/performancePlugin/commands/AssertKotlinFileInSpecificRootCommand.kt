@@ -10,7 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 
 class AssertKotlinFileInSpecificRootCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
     companion object {
@@ -28,7 +28,9 @@ class AssertKotlinFileInSpecificRootCommand(text: String, line: Int) : PlaybackC
             if (file == null) {
                 throw IllegalStateException("Psi file of document is null")
             }
-            if (file.getKtModule() !is KtSourceModule) {
+
+            val ktModule = ProjectStructureProvider.getModule(project, file, null)
+            if (ktModule !is KtSourceModule) {
                 throw IllegalStateException("File $file not in kt source root module")
             }
         }

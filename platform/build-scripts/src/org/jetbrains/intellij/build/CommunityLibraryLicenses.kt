@@ -173,12 +173,7 @@ object CommunityLibraryLicenses {
                      "lucene-queryparser",
                      "lucene-queries",
                      "lucene-analysis-common",
-                     "org.apache.lucene:lucene-core:2.4.1",
-                     "lucene-query-parser:ind-deps",
-                     "lucene-core:ind-deps",
-                     "lucene-analyzer:ind-deps",
-                     "lucene-highlighter:ind-deps",
-                     "lucene-backward-codecs:ind-deps"
+                     "org.apache.lucene:lucene-core:2.4.1"
                    )).apache(),
     LibraryLicense(name = "Apache Tuweni-Toml", libraryName = "tuweni-toml",
                    url = "https://github.com/apache/incubator-tuweni/tree/main/toml")
@@ -486,8 +481,6 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/JetBrains/JetBrainsRuntime").apache(),
     LibraryLicense(name = "jetCheck", libraryName = "jetCheck", url = "https://github.com/JetBrains/jetCheck")
       .apache("https://github.com/JetBrains/jetCheck/blob/master/LICENSE"),
-    LibraryLicense(name = "JGit", libraryName = "JGit", license = "Eclipse Distribution License 1.0",
-                   licenseUrl = "https://www.eclipse.org/org/documents/edl-v10.php", url = "https://www.eclipse.org/jgit/"),
     LibraryLicense(name = "JGit (Settings Sync and SettingsRepo)", libraryName = "jetbrains.intellij.deps.eclipse.jgit",
                    license = "Eclipse Distribution License 1.0",
                    licenseUrl = "https://www.eclipse.org/org/documents/edl-v10.php", url = "https://www.eclipse.org/jgit/"),
@@ -537,7 +530,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Kotlin Coroutines for Guava", libraryName = "kotlinx-coroutines-guava",
                    url = "https://github.com/Kotlin/kotlinx.coroutines")
       .apache("https://github.com/Kotlin/kotlinx.coroutines/blob/master/LICENSE.txt"),
-    LibraryLicense(name = "Kotlin Coroutines for JDK 8", libraryName = "kotlinx-coroutines-jdk8",
+    LibraryLicense(name = "Kotlin Coroutines for JDK 8", libraryName = "kotlinx-coroutines-core",
                    url = "https://github.com/Kotlin/kotlinx.coroutines")
       .apache("https://github.com/Kotlin/kotlinx.coroutines/blob/master/LICENSE.txt"),
     LibraryLicense(name = "Kotlin Coroutines for Slf4j", libraryName = "kotlinx-coroutines-slf4j",
@@ -593,7 +586,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "lz4-java", libraryName = "lz4-java",
                    url = "https://github.com/lz4/lz4-java")
       .apache("https://github.com/lz4/lz4-java/blob/master/LICENSE.txt"),
-
     LibraryLicense(name = "MathJax", attachedTo = "intellij.python", version = "2.6.1",
                    url = "git://github.com/mathjax/MathJax",
                    licenseUrl = "https://github.com/mathjax/MathJax/blob/master/LICENSE").apache(),
@@ -616,8 +608,7 @@ object CommunityLibraryLicenses {
                    url = "https://maven.apache.org/ref/3.6.1/maven-resolver-provider/", libraryName = "maven-resolver-provider",
                    additionalLibraryNames = listOf("org.apache.maven.resolver:maven-resolver-connector-basic",
                                                    "org.apache.maven.resolver:maven-resolver-transport-http",
-                                                   "org.apache.maven.resolver:maven-resolver-transport-file",
-                                                   "maven-resolver-util:ind-deps")).apache("https://maven.apache.org/"),
+                                                   "org.apache.maven.resolver:maven-resolver-transport-file")).apache(),
     LibraryLicense(name = "Maven wagon provider api", libraryName="apache.maven.wagon.provider.api:3.5.2",
                    url = "https://maven.apache.org/wagon/wagon-provider-api/index.html")
       .apache("https://github.com/apache/maven-wagon"),
@@ -969,6 +960,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.noarg-compiler-plugin"),
     jetbrainsLibrary("kotlinc.parcelize-compiler-plugin"),
     jetbrainsLibrary("kotlinc.sam-with-receiver-compiler-plugin"),
+    jetbrainsLibrary("kotlinc.scripting-compiler-plugin"),
     jetbrainsLibrary("kotlinc.symbol-light-classes"),
     jetbrainsLibrary("kotlinx-collections-immutable"),
     jetbrainsLibrary("ml-completion-prev-exprs-models"),

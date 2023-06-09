@@ -160,7 +160,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
         val memberChooserObjects = properties.map { DescriptorMemberChooserObject(it, it.unsafeResolveToDescriptor()) }.toTypedArray()
         val selectedElements = memberChooserObjects.filter { (it.descriptor as? PropertyDescriptor)?.getter?.isDefault ?: true }.toTypedArray()
         val headerPanel = ToStringMemberChooserHeaderPanel(allowSuperCall)
-        val chooser = MemberChooser<DescriptorMemberChooserObject>(memberChooserObjects, true, true, project, false, headerPanel).apply {
+        val chooser = MemberChooser(memberChooserObjects, true, true, project, false, headerPanel).apply {
             title = KotlinBundle.message("action.generate.tostring.name")
             setCopyJavadocVisible(false)
             selectElements(selectedElements)

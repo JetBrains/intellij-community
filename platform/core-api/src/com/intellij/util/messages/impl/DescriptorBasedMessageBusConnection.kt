@@ -22,5 +22,5 @@ internal class DescriptorBasedMessageBusConnection(@JvmField val module: PluginD
   override val isDisposed: Boolean
     get() = false
 
-  override fun toString() = "DescriptorBasedMessageBusConnection(handlers=$handlers)"
+  override fun toString(): String = "DescriptorBasedMessageBusConnection(handlers=$handlers)"
 }

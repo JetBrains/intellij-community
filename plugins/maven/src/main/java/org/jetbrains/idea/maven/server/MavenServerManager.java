@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +23,6 @@ public interface MavenServerManager extends Disposable {
 
   Collection<MavenServerConnector> getAllConnectors();
 
-  @RequiresBlockingContext
   void restartMavenConnectors(Project project, boolean wait, Predicate<MavenServerConnector> condition);
 
   MavenServerConnector getConnector(@NotNull Project project, @NotNull String workingDirectory);

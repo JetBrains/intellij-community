@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
@@ -35,7 +35,7 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
     };
   }
 
-  private static class ReplaceWithRegularStringLiteralFix implements LocalQuickFix {
+  private static class ReplaceWithRegularStringLiteralFix extends PsiUpdateModCommandQuickFix {
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -45,13 +45,13 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiLiteralExpression literalExpression = tryCast(descriptor.getPsiElement(), PsiLiteralExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiLiteralExpression literalExpression = tryCast(element, PsiLiteralExpression.class);
       if (literalExpression == null || !literalExpression.isTextBlock()) return;
       String text = PsiLiteralUtil.getTextBlockText(literalExpression);
       if (text == null) return;
       String replacement = convertToConcatenation(text);
-      PsiFile file = descriptor.getPsiElement().getContainingFile();
+      PsiFile file = element.getContainingFile();
       if (file == null) return;
       CodeStyleSettings tempSettings = CodeStyle.getSettings(file);
       tempSettings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_BINARY_OPERATION = true;

@@ -2,13 +2,14 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -28,7 +29,7 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection extends BaseIns
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new CallToStringConcatCanBeReplacedByOperatorFix();
   }
 
@@ -38,7 +39,7 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection extends BaseIns
   }
 
   private static class CallToStringConcatCanBeReplacedByOperatorFix
-    extends InspectionGadgetsFix {
+    extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -47,8 +48,8 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection extends BaseIns
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiElement element = startElement;
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiReferenceExpression referenceExpression)) {
         return;

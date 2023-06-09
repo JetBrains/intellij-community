@@ -20,7 +20,7 @@ import org.junit.platform.suite.api.Suite
   ExistingThreadContextTest::class,
   IndicatorThreadContextTest::class,
   RunBlockingCancellableTest::class,
-  RunBlockingModalTest::class,
+  WithModalProgressBlockingTest::class,
   WithModalProgressTest::class,
   CoroutineToIndicatorTest::class,
 

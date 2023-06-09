@@ -315,6 +315,9 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   @NotNull
   public SearchScope getSearchScopeFromChangedFiles(@NotNull Project project) throws ExecutionException, InterruptedException {
     List<VirtualFile> files = getChangedFiles(project);
+    for (VirtualFile file : files) {
+      reportMessage(0, "modified file: " + file.getPath());
+    }
     return GlobalSearchScope.filesWithoutLibrariesScope(project, files);
   }
 
@@ -355,15 +358,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     LOG.info("Project structure update written. Change number " + i);
   }
 
-  private List<VirtualFile> getChangedFiles(@NotNull Project project) throws ExecutionException, InterruptedException {
+  public static List<VirtualFile> getChangedFiles(@NotNull Project project) throws ExecutionException, InterruptedException {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     CompletableFuture<List<VirtualFile>> future = new CompletableFuture<>();
     changeListManager.invokeAfterUpdateWithModal(false, null, () -> {
       try {
         List<VirtualFile> files = changeListManager.getAffectedFiles();
-        for (VirtualFile file : files) {
-          reportMessage(0, "modified file: " + file.getPath());
-        }
         future.complete(files);
       }
       catch (Throwable e) {

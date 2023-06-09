@@ -20,7 +20,7 @@ import javax.swing.border.Border
 
 internal class UiDslTestAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     UiDslTestDialog(e.project).show()

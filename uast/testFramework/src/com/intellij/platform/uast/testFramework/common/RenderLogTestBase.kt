@@ -16,7 +16,9 @@ interface RenderLogTestBase {
   private fun getTestFile(testName: String, ext: String) =
     File(getTestDataPath(), testName.substringBeforeLast('.') + '.' + ext)
 
-  fun check(testName: String, file: UFile) = check(testName, file, true)
+  fun check(testName: String, file: UFile) {
+    check(testName, file, true)
+  }
 
   fun check(testName: String, file: UFile, checkParentConsistency: Boolean) {
     val renderFile = getTestFile(testName, "render.txt")

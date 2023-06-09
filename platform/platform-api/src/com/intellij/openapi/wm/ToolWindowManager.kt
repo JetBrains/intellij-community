@@ -176,7 +176,7 @@ abstract class ToolWindowManager {
 
 class RegisterToolWindowTaskBuilder @PublishedApi internal constructor(private val id: String) {
   @JvmField
-  var anchor = ToolWindowAnchor.BOTTOM
+  var anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM
   @JvmField
   var stripeTitle: Supplier<@NlsContexts.TabTitle String>? = null
   @JvmField

@@ -25,7 +25,7 @@ import java.util.Objects;
  * Implementation of the markup element for the editor and document.
  * @author max
  */
-class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx {
+sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx permits PersistentRangeHighlighterImpl {
   @SuppressWarnings({"InspectionUsingGrayColors", "UseJBColor"})
   private static final Color NULL_COLOR = new Color(0, 0, 0); // must be a new instance to work as a sentinel
   private static final Key<Boolean> VISIBLE_IF_FOLDED = Key.create("visible.folded");

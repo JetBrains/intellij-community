@@ -8,6 +8,7 @@
       "generated.svg": "actions/generatedFolder.svg",
       "groupByMethod.svg": "actions/groupByMethod.svg",
       "groupByModule.svg": "actions/GroupByModule.svg",
+      "groupByPackage.svg": "actions/GroupByPackage.svg",
       "groupByTestProduction.svg": "actions/groupByTestProduction.svg",
       "inSelection.svg": "actions/inSelection.svg",
       "install.svg": "actions/install.svg",
@@ -124,7 +125,7 @@
       "remove@14x14.svg": "diff/remove.svg",
       "revert@14x14.svg": "diff/revert.svg"
     },
-    "editor": {
+    "codeInsight": {
       "inlayGlobe.svg": "actions/inlayGlobe.svg",
       "inlaySecuredShield.svg": "actions/inlaySecuredShield.svg",
       "inlayRenameInComments.svg": "actions/inlayRenameInComments.svg",
@@ -304,10 +305,7 @@
       "pluginUpdate.svg": "ide/notification/pluginUpdate.svg",
       "import.svg": "toolbarDecorator/import.svg",
       "informationDialog.svg": "general/informationDialog.svg",
-      "layout.svg": [
-        "debugger/restoreLayout.svg",
-        "graph/layout.svg"
-      ],
+      "layout.svg": "debugger/restoreLayout.svg",
       "left.svg": "actions/back.svg",
       "listFiles.svg": "actions/listFiles.svg",
       "locate.svg": "general/locate.svg",
@@ -369,6 +367,9 @@
       "questionDialog.svg": "general/questionDialog.svg",
       "warningDialog.svg": "general/warningDialog.svg"
     },
+    "graph": {
+      "graphLayout.svg": "graph/layout.svg"
+    },
     "gutter": {
       "bookmark.svg": "gutter/bookmark.svg",
       "colors.svg": "gutter/colors.svg",
@@ -395,6 +396,7 @@
       "writeAccess.svg": "gutter/writeAccess.svg"
     },
     "ide": {
+      "configFile.svg": "ide/configFile.svg",
       "feedbackRating.svg": "ide/feedbackRating.svg",
       "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
       "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",
@@ -709,6 +711,7 @@
       "web.svg": "toolwindows/webToolWindow.svg"
     },
     "vcs": {
+      "branch.svg": "vcs/branch.svg",
       "changelist.svg": "vcs/changelist.svg",
       "changes.svg": "actions/listChanges.svg",
       "changesPush@12x12.svg": "icons/outgoing.svg",
@@ -734,10 +737,7 @@
         "vcs/unshelveSilent.svg"
       ],
       "update.svg": "actions/checkOut.svg",
-      "vcs.svg": [
-        "vcs/branch.svg",
-        "vcs/branchNode.svg"
-      ]
+      "vcs.svg": "vcs/branchNode.svg"
     },
     "welcome": {
       "createNewProjectTab.svg": "welcome/createNewProjectTab.svg",

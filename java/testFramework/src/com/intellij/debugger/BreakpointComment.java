@@ -183,23 +183,21 @@ public final class BreakpointComment {
       skip('/');
       skipWhitespace();
 
-      String kind = parseName();
+      final String head = parseName();
       if (i < len && s[i] == '(') {
-        comment.kind = kind;
+        // We have kind with value.
+        comment.kind = head;
         comment.kindValue = parseValue();
         skipWhitespace();
         int nameStart = i;
-        kind = parseName();
-        if (!kind.equals("Breakpoint")) {
-          throw errorAt(nameStart, "Expected 'Breakpoint' instead of '" + kind + "'");
+        String tail = parseName();
+        if (!tail.equals("Breakpoint")) {
+          throw errorAt(nameStart, "Expected 'Breakpoint' instead of '" + tail + "'");
         }
       }
       else {
-        comment.kind = switch (kind) {
-          case "Method Breakpoint" -> "Method";
-          case "Breakpoint" -> "Line";
-          default -> kind.replaceFirst("\\s+Breakpoint$", "");
-        };
+        var kind = head.replaceFirst("\\s*Breakpoint$", "");
+        comment.kind = kind.isEmpty() ? "Line" : kind;
       }
       skip('!');
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.*;
@@ -37,9 +37,8 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   }
 
   @Override
-  @NotNull
-  public PsiFile createFileFromText(@NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
-                                    long modificationStamp, boolean eventSystemEnabled) {
+  public @NotNull PsiFile createFileFromText(@NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
+                                             long modificationStamp, boolean eventSystemEnabled) {
     return createFileFromText(name, fileType, text, modificationStamp, eventSystemEnabled, true);
   }
 
@@ -76,13 +75,12 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   }
 
   @Override
-  @NotNull
-  public PsiFile createFileFromText(@NotNull String name,
-                                    @NotNull FileType fileType,
-                                    @NotNull CharSequence text,
-                                    long modificationStamp,
-                                    boolean eventSystemEnabled,
-                                    boolean markAsCopy) {
+  public @NotNull PsiFile createFileFromText(@NotNull String name,
+                                             @NotNull FileType fileType,
+                                             @NotNull CharSequence text,
+                                             long modificationStamp,
+                                             boolean eventSystemEnabled,
+                                             boolean markAsCopy) {
     LightVirtualFile lightVirtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
     Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), lightVirtualFile, fileType);
     if (language != null) {
@@ -96,10 +94,9 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     return plainTextFile;
   }
 
-  @Nullable
-  public PsiFile trySetupPsiForFile(@NotNull LightVirtualFile lightVirtualFile,
-                                    @NotNull Language language,
-                                    boolean physical, boolean markAsCopy) {
+  public @Nullable PsiFile trySetupPsiForFile(@NotNull LightVirtualFile lightVirtualFile,
+                                              @NotNull Language language,
+                                              boolean physical, boolean markAsCopy) {
     FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
     FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(lightVirtualFile, language, myManager, physical) : null;
     if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, lightVirtualFile, physical);
@@ -121,12 +118,11 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     return null;
   }
 
-  @NotNull
-  public PsiFile createFileFromText(@NotNull String name,
-                                    @NotNull FileType fileType, Language language, @NotNull Language targetLanguage, @NotNull CharSequence text,
-                                    long modificationStamp,
-                                    boolean physical,
-                                    boolean markAsCopy) {
+  public @NotNull PsiFile createFileFromText(@NotNull String name,
+                                             @NotNull FileType fileType, Language language, @NotNull Language targetLanguage, @NotNull CharSequence text,
+                                             long modificationStamp,
+                                             boolean physical,
+                                             boolean markAsCopy) {
     LightVirtualFile lightVirtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
 
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
@@ -152,14 +148,12 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   }
 
   @Override
-  @NotNull
-  public PsiFile createFileFromText(@NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text) {
+  public @NotNull PsiFile createFileFromText(@NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text) {
     return createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), false);
   }
 
   @Override
-  @NotNull
-  public PsiFile createFileFromText(@NotNull String name, @NotNull String text){
+  public @NotNull PsiFile createFileFromText(@NotNull String name, @NotNull String text){
     FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(name);
     if (type.isBinary()) {
       throw new RuntimeException("Cannot create binary files from text: name " + name + ", file type " + type);
@@ -175,9 +169,8 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     return createFileFromText(fileName, fileType, text);
   }
 
-  @Nullable
   @Override
-  public PsiFile createFileFromText(@NotNull CharSequence chars, @NotNull PsiFile original) {
+  public @Nullable PsiFile createFileFromText(@NotNull CharSequence chars, @NotNull PsiFile original) {
     PsiFile file = createFileFromText(original.getName(), original.getLanguage(), chars, false, true);
     if (file != null) {
       file.putUserData(ORIGINAL_FILE, original);
@@ -185,11 +178,10 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     return file;
   }
 
-  @Nullable
-  public PsiElement createElementFromText(@Nullable String text,
-                                          @NotNull Language language,
-                                          @NotNull IElementType type,
-                                          @Nullable PsiElement context) {
+  public @Nullable PsiElement createElementFromText(@Nullable String text,
+                                                    @NotNull Language language,
+                                                    @NotNull IElementType type,
+                                                    @Nullable PsiElement context) {
     if (text == null) return null;
     DummyHolder result = DummyHolderFactory.createHolder(myManager, language, context);
     FileElement holder = result.getTreeElement();

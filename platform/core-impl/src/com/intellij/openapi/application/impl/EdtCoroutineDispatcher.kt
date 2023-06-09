@@ -37,7 +37,7 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
 
   companion object : EdtCoroutineDispatcher() {
 
-    override fun toString() = "EDT"
+    override fun toString(): String = "EDT"
   }
 
   object Immediate : EdtCoroutineDispatcher() {
@@ -52,6 +52,6 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
       return false
     }
 
-    override fun toString() = "EDT.immediate"
+    override fun toString(): String = "EDT.immediate"
   }
 }

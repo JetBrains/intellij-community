@@ -441,8 +441,7 @@ public final class PythonSdkType extends SdkType {
       }
       return versionString;
     }
-    else if (PythonSdkUtil.isRemote(sdk)) {
-      final PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdkAdditionalData;
+    else if (sdkAdditionalData instanceof PyRemoteSdkAdditionalDataBase data) {
       assert data != null;
       String versionString = data.getVersionString();
       if (StringUtil.isEmpty(versionString)) {

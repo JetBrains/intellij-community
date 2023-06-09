@@ -16,8 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -62,11 +61,11 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryBlockFix();
   }
 
-  private static class UnnecessaryBlockFix extends InspectionGadgetsFix {
+  private static class UnnecessaryBlockFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -76,8 +75,7 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement leftBrace = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement leftBrace, @NotNull EditorUpdater updater) {
       final PsiElement parent = leftBrace.getParent();
       if (!(parent instanceof PsiCodeBlock block)) {
         return;

@@ -16,7 +16,9 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -31,7 +33,6 @@ import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IgnoreClassFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -53,8 +54,8 @@ public class StaticImportInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public OrderedSet<String> allowedClasses = new OrderedSet<>();
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> result = new SmartList<>();
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    final List<LocalQuickFix> result = new SmartList<>();
     final PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)infos[0];
     final SuppressForTestsScopeFix fix = SuppressForTestsScopeFix.build(this, importStaticStatement);
     ContainerUtil.addIfNotNull(result, fix);
@@ -64,7 +65,7 @@ public class StaticImportInspection extends BaseInspection {
       result.add(new IgnoreClassFix(name, allowedClasses, InspectionGadgetsBundle.message("static.import.fix.ignore.class", name)));
     }
     result.add(buildFix(infos));
-    return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override
@@ -90,7 +91,7 @@ public class StaticImportInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new StaticImportFix();
   }
 
@@ -99,7 +100,7 @@ public class StaticImportInspection extends BaseInspection {
     return new StaticImportVisitor();
   }
 
-  private static class StaticImportFix extends InspectionGadgetsFix {
+  private static class StaticImportFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -108,8 +109,8 @@ public class StaticImportInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiImportStaticStatement importStatement = (PsiImportStaticStatement)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiImportStaticStatement importStatement = (PsiImportStaticStatement)startElement;
       final PsiJavaCodeReferenceElement importReference = importStatement.getImportReference();
       if (importReference == null) {
         return;

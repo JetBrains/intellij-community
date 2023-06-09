@@ -63,7 +63,7 @@ internal class BookmarkTypeChooser(
   )
   private lateinit var descriptionField: JBTextField
 
-  val firstButton = bookmarkLayoutGrid.buttons().first()
+  val firstButton: JButton? = bookmarkLayoutGrid.buttons().first()
   val content: JPanel
   var onChosen: (BookmarkType, String) -> Unit = { _, _ -> }
 

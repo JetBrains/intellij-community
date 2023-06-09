@@ -78,7 +78,7 @@ abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer 
         chosenElements: List<PsiClass>
     ): List<TestTasksToRun> {
         val tasks = mppTestTasksChooser.listAvailableTasks(listOf(element))
-        val wildcardFilter = createTestFilterFrom(element.containingClass!!, element)
+        val wildcardFilter = createTestFilterFrom(element)
         return tasks.map { TestTasksToRun(it, wildcardFilter) }
     }
 

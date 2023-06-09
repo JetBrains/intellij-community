@@ -43,7 +43,7 @@ class KotlinAwareDelegatingMoveDestination(
             (it as? PsiPackage)?.directories?.toList() ?: emptyList()
         }
         val projectScope = project.projectScope()
-        val filesToProcess = elements.flatMapTo(LinkedHashSet<KtFile>()) {
+        val filesToProcess = elements.flatMapTo(LinkedHashSet()) {
             if (it is PsiPackage) KotlinExactPackagesIndex.get(it.qualifiedName, project, projectScope) else emptyList()
         }
 

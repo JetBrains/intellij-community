@@ -47,11 +47,11 @@ suspend fun <R> ObservableOperationTrace.awaitOperation(
 
 fun ObservableOperationTrace.waitForOperationCompletion(
   completionTimeout: Duration
-) = waitForOperationCompletion(completionTimeout) { waitForPromise(it) }
+): Unit = waitForOperationCompletion(completionTimeout) { waitForPromise(it) }
 
 suspend fun ObservableOperationTrace.awaitOperationCompletion(
   completionTimeout: Duration
-) = waitForOperationCompletion(completionTimeout) { awaitPromise(it) }
+): Unit = waitForOperationCompletion(completionTimeout) { awaitPromise(it) }
 
 @ApiStatus.Internal
 inline fun <R> ObservableOperationTrace.waitForOperation(

@@ -388,7 +388,7 @@ internal inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
 // FileRepositoryBuilder must be not used directly - using of system config must be disabled
 // (no need, to avoid git exe discovering - it can cause https://youtrack.jetbrains.com/issue/IDEA-170795)
 fun buildRepository(workTree: Path? = null, bare: Boolean = false, gitDir: Path? = null, mustExists: Boolean = false): Repository {
-  val repositoryBuilder = FileRepositoryBuilder().setUseSystemConfig(false).setUseUserConfig(false)
+  val repositoryBuilder = FileRepositoryBuilder().setAutonomous(true)
   if (bare) {
     repositoryBuilder.setBare()
   }

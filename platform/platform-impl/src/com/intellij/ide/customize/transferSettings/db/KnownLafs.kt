@@ -4,7 +4,7 @@ package com.intellij.ide.customize.transferSettings.db
 import com.intellij.ide.customize.transferSettings.models.BundledLookAndFeel
 
 object KnownLafs {
-  val Light = BundledLookAndFeel.fromManager("IntelliJ Light")
-  val Darcula = BundledLookAndFeel.fromManager("Darcula")
-  val HighContrast = BundledLookAndFeel.fromManager("High contrast")
+  val Light: BundledLookAndFeel = BundledLookAndFeel.fromManager("IntelliJ Light")
+  val Darcula: BundledLookAndFeel = BundledLookAndFeel.fromManager("Darcula")
+  val HighContrast: BundledLookAndFeel = BundledLookAndFeel.fromManager("High contrast")
 }

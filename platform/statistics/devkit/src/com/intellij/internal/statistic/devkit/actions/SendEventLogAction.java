@@ -171,8 +171,14 @@ final class SendEventLogAction extends AnAction {
     }
 
     private static void append(@NotNull StringBuilder out, @NotNull List<LogEventRecordRequest> requests) {
+      boolean isFirst = true;
       for (LogEventRecordRequest request : requests) {
-        out.append(LogEventSerializer.INSTANCE.toString(request)).append(",");
+        if (isFirst) {
+          isFirst = false;
+        } else {
+          out.append(",");
+        }
+        out.append(LogEventSerializer.INSTANCE.toString(request));
       }
     }
   }

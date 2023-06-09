@@ -17,10 +17,10 @@ class CorePluginManagerProxy : AbstractPluginManagerProxy() {
 
   override fun getPlugins() = PluginManagerCore.getPlugins()
 
-  override fun addDisablePluginListener(disabledListener: Runnable, parentDisposable: Disposable) {
-    DisabledPluginsState.addDisablePluginListener(disabledListener)
+  override fun addPluginStateChangedListener(listener: PluginEnableStateChangedListener, parentDisposable: Disposable) {
+    DynamicPluginEnabler.addPluginStateChangedListener(listener)
     Disposer.register(parentDisposable, Disposable {
-      DisabledPluginsState.removeDisablePluginListener(disabledListener)
+      DynamicPluginEnabler.removePluginStateChangedListener(listener)
     })
   }
 
@@ -33,4 +33,6 @@ class CorePluginManagerProxy : AbstractPluginManagerProxy() {
   override fun createInstaller(notifyErrors: Boolean): SettingsSyncPluginInstaller {
     return SettingsSyncPluginInstallerImpl(notifyErrors)
   }
+
+  override fun isIncompatible(plugin: IdeaPluginDescriptor) = PluginManagerCore.isIncompatible(plugin)
 }

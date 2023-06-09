@@ -25,10 +25,10 @@ fun Path.createDirectories(): Path = NioFiles.createDirectories(this)
  * Opposite to Java, parent directories will be created
  */
 @JvmOverloads
-fun Path.outputStream(append: Boolean = false): OutputStream {
+fun Path.outputStream(append: Boolean = false, vararg options: OpenOption): OutputStream {
   parent?.createDirectories()
   if (append) {
-    return Files.newOutputStream(this, StandardOpenOption.APPEND, StandardOpenOption.CREATE)
+    return Files.newOutputStream(this, StandardOpenOption.APPEND, StandardOpenOption.CREATE, *options)
   }
   return Files.newOutputStream(this)
 }
@@ -122,10 +122,10 @@ fun Path.readChars(): CharSequence {
 }
 
 @Throws(IOException::class)
-fun Path.writeChild(relativePath: String, data: ByteArray) = resolve(relativePath).write(data)
+fun Path.writeChild(relativePath: String, data: ByteArray): Path = resolve(relativePath).write(data)
 
 @Throws(IOException::class)
-fun Path.writeChild(relativePath: String, data: String) = writeChild(relativePath, data.toByteArray())
+fun Path.writeChild(relativePath: String, data: String): Path = writeChild(relativePath, data.toByteArray())
 
 @Throws(IOException::class)
 @JvmOverloads

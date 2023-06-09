@@ -121,21 +121,24 @@ final class PersistentFSRecordAccessor {
                                  @NotNull IntList usedAttributeRecordIds,
                                  @NotNull IntList validAttributeIds) throws IOException {
     PersistentFSConnection connection = myFSConnection;
-    int parentId = connection.getRecords().getParent(id);
+    PersistentFSRecordsStorage records = connection.getRecords();
+    int parentId = records.getParent(id);
     assert parentId >= 0 && parentId < totalRecordCount;
-    if (parentId > 0 && connection.getRecords().getParent(parentId) > 0) {
-      int parentFlags = connection.getRecords().getFlags(parentId);
+    if (parentId > 0 && records.getParent(parentId) > 0) {
+      int parentFlags = records.getFlags(parentId);
       assert !hasDeletedFlag(parentFlags) : parentId + ": " + Integer.toHexString(parentFlags);
       assert BitUtil.isSet(parentFlags, PersistentFS.Flags.IS_DIRECTORY) : parentId + ": " + Integer.toHexString(parentFlags);
     }
 
     CharSequence name = getName(id);
-    LOG.assertTrue(parentId == 0 || name.length() != 0, "File with empty name found under " + getName(parentId) + ", id=" + id);
+    if(parentId != 0 && name.isEmpty()) {
+      LOG.error("File[" + id + "] with empty name found under parent[" + parentId + "][name:" + getName(parentId) + "]");
+    }
 
     myPersistentFSContentAccessor.checkContentsStorageSanity(id);
     myPersistentFSAttributeAccessor.checkAttributesStorageSanity(id, usedAttributeRecordIds, validAttributeIds);
 
-    long length = connection.getRecords().getLength(id);
+    long length = records.getLength(id);
     assert length >= -1 : "Invalid file length found for " + name + ": " + length;
   }
 

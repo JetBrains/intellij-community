@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -43,7 +44,7 @@ public class HashCodeUsesNonFinalVariableInspection
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     return MakeFieldFinalFix.buildFix(field);
   }

@@ -30,13 +30,13 @@ interface FsRootDataLoader {
 class EmptyFsRootDataLoader : FsRootDataLoader {
   override val name: String = "empty"
 
-  override fun ensureLoaded(storage: Path) = Unit
+  override fun ensureLoaded(storage: Path): Unit = Unit
 
-  override fun deleteRootRecord(storage: Path, rootId: Int) = Unit
+  override fun deleteRootRecord(storage: Path, rootId: Int): Unit = Unit
 
-  override fun deleteDirectoryRecord(storage: Path, id: Int) = Unit
+  override fun deleteDirectoryRecord(storage: Path, id: Int): Unit = Unit
 
-  override fun loadRootData(storage: Path, id: Int, path: String, fs: NewVirtualFileSystem) = Unit
+  override fun loadRootData(storage: Path, id: Int, path: String, fs: NewVirtualFileSystem): Unit = Unit
 
-  override fun loadDirectoryData(storage: Path, id: Int, parent: VirtualFile, childName: CharSequence, fs: NewVirtualFileSystem) = Unit
+  override fun loadDirectoryData(storage: Path, id: Int, parent: VirtualFile, childName: CharSequence, fs: NewVirtualFileSystem): Unit = Unit
 }

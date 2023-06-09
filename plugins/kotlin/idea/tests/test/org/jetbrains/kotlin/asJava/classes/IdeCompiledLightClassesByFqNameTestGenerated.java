@@ -42,6 +42,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
         public void testProperty() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/delegation/Property.kt"));
         }
+
+        @TestMetadata("WithImplicitType.kt")
+        public void testWithImplicitType() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/delegation/WithImplicitType.kt"));
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -423,6 +428,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
         @TestMetadata("StubOrderForOverloads.kt")
         public void testStubOrderForOverloads() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/StubOrderForOverloads.kt"));
+        }
+
+        @TestMetadata("SubstitutionOverride.kt")
+        public void testSubstitutionOverride() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/SubstitutionOverride.kt"));
         }
 
         @TestMetadata("Throws.kt")

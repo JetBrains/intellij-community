@@ -25,41 +25,35 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ChangeAnnotationParameterQuickFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class ReflectionForUnavailableAnnotationInspection extends BaseInspection {
 
   @Override
-  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     String runtimeRef = StringUtil.getQualifiedName("java.lang.annotation.RetentionPolicy", "RUNTIME");
     if (infos.length == 1) {
       PsiClass annotationClass = (PsiClass)infos[0];
       PsiAnnotation newAnnotation = JavaPsiFacade.getElementFactory(annotationClass.getProject())
         .createAnnotationFromText("@Retention(" + runtimeRef + ")", annotationClass);
       String text = getText(annotationClass);
-      LocalQuickFix fix = new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_ANNOTATION_RETENTION,
-                                                  annotationClass,
-                                                  newAnnotation.getParameterList().getAttributes()) {
+      return new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_ANNOTATION_RETENTION,
+                                     annotationClass,
+                                     newAnnotation.getParameterList().getAttributes()) {
         @Override
         public @NotNull String getText() { return text; }
       };
-      return new DelegatingFix(fix);
     }
     else if (infos.length == 2) {
       PsiAnnotation retentionAnnotation = (PsiAnnotation)infos[1];
       String text = getText((PsiClass)infos[0]);
-      LocalQuickFix fix =
-        new ChangeAnnotationParameterQuickFix(retentionAnnotation, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, runtimeRef) {
-          @Override
-          public @NotNull String getText() { return text; }
-        };
-      return new DelegatingFix(fix);
+      return new ChangeAnnotationParameterQuickFix(retentionAnnotation, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, runtimeRef) {
+        @Override
+        public @NotNull String getText() { return text; }
+      };
     }
     assert false;
     return null;

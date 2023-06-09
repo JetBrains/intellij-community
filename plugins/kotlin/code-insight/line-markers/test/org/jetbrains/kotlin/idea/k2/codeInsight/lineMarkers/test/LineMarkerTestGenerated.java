@@ -273,6 +273,11 @@ public abstract class LineMarkerTestGenerated extends AbstractLineMarkerTest {
             performTest();
         }
 
+        @TestMetadata("InterfaceDisabledImplOption.kt")
+        public void testInterfaceDisabledImplOption() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("NavigateFromPrivateAbstractClass.kt")
         public void testNavigateFromPrivateAbstractClass() throws Exception {
             performTest();

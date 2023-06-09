@@ -144,6 +144,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
             val pathname = project.basePath ?: return
             val projectPath = File(pathname)
 
+            @Suppress("RemoveExplicitTypeArguments")
             val wizardModules = wizard.context.read { KotlinPlugin.modules.settingValue }
                 .flatMap { module ->
                     buildList<Module> {

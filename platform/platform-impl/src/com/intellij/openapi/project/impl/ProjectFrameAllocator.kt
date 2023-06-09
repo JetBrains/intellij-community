@@ -12,7 +12,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.util.RunOnceUtil
+import com.intellij.ide.util.runOnceForProject
 import com.intellij.idea.getAndUnsetSplashProjectFrame
 import com.intellij.idea.hideSplashBeforeShow
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -26,10 +26,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.guessProjectDir
@@ -42,6 +45,7 @@ import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.problems.WolfTheProblemSolver
+import com.intellij.psi.PsiManager
 import com.intellij.toolWindow.computeToolWindowBeans
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.TimeoutUtil
@@ -185,7 +189,9 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
 
         // in a separate EDT task, as EDT is used for write actions and frame initialization, should not slow down project opening
         withContext(Dispatchers.EDT) {
-          frameHelper.init()
+          blockingContext {
+            frameHelper.init()
+          }
         }
         frameHelper.setInitBounds(getFrameInfo()?.bounds)
       }
@@ -212,17 +218,21 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
                                                                       device = frameProducer.deviceOrDefault)
     )
     val frameHelper = withContext(Dispatchers.EDT) {
-      val frameHelper = ProjectFrameHelper(frameProducer.create(), loadingState = loadingState)
-      // must be after preInit (frame decorator is required to set a full-screen mode)
-      frameHelper.frame.isVisible = true
-      updateFullScreenState(frameHelper, frameInfo)
-      frameHelper
+      blockingContext {
+        val frameHelper = ProjectFrameHelper(frameProducer.create(), loadingState = loadingState)
+        // must be after preInit (frame decorator is required to set a full-screen mode)
+        frameHelper.frame.isVisible = true
+        updateFullScreenState(frameHelper, frameInfo)
+        frameHelper
+      }
     }
 
     closeFrameOnCancel(frameHelper) {
       // in a separate EDT task, as EDT is used for write actions and frame initialization, should not slow down project opening
       withContext(Dispatchers.EDT) {
-        frameHelper.init()
+        blockingContext {
+          frameHelper.init()
+        }
       }
     }
     return loadingState
@@ -306,7 +316,11 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
   coroutineScope {
     // only after FileEditorManager.init - DaemonCodeAnalyzer uses FileEditorManager
     launch {
+      // WolfTheProblemSolver uses PsiManager
+      project.serviceAsync<PsiManager>()
       project.serviceAsync<WolfTheProblemSolver>()
+    }
+    launch {
       project.serviceAsync<DaemonCodeAnalyzer>()
     }
 
@@ -355,7 +369,9 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
     }
 
     project.getUserData(ProjectImpl.CREATION_TIME)?.let { startTime ->
-      LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime), frameHelper.isTabbedWindow)
+      blockingContext {
+        LifecycleUsageTriggerCollector.onProjectOpenFinished(project, TimeoutUtil.getDurationMillis(startTime), frameHelper.isTabbedWindow)
+      }
     }
 
     if (!hasOpenFiles && !isNotificationSilentMode(project)) {
@@ -396,12 +412,14 @@ private fun CoroutineScope.initFrame(deferredProjectFrameHelper: Deferred<Projec
     val frameHelper = deferredProjectFrameHelper.await()
     val toolbarActionGroups = deferredToolbarActionGroups.await()
     withContext(Dispatchers.EDT) {
-      runActivity("toolbar init") {
-        frameHelper.rootPane.initToolbar(toolbarActionGroups)
-      }
+      blockingContext {
+        runActivity("toolbar init") {
+          frameHelper.rootPane.initToolbar(toolbarActionGroups)
+        }
 
-      runActivity("north components updating") {
-        frameHelper.rootPane.updateNorthComponents()
+        runActivity("north components updating") {
+          frameHelper.rootPane.updateNorthComponents()
+        }
       }
     }
   }
@@ -469,6 +487,10 @@ internal fun createNewProjectFrame(frameInfo: FrameInfo?): ProjectFrameProducer 
         hideSplashBeforeShow(frame)
         if (isMaximized && frame.extendedState == Frame.NORMAL && boundsAndDevice != null) {
           frame.normalBounds = boundsAndDevice.first
+          frame.screenBounds = ScreenUtil.getScreenDevice(boundsAndDevice.first)?.defaultConfiguration?.bounds
+          if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+            IDE_FRAME_EVENT_LOG.debug("Loaded saved normal bounds ${frame.normalBounds} for the screen ${frame.screenBounds}")
+          }
         }
         applyBoundsOrDefault(frame, boundsAndDevice?.first)
         frame.extendedState = state
@@ -507,12 +529,12 @@ internal data class OpenProjectImplOptions(
   @JvmField val frame: IdeFrameImpl? = null,
 )
 
-private fun findAndOpenReadmeIfNeeded(project: Project) {
+private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
   if (!AdvancedSettings.getBoolean("ide.open.readme.md.on.startup")) {
     return
   }
 
-  RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart") {
+  runOnceForProject(project = project, id = "ShowReadmeOnStart") {
     val projectDir = project.guessProjectDir() ?: return@runOnceForProject
     val files = mutableListOf(".github/README.md", "README.md", "docs/README.md")
     if (SystemInfoRt.isFileSystemCaseSensitive) {
@@ -520,10 +542,8 @@ private fun findAndOpenReadmeIfNeeded(project: Project) {
     }
     val readme = files.firstNotNullOfOrNull(projectDir::findFileByRelativePath) ?: return@runOnceForProject
     if (!readme.isDirectory) {
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch(Dispatchers.EDT) {
-        TextEditorWithPreview.openPreviewForFile(project, readme)
-      }
+      readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, TextEditorWithPreview.Layout.SHOW_PREVIEW)
+      FileEditorManagerEx.getInstanceEx(project).openFile(readme, FileEditorOpenOptions(requestFocus = true))
     }
   }
 }

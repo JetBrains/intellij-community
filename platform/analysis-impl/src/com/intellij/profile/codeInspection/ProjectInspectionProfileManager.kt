@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
@@ -53,7 +54,7 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
 
   private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("profile")
 
-  override val schemeManager = SchemeManagerFactory.getInstance(project).create(PROFILE_DIR, object : InspectionProfileProcessor() {
+  override val schemeManager: SchemeManager<InspectionProfileImpl> = SchemeManagerFactory.getInstance(project).create(PROFILE_DIR, object : InspectionProfileProcessor() {
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
                               name: String,
                               attributeProvider: (String) -> String?,
@@ -137,7 +138,7 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
     schemeManager.loadSchemes()
   }
 
-  fun isCurrentProfileInitialized() = currentProfile.wasInitialized()
+  fun isCurrentProfileInitialized(): Boolean = currentProfile.wasInitialized()
 
   override fun schemeRemoved(scheme: InspectionProfileImpl) {
     scheme.cleanup(project)
@@ -190,7 +191,7 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
     }
   }
 
-  override fun getScopesManager() = DependencyValidationManager.getInstance(project)
+  override fun getScopesManager(): DependencyValidationManager = DependencyValidationManager.getInstance(project)
 
   @Synchronized
   override fun getProfiles(): Collection<InspectionProfileImpl> {

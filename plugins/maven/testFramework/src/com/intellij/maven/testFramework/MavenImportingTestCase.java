@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties;
 import com.intellij.java.library.MavenCoordinates;
+import com.intellij.maven.testFramework.utils.MavenImportingTestCaseKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
@@ -73,7 +74,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenResolvedContext myResolvedContext;
   protected MavenImportedContext myImportedContext;
   protected MavenImportingResult myImportingResult;
-  protected MavenSourcesGeneratedContext mySourcesGeneratedContext;
   protected MavenPluginResolvedContext myPluginResolvedContext;
 
     @Override
@@ -82,7 +82,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     super.setUp();
 
-    myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(this::getCurrentCodeStyleSettings);
+    myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(() -> getCurrentCodeStyleSettings());
 
     File settingsFile =
       MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.getEffectiveGlobalSettingsIoFile();
@@ -409,7 +409,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void importProjectWithErrors() {
-    doImportProjects(Collections.singletonList(myProjectPom), false);
+    var files = Collections.singletonList(myProjectPom);
+    doImportProjects(files, false);
+    MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager, files);
   }
 
   protected void importProjectWithProfiles(String... profiles) {
@@ -517,10 +519,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     readProjects(files, disabledProfiles, profiles);
 
-    ApplicationManager.getApplication().invokeAndWait(() -> {
+/*    ApplicationManager.getApplication().invokeAndWait(() -> {
       myProjectsManager.scheduleImportInTests(files);
-    });
-    myProjectsManager.importProjects();
+    });*/
+    //MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager);
 
     Promise<?> promise = myProjectsManager.waitForImportCompletion();
     ApplicationManager.getApplication().invokeAndWait(() -> PlatformTestUtil.waitForPromise(promise));
@@ -571,7 +573,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     }
     else {
       readProjects(files);
-      myProjectsManager.performScheduledImportInTests();
+      //myProjectsManager.performScheduledImportInTests();
     }
   }
 
@@ -583,8 +585,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     }
   }
 
-  protected void scheduleResolveAll() {
-    myProjectsManager.scheduleResolveAllInTests();
+  protected void resolveAndImportAllMavenProjects() {
+    MavenImportingTestCaseKt.resolveAndImportMavenProjectsSync(myProjectsManager, myProjectsManager.getProjects());
   }
 
   protected void waitForReadingCompletion() {
@@ -621,18 +623,18 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     }
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      myProjectsManager.waitForResolvingCompletion();
-      myProjectsManager.performScheduledImportInTests();
+      myProjectsManager.waitForReadingCompletion();
+      //myProjectsManager.performScheduledImportInTests();
     });
   }
 
   protected void resolveFoldersAndImport() {
-    new MavenFolderResolver(myProjectsManager.getProject()).resolveFoldersAndImportBlocking(myProjectsManager.getProjects());
+    MavenImportingTestCaseKt.resolveFoldersAndImport(myProjectsManager.getProject(), myProjectsManager.getProjects());
     if (isNewImportingProcess) {
       importProject();
     }
     else {
-      ApplicationManager.getApplication().invokeAndWait(() -> myProjectsManager.performScheduledImportInTests());
+      //ApplicationManager.getApplication().invokeAndWait(() -> myProjectsManager.performScheduledImportInTests());
     }
   }
 
@@ -653,7 +655,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       return;
     }
 
-    myProjectsManager.waitForPluginsResolvingCompletion();
+    myProjectsManager.waitForReadingCompletion();
   }
 
   protected void downloadArtifacts() {
@@ -665,14 +667,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     if (isNewImportingProcess) {
       return downloadArtifactAndWaitForResult(projects, artifacts);
     }
-    final MavenArtifactDownloader.DownloadResult[] unresolved = new MavenArtifactDownloader.DownloadResult[1];
-
-    AsyncPromise<MavenArtifactDownloader.DownloadResult> result = new AsyncPromise<>();
-    result.onSuccess(unresolvedArtifacts -> unresolved[0] = unresolvedArtifacts);
-
-    myProjectsManager.scheduleArtifactsDownloading(projects, artifacts, true, true, result);
-    myProjectsManager.waitForArtifactsDownloadingCompletion();
-    return unresolved[0];
+    var result = myProjectsManager.downloadArtifactsSync(projects, artifacts, true, true);
+    return result;
   }
 
   @NotNull
@@ -699,12 +695,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void performPostImportTasks() {
-    /*if (isNewImportingProcess) {
-      assertNotNull(myImportedContext);
-      new MavenImportFlow().runPostImportTasks(myImportedContext);
-      return;
-    }*/
-    myProjectsManager.waitForPostImportTasksCompletion();
   }
 
   protected void executeGoal(String relativePath, String goal) throws Exception {

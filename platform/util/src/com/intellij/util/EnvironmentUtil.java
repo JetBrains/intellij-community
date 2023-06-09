@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.execution.process.UnixProcessManager;
@@ -537,7 +537,7 @@ public final class EnvironmentUtil {
     inlineParentOccurrences(envs, getEnvironmentMap());
   }
 
-  private final static Pattern pattern = Pattern.compile("\\$(.*?)\\$");
+  private static final Pattern pattern = Pattern.compile("\\$(.*?)\\$");
 
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs, @NotNull Map<String, String> parentEnv) {
     LinkedHashMap<String, String> lookup = new LinkedHashMap<>(envs);

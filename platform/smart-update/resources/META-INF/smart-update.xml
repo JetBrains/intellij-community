@@ -6,7 +6,7 @@
 
   <actions resource-bundle="messages.SmartUpdateBundle">
       <action id="smart.update" class="com.intellij.smartUpdate.SmartUpdateAction">
-        <add-to-group group-id="VcsGroups"/>
+        <add-to-group group-id="UpdateEntryPointGroup"/>
       </action>
   </actions>
 </idea-plugin>

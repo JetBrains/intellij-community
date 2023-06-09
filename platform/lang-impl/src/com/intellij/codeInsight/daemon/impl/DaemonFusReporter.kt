@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.launch
 import kotlin.math.log10
 import kotlin.math.pow
@@ -44,7 +45,9 @@ private class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyz
       null
     }
     else {
-      FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL)
+      val document = editor.document
+      val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
+      if (psiFile == null) null else FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL)
     }
 
     if (!initialEntireFileHighlightingCompleted) {

@@ -92,7 +92,7 @@ fun Bootstrap.connectRetrying(remoteAddress: InetSocketAddress,
                               maxAttemptCount: Int = NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT,
                               stopCondition: Condition<Void>? = null): ConnectToChannelResult {
   try {
-    return doConnect(this, remoteAddress, maxAttemptCount, stopCondition ?: Conditions.alwaysFalse<Void>())
+    return doConnect(this, remoteAddress, maxAttemptCount, stopCondition ?: Conditions.alwaysFalse())
   }
   catch (e: Throwable) {
     return ConnectToChannelResult(e)

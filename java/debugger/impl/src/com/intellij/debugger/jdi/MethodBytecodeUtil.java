@@ -32,6 +32,7 @@ public final class MethodBytecodeUtil {
    * Visitor could implement {@link InstructionOffsetReader} to additionally consume bytecode instruction offsets.
    */
   public static void visit(Method method, MethodVisitor methodVisitor, boolean withLineNumbers) {
+    assert method.virtualMachine().canGetBytecodes();
     visit(method, method.bytecodes(), methodVisitor, withLineNumbers);
   }
 
@@ -41,6 +42,7 @@ public final class MethodBytecodeUtil {
   public static void visit(Method method, long maxOffset, MethodVisitor methodVisitor, boolean withLineNumbers) {
     if (maxOffset > 0) {
       // need to keep the size, otherwise labels array will not be initialized correctly
+      assert method.virtualMachine().canGetBytecodes();
       byte[] originalBytecodes = method.bytecodes();
       byte[] bytecodes = originalBytecodes;
       if (maxOffset < originalBytecodes.length) {
@@ -54,6 +56,7 @@ public final class MethodBytecodeUtil {
   private static void visit(Method method, byte[] bytecodes, MethodVisitor methodVisitor, boolean withLineNumbers) {
     ReferenceType type = method.declaringType();
 
+    assert type.virtualMachine().canGetConstantPool();
     BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
     try (DataOutputStream dos = new DataOutputStream(bytes)) {
       writeClassHeader(dos, type.constantPoolCount(), type.constantPool());
@@ -267,7 +270,8 @@ public final class MethodBytecodeUtil {
       return locations;
     }
 
-    if (!method.declaringType().virtualMachine().canGetConstantPool()) {
+    VirtualMachine vm = method.declaringType().virtualMachine();
+    if (!vm.canGetConstantPool() || !vm.canGetBytecodes()) {
       return locations;
     }
 

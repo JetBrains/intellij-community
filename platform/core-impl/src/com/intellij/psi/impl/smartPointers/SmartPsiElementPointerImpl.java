@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.smartPointers;
 
@@ -64,14 +64,12 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myManager.getProject();
   }
 
   @Override
-  @Nullable
-  public E getElement() {
+  public @Nullable E getElement() {
     if (getProject().isDisposed()) return null;
 
     E element = getCachedElement();
@@ -129,17 +127,15 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return myElementInfo.getRange(myManager);
   }
 
-  @Nullable
   @Override
-  public Segment getPsiRange() {
+  public @Nullable Segment getPsiRange() {
     return myElementInfo.getPsiRange(myManager);
   }
 
-  @NotNull
-  private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull SmartPointerManagerImpl manager,
-                                                                                  @NotNull E element,
-                                                                                  @Nullable PsiFile containingFile,
-                                                                                  boolean forInjected) {
+  private static @NotNull <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull SmartPointerManagerImpl manager,
+                                                                                           @NotNull E element,
+                                                                                           @Nullable PsiFile containingFile,
+                                                                                           boolean forInjected) {
     SmartPointerElementInfo elementInfo = doCreateElementInfo(manager.getProject(), element, containingFile, forInjected);
     if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
       PsiElement restoredElement = elementInfo.restoreElement(manager);
@@ -157,11 +153,10 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return elementInfo;
   }
 
-  @NotNull
-  private static <E extends PsiElement> SmartPointerElementInfo doCreateElementInfo(@NotNull Project project,
-                                                                                    @NotNull E element,
-                                                                                    @Nullable PsiFile containingFile,
-                                                                                    boolean forInjected) {
+  private static @NotNull <E extends PsiElement> SmartPointerElementInfo doCreateElementInfo(@NotNull Project project,
+                                                                                             @NotNull E element,
+                                                                                             @Nullable PsiFile containingFile,
+                                                                                             boolean forInjected) {
     if (element instanceof PsiDirectory) {
       return new DirElementInfo((PsiDirectory)element);
     }
@@ -248,8 +243,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
            PsiTreeUtil.findElementOfClassAtRange(containingFile, range.getStartOffset(), range.getEndOffset(), element.getClass()) != element;
   }
 
-  @Nullable
-  private static SmartPointerElementInfo createAnchorInfo(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
+  private static @Nullable SmartPointerElementInfo createAnchorInfo(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
     if (element instanceof StubBasedPsiElement && containingFile instanceof PsiFileImpl) {
       IStubFileElementType<?> stubType = ((PsiFileImpl)containingFile).getElementTypeForStubBuilder();
       if (stubType != null && stubType.shouldBuildStubFor(containingFile.getViewProvider().getVirtualFile())) {

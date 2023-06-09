@@ -29,11 +29,11 @@ class JarRepositorySerializationTest {
   
   @Test
   fun `single module`() {
-    check(listOf(RawRuntimeModuleDescriptor("ij.platform.util", listOf("../ij-util.jar"), emptyList()))) {
+    check(listOf(RawRuntimeModuleDescriptor("ij.platform.util", listOf("ij-util.jar"), emptyList()))) {
       xml("ij.platform.util.xml", """
           <module name="ij.platform.util">
             <resources>
-              <resource-root path="../ij-util.jar"/>
+              <resource-root path="ij-util.jar"/>
             </resources>
           </module>
         """.trimIndent())
@@ -43,7 +43,7 @@ class JarRepositorySerializationTest {
   @Test
   fun `two modules`() {
     check(listOf(
-      RawRuntimeModuleDescriptor("ij.platform.util.rt", listOf("../ij-util-rt.jar"), emptyList()),
+      RawRuntimeModuleDescriptor("ij.platform.util.rt", listOf("ij-util-rt.jar"), emptyList()),
       RawRuntimeModuleDescriptor("ij.platform.util", emptyList(), listOf("ij.platform.util.rt")),
     )) {
       xml("ij.platform.util.xml", """
@@ -56,26 +56,62 @@ class JarRepositorySerializationTest {
       xml("ij.platform.util.rt.xml", """
           <module name="ij.platform.util.rt">
             <resources>
-              <resource-root path="../ij-util-rt.jar"/>
+              <resource-root path="ij-util-rt.jar"/>
             </resources>
           </module>
         """.trimIndent())
     }
   }
 
-  private fun check(descriptors: List<RawRuntimeModuleDescriptor>, content: DirectoryContentBuilder.() -> Unit) {
-    val jarFile = jarFile { 
-      dir("META-INF") {
-        file("MANIFEST.MF", """
+  @Test
+  fun `bootstrap module classpath`() {
+    check(listOf(
+      RawRuntimeModuleDescriptor("foo", listOf("foo.jar"), emptyList()),
+      RawRuntimeModuleDescriptor("bar", listOf("bar.jar"), listOf("foo")),
+    ), "bar", "bar.jar foo.jar") {
+      xml("foo.xml", """
+          <module name="foo">
+            <resources>
+              <resource-root path="foo.jar"/>
+            </resources>
+          </module>
+        """.trimIndent())
+      xml("bar.xml", """
+          <module name="bar">
+            <dependencies>
+              <module name="foo"/>
+            </dependencies>
+            <resources>
+              <resource-root path="bar.jar"/>
+            </resources>
+          </module>
+        """.trimIndent())
+    }
+  }
+
+  private fun check(descriptors: List<RawRuntimeModuleDescriptor>, bootstrapModuleName: String? = null,
+                    bootstrapClassPath: String? = null, content: DirectoryContentBuilder.() -> Unit) {
+    val baseManifestText = """
           |Manifest-Version: 1.0
           |Specification-Title: ${JarFileSerializer.SPECIFICATION_TITLE}
           |Specification-Version: ${JarFileSerializer.SPECIFICATION_VERSION}
           |Implementation-Version: ${JarFileSerializer.SPECIFICATION_VERSION}.0
-        """.trimMargin().replace("\n", "\r\n") + "\r\n\r\n")
+        """.trimMargin()
+    val manifestText = if (bootstrapModuleName != null) {
+      """
+        |$baseManifestText
+        |Bootstrap-Module-Name: $bootstrapModuleName
+        |Bootstrap-Class-Path: $bootstrapClassPath
+      """.trimMargin()
+    }
+    else baseManifestText
+    val jarFile = jarFile { 
+      dir("META-INF") {
+        file("MANIFEST.MF", manifestText.replace("\n", "\r\n") + "\r\n\r\n")
       }
       content()
     }
-    checkSaving(descriptors, jarFile)
+    checkSaving(descriptors, bootstrapModuleName, jarFile)
     checkLoading(jarFile, descriptors)
   }
 
@@ -84,9 +120,9 @@ class JarRepositorySerializationTest {
     UsefulTestCase.assertSameElements(actualDescriptors, expectedDescriptors)
   }
 
-  private fun checkSaving(descriptors: List<RawRuntimeModuleDescriptor>, zipFileSpec: DirectoryContentSpec) {
+  private fun checkSaving(descriptors: List<RawRuntimeModuleDescriptor>, bootstrapModuleName: String?, zipFileSpec: DirectoryContentSpec) {
     val jarFile = tempDirectory.rootPath.resolve("descriptors.jar")
-    RuntimeModuleRepositorySerialization.saveToJar(descriptors, jarFile, 0)
+    RuntimeModuleRepositorySerialization.saveToJar(descriptors, bootstrapModuleName, jarFile, 0)
     jarFile.assertMatches(zipFileSpec)
   }
 }

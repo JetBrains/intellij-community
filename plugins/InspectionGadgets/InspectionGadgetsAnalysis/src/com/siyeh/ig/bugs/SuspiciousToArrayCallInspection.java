@@ -3,7 +3,9 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -13,7 +15,6 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
@@ -33,7 +34,7 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new SuspiciousToArrayCallFix((PsiType)infos[0], (boolean)infos[2]);
   }
 
@@ -182,7 +183,7 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
     }
   }
 
-  private static class SuspiciousToArrayCallFix extends InspectionGadgetsFix {
+  private static class SuspiciousToArrayCallFix extends PsiUpdateModCommandQuickFix {
     @NonNls private final String myReplacement;
     @NonNls private final String myPresented;
     
@@ -202,8 +203,8 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpression expression = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      PsiExpression expression = ObjectUtils.tryCast(startElement, PsiExpression.class);
       if (expression == null) return;
       new CommentTracker().replaceAndRestoreComments(expression, myReplacement);
     }

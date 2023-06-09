@@ -62,6 +62,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -305,7 +306,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                    Processors.cancelableCollectProcessor(infos));
           }
         });
-        infos.addAll(DaemonCodeAnalyzerEx.getInstanceEx(project).getFileLevelHighlights(project, psiFile));
+        infos.addAll(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerEx.getInstanceEx(project)).getFileLevelHighlights(project, psiFile));
         return infos;
       }
       catch (ProcessCanceledException e) {
@@ -361,7 +362,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       result.addAll(entry.getValue());
     }
 
-    List<HighlightInfo> infos = DaemonCodeAnalyzerEx.getInstanceEx(file.getProject()).getFileLevelHighlights(file.getProject(), file);
+    List<HighlightInfo> infos = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerEx.getInstanceEx(file.getProject())).getFileLevelHighlights(file.getProject(), file);
     for (HighlightInfo info : infos) {
       info.findRegisteredQuickFix((descriptor, range) -> {
         if (descriptor.getAction().isAvailable(file.getProject(), editor, file)) {
@@ -768,6 +769,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       String text = getIntentionPreviewText(action);
       assertNotNull(action.getText(), text);
       launchAction(action);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       assertEquals(action.getText(), getFile().getText(), text);
     }
   }

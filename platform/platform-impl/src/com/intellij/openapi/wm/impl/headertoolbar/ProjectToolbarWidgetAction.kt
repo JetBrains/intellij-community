@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ReopenProjectAction
-import com.intellij.ide.*
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI
@@ -65,18 +65,21 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     (widget.ui as? ToolbarComboWidgetUI)?.setMaxWidth(500)
     widget.text = presentation.text
     widget.toolTipText = presentation.description
+    widget.leftIcons = emptyList()
+    widget.isOpaque = false
+
     val customizer = ProjectWindowCustomizerService.getInstance()
     if (customizer.isActive()) {
+      val paintingType = customizer.getPaintingType()
       val project = presentation.getClientProperty(projectKey)
-      if (project != null) {
+      if (paintingType.isShowIcon() && project != null) {
         widget.leftIcons = listOf(customizer.getProjectIcon(project))
-        if (customizer.shouldShowGotIt()) {
-          customizer.showGotIt(project, widget)
-        }
+        customizer.showGotIt(project, widget)
       }
-    }
-    else {
-      widget.leftIcons = emptyList()
+
+      if (paintingType.isDropdown() && project != null) {
+        widget.highlightBackground = customizer.getProjectColor(project)
+      }
     }
   }
 

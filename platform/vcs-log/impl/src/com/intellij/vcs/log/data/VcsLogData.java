@@ -134,7 +134,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
       if (useSqlite) {
         Set<VirtualFile> roots = new LinkedHashSet<>(logProviders.keySet());
         String logId = PersistentUtil.calcLogId(myProject, logProviders);
-        return new SqliteVcsLogStorageBackend(myProject, logId, roots, logProviders, this);
+        return new SqliteVcsLogStorageBackend(myProject, logId, roots, logProviders, myErrorHandler, this);
       }
       return new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
     }

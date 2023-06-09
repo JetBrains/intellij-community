@@ -6,7 +6,6 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.presentation.FilePresentationService;
 import com.intellij.psi.PsiElement;
@@ -35,7 +34,6 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.SpeedSearchLocator {
-  private static final Logger LOG = Logger.getInstance(ProjectViewTree.class);
 
   /**
    * @deprecated use another constructor instead
@@ -86,12 +84,6 @@ public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.S
   public DefaultMutableTreeNode getSelectedNode() {
     TreePath path = TreeUtil.getSelectedPathIfOne(this);
     return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
-  }
-
-  @Override
-  public void setToggleClickCount(int count) {
-    if (count != 2) LOG.info(new IllegalStateException("setToggleClickCount: unexpected count = " + count));
-    super.setToggleClickCount(count);
   }
 
   @Override

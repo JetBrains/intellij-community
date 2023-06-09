@@ -367,13 +367,7 @@ private class AlertDialog(project: Project?,
       myMessageComponent = messageComponent
       singleSelectionHandler.add(messageComponent, false)
 
-      val lines = myMessage.length / 100
-      val scrollPane = Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15, if (lines < 4) 4 else lines)
-      if (scrollPane is JScrollPane) {
-        scrollPane.isOpaque = false
-        scrollPane.viewport.isOpaque = false
-      }
-      textPanel.add(wrapWithMinWidth(scrollPane))
+      textPanel.add(wrapWithMinWidth(wrapToScrollPaneIfNeeded(messageComponent)))
     }
 
     textPanel.add(mySouthPanel, BorderLayout.SOUTH)
@@ -423,6 +417,31 @@ private class AlertDialog(project: Project?,
     singleSelectionHandler.start()
 
     return dialogPanel
+  }
+
+  private fun wrapToScrollPaneIfNeeded(messageComponent: JEditorPane): JComponent {
+    val width450 = JBUI.scale(450)
+    val size2D = messageComponent.font.size2D
+    val maximumHeight = (size2D * 9).toInt()
+    val preferred: Dimension = messageComponent.preferredSize
+
+    if (preferred.height < maximumHeight) {
+      val columnLength = (1.2 * width450 / size2D).toInt()
+      if (messageComponent.document.length < columnLength * 8) {
+        return messageComponent
+      }
+    }
+
+    val scrollPane = ScrollPaneFactory.createScrollPane(messageComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED)
+    scrollPane.border = BorderFactory.createEmptyBorder(0, 0, 0, 0)
+    scrollPane.isOpaque = false
+    scrollPane.viewport.isOpaque = false
+
+    val barWidth = UIUtil.getScrollBarWidth()
+    scrollPane.preferredSize = Dimension(preferred.width.coerceAtMost(width450) + barWidth, maximumHeight + barWidth)
+
+    return scrollPane
   }
 
   private fun wrapWithMinWidth(scrollPane: JComponent) = object : Wrapper(scrollPane) {

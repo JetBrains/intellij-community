@@ -12,6 +12,7 @@ import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.file.PsiDirectoryImpl
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
+import com.jetbrains.performancePlugin.utils.VcsTestUtil
 import io.opentelemetry.context.Context
 
 /**
@@ -48,13 +49,16 @@ class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCommandCorou
         if (templateName == null) throw RuntimeException("File type must be one of '${POSSIBLE_FILE_TYPES.keys}'")
         val template = FileTemplateManager.getInstance(directory.project).getInternalTemplate(templateName)
 
+        //Disable vcs dialog which appears on adding new file to the project tree
+        VcsTestUtil.provisionVcsAddFileConfirmation(context.project, VcsTestUtil.VcsAddFileConfirmation.DO_NOTHING)
+
         ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(Runnable {
-                PerformanceTestSpan.TRACER.spanBuilder(NAME).useWithScope {
-                    CreateFileFromTemplateAction
-                        .createFileFromTemplate(fileName, template, directory, null, true)
-                }
-            })
-        )
+            PerformanceTestSpan.TRACER.spanBuilder(NAME).useWithScope {
+                CreateFileFromTemplateAction
+                    .createFileFromTemplate(fileName, template, directory, null, true)
+            }
+        }))
+
     }
 
     override fun getName(): String = NAME

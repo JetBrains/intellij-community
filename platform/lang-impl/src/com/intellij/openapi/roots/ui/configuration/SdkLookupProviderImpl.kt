@@ -25,7 +25,7 @@ class SdkLookupProviderImpl : SdkLookupProvider {
   }
 
   @TestOnly
-  fun getSdkPromiseForTests() = context?.getSdkPromiseForTests()
+  fun getSdkPromiseForTests(): AsyncPromise<Sdk?>? = context?.getSdkPromiseForTests()
 
   override fun getSdkInfo(): SdkInfo {
     return context?.getSdkInfo() ?: SdkInfo.Undefined

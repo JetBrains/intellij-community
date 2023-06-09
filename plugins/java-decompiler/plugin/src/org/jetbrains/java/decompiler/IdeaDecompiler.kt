@@ -27,6 +27,7 @@ import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.components.LegalNoticeDialog
 import com.intellij.util.FileContentUtilCore
+import org.jetbrains.java.decompiler.main.CancellationManager
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.ClassFormatException
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
@@ -145,9 +146,19 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
       val provider = MyBytecodeProvider(files)
       val saver = MyResultSaver()
-      val decompiler = BaseDecompiler(provider, saver, options, myLogger.value)
+
+      val decompiler = BaseDecompiler(provider, saver, options, myLogger.value, SimpleCancellationManager())
       files.forEach { decompiler.addSource(File(it.path)) }
-      decompiler.decompileContext()
+      try {
+        decompiler.decompileContext()
+      }
+      catch (e: CancellationManager.CanceledException) {
+        val cause = e.cause
+        if (cause != null) {
+          throw cause
+        }
+        throw e
+      }
 
       val mapping = saver.myMapping
       if (mapping != null) {

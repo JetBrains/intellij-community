@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -156,7 +156,7 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
     };
   }
 
-  private static class ExistingPatternVariableCanBeUsedFix implements LocalQuickFix {
+  private static class ExistingPatternVariableCanBeUsedFix extends PsiUpdateModCommandQuickFix {
     private final @NotNull String myName;
     private final @NotNull String myPatternName;
 
@@ -180,9 +180,9 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!myName.endsWith("()")) {
-        PsiLocalVariable variable = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiLocalVariable.class);
+        PsiLocalVariable variable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
         if (variable == null) return;
         List<PsiReferenceExpression> references =
           VariableAccessUtils.getVariableReferences(variable, PsiUtil.getVariableCodeBlock(variable, null));
@@ -192,7 +192,7 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
         new CommentTracker().deleteAndRestoreComments(variable);
       }
       else {
-        new CommentTracker().replace(descriptor.getStartElement(), myPatternName);
+        new CommentTracker().replace(element, myPatternName);
       }
     }
   }

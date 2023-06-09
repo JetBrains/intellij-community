@@ -59,8 +59,14 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
         continue
       }
       val pathInDist = context.paths.distAllDir.relativize(entry.path).pathString
-      val realPathInDist = if (pathInDist != "lib/$PRODUCT_JAR" || context.isEmbeddedJetBrainsClientEnabled) pathInDist else "lib/$APP_JAR"
-      resourcePathMapping.putValue(moduleId.stringId, "../$realPathInDist")
+      val realPathInDist = when {
+        //jetbrains-annotations-java5 library is replaced by jetbrains-annotations
+        pathInDist == "lib/annotations-java5.jar" -> "lib/annotations.jar"
+        //product.jar is merged into app.jar unless embedded JetBrains Client is enabled
+        pathInDist == "lib/$PRODUCT_JAR" && !context.isEmbeddedJetBrainsClientEnabled -> "lib/$APP_JAR"
+        else -> pathInDist
+      }
+      resourcePathMapping.putValue(moduleId.stringId, realPathInDist)
     }
   }
 
@@ -100,8 +106,8 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
                            errors.joinToString("\n"))
   }
   try {
-    RuntimeModuleRepositorySerialization.saveToJar(distDescriptors, context.paths.distAllDir.resolve(JAR_REPOSITORY_FILE_NAME),
-                                                   GENERATOR_VERSION)
+    RuntimeModuleRepositorySerialization.saveToJar(distDescriptors, "intellij.platform.bootstrap",
+                                                   context.paths.distAllDir.resolve(JAR_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
   }
   catch (e: IOException) {
     context.messages.error("Failed to save runtime module repository: ${e.message}", e)

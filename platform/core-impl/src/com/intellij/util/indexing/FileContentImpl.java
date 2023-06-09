@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.lang.FileASTNode;
@@ -52,8 +52,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
   private static final Key<LighterAST> LIGHTER_AST_NODE_KEY = Key.create("lighter.ast.node");
 
   @Override
-  @NotNull
-  public LighterAST getLighterAST() {
+  public @NotNull LighterAST getLighterAST() {
     LighterAST lighterAST = getUserData(LIGHTER_AST_NODE_KEY);
     if (lighterAST == null) {
       FileASTNode node = getPsiFile().getNode();
@@ -81,9 +80,8 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return createFileFromText(project, text, (LanguageFileType)fileType, myFile, getFileName());
   }
 
-  @NotNull
-  public static PsiFile createFileFromText(@NotNull Project project, @NotNull CharSequence text, @NotNull LanguageFileType fileType,
-                                           @NotNull VirtualFile file, @NotNull String fileName) {
+  public static @NotNull PsiFile createFileFromText(@NotNull Project project, @NotNull CharSequence text, @NotNull LanguageFileType fileType,
+                                                    @NotNull VirtualFile file, @NotNull String fileName) {
     final Language language = fileType.getLanguage();
     final Language substitutedLanguage = LanguageSubstitutors.getInstance().substituteLanguage(language, file, project);
     PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(
@@ -129,7 +127,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return content;
   }
 
-  public static @NotNull FileContent createByText(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, @Nullable Project project) {
+  public static @NotNull FileContent createByText(final @NotNull VirtualFile file, final @NotNull CharSequence contentAsText, @Nullable Project project) {
     FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
     FileContentImpl content = new FileContentImpl(file,
                                                   fileType,
@@ -144,8 +142,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return content;
   }
 
-  @NotNull
-  public Charset getCharset() {
+  public @NotNull Charset getCharset() {
     Charset charset = myCharset;
     if (charset == null) {
       myCharset = charset = myFile.getCharset();
@@ -176,9 +173,8 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return myContent;
   }
 
-  @NotNull
   @Override
-  public CharSequence getContentAsText() {
+  public @NotNull CharSequence getContentAsText() {
     FileType unsubstitutedFileType = getFileTypeWithoutSubstitution(this);
     if (unsubstitutedFileType.isBinary()) {
       throw new UnsupportedOperationException("Cannot obtain text for binary file type : " + unsubstitutedFileType.getDescription());
@@ -215,8 +211,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
   }
 
   @Override
-  @NotNull
-  public PsiFile getPsiFile() {
+  public @NotNull PsiFile getPsiFile() {
     if (myTransientContent) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(getFile());
 
@@ -252,8 +247,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static FileType getFileTypeWithoutSubstitution(@NotNull IndexedFile indexedFile) {
+  public static @NotNull FileType getFileTypeWithoutSubstitution(@NotNull IndexedFile indexedFile) {
     FileType fileType = indexedFile.getFileType();
     return fileType instanceof SubstitutedFileType ? ((SubstitutedFileType)fileType).getOriginalFileType() : fileType;
   }

@@ -15,14 +15,17 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.utils.MavenImportingTestCaseKt;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
 
 public class DependenciesManagementTest extends MavenMultiVersionImportingTestCase {
+
   @Test
   public void testImportingDependencies() throws Exception {
     if (!hasMavenInstallation()) return;
@@ -128,9 +131,9 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
     // reset embedders and try to resolve project from scratch in specific order - imported one goes first
     // to make maven cache it. we have to ensure that dependent project will be resolved correctly after that
     myProjectsManager.getEmbeddersManager().releaseForcefullyInTests();
-    myProjectsManager.scheduleResolveInTests(Arrays.asList(myProjectsManager.findProject(bom),
-                                                           myProjectsManager.findProject(project)));
-    myProjectsManager.waitForResolvingCompletion();
+    MavenImportingTestCaseKt.resolveAndImportMavenProjectsSyncEdt(myProjectsManager, Arrays.asList(myProjectsManager.findProject(bom),
+                                                                                                myProjectsManager.findProject(project)));
+    myProjectsManager.waitForReadingCompletion();
 
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }
@@ -183,9 +186,10 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
 
     myProjectsManager.getEmbeddersManager().reset();
-    myProjectsManager.scheduleResolveInTests(Arrays.asList(myProjectsManager.findProject(parent),
-                                                           myProjectsManager.findProject(project)));
-    myProjectsManager.waitForResolvingCompletion();
+    MavenImportingTestCaseKt.resolveAndImportMavenProjectsSyncEdt(myProjectsManager, Arrays.asList(myProjectsManager.findProject(parent),
+                                                                                                myProjectsManager.findProject(project)));
+
+    myProjectsManager.waitForReadingCompletion();
 
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }

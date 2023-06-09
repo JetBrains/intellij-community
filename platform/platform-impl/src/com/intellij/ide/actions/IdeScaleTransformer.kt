@@ -71,7 +71,7 @@ internal class IdeScaleTransformer {
       private const val PRESENTATION_MODE_MAX_SCALE = 4f
       private val ideScaleOptions = listOf(1f, 1.1f, 1.25f, 1.5f, 1.75f, 2f)
       private val presentationModeScaleOptions = listOf(1f, 1.1f, 1.25f, 1.5f, 1.75f, 2f, 2.25f, 2.5f, 2.75f, 3f)
-      val currentScaleOptions get() = scaleOptions(UISettings.getInstance().presentationMode)
+      val currentScaleOptions: List<Float> get() = scaleOptions(UISettings.getInstance().presentationMode)
 
       private fun scaleOptions(isPresentation: Boolean) = if (isPresentation) presentationModeScaleOptions else ideScaleOptions
 

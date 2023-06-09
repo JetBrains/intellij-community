@@ -21,7 +21,7 @@ class CodeVisionListData(
 ) {
   companion object {
     @JvmField
-    val KEY: Key<CodeVisionListData> = Key.create<CodeVisionListData>("CodeVisionListData")
+    val KEY: Key<CodeVisionListData> = Key.create("CodeVisionListData")
 
   }
 
@@ -35,7 +35,7 @@ class CodeVisionListData(
       }
     }
 
-  val visibleLens: ArrayList<CodeVisionEntry> = ArrayList<CodeVisionEntry>()
+  val visibleLens: ArrayList<CodeVisionEntry> = ArrayList()
   private var throttle = false
 
   init {

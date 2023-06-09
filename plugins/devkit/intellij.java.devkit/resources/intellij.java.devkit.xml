@@ -9,10 +9,4 @@
     <psiViewer.extension implementation="com.intellij.java.devkit.psiViewer.PsiViewerCodeFragmentExtension"/>
     <psiViewer.extension implementation="com.intellij.java.devkit.psiViewer.PsiViewerMethodExtension"/>
   </extensions>
-
-  <actions resource-bundle="messages.JavaPsiViewerBundle">
-    <action id="ClassLoadingLogAnalyzeAction"
-            internal="true"
-            class="com.intellij.java.devkit.psiViewer.ClassLoadingLogAnalyzeAction"/>
-  </actions>
 </idea-plugin>

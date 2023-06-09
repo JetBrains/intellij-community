@@ -30,7 +30,7 @@ class GHPRStatusViewModelImpl(stateModel: GHPRStateModel) : GHPRStatusViewModel 
   override val hasConflicts: Flow<Boolean> = _mergeabilityState.map { mergeability ->
     mergeability?.hasConflicts ?: false
   }
-  override val ciJobs: Flow<List<CodeReviewCIJob>> = _mergeabilityState.map { it?.ciJobs ?: emptyList<CodeReviewCIJob>() }
+  override val ciJobs: Flow<List<CodeReviewCIJob>> = _mergeabilityState.map { it?.ciJobs ?: emptyList() }
 
   override val isRestricted: Flow<Boolean> = _mergeabilityState.map { mergeability ->
     mergeability?.isRestricted ?: false

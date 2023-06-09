@@ -155,6 +155,15 @@ suspend fun <T> Flow<T>.collectWithPrevious(initial: T, collector: suspend (prev
   }
 }
 
+@ApiStatus.Experimental
+fun <T> Flow<T>.channelWithInitial(initialValue: T): Flow<T> =
+  channelFlow {
+    send(initialValue)
+    collect {
+      send(it)
+    }
+  }
+
 /**
  * Lazy shared flow that logs all exceptions as errors and never throws (beside cancellation)
  */
@@ -240,3 +249,5 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.mapCachingIndexed(sourceIdentifier: (T) -
                                                          destroy: suspend R.() -> Unit,
                                                          update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> =
   associateIndexedBy(sourceIdentifier, mapper, destroy, update).map { it.values.toList() }
+
+fun <T> Flow<Collection<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }

@@ -3,8 +3,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -42,7 +41,7 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection impl
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new IfStatementMissingBreakInLoopFix();
   }
 
@@ -246,11 +245,11 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection impl
     }
   }
 
-  private static class IfStatementMissingBreakInLoopFix extends InspectionGadgetsFix {
+  private static class IfStatementMissingBreakInLoopFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiIfStatement ifStatement = tryCast(descriptor.getPsiElement().getParent(), PsiIfStatement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      PsiIfStatement ifStatement = tryCast(startElement.getParent(), PsiIfStatement.class);
       if (ifStatement == null || ifStatement.getElseBranch() != null) return;
       PsiStatement thenBranch = ifStatement.getThenBranch();
       if (thenBranch == null) return;

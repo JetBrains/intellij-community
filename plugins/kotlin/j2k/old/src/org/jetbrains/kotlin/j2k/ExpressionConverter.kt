@@ -746,7 +746,7 @@ class DefaultExpressionConverter : JavaElementVisitor(), ExpressionConverter {
     override fun visitLambdaExpression(expression: PsiLambdaExpression) {
         val parameters = expression.parameterList
         val convertedParameters = ParameterList(parameters.parameters.map {
-            val paramName = Identifier.withNoPrototype(it.name!!)
+            val paramName = Identifier.withNoPrototype(it.name)
             val paramType = if (it.typeElement != null) converter.typeConverter.convertType(it.type) else null
             LambdaParameter(paramName, paramType).assignPrototype(it)
         }, lPar = null, rPar = null).assignPrototype(parameters)
@@ -923,7 +923,7 @@ class DefaultExpressionConverter : JavaElementVisitor(), ExpressionConverter {
 
         parameterList.parameters.forEach {
             val parameterType = if (isKotlinFunctionType) converter.typeConverter.convertType(it.type, Nullability.NotNull) else null
-            newParameters.add(Identifier.withNoPrototype(it.name ?: "p", isNullable = false) to parameterType)
+            newParameters.add(Identifier.withNoPrototype(it.name, isNullable = false) to parameterType)
         }
 
         if (newParameters.size == 1 && !isKotlinFunctionType) {

@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -38,11 +37,11 @@ public class UnnecessaryInheritDocInspection extends BaseInspection implements C
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryInheritDocFix();
   }
 
-  private static class UnnecessaryInheritDocFix extends InspectionGadgetsFix {
+  private static class UnnecessaryInheritDocFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -52,8 +51,7 @@ public class UnnecessaryInheritDocInspection extends BaseInspection implements C
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiDocTag docTag)) {
         return;
       }

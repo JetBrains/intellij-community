@@ -3,24 +3,30 @@ package com.jetbrains.performancePlugin.commands
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
+import com.intellij.codeInsight.daemon.impl.EditorTracker
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.ui.TypingTarget
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
+import com.intellij.util.ui.UIUtil
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Scope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import java.awt.KeyboardFocusManager
 import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Command runs local inspection.
@@ -36,7 +42,9 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
   override suspend fun doExecute(context: PlaybackContext) {
     val project = context.project
     project.waitForSmartMode()
-    checkFocusInEditor(context)
+    withTimeout(40.seconds) {
+      checkFocusInEditor(context, project)
+    }
 
     val busConnection = project.messageBus.simpleConnect()
     val span = PerformanceTestSpan.getTracer(isWarmupMode()).spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext())
@@ -45,6 +53,9 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
     suspendCancellableCoroutine { continuation ->
       busConnection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonListener {
         override fun daemonFinished() {
+          if (spanRef == null) {
+            return
+          }
           val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl
           val document = FileEditorManager.getInstance(project).selectedTextEditor!!.document
           val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)!!
@@ -95,7 +106,7 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
     }
   }
 
-  private suspend fun checkFocusInEditor(context: PlaybackContext) {
+  private suspend fun checkFocusInEditor(context: PlaybackContext, project: Project) {
     if (!context.isUseTypingTargets) {
       return
     }
@@ -110,7 +121,24 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
         each = each.parent
       }
 
-      throw IllegalStateException("There is no focus in editor (focusOwner=$focusOwner)")
+      val editorTracker = EditorTracker.getInstance(project)
+      val message = "There is no focus in editor (focusOwner=${
+        focusOwner?.let {
+          UIUtil.uiParents(it, false).joinToString(separator = "\n  ->\n")
+        }
+      },\neditorTracker=$editorTracker)"
+
+      takeScreenshotOfFrame("no-focus-in-editor")
+
+      if (focusOwner == null) {
+        val activeEditors = editorTracker.activeEditors
+        activeEditors.firstOrNull()?.let {
+          it.contentComponent.requestFocusInWindow()
+          logger<DoLocalInspection>().warn(message)
+          return@withContext
+        }
+      }
+      throw IllegalStateException(message)
     }
   }
 

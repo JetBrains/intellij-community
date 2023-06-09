@@ -339,6 +339,11 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   @Override
+  public String toString() {
+    return "EditorMarkupModel for "+myEditor;
+  }
+
+  @Override
   public void caretPositionChanged(@NotNull CaretEvent event) {
     updateTrafficLightVisibility();
   }

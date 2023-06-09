@@ -293,7 +293,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
           if (nextExtendedButton(selected)) return;
         }
 
-        handleSelect(false, createKeyEvent(e, KeyEvent.VK_RIGHT));
+        handleRightKeyPressed(createKeyEvent(e, KeyEvent.VK_RIGHT));
       }
     });
 
@@ -307,6 +307,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
         if (isClosableByLeftArrow()) {
           goBack();
+        }
+        else {
+          handleLeftKeyPressed(createKeyEvent(e, KeyEvent.VK_LEFT));
         }
       }
     });
@@ -481,6 +484,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
     }
     return handleNextStep(nextStep, selectedValues.length == 1 ? selectedValue : null, e);
+  }
+
+  protected void handleRightKeyPressed(@NotNull KeyEvent keyEvent) {
+    handleSelect(false, keyEvent);
+  }
+
+  protected void handleLeftKeyPressed(@NotNull KeyEvent keyEvent) {
   }
 
   private void disposePopup(@Nullable InputEvent e) {

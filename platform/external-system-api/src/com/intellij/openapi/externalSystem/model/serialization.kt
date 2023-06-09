@@ -10,7 +10,7 @@ import com.intellij.serialization.ReadConfiguration
 import com.intellij.serialization.WriteConfiguration
 
 // do not use SkipNullAndEmptySerializationFilter for now because can lead to issues
-fun createCacheWriteConfiguration() = WriteConfiguration(allowAnySubTypes = true)
+fun createCacheWriteConfiguration(): WriteConfiguration = WriteConfiguration(allowAnySubTypes = true)
 
 private fun createDataClassResolver(log: Logger): (name: String, hostObject: DataNode<*>?) -> Class<*>? {
   val projectDataManager = ProjectDataManager.getInstance()

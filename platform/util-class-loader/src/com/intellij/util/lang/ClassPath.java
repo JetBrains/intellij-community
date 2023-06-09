@@ -340,7 +340,7 @@ public final class ClassPath {
       }
 
       // https://youtrack.jetbrains.com/issue/IDEA-314175
-      // some environments (e.g. Bazel tests) put relative jar paths on the Java classpath,
+      // some environments (e.g., Bazel tests) put relative jar paths on the Java classpath,
       // because relative paths are useful for hermeticity.
       Path path = files[searchOffset++].toAbsolutePath();
       try {
@@ -606,6 +606,7 @@ public final class ClassPath {
 
     private static void record(long start) {
       if (start != -1) {
+        //noinspection ThreadLocalSetWithNull
         doingClassDefineTiming.set(null);
         classDefineTotalTime.addAndGet(System.nanoTime() - start);
       }
@@ -634,6 +635,7 @@ public final class ClassPath {
         return;
       }
 
+      //noinspection ThreadLocalSetWithNull
       doingTiming.set(null);
 
       long time = System.nanoTime() - start;

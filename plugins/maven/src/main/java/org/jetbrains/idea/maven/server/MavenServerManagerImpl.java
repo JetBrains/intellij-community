@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
@@ -72,7 +71,6 @@ final class MavenServerManagerImpl implements MavenServerManager {
   }
 
   @Override
-  @RequiresBlockingContext
   public void restartMavenConnectors(Project project, boolean wait, Predicate<MavenServerConnector> condition) {
     List<MavenServerConnector> connectorsToShutDown = new ArrayList<>();
     synchronized (myMultimoduleDirToConnectorMap) {
@@ -83,14 +81,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
       });
     }
     MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, SyncBundle.message("maven.sync.restarting"), false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        connectorsToShutDown.forEach(it -> {
-          it.stop(wait);
-        });
-      }
-    });
+    MavenServerManagerEx.stopConnectors(project, wait, connectorsToShutDown);
   }
 
   MavenServerManagerImpl() {
@@ -378,6 +369,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
     MavenServerSettings result = new MavenServerSettings();
     result.setLoggingLevel(settings.getOutputLevel().getLevel());
     result.setOffline(settings.isWorkOffline());
+    result.setUpdateSnapshots(settings.isAlwaysUpdateSnapshots());
     File mavenHome = settings.getEffectiveMavenHome();
     if (mavenHome != null) {
       String remotePath = transformer.toRemotePath(mavenHome.toPath().toAbsolutePath().toString());

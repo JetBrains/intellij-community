@@ -23,7 +23,7 @@ class KeyBindingsParser(private val settings: Settings) {
 
   private val customShortcuts = mutableListOf<KeyBinding>()
 
-  fun process(file: File) = try {
+  fun process(file: File): Unit = try {
     logger.info("Processing a file: $file")
 
     val root = JDOMUtil.load(file)

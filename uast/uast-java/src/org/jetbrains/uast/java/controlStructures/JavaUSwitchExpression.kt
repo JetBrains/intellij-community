@@ -31,7 +31,7 @@ class JavaUSwitchEntryList(
   override val kind: UastSpecialExpressionKind
     get() = JavaSpecialExpressionKinds.SWITCH
 
-  override fun asRenderString() = expressions.joinToString("\n") {
+  override fun asRenderString(): String = expressions.joinToString("\n") {
     it.asRenderString().withMargin
   }
 

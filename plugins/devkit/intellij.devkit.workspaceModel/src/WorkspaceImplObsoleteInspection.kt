@@ -13,10 +13,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.workspaceModel.storage.CodeGeneratorVersions
-import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
-import org.jetbrains.kotlin.parsing.parseNumericLiteral
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 private val LOG = logger<WorkspaceImplObsoleteInspection>()
 

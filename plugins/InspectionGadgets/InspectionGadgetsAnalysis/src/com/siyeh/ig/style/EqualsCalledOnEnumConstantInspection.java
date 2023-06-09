@@ -2,6 +2,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -24,7 +25,7 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection impleme
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
     final boolean negated = (boolean)infos[1];
     return EqualsToEqualityFix.buildFix(methodCallExpression, negated);

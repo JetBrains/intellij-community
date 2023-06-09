@@ -15,11 +15,11 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiLiteralExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +44,8 @@ public class OctalLiteralInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    return new InspectionGadgetsFix[]{
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    return new LocalQuickFix[]{
       new ConvertOctalLiteralToDecimalFix(),
       new RemoveLeadingZeroFix()
     };

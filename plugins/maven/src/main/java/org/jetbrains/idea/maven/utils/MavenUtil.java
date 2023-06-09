@@ -33,7 +33,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -53,7 +52,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -169,15 +167,9 @@ public class MavenUtil {
 
   public static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
     startTestRunnable(r);
-
-    if (isNoBackgroundMode()) {
+    ApplicationManager.getApplication().invokeLater(() -> {
       runAndFinishTestRunnable(r);
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        runAndFinishTestRunnable(r);
-      }, state, p.getDisposed());
-    }
+    }, state, p.getDisposed());
   }
 
 
@@ -232,12 +224,7 @@ public class MavenUtil {
 
   public static void invokeAndWait(final Project p, final ModalityState state, @NotNull Runnable r) {
     startTestRunnable(r);
-    if (isNoBackgroundMode()) {
-      runAndFinishTestRunnable(r);
-    }
-    else {
-      ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(() -> runAndFinishTestRunnable(r), p), state);
-    }
+    ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(() -> runAndFinishTestRunnable(r), p), state);
   }
 
 
@@ -271,11 +258,7 @@ public class MavenUtil {
       return;
     }
 
-    if (isNoBackgroundMode()) {
-      startTestRunnable(runnable);
-      runAndFinishTestRunnable(runnable);
-    }
-    else if (project.isInitialized()) {
+    if (project.isInitialized()) {
       runDumbAware(project, runnable);
     }
     else {
@@ -284,17 +267,24 @@ public class MavenUtil {
     }
   }
 
-  public static boolean isNoBackgroundMode() {
-    if (shouldRunTasksAsynchronouslyInTests() || isLinearImportEnabled()) {
-      return false;
-    }
-    return (ApplicationManager.getApplication().isUnitTestMode()
-            || ApplicationManager.getApplication().isHeadlessEnvironment() &&
-               !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode());
+  @TestOnly
+  public static void setNotUpdateSuspendable() {
+    updateSuspendable = false;
   }
 
+  @TestOnly
+  public static void resetNotUpdateSuspendable() {
+    updateSuspendable = true;
+  }
+
+  @ApiStatus.Internal
+  public static boolean updateSuspendable() {
+    return updateSuspendable;
+  }
+
+  private static volatile boolean updateSuspendable = true;
+
   public static boolean isInModalContext() {
-    if (isNoBackgroundMode()) return false;
     return LaterInvocator.isInModalContext();
   }
 
@@ -547,17 +537,17 @@ public class MavenUtil {
     return true;
   }
 
-  public static void run(Project project, @NlsContexts.DialogTitle String title, final MavenTask task)
+  public static void run(@NlsContexts.DialogTitle String title, final MavenTask task)
     throws MavenProcessCanceledException {
     final Exception[] canceledEx = new Exception[1];
     final RuntimeException[] runtimeEx = new RuntimeException[1];
     final Error[] errorEx = new Error[1];
 
-    ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
+    ProgressManager.getInstance().run(new Task.Modal(null, title, true) {
       @Override
       public void run(@NotNull ProgressIndicator i) {
         try {
-          task.run(new MavenProgressIndicator(project, i, null));
+          task.run(new MavenProgressIndicator(null, i, null));
         }
         catch (MavenProcessCanceledException | ProcessCanceledException e) {
           canceledEx[0] = e;
@@ -578,6 +568,7 @@ public class MavenUtil {
   }
 
   @NotNull
+  // used in third-party plugins
   public static MavenTaskHandler runInBackground(@NotNull Project project,
                                                  @NotNull @NlsContexts.Command String title,
                                                  boolean cancellable,
@@ -597,40 +588,30 @@ public class MavenUtil {
       }
     };
 
-    if (isNoBackgroundMode()) {
-      runnable.run();
-      return new MavenTaskHandler() {
-        @Override
-        public void waitFor() {
+    Future<?> future;
+    future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    MavenTaskHandler handler = new MavenTaskHandler() {
+      @Override
+      public void waitFor() {
+        try {
+          future.get();
         }
-      };
-    }
-    else {
-      Future<?> future;
-      future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
-      MavenTaskHandler handler = new MavenTaskHandler() {
-        @Override
-        public void waitFor() {
-          try {
-            future.get();
-          }
-          catch (InterruptedException | ExecutionException e) {
-            MavenLog.LOG.error(e);
-          }
+        catch (InterruptedException | ExecutionException e) {
+          MavenLog.LOG.error(e);
         }
-      };
-      invokeLater(project, () -> {
-        if (future.isDone()) return;
-        new Task.Backgroundable(project, title, cancellable) {
-          @Override
-          public void run(@NotNull ProgressIndicator i) {
-            indicator.setIndicator(i);
-            handler.waitFor();
-          }
-        }.queue();
-      });
-      return handler;
-    }
+      }
+    };
+    invokeLater(project, () -> {
+      if (future.isDone()) return;
+      new Task.Backgroundable(project, title, cancellable) {
+        @Override
+        public void run(@NotNull ProgressIndicator i) {
+          indicator.setIndicator(i);
+          handler.waitFor();
+        }
+      }.queue();
+    });
+    return handler;
   }
 
   @Nullable
@@ -1174,7 +1155,6 @@ public class MavenUtil {
    * @param wait if true, then maven server(s) restarted synchronously
    * @param condition only connectors satisfied for this predicate will be restarted
    */
-  @RequiresBlockingContext
   public static void restartMavenConnectors(@NotNull Project project, boolean wait, Predicate<MavenServerConnector> condition) {
     MavenServerManager.getInstance().restartMavenConnectors(project, wait, condition);
   }

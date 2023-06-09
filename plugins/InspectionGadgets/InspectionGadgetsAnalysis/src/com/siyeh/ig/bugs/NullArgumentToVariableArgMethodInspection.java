@@ -16,13 +16,12 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,13 +49,13 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiExpression argument = (PsiExpression)infos[0];
     final PsiType type1 = (PsiType)infos[1];
     final PsiType type2 = (PsiType)infos[2];
-    return new InspectionGadgetsFix[] {
-      new DelegatingFix(new AddTypeCastFix(type1, argument)),
-      new DelegatingFix(new AddTypeCastFix(type2, argument))
+    return new LocalQuickFix[] {
+      new AddTypeCastFix(type1, argument),
+      new AddTypeCastFix(type2, argument),
     };
   }
 

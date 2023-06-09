@@ -10,10 +10,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.LangFilterCollector;
+import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoKt.createPsiExtendedInfo;
 
 /**
  * @author Konstantin Bulenkov
@@ -36,6 +38,11 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
   @Override
   public int getSortWeight() {
     return 300;
+  }
+
+  @Override
+  public @Nullable ExtendedInfo createExtendedInfo() {
+    return createPsiExtendedInfo();
   }
 
   @NotNull

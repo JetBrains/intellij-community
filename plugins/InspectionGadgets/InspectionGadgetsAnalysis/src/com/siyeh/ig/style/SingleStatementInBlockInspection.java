@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -13,7 +15,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.*;
 
@@ -32,7 +33,7 @@ public class SingleStatementInBlockInspection extends BaseInspection implements 
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     if (infos.length == 1 && infos[0] instanceof String) {
       return new SingleStatementInBlockFix((String)infos[0]);
     }
@@ -120,7 +121,7 @@ public class SingleStatementInBlockInspection extends BaseInspection implements 
     }
   }
 
-  private static class SingleStatementInBlockFix extends InspectionGadgetsFix {
+  private static class SingleStatementInBlockFix extends PsiUpdateModCommandQuickFix {
     private final @NonNls String myKeywordText;
 
     SingleStatementInBlockFix(String keywordText) {
@@ -142,8 +143,8 @@ public class SingleStatementInBlockInspection extends BaseInspection implements 
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiStatement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(startElement, PsiStatement.class);
       if (statement instanceof PsiBlockStatement) {
         statement = PsiTreeUtil.getNonStrictParentOfType(statement.getParent(), PsiStatement.class);
       }

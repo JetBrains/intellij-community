@@ -9,7 +9,7 @@ import com.intellij.ui.dsl.checkNonNegative
 interface UnscaledGapsX {
   companion object {
     @JvmField
-    val EMPTY = UnscaledGapsX()
+    val EMPTY: UnscaledGapsX = UnscaledGapsX()
   }
 
   val left: Int

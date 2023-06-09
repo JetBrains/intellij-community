@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataPropert
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalProject
@@ -96,6 +97,7 @@ internal fun doCreateSourceSetInfo(
             when (it) {
                 is JvmIdePlatformKind -> KotlinPlatform.JVM
                 is JsIdePlatformKind -> KotlinPlatform.JS
+                is WasmIdePlatformKind -> KotlinPlatform.WASM
                 is NativeIdePlatformKind -> KotlinPlatform.NATIVE
                 else -> KotlinPlatform.COMMON
             }
@@ -483,7 +485,7 @@ private fun getInternalModuleName(
 
 //flag for avoid double resolve from KotlinMPPGradleProjectResolver and KotlinAndroidMPPGradleProjectResolver
 private var DataNode<ModuleData>.isMppDataInitialized
-        by NotNullableCopyableDataNodeUserDataProperty(Key.create<Boolean>("IS_MPP_DATA_INITIALIZED"), false)
+        by NotNullableCopyableDataNodeUserDataProperty(Key.create("IS_MPP_DATA_INITIALIZED"), false)
 
 private fun shouldDelegateToOtherPlugin(kotlinTarget: KotlinTarget): Boolean =
     kotlinTarget.platform == KotlinPlatform.ANDROID

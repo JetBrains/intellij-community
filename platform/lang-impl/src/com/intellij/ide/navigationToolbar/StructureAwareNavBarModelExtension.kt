@@ -53,7 +53,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
     return null
   }
 
-  protected open fun isAcceptableLanguage(psiElement: @Nullable PsiElement?) = psiElement?.language == language
+  protected open fun isAcceptableLanguage(psiElement: @Nullable PsiElement?): Boolean = psiElement?.language == language
 
   override fun processChildren(`object`: Any,
                                rootElement: Any?,
@@ -143,7 +143,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
     return children + applicableNodeProviders.flatMap { it.provideNodes(parent) }
   }
 
-  override fun normalizeChildren() = false
+  override fun normalizeChildren(): Boolean = false
 
   protected open val applicableNodeProviders: List<NodeProvider<*>> = emptyList()
 

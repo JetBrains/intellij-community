@@ -12,6 +12,7 @@ import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDImage;
 import com.intellij.ide.dnd.DnDNativeTarget;
@@ -84,6 +85,7 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.*;
 import com.intellij.util.animation.AlphaAnimationContext;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBValue.JBValueGroup;
@@ -430,7 +432,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         paintLineNumbers(g, startVisualLine, endVisualLine);
         paintCurrentAccessibleLine(g);
 
-        if (ExperimentalUI.isNewUI() && myPaintBackground) {
+        if (ExperimentalUI.isNewUI() && myPaintBackground && !ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()) {
           g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
           LinePainter2D.paint(g, gutterSeparatorX, clip.y, gutterSeparatorX, clip.y + clip.height);
         }
@@ -912,6 +914,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     updateSize(false, false);
   }
 
+  @RequiresEdt
   void updateSize(boolean onLayout, boolean canShrink) {
     int prevHash = sizeHash();
 
@@ -1706,7 +1709,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @NotNull LineNumberConverter getPrimaryLineNumberConverter() {
     if (myLineNumberConverter != null) return myLineNumberConverter;
 
-    EditorSettingsExternalizable.LineNumerationType numeration = EditorSettingsExternalizable.getInstance().getLineNumeration();
+    EditorSettings.LineNumerationType numeration = myEditor.getSettings().getLineNumerationType();
     switch (numeration) {
       case RELATIVE -> {
         return RelativeLineNumberConverter.INSTANCE;
@@ -2448,13 +2451,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public void setLeftFreePaintersAreaWidth(int widthInPixels) {
-    if (widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
+    if (widthInPixels != -1 && widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
     myForcedLeftFreePaintersAreaWidth = (short)widthInPixels;
   }
 
   @Override
   public void setRightFreePaintersAreaWidth(int widthInPixels) {
-    if (widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
+    if (widthInPixels != -1 && widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
     myForcedRightFreePaintersAreaWidth = (short)widthInPixels;
   }
 
@@ -2846,7 +2849,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private class LineNumbersRepainter implements CaretListener {
     @Override
     public void caretPositionChanged(@NotNull CaretEvent event) {
-      if (getPrimaryLineNumberConverter().shouldRepaintOnCaretMovement()) {
+      if (event.getOldPosition().line != event.getNewPosition().line &&
+          event.getCaret() == event.getEditor().getCaretModel().getPrimaryCaret() &&
+          getPrimaryLineNumberConverter().shouldRepaintOnCaretMovement()) {
         repaint();
       }
     }

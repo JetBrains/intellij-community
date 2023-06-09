@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components
 
+import com.intellij.openapi.client.ClientKind
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -51,7 +52,7 @@ inline fun <reified T : Any> ComponentManager.serviceIfCreated(): T? {
  * @see ComponentManager.getServices
  */
 inline fun <reified T : Any> ComponentManager.services(includeLocal: Boolean): List<T> {
-  return getServices(T::class.java, includeLocal)
+  return getServices(T::class.java, if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)
 }
 
 @ApiStatus.Internal

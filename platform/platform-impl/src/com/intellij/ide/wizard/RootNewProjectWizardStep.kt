@@ -7,9 +7,9 @@ import com.intellij.openapi.util.UserDataHolderBase
 
 class RootNewProjectWizardStep(override val context: WizardContext) : NewProjectWizardStep {
 
-  override val data = UserDataHolderBase()
+  override val data: UserDataHolderBase = UserDataHolderBase()
 
-  override val propertyGraph = PropertyGraph("New project wizard")
+  override val propertyGraph: PropertyGraph = PropertyGraph("New project wizard")
 
-  override var keywords = NewProjectWizardStep.Keywords()
+  override var keywords: NewProjectWizardStep.Keywords = NewProjectWizardStep.Keywords()
 }

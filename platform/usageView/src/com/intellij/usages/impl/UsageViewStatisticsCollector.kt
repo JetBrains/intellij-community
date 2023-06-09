@@ -35,11 +35,11 @@ enum class TooManyUsagesUserAction {
 }
 
 class UsageViewStatisticsCollector : CounterUsagesCollector() {
-  override fun getGroup() = GROUP
+  override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 21)
-    val USAGE_VIEW = object : PrimitiveEventField<UsageView?>() {
+    val GROUP: EventLogGroup = EventLogGroup("usage.view", 21)
+    val USAGE_VIEW: PrimitiveEventField<UsageView?> = object : PrimitiveEventField<UsageView?>() {
       override val name: String = "usage_view"
 
       override fun addData(fuData: FeatureUsageData, value: UsageView?) {
@@ -51,13 +51,13 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     }
 
     @JvmField
-    val NUMBER_OF_TARGETS = EventFields.Int("number_of_targets")
+    val NUMBER_OF_TARGETS: IntEventField = EventFields.Int("number_of_targets")
     @JvmField
-    val IS_IN_TEST_SOURCES = EventFields.Boolean("is_in_test_sources")
+    val IS_IN_TEST_SOURCES: BooleanEventField = EventFields.Boolean("is_in_test_sources")
     @JvmField
-    val IS_SELECTED_ELEMENT_AMONG_RECENT_FILES = EventFields.Boolean("is_among_recent_files")
+    val IS_SELECTED_ELEMENT_AMONG_RECENT_FILES: BooleanEventField = EventFields.Boolean("is_among_recent_files")
     @JvmField
-    val REFERENCE_CLASS = EventFields.Class("reference_class")
+    val REFERENCE_CLASS: ClassEventField = EventFields.Class("reference_class")
     private val UI_LOCATION = EventFields.Enum("ui_location", CodeNavigateSource::class.java)
     private val USAGE_SHOWN = GROUP.registerVarargEvent("usage.shown", USAGE_VIEW, REFERENCE_CLASS, EventFields.Language, UI_LOCATION)
     private val USAGE_NAVIGATE = GROUP.registerEvent("usage.navigate", REFERENCE_CLASS, EventFields.Language)
@@ -69,9 +69,9 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val IS_FILE_ALREADY_OPENED = EventFields.Boolean("is_file_already_opened")
 
     @JvmField
-    val IS_THE_SAME_FILE = EventFields.Boolean("is_the_same_file")
+    val IS_THE_SAME_FILE: BooleanEventField = EventFields.Boolean("is_the_same_file")
     @JvmField
-    val IS_IN_INJECTED_FILE = EventFields.Boolean("is_in_injected_file")
+    val IS_IN_INJECTED_FILE: BooleanEventField = EventFields.Boolean("is_in_injected_file")
     @JvmStatic
     @RequiresBackgroundThread
     fun calculateElementData(psiElement: PsiElement?): ObjectEventData? {
@@ -92,14 +92,14 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     }
 
     @JvmField
-    val SELECTED_ELEMENT_DATA = ObjectEventField("selected_element", REFERENCE_CLASS, EventFields.Language, IS_IN_TEST_SOURCES,
-                                                 IS_IN_INJECTED_FILE)
+    val SELECTED_ELEMENT_DATA: ObjectEventField = ObjectEventField("selected_element", REFERENCE_CLASS, EventFields.Language, IS_IN_TEST_SOURCES,
+                                                                   IS_IN_INJECTED_FILE)
 
     @JvmField
-    val TARGET_ELEMENT_DATA = ObjectEventField("target_element", REFERENCE_CLASS, EventFields.Language, IS_IN_TEST_SOURCES,
-                                               IS_IN_INJECTED_FILE)
+    val TARGET_ELEMENT_DATA: ObjectEventField = ObjectEventField("target_element", REFERENCE_CLASS, EventFields.Language, IS_IN_TEST_SOURCES,
+                                                                 IS_IN_INJECTED_FILE)
 
-    const val SCOPE_RULE_ID = "scopeRule"
+    const val SCOPE_RULE_ID: String = "scopeRule"
 
     private val SYMBOL_CLASS = EventFields.Class("symbol")
     private val SEARCH_SCOPE = EventFields.StringValidatedByCustomRule("scope", ScopeRuleValidator::class.java)
@@ -284,7 +284,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    fun logTabSwitched(project: Project?, usageView:UsageView) = tabSwitched.log(project, usageView)
+    fun logTabSwitched(project: Project?, usageView:UsageView): Unit = tabSwitched.log(project, usageView)
 
     @JvmStatic
     fun logScopeChanged(
@@ -319,7 +319,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    fun logOpenInFindToolWindow(project: Project?, usageView: UsageView) =
+    fun logOpenInFindToolWindow(project: Project?, usageView: UsageView): Unit =
       OPEN_IN_FIND_TOOL_WINDOW.log(project, usageView)
 
     @JvmStatic

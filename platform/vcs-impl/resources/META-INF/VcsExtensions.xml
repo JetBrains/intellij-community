@@ -349,6 +349,7 @@
     <notificationGroup id="External Executable Critical Failures" displayType="STICKY_BALLOON" bundle="messages.VcsBundle" key="notification.group.external.executable"/>
 
     <codeInsight.codeVisionProvider implementation="com.intellij.codeInsight.hints.VcsCodeVisionProvider"/>
+    <backgroundPostStartupActivity implementation="com.intellij.codeInsight.ChangesToolwindowPassCache"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
@@ -358,8 +359,6 @@
   <applicationListeners>
     <listener class="com.intellij.openapi.vcs.changes.patch.PatchClipboardListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    <listener class="com.intellij.openapi.vcs.impl.VcsInitialization$ShutDownProjectListener"
-              topic="com.intellij.openapi.project.ProjectCloseListener"/>
     <listener class="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$TrustListener"
               topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>

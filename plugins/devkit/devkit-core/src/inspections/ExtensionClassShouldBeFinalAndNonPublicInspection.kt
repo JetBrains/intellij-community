@@ -11,7 +11,6 @@ import com.intellij.lang.jvm.actions.modifierRequest
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.util.PsiUtil
 
 internal class ExtensionClassShouldBeFinalAndNonPublicInspection : DevKitJvmInspection() {
 

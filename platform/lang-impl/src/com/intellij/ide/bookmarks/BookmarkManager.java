@@ -42,7 +42,11 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * @deprecated Please use the new bookmarks manager {@link com.intellij.ide.bookmark.BookmarksManager}.
+ */
 @State(name = "BookmarkManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
+@Deprecated
 public final class BookmarkManager implements PersistentStateComponent<Element> {
   private record BookmarkInfo(Bookmark bookmark, int line, String text) {
   }

@@ -15,5 +15,23 @@ class Clazz {
       ProgressManager.checkCanceled();
       doSomething();
     }
+
+    for (int i = 0; i < 5; i++) {
+      ProgressManager.checkCanceled();
+      doSomething();
+    }
+
+    int i = 0;
+    while (i < 5) {
+      ProgressManager.checkCanceled();
+      doSomething();
+      i++;
+    }
+
+    do {
+      ProgressManager.checkCanceled();
+      doSomething();
+      i++;
+    } while (i < 10);
   }
 }

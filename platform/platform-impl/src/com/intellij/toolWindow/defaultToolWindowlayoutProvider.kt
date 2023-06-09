@@ -22,7 +22,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 interface DefaultToolWindowLayoutExtension {
   companion object {
-    val EP_NAME = ExtensionPointName.create<DefaultToolWindowLayoutExtension>("com.intellij.defaultToolWindowLayout")
+    val EP_NAME: ExtensionPointName<DefaultToolWindowLayoutExtension> = ExtensionPointName.create("com.intellij.defaultToolWindowLayout")
   }
 
   fun buildV1Layout(builder: DefaultToolWindowLayoutBuilder)
@@ -266,6 +266,7 @@ internal class DefaultToolWindowLayoutBuilderImpl : DefaultToolWindowLayoutBuild
             weight = 0.25f
             contentUiType = ToolWindowDescriptor.ToolWindowContentUiType.COMBO
           }
+          addOrUpdate("AI Assistant") { weight = 0.25f }
           addOrUpdate("Database") { weight = 0.25f }
           addOrUpdate("Gradle") { weight = 0.25f }
           addOrUpdate("Maven") { weight = 0.25f }

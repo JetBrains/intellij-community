@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.types.Variance
 internal class ThisKeywordHandler(
     private val basicContext: FirBasicCompletionContext
 ) : CompletionKeywordHandler<KtAnalysisSession>(KtTokens.THIS_KEYWORD) {
-    @OptIn(ExperimentalStdlibApi::class)
     override fun KtAnalysisSession.createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,

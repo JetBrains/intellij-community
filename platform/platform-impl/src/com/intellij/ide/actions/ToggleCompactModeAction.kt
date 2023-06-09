@@ -16,7 +16,7 @@ import com.intellij.ui.mac.MacFullScreenControlsManager
  */
 class ToggleCompactModeAction: DumbAwareToggleAction() {
 
-  override fun isSelected(e: AnActionEvent) = UISettings.getInstance().uiDensity == UIDensity.COMPACT
+  override fun isSelected(e: AnActionEvent): Boolean = UISettings.getInstance().uiDensity == UIDensity.COMPACT
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val value = UISettings.getInstance().uiDensity
@@ -35,5 +35,5 @@ class ToggleCompactModeAction: DumbAwareToggleAction() {
     e.presentation.isEnabledAndVisible = ExperimentalUI.isNewUI()
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }

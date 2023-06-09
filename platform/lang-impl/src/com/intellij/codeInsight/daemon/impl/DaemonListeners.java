@@ -71,6 +71,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.KeyedLazyInstance;
@@ -297,7 +298,7 @@ public final class DaemonListeners implements Disposable {
       private void fileRenamed(@NotNull VFilePropertyChangeEvent event) {
         stopDaemonAndRestartAllFiles("Virtual file name changed");
         VirtualFile virtualFile = event.getFile();
-        PsiFile psiFile = !virtualFile.isValid() ? null : PsiManagerEx.getInstanceEx(myProject).getFileManager().getCachedPsiFile(virtualFile);
+        PsiFile psiFile = !virtualFile.isValid() ? null : ((FileManagerImpl)PsiManagerEx.getInstanceEx(myProject).getFileManager()).getFastCachedPsiFile(virtualFile);
         if (psiFile == null || myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
           return;
         }
@@ -405,9 +406,11 @@ public final class DaemonListeners implements Disposable {
     HeavyProcessLatch.INSTANCE.addListener(this, __ -> stopDaemon(true, "re-scheduled to execute after heavy processing finished"));
   }
 
-  private void removeAllHighlightersFromHighlightPasses(@NotNull Document document, @NotNull Project project) {
+  private static void removeAllHighlightersFromHighlightPasses(@NotNull Document document, @NotNull Project project) {
     MarkupModel model = DocumentMarkupModel.forDocument(document, project, false);
-    if (model == null) return;
+    if (model == null) {
+      return;
+    }
     for (RangeHighlighter highlighter : model.getAllHighlighters()) {
       Object tooltip = highlighter.getErrorStripeTooltip();
       if (tooltip instanceof HighlightInfo) {

@@ -63,7 +63,7 @@ class ProcessedFilesStorageService : PersistentStateComponentWithModificationTra
     return state.timestamps.values.removeIf { isDayPassed(lastTime = it, currentTime = currentTime) }
   }
 
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   companion object {
     fun getInstance(project: Project): ProcessedFilesStorageService = project.service()

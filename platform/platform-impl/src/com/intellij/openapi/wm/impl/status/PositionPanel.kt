@@ -41,10 +41,10 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
 
   companion object {
     @JvmField
-    val DISABLE_FOR_EDITOR = Key<Any>("positionPanel.disableForEditor")
+    val DISABLE_FOR_EDITOR: Key<Any> = Key<Any>("positionPanel.disableForEditor")
 
-    const val SPACE = "     "
-    const val SEPARATOR = ":"
+    const val SPACE: String = "     "
+    const val SEPARATOR: String = ":"
     private const val CHAR_COUNT_SYNC_LIMIT = 500_000
     private const val CHAR_COUNT_UNKNOWN = "..."
   }
@@ -114,7 +114,7 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
     return if (shortcut.isNotEmpty() && !Registry.`is`("ide.helptooltip.enabled")) "$toolTip ($shortcut)" else toolTip
   }
 
-  override suspend fun getShortcutText() = gotoShortcutText
+  override suspend fun getShortcutText(): String = gotoShortcutText
 
   override fun getClickConsumer(): (MouseEvent) -> Unit {
     return h@{

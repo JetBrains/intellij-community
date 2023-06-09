@@ -157,13 +157,13 @@ class RuntimeModuleRepositoryBuilderTest : JpsBuildTestCase() {
     val descriptors = ArrayList<RawRuntimeModuleDescriptor>()
     
     fun descriptor(id: String, vararg dependencies: String, resourceDirName: String? = id) {
-      val resources = if (resourceDirName != null) listOf("../production/$resourceDirName") else emptyList()
+      val resources = if (resourceDirName != null) listOf("production/$resourceDirName") else emptyList()
       descriptor(id, resources, dependencies.asList())
     }
 
     fun testDescriptor(id: String, vararg dependencies: String, resourceDirName: String = id.removeSuffix(RuntimeModuleId.TESTS_NAME_SUFFIX)) {
       if (RuntimeModuleRepositoryBuilder.GENERATE_DESCRIPTORS_FOR_TEST_MODULES) {
-        descriptor(id, listOf("../test/$resourceDirName"), dependencies.asList())
+        descriptor(id, listOf("test/$resourceDirName"), dependencies.asList())
       }
     }
 

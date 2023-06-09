@@ -17,14 +17,13 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,10 +59,10 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiExpression argument = (PsiExpression)infos[0];
     final PsiType type = (PsiType)infos[1];
-    return new DelegatingFix(new AddTypeCastFix(type, argument));
+    return new AddTypeCastFix(type, argument);
   }
 
   @Override

@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
-
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.PathMacroManager
@@ -12,6 +11,7 @@ import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -29,15 +29,16 @@ internal class ApplicationPathMacroManager : PathMacroManager(null)
 
 @NonNls const val APP_CONFIG = "\$APP_CONFIG$"
 
-open class ApplicationStoreImpl : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
-  override val storageManager = ApplicationStorageManager(PathMacroManager.getInstance(ApplicationManager.getApplication()))
+open class ApplicationStoreImpl(@Suppress("NonDefaultConstructor") private val app: Application)
+  : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
+  override val storageManager = ApplicationStorageManager(PathMacroManager.getInstance(app))
 
   override val serviceContainer: ComponentManagerImpl
-    get() = ApplicationManager.getApplication() as ComponentManagerImpl
+    get() = app as ComponentManagerImpl
 
   // a number of app components require some state, so we load the default state in test mode
   override val loadPolicy: StateLoadPolicy
-    get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.LOAD_ONLY_DEFAULT else StateLoadPolicy.LOAD
+    get() = if (app.isUnitTestMode) StateLoadPolicy.LOAD_ONLY_DEFAULT else StateLoadPolicy.LOAD
 
   override fun setPath(path: Path) {
     storageManager.setMacros(listOf(
@@ -51,7 +52,9 @@ open class ApplicationStoreImpl : ComponentStoreWithExtraComponents(), Applicati
   override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
     val saveSessionManager = createSaveSessionProducerManager()
     if (GlobalLibraryTableBridge.isEnabled()) {
-      (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities(AppStorageContentWriter(saveSessionManager))
+      blockingContext {
+        (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities(AppStorageContentWriter(saveSessionManager))
+      }
     }
     saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings, saveSessionManager)
     // todo can we store default project in parallel to regular saving? for now only flush on disk is async, but not component committing

@@ -12,7 +12,7 @@ enum class SearchWords(@NonNls val value: String) {
 
   companion object {
     @JvmStatic
-    fun find(value: String) = values().find { it.value == value }
+    fun find(value: String): SearchWords? = values().find { it.value == value }
   }
 
 }

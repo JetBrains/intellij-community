@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
 
 open class VirtualFileUrlWatcher(val project: Project) {
   private val virtualFileManager = VirtualFileUrlManager.getInstance(project)
-  internal var isInsideFilePointersUpdate = false
+  internal var isInsideFilePointersUpdate: Boolean = false
     private set
 
   private val pointers = listOf(

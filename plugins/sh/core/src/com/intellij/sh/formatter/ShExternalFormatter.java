@@ -9,18 +9,10 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.service.AsyncDocumentFormattingService;
 import com.intellij.formatting.service.AsyncFormattingRequest;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShFileType;
-import com.intellij.sh.ShNotificationDisplayIds;
 import com.intellij.sh.codeStyle.ShCodeStyleSettings;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
@@ -38,11 +30,9 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.sh.ShBundle.message;
-import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP;
 import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
 
-public class ShExternalFormatter extends AsyncDocumentFormattingService {
-  private static final Logger LOG = Logger.getInstance(ShExternalFormatter.class);
+public final class ShExternalFormatter extends AsyncDocumentFormattingService {
   @NonNls private static final List<String> KNOWN_SHELLS = Arrays.asList("bash", "posix", "mksh");
 
   private static final Set<Feature> FEATURES = EnumSet.noneOf(Feature.class);
@@ -73,37 +63,11 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
     Project project = formattingContext.getProject();
     String shFmtExecutable = ShSettings.getShfmtPath();
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        Notification notification = NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.fmt.install.question"),
-                                                     NotificationType.INFORMATION);
-        notification.setDisplayId(ShNotificationDisplayIds.INSTALL_FORMATTER);
-        notification.setSuggestionType(true);
-        notification.addAction(
-          NotificationAction.createSimple(ShBundle.messagePointer("sh.install"), () -> {
-            notification.expire();
-            ShShfmtFormatterUtil.download(formattingContext.getProject(),
-                                          () -> Notifications.Bus
-                                            .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"),
-                                                                     message("sh.fmt.success.install"),
-                                                                     NotificationType.INFORMATION)
-                                                      .setDisplayId(ShNotificationDisplayIds.INSTALL_FORMATTER_SUCCESS)),
-                                          () -> Notifications.Bus
-                                            .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"),
-                                                                     message("sh.fmt.cannot.download"),
-                                                                     NotificationType.ERROR)
-                                                      .setDisplayId(ShNotificationDisplayIds.INSTALL_FORMATTER_ERROR)));
-          }));
-        notification.addAction(NotificationAction.createSimple(ShBundle.messagePointer("sh.no.thanks"), () -> {
-          notification.expire();
-          ShSettings.setShfmtPath(ShSettings.I_DO_MIND_SUPPLIER.get());
-        }));
-        Notifications.Bus.notify(notification, project);
-      }
       return null;
     }
+
     ShShfmtFormatterUtil.checkShfmtForUpdate(project);
     String interpreter = ShShebangParserUtil.getInterpreter((ShFile)formattingContext.getContainingFile(), KNOWN_SHELLS, "bash");
-
 
     CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
     ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
@@ -178,5 +142,4 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
       return null;
     }
   }
-
 }

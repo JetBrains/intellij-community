@@ -133,6 +133,22 @@ public class SimpleDiffChangeUi {
     myOperations.clear();
   }
 
+  public boolean drawDivider(@NotNull DiffDividerDrawUtil.DividerPaintable.Handler handler) {
+    int startLine1 = myChange.getStartLine(Side.LEFT);
+    int endLine1 = myChange.getEndLine(Side.LEFT);
+    int startLine2 = myChange.getStartLine(Side.RIGHT);
+    int endLine2 = myChange.getEndLine(Side.RIGHT);
+    TextDiffType type = myChange.getDiffType();
+
+    if (myViewer.needAlignChanges()) {
+      return handler.processAligned(startLine1, endLine1, startLine2, endLine2, type);
+    }
+    else {
+      return handler.processExcludable(startLine1, endLine1, startLine2, endLine2, type,
+                                       myChange.isExcluded(), myChange.isSkipped());
+    }
+  }
+
   //
   // Helpers
   //

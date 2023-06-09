@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl.versionCatalogs
 
 import com.intellij.psi.PsiReference
@@ -73,6 +73,30 @@ class GradleVersionCatalogsFindUsagesTest : GradleCodeInsightTestCase() {
     """.trimIndent()) { refs ->
       assertNotNull(refs.find { it.element.containingFile is GroovyFileBase })
       assertNotNull(refs.find { it.element.containingFile is TomlFile })
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNestedProject(gradleVersion: GradleVersion) {
+    testEmptyProject(gradleVersion) {
+      writeTextAndCommit("gradle/libs.versions.toml", """
+      [libraries]
+      aaa-b<caret>bb = { group = "org.apache.groovy", name = "groovy", version = "4.0.2" }
+    """.trimIndent())
+      writeTextAndCommit("settings.gradle", """
+        rootProject.name = 'empty-project'
+        include 'app'
+      """.trimIndent())
+      writeTextAndCommit("build.gradle", "")
+      writeTextAndCommit("app/build.gradle", "libs.aaa.bbb")
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("gradle/libs.versions.toml"))
+        val elementAtCaret = codeInsightFixture.elementAtCaret
+        assertNotNull(elementAtCaret)
+        val usages = ReferencesSearch.search(elementAtCaret).findAll()
+        assertNotNull(usages.find { it.element.containingFile is GroovyFileBase })
+      }
     }
   }
 }

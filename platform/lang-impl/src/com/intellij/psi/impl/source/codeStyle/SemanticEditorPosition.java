@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.Language;
@@ -203,8 +203,7 @@ public final class SemanticEditorPosition {
     return elementAfterOnSameLine(syntaxElements) != null;
   }
 
-  @Nullable
-  public SyntaxElement elementAfterOnSameLine(SyntaxElement @NotNull ... syntaxElements) {
+  public @Nullable SyntaxElement elementAfterOnSameLine(SyntaxElement @NotNull ... syntaxElements) {
     myIterator.retreat();
     while (!myIterator.atEnd() && !isAtMultiline()) {
       SyntaxElement currElement = map(myIterator.getTokenType());
@@ -264,8 +263,7 @@ public final class SemanticEditorPosition {
     return myEditor;
   }
 
-  @Nullable
-  public Language getLanguage() {
+  public @Nullable Language getLanguage() {
     return !myIterator.atEnd() ? myIterator.getTokenType().getLanguage() : null;
   }
 
@@ -276,8 +274,7 @@ public final class SemanticEditorPosition {
     return false;
   }
 
-  @Nullable
-  public SyntaxElement getCurrElement() {
+  public @Nullable SyntaxElement getCurrElement() {
     return !myIterator.atEnd() ? map(myIterator.getTokenType()) : null;
   }
 
@@ -326,10 +323,9 @@ public final class SemanticEditorPosition {
     return position;
   }
 
-  @NotNull
-  public static SemanticEditorPosition createEditorPosition(@NotNull Editor editor, int offset,
-                                                            @NotNull BiFunction<? super Editor, ? super Integer, ? extends HighlighterIterator> createHighlighterIteratorAtOffset,
-                                                            @NotNull Function<? super IElementType, ? extends SyntaxElement> typeMapper) {
+  public static @NotNull SemanticEditorPosition createEditorPosition(@NotNull Editor editor, int offset,
+                                                                     @NotNull BiFunction<? super Editor, ? super Integer, ? extends HighlighterIterator> createHighlighterIteratorAtOffset,
+                                                                     @NotNull Function<? super IElementType, ? extends SyntaxElement> typeMapper) {
     return new SemanticEditorPosition(editor, offset, createHighlighterIteratorAtOffset, typeMapper);
   }
 }

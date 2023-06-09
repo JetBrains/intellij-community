@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal
 
 import com.intellij.internal.statistic.collectors.fus.TerminalFusAwareHandler
@@ -18,7 +18,7 @@ class TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup(GROUP_ID, 10)
+    private val GROUP = EventLogGroup(GROUP_ID, 13)
 
     private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
     private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")

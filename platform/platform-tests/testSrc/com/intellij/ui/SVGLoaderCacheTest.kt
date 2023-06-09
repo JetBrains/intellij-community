@@ -7,6 +7,8 @@ import com.intellij.ui.scale.paint.ImageComparator
 import com.intellij.ui.scale.paint.ImageComparator.AASmootherComparator
 import com.intellij.ui.svg.SvgCacheClassifier
 import com.intellij.ui.svg.SvgCacheManager
+import com.intellij.ui.svg.createSvgCacheManager
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -16,7 +18,7 @@ import java.nio.file.Path
 
 class SVGLoaderCacheTest {
   @Test
-  fun testNoEntry(@TempDir dir: Path) {
+  fun testNoEntry(@TempDir dir: Path) = runBlocking {
     val cache = createCache(dir)
     try {
       assertThat(cache.loadFromCache(byteArrayOf(), 0, SvgCacheClassifier(1f))).isNull()
@@ -27,7 +29,7 @@ class SVGLoaderCacheTest {
   }
 
   @Test
-  fun testSaveAndLoad(@TempDir dir: Path) {
+  fun testSaveAndLoad(@TempDir dir: Path) = runBlocking {
     var cache = createCache(dir)
     try {
       val i = BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB)
@@ -53,7 +55,7 @@ class SVGLoaderCacheTest {
   }
 }
 
-private fun createCache(dir: Path): SvgCacheManager {
-  return SvgCacheManager(dir.resolve("db.db"))
+private suspend fun createCache(dir: Path): SvgCacheManager {
+  return createSvgCacheManager(dir.resolve("db.db"))!!
 }
 

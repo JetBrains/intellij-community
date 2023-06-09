@@ -3,6 +3,7 @@
 
 package com.intellij.xdebugger.impl.ui
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorKind
@@ -90,15 +91,20 @@ internal class ExecutionPositionUi private constructor(
     }
 
     @RequiresEdt
-    private fun create(coroutineScope: CoroutineScope, project: Project, vm: ExecutionPositionVm): ExecutionPositionUi? {
+    private suspend fun create(coroutineScope: CoroutineScope, project: Project, vm: ExecutionPositionVm): ExecutionPositionUi? {
       val rangeHighlighter = createRangeHighlighter(project, vm) ?: return null
       rangeHighlighter.editorFilter = MarkupEditorFilter { it.editorKind == EditorKind.MAIN_EDITOR }
 
       return ExecutionPositionUi(coroutineScope, vm, rangeHighlighter)
     }
 
-    private fun createRangeHighlighter(project: Project, vm: ExecutionPositionVm): RangeHighlighter? {
-      val document = FileDocumentManager.getInstance().getDocument(vm.file) ?: return null
+    @RequiresEdt
+    private suspend fun createRangeHighlighter(project: Project, vm: ExecutionPositionVm): RangeHighlighter? {
+      val document = withContext(Dispatchers.Default) {
+        readAction {
+          FileDocumentManager.getInstance().getDocument(vm.file)
+        }
+      } ?: return null
 
       val line = vm.line
       if (!DocumentUtil.isValidLine(line, document)) return null

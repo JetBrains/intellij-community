@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginEnableStateChangedListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
@@ -11,11 +12,11 @@ import org.junit.Assert
 import java.util.concurrent.CopyOnWriteArrayList
 
 internal class TestPluginManager : AbstractPluginManagerProxy() {
-  val installer = TestPluginInstaller() {
+  val installer = TestPluginInstaller {
     addPluginDescriptors(TestPluginDescriptor.ALL[it]!!)
   }
   private val ownPluginDescriptors = HashMap<PluginId, IdeaPluginDescriptor>()
-  private val pluginEnabledStateListeners = CopyOnWriteArrayList<Runnable>()
+  private val pluginEnabledStateListeners = CopyOnWriteArrayList<PluginEnableStateChangedListener>()
   var pluginStateExceptionThrower: ((PluginId) -> Unit)? = null
 
   override fun getPlugins(): Array<IdeaPluginDescriptor> {
@@ -25,27 +26,31 @@ internal class TestPluginManager : AbstractPluginManagerProxy() {
   override val pluginEnabler: PluginEnabler
     get() = object : PluginEnabler {
       override fun enableById(pluginIds: MutableSet<PluginId>): Boolean {
+        val enabledList = mutableListOf<IdeaPluginDescriptor>()
         for (plugin in pluginIds) {
           val descriptor = findPlugin(plugin)
           assert(descriptor is TestPluginDescriptor)
           descriptor?.isEnabled = true
           pluginStateExceptionThrower?.invoke(plugin)
+          enabledList.add(descriptor!!)
         }
         for (pluginListener in pluginEnabledStateListeners) {
-          pluginListener.run()
+          pluginListener.stateChanged(enabledList, true)
         }
         return true
       }
 
       override fun disableById(pluginIds: MutableSet<PluginId>): Boolean {
+        val disabledList = mutableListOf<IdeaPluginDescriptor>()
         for (plugin in pluginIds) {
           val descriptor = findPlugin(plugin)
           assert(descriptor is TestPluginDescriptor)
           descriptor?.isEnabled = false
           pluginStateExceptionThrower?.invoke(plugin)
+          disabledList.add(descriptor!!)
         }
         for (pluginListener in pluginEnabledStateListeners) {
-          pluginListener.run()
+          pluginListener.stateChanged(disabledList, false)
         }
         return true
       }
@@ -57,27 +62,27 @@ internal class TestPluginManager : AbstractPluginManagerProxy() {
 
   override fun isDescriptorEssential(pluginId: PluginId): Boolean {
     val descriptor = ownPluginDescriptors[pluginId] ?: Assert.fail("Cannot find descriptor for pluginId $pluginId")
-    return (descriptor as TestPluginDescriptor).isEssential()
-
+    return (descriptor as TestPluginDescriptor).essential
   }
 
   override fun getDisabledPluginIds(): Set<PluginId> {
     return ownPluginDescriptors.filter { (_, descriptor) -> !descriptor.isEnabled }.keys
   }
 
-  override fun addDisablePluginListener(disabledListener: Runnable, parentDisposable: Disposable) {
-    pluginEnabledStateListeners.add(disabledListener)
+  override fun isIncompatible(plugin: IdeaPluginDescriptor): Boolean {
+    return !(plugin as TestPluginDescriptor).compatible
+  }
+
+  override fun addPluginStateChangedListener(listener: PluginEnableStateChangedListener, parentDisposable: Disposable) {
+    pluginEnabledStateListeners.add(listener)
     Disposer.register(parentDisposable, Disposable {
-      pluginEnabledStateListeners.remove(disabledListener)
+      pluginEnabledStateListeners.remove(listener)
       pluginStateExceptionThrower = null
     })
   }
 
   override fun findPlugin(pluginId: PluginId): IdeaPluginDescriptor? {
-    return if (ownPluginDescriptors.containsKey(pluginId)) {
-      ownPluginDescriptors[pluginId]
-    }
-    else PluginManagerCore.findPlugin(pluginId)
+    return ownPluginDescriptors[pluginId]
   }
 
   override fun createInstaller(notifyErrors: Boolean): SettingsSyncPluginInstaller {

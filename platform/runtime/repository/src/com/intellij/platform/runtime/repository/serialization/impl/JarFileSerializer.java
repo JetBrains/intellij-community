@@ -3,6 +3,7 @@ package com.intellij.platform.runtime.repository.serialization.impl;
 
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
@@ -14,14 +15,14 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.jar.*;
 
 public final class JarFileSerializer {
   public static final String SPECIFICATION_VERSION = "0.1";
   public static final String SPECIFICATION_TITLE = "IntelliJ Runtime Module Repository";
+  private static final Attributes.Name BOOTSTRAP_MODULE_ATTRIBUTE_NAME = new Attributes.Name("Bootstrap-Module-Name");
+  private static final Attributes.Name BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME = new Attributes.Name("Bootstrap-Class-Path");
 
   @NotNull
   public static Map<String, RawRuntimeModuleDescriptor> loadFromJar(@NotNull Path jarPath) throws IOException, XMLStreamException {
@@ -51,7 +52,29 @@ public final class JarFileSerializer {
     return rawData;
   }
 
-  public static void saveToJar(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors, @NotNull Path jarFile, int generatorVersion)
+  public static @NotNull String @Nullable [] loadBootstrapClasspath(@NotNull Path jarPath, @NotNull String bootstrapModuleName)
+    throws IOException {
+    try (JarInputStream input = new JarInputStream(new BufferedInputStream(Files.newInputStream(jarPath)))) {
+      Manifest manifest = input.getManifest();
+      if (manifest == null) return null;
+      Attributes attributes = manifest.getMainAttributes();
+      if (!SPECIFICATION_VERSION.equals(attributes.getValue(Attributes.Name.SPECIFICATION_VERSION))) {
+        return null;
+      }
+      if (!bootstrapModuleName.equals(attributes.getValue(BOOTSTRAP_MODULE_ATTRIBUTE_NAME))) {
+        return null;
+      }
+      String classpathValue = attributes.getValue(BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME);
+      if (classpathValue == null) {
+        return null;
+      }
+      return classpathValue.split(" ");
+    }
+  }
+
+  public static void saveToJar(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors,
+                               @Nullable String bootstrapModuleName,
+                               @NotNull Path jarFile, int generatorVersion)
     throws IOException, XMLStreamException {
     Files.createDirectories(jarFile.getParent());
     Manifest manifest = new Manifest();
@@ -60,6 +83,10 @@ public final class JarFileSerializer {
     attributes.put(Attributes.Name.SPECIFICATION_TITLE, SPECIFICATION_TITLE);
     attributes.put(Attributes.Name.SPECIFICATION_VERSION, SPECIFICATION_VERSION);
     attributes.put(Attributes.Name.IMPLEMENTATION_VERSION, SPECIFICATION_VERSION + "." + generatorVersion);
+    if (bootstrapModuleName != null) {
+      attributes.put(BOOTSTRAP_MODULE_ATTRIBUTE_NAME, bootstrapModuleName);
+      attributes.put(BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME, computeClasspath(descriptors, bootstrapModuleName));
+    }
     try (JarOutputStream jarOutput = new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(jarFile)), manifest)) {
       XMLOutputFactory factory = XMLOutputFactory.newDefaultFactory();
       for (RawRuntimeModuleDescriptor descriptor : descriptors) {
@@ -69,6 +96,29 @@ public final class JarFileSerializer {
         ModuleXmlSerializer.writeModuleXml(descriptor, output, factory);
         jarOutput.closeEntry();
       }
+    }
+  }
+
+  private static String computeClasspath(Collection<RawRuntimeModuleDescriptor> descriptors, String moduleName) {
+    Set<String> classpath = new LinkedHashSet<>();
+    Map<String, RawRuntimeModuleDescriptor> descriptorMap = new HashMap<>();
+    for (RawRuntimeModuleDescriptor descriptor : descriptors) {
+      descriptorMap.put(descriptor.getId(), descriptor);
+    }
+    collectClasspathEntries(moduleName, descriptorMap, new HashSet<String>(), classpath);
+    return String.join(" ", classpath);
+  }
+
+  private static void collectClasspathEntries(String moduleName,
+                                              Map<String, RawRuntimeModuleDescriptor> descriptorMap,
+                                              Set<String> processedModules,
+                                              Set<String> classpath) {
+    if (!processedModules.add(moduleName)) return;
+    RawRuntimeModuleDescriptor descriptor = descriptorMap.get(moduleName);
+    if (descriptor == null) return;
+    classpath.addAll(descriptor.getResourcePaths());
+    for (String dependency : descriptor.getDependencies()) {
+      collectClasspathEntries(dependency, descriptorMap, processedModules, classpath);
     }
   }
 }

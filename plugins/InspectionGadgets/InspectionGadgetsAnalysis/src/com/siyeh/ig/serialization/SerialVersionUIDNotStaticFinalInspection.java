@@ -15,14 +15,15 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,12 +46,12 @@ public class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     boolean needToFix = ((Boolean)infos[0]).booleanValue();
     return needToFix ? new SerialVersionUIDNotStaticFinalFix() : null;
   }
 
-  private static class SerialVersionUIDNotStaticFinalFix extends InspectionGadgetsFix {
+  private static class SerialVersionUIDNotStaticFinalFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -60,8 +61,7 @@ public class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiField field)) {
         return;

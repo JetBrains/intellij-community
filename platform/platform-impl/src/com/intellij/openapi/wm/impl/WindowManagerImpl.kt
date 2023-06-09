@@ -13,6 +13,7 @@ import com.intellij.openapi.components.PersistentStateComponentWithModificationT
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -24,6 +25,7 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
@@ -43,6 +45,8 @@ import javax.swing.JOptionPane
 import javax.swing.JWindow
 
 private val LOG = logger<WindowManagerImpl>()
+@JvmField
+internal val IDE_FRAME_EVENT_LOG = Logger.getInstance("ide.frame.events")
 
 @NonNls
 private const val FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow"
@@ -54,7 +58,7 @@ private const val FRAME_ELEMENT = "frame"
 ])
 class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModificationTracker<Element> {
   private var alphaModeSupported: Boolean? = null
-  internal val windowWatcher = WindowWatcher()
+  internal val windowWatcher: WindowWatcher = WindowWatcher()
 
   internal var oldLayout: DesktopLayout? = null
     private set
@@ -71,7 +75,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   // read from any thread, write from EDT
   private val frameToReuse = AtomicReference<IdeFrameImpl?>()
 
-  internal val defaultFrameInfoHelper = FrameInfoHelper()
+  internal val defaultFrameInfoHelper: FrameInfoHelper = FrameInfoHelper()
 
   private var frameReuseEnabled = false
 
@@ -101,17 +105,17 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     })
   }
 
-  override fun getAllProjectFrames() = projectToFrame.values.map { it.frameHelper }.toTypedArray()
+  override fun getAllProjectFrames(): Array<ProjectFrameHelper> = projectToFrame.values.map { it.frameHelper }.toTypedArray()
 
-  override fun getProjectFrameHelpers() = projectToFrame.values.map { it.frameHelper }
+  override fun getProjectFrameHelpers(): List<ProjectFrameHelper> = projectToFrame.values.map { it.frameHelper }
 
   override fun findVisibleFrame(): JFrame? {
     return projectToFrame.values.firstOrNull()?.frameHelper?.frame ?: WelcomeFrame.getInstance() as? JFrame
   }
 
-  override fun findFirstVisibleFrameHelper() = projectToFrame.values.asSequence().map { it.frameHelper }.firstOrNull()
+  override fun findFirstVisibleFrameHelper(): ProjectFrameHelper? = projectToFrame.values.asSequence().map { it.frameHelper }.firstOrNull()
 
-  override fun getScreenBounds() = ScreenUtil.getAllScreensRectangle()
+  override fun getScreenBounds(): Rectangle = ScreenUtil.getAllScreensRectangle()
 
   override fun getScreenBounds(project: Project): Rectangle? {
     val onScreen = getFrame(project)!!.locationOnScreen
@@ -204,9 +208,9 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     windowWatcher.dispatchComponentEvent(e)
   }
 
-  override fun suggestParentWindow(project: Project?) = windowWatcher.suggestParentWindow(project, this)
+  override fun suggestParentWindow(project: Project?): Window? = windowWatcher.suggestParentWindow(project, this)
 
-  override fun getStatusBar(project: Project) = getFrameHelper(project)?.statusBar
+  override fun getStatusBar(project: Project): IdeStatusBarImpl? = getFrameHelper(project)?.statusBar
 
   override fun getStatusBar(component: Component, project: Project?): StatusBar? {
     var parent: Component? = component
@@ -234,7 +238,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   @ApiStatus.Internal
-  override fun getFrameHelper(project: Project?) = projectToFrame.get(project)?.frameHelper
+  override fun getFrameHelper(project: Project?): ProjectFrameHelper? = projectToFrame.get(project)?.frameHelper
 
   override fun findFrameHelper(project: Project?): ProjectFrameHelper? {
     return getFrameHelper(project ?: IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: return null)
@@ -318,11 +322,11 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     return AutoCloseable { frameReuseEnabled = oldValue }
   }
 
-  override fun getMostRecentFocusedWindow() = windowWatcher.focusedWindow
+  override fun getMostRecentFocusedWindow(): Window? = windowWatcher.focusedWindow
 
-  override fun getFocusedComponent(window: Window) = windowWatcher.getFocusedComponent(window)
+  override fun getFocusedComponent(window: Window): Component? = windowWatcher.getFocusedComponent(window)
 
-  override fun getFocusedComponent(project: Project?) = windowWatcher.getFocusedComponent(project)
+  override fun getFocusedComponent(project: Project?): Component? = windowWatcher.getFocusedComponent(project)
 
   override fun loadState(state: Element) {
     val frameElement = state.getChild(FRAME_ELEMENT)
@@ -354,7 +358,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     return state
   }
 
-  override fun isFullScreenSupportedInCurrentOS() = isFullScreenSupportedInCurrentOs()
+  override fun isFullScreenSupportedInCurrentOS(): Boolean = isFullScreenSupportedInCurrentOs()
 
   override fun updateDefaultFrameInfoOnProjectClose(project: Project) {
     val frameHelper = getFrameHelper(project) ?: return
@@ -456,8 +460,43 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
 
     val extendedState = frame.extendedState
     val bounds = frame.bounds
-    if (extendedState == Frame.NORMAL && rootPane != null) {
-      frame.normalBounds = bounds
+    var normalBoundsOnCurrentScreen: Rectangle? = null
+    if (rootPane != null) {
+      val oldScreen = frame.screenBounds
+      val newScreen = frame.graphicsConfiguration?.bounds
+      if (extendedState == Frame.NORMAL) {
+        frame.normalBounds = bounds
+        frame.screenBounds = newScreen
+        if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+          IDE_FRAME_EVENT_LOG.debug("Updated bounds for IDE frame ${frame.normalBounds} and screen ${frame.screenBounds} after moving/resizing")
+        }
+      }
+      else if (isMaximized(extendedState)) {
+        val normalBounds = frame.normalBounds
+        if (normalBounds == null) {
+          IDE_FRAME_EVENT_LOG.debug("Not updating frame bounds because normalBounds == null")
+        }
+        if (normalBounds != null) {
+          normalBoundsOnCurrentScreen = normalBounds
+          if (
+            oldScreen != null && !oldScreen.isEmpty &&
+            newScreen != null && !newScreen.isEmpty &&
+            newScreen != oldScreen
+          ) {
+            // The frame was moved to another screen after it had been maximized, move/scale its "normal" bounds accordingly.
+            normalBoundsOnCurrentScreen = Rectangle(normalBoundsOnCurrentScreen)
+            ScreenUtil.moveAndScale(normalBoundsOnCurrentScreen, oldScreen, newScreen)
+            if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+              IDE_FRAME_EVENT_LOG.debug("Updated bounds for IDE frame ${normalBoundsOnCurrentScreen} after moving from $oldScreen to $newScreen")
+            }
+          }
+          else {
+            if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+              IDE_FRAME_EVENT_LOG.debug("Frame moved from $oldScreen to $newScreen, not updating normal bounds $normalBounds")
+            }
+          }
+        }
+      }
     }
 
     val frameHelper = frame.frameHelper?.helper as? ProjectFrameHelper ?: return
@@ -471,7 +510,7 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
       defaultFrameInfoHelper.updateFrameInfo(frameHelper, frame)
     }
     else if (!project.isDisposed) {
-      ProjectFrameBounds.getInstance(project).markDirty(if (isMaximized(extendedState)) null else bounds)
+      ProjectFrameBounds.getInstance(project).markDirty(if (isMaximized(extendedState)) normalBoundsOnCurrentScreen else bounds)
     }
   }
 }

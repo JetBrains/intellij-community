@@ -14,11 +14,11 @@ dependencies {
 
 android {
     namespace = "testGroupId.android"
-    compileSdk = 32
+    compileSdk = 33
     defaultConfig {
         applicationId = "testGroupId.android"
         minSdk = 24
-        targetSdk = 32
+        targetSdk = 33
         versionCode = 1
         versionName = "1.0"
     }

@@ -50,6 +50,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffSu
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffSupportImpl
 import org.jetbrains.plugins.github.pullrequest.ui.changes.showPullRequestProgress
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.*
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
@@ -191,6 +192,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
       val scope = DisposingScope(disposable, SupervisorJob() + Dispatchers.Main.immediate)
       val reviewDetailsVm = GHPRDetailsViewModelImpl(detailsModel, stateModel)
+      val reviewBranchesVm = GHPRBranchesViewModel(project, branchesModel, dataProvider.detailsData)
       val reviewStatusVm = GHPRStatusViewModelImpl(stateModel)
       val reviewFlowVm = GHPRReviewFlowViewModelImpl(scope,
                                                      metadataModel,
@@ -202,12 +204,10 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                      disposable)
       val commitsVm = GHPRCommitsViewModel(scope, commitsLoadingModel, dataContext.securityService, diffBridge)
 
-      GHPRDetailsComponentFactory.create(project,
-                                         scope,
-                                         reviewDetailsVm, reviewStatusVm, reviewFlowVm, commitsVm,
+      GHPRDetailsComponentFactory.create(scope,
+                                         reviewDetailsVm, reviewBranchesVm, reviewStatusVm, reviewFlowVm, commitsVm,
                                          dataProvider,
-                                         dataContext.repositoryDataService, dataContext.securityService, dataContext.avatarIconsProvider,
-                                         branchesModel,
+                                         dataContext.securityService, dataContext.avatarIconsProvider,
                                          createCommitFilesBrowserComponent(scope, commitsVm))
     }.apply {
       isOpaque = true

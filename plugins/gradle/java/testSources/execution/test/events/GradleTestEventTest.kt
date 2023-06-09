@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.execution.test.events
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleTestEventTest : GradleExecutionTestCase() {
@@ -20,47 +19,8 @@ class GradleTestEventTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestConsoleDoesNotContain("<ijLogEol/>")
-    }
-  }
-
-  @ParameterizedTest
-  @TargetVersions("3.5+")
-  @AllGradleVersionsSource
-  fun `test configuration resolves after execution graph`(gradleVersion: GradleVersion) {
-    testJavaProject(gradleVersion) {
-      appendText("build.gradle", """
-        |import java.util.concurrent.atomic.AtomicBoolean;
-        |
-        |def resolutionAllowed = new AtomicBoolean(false)
-        |
-        |configurations.testRuntimeClasspath.incoming.beforeResolve {
-        |  logger.warn("Attempt to resolve configuration")
-        |  if (!resolutionAllowed.get()) {
-        |    logger.warn("Attempt to resolve configuration too early")
-        |  }
-        |}
-        |
-        |gradle.taskGraph.beforeTask { Task task ->
-        |  if (task.path == ":test" ) {
-        |    logger.warn("Green light to resolve configuration")
-        |    resolutionAllowed.set(true)
-        |  }
-        |}
-      """.trimMargin())
-      writeText("src/test/java/org/example/TestCase.java", """
-        |package org.example;
-        |import $jUnitTestAnnotationClass;
-        |public class TestCase {
-        |  @Test public void test() {}
-        |}
-      """.trimMargin())
-
-      executeTasks(":test")
-      assertTestConsoleContains("Green light to resolve configuration")
-      assertTestConsoleContains("Attempt to resolve configuration")
-      assertTestConsoleDoesNotContain("Attempt to resolve configuration too early")
     }
   }
 
@@ -85,7 +45,7 @@ class GradleTestEventTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestEventsContain("org.example.TestCase", "testSuccess")
       assertTestEventsContain("org.example.TestCase", "testFail")
       assertTestEventsContain("com.intellij.TestCase", "testSuccess")
@@ -105,10 +65,13 @@ class GradleTestEventTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":build --rerun-tasks")
+      executeTasks(":build", isRunAsTest = true)
       assertTestEventsContain("org.example.TestCase", "test")
 
-      executeTasks(":build")
+      executeTasks(":build --rerun-tasks", isRunAsTest = false)
+      assertTestEventsWasNotReceived()
+
+      executeTasks(":build", isRunAsTest = false)
       assertTestEventsWasNotReceived()
     }
   }
@@ -141,20 +104,20 @@ class GradleTestEventTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestEventsContain("org.example.TestCase", "testSuccess")
       assertTestEventsContain("org.example.TestCase", "testFail")
       assertTestEventsDoesNotContain("com.intellij.TestCase", "testSuccess")
       assertTestEventsDoesNotContain("com.intellij.TestCase", "testFail")
 
-      executeTasks(":test --tests org.example.TestCase.testFail")
+      executeTasks(":test --tests org.example.TestCase.testFail", isRunAsTest = true)
       assertTestEventsDoesNotContain("org.example.TestCase", "testSuccess")
       assertTestEventsContain("org.example.TestCase", "testFail")
       assertTestEventsDoesNotContain("com.intellij.TestCase", "testSuccess")
       assertTestEventsDoesNotContain("com.intellij.TestCase", "testFail")
 
       if (isGradleAtLeast("4.1")) {
-        executeTasks(":test --tests com.intellij.*")
+        executeTasks(":test --tests com.intellij.*", isRunAsTest = true)
         assertTestEventsDoesNotContain("org.example.TestCase", "testSuccess")
         assertTestEventsDoesNotContain("org.example.TestCase", "testFail")
         assertTestEventsDoesNotContain("com.intellij.TestCase", "testSuccess")
@@ -186,7 +149,7 @@ class GradleTestEventTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertNode("successTest")

@@ -19,7 +19,6 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.ExtensionPoint.Area
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.idea.devkit.util.processExtensionDeclarations
 import org.jetbrains.uast.UClass

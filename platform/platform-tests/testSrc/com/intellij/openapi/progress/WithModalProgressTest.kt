@@ -19,7 +19,7 @@ import org.junit.jupiter.api.assertThrows
 import kotlin.coroutines.ContinuationInterceptor
 
 /**
- * @see RunBlockingModalTest
+ * @see WithModalProgressBlockingTest
  */
 class WithModalProgressTest : ModalCoroutineTest() {
 
@@ -71,12 +71,20 @@ class WithModalProgressTest : ModalCoroutineTest() {
 
   @Test
   fun dispatcher(): Unit = timeoutRunBlocking {
+    val dispatcher = coroutineContext[ContinuationInterceptor]
     withModalProgress {
-      assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
+      assertSame(dispatcher, coroutineContext[ContinuationInterceptor])
     }
     withContext(Dispatchers.EDT) {
       withModalProgress {
-        assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
+        assertSame(Dispatchers.EDT, coroutineContext[ContinuationInterceptor])
+      }
+    }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val limited = Dispatchers.Default.limitedParallelism(3)
+    withContext(limited) {
+      withModalProgress {
+        assertSame(limited, coroutineContext[ContinuationInterceptor])
       }
     }
   }

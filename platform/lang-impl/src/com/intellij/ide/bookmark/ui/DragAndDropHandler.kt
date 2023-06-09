@@ -53,7 +53,7 @@ internal class DragAndDropHandler(val view: BookmarksView) : DnDNativeTarget, Dn
     return true
   }
 
-  override fun tryDrop(event: DnDEvent) = tryDrop(event, false)
+  override fun tryDrop(event: DnDEvent): Boolean = tryDrop(event, false)
   private fun tryDrop(event: DnDEvent, updateOnly: Boolean): Boolean {
     val point = event.point ?: return false
     if (event.handlerComponent != view.tree || !view.tree.isShowing) return false

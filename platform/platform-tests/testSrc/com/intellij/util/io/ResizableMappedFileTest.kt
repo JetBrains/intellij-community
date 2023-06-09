@@ -22,10 +22,10 @@ class ResizableMappedFileTest {
   }
 
   @get: Rule
-  val tempDir = TempDirectory()
+  val tempDir: TempDirectory = TempDirectory()
 
   @get: Rule
-  val disposable = DisposableRule()
+  val disposable: DisposableRule = DisposableRule()
 
   @Test
   fun `put data to non-existing page`() {

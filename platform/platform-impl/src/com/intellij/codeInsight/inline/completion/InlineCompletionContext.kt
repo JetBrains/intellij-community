@@ -88,8 +88,8 @@ class InlineCompletionContext private constructor(val editor: Editor) : Disposab
       }
     }
     fun Editor.getInlineCompletionContextOrNull(): InlineCompletionContext? = getUserData(INLINE_COMPLETION_CONTEXT)
-    fun Editor.removeInlineCompletionContext() = putUserData(INLINE_COMPLETION_CONTEXT, null)
-    fun Editor.resetInlineCompletionContext() = getInlineCompletionContextOrNull()?.let {
+    fun Editor.removeInlineCompletionContext(): Unit = putUserData(INLINE_COMPLETION_CONTEXT, null)
+    fun Editor.resetInlineCompletionContext(): Unit? = getInlineCompletionContextOrNull()?.let {
       if (it.isCurrentlyDisplayingInlays) {
         removeInlineCompletionContext()
         Disposer.dispose(it)

@@ -11,8 +11,6 @@ import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -284,7 +282,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     PsiElement simplify(PsiMethodCallExpression element);
   }
 
-  private static class SimplifyCallChainFix extends ModCommandQuickFix {
+  private static class SimplifyCallChainFix extends PsiUpdateModCommandQuickFix {
     private final CallChainFix myFix;
 
     SimplifyCallChainFix(CallChainFix fix) {
@@ -304,8 +302,8 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     }
 
     @Override
-    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      return ModCommands.psiUpdate(descriptor.getStartElement(), e -> myFix.applyFix(project, e));
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      myFix.applyFix(project, element);
     }
   }
 

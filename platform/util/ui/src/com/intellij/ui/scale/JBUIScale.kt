@@ -68,7 +68,7 @@ object JBUIScale {
   private const val DISCRETE_SCALE_RESOLUTION = 0.25f
 
   @JvmField
-  var DEF_SYSTEM_FONT_SIZE = 12f
+  var DEF_SYSTEM_FONT_SIZE: Float = 12f
 
   @JvmStatic
   fun addUserScaleChangeListener(listener: PropertyChangeListener) {

@@ -1100,9 +1100,24 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/breakpointInInlineLambda.kt");
         }
 
+        @TestMetadata("breakpointInLambdaWithManyLambdas.kt")
+        public void testBreakpointInLambdaWithManyLambdas() throws Exception {
+            runTest("testData/stepping/custom/breakpointInLambdaWithManyLambdas.kt");
+        }
+
+        @TestMetadata("breakpointInLambdaWithNestedLambda.kt")
+        public void testBreakpointInLambdaWithNestedLambda() throws Exception {
+            runTest("testData/stepping/custom/breakpointInLambdaWithNestedLambda.kt");
+        }
+
         @TestMetadata("breakpointInOneLineLambda.kt")
         public void testBreakpointInOneLineLambda() throws Exception {
             runTest("testData/stepping/custom/breakpointInOneLineLambda.kt");
+        }
+
+        @TestMetadata("breakpointOnLambdaEnd.kt")
+        public void testBreakpointOnLambdaEnd() throws Exception {
+            runTest("testData/stepping/custom/breakpointOnLambdaEnd.kt");
         }
 
         @TestMetadata("breakpointOnWhen.kt")
@@ -1280,6 +1295,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/ktij15642.kt");
         }
 
+        @TestMetadata("lambdaBreakpointInAnonymousFunction.kt")
+        public void testLambdaBreakpointInAnonymousFunction() throws Exception {
+            runTest("testData/stepping/custom/lambdaBreakpointInAnonymousFunction.kt");
+        }
+
         @TestMetadata("lambdaBreakpoints.kt")
         public void testLambdaBreakpoints() throws Exception {
             runTest("testData/stepping/custom/lambdaBreakpoints.kt");
@@ -1450,9 +1470,19 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/smartStepIntoMethodReference.kt");
         }
 
+        @TestMetadata("smartStepIntoMultiplyInlinedLambdas.kt")
+        public void testSmartStepIntoMultiplyInlinedLambdas() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoMultiplyInlinedLambdas.kt");
+        }
+
         @TestMetadata("smartStepIntoNullSafeFunctionCalls.kt")
         public void testSmartStepIntoNullSafeFunctionCalls() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoNullSafeFunctionCalls.kt");
+        }
+
+        @TestMetadata("smartStepIntoOnLambdaBreakpoint.kt")
+        public void testSmartStepIntoOnLambdaBreakpoint() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoOnLambdaBreakpoint.kt");
         }
 
         @TestMetadata("smartStepIntoPropertyGetterReference.kt")

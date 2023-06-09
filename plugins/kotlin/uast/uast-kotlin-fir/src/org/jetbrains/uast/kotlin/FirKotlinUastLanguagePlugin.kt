@@ -1,19 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.project.structure.KtNotUnderContentRootModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.uast.DEFAULT_TYPES_LIST
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.FirKotlinConverter.convertDeclarationOrElement
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
 import org.jetbrains.uast.util.ClassSet
@@ -33,21 +30,8 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
         }
     }
 
-    private val PsiElement.isJvmElement: Boolean
-        get() {
-            val resolveProvider = ServiceManager.getService(project, FirKotlinUastResolveProviderService::class.java)
-            return resolveProvider.isJvmElement(this)
-        }
-
     private val PsiElement.isSupportedElement: Boolean
-        get() {
-            if (!isJvmElement) {
-                return false
-            }
-
-            val containingFile = containingFile?.let(::unwrapFakeFileForLightClass) as? KtFile ?: return false
-            return containingFile.getKtModule(project) !is KtNotUnderContentRootModule
-        }
+        get() = project.service<FirKotlinUastResolveProviderService>().isSupportedElement(this)
 
     override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
         if (!element.isSupportedElement) return null
@@ -90,6 +74,36 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
             else ->
                 sequenceOf(convertElementWithParent(element, requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)) as? T).filterNotNull()
         }
+    }
+
+    override fun getContainingAnnotationEntry(uElement: UElement?, annotationsHint: Collection<String>): Pair<UAnnotation, String?>? {
+        val sourcePsi = uElement?.sourcePsi ?: return null
+
+        val parent = sourcePsi.parent ?: return null
+        if (parent is KtAnnotationEntry) {
+            if (!isOneOfNames(parent, annotationsHint)) return null
+
+            return super.getContainingAnnotationEntry(uElement, annotationsHint)
+        }
+
+        val annotationEntry = parent.getParentOfType<KtAnnotationEntry>(true, KtDeclaration::class.java)
+        if (annotationEntry == null) return null
+
+        if (!isOneOfNames(annotationEntry, annotationsHint)) return null
+
+        return super.getContainingAnnotationEntry(uElement, annotationsHint)
+    }
+
+    private fun isOneOfNames(annotationEntry: KtAnnotationEntry, annotations: Collection<String>): Boolean {
+        if (annotations.isEmpty()) return true
+        val shortName = annotationEntry.shortName?.identifier ?: return false
+
+        for (annotation in annotations) {
+            if (StringUtil.getShortName(annotation) == shortName) {
+                return true
+            }
+        }
+        return false
     }
 
     override fun getConstructorCallExpression(

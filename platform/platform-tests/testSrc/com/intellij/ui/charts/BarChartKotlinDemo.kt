@@ -13,7 +13,7 @@ import javax.swing.border.Border
 import kotlin.math.cos
 import kotlin.system.exitProcess
 
-fun simple() = barChart<Double> {
+fun simple(): HorizontalBarChart<Double> = barChart {
   gap = 20
   datasets {
     dataset {
@@ -49,7 +49,7 @@ fun simple() = barChart<Double> {
   }
 }
 
-fun performance() = barChart<Double> {
+fun performance(): HorizontalBarChart<Double> = barChart {
   val format: (Double) -> String = { v -> "%.2f".format(v) }
   val labels = listOf("macOS Mojave 10.14.6", "Ubuntu 16.04", "Windows 10")
   ranges {

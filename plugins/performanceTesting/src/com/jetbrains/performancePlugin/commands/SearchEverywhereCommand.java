@@ -77,7 +77,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
       default -> throw new RuntimeException("Tab is not set");
     }
 
-    Semaphore typingSemaphore = new Semaphore(1);
+    Semaphore typingSemaphore = new Semaphore(0);
     TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere", globalSpan -> {
       ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
         try {
@@ -100,8 +100,8 @@ public class SearchEverywhereCommand extends AbstractCommand {
         }
       }));
       try {
-        SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
         typingSemaphore.acquire();
+        SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
         if (myOptions.close) {
           ApplicationManager.getApplication().invokeAndWait(() -> ui.closePopup());
         }
@@ -127,7 +127,6 @@ public class SearchEverywhereCommand extends AbstractCommand {
     throws InterruptedException {
     SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
     Span insertSpan = PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_items_loaded").startSpan();
-    typingSemaphore.acquire();
     //noinspection TestOnlyProblems
     Future<List<Object>> elements = ui.findElementsForPattern(insertText);
     ApplicationManager.getApplication().executeOnPooledThread(Context.current().wrap((Callable<Object>)() -> {
@@ -143,7 +142,6 @@ public class SearchEverywhereCommand extends AbstractCommand {
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
   private static void typeText(Project project, String typingText, Semaphore typingSemaphore) throws InterruptedException {
     SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
-    typingSemaphore.acquire();
     Document document = ui.getSearchField().getDocument();
     Semaphore oneLetterLock = new Semaphore(1);
     ThreadPoolExecutor typing = ConcurrencyUtil.newSingleThreadExecutor("Performance plugin delayed type");

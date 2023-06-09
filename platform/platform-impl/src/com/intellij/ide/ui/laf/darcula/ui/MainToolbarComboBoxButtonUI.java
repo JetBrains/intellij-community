@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
@@ -75,8 +76,8 @@ public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
   public void paint(Graphics g, JComponent c) {
     if (!(c instanceof ComboBoxAction.ComboBoxButton button)) return;
 
-    if (button.getClientProperty(HOVER_PROP) == Boolean.TRUE) paintBackground(g, button, HOVER_COLOR);
-    else if (c.isOpaque()) paintBackground(g, button, button.getBackground());
+    if (c.isOpaque()) paintBackground(g, button, button.getBackground());
+    if (button.isEnabled() && button.getClientProperty(HOVER_PROP) == Boolean.TRUE) paintHover(g, button, HOVER_COLOR);
     paintContents(g, button);
   }
 
@@ -149,12 +150,27 @@ public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
     return size;
   }
 
+  private static void paintHover(Graphics g, JComponent c, Color color) {
+    doFill(g, c, color, true);
+  }
+
   private static void paintBackground(Graphics g, JComponent c, Color color) {
+    doFill(g, c, color, false);
+  }
+
+  private static void doFill(Graphics g, JComponent c, Color color, boolean rounded) {
     Graphics g2 = g.create();
     try {
       g2.setColor(color);
-      Rectangle bounds = g2.getClipBounds();
-      g2.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+      Rectangle bounds = c.getVisibleRect();
+      JBInsets.removeFrom(bounds, c.getInsets());
+      if (rounded) {
+        int arc = DarculaUIUtil.COMPONENT_ARC.get();
+        g2.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, arc, arc);
+      }
+      else {
+        g2.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+      }
     } finally {
       g2.dispose();
     }

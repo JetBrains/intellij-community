@@ -23,9 +23,9 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
     const val HIDE_ALL: String = "!HideAll"
   }
 
-  val maxVisibleLensCount: ViewableMap<CodeVisionAnchorKind, Int> = ViewableMap<CodeVisionAnchorKind, Int>()
-  val hoveredInlay: Property<Inlay<*>?> = Property<Inlay<*>?>(null)
-  val hoveredEntry: Property<CodeVisionEntry?> = Property<CodeVisionEntry?>(null)
+  val maxVisibleLensCount: ViewableMap<CodeVisionAnchorKind, Int> = ViewableMap()
+  val hoveredInlay: Property<Inlay<*>?> = Property(null)
+  val hoveredEntry: Property<CodeVisionEntry?> = Property(null)
   val lensPopupActive: Property<Boolean> = Property(false)
 
   val moreEntry: AdditionalCodeVisionEntry = AdditionalCodeVisionEntry(MORE_PROVIDER_ID, CodeVisionBundle.message("more"))

@@ -17,9 +17,11 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiLambdaExpression;
 
 /**
@@ -28,10 +30,19 @@ import com.intellij.psi.PsiLambdaExpression;
 public class JavaSourcePositionHighlighter extends SourcePositionHighlighter implements DumbAware {
   @Override
   public TextRange getHighlightRange(SourcePosition sourcePosition) {
+    // Highlight only return keyword in case of conditional return breakpoint.
+    if (sourcePosition.getElementAt() instanceof PsiKeyword retKeyword &&
+        retKeyword.getText().equals(PsiKeyword.RETURN) &&
+        retKeyword == JavaLineBreakpointType.findSingleConditionalReturn(sourcePosition)) {
+      return retKeyword.getTextRange();
+    }
+
+    // Highlight only lambda body in case of lambda breakpoint.
     PsiElement method = DebuggerUtilsEx.getContainingMethod(sourcePosition);
     if (method instanceof PsiLambdaExpression) {
       return method.getTextRange();
     }
+
     return null;
   }
 }

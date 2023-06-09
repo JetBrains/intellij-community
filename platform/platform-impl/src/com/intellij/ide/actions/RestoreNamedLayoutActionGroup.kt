@@ -20,7 +20,7 @@ class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = childrenCache.getCachedOrUpdatedArray(AnAction.EMPTY_ARRAY)
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private class RestoreNamedLayoutAction(@NlsSafe private val layoutName: String) : DumbAwareToggleAction() {
 

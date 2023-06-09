@@ -55,7 +55,7 @@ internal class CellImpl<T : JComponent>(
 
   private val cellValidation = CellValidationImpl(dialogPanelConfig, component, component.interactiveComponent)
 
-  val onChangeManager = OnChangeManager(component)
+  val onChangeManager: OnChangeManager<T> = OnChangeManager(component)
 
   @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
@@ -298,7 +298,7 @@ internal class CellImpl<T : JComponent>(
     return validationOnApply { if (condition(it)) error(message) else null }
   }
 
-  override fun errorOnApply(message: String, condition: (T) -> Boolean) = addValidationRule(message, condition)
+  override fun errorOnApply(message: String, condition: (T) -> Boolean): Cell<T> = addValidationRule(message, condition)
 
   private fun guessAndInstallValidationRequestor() {
     val stackTrace = Throwable()

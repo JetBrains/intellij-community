@@ -12,8 +12,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 
 fun VirtualFile.isKotlinFileType(): Boolean {
     val nameSequence = nameSequence
-    // TODO: change to  DOT_DEFAULT_EXTENSION
-    if (nameSequence.endsWith(KotlinFileType.EXTENSION)) return true
+    if (nameSequence.endsWith(KotlinFileType.DOT_DEFAULT_EXTENSION)) return true
     if (nameSequence.endsWith(JavaFileType.DOT_DEFAULT_EXTENSION) ||
         nameSequence.endsWith(JavaClassFileType.DOT_DEFAULT_EXTENSION)) return false
 

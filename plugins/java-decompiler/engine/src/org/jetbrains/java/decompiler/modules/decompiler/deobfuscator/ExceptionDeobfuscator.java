@@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.code.SimpleInstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
 import org.jetbrains.java.decompiler.code.cfg.ExceptionRangeCFG;
+import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.GenericDominatorEngine;
@@ -34,6 +35,7 @@ public final class ExceptionDeobfuscator {
   }
 
   public static void restorePopRanges(ControlFlowGraph graph) {
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
 
     List<Range> lstRanges = new ArrayList<>();
 
@@ -71,7 +73,7 @@ public final class ExceptionDeobfuscator {
             Set<BasicBlock> setrange = new HashSet<>(range.protectedRange);
 
             for (Range range_super : lstRanges) { // finally or strict superset
-
+              cancellationManager.checkSavedCancelled();
               if (range != range_super) {
 
                 Set<BasicBlock> setrange_super = new HashSet<>(range_super.protectedRange);

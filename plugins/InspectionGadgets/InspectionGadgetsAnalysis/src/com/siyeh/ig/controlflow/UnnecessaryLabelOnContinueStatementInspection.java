@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -41,11 +44,11 @@ public class UnnecessaryLabelOnContinueStatementInspection
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryLabelOnContinueStatementFix();
   }
 
-  private static class UnnecessaryLabelOnContinueStatementFix extends InspectionGadgetsFix {
+  private static class UnnecessaryLabelOnContinueStatementFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -55,8 +58,7 @@ public class UnnecessaryLabelOnContinueStatementInspection
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement continueKeywordElement = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement continueKeywordElement, @NotNull EditorUpdater updater) {
       final PsiContinueStatement continueStatement = (PsiContinueStatement)continueKeywordElement.getParent();
       final PsiIdentifier labelIdentifier = continueStatement.getLabelIdentifier();
       if (labelIdentifier == null) return;

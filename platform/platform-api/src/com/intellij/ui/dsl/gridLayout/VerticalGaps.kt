@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 data class VerticalGaps(val top: Int = 0, val bottom: Int = 0) {
   companion object {
     @JvmField
-    val EMPTY = VerticalGaps()
+    val EMPTY: VerticalGaps = VerticalGaps()
   }
 
   init {

@@ -30,7 +30,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
     override fun createSettings() = JpsPluginSettings()
 
     fun setVersion(jpsVersion: String) {
-        //if (jpsVersion == settings.version) return
+        if (jpsVersion == settings.version) return
         update { version = jpsVersion }
     }
 

@@ -3,17 +3,15 @@ package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PlatformUtils
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.IndexableFilesIterator
+import com.intellij.util.indexing.roots.selectRootVirtualFileUrls
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.ide.isEqualOrParentOf
 import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   override fun accepts(builder: IndexableEntityProvider.IndexableIteratorBuilder): Boolean =
@@ -72,31 +70,7 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
 
   private fun resolveRoots(builders: List<ModuleRootsIteratorBuilder>,
                            fileBasedBuilders: List<ModuleRootsFileBasedIteratorBuilder>): List<VirtualFile> {
-    if (PlatformUtils.isRider() || PlatformUtils.isCLion()) {
-      return builders.flatMap { builder -> builder.urls }.mapNotNull { url -> url.virtualFile } +
-             fileBasedBuilders.flatMap { builder -> builder.files }
-    }
-    val roots = mutableListOf<VirtualFileUrl>()
-    for (builder in builders) {
-      for (root in builder.urls) {
-        var isChild = false
-        val it = roots.iterator()
-        while (it.hasNext()) {
-          val next = it.next()
-          if (next.isEqualOrParentOf(root)) {
-            isChild = true
-            break
-          }
-          if (root.isEqualOrParentOf(next)) {
-            it.remove()
-          }
-        }
-        if (!isChild) {
-          roots.add(root)
-        }
-      }
-    }
-    //todo[lene] optimize where possible
-    return roots.mapNotNull { url -> url.virtualFile } + fileBasedBuilders.flatMap { builder -> builder.files }
+    return selectRootVirtualFileUrls(builders.flatMap { it.urls }).mapNotNull { url -> url.virtualFile } +
+           fileBasedBuilders.flatMap { builder -> builder.files }
   }
 }

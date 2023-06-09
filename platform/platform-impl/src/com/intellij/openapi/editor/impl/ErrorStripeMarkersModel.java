@@ -95,7 +95,7 @@ final class ErrorStripeMarkersModel {
 
   private MarkupModelListener createMarkupListener(boolean documentMarkupModel) {
     return new MarkupModelListener() {
-      final Queue<ErrorStripeMarkerImpl> toRemove = new ConcurrentLinkedDeque<>();
+      final Queue<RangeHighlighterEx> toRemove = new ConcurrentLinkedDeque<>();
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
         ErrorStripeMarkersModel.this.afterAdded(highlighter, documentMarkupModel);
@@ -103,15 +103,18 @@ final class ErrorStripeMarkersModel {
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        ContainerUtil.addIfNotNull(toRemove, ErrorStripeMarkersModel.this.beforeRemoved(highlighter, documentMarkupModel));
+        toRemove.add(highlighter);
       }
 
       @Override
       public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
         while (true) {
-          ErrorStripeMarkerImpl marker = toRemove.poll();
+          RangeHighlighterEx marker = toRemove.poll();
           if (marker == null) break;
-          removeErrorStripeMarker(marker);
+          ErrorStripeMarkerImpl errorStripeMarker = errorStripeForRemovedMarker(highlighter, documentMarkupModel);
+          if (errorStripeMarker != null) {
+            removeErrorStripeMarker(errorStripeMarker);
+          }
         }
       }
 
@@ -128,12 +131,12 @@ final class ErrorStripeMarkersModel {
     }
   }
 
-  private ErrorStripeMarkerImpl beforeRemoved(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
-    ErrorStripeMarkerImpl errorStripeMarker = findErrorStripeMarker(highlighter, false);
-    if (errorStripeMarker == null && isAvailable(highlighter, documentMarkupModel)) {
-      errorStripeMarker = findErrorStripeMarker(highlighter, true);
+  private ErrorStripeMarkerImpl errorStripeForRemovedMarker(@NotNull RangeHighlighterEx originalHighlighter, boolean documentMarkupModel) {
+    ErrorStripeMarkerImpl errorStripeMarker = findErrorStripeMarker(originalHighlighter, false);
+    if (errorStripeMarker == null && isAvailable(originalHighlighter, documentMarkupModel)) {
+      errorStripeMarker = findErrorStripeMarker(originalHighlighter, true);
     }
-    return  errorStripeMarker;
+    return errorStripeMarker;
   }
 
   void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {

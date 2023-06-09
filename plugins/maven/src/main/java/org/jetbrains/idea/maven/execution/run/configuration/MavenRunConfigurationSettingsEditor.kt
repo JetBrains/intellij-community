@@ -80,7 +80,7 @@ class MavenRunConfigurationSettingsEditor(
     }
   }
 
-  override fun createRunFragments() = SettingsFragmentsContainer.fragments<MavenRunConfiguration> {
+  override fun createRunFragments(): List<SettingsEditorFragment<MavenRunConfiguration, *>> = SettingsFragmentsContainer.fragments {
     add(CommonParameterFragments.createRunHeader())
     addBeforeRunFragment(CompileStepBeforeRun.ID)
     addAll(BeforeRunFragment.createGroup())

@@ -10,7 +10,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonListeners
 import com.intellij.codeInsight.daemon.impl.SilentChangeVetoer
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.*
-import com.intellij.lang.OuterModelsModificationTrackerManager
+import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.command.undo.UndoManager

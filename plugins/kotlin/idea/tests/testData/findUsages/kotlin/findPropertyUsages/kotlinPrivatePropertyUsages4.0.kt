@@ -1,4 +1,3 @@
-// FIR_IGNORE
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtParameter
 // OPTIONS: usages
 // PSI_ELEMENT_AS_TITLE: "foo: String = ..."
@@ -12,5 +11,3 @@ public class ServerEx() : Server(foo = "!") {
     private val foo = "f"
     override fun processRequest() = "foo" + foo
 }
-
-

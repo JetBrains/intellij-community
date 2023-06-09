@@ -12,7 +12,6 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.uast.UClass
 

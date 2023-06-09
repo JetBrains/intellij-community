@@ -310,6 +310,25 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
     }
   }
 
+  @Override
+  public boolean isDirty() {
+    if (super.isDirty()) {
+      return true;
+    }
+
+    if (mySnapshotInputMappings != null &&
+        myUpdateMappings &&
+        ((UpdatableSnapshotInputMappingIndex<Key, Value, FileContent>)mySnapshotInputMappings).isDirty()) {
+      return true;
+    }
+
+    if (mySubIndexerRetriever != null) {
+      return mySubIndexerRetriever.isDirty();
+    }
+
+    return false;
+  }
+
   protected FileIndexingState isIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
     return FileIndexingState.OUT_DATED;
   }

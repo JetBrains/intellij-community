@@ -2,10 +2,8 @@
 package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.psi.*
-import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
@@ -34,11 +32,6 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 
 internal class K1MoveRefactoringSupport : KotlinMoveRefactoringSupport {
-    override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope): Collection<PsiReference> {
-        return KotlinFindUsagesHandlerFactory(target.project).createFindUsagesHandler(target, false)
-            .findReferencesToHighlight(target, searchScope)
-    }
-
     override fun isExtensionRef(expr: KtSimpleNameExpression): Boolean {
         val resolvedCall = expr.getResolvedCall(expr.analyze(BodyResolveMode.PARTIAL)) ?: return false
         if (resolvedCall is VariableAsFunctionResolvedCall) {

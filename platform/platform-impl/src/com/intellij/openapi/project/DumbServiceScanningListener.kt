@@ -30,6 +30,6 @@ class DumbServiceScanningListener(private val project: Project, private val cs: 
 
   @TestOnly
   class TestCompanion(private val obj: DumbServiceScanningListener) {
-    fun subscribe(scanningState: StateFlow<Boolean>) = obj.subscribe(scanningState)
+    fun subscribe(scanningState: StateFlow<Boolean>): Unit = obj.subscribe(scanningState)
   }
 }

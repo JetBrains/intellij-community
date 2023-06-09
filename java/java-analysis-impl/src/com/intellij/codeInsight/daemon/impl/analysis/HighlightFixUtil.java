@@ -315,6 +315,7 @@ public final class HighlightFixUtil {
                                                                           @Nullable PsiClass accessObjectClass,
                                                                           @Nullable TextRange parentFixRange) {
     if (refElement instanceof PsiField psiField && place instanceof PsiReferenceExpression ref) {
+      if (PsiTypes.nullType().equals(psiField.getType())) return;
       PsiClass containingClass = psiField.getContainingClass();
       if (containingClass != null) {
         if (PsiUtil.isOnAssignmentLeftHand(ref)) {

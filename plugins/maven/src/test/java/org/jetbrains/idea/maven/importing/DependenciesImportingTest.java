@@ -15,9 +15,12 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.RunAll;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -28,6 +31,13 @@ import java.util.Collections;
 import java.util.List;
 
 public class DependenciesImportingTest extends MavenMultiVersionImportingTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myProjectsManager.initForTests();
+    myProjectsManager.listenForExternalChanges();
+  }
+
   @Test
   public void testLibraryDependency() {
     importProject("""
@@ -1638,8 +1648,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     setRepositoryPath(new File(myDir, "__repo").getPath());
     myProjectsManager.getEmbeddersManager().reset(); // to recognize repository change
 
-    scheduleResolveAll();
-    resolveDependenciesAndImport();
+    myProjectsManager.updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
@@ -1671,7 +1680,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     setRepositoryPath(new File(myDir, "__repo").getPath());
     myProjectsManager.getEmbeddersManager().reset(); // to recognize repository change
 
-    scheduleResolveAll();
+    resolveAndImportAllMavenProjects();
 
     resolveDependenciesAndImport();
 
@@ -1700,9 +1709,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/"),
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/"));
 
-    scheduleResolveAll();
+    resolveAndImportAllMavenProjects();
     resolveDependenciesAndImport();
-    scheduleResolveAll();
+    resolveAndImportAllMavenProjects();
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
@@ -1733,9 +1742,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        Collections.emptyList(),
                        Collections.emptyList());
 
-    scheduleResolveAll();
+    resolveAndImportAllMavenProjects();
     resolveDependenciesAndImport();
-    scheduleResolveAll();
+    resolveAndImportAllMavenProjects();
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
@@ -2019,7 +2028,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                          <module>m1</module>
                        </modules>""");
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     importProject();
     assertProjectLibraries("Maven: group:lib1:1");
   }
@@ -2297,7 +2308,8 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     assertModules("project", "m1", "m2");
     assertModuleModuleDeps("m1", "m2");
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
 
 
     setIgnoredFilesPathForNextImport(Collections.singletonList(m2.getPath()));

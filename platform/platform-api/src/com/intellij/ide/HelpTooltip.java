@@ -395,7 +395,8 @@ public class HelpTooltip {
     };
   }
 
-  private static ComponentPopupBuilder initPopupBuilder(@NotNull JComponent tipPanel) {
+  @ApiStatus.Internal
+  public static ComponentPopupBuilder initPopupBuilder(@NotNull JComponent tipPanel) {
     return JBPopupFactory.getInstance().
       createComponentPopupBuilder(tipPanel, null).
       setShowBorder(UIManager.getBoolean("ToolTip.paintBorder")).

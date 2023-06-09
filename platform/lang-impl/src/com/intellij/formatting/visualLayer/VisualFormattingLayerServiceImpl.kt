@@ -8,6 +8,7 @@ import com.intellij.formatting.visualLayer.VisualFormattingLayerElement.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.LineSet
 import com.intellij.psi.PsiDocumentManager
 import kotlin.math.min
@@ -16,6 +17,12 @@ import kotlin.math.min
 class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
 
   override fun applyVisualFormattingLayerElementsToEditor(editor: Editor, elements: List<VisualFormattingLayerElement>) {
+    EditorScrollingPositionKeeper.perform(editor, false) {
+      doApplyElements(editor, elements)
+    }
+  }
+
+  private fun doApplyElements(editor: Editor, elements: List<VisualFormattingLayerElement>) {
     editor.inlayModel.execute(false) {
       editor.inlayModel
         .getInlineElementsInRange(0, Int.MAX_VALUE, InlayPresentation::class.java)

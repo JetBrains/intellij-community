@@ -11,7 +11,7 @@ import java.awt.Rectangle
 
 internal class EditorTabPainterAdapter : TabPainterAdapter {
   private val magicOffset = 1
-  override val tabPainter = JBEditorTabPainter()
+  override val tabPainter: JBEditorTabPainter = JBEditorTabPainter()
 
   override fun paintBackground(label: TabLabel, g: Graphics, tabs: JBTabsImpl) {
     val info = label.info

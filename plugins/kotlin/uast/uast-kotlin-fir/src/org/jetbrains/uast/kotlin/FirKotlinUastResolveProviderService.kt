@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -38,6 +38,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     private val KtExpression.parentValueArgument: ValueArgument?
         get() = parents.firstOrNull { it is ValueArgument } as? ValueArgument
+
+    fun isSupportedElement(psiElement: PsiElement): Boolean
 
     override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
         return ktElement.toLightAnnotation()
@@ -361,8 +363,10 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             return resolveSyntheticJavaPropertyAccessorCall(ktExpression)
         }
 
+        val project = ktExpression.project
+
         val resolvedTargetElement = analyzeForUast(ktExpression) {
-            psiForUast(resolvedTargetSymbol, ktExpression.project)
+            psiForUast(resolvedTargetSymbol, project)
         }
 
         // Shortcut: if the resolution target is compiled class/member, package info, or pure Java declarations,
@@ -374,16 +378,18 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             return resolvedTargetElement
         }
 
-        when ((resolvedTargetElement as? KtDeclaration)?.getKtModule(ktExpression.project)) {
-            is KtSourceModule -> {
-                // `getMaybeLightElement` tries light element conversion first, and then something else for local declarations.
-                resolvedTargetElement.getMaybeLightElement(ktExpression)?.let { return it }
+        if (resolvedTargetElement != null) {
+            when (ProjectStructureProvider.getModule(project, resolvedTargetElement, null)) {
+                is KtSourceModule -> {
+                    // `getMaybeLightElement` tries light element conversion first, and then something else for local declarations.
+                    resolvedTargetElement.getMaybeLightElement(ktExpression)?.let { return it }
+                }
+                is KtLibraryModule -> {
+                    // For decompiled declarations, we can try light element conversion (only).
+                    (resolvedTargetElement as? KtDeclaration)?.toLightElements()?.singleOrNull()?.let { return it }
+                }
+                else -> {}
             }
-            is KtLibraryModule -> {
-                // For decompiled declarations, we can try light element conversion (only).
-                (resolvedTargetElement as? KtDeclaration)?.toLightElements()?.singleOrNull()?.let { return it }
-            }
-            else -> {}
         }
 
         fun resolveToPsiClassOrEnumEntry(classOrObject: KtClassOrObject): PsiElement? {

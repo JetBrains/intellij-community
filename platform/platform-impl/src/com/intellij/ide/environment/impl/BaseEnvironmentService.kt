@@ -4,12 +4,13 @@ package com.intellij.ide.environment.impl
 import com.intellij.ide.environment.EnvironmentKey
 import com.intellij.ide.environment.EnvironmentKeyProvider
 import com.intellij.ide.environment.EnvironmentService
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 
 abstract class BaseEnvironmentService : EnvironmentService {
   companion object {
     @JvmStatic
-    protected val LOG = logger<EnvironmentService>()
+    protected val LOG: Logger = logger<EnvironmentService>()
   }
 
   protected fun checkKeyRegistered(key: EnvironmentKey) {

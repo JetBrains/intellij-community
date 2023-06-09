@@ -112,7 +112,9 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   }
 
   fun showExecutionPosition() {
-    executionPointVm?.navigateTo(ExecutionPositionNavigationMode.OPEN)
+    coroutineScope.launch {
+      executionPointVm?.navigateTo(ExecutionPositionNavigationMode.OPEN)
+    }
   }
 }
 

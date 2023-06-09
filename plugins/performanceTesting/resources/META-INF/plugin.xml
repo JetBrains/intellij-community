@@ -24,6 +24,7 @@
     </group>
     <group id="DiagnosticGroup">
       <separator/>
+      <action id="CaptureMemorySnapShot" class="com.jetbrains.performancePlugin.actions.CaptureMemorySnapshotAction" icon="AllIcons.Actions.ProfileMemory"/>
       <action class="com.jetbrains.performancePlugin.actions.ExecuteScriptAction" id="performancePlugin.ExecuteScriptAction"/>
       <separator/>
       <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>

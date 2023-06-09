@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
@@ -11,7 +13,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
-class ConvertOctalLiteralToDecimalFix extends InspectionGadgetsFix {
+class ConvertOctalLiteralToDecimalFix extends PsiUpdateModCommandQuickFix {
 
   @Override
   @NotNull
@@ -20,8 +22,7 @@ class ConvertOctalLiteralToDecimalFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
     if (!(element instanceof PsiLiteralExpression literalExpression)) {
       return;
     }

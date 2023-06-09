@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.UtilBundle;
@@ -61,10 +61,8 @@ import java.util.List;
 import java.util.*;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
-  @NotNull
-  private final Project myProject;
-  @NotNull
-  private final Document myDocument;
+  private final @NotNull Project myProject;
+  private final @NotNull Document myDocument;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private final SeverityRegistrar mySeverityRegistrar;
   private final Object2IntMap<HighlightSeverity> errorCount = Object2IntMaps.synchronize(new Object2IntOpenHashMap<>());
@@ -430,8 +428,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   }
 
   protected class AbstractUIController implements UIController {
-    @NotNull
-    private List<HectorComponentPanel> myAdditionalPanels = Collections.emptyList();
+    private @NotNull List<HectorComponentPanel> myAdditionalPanels = Collections.emptyList();
 
     AbstractUIController() {
       ApplicationManager.getApplication().assertIsNonDispatchThread();

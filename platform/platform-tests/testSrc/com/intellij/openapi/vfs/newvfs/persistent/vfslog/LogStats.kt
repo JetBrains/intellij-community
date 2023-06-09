@@ -271,8 +271,7 @@ private fun vfsRecoveryDraft(log: VfsLog,
     log.context.run {
       val iter = IteratorUtils.VFileEventBasedIterator(operationLogStorage.begin())
       while (iter.hasNext()) {
-        val rec = iter.next()
-        when (rec) {
+        when (val rec = iter.next()) {
           is ReadResult.Invalid -> throw rec.cause
           is ReadResult.SingleOperation -> {
             singleOp++

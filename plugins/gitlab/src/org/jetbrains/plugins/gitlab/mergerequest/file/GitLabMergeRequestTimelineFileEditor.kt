@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
 import com.intellij.collaboration.async.DisposingScope
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
@@ -13,8 +14,10 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.LoadAllGitLabMergeRequestTimelineViewModel
 import java.beans.PropertyChangeListener
@@ -32,18 +35,22 @@ internal class GitLabMergeRequestTimelineFileEditor(private val project: Project
   private val cs = DisposingScope(this)
 
   private val component = run {
-    val vm = LoadAllGitLabMergeRequestTimelineViewModel(cs, ctx.currentUser, ctx.projectData, file.mergeRequestId)
+    val contextHolder = project.service<GitLabProjectUIContextHolder>()
+    val accountManager = contextHolder.accountManager
+
+    val timelineVm = LoadAllGitLabMergeRequestTimelineViewModel(cs, ctx.currentUser, ctx.projectData, file.mergeRequestId)
+    val accountVm = GitLabAccountViewModelImpl(project, cs, ctx.account, accountManager)
     val uiCs = cs.childScope(Dispatchers.Main)
 
     val diffBridge = ctx.getDiffBridge(file.mergeRequestId)
     uiCs.launch(start = CoroutineStart.UNDISPATCHED) {
-      vm.diffRequests.collect { (change, location) ->
+      timelineVm.diffRequests.collect { (change, location) ->
         diffBridge.setChanges(ChangesSelection.Single(listOf(change), 0, location))
         diffBridge.changeSelected(change)
         ctx.filesController.openDiff(file.mergeRequestId, true)
       }
     }
-    GitLabMergeRequestTimelineComponentFactory.create(project, uiCs, vm, ctx.avatarIconProvider)
+    GitLabMergeRequestTimelineComponentFactory.create(project, uiCs, timelineVm, accountVm, ctx.avatarIconProvider)
   }
 
   override fun getComponent(): JComponent = component

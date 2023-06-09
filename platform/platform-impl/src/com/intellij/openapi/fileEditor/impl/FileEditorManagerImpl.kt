@@ -49,9 +49,10 @@ import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.withModalProgressBlocking
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
@@ -84,6 +85,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
+import com.intellij.util.containers.toArray
 import com.intellij.util.flow.zipWithNext
 import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.EDT
@@ -189,7 +191,7 @@ open class FileEditorManagerImpl(
 
   private val splitterFlow = MutableSharedFlow<EditorsSplitters>(replay = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
-  override val currentFileEditorFlow: StateFlow<FileEditor?>
+  final override val currentFileEditorFlow: StateFlow<FileEditor?>
 
   override val dockContainer: DockContainer?
     get() = dockable.value
@@ -229,12 +231,14 @@ open class FileEditorManagerImpl(
 
         // expected in EDT
         withContext(Dispatchers.EDT) {
-          kotlin.runCatching {
-            fireSelectionChanged(newComposite = state?.composite,
-                                 oldEditorWithProvider = oldEditorWithProvider,
-                                 newEditorWithProvider = newEditorWithProvider,
-                                 publisher = publisher)
-          }.getOrLogException(LOG)
+          blockingContext {
+            kotlin.runCatching {
+              fireSelectionChanged(newComposite = state?.composite,
+                                   oldEditorWithProvider = oldEditorWithProvider,
+                                   newEditorWithProvider = newEditorWithProvider,
+                                   publisher = publisher)
+            }.getOrLogException(LOG)
+          }
         }
       }
       .launchIn(coroutineScope)
@@ -311,27 +315,27 @@ open class FileEditorManagerImpl(
 
   companion object {
     @JvmField
-    protected val DUMB_AWARE = Key.create<Boolean>("DUMB_AWARE")
+    protected val DUMB_AWARE: Key<Boolean> = Key.create("DUMB_AWARE")
 
     @JvmField
-    val NOTHING_WAS_OPENED_ON_START = Key.create<Boolean>("NOTHING_WAS_OPENED_ON_START")
+    val NOTHING_WAS_OPENED_ON_START: Key<Boolean> = Key.create("NOTHING_WAS_OPENED_ON_START")
 
     @JvmField
     @TestOnly
-    val ALLOW_IN_LIGHT_PROJECT = Key.create<Boolean>("ALLOW_IN_LIGHT_PROJECT")
+    val ALLOW_IN_LIGHT_PROJECT: Key<Boolean> = Key.create("ALLOW_IN_LIGHT_PROJECT")
 
     @JvmField
-    val CLOSING_TO_REOPEN = Key.create<Boolean>("CLOSING_TO_REOPEN")
+    val CLOSING_TO_REOPEN: Key<Boolean> = Key.create("CLOSING_TO_REOPEN")
 
     /**
      * Works on VirtualFile objects and allows disabling the Preview Tab functionality for certain files.
      * If a virtual file has, this key is set to TRUE, the corresponding editor will always be opened in a regular tab.
      */
     @JvmField
-    val FORBID_PREVIEW_TAB = Key.create<Boolean>("FORBID_PREVIEW_TAB")
+    val FORBID_PREVIEW_TAB: Key<Boolean> = Key.create("FORBID_PREVIEW_TAB")
 
     @JvmField
-    val OPEN_IN_PREVIEW_TAB = Key.create<Boolean>("OPEN_IN_PREVIEW_TAB")
+    val OPEN_IN_PREVIEW_TAB: Key<Boolean> = Key.create("OPEN_IN_PREVIEW_TAB")
 
     /**
      * Works on [FileEditor] objects, allows forcing opening other editor tabs in the main window.
@@ -343,14 +347,14 @@ open class FileEditorManagerImpl(
      * but in a separate detached window, then the new editors will be opened in the main window splitters.
      */
     @JvmField
-    val SINGLETON_EDITOR_IN_WINDOW = Key.create<Boolean>("OPEN_OTHER_TABS_IN_MAIN_WINDOW")
+    val SINGLETON_EDITOR_IN_WINDOW: Key<Boolean> = Key.create("OPEN_OTHER_TABS_IN_MAIN_WINDOW")
 
-    const val FILE_EDITOR_MANAGER = "FileEditorManager"
-    const val EDITOR_OPEN_INACTIVE_SPLITTER = "editor.open.inactive.splitter"
+    const val FILE_EDITOR_MANAGER: String = "FileEditorManager"
+    const val EDITOR_OPEN_INACTIVE_SPLITTER: String = "editor.open.inactive.splitter"
     private val openFileSetModificationCount = LongAdder()
 
     @JvmField
-    val OPEN_FILE_SET_MODIFICATION_COUNT = ModificationTracker { openFileSetModificationCount.sum() }
+    val OPEN_FILE_SET_MODIFICATION_COUNT: ModificationTracker = ModificationTracker { openFileSetModificationCount.sum() }
 
     fun isDumbAware(editor: FileEditor): Boolean {
       return true == editor.getUserData(DUMB_AWARE) && (editor !is PossiblyDumbAware || (editor as PossiblyDumbAware).isDumbAware)
@@ -805,7 +809,7 @@ open class FileEditorManagerImpl(
     }
     else {
       val context = ClientId.coroutineContext()
-      return runBlockingModal(project, EditorBundle.message("editor.open.file.progress", file.name)) {
+      return withModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
         withContext(context) {
           openFileAsync(window = windowToOpenIn, file = getOriginalFile(file), entry = null, options = options)
         }
@@ -1024,12 +1028,9 @@ open class FileEditorManagerImpl(
                                     entry: HistoryEntry?,
                                     options: FileEditorOpenOptions): FileEditorComposite {
     if (!ClientId.isCurrentlyUnderLocalId) {
-      val result = (clientFileEditorManager ?: return FileEditorComposite.EMPTY).openFileAsync(file = file,
-                                                                                               forceCreate = false,
-                                                                                               requestFocus = options.requestFocus)
-      return FileEditorComposite.createFileEditorComposite(allEditors = result.map { it.fileEditor },
-                                                           allProviders = result.map { it.provider },
-                                                           isPreview = options.usePreviewTab)
+      return clientFileEditorManager?.openFileAsync(file = file,
+                                                    forceCreate = false,
+                                                    requestFocus = options.requestFocus) ?: FileEditorComposite.EMPTY
     }
 
     val existingComposite = withContext(Dispatchers.EDT) { window.getComposite(file) }
@@ -1061,10 +1062,7 @@ open class FileEditorManagerImpl(
 
   private fun openFileUsingClient(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     val clientManager = clientFileEditorManager ?: return FileEditorComposite.EMPTY
-    val result = clientManager.openFile(file = file, forceCreate = false, requestFocus = options.requestFocus)
-    return FileEditorComposite.createFileEditorComposite(allEditors = result.map { it.fileEditor },
-                                                         allProviders = result.map { it.provider },
-                                                         isPreview = options.usePreviewTab)
+    return clientManager.openFile(file = file, forceCreate = false, requestFocus = options.requestFocus)
   }
 
   @Suppress("DuplicatedCode")
@@ -1283,12 +1281,12 @@ open class FileEditorManagerImpl(
       requestFocus = focusEditor,
     )
     val result = if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-      // runBlockingModal cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
+      // withModalProgressBlocking cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
       openFile(file = file, window = null, options = openOptions).allEditors
     }
     else {
       val context = ClientId.coroutineContext()
-      runBlockingModal(project, EditorBundle.message("editor.open.file.progress", file.name)) {
+      withModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
         withContext(context) {
           openFile(file = file, options = openOptions).allEditors
         }
@@ -1362,13 +1360,19 @@ open class FileEditorManagerImpl(
     return target.editor
   }
 
-  override fun getSelectedEditorWithRemotes(): Array<FileEditor> {
+  override fun getSelectedEditorWithRemotes(): Collection<FileEditor> {
+    val editorList = getSelectedEditorList()
+    val editorManagerList = allClientFileEditorManagers
+    if (editorManagerList.isEmpty()) {
+      return editorList
+    }
+
     val result = ArrayList<FileEditor>()
-    result.addAll(selectedEditors)
-    for (m in allClientFileEditorManagers) {
+    result.addAll(editorList)
+    for (m in editorManagerList) {
       result.addAll(m.getSelectedEditors())
     }
-    return result.toTypedArray()
+    return result
   }
 
   override fun getSelectedTextEditorWithRemotes(): Array<Editor> {
@@ -1459,18 +1463,23 @@ open class FileEditorManagerImpl(
   }
 
   override fun getSelectedEditors(): Array<FileEditor> {
+    val result = getSelectedEditorList()
+    return if (result.isEmpty()) FileEditor.EMPTY_ARRAY else result.toArray(FileEditor.EMPTY_ARRAY)
+  }
+
+  private fun getSelectedEditorList(): Collection<FileEditor> {
     if (!initJob.isCompleted) {
-      return FileEditor.EMPTY_ARRAY
+      return emptyList()
     }
 
     if (!ClientId.isCurrentlyUnderLocalId) {
-      return clientFileEditorManager?.getSelectedEditors()?.toTypedArray() ?: FileEditor.EMPTY_ARRAY
+      return clientFileEditorManager?.getSelectedEditors() ?: emptyList()
     }
     val selectedEditors = SmartHashSet<FileEditor>()
     for (splitters in getAllSplitters()) {
       splitters.addSelectedEditorsTo(selectedEditors)
     }
-    return selectedEditors.toTypedArray()
+    return selectedEditors
   }
 
   override val splitters: EditorsSplitters
@@ -2170,7 +2179,7 @@ open class FileEditorManagerImpl(
   }
 
   @Internal
-  open fun forceUseUiInHeadlessMode() = false
+  open fun forceUseUiInHeadlessMode(): Boolean = false
 
   @TestOnly
   fun waitForAsyncUpdateOnDumbModeFinished() {

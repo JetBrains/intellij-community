@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.fileEditor.impl
@@ -123,11 +123,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   private fun openFileImpl3(openFileDescriptor: FileEditorNavigatable): FileEditorComposite {
     val file = openFileDescriptor.file
     if (!isCurrentlyUnderLocalId) {
-      val clientManager = clientFileEditorManager ?: return FileEditorComposite.EMPTY
-      val result = clientManager.openFile(file, false, true)
-      val fileEditors = result.map { it.fileEditor }.toTypedArray()
-      val providers = result.map { it.provider }.toTypedArray()
-      return FileEditorComposite.fromPair(kotlin.Pair(fileEditors, providers))
+      clientFileEditorManager?.openFile(file, false, true) ?: return FileEditorComposite.EMPTY
     }
 
     val isNewEditor = !virtualFileToEditor.containsKey(file)
@@ -216,7 +212,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   override val isInSplitter: Boolean
     get() = false
 
-  override fun hasOpenedFile() = false
+  override fun hasOpenedFile(): Boolean = false
 
   override val currentFile: VirtualFile?
     get() {
@@ -246,7 +242,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     }
   }
 
-  override fun isChanged(editor: EditorComposite) = false
+  override fun isChanged(editor: EditorComposite): Boolean = false
 
   override fun getNextWindow(window: EditorWindow): EditorWindow? = null
 
@@ -280,13 +276,13 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   override val windows: Array<EditorWindow>
     get() = emptyArray()
 
-  override fun getSelectedEditorWithRemotes(): Array<FileEditor> {
+  override fun getSelectedEditorWithRemotes(): Collection<FileEditor> {
     val result = ArrayList<FileEditor>()
     result.addAll(selectedEditors)
     for (m in allClientFileEditorManagers) {
       result.addAll(m.getSelectedEditors())
     }
-    return result.toTypedArray()
+    return result
   }
 
   override fun isFileOpen(file: VirtualFile): Boolean {
@@ -477,7 +473,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     return openFileInCommand(descriptor).allEditors
   }
 
-  override fun getProject() = project
+  override fun getProject(): Project = project
 
   override val preferredFocusedComponent: JComponent?
     get() = null
@@ -499,7 +495,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   override val windowSplitCount: Int
     get() = 0
 
-  override fun hasSplitOrUndockedWindows() = false
+  override fun hasSplitOrUndockedWindows(): Boolean = false
 
   override val splitters: EditorsSplitters
     get() = throw IncorrectOperationException()

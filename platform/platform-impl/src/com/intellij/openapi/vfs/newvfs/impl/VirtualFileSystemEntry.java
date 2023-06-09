@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.core.CoreBundle;
@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
@@ -103,7 +104,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @NotNull VfsData getVfsData() {
     VfsData data = getSegment().vfsData;
-    if (!((PersistentFSImpl)getPersistence()).isOwnData(data)) {
+    PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
+    if (fs != null && !fs.isOwnData(data)) {
       throw new AssertionError("Alien file!");
     }
     return data;
@@ -391,21 +393,22 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
-  public boolean exists() {
+  public final boolean exists() {
     return getVfsData().isFileValid(myId);
   }
 
   @Override
-  public boolean isValid() {
+  public final boolean isValid() {
     return exists();
   }
 
   @Override
   public @NonNls String toString() {
-    if (!((PersistentFSImpl)getPersistence()).isOwnData(getSegment().vfsData)) {
+    PersistentFSImpl persistentFs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
+    if (persistentFs != null && !persistentFs.isOwnData(getSegment().vfsData)) {
       return "Alien file!";
     }
-    if (isValid()) {
+    if (persistentFs == null || exists()) {
       return getUrl();
     }
     String reason = getInvalidationInfo();

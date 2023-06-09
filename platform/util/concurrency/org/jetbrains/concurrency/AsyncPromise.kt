@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.concurrency
 
+import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ExceptionUtilRt
 import com.intellij.util.Function
+import com.intellij.util.concurrency.createChildContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.concurrency.Promise.State
 import java.util.concurrent.*
@@ -19,7 +21,7 @@ open class AsyncPromise<T> private constructor(internal val f: CompletableFuture
 
     @Internal
     @JvmField
-    val CANCELED = object: CancellationException() {
+    val CANCELED: CancellationException = object: CancellationException() {
       override fun fillInStackTrace(): Throwable = this
     }
   }
@@ -101,9 +103,12 @@ open class AsyncPromise<T> private constructor(internal val f: CompletableFuture
 
   private fun whenComplete(action: BiConsumer<T, Throwable?>): CompletableFuture<T> {
     val result = CompletableFuture<T>()
+    val context = createChildContext().first
     f.handle { value, error ->
       try {
-        action.accept(value, error)
+        installThreadContext(context, true).use {
+          action.accept(value, error)
+        }
         if (error != null) result.completeExceptionally(error)
         else result.complete(value)
       }
@@ -168,9 +173,9 @@ open class AsyncPromise<T> private constructor(internal val f: CompletableFuture
     return true
   }
 
-  protected open fun shouldLogErrors() = !hasErrorHandler.get()
+  protected open fun shouldLogErrors(): Boolean = !hasErrorHandler.get()
 
-  fun setError(error: String) = setError(createError(error))
+  fun setError(error: String): Boolean = setError(createError(error))
 }
 
 inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {

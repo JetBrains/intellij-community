@@ -10,9 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.CustomizingIndexingContributor
 import com.intellij.util.indexing.ReincludedRootsUtil
@@ -39,46 +37,10 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Function
-
-/**
- * Usually it makes sense to deduplicate roots, for content root and source roots may share them.
- * But there may be too many of them, resulting in a freeze, especially for Rider or CLion who add each file as a root.
- */
-private const val ROOTS_SIZE_OPTIMISING_LIMIT = 1000
-
-fun optimizeRoots(roots: Collection<VirtualFile>): List<VirtualFile> {
-  val size = roots.size
-  return if (size == 0) {
-    emptyList()
-  }
-  else if (size == 1) {
-    SmartList(roots.iterator().next())
-  }
-  else if (size > ROOTS_SIZE_OPTIMISING_LIMIT) {
-    ArrayList(roots)
-  }
-  else {
-    val filteredList: MutableList<VirtualFile> = ArrayList()
-    val consumer: Consumer<VirtualFile> = object : Consumer<VirtualFile> {
-      private var previousPath: String? = null
-      override fun accept(file: VirtualFile) {
-        val path = file.path
-        if (previousPath == null || !FileUtil.startsWith(path, previousPath!!)) {
-          filteredList.add(file)
-          previousPath = path
-        }
-      }
-    }
-    roots.sortedWith { o1: VirtualFile, o2: VirtualFile ->
-      StringUtil.compare(o1.path, o2.path, false)
-    }.forEach(consumer)
-
-    return filteredList
-  }
-}
 
 internal sealed interface IndexingRootsDescription {
   fun createBuilders(): Collection<IndexableIteratorBuilder>
@@ -169,17 +131,25 @@ private fun <T> toList(value: Collection<T>): List<T> {
   return if (value.isEmpty()) emptyList() else ArrayList(value)
 }
 
-private fun toRootList(value: Collection<VirtualFile>): List<VirtualFile> {
-  if (value.size < 2) {
-    if (value is List<VirtualFile>) return value
-    return if (value.isEmpty()) emptyList() else ArrayList(value)
+fun selectRootVirtualFiles(value: Collection<VirtualFile>): List<VirtualFile> {
+  return selectRootItems(value) { file -> file.path }
+}
+
+fun selectRootVirtualFileUrls(urls: Collection<VirtualFileUrl>): List<VirtualFileUrl> {
+  return selectRootItems(urls) { url -> JpsPathUtil.urlToPath(url.url) }
+}
+
+private fun <T> selectRootItems(items: Collection<T>, toPath: Function<T, String>): List<T> {
+  if (items.size < 2) {
+    if (items is List<T>) return items
+    return if (items.isEmpty()) emptyList() else ArrayList(items)
   }
 
-  val pathMap = TreeMap<String, VirtualFile>(OSAgnosticPathUtil.COMPARATOR)
-  for (file in value) {
-    val path = FileUtil.toSystemIndependentName(file.path)
+  val pathMap = TreeMap<String, T>(OSAgnosticPathUtil.COMPARATOR)
+  for (item in items) {
+    val path = FileUtil.toSystemIndependentName(toPath.apply(item))
     if (!isIncluded(pathMap, path)) {
-      pathMap[path] = file
+      pathMap[path] = item
       while (true) {
         val excludedPath = pathMap.higherKey(path)
         if (excludedPath != null && OSAgnosticPathUtil.startsWith(excludedPath, path)) {
@@ -194,7 +164,7 @@ private fun toRootList(value: Collection<VirtualFile>): List<VirtualFile> {
   return pathMap.values.toList()
 }
 
-private fun isIncluded(existingFiles: NavigableMap<String, VirtualFile>, path: String): Boolean {
+private fun isIncluded(existingFiles: NavigableMap<String, *>, path: String): Boolean {
   val suggestedCoveringRoot = existingFiles.floorKey(path)
   return suggestedCoveringRoot != null && OSAgnosticPathUtil.startsWith(path, suggestedCoveringRoot)
 }
@@ -323,7 +293,7 @@ internal class WorkspaceIndexingRootsBuilder {
                             storage: EntityStorage) {
     val initialIterators = ArrayList<IndexableFilesIterator>()
     for ((module, roots) in moduleRoots.entrySet()) {
-      initialIterators.add(ModuleIndexableFilesIteratorImpl(module, toRootList(roots), true))
+      initialIterators.add(ModuleIndexableFilesIteratorImpl(module, selectRootVirtualFiles(roots), true))
     }
     for (description in descriptions) {
       when (description) {
@@ -392,7 +362,7 @@ internal class WorkspaceIndexingRootsBuilder {
 
     internal class Settings {
       companion object {
-        val DEFAULT = Settings()
+        val DEFAULT: Settings = Settings()
 
         init {
           DEFAULT.retainCondition = Condition<WorkspaceFileIndexContributor<*>> { contributor -> contributor.storageKind == EntityStorageKind.MAIN }

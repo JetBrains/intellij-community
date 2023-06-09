@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -47,6 +48,9 @@ import javax.accessibility.AccessibleContext
 import javax.swing.*
 
 private const val INIT_BOUNDS_KEY = "InitBounds"
+
+private val LOG: Logger
+  get() = logger<ProjectFrameHelper>()
 
 open class ProjectFrameHelper internal constructor(
   val frame: IdeFrameImpl,
@@ -123,8 +127,6 @@ open class ProjectFrameHelper internal constructor(
   }
 
   companion object {
-    private val LOG = logger<ProjectFrameHelper>()
-
     @JvmStatic
     fun getFrameHelper(window: Window?): ProjectFrameHelper? {
       if (window == null) {
@@ -145,15 +147,6 @@ open class ProjectFrameHelper internal constructor(
 
     internal fun appendTitlePart(sb: StringBuilder, s: String?) {
       appendTitlePart(sb, s, " \u2013 ")
-    }
-
-    private fun appendTitlePart(builder: StringBuilder, s: String?, separator: String) {
-      if (!s.isNullOrBlank()) {
-        if (builder.isNotEmpty()) {
-          builder.append(separator)
-        }
-        builder.append(s)
-      }
     }
   }
 
@@ -187,7 +180,7 @@ open class ProjectFrameHelper internal constructor(
       }
 
       // in production (not from sources) it makes sense only on Linux
-      // or on Windows (for products that don't use a native launcher, e.g. MPS)
+      // or on Windows (for products that don't use a native launcher, e.g., MPS)
       updateAppWindowIcon(frame)
     }
     return frame
@@ -299,7 +292,7 @@ open class ProjectFrameHelper internal constructor(
     }
   }
 
-  override fun getProject() = project
+  override fun getProject(): Project? = project
 
   @RequiresEdt
   fun setProject(project: Project) {
@@ -328,10 +321,16 @@ open class ProjectFrameHelper internal constructor(
       rootPane.putClientProperty(INIT_BOUNDS_KEY, null)
       if (bounds is Rectangle) {
         ProjectFrameBounds.getInstance(project!!).markDirty(bounds)
+        if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+          IDE_FRAME_EVENT_LOG.debug("Applied init bounds for full screen from client property: $bounds")
+        }
       }
     }
     else {
       ProjectFrameBounds.getInstance(project!!).markDirty(frame.bounds)
+      if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+        IDE_FRAME_EVENT_LOG.debug("Applied init bounds for non-fullscreen from the frame: ${frame.bounds}")
+      }
     }
   }
 
@@ -432,7 +431,7 @@ open class ProjectFrameHelper internal constructor(
   internal val isTabbedWindow: Boolean
     get() = frameDecorator?.isTabbedWindow ?: false
 
-  internal fun getDecorator() = frameDecorator
+  internal fun getDecorator(): IdeFrameDecorator? = frameDecorator
 
   open fun windowClosing(project: Project) {
     CloseProjectWindowHelper().windowClosing(project)
@@ -457,5 +456,14 @@ private object WindowCloseListener : WindowAdapter() {
     if (app != null && !app.isDisposed) {
       frameHelper.windowClosing(project)
     }
+  }
+}
+
+private fun appendTitlePart(builder: StringBuilder, s: String?, separator: String) {
+  if (!s.isNullOrBlank()) {
+    if (builder.isNotEmpty()) {
+      builder.append(separator)
+    }
+    builder.append(s)
   }
 }

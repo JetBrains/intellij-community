@@ -24,12 +24,12 @@ abstract class AbstractObservableBooleanProperty :
   private fun fireSetEvent() =
     setDispatcher.fireEvent()
 
-  override fun afterSet(parentDisposable: Disposable?, listener: () -> Unit) =
+  override fun afterSet(parentDisposable: Disposable?, listener: () -> Unit): Unit =
     setDispatcher.whenEventHappened(parentDisposable, listener)
 
   private fun fireResetEvent() =
     resetDispatcher.fireEvent()
 
-  override fun afterReset(parentDisposable: Disposable?, listener: () -> Unit) =
+  override fun afterReset(parentDisposable: Disposable?, listener: () -> Unit): Unit =
     resetDispatcher.whenEventHappened(parentDisposable, listener)
 }

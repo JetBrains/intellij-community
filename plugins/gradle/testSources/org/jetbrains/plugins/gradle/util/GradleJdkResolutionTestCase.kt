@@ -99,8 +99,8 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
     assertEquals(java?.homePath, getJavaHome(project, externalProjectPath, GradlePropertiesFile))
   }
 
-  fun assertLocalProperties(java: TestSdk?) {
-    assertEquals(java?.homePath, getJavaHome(project, externalProjectPath, LocalPropertiesFile))
+  fun assertGradleLocalProperties(java: TestSdk?) {
+    assertEquals(java?.homePath, getJavaHome(project, externalProjectPath, GradleLocalPropertiesFile))
   }
 
   fun withServiceGradleUserHome(action: () -> Unit) {
@@ -131,10 +131,10 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
       FileUtil.delete(File(propertiesPath))
     }
 
-    fun withLocalProperties(parentDirectory: String, java: TestSdk?, action: () -> Unit) {
-      val propertiesPath = FileUtil.join(parentDirectory, LOCAL_PROPERTIES_FILE_NAME)
+    fun withGradleLocalProperties(parentDirectory: String, java: TestSdk?, action: () -> Unit) {
+      val propertiesPath = FileUtil.join(parentDirectory, GRADLE_CACHE_DIR_NAME, GRADLE_LOCAL_PROPERTIES_FILE_NAME)
       createProperties(propertiesPath) {
-        java?.let { setProperty(LOCAL_JAVA_HOME_PROPERTY, it.homePath) }
+        java?.let { setProperty(GRADLE_LOCAL_JAVA_HOME_PROPERTY, it.homePath) }
       }
       action()
       FileUtil.delete(File(propertiesPath))

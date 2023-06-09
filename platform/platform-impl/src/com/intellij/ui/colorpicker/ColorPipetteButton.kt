@@ -30,7 +30,7 @@ class ColorPipetteButton(private val colorPickerModel: ColorPickerModel, private
     addActionListener { pipette.pick(MyCallback(colorPickerModel)) }
   }
 
-  var currentState = PipetteState.NONE
+  var currentState: PipetteState = PipetteState.NONE
 
   enum class PipetteState {PICKED, UPDATING, NONE}
 

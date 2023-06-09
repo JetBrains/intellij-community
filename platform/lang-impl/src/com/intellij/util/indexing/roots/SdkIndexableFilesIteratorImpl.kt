@@ -13,22 +13,23 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.origin.SdkOriginImpl
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.util.*
 
 @ApiStatus.Internal
 class SdkIndexableFilesIteratorImpl private constructor(private val sdk: Sdk,
                                                         private val rootsToIndex: Collection<VirtualFile>) : IndexableFilesIterator {
 
-  override fun getDebugName() = "$sdkPresentableName ${sdk.name} ${sdk.homePath}"
+  override fun getDebugName(): String = "$sdkPresentableName ${sdk.name} ${sdk.homePath}"
 
   private val sdkPresentableName: String
     get() = (sdk.sdkType as? SdkType)?.presentableName.takeUnless { it.isNullOrEmpty() }
             ?: IndexingBundle.message("indexable.files.provider.indexing.sdk.unnamed")
 
-  override fun getIndexingProgressText() = IndexingBundle.message("indexable.files.provider.indexing.sdk", sdkPresentableName, sdk.name)
+  override fun getIndexingProgressText(): @Nls String = IndexingBundle.message("indexable.files.provider.indexing.sdk", sdkPresentableName, sdk.name)
 
-  override fun getRootsScanningProgressText() = IndexingBundle.message("indexable.files.provider.scanning.sdk", sdkPresentableName,
-                                                                       sdk.name)
+  override fun getRootsScanningProgressText(): @Nls String = IndexingBundle.message("indexable.files.provider.scanning.sdk", sdkPresentableName,
+                                                                                    sdk.name)
 
   override fun getOrigin(): IndexableSetOrigin = SdkOriginImpl(sdk, rootsToIndex)
 

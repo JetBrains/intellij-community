@@ -4,6 +4,8 @@ package com.intellij.workspaceModel.storage.impl
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.checkCircularDependency
+import com.intellij.workspaceModel.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.workspaceModel.storage.instrumentation.instrumentation
 
 // ------------------------- Updating references ------------------------
 
@@ -150,32 +152,13 @@ fun <Parent : WorkspaceEntity> EntityStorage.updateOneToAbstractOneParentOfChild
 
 // ------------------------- Extracting references references ------------------------
 
-@Suppress("unused")
+@OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Please use direct call to `this.instrumentation.extractOneToManyChildren`",
+            ReplaceWith("this.instrumentation.extractOneToManyChildren(connectionId, parent)",
+                                    "com.intellij.workspaceModel.storage.instrumentation.instrumentation"))
 fun <Child : WorkspaceEntity> EntityStorage.extractOneToManyChildren(connectionId: ConnectionId,
                                                                      parent: WorkspaceEntity): Sequence<Child> {
-  return (this as AbstractEntityStorage).extractOneToManyChildren(connectionId, (parent as WorkspaceEntityBase).id)
-}
-
-@Suppress("UNCHECKED_CAST")
-internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToManyChildren(connectionId: ConnectionId,
-                                                                                      parentId: EntityId): Sequence<Child> {
-  val entitiesList = entitiesByType[connectionId.childClass] ?: return emptySequence()
-  return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map {
-    val entityData = entitiesList[it]
-    if (entityData == null) {
-      if (!brokenConsistency) {
-        error(
-          """Cannot resolve entity.
-          |Connection id: $connectionId
-          |Unresolved array id: $it
-          |All child array ids: ${refs.getOneToManyChildren(connectionId, parentId.arrayId)?.toArray()}
-        """.trimMargin()
-        )
-      }
-      null
-    }
-    else entityData.createEntity(this)
-  }?.filterNotNull() as? Sequence<Child> ?: emptySequence()
+  return this.instrumentation.extractOneToManyChildren(connectionId, parent)
 }
 
 internal fun AbstractEntityStorage.extractOneToManyChildrenIds(connectionId: ConnectionId, parentId: EntityId): Sequence<EntityId> {
@@ -218,16 +201,13 @@ internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstra
   return refs.getOneToAbstractManyParent(connectionId, child)?.let { entityDataByIdOrDie(it.id).createEntity(this) as Parent }
 }
 
-@Suppress("unused")
+@OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Please use direct call to instrumentation level API",
+            ReplaceWith("this.instrumentation.extractOneToAbstractOneChild(connectionId, parent)",
+                                    "com.intellij.workspaceModel.storage.instrumentation.instrumentation"))
 fun <Child : WorkspaceEntity> EntityStorage.extractOneToAbstractOneChild(connectionId: ConnectionId,
                                                                          parent: WorkspaceEntity): Child? {
-  return (this as AbstractEntityStorage).extractOneToAbstractOneChild(connectionId, (parent as WorkspaceEntityBase).id.asParent())
-}
-
-@Suppress("UNCHECKED_CAST")
-internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractOneChild(connectionId: ConnectionId,
-                                                                                          parentId: ParentEntityId): Child? {
-  return refs.getAbstractOneToOneChildren(connectionId, parentId)?.let { entityDataByIdOrDie(it.id).createEntity(this) as Child }
+  return this.instrumentation.extractOneToAbstractOneChild(connectionId, parent)
 }
 
 @Suppress("unused")

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.AppUIExecutor;
@@ -44,8 +44,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   private static volatile boolean ourStubReloadingProhibited;
 
   @Override
-  @Nullable
-  public ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile) {
+  public @Nullable ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile) {
     ObjectStubTree<?> fromIndices = readFromVFile(project, vFile);
     if (fromIndices != null) {
       return fromIndices;
@@ -100,8 +99,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   }
 
   @Override
-  @Nullable
-  public ObjectStubTree<?> readFromVFile(@NotNull Project project, final @NotNull VirtualFile vFile) {
+  public @Nullable ObjectStubTree<?> readFromVFile(@NotNull Project project, final @NotNull VirtualFile vFile) {
     if ((DumbService.getInstance(project).isDumb() &&
          (!FileBasedIndex.isIndexAccessDuringDumbModeEnabled() ||
           FileBasedIndex.getInstance().getCurrentDumbModeAccessType() != DumbModeAccessType.RELIABLE_DATA_ONLY)) ||
@@ -262,7 +260,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   }
 
   @Override
-  protected boolean hasPsiInManyProjects(@NotNull final VirtualFile virtualFile) {
+  protected boolean hasPsiInManyProjects(final @NotNull VirtualFile virtualFile) {
     int count = 0;
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       if (PsiManagerEx.getInstanceEx(project).getFileManager().findCachedViewProvider(virtualFile) != null) {
@@ -303,8 +301,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
     }
   }
 
-  @Nullable
-  static IndexingStampInfo readSavedIndexingStampInfo(@NotNull VirtualFile file) {
+  static @Nullable IndexingStampInfo readSavedIndexingStampInfo(@NotNull VirtualFile file) {
     try (DataInputStream stream = INDEXED_STAMP.readFileAttribute(file)) {
       if (stream == null || stream.available() <= 0) {
         return null;

@@ -137,7 +137,7 @@ abstract class AbstractScriptTemplatesFromDependenciesTest : HeavyPlatformTestCa
 
     // Copied from `MockLibraryUtil.createJarFile` of old repo
     private fun createJarFile(contentDir: File, dirToAdd: File, jarName: String, sourcesPath: String? = null): File {
-        val jarFile = File(contentDir, jarName + ".jar")
+        val jarFile = File(contentDir, "$jarName.jar")
 
         ZipOutputStream(FileOutputStream(jarFile)).use { zip ->
             ZipUtil.addDirToZipRecursively(zip, jarFile, dirToAdd, "", null, null)

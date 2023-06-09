@@ -103,7 +103,7 @@ class InlayTextMetrics(
   // Editor metrics:
   val ascent: Int = editor.ascent
   val descent: Int = (editor as? EditorImpl)?.descent ?: 0
-  val lineHeight = editor.lineHeight
+  val lineHeight: Int = editor.lineHeight
   private val editorComponent = editor.component
 
   fun isActual(size: Float, familyName: String) : Boolean {

@@ -3,12 +3,9 @@
 
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
-import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeMenuBar
@@ -16,28 +13,25 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.GridLayout
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.IJSwingUtilities
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBUI
 import java.awt.*
-import java.awt.event.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.*
 
 private const val ALPHA = (255 * 0.6).toInt()
 
 internal class ExpandableMenu(private val headerContent: JComponent) {
 
-  val ideMenu = IdeMenuBar.createMenuBar()
-  private val ideMenuHelper = IdeMenuHelper(ideMenu)
+  val ideMenu: IdeMenuBar = IdeMenuBar.createMenuBar()
+  private val ideMenuHelper = IdeMenuHelper(ideMenu, null)
   private var expandedMenuBar: JPanel? = null
   private var headerColorfulPanel: HeaderColorfulPanel? = null
   private val shadowComponent = ShadowComponent()
   private val rootPane: JRootPane?
     get() = SwingUtilities.getRootPane(headerContent)
-  private val hoverListeners = mutableMapOf<JMenu, MouseListener>()
   private var hideMenu = false
 
   init {
@@ -79,7 +73,7 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
     ideMenuHelper.updateUI()
   }
 
-  fun switchState(buttonSize: Dimension, actionToShow: AnAction? = null) {
+  fun switchState(actionToShow: AnAction? = null) {
     if (isShowing() && actionToShow == null) {
       hideExpandedMenuBar()
       return
@@ -91,20 +85,15 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
     expandedMenuBar = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
         row {
-          val closeButton = createMenuButton(CloseExpandedMenuAction()).apply {
-            setMinimumButtonSize(JBDimension(JBUI.unscale(buttonSize.width), JBUI.unscale(buttonSize.height)))
-          }
-          headerColorfulPanel = cell(HeaderColorfulPanel(listOf(closeButton, ideMenu)))
+          headerColorfulPanel = cell(HeaderColorfulPanel(ideMenu))
             .align(AlignY.FILL)
             .component
           cell(shadowComponent).align(Align.FILL)
-        }
+        }.resizableRow()
       }
     }.apply { isOpaque = false }
 
-    ideMenu.updateMenuActions(true)
-
-    // Menu wasn't a part of components tree, updateUI is needed
+    // menu wasn't a part of component's tree, updateUI is needed
     updateUI()
     updateBounds()
     updateColor()
@@ -129,35 +118,12 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
     }
 
     val subElements = menu.popupMenu.subElements
-    if (action == null || subElements.isEmpty()) {
+    if (subElements.isEmpty()) {
       MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu)
-      installHoverListeners()
     }
     else {
       MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu, menu.popupMenu, subElements[0])
     }
-  }
-
-  private fun installHoverListeners() {
-    uninstallHoverListeners()
-    for (i in 0..ideMenu.menuCount - 1) {
-      val menu = ideMenu.getMenu(i)
-      val listener = object : MouseAdapter() {
-        override fun mouseEntered(e: MouseEvent?) {
-          MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu, menu.popupMenu)
-          uninstallHoverListeners()
-        }
-      }
-      menu.addMouseListener(listener)
-      hoverListeners[menu] = listener
-    }
-  }
-
-  private fun uninstallHoverListeners() {
-    for (entry in hoverListeners.entries) {
-      entry.key.removeMouseListener(entry.value)
-    }
-    hoverListeners.clear()
   }
 
   fun updateColor() {
@@ -187,44 +153,31 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
       rootPane?.layeredPane?.remove(expandedMenuBar)
       expandedMenuBar = null
       headerColorfulPanel = null
-      uninstallHoverListeners()
 
       rootPane?.repaint()
     }
   }
 
-  private class HeaderColorfulPanel(components: List<JComponent>): JPanel() {
+  private class HeaderColorfulPanel(component: JComponent): JPanel() {
 
     var horizontalOffset = 0
 
     init {
       // Deny background painting by super.paint()
       isOpaque = false
-      layout = GridLayout()
-      val builder = RowsGridBuilder(this)
-      for (component in components) {
-        builder.cell(component, verticalAlign = VerticalAlign.FILL)
-      }
+      layout = BorderLayout()
+      add(component, BorderLayout.CENTER)
     }
 
     override fun paint(g: Graphics?) {
       g as Graphics2D
+      g.color = background
+      g.fillRect(0, 0, width, height)
       g.translate(-horizontalOffset, 0)
       val root = SwingUtilities.getRoot(this) as? Window
-      val painted = if (root == null) false else ProjectWindowCustomizerService.getInstance().paint(root, this, g)
+      if (root != null) ProjectWindowCustomizerService.getInstance().paint(root, this, g)
       g.translate(horizontalOffset, 0)
-      if (!painted) {
-        g.color = background
-        g.fillRect(0, 0, width, height)
-      }
       super.paint(g)
-    }
-  }
-
-  private inner class CloseExpandedMenuAction : DumbAwareAction(ExpUiIcons.General.Close) {
-
-    override fun actionPerformed(e: AnActionEvent) {
-      hideExpandedMenuBar()
     }
   }
 

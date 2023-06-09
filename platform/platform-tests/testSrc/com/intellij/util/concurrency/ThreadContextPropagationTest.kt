@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency
 
 import com.intellij.concurrency.*
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -12,9 +13,10 @@ import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.*
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -27,6 +29,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 @TestApplication
@@ -48,14 +51,14 @@ class ThreadContextPropagationTest {
 
   @Test
   fun `executeOnPooledThread(Runnable)`(): Unit = timeoutRunBlocking {
-    doTest {
+    doPropagationTest {
       ApplicationManager.getApplication().executeOnPooledThread(it.runnable())
     }
   }
 
   @Test
   fun `executeOnPooledThread(Callable)`(): Unit = timeoutRunBlocking {
-    doTest {
+    doPropagationTest {
       ApplicationManager.getApplication().executeOnPooledThread(it.callable())
     }
   }
@@ -63,16 +66,16 @@ class ThreadContextPropagationTest {
   @Test
   fun invokeLater(): Unit = timeoutRunBlocking {
     val application = ApplicationManager.getApplication()
-    doTest {
+    doPropagationTest {
       application.invokeLater(it.runnable())
     }
-    doTest {
+    doPropagationTest {
       application.invokeLater(it.runnable(), Conditions.alwaysFalse<Nothing?>())
     }
-    doTest {
+    doPropagationTest {
       application.invokeLater(it.runnable(), ModalityState.any())
     }
-    doTest {
+    doPropagationTest {
       application.invokeLater(it.runnable(), ModalityState.any(), Conditions.alwaysFalse<Nothing?>())
     }
   }
@@ -81,17 +84,26 @@ class ThreadContextPropagationTest {
   fun edtExecutorService(): Unit = timeoutRunBlocking {
     val service = EdtExecutorService.getInstance()
     doExecutorServiceTest(service)
-    doTest {
+    doPropagationTest {
       service.execute(it)
     }
-    doTest {
+    doPropagationTest {
       service.execute(it)
     }
-    doTest {
+    doPropagationTest {
       service.submit(it)
     }
-    doTest {
+    doPropagationTest {
       service.submit(it.callable())
+    }
+  }
+
+  @Test
+  fun edtScheduledExecutorService(): Unit = timeoutRunBlocking {
+    val service = EdtScheduledExecutorService.getInstance()
+    doScheduledExecutorServiceTest(service)
+    doPropagationTest {
+      service.schedule(it.runnable(), ModalityState.any(), 10, TimeUnit.MILLISECONDS)
     }
   }
 
@@ -110,6 +122,10 @@ class ThreadContextPropagationTest {
     doExecutorServiceTest(AppExecutorUtil.createBoundedApplicationPoolExecutor("Bounded", 1))
   }
 
+  @Test
+  fun processIOExecutor(): Unit = timeoutRunBlocking {
+    doExecutorServiceTest(ProcessIOExecutorService.INSTANCE)
+  }
   @Test
   fun boundedScheduledExecutorService(): Unit = timeoutRunBlocking {
     doScheduledExecutorServiceTest(AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled", 1))
@@ -132,32 +148,32 @@ class ThreadContextPropagationTest {
   }
 
   private suspend fun doExecutorServiceTest(service: ExecutorService) {
-    doTest {
+    doPropagationTest {
       service.execute(it.runnable())
     }
-    doTest {
+    doPropagationTest {
       service.submit(it.runnable())
     }
-    doTest {
+    doPropagationTest {
       service.submit(it.callable())
     }
-    doTest {
+    doPropagationTest {
       service.invokeAny(listOf(it.callable()))
     }
-    doTest {
+    doPropagationTest {
       service.invokeAll(listOf(it.callable()))
     }
   }
 
   private suspend fun doScheduledExecutorServiceTest(service: ScheduledExecutorService) {
     doExecutorServiceTest(service)
-    doTest {
+    doPropagationTest {
       service.schedule(it.runnable(), 10, TimeUnit.MILLISECONDS)
     }
-    doTest {
+    doPropagationTest {
       service.schedule(it.callable(), 10, TimeUnit.MILLISECONDS)
     }
-    doTest {
+    doPropagationTest {
       val canStart = Semaphore(1)
       lateinit var future: Future<*>
       val runCounter = AtomicInteger(0)
@@ -175,7 +191,7 @@ class ThreadContextPropagationTest {
   }
 
   @Test
-  fun `EDT dispatcher does not capture thread context`() = timeoutRunBlocking {
+  fun `EDT dispatcher does not capture thread context`(): Unit = timeoutRunBlocking {
     blockingContext {
       launch(Dispatchers.EDT) {
         assertNull(currentThreadContextOrNull())
@@ -214,5 +230,31 @@ class ThreadContextPropagationTest {
       }
     }
     finished.await()
+  }
+
+  @Test
+  fun `merging update queue`() = timeoutRunBlocking {
+    val queue = MergingUpdateQueue("test", 100, true, null)
+    val semaphore = Semaphore(2)
+    val element = TestElement("e1")
+    val element2 = TestElement2("e2")
+    withContext(element) {
+      blockingContext {
+        queue.queue(Update.create("id") {
+          assertEquals(element, currentThreadContext()[TestElementKey])
+          semaphore.up()
+        })
+      }
+      withContext(element2) {
+        blockingContext {
+          queue.queue(Update.create("id") {
+            // no eating occurs since the contexts are different
+            assertEquals(element2, currentThreadContext()[TestElement2Key])
+            semaphore.up()
+          })
+        }
+      }
+    }
+    semaphore.timeoutWaitUp()
   }
 }

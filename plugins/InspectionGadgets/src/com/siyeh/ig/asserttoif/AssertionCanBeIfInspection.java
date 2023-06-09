@@ -16,7 +16,9 @@
 package com.siyeh.ig.asserttoif;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -24,7 +26,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -47,7 +48,7 @@ public class AssertionCanBeIfInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new AssertToIfFix();
   }
 
@@ -72,7 +73,7 @@ public class AssertionCanBeIfInspection extends BaseInspection {
     }
   }
 
-  private static class AssertToIfFix extends InspectionGadgetsFix {
+  private static class AssertToIfFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -81,8 +82,7 @@ public class AssertionCanBeIfInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       PsiAssertStatement assertStatement =
         element instanceof PsiKeyword ? (PsiAssertStatement)element.getParent() : (PsiAssertStatement)element;
       if (!(assertStatement.getParent() instanceof PsiCodeBlock)) {

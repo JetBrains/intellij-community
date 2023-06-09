@@ -15,10 +15,8 @@
  */
 package com.siyeh.ig.migration;
 
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,14 +28,11 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
@@ -69,11 +64,11 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return infos.length == 0 ? new UnnecessaryBoxingFix() : new UnnecessaryBoxingFix((PsiType)infos[0], (String)infos[1]);
   }
 
-  private static final class UnnecessaryBoxingFix extends InspectionGadgetsFix {
+  private static final class UnnecessaryBoxingFix extends PsiUpdateModCommandQuickFix {
 
     private final @IntentionFamilyName String name;
 
@@ -92,8 +87,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiCallExpression.class);
       if (expression == null) {
         return;
@@ -329,7 +323,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
              !LambdaUtil.isSafeLambdaReturnValueReplacement(boxingExpression, boxedExpression);
     }
 
-    private boolean isPossibleObjectComparison(PsiExpression expression, PsiPolyadicExpression polyadicExpression) {
+    private static boolean isPossibleObjectComparison(PsiExpression expression, PsiPolyadicExpression polyadicExpression) {
       if (!ComparisonUtils.isEqualityComparison(polyadicExpression)) {
         return false;
       }

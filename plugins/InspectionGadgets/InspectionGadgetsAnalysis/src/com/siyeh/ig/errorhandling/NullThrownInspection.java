@@ -2,14 +2,15 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class NullThrownInspection extends BaseInspection {
@@ -22,11 +23,11 @@ public class NullThrownInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new ThrowNullFix();
   }
 
-  private static class ThrowNullFix extends InspectionGadgetsFix {
+  private static class ThrowNullFix extends PsiUpdateModCommandQuickFix {
 
     @NotNull
     @Override
@@ -35,8 +36,7 @@ public class NullThrownInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiExpression newExpression = factory.createExpressionFromText("new java.lang.NullPointerException()", element);
       element.replace(newExpression);

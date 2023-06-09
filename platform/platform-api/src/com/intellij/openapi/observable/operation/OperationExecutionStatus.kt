@@ -26,6 +26,6 @@ sealed interface OperationExecutionStatus {
   }
 
   companion object {
-    val KEY = DataKey.create<OperationExecutionStatus>("com.intellij.openapi.observable.dispatcher.operation.TaskExecutionStatus")
+    val KEY: DataKey<OperationExecutionStatus> = DataKey.create("com.intellij.openapi.observable.dispatcher.operation.TaskExecutionStatus")
   }
 }

@@ -11,18 +11,15 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.properties.GRADLE_JAVA_HOME_PROPERTY
-import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
-import org.jetbrains.plugins.gradle.properties.LOCAL_JAVA_HOME_PROPERTY
-import org.jetbrains.plugins.gradle.properties.LocalPropertiesFile
+import org.jetbrains.plugins.gradle.properties.*
 import org.jetbrains.plugins.gradle.properties.base.BaseProperties
 import org.jetbrains.plugins.gradle.properties.base.BasePropertiesFile
 import java.nio.file.Paths
 
-const val LOCAL_PROPERTIES_JAVA_HOME = "LOCAL_PROPERTIES_JDK"
+const val GRADLE_LOCAL_JAVA_HOME = "GRADLE_LOCAL_JAVA_HOME"
 
 const val USE_GRADLE_JAVA_HOME = "#GRADLE_JAVA_HOME"
-const val USE_LOCAL_PROPERTIES_JAVA_HOME = "#LOCAL_PROPERTIES_JDK"
+const val USE_GRADLE_LOCAL_JAVA_HOME = "#GRADLE_LOCAL_JAVA_HOME"
 
 fun SdkLookupProvider.nonblockingResolveGradleJvmInfo(project: Project, externalProjectPath: String?, gradleJvm: String?): SdkInfo {
   val projectSdk = ProjectRootManager.getInstance(project).projectSdk
@@ -32,7 +29,7 @@ fun SdkLookupProvider.nonblockingResolveGradleJvmInfo(project: Project, external
 fun SdkLookupProvider.nonblockingResolveGradleJvmInfo(project: Project, projectSdk: Sdk?, externalProjectPath: String?, gradleJvm: String?): SdkInfo {
   return when (gradleJvm) {
     USE_GRADLE_JAVA_HOME -> createJdkInfo(GRADLE_JAVA_HOME_PROPERTY, getJavaHome(project, externalProjectPath, GradlePropertiesFile))
-    USE_LOCAL_PROPERTIES_JAVA_HOME -> createJdkInfo(LOCAL_JAVA_HOME_PROPERTY, getJavaHome(project, externalProjectPath, LocalPropertiesFile))
+    USE_GRADLE_LOCAL_JAVA_HOME -> createJdkInfo(GRADLE_LOCAL_JAVA_HOME_PROPERTY, getJavaHome(project, externalProjectPath, GradleLocalPropertiesFile))
     else -> nonblockingResolveJdkInfo(projectSdk, gradleJvm)
   }
 }

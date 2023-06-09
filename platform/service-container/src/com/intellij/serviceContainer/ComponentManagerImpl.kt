@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.attachAsChildTo
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
@@ -56,7 +57,6 @@ import java.util.concurrent.atomic.AtomicReference
 internal val LOG: Logger
   get() = logger<ComponentManagerImpl>()
 
-private val constructorParameterResolver = ConstructorParameterResolver()
 private val methodLookup = MethodHandles.lookup()
 private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
 private val coroutineScopeMethodType = emptyConstructorMethodType.appendParameterTypes(CoroutineScope::class.java)
@@ -133,8 +133,6 @@ abstract class ComponentManagerImpl(
   private val _extensionArea by lazy { ExtensionsAreaImpl(this) }
 
   private var messageBus: MessageBusImpl? = null
-
-  private var handlingInitComponentError = false
 
   @Volatile
   private var isServicePreloadingCancelled = false
@@ -378,8 +376,20 @@ abstract class ComponentManagerImpl(
           pluginDescriptor = pluginDescriptor,
         )
       }
+      catch (e: StartupAbortedException) {
+        throw e
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: PluginException) {
+        throw e
+      }
       catch (e: Throwable) {
-        handleInitComponentError(e, componentClassName, pluginDescriptor.pluginId)
+        throw PluginException("Fatal error initializing '$componentClassName'", e, pluginDescriptor.pluginId)
       }
     }
   }
@@ -536,10 +546,6 @@ abstract class ComponentManagerImpl(
 
       // Allow to re-define service implementations in plugins.
       // Empty serviceImplementation means we want unregistering service.
-      val key = descriptor.getInterface()
-      if (descriptor.overrides && componentKeyToAdapter.remove(key) == null) {
-        throw PluginException("Service $key doesn't override anything", pluginDescriptor.pluginId)
-      }
 
       // empty serviceImplementation means we want unregistering service
       val implementation = when {
@@ -548,45 +554,31 @@ abstract class ComponentManagerImpl(
         else -> descriptor.serviceImplementation
       }
 
+      val key = descriptor.serviceInterface ?: implementation
+      if (descriptor.overrides && componentKeyToAdapter.remove(key) == null) {
+        throw PluginException("Service $key doesn't override anything", pluginDescriptor.pluginId)
+      }
+
       if (implementation != null) {
         val componentAdapter = ServiceComponentAdapter(descriptor, pluginDescriptor, this)
         val existingAdapter = componentKeyToAdapter.putIfAbsent(key, componentAdapter)
         if (existingAdapter != null) {
-          throw PluginException("Key $key duplicated; existingAdapter: $existingAdapter; descriptor: ${descriptor.implementation}; app: $app; current plugin: ${pluginDescriptor.pluginId}", pluginDescriptor.pluginId)
+          throw PluginException("Key $key duplicated; existingAdapter: $existingAdapter; " +
+                                "descriptor=${getServiceImplementation(descriptor, this)}, " +
+                                " app=$app, current plugin=${pluginDescriptor.pluginId}", pluginDescriptor.pluginId)
         }
       }
     }
   }
 
-  internal fun handleInitComponentError(error: Throwable, componentClassName: String, pluginId: PluginId) {
-    if (handlingInitComponentError) {
-      return
-    }
-
-    handlingInitComponentError = true
-    try {
-      // not logged but thrown PluginException means some fatal error
-      if (error is StartupAbortedException || error is ProcessCanceledException || error is PluginException) {
-        throw error
-      }
-
-      var effectivePluginId = pluginId
-      if (effectivePluginId == PluginManagerCore.CORE_ID) {
-        effectivePluginId = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(componentClassName)?.pluginId
-                            ?: PluginManagerCore.CORE_ID
-      }
-
-      throw PluginException("Fatal error initializing '$componentClassName'", error, effectivePluginId)
-    }
-    finally {
-      handlingInitComponentError = false
-    }
-  }
-
   internal fun initializeComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
     if (serviceDescriptor == null || !isPreInitialized(component)) {
-      LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred()
-      componentStore.initComponent(component, serviceDescriptor, pluginId)
+      if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+        componentStore.initComponent(component, serviceDescriptor, pluginId)
+      }
+      else {
+        check(component !is PersistentStateComponent<*> || getApplication()!!.isUnitTestMode)
+      }
     }
   }
 
@@ -629,6 +621,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
+  @RequiresBlockingContext
   final override fun <T : Any> getService(serviceClass: Class<T>): T? {
     // `computeIfAbsent` cannot be used because of recursive update
     @Suppress("UNCHECKED_CAST")
@@ -650,7 +643,9 @@ abstract class ComponentManagerImpl(
     check(adapter is ServiceComponentAdapter) {
       "$adapter is not a service (key=$key)"
     }
-    return adapter.getInstanceAsync(componentManager = this, keyClass = keyClass)
+    val result = adapter.getInstanceAsync(componentManager = this, keyClass = keyClass)
+    serviceInstanceHotCache.putIfAbsent(keyClass, result)
+    return result
   }
 
   protected open fun <T : Any> postGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? = null
@@ -1013,11 +1008,7 @@ abstract class ComponentManagerImpl(
 
   final override fun <T : Any> instantiateClassWithConstructorInjection(aClass: Class<T>, key: Any, pluginId: PluginId): T {
     return resetThreadContext().use {
-      instantiateUsingPicoContainer(aClass = aClass,
-                                    requestorKey = key,
-                                    pluginId = pluginId,
-                                    componentManager = this,
-                                    parameterResolver = constructorParameterResolver)
+      instantiateUsingPicoContainer(aClass = aClass, requestorKey = key, pluginId = pluginId, componentManager = this)
     }
   }
 
@@ -1082,7 +1073,8 @@ abstract class ComponentManagerImpl(
     if (!services.isEmpty()) {
       val store = componentStore
       for (service in services) {
-        val adapter = (componentKeyToAdapter.remove(service.`interface`) ?: continue) as ServiceComponentAdapter
+        val serviceInterface = getServiceInterface(service, this)
+        val adapter = (componentKeyToAdapter.remove(serviceInterface) ?: continue) as ServiceComponentAdapter
         val instance = adapter.getInitializedInstance() ?: continue
         if (instance is Disposable) {
           Disposer.dispose(instance)
@@ -1136,8 +1128,22 @@ abstract class ComponentManagerImpl(
           return
         }
 
-        scope.launch(CoroutineName("${service.`interface`} preloading")) {
-          preloadService(service)
+        val serviceInterface = getServiceInterface(service, this)
+        if (plugin.pluginId != PluginManagerCore.CORE_ID) {
+          val impl = getServiceImplementation(service, this)
+          if (!servicePreloadingAllowListForNonCorePlugin.contains(impl)) {
+            val message = "`preload=true` should be used only for core services (service=$impl, plugin=${plugin.pluginId})"
+            if (service.preload == PreloadMode.AWAIT) {
+              LOG.error(PluginException(message, plugin.pluginId))
+            }
+            else {
+              LOG.warn(message)
+            }
+          }
+        }
+
+        scope.launch(CoroutineName("$serviceInterface preloading")) {
+          preloadService(service, serviceInterface)
         }
       }
     }
@@ -1151,8 +1157,8 @@ abstract class ComponentManagerImpl(
                                          onlyIfAwait: Boolean) {
   }
 
-  protected open suspend fun preloadService(service: ServiceDescriptor) {
-    val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return
+  protected open suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
+    val adapter = componentKeyToAdapter.get(serviceInterface) as ServiceComponentAdapter? ?: return
     val instance = adapter.getInstanceAsync<Any>(componentManager = this, keyClass = null)
     val implClass = instance.javaClass
     // well, we don't know the interface class, so we cannot add any service to a hot cache
@@ -1620,3 +1626,39 @@ private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescripto
   task(mainPluginDescriptor)
   executeRegisterTaskForOldContent(mainPluginDescriptor, task)
 }
+
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "SpellCheckingInspection")
+private val servicePreloadingAllowListForNonCorePlugin = java.util.Set.of(
+  "com.android.tools.adtui.webp.WebpMetadata\$WebpMetadataRegistrar",
+  "com.intellij.completion.ml.experiment.ClientExperimentStatus",
+  "com.intellij.compiler.server.BuildManager",
+  "com.intellij.openapi.module.WebModuleTypeRegistrar",
+  "com.intellij.tasks.config.PasswordConversionEnforcer",
+  "com.intellij.ide.RecentProjectsManagerBase",
+  "org.jetbrains.android.AndroidPlugin",
+  "com.intellij.remoteDev.tests.impl.DistributedTestHost",
+  "com.intellij.configurationScript.inspection.ExternallyConfigurableProjectInspectionProfileManager",
+  // use lazy listener
+  "com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge",
+  "com.intellij.compiler.CompilerConfigurationImpl",
+  "com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl",
+  "org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService",
+  "org.jetbrains.idea.maven.project.MavenProjectsManagerEx",
+  // use lazy listener
+  "org.jetbrains.idea.maven.navigator.MavenProjectsNavigator",
+  "org.jetbrains.idea.maven.tasks.MavenShortcutsManager",
+  "com.jetbrains.rd.platform.codeWithMe.toolbar.CodeWithMeToolbarUpdater",
+  "com.jetbrains.rdserver.portForwarding.cwm.CodeWithMeBackendPortForwardingToolWindowManager",
+  "com.jetbrains.rdserver.followMe.FollowMeManagerService",
+  "com.jetbrains.rdserver.diagnostics.BackendPerformanceHost",
+  "com.jetbrains.rdserver.followMe.BackendUserManager",
+  "com.jetbrains.rdserver.followMe.BackendUserFocusManager",
+  "com.jetbrains.rdserver.projectView.BackendProjectViewSync",
+  "com.jetbrains.rdserver.editors.BackendFollowMeEditorsHost",
+  "com.jetbrains.rdserver.debugger.BackendFollowMeDebuggerHost",
+  "com.jetbrains.rdserver.editors.BackendEditorService",
+  "com.jetbrains.rdserver.toolWindow.BackendServerToolWindowManager",
+  "com.jetbrains.rdserver.toolbar.CWMHostClosedToolbarNotification",
+  "com.jetbrains.rdclient.client.FrontendProjectSessionsManager",
+  "com.jetbrains.rider.projectView.workspace.impl.RiderWorkspaceModel",
+)

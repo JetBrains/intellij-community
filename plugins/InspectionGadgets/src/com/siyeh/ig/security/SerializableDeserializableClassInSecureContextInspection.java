@@ -1,13 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.security;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.serialization.SerializableInspectionBase;
@@ -44,7 +46,7 @@ public class SerializableDeserializableClassInSecureContextInspection extends Se
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final Boolean serializable = (Boolean)infos[0];
     final Boolean deserializable = (Boolean)infos[1];
     final PsiClass aClass = (PsiClass)infos[2];
@@ -57,14 +59,14 @@ public class SerializableDeserializableClassInSecureContextInspection extends Se
   }
 
   private static boolean hasOwnReadObjectMethod(PsiClass aClass) {
-    return Arrays.stream(aClass.findMethodsByName("readObject", false)).anyMatch(SerializationUtils::isReadObject);
+    return ContainerUtil.exists(aClass.findMethodsByName("readObject", false), SerializationUtils::isReadObject);
   }
 
   private static boolean hasOwnWriteObjectMethod(PsiClass aClass) {
-    return Arrays.stream(aClass.findMethodsByName("writeObject", false)).anyMatch(SerializationUtils::isWriteObject);
+    return ContainerUtil.exists(aClass.findMethodsByName("writeObject", false), SerializationUtils::isWriteObject);
   }
 
-  private static class AddReadWriteObjectMethodsFix extends InspectionGadgetsFix {
+  private static class AddReadWriteObjectMethodsFix extends PsiUpdateModCommandQuickFix {
 
     private final boolean myReadObject;
     private final boolean myWriteObject;
@@ -92,8 +94,7 @@ public class SerializableDeserializableClassInSecureContextInspection extends Se
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       if (containingClass == null) {
         return;
@@ -149,14 +150,14 @@ public class SerializableDeserializableClassInSecureContextInspection extends Se
       registerClassError(aClass, Boolean.valueOf(serializable), Boolean.valueOf(deserializable), aClass);
     }
 
-    private boolean hasSerializableState(PsiClass aClass) {
+    private static boolean hasSerializableState(PsiClass aClass) {
       return Arrays.stream(aClass.getFields())
         .filter(f -> !f.hasModifierProperty(PsiModifier.STATIC))
         .filter(f -> !f.hasModifierProperty(PsiModifier.TRANSIENT))
         .anyMatch(f -> !(f instanceof PsiEnumConstant));
     }
 
-    private boolean hasReadObjectMethodWhichAlwaysThrowsException(PsiClass aClass) {
+    private static boolean hasReadObjectMethodWhichAlwaysThrowsException(PsiClass aClass) {
       for (final PsiMethod method : aClass.findMethodsByName("readObject", true)) {
         if (SerializationUtils.isReadObject(method)) {
           return ControlFlowUtils.methodAlwaysThrowsException((PsiMethod)method.getNavigationElement());
@@ -165,7 +166,7 @@ public class SerializableDeserializableClassInSecureContextInspection extends Se
       return false;
     }
 
-    private boolean hasWriteObjectMethodWhichAlwaysThrowsException(PsiClass aClass) {
+    private static boolean hasWriteObjectMethodWhichAlwaysThrowsException(PsiClass aClass) {
       for (final PsiMethod method : aClass.findMethodsByName("writeObject", true)) {
         if (SerializationUtils.isWriteObject(method)) {
           return ControlFlowUtils.methodAlwaysThrowsException((PsiMethod)method.getNavigationElement());

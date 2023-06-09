@@ -71,7 +71,7 @@ internal class RuntimeModuleRepositoryBuilder
     val outputPath = Path.of(JpsPathUtil.urlToOsPath (outputUrl), JAR_REPOSITORY_FILE_NAME)
     val timeToSaveDescriptors = measureTimeMillis {
       try {
-        RuntimeModuleRepositorySerialization.saveToJar(descriptors, outputPath, GENERATOR_VERSION)
+        RuntimeModuleRepositorySerialization.saveToJar(descriptors, null, outputPath, GENERATOR_VERSION)
       }
       catch (e: IOException) {
         LOG.info(e)
@@ -165,7 +165,7 @@ internal class RuntimeModuleRepositoryBuilder
     collectDependencies(module, test, dependencies, processedDummyTestDependencies, runtimeModuleNameGenerator)
     val sourceRootTypes = if (test) JavaModuleSourceRootTypes.TESTS else JavaModuleSourceRootTypes.PRODUCTION
     val resourcePaths = if (module.sourceRoots.any { it.rootType in sourceRootTypes }) {
-      listOf("../${if (test) "test" else "production"}/${module.name}")
+      listOf("${if (test) "test" else "production"}/${module.name}")
     }
     else {
       emptyList()

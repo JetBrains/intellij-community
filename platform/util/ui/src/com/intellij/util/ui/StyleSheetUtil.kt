@@ -18,7 +18,7 @@ import javax.swing.text.html.StyleSheet
 
 object StyleSheetUtil {
   @get:ApiStatus.Internal
-  val NO_GAPS_BETWEEN_PARAGRAPHS_STYLE by lazy {
+  val NO_GAPS_BETWEEN_PARAGRAPHS_STYLE: StyleSheet by lazy {
     loadStyleSheet("p { margin-top: 0; }")
   }
 

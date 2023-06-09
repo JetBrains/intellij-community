@@ -55,7 +55,6 @@ fun IndexingFileSetStatistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio:
     filesFullyIndexedByExtensions = listOfFilesFullyIndexedByExtensions,
     totalIndexingVisibleTime = convertAllThreadsTimeToVisibleDuration(processingTimeInAllThreads, visibleTimeToAllThreadsTimeRatio),
     contentLoadingVisibleTime = convertAllThreadsTimeToVisibleDuration(contentLoadingTimeInAllThreads, visibleTimeToAllThreadsTimeRatio),
-    readActionWaitingVisibleTime = convertAllThreadsTimeToVisibleDuration(readActionWaitingTimeInAllThreads, visibleTimeToAllThreadsTimeRatio),
     numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles,
     slowIndexedFiles = slowIndexedFiles.biggestElements.map { it.toJson() },
     isAppliedAllValuesSeparately = allValuesAppliedSeparately,
@@ -68,20 +67,19 @@ fun IndexingFileSetStatistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio:
 private fun convertAllThreadsTimeToVisibleDuration(allThreadsTime: TimeNano, visibleTimeToAllThreadsTimeRatio: Double) =
   JsonDuration((allThreadsTime * visibleTimeToAllThreadsTimeRatio).toLong())
 
-fun SlowIndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonSlowIndexedFile(
+fun SlowIndexedFile.toJson(): JsonFileProviderIndexStatistics.JsonSlowIndexedFile = JsonFileProviderIndexStatistics.JsonSlowIndexedFile(
   fileName = fileName,
   processingTime = JsonDuration(processingTime),
   evaluationOfIndexValueChangerTime = JsonDuration(evaluationOfIndexValueChangerTime),
-  contentLoadingTime = JsonDuration(contentLoadingTime),
-  readLockWaitingTime = JsonDuration(readLockWaitingTime)
+  contentLoadingTime = JsonDuration(contentLoadingTime)
 )
 
-fun IndexingFileSetStatistics.IndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonIndexedFile(
+fun IndexingFileSetStatistics.IndexedFile.toJson(): JsonFileProviderIndexStatistics.JsonIndexedFile = JsonFileProviderIndexStatistics.JsonIndexedFile(
   path = portableFilePath,
   wasFullyIndexedByExtensions = wasFullyIndexedByExtensions
 )
 
-fun IndexingTimes.toJson() =
+fun IndexingTimes.toJson(): JsonProjectIndexingHistoryTimes =
   JsonProjectIndexingHistoryTimes(
     indexingReason = indexingReason,
     scanningType = scanningType,
@@ -100,7 +98,7 @@ fun IndexingTimes.toJson() =
     wasInterrupted = wasInterrupted
   )
 
-fun ScanningTimes.toJson() =
+fun ScanningTimes.toJson(): JsonProjectScanningHistoryTimes =
   JsonProjectScanningHistoryTimes(
     scanningReason = scanningReason,
     scanningType = scanningType,
@@ -119,12 +117,11 @@ fun ScanningTimes.toJson() =
     dumbWallTimeWithPauses = JsonDuration(dumbModeWithPausesDuration.toNanos())
   )
 
-fun DumbIndexingTimes.toJson() =
+fun DumbIndexingTimes.toJson(): JsonProjectDumbIndexingHistoryTimes =
   JsonProjectDumbIndexingHistoryTimes(
     scanningIds = scanningIds.toSortedSet(),
     totalWallTimeWithPauses = JsonDuration(totalUpdatingTime),
     contentLoadingVisibleTime = JsonDuration(contentLoadingVisibleDuration.toNanos()),
-    readLockWaitingVisibleTime = JsonDuration(readLockWaitingVisibleDuration.toNanos()),
     refreshedFilesScanTime = JsonDuration(refreshedScanFilesDuration.toNanos()),
     isAppliedAllValuesSeparately = appliedAllValuesSeparately,
     separateApplyingIndexesVisibleTime = JsonDuration(separateValueApplicationVisibleTime),
@@ -176,7 +173,6 @@ private fun ProjectScanningHistoryImpl.changeToJson(): JsonProjectScanningHistor
 private fun ProjectDumbIndexingHistoryImpl.changeToJson(): JsonProjectDumbIndexingHistory {
   val timesImpl = times as ProjectDumbIndexingHistoryImpl.DumbIndexingTimesImpl
   timesImpl.contentLoadingVisibleDuration = Duration.ofNanos(providerStatistics.sumOf { it.contentLoadingVisibleTime.nano })
-  timesImpl.readLockWaitingVisibleDuration = Duration.ofNanos(providerStatistics.sumOf { it.readActionWaitingVisibleTime.nano })
   if (providerStatistics.all { it.isAppliedAllValuesSeparately }) {
     timesImpl.appliedAllValuesSeparately = true
     timesImpl.separateValueApplicationVisibleTime = providerStatistics.sumOf { it.separateApplyingIndexesVisibleTime.nano }

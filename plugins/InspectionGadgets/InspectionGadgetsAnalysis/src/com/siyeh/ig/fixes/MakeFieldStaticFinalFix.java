@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -24,7 +27,7 @@ import com.siyeh.ig.psiutils.FinalUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class MakeFieldStaticFinalFix extends InspectionGadgetsFix {
+public final class MakeFieldStaticFinalFix extends PsiUpdateModCommandQuickFix {
 
   private final String fieldName;
 
@@ -33,13 +36,13 @@ public final class MakeFieldStaticFinalFix extends InspectionGadgetsFix {
   }
 
   @NotNull
-  public static InspectionGadgetsFix buildFixUnconditional(
+  public static LocalQuickFix buildFixUnconditional(
     @NotNull PsiField field) {
     return new MakeFieldStaticFinalFix(field.getName());
   }
 
   @Nullable
-  public static InspectionGadgetsFix buildFix(PsiField field) {
+  public static LocalQuickFix buildFix(PsiField field) {
     final PsiExpression initializer = field.getInitializer();
     if (initializer == null) {
       return null;
@@ -64,8 +67,7 @@ public final class MakeFieldStaticFinalFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiField field)) {
       return;

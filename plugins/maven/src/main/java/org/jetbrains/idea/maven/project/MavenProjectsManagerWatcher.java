@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -34,6 +35,7 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.ArrayList;
@@ -103,7 +105,7 @@ public final class MavenProjectsManagerWatcher {
   @TestOnly
   public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
     myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
-    scheduleUpdateAll(new MavenImportSpec(false, true, true));
+    scheduleUpdateAll(new MavenImportSpec(true, true, true));
   }
 
   public synchronized void removeManagedFiles(List<VirtualFile> files) {
@@ -125,6 +127,10 @@ public final class MavenProjectsManagerWatcher {
       return MavenImportingManager.getInstance(myProject).scheduleImportAll(spec).getFinishPromise().then(it -> null);
     }
 
+    if (MavenUtil.updateSuspendable()) {
+      return scheduleUpdateAllSuspendable(spec);
+    }
+
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     // display all import activities using the same build progress
     MavenSyncConsole.startTransaction(myProject);
@@ -140,13 +146,84 @@ public final class MavenProjectsManagerWatcher {
     return promise;
   }
 
-  public Promise<Void> scheduleUpdate(List<VirtualFile> filesToUpdate,
-                                      List<VirtualFile> filesToDelete,
+  /**
+   * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
+   * if project is closed)
+   */
+  private Promise<Void> scheduleUpdateAllSuspendable(MavenImportSpec spec) {
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      updateAllMavenProjectsSync(spec, promise);
+    }
+    else {
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
+        updateAllMavenProjectsSync(spec, promise);
+      });
+    }
+
+    return promise;
+  }
+
+  private void updateAllMavenProjectsSync(MavenImportSpec spec, AsyncPromise<Void> promise) {
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+    try {
+      projectsManager.updateAllMavenProjectsSync(spec);
+      promise.setResult(null);
+    }
+    catch (Exception e) {
+      promise.setError(e);
+    }
+  }
+
+  private Promise<Void> scheduleUpdateSuspendable(MavenImportSpec spec,
+                                                  List<VirtualFile> filesToUpdate,
+                                                  List<VirtualFile> filesToDelete) {
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        updateMavenProjectsSync(spec, filesToUpdate, filesToDelete, promise);
+      }
+      else {
+        MavenLog.LOG.warn("updateAllMavenProjectsSync skipped in write action");
+      }
+    }
+    else {
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
+        updateMavenProjectsSync(spec, filesToUpdate, filesToDelete, promise);
+      });
+    }
+
+    return promise;
+  }
+
+  private void updateMavenProjectsSync(MavenImportSpec spec,
+                                       List<VirtualFile> filesToUpdate,
+                                       List<VirtualFile> filesToDelete,
+                                       AsyncPromise<Void> promise) {
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+    try {
+      projectsManager.updateMavenProjectsSync(spec, filesToUpdate, filesToDelete);
+      promise.setResult(null);
+    }
+    catch (Exception e) {
+      promise.setError(e);
+    }
+  }
+
+  public Promise<Void> scheduleUpdate(@NotNull List<VirtualFile> filesToUpdate,
+                                      @NotNull List<VirtualFile> filesToDelete,
                                       MavenImportSpec spec) {
 
     if (MavenUtil.isLinearImportEnabled()) {
       return MavenImportingManager.getInstance(myProject).scheduleUpdate(filesToUpdate, filesToDelete, spec).getFinishPromise().then(it -> null);
     }
+
+    if (MavenUtil.updateSuspendable()) {
+      return scheduleUpdateSuspendable(spec, filesToUpdate, filesToDelete);
+    }
+
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     // display all import activities using the same build progress
     MavenSyncConsole.startTransaction(myProject);
@@ -158,7 +235,7 @@ public final class MavenProjectsManagerWatcher {
                   ". Files to update: " + filesToUpdate + ". Files to delete: " + filesToDelete);
       }
 
-      scheduleReadingTask(new MavenProjectsProcessorReadingTask(
+      scheduleReadingTask(new MavenProjectsProcessorDeltaReadingTask(
         filesToUpdate, filesToDelete, spec.isForceReading(), myProjectsTree, myGeneralSettings, onCompletion));
     }
     finally {
@@ -172,7 +249,7 @@ public final class MavenProjectsManagerWatcher {
   /**
    * All changed documents must be saved before reading
    */
-  private void scheduleReadingTask(@NotNull MavenProjectsProcessorReadingTask readingTask) {
+  private void scheduleReadingTask(@NotNull MavenProjectsProcessorTask readingTask) {
     myReadingProcessor.scheduleTask(readingTask);
   }
 
@@ -186,9 +263,13 @@ public final class MavenProjectsManagerWatcher {
 
       if (spec.isForceResolve()) {
         MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-        projectsManager.scheduleImportAndResolve(spec)
-          .onSuccess(modules -> promise.setResult(null))
-          .onError(t -> promise.setError(t));
+        try {
+          projectsManager.resolveAndImportMavenProjectsSync(spec);
+          promise.setResult(null);
+        }
+        catch (Exception e) {
+          promise.setError(e);
+        }
       }
       else {
         promise.setResult(null);

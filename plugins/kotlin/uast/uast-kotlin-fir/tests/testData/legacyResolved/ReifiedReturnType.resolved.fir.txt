@@ -77,12 +77,12 @@ UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifie
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
 UTypeReferenceExpression (name = B) -> USimpleNameReferenceExpression (identifier = B) -> Kotlin_Light_Type_Parameter: B
 UTypeReferenceExpression (name = B) -> USimpleNameReferenceExpression (identifier = B) -> Kotlin_Light_Type_Parameter: B
-null -> USimpleNameReferenceExpression (identifier = T) -> null: null
+null -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
 UTypeReferenceExpression (name = java.lang.CharSequence) -> USimpleNameReferenceExpression (identifier = CharSequence) -> Decompiled_Class: CharSequence
-null -> USimpleNameReferenceExpression (identifier = T) -> null: null
+null -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
 UTypeReferenceExpression (name = java.lang.Comparable<? super T>) -> USimpleNameReferenceExpression (identifier = Comparable) -> Decompiled_Class: Comparable
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
-null -> USimpleNameReferenceExpression (identifier = B) -> null: null
+null -> USimpleNameReferenceExpression (identifier = B) -> Kotlin_Light_Type_Parameter: B
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
     UReturnExpression -> USimpleNameReferenceExpression (identifier = threshold2) -> Kotlin_Light_Value_Parameter: threshold2
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T

@@ -2,6 +2,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
@@ -9,7 +10,6 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddThisQualifierFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ public class UnqualifiedMethodAccessInspection extends BaseInspection implements
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     final PsiReferenceExpression expressionToQualify = (PsiReferenceExpression)infos[0];
     final PsiMethod methodAccessed = (PsiMethod)infos[1];
     return AddThisQualifierFix.buildFix(expressionToQualify, methodAccessed);

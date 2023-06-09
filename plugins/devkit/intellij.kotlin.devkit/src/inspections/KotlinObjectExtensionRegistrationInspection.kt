@@ -23,10 +23,12 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import java.util.function.Predicate
 
-class KotlinObjectExtensionRegistrationInspection : DevKitPluginXmlInspectionBase() {
+internal class KotlinObjectExtensionRegistrationInspection : DevKitPluginXmlInspectionBase() {
 
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
     val extension = element as? Extension ?: return
+    if (!isAllowed(holder)) return
+
     if (extension.isAllowed()) return
     for (classNameDomValue in extension.getClassNameDomValues()) {
       if (classNameDomValue.isKotlinObjectReference()) {

@@ -15,8 +15,7 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -48,12 +47,12 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection impleme
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     final String methodName = (String)infos[0];
     return new SwapEqualsFix(methodName);
   }
 
-  private static class SwapEqualsFix extends InspectionGadgetsFix {
+  private static class SwapEqualsFix extends PsiUpdateModCommandQuickFix {
 
     private final String myMethodName;
 
@@ -75,8 +74,8 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection impleme
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiExpression argument = (PsiExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiExpression argument = (PsiExpression)startElement;
       final PsiElement argumentList = PsiUtil.skipParenthesizedExprUp(argument.getParent());
       final PsiMethodCallExpression expression = (PsiMethodCallExpression)argumentList.getParent();
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();

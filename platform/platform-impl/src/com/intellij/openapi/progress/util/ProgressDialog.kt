@@ -32,7 +32,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
                      cancelText: @Nls String?,
                      private val myParentWindow: Window?) : Disposable {
   companion object {
-    const val UPDATE_INTERVAL = 50 //msec. 20 frames per second.
+    const val UPDATE_INTERVAL: Int = 50 //msec. 20 frames per second.
   }
 
   private var myLastTimeDrawn: Long = -1

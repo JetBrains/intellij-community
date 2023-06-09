@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -32,6 +32,8 @@ import static org.jetbrains.plugins.groovy.lang.resolve.CategoryMemberContributo
 import static org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor.processClassMixins;
 
 /**
+ * Allows to extend groovy programs with custom properties and methods.
+ * This is useful for implementing custom resolve algorithms and completion.
  * <p>
  * Contributor must check if the processor accepts the elements the contributor can offer.
  * Feeding processor with unnecessary elements which are then filtered away slows down the reference resolution.

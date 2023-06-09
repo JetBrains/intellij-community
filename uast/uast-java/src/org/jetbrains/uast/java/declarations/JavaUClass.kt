@@ -18,7 +18,7 @@ abstract class AbstractJavaUClass(
   abstract override val javaPsi: PsiClass
 
   @Suppress("OverridingDeprecatedMember")
-  override val psi get() = javaPsi
+  override val psi: PsiClass get() = javaPsi
 
   override val uastDeclarations: List<UDeclaration> by lazyPub {
     mutableListOf<UDeclaration>().apply {

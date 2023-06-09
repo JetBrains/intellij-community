@@ -72,7 +72,7 @@ class PydevConsoleCommunicationServer(project: Project,
 
   init {
     val serverHandler = createPythonConsoleFrontendHandler()
-    val serverProcessor = PythonConsoleFrontendService.Processor<PythonConsoleFrontendService.Iface>(serverHandler)
+    val serverProcessor = PythonConsoleFrontendService.Processor(serverHandler)
     //noinspection IOResourceOpenedButNotSafelyClosed
     serverTransport = TNettyServerTransport(host, port)
     server = TNettyServer(serverTransport, serverProcessor)

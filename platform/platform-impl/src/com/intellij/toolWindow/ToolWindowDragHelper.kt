@@ -1,17 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
+import com.intellij.ide.HelpTooltip
+import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ToolWindowAnchor.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.*
-import com.intellij.ui.ComponentUtil
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.MouseDragHelper
-import com.intellij.ui.ScreenUtil
+import com.intellij.ui.*
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -52,8 +52,11 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   private var dragMoreButton: MoreSquareStripeButton? = null
   private var dragMoreButtonNewSide: ToolWindowAnchor? = null
 
+  private var lastDropTooltipAnchor: ToolWindowMoveAction.Anchor? = null
+  private var dropTooltipPopup: JBPopup? = null
+
   companion object {
-    const val THUMB_OPACITY = .85f
+    const val THUMB_OPACITY: Float = .85f
 
     /**
      * Create a potentially scaled image of the component to use as a drag image
@@ -242,7 +245,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     val dialog = dragImageDialog ?: return
 
     val eventDevicePoint = DevicePoint(event)
-    val originalDialogSize = dialog.size
+    val originalDialogSize = dialog.preferredSize
 
     // Initial offset is relative to the original component and therefore in screen coordinates. The dialog size is a pixel size, and is the
     // same in all coordinates - it's not scaled between screens. This means it has the same size relative to the UI, but not the same
@@ -290,7 +293,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       else {
         dragMoreButtonNewSide = LEFT
       }
-      bounds.width = bounds.width / 3
+      bounds.width /= 3
       dropTargetHighlightComponent.bounds = bounds
       relocateImageDialog(event)
       return
@@ -309,6 +312,41 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       if (it != targetStripe) {
         removeDropTargetHighlighter(toolWindow.toolWindowManager.getToolWindowPane(it.paneId))
         it.resetDrop()
+      }
+    }
+
+    if (isNewUi) {
+      if (lastStripe == null) {
+        clearDropTooltip()
+      }
+      else {
+        val anchor = ToolWindowMoveAction.Anchor.getAnchor(lastStripe!!.anchor, lastStripe!!.getDropToSide() == true)
+        if (anchor !== lastDropTooltipAnchor) {
+          clearDropTooltip()
+          lastDropTooltipAnchor = anchor
+
+          val tooltip = HelpTooltip()
+          tooltip.setTitle(UIBundle.message("tool.window.move.to.action.group.name") + " " + anchor.toString())
+          dropTooltipPopup = HelpTooltip.initPopupBuilder(tooltip.createTipPanel()).createPopup()
+        }
+
+        val bounds = dialog.bounds
+        val size = dropTooltipPopup!!.content.preferredSize
+        val location = Point(0, bounds.y + (bounds.height - size.height) / 2)
+
+        if (anchor.toString().lowercase().contains("left")) {
+          location.x = bounds.x + bounds.width + JBUI.scale(10)
+        }
+        else {
+          location.x = bounds.x - JBUI.scale(10) - size.width
+        }
+
+        if (dropTooltipPopup!!.isVisible) {
+          dropTooltipPopup!!.setLocation(location)
+        }
+        else {
+          dropTooltipPopup!!.show(RelativePoint(location))
+        }
       }
     }
 
@@ -483,6 +521,17 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     dragMoreButton?.setDragState(false)
     dragMoreButton = null
     dragMoreButtonNewSide = null
+    clearDropTooltip()
+  }
+
+  private fun clearDropTooltip() {
+    val popup = dropTooltipPopup
+    dropTooltipPopup = null
+    lastDropTooltipAnchor = null
+
+    if (popup != null && popup.isVisible) {
+      popup.cancel()
+    }
   }
 
   private fun addDropTargetHighlighter(pane: ToolWindowPane) {

@@ -20,7 +20,7 @@ import javax.swing.JLabel
  */
 @Deprecated("Use \"\" instead of this constant")
 @ApiStatus.ScheduledForRemoval
-val EMPTY_LABEL = ""
+val EMPTY_LABEL: String = ""
 
 @ApiStatus.NonExtendable
 @JvmDefaultWithCompatibility

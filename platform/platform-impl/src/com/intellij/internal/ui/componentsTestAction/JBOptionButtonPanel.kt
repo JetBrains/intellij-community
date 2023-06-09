@@ -2,6 +2,7 @@
 package com.intellij.internal.ui.componentsTestAction
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.messages.MessageDialog
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.dsl.builder.Panel
@@ -14,7 +15,7 @@ import javax.swing.Action
 @ApiStatus.Internal
 internal class JBOptionButtonPanel {
 
-  val panel = panel {
+  val panel: DialogPanel = panel {
     optionsRow(true, true)
     optionsRow(true, false)
     optionsRow(false, true)

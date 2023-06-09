@@ -4,6 +4,7 @@
 package com.intellij.util.progress
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.isInCancellableContext
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -48,8 +49,18 @@ fun Lock.lockCancellable() {
   LOG.assertTrue(isInCancellableContext())
   while (true) {
     ProgressManager.checkCanceled()
-    if (tryLock(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-      return
+    try {
+      if (tryLock(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+        return
+      }
+    }
+    catch (e: InterruptedException) {
+      //This code is a modern (less intricate) version of ProgressIndicatorUtils.awaitWithCheckCanceled().
+      // awaitWithCheckCanceled() doesn't throw InterruptedException, it wraps them into PCE -- and we better
+      // follow the same API here for more smooth transition -- especially important since kotlin code doesn't
+      // declare (checked) InterruptedException, that makes them an unexpected surprise when called from
+      // java code
+      throw ProcessCanceledException(e)
     }
   }
 }
@@ -73,11 +84,22 @@ fun Lock.withLockCancellable(action: Runnable) {
 }
 
 @RequiresBlockingContext
+@Throws(ProcessCanceledException::class)
 fun Lock.lockMaybeCancellable() {
   while (true) {
     ProgressManager.checkCanceled()
-    if (tryLock(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-      return
+    try {
+      if (tryLock(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+        return
+      }
+    }
+    catch (e: InterruptedException) {
+      //This code is a modern (less intricate) version of ProgressIndicatorUtils.awaitWithCheckCanceled().
+      // awaitWithCheckCanceled() doesn't throw InterruptedException, it wraps them into PCE -- and we better
+      // follow the same API here for more smooth transition -- especially important since kotlin code doesn't
+      // declare (checked) InterruptedException, that makes them an unexpected surprise when called from
+      // java code
+      throw ProcessCanceledException(e)
     }
   }
 }

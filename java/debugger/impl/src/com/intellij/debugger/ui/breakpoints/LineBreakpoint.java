@@ -13,6 +13,7 @@ import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
@@ -105,18 +107,29 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       return;
     }
     try {
-      List<Location> locations = debugProcess.getPositionManager().locationsOfLine(classType, getSourcePosition());
+      SourcePosition position = getSourcePosition();
+      List<Location> locations = debugProcess.getPositionManager().locationsOfLine(classType, position);
       if (!locations.isEmpty()) {
+        VirtualMachineProxyImpl vm = debugProcess.getVirtualMachineProxy();
         locations = StreamEx.of(locations).peek(loc -> {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Found location [codeIndex=" + loc.codeIndex() +
                       "] for reference type " + classType.name() +
                       " at line " + getLineIndex() +
-                      "; isObsolete: " + (debugProcess.getVirtualMachineProxy().versionHigher("1.4") && loc.method().isObsolete()));
+                      "; isObsolete: " + (vm.versionHigher("1.4") && loc.method().isObsolete()));
           }
         }).filter(l -> acceptLocation(debugProcess, classType, l)).toList();
 
-        if (myIgnoreSameLineLocations) {
+        if (getProperties() instanceof JavaLineBreakpointProperties props && props.isConditionalReturn()) {
+          if (vm.canGetBytecodes() && vm.canGetConstantPool()) {
+            locations = locations.stream()
+              .map(l -> l.method())
+              .distinct()
+              .flatMap(m -> JavaLineBreakpointType.collectInlineReturnLocations(m, position.getLine() + 1))
+              .toList();
+          }
+        }
+        else if (myIgnoreSameLineLocations) {
           locations = MethodBytecodeUtil.removeSameLineLocations(locations);
         }
 

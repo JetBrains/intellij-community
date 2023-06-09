@@ -57,7 +57,7 @@ class EnvironmentKeyStubGenerator : ModernApplicationStarter() {
   }
 
   companion object {
-    const val COMMAND_NAME = "generateEnvironmentKeysFile"
+    const val COMMAND_NAME: String = "generateEnvironmentKeysFile"
   }
 }
 

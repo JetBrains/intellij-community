@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
 import com.intellij.testFramework.ApplicationRule
@@ -21,9 +22,11 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import java.util.*
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.div
 import kotlin.io.path.writeText
 
@@ -247,11 +250,14 @@ internal class GitSettingsLogTest {
 
   @Test
   fun `do not fail if unknown gpg option is written in global config`() {
-    val editorXml = (configDir / "options" / "editor.xml").createFile()
-    editorXml.writeText("editorContent")
-    val settingsLog = initializeGitSettingsLog(editorXml)
+    val userHomeDefault = System.getProperty("user.home")
+    try {
+      val userHome = Files.createTempDirectory("gitSettingsLogTest")
+      System.setProperty("user.home", userHome.absolutePathString())
 
-    (settingsSyncStorage / ".git" / "config").writeText("""
+      val editorXml = (configDir / "options" / "editor.xml").createFile()
+      editorXml.writeText("editorContent")
+      (userHome / ".gitconfig").writeText("""
       [commit]
           gpgsign = true
       [user]
@@ -260,14 +266,19 @@ internal class GitSettingsLogTest {
 	        format = ssh
       [gpg "ssh"]
         allowedSignersFile = ~/.config/git/allowed_signers""".trimIndent())
+      val settingsLog = initializeGitSettingsLog(editorXml)
 
-    settingsLog.forceWriteToMaster(
-      settingsSnapshot {
+      settingsLog.forceWriteToMaster(
+        settingsSnapshot {
+          fileState("options/editor.xml", "ideEditorContent")
+        }, "Local changes"
+      )
+      settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
         fileState("options/editor.xml", "ideEditorContent")
-      }, "Local changes"
-    )
-    settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
-      fileState("options/editor.xml", "ideEditorContent")
+      }
+    }
+    finally {
+      System.setProperty("user.home", userHomeDefault)
     }
   }
 
@@ -370,6 +381,30 @@ internal class GitSettingsLogTest {
 
   @Test
   fun `use username from JBA`() {
+    val jbaEmail = "some-jba-email@jba-mail.com"
+    val jbaName = "JBA Name"
+
+    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", jbaName, jbaEmail)
+    checkUsernameEmail(jbaName, jbaEmail)
+  }
+
+  @Test
+  @TestFor(issues = ["EA-844607"])
+  fun `use empty email if JBA doesn't provide one`() {
+    val jbaName = "JBA Name 2"
+
+    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", jbaName, null)
+    checkUsernameEmail(jbaName, "")
+  }
+
+  @Test
+  @TestFor(issues = ["EA-844607"])
+  fun `use empty name if JBA doesn't provide one`() {
+    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", null, null)
+    checkUsernameEmail("", "")
+  }
+
+  private fun checkUsernameEmail(expectedName: String, expectedEmail: String) {
     val editorXml = (configDir / "options" / "editor.xml").createFile()
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
@@ -378,13 +413,6 @@ internal class GitSettingsLogTest {
         name = Gawr Gura
         email = just-email@non-existing.addr
 """.trimIndent())
-
-
-    val jbaEmail = "some-jba-email@jba-mail.com"
-    val jbaName = "JBA Name"
-
-    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", jbaName, jbaEmail)
-
     settingsLog.applyIdeState(
       settingsSnapshot {
         fileState("options/editor.xml", "Editor Ide")
@@ -394,10 +422,10 @@ internal class GitSettingsLogTest {
     val headCommit = getRepository().headCommit()
     val author = headCommit.authorIdent
     val committer = headCommit.committerIdent
-    assertEquals(jbaEmail, author.emailAddress)
-    assertEquals(jbaEmail, committer.emailAddress)
-    assertEquals(jbaName, author.name)
-    assertEquals(jbaName, committer.name)
+    assertEquals(expectedEmail, author.emailAddress)
+    assertEquals(expectedEmail, committer.emailAddress)
+    assertEquals(expectedName, author.name)
+    assertEquals(expectedName, committer.name)
   }
 
   private fun initializeGitSettingsLog(vararg filesToCopyInitially: Path): GitSettingsLog {
@@ -428,14 +456,16 @@ internal class GitSettingsLogTest {
         val ide = repository.findRef("ide")!!
         val cloud = repository.findRef("cloud")!!
         val (parent1, parent2) = parents
-        if (parent1.id == ide.objectId) {
-          assertTrue(parent2.id == cloud.objectId)
-        }
-        else if (parent1.id == cloud.objectId) {
-          assertTrue(parent2.id == ide.objectId)
-        }
-        else {
-          fail("Neither ide nor cloud are parents of master")
+        when (parent1.id) {
+          ide.objectId -> {
+            assertTrue(parent2.id == cloud.objectId)
+          }
+          cloud.objectId -> {
+            assertTrue(parent2.id == ide.objectId)
+          }
+          else -> {
+            fail("Neither ide nor cloud are parents of master")
+          }
         }
         walk.dispose()
       }

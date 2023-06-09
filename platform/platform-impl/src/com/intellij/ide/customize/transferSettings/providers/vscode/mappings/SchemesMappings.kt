@@ -1,9 +1,10 @@
 package com.intellij.ide.customize.transferSettings.providers.vscode.mappings
 
 import com.intellij.ide.customize.transferSettings.db.KnownColorSchemes
+import com.intellij.ide.customize.transferSettings.models.BundledEditorColorScheme
 
 object SchemesMappings {
-  fun schemeMap(scheme: String) = when (scheme) {
+  fun schemeMap(scheme: String): BundledEditorColorScheme = when (scheme) {
     "vs" -> KnownColorSchemes.Light
     "vs-dark" -> KnownColorSchemes.Darcula
     "hc-black" -> KnownColorSchemes.HighContrast

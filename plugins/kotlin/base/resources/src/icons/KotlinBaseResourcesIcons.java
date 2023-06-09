@@ -25,7 +25,7 @@ public final class KotlinBaseResourcesIcons {
   /** 16x16 */ public static final @NotNull Icon Expect = load("org/jetbrains/kotlin/idea/icons/expect.svg", 363067744, 1);
   /** 16x16 */ public static final @NotNull Icon Field_value = load("org/jetbrains/kotlin/idea/icons/field_value.svg", -325628794, 0);
   /** 16x16 */ public static final @NotNull Icon Field_variable = load("org/jetbrains/kotlin/idea/icons/field_variable.svg", 1413188893, 0);
-  /** 16x16 */ public static final @NotNull Icon Fir = load("org/jetbrains/kotlin/idea/icons/fir.svg", 1371508146, 0);
+  /** 16x16 */ public static final @NotNull Icon Fir = load("org/jetbrains/kotlin/idea/icons/fir.svg", 26181624, 0);
   /** 16x16 */ public static final @NotNull Icon InterfaceKotlin = load("org/jetbrains/kotlin/idea/icons/interfaceKotlin.svg", 753679007, 1);
   /** 16x16 */ public static final @NotNull Icon Kotlin = load("org/jetbrains/kotlin/idea/icons/kotlin.svg", -670251469, 0);
   /** 13x13 */ public static final @NotNull Icon Kotlin13 = load("org/jetbrains/kotlin/idea/icons/kotlin13.svg", -2024283106, 0);
@@ -45,7 +45,7 @@ public final class KotlinBaseResourcesIcons {
 
   public static final class Wizard {
     /** 16x16 */ public static final @NotNull Icon Android = load("org/jetbrains/kotlin/idea/icons/wizard/android.svg", -1326579908, 0);
-    /** 16x16 */ public static final @NotNull Icon Compose = load("org/jetbrains/kotlin/idea/icons/wizard/compose.svg", -1841956116, 0);
+    /** 16x16 */ public static final @NotNull Icon Compose = load("org/jetbrains/kotlin/idea/icons/wizard/compose.svg", 507227494, 0);
     /** 16x16 */ public static final @NotNull Icon Console = load("org/jetbrains/kotlin/idea/icons/wizard/console.svg", 1289322946, 0);
     /** 16x16 */ public static final @NotNull Icon Ios = load("org/jetbrains/kotlin/idea/icons/wizard/ios.svg", 713314826, 0);
     /** 16x16 */ public static final @NotNull Icon JS = load("org/jetbrains/kotlin/idea/icons/wizard/js.svg", -1754026525, 0);
@@ -57,7 +57,7 @@ public final class KotlinBaseResourcesIcons {
     /** 16x16 */ public static final @NotNull Icon MultiplatformMobile = load("org/jetbrains/kotlin/idea/icons/wizard/multiplatformMobile.svg", 2146171055, 0);
     /** 16x16 */ public static final @NotNull Icon MultiplatformMobileLibrary = load("org/jetbrains/kotlin/idea/icons/wizard/multiplatformMobileLibrary.svg", 1860899803, 0);
     /** 16x16 */ public static final @NotNull Icon Native = load("org/jetbrains/kotlin/idea/icons/wizard/native.svg", 1370229751, 0);
-    /** 16x16 */ public static final @NotNull Icon Nodejs = load("org/jetbrains/kotlin/idea/icons/wizard/nodejs.svg", -777923678, 2);
+    /** 16x16 */ public static final @NotNull Icon Nodejs = load("org/jetbrains/kotlin/idea/icons/wizard/nodejs.svg", 29715953, 2);
     /** 16x16 */ public static final @NotNull Icon PpWeb = load("org/jetbrains/kotlin/idea/icons/wizard/ppWeb.svg", -1741405143, 0);
     /** 16x16 */ public static final @NotNull Icon React = load("org/jetbrains/kotlin/idea/icons/wizard/react.svg", -546671193, 0);
     /** 16x16 */ public static final @NotNull Icon Windows = load("org/jetbrains/kotlin/idea/icons/wizard/windows.svg", 843099969, 0);

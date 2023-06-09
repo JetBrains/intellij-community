@@ -339,7 +339,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
               throw reThrown;
             }
             catch (Throwable t) {
-              request.processException(indicator, t);
+              indicator.checkCanceled();
+              request.processException(t);
             }
           }
         }
@@ -411,7 +412,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      mySpan = TelemetryTracer.getInstance().getTracer(VcsScope).spanBuilder("indexing").startSpan();
+      mySpan = TelemetryTracer.getInstance().getTracer(VcsScope).spanBuilder("git-log-indexing").startSpan();
       myScope = mySpan.makeCurrent();
       myStartTime = getCurrentTimeMillis();
 
@@ -443,7 +444,12 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         throw e;
       }
       catch (VcsException e) {
-        processException(indicator, e);
+        if (indicator.isCanceled()) {
+          performCommit = true;
+          scheduleReindex();
+          throw new ProcessCanceledException();
+        }
+        processException(e);
         scheduleReindex();
       }
       finally {
@@ -469,9 +475,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       }
     }
 
-    private void processException(@NotNull ProgressIndicator indicator, @NotNull Throwable e) {
-      indicator.checkCanceled();
-
+    private void processException(@NotNull Throwable e) {
       int errorHash = ThrowableInterner.computeTraceHashCode(e);
       int errors = myIndexingErrors.get(myRoot).cacheOrGet(errorHash, 0);
       myIndexingErrors.get(myRoot).put(errorHash, errors + 1);
@@ -491,7 +495,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
     private void report() {
       String formattedTime = StopWatch.formatTime(getCurrentTimeMillis() - myStartTime);
-      mySpan.setAttribute("numberOfCommits", myNewIndexedCommits.get());
+      mySpan.setAttribute("numberOfCommits-" + myRoot.getName(), myNewIndexedCommits.get());
       mySpan.setAttribute("rootName", myRoot.getName());
       if (myFull) {
         LOG.info(formattedTime +

@@ -134,7 +134,7 @@ internal class SelectInProjectViewImpl(
         val virtualFile: VirtualFile?,
       )
       val context = readAction {
-        val elementToSelect = elementSupplier.get() ?: return@readAction null
+        val elementToSelect = elementSupplier.get() ?: virtualFile ?: return@readAction null
         SelectionContext(
 visibleAndSelectedUserObject != null && visibleAndSelectedUserObject.canRepresent(elementToSelect),
 virtualFile ?: (elementToSelect as? PsiElement)?.virtualFile

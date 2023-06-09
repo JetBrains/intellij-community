@@ -8,6 +8,37 @@ attrib
 az
 brew
 cargo
+cargo bench
+cargo build
+cargo check
+cargo clean
+cargo doc
+cargo fetch
+cargo fix
+cargo run
+cargo rustc
+cargo rustdoc
+cargo test
+cargo report
+cargo add
+cargo generate-lockfile
+cargo locale-project
+cargo metadata
+cargo pkgid
+cargo remove
+cargo tree
+cargo update
+cargo vendor
+cargo verify-project
+cargo init
+cargo install
+cargo new
+cargo search
+cargo uninstall
+cargo help
+cargo version
+cargo fmt
+cargo miri
 cat
 cd
 chkdsk
@@ -19,6 +50,37 @@ cls
 code
 command
 compact
+composer
+composer audit
+composer bump
+composer check-platform-reqs
+composer clear-cache
+composer completion
+composer config
+composer create-project
+composer depends
+composer diagnose
+composer dump-autoload
+composer exec
+composer global
+composer help
+composer init
+composer install
+composer licenses
+composer list
+composer outdated
+composer prohibits
+composer reinstall
+composer remove
+composer require
+composer run-script
+composer search
+composer self-update
+composer show
+composer status
+composer suggests
+composer validate
+composer update
 copy
 cp
 curl

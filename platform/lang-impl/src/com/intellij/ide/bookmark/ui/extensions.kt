@@ -20,6 +20,7 @@ import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
@@ -29,13 +30,13 @@ import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Component
 import javax.swing.tree.TreePath
 
-internal val TreePath.asAbstractTreeNode
+internal val TreePath.asAbstractTreeNode: AbstractTreeNode<*>?
   get() = TreeUtil.getAbstractTreeNode(this)
 
-internal val TreePath.findFolderNode
+internal val TreePath.findFolderNode: FolderNode?
   get() = TreeUtil.findObjectInPath(this, FolderNode::class.java)
 
-internal val AbstractTreeNode<*>.bookmarkOccurrence
+internal val AbstractTreeNode<*>.bookmarkOccurrence: BookmarkOccurrence?
   get() = (this as? BookmarkNode<*>)?.run { bookmarkGroup?.let { BookmarkOccurrence(it, value) } }
 
 internal val AbstractTreeNode<*>.asDescriptor: OpenFileDescriptor?
@@ -46,7 +47,7 @@ internal val AbstractTreeNode<*>.asDescriptor: OpenFileDescriptor?
     return descriptor ?: asVirtualFile?.let { OpenFileDescriptor(project, it) }
   }
 
-internal val AbstractTreeNode<*>.asVirtualFile
+internal val AbstractTreeNode<*>.asVirtualFile: VirtualFile?
   get() = (this as? ProjectViewNode<*>)?.virtualFile
 
 internal val AbstractTreeNode<*>.module: Module?

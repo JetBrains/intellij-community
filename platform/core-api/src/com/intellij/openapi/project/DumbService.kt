@@ -374,7 +374,7 @@ abstract class DumbService {
   companion object {
     @JvmField
     @Topic.ProjectLevel
-    val DUMB_MODE = Topic("dumb mode", DumbModeListener::class.java, Topic.BroadcastDirection.NONE)
+    val DUMB_MODE: Topic<DumbModeListener> = Topic("dumb mode", DumbModeListener::class.java, Topic.BroadcastDirection.NONE)
 
     @JvmStatic
     fun isDumb(project: Project): Boolean {

@@ -63,7 +63,9 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
         AllIcons.Actions.More, null,
         IdeBundle.message("tooltip.turn.notification.off"),
         event -> myBalloon.runWithSmartFadeoutPause(() -> {
-          showMorePopup();
+          if (!myBalloon.isDisposed()) {
+            showMorePopup();
+          }
         })) {
         @Override
         public void repaint() {

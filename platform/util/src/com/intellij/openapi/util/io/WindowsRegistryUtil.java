@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -18,8 +18,7 @@ import java.util.List;
 public final class WindowsRegistryUtil {
   private WindowsRegistryUtil() { }
 
-  @Nullable
-  private static String trimToValue(@Nullable StringBuilder output) {
+  private static @Nullable String trimToValue(@Nullable StringBuilder output) {
     if (output == null) {
       return null;
     }
@@ -51,8 +50,7 @@ public final class WindowsRegistryUtil {
     return output.subSequence(startPos, endPos + 1).toString();
   }
 
-  @NotNull
-  public static List<String> readRegistryBranch(@NotNull String location) {
+  public static @NotNull List<String> readRegistryBranch(@NotNull String location) {
     List<String> result = new ArrayList<>();
     StringBuilder output = doReadBranch(location);
     if (output != null) {
@@ -74,18 +72,15 @@ public final class WindowsRegistryUtil {
     return readRegistrySilently("reg query \"" + location + "\"");
   }
 
-  @Nullable
-  public static String readRegistryDefault(@NonNls @NotNull String location) {
+  public static @Nullable String readRegistryDefault(@NonNls @NotNull String location) {
     return trimToValue(readRegistrySilently("reg query \"" + location + "\" /ve"));
   }
 
-  @Nullable
-  public static String readRegistryValue(@NonNls @NotNull String location, @NonNls @NotNull String key) {
+  public static @Nullable String readRegistryValue(@NonNls @NotNull String location, @NonNls @NotNull String key) {
     return trimToValue(readRegistrySilently("reg query \"" + location + "\" /v " + key));
   }
 
-  @Nullable
-  private static StringBuilder readRegistrySilently(@NonNls @NotNull String command) {
+  private static @Nullable StringBuilder readRegistrySilently(@NonNls @NotNull String command) {
     try {
       String text = readRegistry(command);
       return new StringBuilder(text);
@@ -95,8 +90,8 @@ public final class WindowsRegistryUtil {
     }
   }
 
-  @NotNull @ApiStatus.Internal
-  public static String readRegistry(@NonNls @NotNull String command) throws IOException, InterruptedException {
+  @ApiStatus.Internal
+  public static @NotNull String readRegistry(@NonNls @NotNull String command) throws IOException, InterruptedException {
     Process process = Runtime.getRuntime().exec(command);
     InputStream is = null;
     ByteArrayOutputStream os = null;

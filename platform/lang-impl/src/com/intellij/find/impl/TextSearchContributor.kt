@@ -11,7 +11,7 @@ import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.actions.SearchEverywhereClassifier
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.createContext
-import com.intellij.ide.util.RunOnceUtil
+import com.intellij.ide.actions.searcheverywhere.footer.createTextExtendedInfo
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeModel
 import com.intellij.openapi.Disposable
@@ -23,18 +23,17 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Key
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.reference.SoftReference
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
-import com.intellij.util.PlatformUtils
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import javax.swing.ListCellRenderer
@@ -79,11 +78,11 @@ class TextSearchContributor(
     return if (secondScope != null) secondScope.scope as GlobalSearchScope? else everywhereScope
   }
 
-  override fun getSearchProviderId() = ID
-  override fun getGroupName() = FindBundle.message("search.everywhere.group.name")
-  override fun getSortWeight() = 1500
-  override fun showInFindResults() = enabled()
-  override fun isShownInSeparateTab() = true
+  override fun getSearchProviderId(): String = ID
+  override fun getGroupName(): @Nls String = FindBundle.message("search.everywhere.group.name")
+  override fun getSortWeight(): Int = 1500
+  override fun showInFindResults(): Boolean = enabled()
+  override fun isShownInSeparateTab(): Boolean = true
 
   override fun fetchWeightedElements(pattern: String,
                                      indicator: ProgressIndicator,
@@ -128,7 +127,7 @@ class TextSearchContributor(
   override fun getActions(onChanged: Runnable): List<AnAction> =
     listOf(ScopeAction { onChanged.run() }, JComboboxAction(project) { onChanged.run() }.also { onDispose = it.saveMask })
 
-  override fun createRightActions(onChanged: Runnable): List<TextSearchRightActionAction> {
+  override fun createRightActions(pattern: String, onChanged: Runnable): List<TextSearchRightActionAction> {
     lateinit var regexp: AtomicBooleanProperty
     val word = AtomicBooleanProperty(model.isWholeWordsOnly).apply {
       afterChange {
@@ -175,8 +174,8 @@ class TextSearchContributor(
                                           setOf(ScopeModel.Option.LIBRARIES, ScopeModel.Option.EMPTY_SCOPES)))
   }
 
-  override fun getScope() = selectedScopeDescriptor
-  override fun getSupportedScopes() = createScopes()
+  override fun getScope(): ScopeDescriptor = selectedScopeDescriptor
+  override fun getSupportedScopes(): MutableList<ScopeDescriptor> = createScopes()
 
   override fun setScope(scope: ScopeDescriptor) {
     setSelectedScope(scope)
@@ -209,6 +208,8 @@ class TextSearchContributor(
     if (this::onDispose.isInitialized) onDispose()
   }
 
+  override fun createExtendedInfo() = createTextExtendedInfo()
+
   companion object {
     private const val ID = "TextSearchContributor"
     private const val ADVANCED_OPTION_ID = "se.text.search"
@@ -217,8 +218,8 @@ class TextSearchContributor(
     private fun enabled() = AdvancedSettings.getBoolean(ADVANCED_OPTION_ID)
 
     class Factory : SearchEverywhereContributorFactory<SearchEverywhereItem> {
-      override fun isAvailable(project: Project) = enabled()
-      override fun createContributor(event: AnActionEvent) = TextSearchContributor(event)
+      override fun isAvailable(project: Project): Boolean = enabled()
+      override fun createContributor(event: AnActionEvent): TextSearchContributor = TextSearchContributor(event)
     }
 
     class TextSearchAction : SearchEverywhereBaseAction(), DumbAware {

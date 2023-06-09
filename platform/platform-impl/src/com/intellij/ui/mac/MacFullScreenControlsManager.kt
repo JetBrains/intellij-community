@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac
 
+import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
@@ -17,7 +18,7 @@ import javax.swing.JFrame
  * @author Alexander Lobas
  */
 object MacFullScreenControlsManager {
-  fun enabled() = Registry.`is`("apple.awt.newFullScreeControls", true)
+  fun enabled(): Boolean = Registry.`is`("apple.awt.newFullScreeControls", true)
 
   fun configureEnable(parentDisposable: Disposable, block: () -> Unit) {
     val rKey = Registry.get("apple.awt.newFullScreeControls")
@@ -32,6 +33,10 @@ object MacFullScreenControlsManager {
 
     if (enabled()) {
       configureColors()
+    }
+
+    if (ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()) {
+      updateForDistractionFreeMode(true)
     }
   }
 

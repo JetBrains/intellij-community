@@ -4,6 +4,6 @@ class Main {
   }
 
   public static void main(int x, int y) {
-      <caret>printInt(y, y);
+    <caret>  printInt(y, y);
   }
 }

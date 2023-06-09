@@ -17,10 +17,9 @@ import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
-import org.jetbrains.kotlin.idea.base.codeInsight.getEntriesPropertyOfEnumClass
-import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
-import org.jetbrains.kotlin.idea.base.codeInsight.isSoftDeprecatedEnumValuesMethod
+import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.idea.base.codeInsight.*
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.DeprecationCollectingInspection
 import org.jetbrains.kotlin.idea.statistics.DeprecatedFeaturesInspectionData
@@ -56,7 +55,8 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
                         return
                     }
                     val enumEntriesPropertySymbol = getEntriesPropertyOfEnumClass(enumClassSymbol) ?: return
-                    val optInRequired = isOptInRequired(enumEntriesPropertySymbol) ?: return
+                    val moduleApiVersion = callExpression.languageVersionSettings.apiVersion
+                    val optInRequired = isOptInRequired(enumEntriesPropertySymbol, moduleApiVersion) ?: return
                     if (optInRequired && !isOptInAllowed(callExpression, EXPERIMENTAL_ANNOTATION_CLASS_ID)) {
                         return
                     }
@@ -71,8 +71,20 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
             })
         }
 
-    private fun KtAnalysisSession.isOptInRequired(enumEntriesPropertySymbol: KtCallableSymbol): Boolean? =
-        enumEntriesPropertySymbol.returnType.expandedClassSymbol?.hasAnnotation(EXPERIMENTAL_ANNOTATION_CLASS_ID)
+    private fun KtAnalysisSession.isOptInRequired(
+        enumEntriesPropertySymbol: KtCallableSymbol,
+        moduleApiVersion: ApiVersion,
+    ): Boolean? {
+        val enumEntriesClass = enumEntriesPropertySymbol.returnType.expandedClassSymbol
+            ?: return null
+        if (enumEntriesClass.hasAnnotation(EXPERIMENTAL_ANNOTATION_CLASS_ID)) {
+            return true
+        }
+        val necessaryOptIns = WasExperimentalOptInsNecessityChecker.getNecessaryOptInsFromWasExperimental(
+            enumEntriesClass.annotationsList, moduleApiVersion,
+        )
+        return EXPERIMENTAL_ANNOTATION_CLASS_ID in necessaryOptIns
+    }
 
     protected abstract fun KtAnalysisSession.isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean
 

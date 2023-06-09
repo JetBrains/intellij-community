@@ -22,6 +22,8 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabPersistentAccounts"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager"
                         serviceImplementation="org.jetbrains.plugins.gitlab.authentication.accounts.PersistentGitLabAccountManager"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gitlab.GitLabServersManager"
+                        serviceImplementation="org.jetbrains.plugins.gitlab.CachingGitLabServersManager"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.gitlab.GitLabProjectsManager"
                     serviceImplementation="org.jetbrains.plugins.gitlab.GitLabProjectsManagerImpl"/>
@@ -38,21 +40,34 @@
     <virtualFileSystem key="gitlabmr" implementationClass="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabVirtualFileSystem"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabFileEditorProvider"/>
     <diff.DiffExtension implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffExtension"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider
+      implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestShowDiffActionProvider"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
+      implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestShowDiffActionProvider"/>
     <iconMapper mappingFile="GitlabIconMappings.json"/>
+
+    <statistics.applicationUsagesCollector
+      implementation="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabAccountsStatisticsCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
-    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.gitlab.git.http.GitLabGitHttpAuthDataProvider"/>
+    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.gitlab.git.http.GitLabSilentHttpAuthDataProvider"/>
+    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.gitlab.git.http.GitLabHttpAuthDataProvider"/>
   </extensions>
 
   <actions>
+    <action id="GitLab.Open.Settings.Page" class="org.jetbrains.plugins.gitlab.GitLabOpenSettingsPageAction"/>
+    
     <action id="GitLab.Merge.Request.List.Refresh"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestListRefreshAction"
             use-shortcut-of="Refresh"
             icon="AllIcons.Actions.Refresh"/>
     <action id="GitLab.Merge.Request.Refresh"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRefreshAction"
-            use-shortcut-of="Refresh"/>
+            use-shortcut-of="Refresh"
+            icon="AllIcons.Actions.Refresh"/>
     <action id="GitLab.Merge.Request.Branch.Checkout.Remote"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCheckoutRemoteBranchAction"/>
     <action id="GitLab.Merge.Request.Show"
@@ -68,6 +83,10 @@
     </group>
 
     <group id="GitLab.Merge.Request.Details.Popup">
+      <reference id="GitLab.Merge.Request.Refresh"/>
+    </group>
+
+    <group id="GitLab.Merge.Request.Timeline.Popup">
       <reference id="GitLab.Merge.Request.Refresh"/>
     </group>
 
@@ -92,5 +111,7 @@
                     relative-to-action="Vcs.Diff.ToggleDiffAligningMode"
                     anchor="before"/>
     </group>
+    <action id="GitLab.MergeRequest.Review.Submit"
+            class="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestDiffSubmitReviewAction"/>
   </actions>
 </idea-plugin>

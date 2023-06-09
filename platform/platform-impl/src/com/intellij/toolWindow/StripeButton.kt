@@ -102,14 +102,14 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
     }
   }
 
-  override fun getMnemonic() = mnemonic
+  override fun getMnemonic(): Int = mnemonic
 
   /**
    * We are using the trick here: the method does all things that super method does
    * except firing of the MNEMONIC_CHANGED_PROPERTY event. After that mnemonic
    * doesn't work via standard Swing rules (processing of Alt keystrokes).
    */
-  override fun setMnemonic(mnemonic: Int) = throw UnsupportedOperationException("use setMnemonic2(int)")
+  override fun setMnemonic(mnemonic: Int): Nothing = throw UnsupportedOperationException("use setMnemonic2(int)")
 
   private fun setMnemonic2(mnemonic: Int) {
     this.mnemonic = mnemonic
@@ -118,9 +118,9 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
     repaint()
   }
 
-  override fun getMnemonic2() = mnemonic
+  override fun getMnemonic2(): Int = mnemonic
 
-  override fun getAnchor() = toolWindow.anchor
+  override fun getAnchor(): ToolWindowAnchor = toolWindow.anchor
 
   val isFirst: Boolean
     get() = `is`(true)

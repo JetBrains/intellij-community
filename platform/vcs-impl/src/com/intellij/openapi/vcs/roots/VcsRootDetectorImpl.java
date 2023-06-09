@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots;
 
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -40,7 +43,10 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
   public Collection<VcsRoot> detect() {
     MAPPING_DETECTION_LOG.debug("VcsRootDetectorImpl.detect");
     synchronized (LOCK) {
+      Activity activity = StartUpMeasurer.startActivity("VcsRootDetector.detect", ActivityCategory.DEFAULT);
       Collection<VcsRoot> roots = scanForRootsInContentRoots();
+      activity.end();
+
       myDetectedRoots = ContainerUtil.map(roots, DetectedVcsRoot::new);
       return roots;
     }

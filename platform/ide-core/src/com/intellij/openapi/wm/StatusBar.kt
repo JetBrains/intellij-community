@@ -27,7 +27,7 @@ import javax.swing.JComponent
 interface StatusBar : StatusBarInfo {
   object Info {
     @Topic.ProjectLevel
-    val TOPIC = Topic("IdeStatusBar.Text", StatusBarInfo::class.java, Topic.BroadcastDirection.NONE)
+    val TOPIC: Topic<StatusBarInfo> = Topic("IdeStatusBar.Text", StatusBarInfo::class.java, Topic.BroadcastDirection.NONE)
 
     @JvmOverloads
     @JvmStatic
@@ -106,12 +106,12 @@ interface StatusBar : StatusBarInfo {
   }
 
   object StandardWidgets {
-    const val ENCODING_PANEL = "Encoding"
+    const val ENCODING_PANEL: String = "Encoding"
     // keep the old ID for backwards compatibility
-    const val COLUMN_SELECTION_MODE_PANEL = "InsertOverwrite"
-    const val READONLY_ATTRIBUTE_PANEL = "ReadOnlyAttribute"
-    const val POSITION_PANEL = "Position"
-    const val LINE_SEPARATOR_PANEL = "LineSeparator"
+    const val COLUMN_SELECTION_MODE_PANEL: String = "InsertOverwrite"
+    const val READONLY_ATTRIBUTE_PANEL: String = "ReadOnlyAttribute"
+    const val POSITION_PANEL: String = "Position"
+    const val LINE_SEPARATOR_PANEL: String = "LineSeparator"
   }
 
   fun startRefreshIndication(tooltipText: @NlsContexts.Tooltip String?)

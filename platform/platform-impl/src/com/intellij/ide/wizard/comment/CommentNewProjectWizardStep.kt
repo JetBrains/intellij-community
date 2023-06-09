@@ -11,7 +11,7 @@ import javax.swing.event.HyperlinkEvent
 abstract class CommentNewProjectWizardStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent) {
   abstract val comment: @Nls(capitalization = Nls.Capitalization.Sentence) String
 
-  open val isFullWidth = true
+  open val isFullWidth: Boolean = true
 
   open fun onHyperlinkActivated(e: HyperlinkEvent) {
     HyperlinkEventAction.HTML_HYPERLINK_INSTANCE.hyperlinkActivated(e)

@@ -33,6 +33,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManagerListener.FILE_EDITOR_MANAGER
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
@@ -64,7 +65,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 internal class InitCtrlMouseHandlerActivity : ProjectActivity {
-  override suspend fun execute(project: Project) {
+  override suspend fun execute(project: Project) : Unit = blockingContext {
     project.service<CtrlMouseHandler2>()
   }
 }
@@ -202,7 +203,9 @@ class CtrlMouseHandler2(
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
       val result = compute(request)
       if (result != null) {
-        highlightAndHint(request, result)
+        blockingContext {
+          highlightAndHint(request, result)
+        }
       }
       else {
         clearState()

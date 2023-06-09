@@ -79,7 +79,7 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
     return null
   }
 
-  fun hasButtons() = topStripe.getButtons().isNotEmpty() || bottomStripe.getButtons().isNotEmpty()
+  fun hasButtons(): Boolean = topStripe.getButtons().isNotEmpty() || bottomStripe.getButtons().isNotEmpty()
 
   fun reset() {
     topStripe.reset()
@@ -91,7 +91,7 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
     repaint()
   }
 
-  fun stopDrag() = startDrag()
+  fun stopDrag(): Unit = startDrag()
 
   fun tryDroppingOnGap(data: LayoutData, gap: Int, dropRectangle: Rectangle, doLayout: () -> Unit) {
     val sideDistance = data.eachY + gap - dropRectangle.y + dropRectangle.height
@@ -222,7 +222,7 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
       return super.getToolWindowDropAreaScreenBounds()
     }
 
-    override fun getButtonFor(toolWindowId: String) = toolBar.getButtonFor(toolWindowId)
+    override fun getButtonFor(toolWindowId: String): StripeButtonManager? = toolBar.getButtonFor(toolWindowId)
 
     override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) {
       toolBar.tryDroppingOnGap(data, gap, dropRectangle) {
@@ -230,7 +230,7 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
       }
     }
 
-    override fun toString() = "StripeNewUi(anchor=$anchor)"
+    override fun toString(): String = "StripeNewUi(anchor=$anchor)"
   }
 
   protected open val accessibleGroupName: @NlsSafe String get() = UIBundle.message("toolbar.group.default.accessible.group.name")

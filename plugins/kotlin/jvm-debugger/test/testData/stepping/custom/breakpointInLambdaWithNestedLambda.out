@@ -1,0 +1,35 @@
+LineBreakpoint created at breakpointInLambdaWithNestedLambda.kt:19 lambdaOrdinal = 1
+LineBreakpoint created at breakpointInLambdaWithNestedLambda.kt:24 lambdaOrdinal = 1
+LineBreakpoint created at breakpointInLambdaWithNestedLambda.kt:31 lambdaOrdinal = 1
+LineBreakpoint created at breakpointInLambdaWithNestedLambda.kt:40 lambdaOrdinal = 1
+LineBreakpoint created at breakpointInLambdaWithNestedLambda.kt:45 lambdaOrdinal = 1
+LineBreakpoint created at breakpointInLambdaWithNestedLambda.kt:52 lambdaOrdinal = 1
+LineBreakpoint created at breakpointInLambdaWithNestedLambda.kt:63 lambdaOrdinal = 1
+LineBreakpoint created at breakpointInLambdaWithNestedLambda.kt:68 lambdaOrdinal = 1
+LineBreakpoint created at breakpointInLambdaWithNestedLambda.kt:77 lambdaOrdinal = 1
+LineBreakpoint created at breakpointInLambdaWithNestedLambda.kt:82 lambdaOrdinal = 1
+Run Java
+Connected to the target VM
+breakpointInLambdaWithNestedLambda.kt:19
+breakpointInLambdaWithNestedLambda.kt:5
+breakpointInLambdaWithNestedLambda.kt:25
+breakpointInLambdaWithNestedLambda.kt:5
+breakpointInLambdaWithNestedLambda.kt:32
+breakpointInLambdaWithNestedLambda.kt:5
+breakpointInLambdaWithNestedLambda.kt:40
+breakpointInLambdaWithNestedLambda.kt:5
+breakpointInLambdaWithNestedLambda.kt:46
+breakpointInLambdaWithNestedLambda.kt:5
+breakpointInLambdaWithNestedLambda.kt:53
+breakpointInLambdaWithNestedLambda.kt:5
+breakpointInLambdaWithNestedLambda.kt:63
+breakpointInLambdaWithNestedLambda.kt:6
+breakpointInLambdaWithNestedLambda.kt:69
+breakpointInLambdaWithNestedLambda.kt:6
+breakpointInLambdaWithNestedLambda.kt:77
+breakpointInLambdaWithNestedLambda.kt:6
+breakpointInLambdaWithNestedLambda.kt:83
+breakpointInLambdaWithNestedLambda.kt:6
+Disconnected from the target VM
+
+Process finished with exit code 0

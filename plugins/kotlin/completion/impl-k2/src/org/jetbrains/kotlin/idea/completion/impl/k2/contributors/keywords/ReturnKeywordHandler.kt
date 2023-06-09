@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
  * Implementation in K1: [org.jetbrains.kotlin.idea.completion.returnExpressionItems]
  */
 internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSession>(KtTokens.RETURN_KEYWORD) {
-    @OptIn(ExperimentalStdlibApi::class)
     override fun KtAnalysisSession.createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
@@ -87,7 +86,6 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSessio
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun KtAnalysisSession.getExpressionsToReturnByType(returnType: KtType): List<ExpressionTarget> = buildList {
         if (returnType.canBeNull) {
             add(ExpressionTarget("null", addToLookupElementTail = false))

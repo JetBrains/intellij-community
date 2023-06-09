@@ -26,7 +26,7 @@ class InlineCompletionCaretListener : CaretListener {
 
 @ApiStatus.Experimental
 class InlineCompletionFocusListener : FocusChangeListener {
-  override fun focusGained(editor: Editor) = Unit
+  override fun focusGained(editor: Editor) {}
   override fun focusLost(editor: Editor) {
     editor.resetInlineCompletionContext()
   }

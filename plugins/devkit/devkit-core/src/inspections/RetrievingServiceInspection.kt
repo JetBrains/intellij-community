@@ -31,13 +31,13 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
     return UastHintedVisitorAdapter.create(holder.file.language, object : AbstractUastNonRecursiveVisitor() {
 
       override fun visitCallExpression(node: UCallExpression): Boolean {
-        val retrievingExpression = node.uastParent as? UQualifiedReferenceExpression ?: return true
-        val serviceType = node.returnType as? PsiClassType ?: return true
         if (!COMPONENT_MANAGER_GET_SERVICE.uCallMatches(node)) return true
         val howServiceRetrieved = howServiceRetrieved(node) ?: return true
+        val serviceType = node.returnType as? PsiClassType ?: return true
         val serviceClass = serviceType.resolve()?.toUElement(UClass::class.java) ?: return true
         val serviceLevel = getLevelType(holder.project, serviceClass)
         if (isServiceRetrievedCorrectly(serviceLevel, howServiceRetrieved)) {
+          val retrievingExpression = node.uastParent as? UQualifiedReferenceExpression ?: return true
           checkIfCanBeReplacedWithGetInstance(retrievingExpression, howServiceRetrieved, serviceClass, holder)
         }
         else {

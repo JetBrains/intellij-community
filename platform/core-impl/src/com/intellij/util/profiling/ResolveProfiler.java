@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.profiling;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,7 +16,7 @@ import java.util.Deque;
  * @author Max Medvedev
  */
 public final class ResolveProfiler {
-  @NonNls private static final String PATH = "../../resolve_info/";
+  private static final @NonNls String PATH = "../../resolve_info/";
   private static final boolean DISABLED = true;
 
   private static final ThreadLocal<ThreadInfo> threadMap = new ThreadLocal<>();
@@ -32,8 +32,7 @@ public final class ResolveProfiler {
       myFileName = name;
     }
 
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return myFileName;
     }
 
@@ -88,8 +87,7 @@ public final class ResolveProfiler {
     }
   }
 
-  @NotNull
-  private static ThreadInfo getThreadInfo() {
+  private static @NotNull ThreadInfo getThreadInfo() {
     ThreadInfo info = threadMap.get();
     if (info == null) {
       synchronized (ResolveProfiler.class) {

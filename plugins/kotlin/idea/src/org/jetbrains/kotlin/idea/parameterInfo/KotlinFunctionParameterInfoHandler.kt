@@ -110,6 +110,8 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
             enhancedTypes = true
             renderUnabbreviatedType = false
         }
+
+        private const val SINGLE_LINE_PARAMETERS_COUNT = 3
     }
 
     private fun findCall(argumentList: TArgumentList, bindingContext: BindingContext): Call? {
@@ -224,6 +226,7 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
             val usedParameterIndices = HashSet<Int>()
             var namedMode = false
             var argumentIndex = 0
+            val parameterDelimiterIndexes = mutableListOf<Int>()
 
             if (call.callType == Call.CallType.ARRAY_SET_METHOD) {
                 // for set-operator the last parameter is used for the value assigned
@@ -241,10 +244,11 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
 
                 if (length > 0) {
                     append(", ")
+                    parameterDelimiterIndexes.add(length)
                     if (markUsedUnusedParameterBorder) {
-                        // mark the space after the comma as bold; bold text needs to be at least one character long
+                        // mark something as bold to show text before as disabled
                         boldStartOffset = length - 1
-                        boldEndOffset = length
+                        boldEndOffset = length - 1
                         disabledBeforeHighlight = true
                     }
                 }
@@ -286,6 +290,16 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
 
             if (length == 0) {
                 append(CodeInsightBundle.message("parameter.info.no.parameters"))
+            } else if (argumentIndex > SINGLE_LINE_PARAMETERS_COUNT) {
+                parameterDelimiterIndexes.forEach { offset ->
+                    val start = offset - 1
+                    val end = offset
+                    replace(start, end, "\n")
+                    if (start < boldStartOffset) boldStartOffset--
+                    if (start < boldEndOffset) boldEndOffset--
+                }
+
+
             }
         }
 

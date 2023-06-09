@@ -56,10 +56,8 @@ public class PluginHeaderPanel {
     myUpdated.setVisible(true);
     myName.setFont(StartupUiUtil.getLabelFont().deriveFont(4f + StartupUiUtil.getLabelFont().getSize()));
 
-    //data
-    //noinspection HardCodedStringLiteral
     myName.setText("<html><body>" + plugin.getName() + "</body></html>");
-    myCategory.setText(plugin.getCategory() == null ? IdeBundle.message("label.category.unknown") : StringUtil.toUpperCase(plugin.getCategory())); //NON-NLS
+    myCategory.setText(plugin.getDisplayCategory() == null ? IdeBundle.message("label.category.unknown") : StringUtil.toUpperCase(plugin.getDisplayCategory()));
     String versionText;
     boolean showVersion = !plugin.isBundled() || plugin.allowBundledUpdate();
     if (plugin instanceof PluginNode node) {

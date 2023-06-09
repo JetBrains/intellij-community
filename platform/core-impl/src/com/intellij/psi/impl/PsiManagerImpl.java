@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.PsiBuilderFactory;
@@ -128,14 +128,12 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   @Override
-  @NotNull
-  public FileManager getFileManager() {
+  public @NotNull FileManager getFileManager() {
     return myFileManager;
   }
 
@@ -158,9 +156,8 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     return myFileManager.findFile(file);
   }
 
-  @NotNull
   @Override
-  public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
+  public @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findViewProvider(file);
   }
@@ -436,8 +433,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
-  @NotNull
-  public PsiModificationTracker getModificationTracker() {
+  public @NotNull PsiModificationTracker getModificationTracker() {
     return myModificationTracker;
   }
 

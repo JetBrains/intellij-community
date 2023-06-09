@@ -17,7 +17,9 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaTokenType;
@@ -36,7 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class EqualityToSafeEqualsFix extends InspectionGadgetsFix implements PriorityAction {
+public final class EqualityToSafeEqualsFix extends PsiUpdateModCommandQuickFix implements PriorityAction {
 
   private final boolean myNegated;
   private final Priority myPriority;
@@ -75,8 +77,7 @@ public final class EqualityToSafeEqualsFix extends InspectionGadgetsFix implemen
   }
 
   @Override
-  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement comparisonToken = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement comparisonToken, @NotNull EditorUpdater updater) {
     final PsiElement parent = comparisonToken.getParent();
     if (!(parent instanceof PsiBinaryExpression expression)) {
       return;

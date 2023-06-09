@@ -30,8 +30,7 @@ public abstract class CachedValueBase<T> {
     myTrackValue = trackValue;
   }
 
-  @NotNull
-  private Data<T> computeData(@NotNull Computable<CachedValueProvider.Result<T>> doCompute) {
+  private @NotNull Data<T> computeData(@NotNull Computable<CachedValueProvider.Result<T>> doCompute) {
     CachedValueProvider.Result<T> result;
     CachedValueProfiler.ValueTracker tracker;
     if (CachedValueProfiler.isProfiling()) {
@@ -56,8 +55,7 @@ public abstract class CachedValueBase<T> {
     return new Data<>(value, inferredDependencies, inferredTimeStamps, tracker);
   }
 
-  @Nullable
-  private synchronized Data<T> cacheOrGetData(@Nullable Data<T> expected, @Nullable Data<T> updatedValue) {
+  private synchronized @Nullable Data<T> cacheOrGetData(@Nullable Data<T> expected, @Nullable Data<T> updatedValue) {
     if (expected != getRawData()) return null;
 
     if (updatedValue != null) {
@@ -93,8 +91,7 @@ public abstract class CachedValueBase<T> {
     return getUpToDateOrNull() != null;
   }
 
-  @Nullable
-  public final Data<T> getUpToDateOrNull() {
+  public final @Nullable Data<T> getUpToDateOrNull() {
     Data<T> data = getRawData();
     return data != null && checkUpToDate(data) ? data : null;
   }
@@ -109,8 +106,7 @@ public abstract class CachedValueBase<T> {
     return false;
   }
 
-  @Nullable
-  private Data<T> getRawData() {
+  private @Nullable Data<T> getRawData() {
     return dereference(myData);
   }
 
@@ -181,8 +177,7 @@ public abstract class CachedValueBase<T> {
 
   public abstract boolean isFromMyProject(@NotNull Project project);
 
-  @NotNull
-  public abstract Object getValueProvider();
+  public abstract @NotNull Object getValueProvider();
 
   private static final Object[] PSI_MODIFICATION_DEPENDENCIES = new Object[] { PsiModificationTracker.MODIFICATION_COUNT };
 
@@ -231,8 +226,7 @@ public abstract class CachedValueBase<T> {
     }
   }
 
-  @Nullable
-  protected <P> T getValueWithLock(P param) {
+  protected @Nullable <P> T getValueWithLock(P param) {
     Data<T> data = getUpToDateOrNull();
     if (data != null) {
       if (IdempotenceChecker.areRandomChecksEnabled()) {

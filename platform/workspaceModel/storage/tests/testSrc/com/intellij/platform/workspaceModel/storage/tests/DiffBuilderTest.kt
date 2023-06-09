@@ -431,7 +431,7 @@ class DiffBuilderTest {
     val child = source addEntity XChildWithOptionalParentEntity(parentAndChildProperty, MySource)
     val parent = source addEntity XParentEntity(parentAndChildProperty, MySource)
     source.modifyEntity(parent) {
-      this.optionalChildren = this.optionalChildren + child
+      this.optionalChildren += child
     }
 
     target.addDiff(source)

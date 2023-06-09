@@ -2,8 +2,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -12,7 +10,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 
-public class AddAssertStatementFix extends ModCommandQuickFix {
+public class AddAssertStatementFix extends PsiUpdateModCommandQuickFix {
   private final String myText;
 
   public AddAssertStatementFix(@NotNull String text) {
@@ -26,26 +24,24 @@ public class AddAssertStatementFix extends ModCommandQuickFix {
   }
 
   @Override
-  public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiExpression element = PsiTreeUtil.getNonStrictParentOfType(descriptor.getPsiElement(), PsiExpression.class);
-    if (element == null) return ModCommands.nop();
-    return ModCommands.psiUpdate(element, expr -> {
-      CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(expr);
-      if (surrounder == null) return;
-      CodeBlockSurrounder.SurroundResult result = surrounder.surround();
-      expr = result.getExpression();
-      PsiElement anchorElement = result.getAnchor();
-      PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(anchorElement);
-      if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
-        anchorElement = prev;
-      }
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    PsiExpression expr = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpression.class);
+    if (expr == null) return;
+    CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(expr);
+    if (surrounder == null) return;
+    CodeBlockSurrounder.SurroundResult result = surrounder.surround();
+    expr = result.getExpression();
+    PsiElement anchorElement = result.getAnchor();
+    PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(anchorElement);
+    if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
+      anchorElement = prev;
+    }
 
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
-      @NonNls String text = "assert " + myText + ";";
-      PsiAssertStatement assertStatement = (PsiAssertStatement)factory.createStatementFromText(text, expr);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
+    @NonNls String text = "assert " + myText + ";";
+    PsiAssertStatement assertStatement = (PsiAssertStatement)factory.createStatementFromText(text, expr);
 
-      anchorElement.getParent().addBefore(assertStatement, anchorElement);
-    });
+    anchorElement.getParent().addBefore(assertStatement, anchorElement);
   }
 
   @Override

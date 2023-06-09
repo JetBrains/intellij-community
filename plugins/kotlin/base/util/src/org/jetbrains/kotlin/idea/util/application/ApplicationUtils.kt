@@ -50,7 +50,7 @@ fun Project.executeWriteCommand(@NlsContexts.Command name: String, command: () -
 }
 
 fun <T> Project.executeWriteCommand(@NlsContexts.Command name: String, groupId: Any? = null, command: () -> T): T {
-    return executeCommand<T>(name, groupId) { runWriteAction(command) }
+    return executeCommand(name, groupId) { runWriteAction(command) }
 }
 
 fun <T> Project.executeCommand(@NlsContexts.Command name: String, groupId: Any? = null, command: () -> T): T {

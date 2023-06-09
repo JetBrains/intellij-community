@@ -3,6 +3,7 @@
 package com.intellij.platform.impl.toolkit
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import java.awt.Desktop
 import java.awt.peer.DesktopPeer
@@ -11,11 +12,11 @@ import java.net.URI
 
 class IdeDesktopPeer : DesktopPeer {
   companion object {
-    val logger = logger<IdeDesktopPeer>()
+    val logger: Logger = logger<IdeDesktopPeer>()
     val clientInstance: ClientDesktopPeer
       get() = service()
   }
-  override fun isSupported(action: Desktop.Action) =
+  override fun isSupported(action: Desktop.Action): Boolean =
     action in setOf(Desktop.Action.OPEN, Desktop.Action.EDIT, Desktop.Action.PRINT, Desktop.Action.MAIL, Desktop.Action.BROWSE)
 
   override fun open(file: File) {
@@ -33,5 +34,5 @@ class IdeDesktopPeer : DesktopPeer {
   override fun mail(mailtoURL: URI) {
     logger.error("mail ignored")
   }
-  override fun browse(uri: URI) = clientInstance.browse(uri)
+  override fun browse(uri: URI): Unit = clientInstance.browse(uri)
 }

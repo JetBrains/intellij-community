@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * Can be used when want to run process with some temp indicator but display all its changes in the other (global visible) indicator.
  */
 public class RelayUiToDelegateIndicator extends AbstractProgressIndicatorExBase {
-  private @NotNull final ProgressIndicator myDelegate;
+  private final @NotNull ProgressIndicator myDelegate;
 
   public RelayUiToDelegateIndicator(@NotNull ProgressIndicator delegate) {
     super(true);

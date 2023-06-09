@@ -15,12 +15,12 @@
  */
 package com.siyeh.ig.classmetrics;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiEnumConstantInitializer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +30,7 @@ public class AnonymousClassMethodCountInspection
   private static final int DEFAULT_METHOD_COUNT_LIMIT = 1;
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new MoveAnonymousToInnerClassFix();
   }
 

@@ -225,7 +225,7 @@ private fun assertDirectoryContentMatches(file: Path,
       errorReporter.assertTrue(relativePath, "$file is not a file", file.isFile())
       if (spec.content != null) {
         val fileBytes = file.readBytes()
-        if (!Arrays.equals(fileBytes, spec.content)) {
+        if (!fileBytes.contentEquals(spec.content)) {
           val fileString = fileBytes.convertToText()
           val specString = spec.content.convertToText()
           val place = if (relativePath != ".") " at $relativePath" else ""

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.script.ucache
 
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -342,10 +343,12 @@ abstract class ScriptClassRootsUpdater(
         if (ktFiles.isNotEmpty()) {
             scope.launch {
                 withContext(Dispatchers.EDT) {
-                    ktFiles.forEach {
-                        val ktFile = it.element ?: return@forEach
-                        DaemonCodeAnalyzer.getInstance(project)
-                            .restart(ktFile)
+                    blockingContext {
+                        ktFiles.forEach {
+                            val ktFile = it.element ?: return@forEach
+                            DaemonCodeAnalyzer.getInstance(project)
+                                .restart(ktFile)
+                        }
                     }
                 }
             }

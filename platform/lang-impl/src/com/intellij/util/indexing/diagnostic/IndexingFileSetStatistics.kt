@@ -17,34 +17,32 @@ import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
 class IndexingFileSetStatistics(private val project: Project, val fileSetName: String) {
 
   companion object {
-    const val SLOW_FILES_LIMIT = 10
+    const val SLOW_FILES_LIMIT: Int = 10
 
-    const val SLOW_FILE_PROCESSING_THRESHOLD_MS = 500
+    const val SLOW_FILE_PROCESSING_THRESHOLD_MS: Int = 500
   }
 
   var processingTimeInAllThreads: TimeNano = 0
 
   var contentLoadingTimeInAllThreads: TimeNano = 0
 
-  var readActionWaitingTimeInAllThreads: TimeNano = 0
-
   var numberOfIndexedFiles: Int = 0
 
-  var listOfFilesFullyIndexedByExtensions = arrayListOf<String>()
+  var listOfFilesFullyIndexedByExtensions: ArrayList<String> = arrayListOf()
 
   var numberOfFilesFullyIndexedByExtensions: Int = 0
 
   var numberOfTooLargeForIndexingFiles: Int = 0
 
-  val statsPerIndexer = hashMapOf<String /* ID.name() */, StatsPerIndexer>()
+  val statsPerIndexer: HashMap<String, StatsPerIndexer> = hashMapOf()
 
-  val statsPerFileType = hashMapOf<String /* File type name */, StatsPerFileType>()
+  val statsPerFileType: HashMap<String, StatsPerFileType> = hashMapOf()
 
-  val indexedFiles = arrayListOf<IndexedFile>()
+  val indexedFiles: ArrayList<IndexedFile> = arrayListOf()
 
-  val slowIndexedFiles = LimitedPriorityQueue<SlowIndexedFile>(SLOW_FILES_LIMIT, compareBy { it.processingTime })
+  val slowIndexedFiles: LimitedPriorityQueue<SlowIndexedFile> = LimitedPriorityQueue(SLOW_FILES_LIMIT, compareBy { it.processingTime })
 
-  var allValuesAppliedSeparately = true
+  var allValuesAppliedSeparately: Boolean = true
   var allSeparateApplicationTimeInAllThreads: TimeNano = 0 //is 0 when !allValuesAppliedSeparately
 
   data class IndexedFile(val portableFilePath: PortableFilePath, val wasFullyIndexedByExtensions: Boolean)
@@ -77,7 +75,6 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     fileStatistics: FileIndexingStatistics,
     processingTime: TimeNano,
     contentLoadingTime: TimeNano,
-    readActionWaitingTime: Long,
     fileSize: BytesNumber,
     valuesAppliedSeparately: Boolean,
     separateApplicationTime: TimeNano
@@ -91,7 +88,6 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     }
     processingTimeInAllThreads += processingTime
     contentLoadingTimeInAllThreads += contentLoadingTime
-    readActionWaitingTimeInAllThreads += readActionWaitingTime
     val perIndexerEvaluationOfValueChangerTimes = fileStatistics.perIndexerEvaluateIndexValueTimes.toMutableMap()
     fileStatistics.perIndexerEvaluatingIndexValueRemoversTimes.forEach { (indexId, time) ->
       perIndexerEvaluationOfValueChangerTimes[indexId] = time + perIndexerEvaluationOfValueChangerTimes.getOrDefault(indexId, 0)
@@ -120,8 +116,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
       indexedFiles += IndexedFile(getIndexedFilePath(file), fileStatistics.wasFullyIndexedByExtensions)
     }
     if (processingTime > SLOW_FILE_PROCESSING_THRESHOLD_MS * 1_000_000) {
-      slowIndexedFiles.addElement(SlowIndexedFile(file.name, processingTime,
-                                                  evaluationOfIndexValueChangerTime, contentLoadingTime, readActionWaitingTime))
+      slowIndexedFiles.addElement(SlowIndexedFile(file.name, processingTime, evaluationOfIndexValueChangerTime, contentLoadingTime))
     }
     allValuesAppliedSeparately = allValuesAppliedSeparately && valuesAppliedSeparately
     allSeparateApplicationTimeInAllThreads += separateApplicationTime

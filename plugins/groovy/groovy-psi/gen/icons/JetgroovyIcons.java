@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -35,7 +35,7 @@ public final class JetgroovyIcons {
     /** 16x16 */ public static final @NotNull Icon Interface = load("icons/groovy/interface.svg", 1737162257, 1);
     /** 16x16 */ public static final @NotNull Icon Method = load("icons/groovy/method.svg", -1410304419, 1);
     /** 16x16 */ public static final @NotNull Icon Property = load("icons/groovy/property.svg", 1949490268, 0);
-    /** 16x16 */ public static final @NotNull Icon Record = load("icons/groovy/record.svg", -1940578720, 0);
+    /** 16x16 */ public static final @NotNull Icon Record = load("icons/groovy/record.svg", 97866237, 0);
     /** 16x16 */ public static final @NotNull Icon Trait = load("icons/groovy/trait.svg", 208038733, 0);
     /** 16x16 */ public static final @NotNull Icon Variable = load("icons/groovy/variable.svg", 2964789, 0);
   }

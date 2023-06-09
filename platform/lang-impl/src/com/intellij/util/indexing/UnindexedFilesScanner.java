@@ -465,6 +465,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     myIndex.loadIndexes();
     myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
     IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
+    IndexDiagnosticDumper.getInstance().onScanningStarted(scanningHistory);
     Ref<StatusMark> markRef = new Ref<>();
     try {
       ProjectScanningHistoryImpl.Companion.startDumbModeBeginningTracking(myProject, scanningHistory, projectIndexingHistory);

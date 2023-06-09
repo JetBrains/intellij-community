@@ -55,7 +55,7 @@ private val keymapManager get() = KeymapManager.getInstance() as KeymapManagerIm
 private val editorColorsManager get() = EditorColorsManager.getInstance() as EditorColorsManagerImpl
 
 class CustomizeTabFactory : WelcomeTabFactory {
-  override fun createWelcomeTab(parentDisposable: Disposable) = CustomizeTab(parentDisposable)
+  override fun createWelcomeTab(parentDisposable: Disposable): CustomizeTab = CustomizeTab(parentDisposable)
 }
 
 private fun getIdeFontSize() =

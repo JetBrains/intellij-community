@@ -33,9 +33,8 @@ public class EssentialHighlightingRestarter implements SaveAndSyncHandlerListene
       Arrays.stream(FileEditorManager.getInstance(myProject).getOpenFiles())
         .map(vf -> ReadAction.compute(() -> PsiManagerEx.getInstanceEx(myProject).getFileManager().findFile(vf)))
         .filter(Objects::nonNull)
-        .map(psiFile -> ReadAction.compute(() -> HighlightingSettingsPerFile.getInstance(myProject).getHighlightingSettingForRoot(psiFile) ==
-                        FileHighlightingSetting.ESSENTIAL))
-        .findAny().isPresent();
+        .anyMatch(psiFile -> ReadAction.compute(() -> HighlightingSettingsPerFile.getInstance(myProject).getHighlightingSettingForRoot(psiFile) ==
+                                                      FileHighlightingSetting.ESSENTIAL));
     if (hasFilesWithEssentialHighlightingConfigured) {
       DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
       codeAnalyzer.restartToCompleteEssentialHighlighting();

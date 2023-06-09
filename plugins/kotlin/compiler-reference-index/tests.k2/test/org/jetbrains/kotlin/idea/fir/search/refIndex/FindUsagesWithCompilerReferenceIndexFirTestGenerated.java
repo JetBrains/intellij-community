@@ -913,6 +913,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
+            public static class TestJavaInterfaceAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("javaInterfaceAllUsages.0.kt")
+                public void testJavaInterfaceAllUsages() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/javaInterfaceAllUsages.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
             public static class TestKotlinAliasedClassAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -1194,6 +1207,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @TestMetadata("kotlinInnerClassAllUsages.0.kt")
                 public void testKotlinInnerClassAllUsages() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinInnerClassAllUsages.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findClassUsages")
+            public static class TestKotlinInterfaceAllUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinInterfaceAllUsages.0.kt")
+                public void testKotlinInterfaceAllUsages() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinInterfaceAllUsages.0.kt");
                 }
             }
 
@@ -2228,6 +2254,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @TestMetadata("kotlinFunctionParameterUsages.0.kt")
                 public void testKotlinFunctionParameterUsages() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinFunctionParameterUsages.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
+            public static class TestKotlinFunctionTypeParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinFunctionTypeParameterUsages.0.kt")
+                public void testKotlinFunctionTypeParameterUsages() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinFunctionTypeParameterUsages.0.kt");
                 }
             }
 

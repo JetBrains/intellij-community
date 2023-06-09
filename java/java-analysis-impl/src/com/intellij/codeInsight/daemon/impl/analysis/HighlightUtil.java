@@ -3266,6 +3266,15 @@ public final class HighlightUtil {
       }
       else {
         description = JavaErrorBundle.message("cannot.resolve.symbol", refName.getText());
+        if (ref instanceof PsiReferenceExpression expression) {
+          PsiExpression qualifierExpression = expression.getQualifierExpression();
+          if (qualifierExpression != null &&
+              qualifierExpression.getType() instanceof PsiPrimitiveType primitiveType &&
+              !primitiveType.equals(PsiTypes.nullType()) && !primitiveType.equals(PsiTypes.voidType())) {
+            description = JavaErrorBundle.message("cannot.access.member.on.type", qualifierExpression.getText(),
+                                                  primitiveType.getPresentableText(false));
+          }
+        }
       }
 
       HighlightInfo.Builder info =

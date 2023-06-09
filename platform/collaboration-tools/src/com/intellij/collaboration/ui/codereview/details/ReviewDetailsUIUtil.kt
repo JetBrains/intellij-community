@@ -21,7 +21,7 @@ object ReviewDetailsUIUtil {
 
   fun getReviewStateIcon(reviewState: ReviewState): Icon = when (reviewState) {
     ReviewState.ACCEPTED -> AllIcons.RunConfigurations.TestPassed
-    ReviewState.WAIT_FOR_UPDATES -> AllIcons.RunConfigurations.TestError
+    ReviewState.WAIT_FOR_UPDATES,
     ReviewState.NEED_REVIEW -> AllIcons.RunConfigurations.TestFailed
   }
 

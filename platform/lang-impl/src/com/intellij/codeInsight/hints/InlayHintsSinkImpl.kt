@@ -48,5 +48,5 @@ class InlayHintsSinkImpl(val editor: Editor) : InlayHintsSink {
 }
 
 private fun <T : Any> addCreatingListIfNeeded(map: Int2ObjectMap<MutableList<ConstrainedPresentation<*, T>>>, offset: Int, value: ConstrainedPresentation<*, T>) {
-  map.computeIfAbsent(offset, IntFunction { SmartList<ConstrainedPresentation<*, T>>() }).add(value)
+  map.computeIfAbsent(offset, IntFunction { SmartList() }).add(value)
 }

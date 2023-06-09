@@ -60,11 +60,13 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
+final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   private static final Logger LOG = Logger.getInstance(PluginXmlI18nInspection.class);
 
   @Override
   protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
+    if (!isAllowed(holder)) return;
+
     if (element instanceof ActionOrGroup) {
       highlightActionOrGroup(holder, (ActionOrGroup)element);
     }

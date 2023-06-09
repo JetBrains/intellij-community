@@ -159,9 +159,9 @@ class DistributionComboBox(
     selectFolderAction.run()
   }
 
-  private fun createEditor(): Editor {
+  private fun createEditor(): AbstractComboBoxEditor {
     val property = AtomicProperty("")
-    val editor = object : Editor() {
+    val editor = object : AbstractComboBoxEditor() {
       override fun setItem(anObject: Any?) {}
       override fun getItem(): Any? = selectedItem
     }
@@ -249,7 +249,7 @@ class DistributionComboBox(
     }
   }
 
-  private abstract class Editor : BasicComboBoxEditor() {
+  private abstract class AbstractComboBoxEditor : BasicComboBoxEditor() {
     val textField get() = editor as ExtendableTextField
 
     override fun createEditorComponent(): JTextField {

@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.util.indexing.*
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_EXT
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.DataInput
@@ -30,10 +30,7 @@ class KotlinPackageSourcesMemberNamesIndex internal constructor() : FileBasedInd
     override fun getValueExternalizer() = StringSetExternalizer
 
     override fun getInputFilter(): FileBasedIndex.InputFilter =
-        FileBasedIndex.InputFilter { file ->
-            file.nameSequence.endsWith(KOTLIN_DOT_FILE_EXTENSION)
-            || file.nameSequence.endsWith(STD_SCRIPT_EXT)
-        }
+        FileTypeInputFilterPredicate(KotlinFileType.INSTANCE)
 
     override fun getVersion(): Int = 2
 

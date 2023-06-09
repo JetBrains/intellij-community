@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtFile
 abstract class NewKotlinFileHook {
     companion object {
         val EP_NAME: ExtensionPointName<NewKotlinFileHook> =
-            ExtensionPointName.create<NewKotlinFileHook>("org.jetbrains.kotlin.newFileHook")
+            ExtensionPointName.create("org.jetbrains.kotlin.newFileHook")
     }
 
     abstract fun postProcess(createdElement: KtFile, module: Module)

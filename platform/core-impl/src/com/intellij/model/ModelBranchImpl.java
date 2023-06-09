@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -66,8 +66,7 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -86,8 +85,7 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
     });
   }
 
-  @NotNull
-  static ModelPatch performInBranch(@NotNull Consumer<? super ModelBranch> action, @NotNull ModelBranchImpl branch) {
+  static @NotNull ModelPatch performInBranch(@NotNull Consumer<? super ModelBranch> action, @NotNull ModelBranchImpl branch) {
     action.accept(branch);
     return new ModelPatch() {
       @Override
@@ -128,8 +126,7 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
     return null;
   }
 
-  @Nullable
-  private VirtualFile findFileByUrl(@NotNull String url, @NotNull BranchedVirtualFileImpl someCopyFromSameFS) {
+  private @Nullable VirtualFile findFileByUrl(@NotNull String url, @NotNull BranchedVirtualFileImpl someCopyFromSameFS) {
     BranchedVirtualFileImpl topmostChange =
       JBIterable.generate(someCopyFromSameFS, BranchedVirtualFileImpl::getParent).filter(myVfsStructureChanges::contains).last();
     BranchedVirtualFileImpl stableAncestor = topmostChange != null ? topmostChange.getParent() : someCopyFromSameFS;
@@ -148,13 +145,11 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
   }
 
   @Override
-  @NotNull
-  public VirtualFile findFileCopy(@NotNull VirtualFile original) {
+  public @NotNull VirtualFile findFileCopy(@NotNull VirtualFile original) {
     return original instanceof VirtualFileWindow ? findInjectedFileCopy((VirtualFileWindow)original) : findPhysicalFileCopy(original);
   }
 
-  @NotNull
-  private VirtualFile findInjectedFileCopy(VirtualFileWindow original) {
+  private @NotNull VirtualFile findInjectedFileCopy(VirtualFileWindow original) {
     VirtualFile hostCopy = findPhysicalFileCopy(original.getDelegate());
     DocumentWindow injectedDoc = original.getDocumentWindow();
     PsiFile hostPsi = PsiManager.getInstance(myProject).findFile(hostCopy);
@@ -180,16 +175,14 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
     myAffectedFiles.add(file);
   }
 
-  @Nullable
-  private PsiFile findSameLanguageRoot(@Nullable PsiFile original, @Nullable VirtualFile vFileCopy) {
+  private @Nullable PsiFile findSameLanguageRoot(@Nullable PsiFile original, @Nullable VirtualFile vFileCopy) {
     if (original == null || vFileCopy == null) return null;
     FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(vFileCopy);
     return viewProvider == null ? null : viewProvider.getPsi(original.getLanguage());
   }
 
   @Override
-  @NotNull
-  public <T extends PsiElement> T obtainPsiCopy(@NotNull T original) {
+  public @NotNull <T extends PsiElement> T obtainPsiCopy(@NotNull T original) {
     if (original instanceof PsiDirectory) {
       //noinspection unchecked
       return (T)Objects.requireNonNull(PsiManager.getInstance(myProject).findDirectory(findFileCopy(((PsiDirectory)original).getVirtualFile())));
@@ -207,8 +200,7 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
   }
 
   @Override
-  @NotNull
-  public <T extends PsiReference> T obtainReferenceCopy(@NotNull T original) {
+  public @NotNull <T extends PsiReference> T obtainReferenceCopy(@NotNull T original) {
     PsiElement psiCopy = obtainPsiCopy(original.getElement());
     TextRange range = original.getRangeInElement();
     PsiReference[] refs = psiCopy.getReferences();
@@ -230,8 +222,7 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  private <T extends PsiReference> T findSimilarReference(@NotNull T original, TextRange range, PsiReference[] references) {
+  private @Nullable <T extends PsiReference> T findSimilarReference(@NotNull T original, TextRange range, PsiReference[] references) {
     Condition<PsiReference> isSimilar = r -> r.getClass() == original.getClass() && range.equals(r.getRangeInElement());
 
     //try to get ref of the same index
@@ -252,8 +243,7 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
   }
 
   @Override
-  @Nullable
-  public <T extends PsiElement> T findOriginalPsi(@NotNull T branched) {
+  public @Nullable <T extends PsiElement> T findOriginalPsi(@NotNull T branched) {
     if (branched instanceof PsiDirectory) {
       VirtualFile originalDir = findOriginalFile(((PsiDirectory) branched).getVirtualFile());
       if (originalDir == null) return null;
@@ -267,8 +257,7 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
   }
 
   @Override
-  @Nullable
-  public VirtualFile findOriginalFile(@NotNull VirtualFile file) {
+  public @Nullable VirtualFile findOriginalFile(@NotNull VirtualFile file) {
     BranchedVirtualFileImpl branched = (BranchedVirtualFileImpl)file;
     assert branched.getBranch() == this;
     return branched.getOriginal();
@@ -332,8 +321,7 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
     }
   }
 
-  @NotNull
-  public GlobalSearchScope modifyScope(@NotNull GlobalSearchScope scope) {
+  public @NotNull GlobalSearchScope modifyScope(@NotNull GlobalSearchScope scope) {
     return new DelegatingGlobalSearchScope(scope, this, getBranchedPsiModificationCount()) {
       @Override
       public boolean contains(@NotNull VirtualFile file) {

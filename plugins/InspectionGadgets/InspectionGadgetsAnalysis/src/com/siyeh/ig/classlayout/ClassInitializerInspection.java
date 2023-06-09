@@ -19,7 +19,9 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,7 +30,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.performance.ClassInitializerMayBeStaticInspection;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -64,21 +65,21 @@ public class ClassInitializerInspection extends BaseInspection {
 
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     PsiClassInitializer classInitializer = (PsiClassInitializer)infos[0];
     final PsiClass aClass = classInitializer.getContainingClass();
     assert aClass != null;
     if (PsiUtil.isInnerClass(aClass) && !HighlightingFeature.INNER_STATICS.isAvailable(aClass) || 
         ClassInitializerMayBeStaticInspection.dependsOnInstanceMembers(classInitializer)) {
-      return new InspectionGadgetsFix[] {new MoveToConstructorFix()};
+      return new LocalQuickFix[] {new MoveToConstructorFix()};
     }
-    return new InspectionGadgetsFix[] {
+    return new LocalQuickFix[] {
       new ChangeModifierFix(PsiModifier.STATIC),
       new MoveToConstructorFix()
     };
   }
 
-  private static class MoveToConstructorFix extends InspectionGadgetsFix {
+  private static class MoveToConstructorFix extends PsiUpdateModCommandQuickFix {
 
     @NotNull
     @Override
@@ -87,8 +88,7 @@ public class ClassInitializerInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement brace = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement brace, @NotNull EditorUpdater updater) {
       final PsiElement parent = brace.getParent();
       if (!(parent instanceof PsiCodeBlock)) {
         return;

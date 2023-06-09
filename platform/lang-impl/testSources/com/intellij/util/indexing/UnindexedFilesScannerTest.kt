@@ -57,7 +57,7 @@ class UnindexedFilesScannerTest {
 
   @Rule
   @JvmField
-  val tempDir = TemporaryDirectory()
+  val tempDir: TemporaryDirectory = TemporaryDirectory()
 
   private lateinit var project: Project
   private lateinit var testRootDisposable: CheckedDisposable

@@ -274,4 +274,4 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
   }
 }
 
-fun isDocumentationPopupVisible(project: Project) = DocumentationManager.instance(project).isPopupVisible
+fun isDocumentationPopupVisible(project: Project): Boolean = DocumentationManager.instance(project).isPopupVisible

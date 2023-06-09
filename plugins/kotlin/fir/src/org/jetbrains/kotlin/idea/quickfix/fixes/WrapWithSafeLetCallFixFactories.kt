@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplica
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
@@ -153,12 +154,13 @@ object WrapWithSafeLetCallFixFactories {
 
     private fun KtAnalysisSession.isCallingFunctionalTypeVariableInLocalScope(callExpression: KtCallExpression): Boolean? {
         val calleeExpression = callExpression.calleeExpression
-        val calleeName = calleeExpression?.text ?: return null
+        val calleeName = calleeExpression?.text?.let(Name::identifierIfValid) ?: return null
         val callSite = callExpression.parent as? KtQualifiedExpression ?: callExpression
         val functionalVariableSymbol = (calleeExpression.resolveCall()?.singleCallOrNull<KtSimpleVariableAccessCall>())?.symbol ?: return false
         val localScope = callExpression.containingKtFile.getScopeContextForPosition(callSite).getCompositeScope()
         // If no symbol in the local scope contains the called symbol, then the symbol must be a member symbol.
-        return localScope.getCallableSymbols { it.identifierOrNullIfSpecial == calleeName }.any { it == functionalVariableSymbol }
+
+        return localScope.getCallableSymbols(calleeName).any { it == functionalVariableSymbol }
     }
 
     val forUnsafeInfixCall = diagnosticFixFactory(KtFirDiagnostic.UnsafeInfixCall::class) { diagnostic ->

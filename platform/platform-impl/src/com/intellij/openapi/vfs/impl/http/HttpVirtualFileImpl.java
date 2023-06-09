@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -47,11 +48,16 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
       myFileInfo.addDownloadingListener(new FileDownloadingAdapter() {
         @Override
         public void fileDownloaded(@NotNull final VirtualFile localFile) {
+          boolean fileTypeChanged = myInitialFileType != null && !FileTypeRegistry.getInstance().isFileOfType(localFile, myInitialFileType);
+          VirtualFile thisHttpFile = HttpVirtualFileImpl.this;
           ApplicationManager.getApplication().invokeLater(() -> {
-            HttpVirtualFileImpl file = HttpVirtualFileImpl.this;
-            FileDocumentManager.getInstance().reloadFiles(file);
-            if (myInitialFileType != null && !FileTypeRegistry.getInstance().isFileOfType(localFile, myInitialFileType)) {
-              FileContentUtilCore.reparseFiles(file);
+            FileDocumentManager manager = FileDocumentManager.getInstance();
+            Document document = manager.getCachedDocument(thisHttpFile);
+            if (document != null) {
+              manager.reloadFromDisk(document, null);
+            }
+            if (fileTypeChanged) {
+              FileContentUtilCore.reparseFiles(thisHttpFile);
             }
           });
         }

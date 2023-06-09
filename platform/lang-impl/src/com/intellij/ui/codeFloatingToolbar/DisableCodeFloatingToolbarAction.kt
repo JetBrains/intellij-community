@@ -7,6 +7,6 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 
 class DisableCodeFloatingToolbarAction: AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    AdvancedSettings.setBoolean("floating.codeToolbar.hide", false)
+    AdvancedSettings.setBoolean("floating.codeToolbar.hide", true)
   }
 }

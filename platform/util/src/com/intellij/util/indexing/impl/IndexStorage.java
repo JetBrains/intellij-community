@@ -18,7 +18,6 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
-import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Flushable;
@@ -50,4 +49,5 @@ public interface IndexStorage<Key, Value> extends Flushable {
   @Override
   void flush() throws IOException;
 
+  boolean isDirty();
 }

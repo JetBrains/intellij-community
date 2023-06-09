@@ -29,7 +29,7 @@ import org.jdom.Element
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
 
-const val KEYMAPS_DIR_PATH = "keymaps"
+const val KEYMAPS_DIR_PATH: String = "keymaps"
 
 private const val ACTIVE_KEYMAP = "active_keymap"
 private const val NAME_ATTRIBUTE = "name"
@@ -44,7 +44,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
 
   companion object {
     @JvmStatic
-    var isKeymapManagerInitialized = false
+    var isKeymapManagerInitialized: Boolean = false
       private set
   }
 

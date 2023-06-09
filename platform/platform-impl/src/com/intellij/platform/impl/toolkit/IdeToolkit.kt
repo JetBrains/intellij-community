@@ -43,21 +43,21 @@ class IdeToolkit : SunToolkit() {
     targetCreatedPeer(target, peer)
     Disposer.register(disposable) { targetDisposedPeer(target, peer) }
   }
-  fun createPanelWindow(panel: Component, target: Window) = clientInstance.createPanelWindow(panel, target)
-  override fun createWindow(target: Window) = clientInstance.createWindow(target)
-  override fun createDialog(target: Dialog) = clientInstance.createDialog(target)
-  override fun createFrame(target: Frame) = clientInstance.createFrame(target)
-  override fun getSystemClipboard() = clipboard
+  fun createPanelWindow(panel: Component, target: Window): WindowPeer = clientInstance.createPanelWindow(panel, target)
+  override fun createWindow(target: Window): WindowPeer = clientInstance.createWindow(target)
+  override fun createDialog(target: Dialog): DialogPeer = clientInstance.createDialog(target)
+  override fun createFrame(target: Frame): FramePeer = clientInstance.createFrame(target)
+  override fun getSystemClipboard(): Clipboard = clipboard
 
-  override fun getScreenResolution() = 96
+  override fun getScreenResolution(): Int = 96
   override fun prepareImage(img: Image, w: Int, h: Int, o: ImageObserver?): Boolean {
     //TODO: probably can be used for caching
     return super.prepareImage(img, w, h, o)
   }
 
-  override fun createDesktopPeer(target: Desktop) = IdeDesktopPeer()
-  override fun getMouseInfoPeer() = IdeMouseInfoPeer
-  override fun getKeyboardFocusManagerPeer() = IdeKeyboardFocusManagerPeer
+  override fun createDesktopPeer(target: Desktop): IdeDesktopPeer = IdeDesktopPeer()
+  override fun getMouseInfoPeer(): IdeMouseInfoPeer = IdeMouseInfoPeer
+  override fun getKeyboardFocusManagerPeer(): IdeKeyboardFocusManagerPeer = IdeKeyboardFocusManagerPeer
 
   // Toolkit interface which shouldn't be used
   override fun sync() {}
@@ -145,9 +145,9 @@ class IdeToolkit : SunToolkit() {
 
   override fun createSystemTray(target: SystemTray?): SystemTrayPeer? = null
 
-  override fun isTraySupported() = false
+  override fun isTraySupported(): Boolean = false
 
-  override fun syncNativeQueue(timeout: Long) = true
+  override fun syncNativeQueue(timeout: Long): Boolean = true
 
   override fun grab(w: Window?) {
     //todo
@@ -157,6 +157,6 @@ class IdeToolkit : SunToolkit() {
     //todo
   }
 
-  override fun isDesktopSupported() = true
-  override fun isTaskbarSupported() = false
+  override fun isDesktopSupported(): Boolean = true
+  override fun isTaskbarSupported(): Boolean = false
 }

@@ -185,7 +185,7 @@ class OperationLogStorageImpl(
 
   override fun size(): Long = position.getReadyPosition()
   override fun emergingSize(): Long = position.getCurrentAdvancePosition()
-  override fun persistentSize() = persistentSize ?: 0L
+  override fun persistentSize(): Long = persistentSize ?: 0L
 
   override fun begin(): OperationLogStorage.Iterator = IteratorImpl(0L)
   override fun end(): OperationLogStorage.Iterator = IteratorImpl(size())

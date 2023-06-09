@@ -86,7 +86,7 @@ class CsvGzippedMetricsExporter(private var fileToWrite: File) : MetricExporter 
   }
 
   companion object {
-    val logger = Logger.getInstance(CsvGzippedMetricsExporter::class.java)
+    val logger: Logger = Logger.getInstance(CsvGzippedMetricsExporter::class.java)
 
     fun generatePathForConnectionMetrics(): Path {
       val connectionMetricsPath = "open-telemetry-connection-metrics.csv.gz"

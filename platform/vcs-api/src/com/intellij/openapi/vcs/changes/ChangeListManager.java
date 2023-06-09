@@ -188,7 +188,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public abstract FileStatus getStatus(@NotNull VirtualFile file);
 
-  public abstract boolean isUnversioned(VirtualFile file);
+  public abstract boolean isUnversioned(@NotNull VirtualFile file);
 
   @NotNull
   public abstract List<FilePath> getUnversionedFilesPaths();

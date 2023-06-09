@@ -33,7 +33,6 @@ abstract class AbstractHLImplementationSearcherTest : KotlinLightCodeInsightFixt
         KotlinTestUtils.assertEqualsToSibling(Paths.get(testFilePath), ".result.kt", actual)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun render(declarations: List<PsiElement>): String = buildList {
         for (declaration in declarations) {
           val name = declaration.kotlinFqName ?: declaration.declarationName()

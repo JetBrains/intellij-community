@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
-import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
@@ -10,6 +9,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
@@ -84,8 +84,9 @@ class FileNotInSourceRootService(val project: Project) : Disposable {
       .registerFix(moveFileFix, listOf(DismissFix(), IgnoreForThisProjectFix()), null, null, null)
       .create()
     if (info != null) {
-      BackgroundUpdateHighlightersUtil.setHighlightersToSingleEditor(project, editor, 0, editor.document.textLength, listOf(info), null,
-                                                                     GROUP)
+      ApplicationManager.getApplication().invokeLater({
+        DaemonCodeAnalyzerEx.getInstanceEx(project).addFileLevelHighlight(GROUP, info, psiFile)
+      }, project.disposed)
     }
   }
 

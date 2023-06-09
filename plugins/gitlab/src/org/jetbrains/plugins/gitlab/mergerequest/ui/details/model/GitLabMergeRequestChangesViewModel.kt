@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelBase
 import com.intellij.openapi.ListSelection
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.childScope
@@ -19,7 +20,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.diff.isEqual
 internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommitDTO> {
   val changesResult: Flow<Result<Collection<Change>>>
 
-  val userChangesSelection: Flow<ListSelection<Change>>
+  val userChangesSelection: StateFlow<ListSelection<Change>>
   val changeSelectionRequests: Flow<Change>
 
   fun selectChange(change: Change)
@@ -27,6 +28,10 @@ internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewMod
   fun updateChangesSelectedByUser(changes: ListSelection<Change>)
 
   fun showDiff()
+
+  companion object {
+    val DATA_KEY = DataKey.create<GitLabMergeRequestChangesViewModel>("GitLab.MergeRequest.Changes.ViewModel")
+  }
 }
 
 internal class GitLabMergeRequestChangesViewModelImpl(
@@ -49,10 +54,8 @@ internal class GitLabMergeRequestChangesViewModelImpl(
       }
     }.modelFlow(cs, thisLogger())
 
-  private val _userChangesSelection = MutableSharedFlow<ListSelection<Change>>()
-  override val userChangesSelection: Flow<ListSelection<Change>> = _userChangesSelection.asSharedFlow().distinctUntilChanged { old, new ->
-    isSelectionEqual(old, new)
-  }
+  private val _userChangesSelection = MutableStateFlow<ListSelection<Change>>(ListSelection.empty())
+  override val userChangesSelection: StateFlow<ListSelection<Change>> = _userChangesSelection.asStateFlow()
 
   private val _changeSelectionRequests = MutableSharedFlow<Change>()
   override val changeSelectionRequests: Flow<Change> = _changeSelectionRequests.asSharedFlow()
@@ -81,8 +84,8 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   }
 
   override fun updateChangesSelectedByUser(changes: ListSelection<Change>) {
-    cs.launch {
-      _userChangesSelection.emit(changes)
+    _userChangesSelection.update {
+      if (isSelectionEqual(it, changes)) it else changes
     }
   }
 

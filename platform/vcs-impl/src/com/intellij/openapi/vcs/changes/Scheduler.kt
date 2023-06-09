@@ -5,6 +5,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
@@ -31,7 +33,9 @@ internal class Scheduler(private val coroutineScope: CoroutineScope) {
     val future = coroutineScope.launch(limitedDispatcher) {
       delay(unit.toMillis(delay))
       runCatching {
-        command.run()
+        blockingContext {
+          command.run()
+        }
       }.getOrLogException(LOG)
     }
     addFuture(future)
@@ -40,7 +44,9 @@ internal class Scheduler(private val coroutineScope: CoroutineScope) {
   fun submit(command: Runnable) {
     val future = coroutineScope.launch(limitedDispatcher) {
       runCatching {
-        command.run()
+        blockingContext {
+          command.run()
+        }
       }.getOrLogException(LOG)
     }
     addFuture(future)

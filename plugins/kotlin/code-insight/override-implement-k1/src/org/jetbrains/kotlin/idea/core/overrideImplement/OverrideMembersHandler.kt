@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.core.overrideImplement
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.java.JavaVisibilities
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
@@ -19,7 +20,7 @@ class OverrideMembersHandler(private val preferConstructorParameters: Boolean = 
         for (member in descriptor.unsubstitutedMemberScope.getContributedDescriptors()) {
             if (member is CallableMemberDescriptor && (member.kind != CallableMemberDescriptor.Kind.DECLARATION)) {
                 val overridden = member.overriddenDescriptors
-                if (overridden.any { it.modality == Modality.FINAL || DescriptorVisibilities.isPrivate(it.visibility.normalize()) }) continue
+                if (overridden.any { it.modality == Modality.FINAL || !it.isVisibleFrom(descriptor) }) continue
 
                 if (DescriptorUtils.isInterface(descriptor) && overridden.any { descriptor.builtIns.isMemberOfAny(it) }) continue
 
@@ -86,6 +87,13 @@ class OverrideMembersHandler(private val preferConstructorParameters: Boolean = 
             }
         }
         return result
+    }
+
+    private fun CallableMemberDescriptor.isVisibleFrom(classDescriptor: ClassDescriptor): Boolean {
+        if (visibility.delegate is JavaVisibilities.PackageVisibility) {
+            return containingPackage() == classDescriptor.containingPackage()
+        }
+        return !DescriptorVisibilities.isPrivate(visibility.normalize())
     }
 
     private fun toRealSupers(immediateSuper: CallableMemberDescriptor): Collection<CallableMemberDescriptor> {

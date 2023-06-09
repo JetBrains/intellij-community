@@ -12,10 +12,17 @@ import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.PluginData
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.test.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
+import kotlin.coroutines.CoroutineContext
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @TestApplication
 abstract class BasePluginManagerTest {
   internal lateinit var pluginManager: SettingsSyncPluginManager
@@ -23,6 +30,8 @@ abstract class BasePluginManagerTest {
 
   @TestDisposable
   internal lateinit var testRootDisposable: Disposable
+  protected lateinit var testDispatcher: TestDispatcher
+  protected lateinit var testScheduler: TestCoroutineScheduler
 
   internal val quickJump = TestPluginDescriptor(
     "QuickJump",
@@ -41,6 +50,12 @@ abstract class BasePluginManagerTest {
     listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),
     bundled = true
   )
+  internal val cvsOutdated = TestPluginDescriptor(
+    "cvs",
+    listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),
+    bundled = false,
+    compatible = false
+  )
   internal val javascript = TestPluginDescriptor(
     "JavaScript",
     listOf(TestPluginDependency("css", false)),
@@ -56,9 +71,12 @@ abstract class BasePluginManagerTest {
   @BeforeEach
   fun setUp() {
     SettingsSyncSettings.getInstance().syncEnabled = true
+    SettingsSyncSettings.getInstance().loadState(SettingsSyncSettings.SettingsSyncSettingsState())
     testPluginManager = TestPluginManager()
     ApplicationManager.getApplication().replaceService(PluginManagerProxy::class.java, testPluginManager, testRootDisposable)
-    pluginManager = SettingsSyncPluginManager()
+    testScheduler = TestCoroutineScheduler()
+    testDispatcher = StandardTestDispatcher(testScheduler)
+    pluginManager = SettingsSyncPluginManager(CoroutineScope(testDispatcher))
     Disposer.register(testRootDisposable, pluginManager)
   }
 

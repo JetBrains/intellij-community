@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.icons.AllIcons;
@@ -104,7 +104,8 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     Path libDir = Path.of(home, LIB_DIR_NAME);
     // in 173.* and earlier builds all IDEs included platform modules into openapi.jar
     // (see org.jetbrains.intellij.build.ProductModulesLayout.platformApiModules)
-    for (String name : List.of("app.jar", "platform-api.jar", "openapi.jar")) {
+    // DO NOT change order of this list, first match must return JAR containing marker class for getRequiredJdkVersion()
+    for (String name : List.of("app-client.jar", "app.jar", "platform-api.jar", "openapi.jar")) {
       Path result = libDir.resolve(name);
       if (Files.exists(result)) {
         return result;

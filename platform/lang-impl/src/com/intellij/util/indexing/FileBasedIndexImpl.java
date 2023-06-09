@@ -340,7 +340,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   void setUpShutDownTask() {
     myShutDownTask = new MyShutDownTask();
-    ShutDownTracker.getInstance().registerShutdownTask(myShutDownTask);
+    ShutDownTracker.getInstance().registerCacheShutdownTask(myShutDownTask);
   }
 
   @ApiStatus.Internal
@@ -2299,6 +2299,21 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         SnapshotHashEnumeratorService.getInstance().flush();
       }
       return overallResult;
+    }
+
+    @Override
+    public boolean hasSomethingToFlush() {
+      if (IndexingStamp.isDirty()) return true;
+
+      IndexConfiguration indexes = getState();
+      for (ID<?, ?> indexId : indexes.getIndexIDs()) {
+        UpdatableIndex<?, ?, FileContent, ?> index = indexes.getIndex(indexId);
+        if (index != null && index.isDirty()) {
+          return true;
+        }
+      }
+
+      return SnapshotHashEnumeratorService.getInstance().isDirty();
     }
 
     @Override

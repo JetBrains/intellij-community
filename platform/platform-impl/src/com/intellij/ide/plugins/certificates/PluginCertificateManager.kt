@@ -36,7 +36,7 @@ class PluginCertificateManager :
 
   private val myDetailsPanel: JPanel = JPanel(CardLayout())
 
-  val myRootPanel = panel {
+  val myRootPanel: DialogPanel = panel {
     row {
       val decorator = ToolbarDecorator.createDecorator(myTree)
         .disableUpDownActions()

@@ -29,7 +29,7 @@ class KeepTabOpenAction : DumbAwareAction() {
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   private fun getActionState(e: AnActionEvent): ActionState? {
     val project = e.project ?: return null

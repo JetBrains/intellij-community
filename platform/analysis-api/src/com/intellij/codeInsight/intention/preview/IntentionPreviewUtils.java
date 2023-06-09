@@ -7,12 +7,13 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModChooseTarget;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModNavigate;
-import com.intellij.modcommand.ModUpdatePsiFile;
+import com.intellij.modcommand.ModUpdateFileText;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -155,14 +156,16 @@ public final class IntentionPreviewUtils {
     IntentionPreviewInfo info = null;
     IntentionPreviewInfo info2 = IntentionPreviewInfo.EMPTY;
     for (ModCommand command : modCommand.unpack()) {
-      if (command instanceof ModUpdatePsiFile modFile) {
+      if (command instanceof ModUpdateFileText modFile) {
         if (info != null) {
           return IntentionPreviewInfo.EMPTY;
         }
-        if (file == modFile.file() || InjectedLanguageManager.getInstance(project).getTopLevelFile(file) == modFile.file()) {
+        VirtualFile vFile = modFile.file();
+        if (vFile.equals(file.getOriginalFile().getVirtualFile()) ||
+            vFile.equals(InjectedLanguageManager.getInstance(project).getTopLevelFile(file).getOriginalFile().getVirtualFile())) {
           info = new IntentionPreviewInfo.Diff(modFile.oldText(), modFile.newText());
         } else {
-          info = new IntentionPreviewInfo.CustomDiff(modFile.file().getFileType(), modFile.file().getName(), modFile.oldText(),
+          info = new IntentionPreviewInfo.CustomDiff(vFile.getFileType(), vFile.getName(), modFile.oldText(),
                                                      modFile.newText());
         }
       }

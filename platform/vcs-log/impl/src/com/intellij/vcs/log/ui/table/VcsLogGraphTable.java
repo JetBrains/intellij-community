@@ -131,7 +131,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     getEmptyText().setText(VcsLogBundle.message("vcs.log.default.status"));
     myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), this);
 
-    initColumnModel();
+    setColumnModel(new MyTableColumnModel(myProperties));
     onColumnOrderSettingChanged();
     setRootColumnSize();
     subscribeOnNewUiSwitching();
@@ -162,6 +162,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     ScrollingUtil.installActions(this, false);
   }
 
+  @Override
+  public boolean getAutoCreateColumnsFromModel() {
+    // otherwise sizes are recalculated after each TableColumn re-initialization
+    return false;
+  }
+
   public @NotNull @NonNls String getId() {
     return myId;
   }
@@ -172,12 +178,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public @NotNull VcsLogCommitSelection getSelection() {
     return getModel().createSelection(getSelectedRows());
-  }
-
-  private void initColumnModel() {
-    TableColumnModel columnModel = new MyTableColumnModel(myProperties);
-    setColumnModel(columnModel);
-    setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
   }
 
   protected void updateEmptyText() {
@@ -239,8 +239,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     LOG.debug("Incorrect column order was saved in properties " + columnOrder + ", replacing it with default order.");
-    updateOrder(myProperties, getVisibleColumns());
-    return null;
+    List<VcsLogColumn<?>> visibleColumns = getVisibleColumns();
+    if (!visibleColumns.isEmpty()) {
+      updateOrder(myProperties, visibleColumns);
+      return null;
+    }
+    List<VcsLogColumn<?>> validColumnOrder = makeValidColumnOrder(columnOrder);
+    updateOrder(myProperties, validColumnOrder);
+    return validColumnOrder;
   }
 
   private @NotNull List<Integer> getVisibleColumnIndices() {

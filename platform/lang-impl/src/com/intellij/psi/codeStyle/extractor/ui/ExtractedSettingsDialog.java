@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.extractor.ui;
 
 import com.intellij.lang.LangBundle;
@@ -56,9 +56,8 @@ public class ExtractedSettingsDialog extends DialogWrapper {
     setTitle(LangBundle.message("dialog.title.extracted.code.style.settings"));
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return buildExtractedSettingsTree();
   }
 
@@ -112,8 +111,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
       return isGroupNode;
     }
 
-    @NotNull
-    public @Nls String getTitle() {
+    public @NotNull @Nls String getTitle() {
       return customTitle != null ? customTitle : (myRepresentation == null ? valueString : myRepresentation.getUiName());
     }
 
@@ -124,9 +122,8 @@ public class ExtractedSettingsDialog extends DialogWrapper {
 
   protected static ColumnInfo getTitleColumnInfo() {
     return new ColumnInfo("TITLE") {
-      @Nullable
       @Override
-      public Object valueOf(Object o) {
+      public @Nullable Object valueOf(Object o) {
         if (o instanceof SettingsTreeNode) {
           return ((SettingsTreeNode) o).getTitle();
         } else {
@@ -150,14 +147,13 @@ public class ExtractedSettingsDialog extends DialogWrapper {
       myPanel.add(myCheckBox);
     }
 
-    @NotNull
     @Override
-    public Component getTableCellRendererComponent(JTable table,
-                                                   Object value,
-                                                   boolean isSelected,
-                                                   boolean hasFocus,
-                                                   int row,
-                                                   int column) {
+    public @NotNull Component getTableCellRendererComponent(JTable table,
+                                                            Object value,
+                                                            boolean isSelected,
+                                                            boolean hasFocus,
+                                                            int row,
+                                                            int column) {
       if (table instanceof TreeTable) {
         table.setEnabled(true);
         DefaultMutableTreeNode valueNode = (DefaultMutableTreeNode)((TreeTable) table).getTree().getPathForRow(row).getLastPathComponent();
@@ -258,9 +254,8 @@ public class ExtractedSettingsDialog extends DialogWrapper {
 
   protected static ColumnInfo getValueColumnInfo() {
     return new ColumnInfo("VALUE") {
-      @Nullable
       @Override
-      public Object valueOf(Object o) {
+      public @Nullable Object valueOf(Object o) {
         if (o instanceof SettingsTreeNode) {
           return ((SettingsTreeNode) o).getValueString();
         } else {
@@ -436,15 +431,14 @@ public class ExtractedSettingsDialog extends DialogWrapper {
 
     private final JLabel myLabel = new JLabel();
 
-    @NotNull
     @Override
-    public Component getTreeCellRendererComponent(JTree tree,
-                                                  Object value,
-                                                  boolean selected,
-                                                  boolean expanded,
-                                                  boolean leaf,
-                                                  int row,
-                                                  boolean hasFocus) {
+    public @NotNull Component getTreeCellRendererComponent(JTree tree,
+                                                           Object value,
+                                                           boolean selected,
+                                                           boolean expanded,
+                                                           boolean leaf,
+                                                           int row,
+                                                           boolean hasFocus) {
       if (value instanceof SettingsTreeNode node) {
         myLabel.setText(node.getTitle());
         myLabel.setFont(node.isGroupOrTypeNode() ? myLabel.getFont().deriveFont(Font.BOLD) : myLabel.getFont().deriveFont(Font.PLAIN));

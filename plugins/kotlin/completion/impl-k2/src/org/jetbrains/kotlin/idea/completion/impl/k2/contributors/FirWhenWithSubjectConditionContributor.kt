@@ -131,7 +131,6 @@ internal class FirWhenWithSubjectConditionContributor(
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun KtAnalysisSession.completeSubClassesOfSealedClass(
         classSymbol: KtNamedClassOrObjectSymbol,
         conditions: List<KtWhenCondition>,

@@ -16,14 +16,15 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -56,11 +57,11 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new RedundantImplementsFix();
   }
 
-  private static class RedundantImplementsFix extends InspectionGadgetsFix {
+  private static class RedundantImplementsFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -69,8 +70,8 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      deleteElement(descriptor.getPsiElement());
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      startElement.delete();
     }
   }
 

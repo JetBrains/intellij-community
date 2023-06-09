@@ -51,7 +51,7 @@ class WorkspaceModelTopics : Disposable {
     fun getInstance(project: Project): WorkspaceModelTopics = project.service()
   }
 
-  var modulesAreLoaded = false
+  var modulesAreLoaded: Boolean = false
     private set
 
   fun notifyModulesAreLoaded() {

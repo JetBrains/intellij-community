@@ -34,6 +34,11 @@ public final class InMemoryForwardIndex implements ForwardIndex, MeasurableIndex
   public void force() { }
 
   @Override
+  public boolean isDirty() {
+    return false;
+  }
+
+  @Override
   public int keysCountApproximately() {
     return myMap.size();
   }

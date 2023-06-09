@@ -340,7 +340,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     return apply(builder, texts, indicator);
   }
 
-  private void clearDiffPresentation() {
+  protected void clearDiffPresentation() {
     myPanel.resetNotifications();
     myStatusPanel.setBusy(false);
     destroyChangedBlockData();

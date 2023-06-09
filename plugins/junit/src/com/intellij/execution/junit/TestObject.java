@@ -281,7 +281,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     final StringBuilder buf = new StringBuilder();
     collectListeners(javaParameters, buf, IDEAJUnitListener.EP_NAME, "\n");
-    if (buf.length() > 0) {
+    if (!buf.isEmpty()) {
       try {
         myListenersFile = FileUtil.createTempFile("junit_listeners_", "", true);
         javaParameters.getProgramParametersList().add("@@" + myListenersFile.getPath());
@@ -323,7 +323,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     boolean isModularized = ensureOnModulePath &&
                             JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9) &&
-                            ReadAction.nonBlocking(() -> FilenameIndex.getVirtualFilesByName(PsiJavaModule.MODULE_INFO_FILE, globalSearchScope).size() > 0).executeSynchronously() &&
+                            ReadAction.nonBlocking(() -> !FilenameIndex.getVirtualFilesByName(PsiJavaModule.MODULE_INFO_FILE,
+                                                                                              globalSearchScope)
+                              .isEmpty()).executeSynchronously() &&
                             VersionComparatorUtil.compare(launcherVersion, "1.5.0") >= 0;
 
     if (isModularized) { //for modularized junit ensure launcher is included in the module graph

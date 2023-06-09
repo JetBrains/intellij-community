@@ -93,7 +93,7 @@ public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspection
     }
   }
 
-  private static class SimplifyCollectorFix implements LocalQuickFix {
+  private static class SimplifyCollectorFix extends PsiUpdateModCommandQuickFix {
     private final String myMethodName;
 
     SimplifyCollectorFix(String methodName) {
@@ -115,8 +115,8 @@ public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspection
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (!isCollectorMethod(call, "groupingBy", "groupingByConcurrent")) return;
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (args.length != 2 && args.length != 3) return;

@@ -8,9 +8,13 @@ import com.intellij.util.asSafely
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
+import org.jetbrains.jps.model.JpsElement
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
 object WorkspaceFileSetRecognizer {
 
@@ -58,5 +62,20 @@ object WorkspaceFileSetRecognizer {
 
   fun isFromAdditionalLibraryRootsProvider(fileSet: WorkspaceFileSet): Boolean {
     return NonIncrementalContributors.isFromAdditionalLibraryRootsProvider(fileSet)
+  }
+
+  fun isSourceRoot(fileSet: WorkspaceFileSet): Boolean {
+    return (fileSet as? WorkspaceFileSetImpl)?.data is ModuleSourceRootData
+  }
+
+  /**
+   * @return null for fileSet not corresponding to a source root (see [isSourceRoot]),
+   * or when no known [JpsModuleSourceRootType] corresponds to the string id in [SourceRootEntity.rootType],
+   * which may be due to uninstalling corresponding plugin
+   */
+  fun getRootTypeForSourceRoot(fileSet: WorkspaceFileSet): JpsModuleSourceRootType<out JpsElement>? {
+    return ((fileSet as? WorkspaceFileSetImpl)?.data as? ModuleSourceRootData)?.rootType?.let { rootType ->
+      SourceRootTypeRegistry.getInstance().findTypeById(rootType)
+    }
   }
 }

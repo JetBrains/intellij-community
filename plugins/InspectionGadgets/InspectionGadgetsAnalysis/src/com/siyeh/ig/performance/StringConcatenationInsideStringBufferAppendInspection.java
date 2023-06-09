@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.util.ChangeToAppendUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -25,7 +27,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
@@ -52,11 +53,11 @@ public class StringConcatenationInsideStringBufferAppendInspection extends BaseI
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new ReplaceWithChainedAppendFix();
   }
 
-  private static class ReplaceWithChainedAppendFix extends InspectionGadgetsFix {
+  private static class ReplaceWithChainedAppendFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -66,8 +67,7 @@ public class StringConcatenationInsideStringBufferAppendInspection extends BaseI
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement methodNameElement = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameElement, @NotNull EditorUpdater updater) {
       final PsiReferenceExpression methodExpression = (PsiReferenceExpression)methodNameElement.getParent();
       if (methodExpression == null) {
         return;

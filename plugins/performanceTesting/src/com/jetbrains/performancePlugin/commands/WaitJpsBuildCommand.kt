@@ -8,10 +8,8 @@ import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener.Companion.LOADED
 import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl
-import com.jetbrains.performancePlugin.utils.TimeArgumentHelper
+import com.jetbrains.performancePlugin.utils.TimeArgumentParserUtil
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.time.withTimeoutOrNull
-import java.time.Duration
 import java.time.temporal.ChronoUnit
 
 /**
@@ -37,16 +35,17 @@ class WaitJpsBuildCommand(text: String, line: Int) : PerformanceCommandCoroutine
         Disposer.newDisposable("waitJpsProjectLoaded").use { disposable ->
           //disposable will help to make a disconnect on dispose
           //Example - MessageBusTest::disconnectOnDisposeForImmediateDeliveryTopic
-          project.messageBus.connect(disposable).subscribe<JpsProjectLoadedListener>(LOADED, object : JpsProjectLoadedListener {
+          project.messageBus.connect(disposable).subscribe(LOADED, object : JpsProjectLoadedListener {
             override fun loaded() {
               completableDeferred.complete(true)
             }
           })
 
-          withTimeoutOrNull(Duration.of(waitTimeout, chronoUnit)) {
-            return@withTimeoutOrNull completableDeferred.await()
-          } ?: throw RuntimeException("Jps project wasn't loaded in $waitTimeout ${chronoUnit.name}")
+          Waiter.waitOrThrow(waitTimeout, chronoUnit, "Jps project wasn't loaded in $waitTimeout ${chronoUnit.name}") {
+            completableDeferred.await()
+          }
         }
+
       }
     }
     else {
@@ -55,7 +54,7 @@ class WaitJpsBuildCommand(text: String, line: Int) : PerformanceCommandCoroutine
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val (timeout, timeunit) = TimeArgumentHelper.parse(extractCommandArgument(PREFIX))
+    val (timeout, timeunit) = TimeArgumentParserUtil.parse(extractCommandArgument(PREFIX))
     waitJpsProjectLoaded(context.project, timeout, timeunit)
   }
 

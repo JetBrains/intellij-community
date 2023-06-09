@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
@@ -78,7 +77,8 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
   protected open fun createDataProvider() = DataProvider { dataId ->
     when {
-      COMMIT_WORKFLOW_HANDLER.`is`(dataId) -> this
+      VcsDataKeys.COMMIT_WORKFLOW_HANDLER.`is`(dataId) -> this
+      VcsDataKeys.COMMIT_WORKFLOW_UI.`is`(dataId) -> this.ui
       Refreshable.PANEL_KEY.`is`(dataId) -> commitPanel
       else -> null
     }

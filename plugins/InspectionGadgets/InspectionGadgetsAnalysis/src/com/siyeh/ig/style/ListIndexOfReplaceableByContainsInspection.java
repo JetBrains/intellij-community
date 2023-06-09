@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -50,17 +48,16 @@ public class ListIndexOfReplaceableByContainsInspection extends BaseInspection i
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new IndexOfReplaceableByContainsFix();
   }
 
   private static class IndexOfReplaceableByContainsFix
-    extends InspectionGadgetsFix {
+    extends PsiUpdateModCommandQuickFix {
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiBinaryExpression expression =
-        (PsiBinaryExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiBinaryExpression expression = (PsiBinaryExpression)startElement;
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
       final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
       CommentTracker tracker = new CommentTracker();

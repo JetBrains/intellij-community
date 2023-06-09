@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
@@ -44,7 +45,9 @@ private class BreadcrumbsInitializingActivity : ProjectActivity {
     VirtualFileManager.getInstance().addVirtualFileListener(MyVirtualFileListener(project), project)
     connection.subscribe(UISettingsListener.TOPIC, UISettingsListener { reinitBreadcrumbsInAllEditors(project) })
     withContext(Dispatchers.EDT) {
-      reinitBreadcrumbsInAllEditors(project)
+      blockingContext {
+        reinitBreadcrumbsInAllEditors(project)
+      }
     }
   }
 }

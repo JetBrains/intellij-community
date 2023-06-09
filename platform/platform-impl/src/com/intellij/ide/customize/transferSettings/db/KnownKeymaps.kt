@@ -37,12 +37,12 @@ object KnownKeymaps {
     SimpleActionDescriptor("BuildSolutionAction", IdeBundle.message("transfersettings.label.build.solution"), KeyboardShortcut.fromString("control shift B"))
   )
 
-  val VSCode = PluginKeymap(IdeBundle.message("transfersettings.product.vscode"), "com.intellij.plugins.vscodekeymap",
-                            "VSCode", BundledKeymap.fromManager("\$default"), VSCodeDemo)
-  val VSCodeMac = PluginKeymap(IdeBundle.message("transfersettings.product.vscode"), "com.intellij.plugins.vscodekeymap",
-                               "VSCode OSX", BundledKeymap.fromManager("\$default"), VSCodeMacDemo)
-  val VSMac = PluginKeymap(IdeBundle.message("transfersettings.product.visual.studio.for.mac"), "com.intellij.plugins.visualstudioformackeymap",
-                           "Visual Studio for Mac", BundledKeymap.fromManager("\$default"), VSMacDemo)
-  val VisualStudio2022 = PluginKeymap(IdeBundle.message("transfersettings.product.visual.studio"), "com.intellij.plugins.visualstudio2022keymap",
-                                      "Visual Studio 2022", BundledKeymap.fromManager("\$default"), VSMacDemo)
+  val VSCode: PluginKeymap = PluginKeymap(IdeBundle.message("transfersettings.product.vscode"), "com.intellij.plugins.vscodekeymap",
+                                          "VSCode", BundledKeymap.fromManager("\$default"), VSCodeDemo)
+  val VSCodeMac: PluginKeymap = PluginKeymap(IdeBundle.message("transfersettings.product.vscode"), "com.intellij.plugins.vscodekeymap",
+                                             "VSCode OSX", BundledKeymap.fromManager("\$default"), VSCodeMacDemo)
+  val VSMac: PluginKeymap = PluginKeymap(IdeBundle.message("transfersettings.product.visual.studio.for.mac"), "com.intellij.plugins.visualstudioformackeymap",
+                                         "Visual Studio for Mac", BundledKeymap.fromManager("\$default"), VSMacDemo)
+  val VisualStudio2022: PluginKeymap = PluginKeymap(IdeBundle.message("transfersettings.product.visual.studio"), "com.intellij.plugins.visualstudio2022keymap",
+                                                    "Visual Studio 2022", BundledKeymap.fromManager("\$default"), VSMacDemo)
 }

@@ -16,7 +16,9 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
@@ -26,7 +28,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
@@ -52,11 +53,11 @@ public class RedundantFieldInitializationInspection extends BaseInspection imple
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new RedundantFieldInitializationFix();
   }
 
-  private static class RedundantFieldInitializationFix extends InspectionGadgetsFix {
+  private static class RedundantFieldInitializationFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -65,8 +66,8 @@ public class RedundantFieldInitializationInspection extends BaseInspection imple
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      descriptor.getPsiElement().delete();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      startElement.delete();
     }
   }
 
@@ -111,7 +112,7 @@ public class RedundantFieldInitializationInspection extends BaseInspection imple
       registerError(initializer);
     }
 
-    private boolean isAssignmentInInitializerOverwritten(@NotNull PsiField field) {
+    private static boolean isAssignmentInInitializerOverwritten(@NotNull PsiField field) {
       // JLS 12.5. Creation of New Class Instances
       final PsiClass aClass = field.getContainingClass();
       if (aClass == null) {

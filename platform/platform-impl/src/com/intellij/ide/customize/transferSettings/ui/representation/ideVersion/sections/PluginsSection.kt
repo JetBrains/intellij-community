@@ -13,8 +13,8 @@ import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
 
 class PluginsSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settings.preferences, SettingsPreferencesKind.Plugins, AllIcons.Plugins.PluginLogo) {
-  override val name = "Plugins and Features"
-  override fun worthShowing() = ideVersion.settings.plugins.isNotEmpty()
+  override val name: String = "Plugins and Features"
+  override fun worthShowing(): Boolean = ideVersion.settings.plugins.isNotEmpty()
 
   override fun getContent(): JComponent {
     if (ideVersion.settings.plugins.size > 3) {

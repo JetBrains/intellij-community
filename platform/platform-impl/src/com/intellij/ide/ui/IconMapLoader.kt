@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.ide.ui
@@ -33,10 +33,10 @@ class IconMapLoader {
       val channel = Channel<Pair<ByteArray, ExtensionPointName.LazyExtension<IconMapperBean>>>(Runtime.getRuntime().availableProcessors())
       launch {
         for (extension in IconMapperBean.EP_NAME.filterableLazySequence()) {
-          launch(Dispatchers.IO) t@{
+          launch t@{
             val classLoader = extension.pluginDescriptor.pluginClassLoader ?: return@t
             val mappingFile = extension.instance?.mappingFile ?: return@t
-            val data = ResourceUtil.getResourceAsBytes(mappingFile, classLoader)
+            val data = withContext(Dispatchers.IO) { ResourceUtil.getResourceAsBytes (mappingFile, classLoader) }
             if (data == null) {
               logger<IconMapLoader>().error(PluginException("Cannot find $mappingFile", extension.pluginDescriptor.pluginId))
             }
@@ -54,6 +54,9 @@ class IconMapLoader {
           val map = result.computeIfAbsent(classLoader) { HashMap() }
           val parser = JsonFactory().createParser(data)
           readDataFromJson(parser, map)
+        }
+        catch (e: CancellationException) {
+          throw e
         }
         catch (e: Exception) {
           logger<IconMapLoader>().warn("Can't process ${extension.instance?.mappingFile}",

@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.cloneable;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
@@ -27,7 +29,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jdom.Element;
@@ -69,11 +70,11 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new CloneDeclaresCloneNotSupportedInspectionFix();
   }
 
-  private static class CloneDeclaresCloneNotSupportedInspectionFix extends InspectionGadgetsFix {
+  private static class CloneDeclaresCloneNotSupportedInspectionFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -82,8 +83,7 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement methodNameIdentifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement methodNameIdentifier, @NotNull EditorUpdater updater) {
       final PsiMethod method = (PsiMethod)methodNameIdentifier.getParent();
       PsiUtil.addException(method, "java.lang.CloneNotSupportedException");
     }

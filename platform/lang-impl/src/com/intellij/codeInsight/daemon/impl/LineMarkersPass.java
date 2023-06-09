@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -46,13 +45,11 @@ import java.util.*;
 public final class LineMarkersPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(LineMarkersPass.class);
 
-  private volatile List<LineMarkerInfo<?>> myMarkers = Collections.emptyList();
+  private final @NotNull PsiFile myFile;
+  private final @NotNull TextRange myPriorityBounds;
+  private final @NotNull TextRange myRestrictRange;
 
-  @NotNull private final PsiFile myFile;
-  @NotNull private final TextRange myPriorityBounds;
-  @NotNull private final TextRange myRestrictRange;
-
-  @NotNull private final Mode myMode;
+  private final @NotNull Mode myMode;
 
   LineMarkersPass(@NotNull Project project,
                   @NotNull PsiFile file,
@@ -73,9 +70,21 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
+    List<LineMarkerInfo<?>> markers = doCollectMarkers();
+    try {
+      LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, markers, getId());
+      DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+      FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
+      fileStatusMap.markFileUpToDate(myDocument, getId());
+    }
+    catch (IndexNotReadyException ignored) {
+    }
+  }
+
+  private @NotNull List<LineMarkerInfo<?>> doCollectMarkers() {
     if (!EditorSettingsExternalizable.getInstance().areGutterIconsShown() && !Registry.is("calculate.gutter.actions.always")) {
       // optimization: do not even try to query expensive providers if icons they are going to produce are not to be displayed
-      return;
+      return Collections.emptyList();
     }
     List<LineMarkerInfo<?>> lineMarkers = new ArrayList<>();
     FileViewProvider viewProvider = myFile.getViewProvider();
@@ -108,22 +117,13 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
     }
 
     List<LineMarkerInfo<?>> markers = mergeLineMarkers(lineMarkers, getDocument());
-    myMarkers = markers;
     if (LOG.isDebugEnabled()) {
       LOG.debug("LineMarkersPass.doCollectInformation. lineMarkers: " + lineMarkers+"; merged: "+markers);
     }
-    try {
-      LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, markers, getId());
-      DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-      FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-      fileStatusMap.markFileUpToDate(myDocument, getId());
-    }
-    catch (IndexNotReadyException ignored) {
-    }
+    return markers;
   }
 
-  @NotNull
-  private static List<LineMarkerInfo<?>> mergeLineMarkers(@NotNull List<LineMarkerInfo<?>> markers, @NotNull Document document) {
+  private static @NotNull List<LineMarkerInfo<?>> mergeLineMarkers(@NotNull List<LineMarkerInfo<?>> markers, @NotNull Document document) {
     Int2ObjectMap<List<MergeableLineMarkerInfo<?>>> sameLineMarkers = new Int2ObjectOpenHashMap<>();
 
     for (int i = markers.size() - 1; i >= 0; i--) {
@@ -152,8 +152,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
     return result;
   }
 
-  @NotNull
-  public static List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull Project project) {
+  public static @NotNull List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull Project project) {
     List<LineMarkerProvider> forLanguage = LineMarkerProviders.getInstance().allForLanguageOrAny(language);
     List<LineMarkerProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(forLanguage);
     LineMarkerSettings settings = LineMarkerSettings.getSettings();
@@ -264,6 +263,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
         for (TextRange editable : editables) {
           TextRange hostRange = manager.injectedToHost(injectedPsi, editable);
           Icon icon = gutterRenderer == null ? null : gutterRenderer.getIcon();
+          //noinspection unchecked
           GutterIconNavigationHandler<PsiElement> navigationHandler = (GutterIconNavigationHandler<PsiElement>)injectedMarker.getNavigationHandler();
           LineMarkerInfo<PsiElement> converted = icon == null
                                                  ? new LineMarkerInfo<>(injectedElement, hostRange)
@@ -277,19 +277,16 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
     });
   }
 
-  @NotNull
-  public static Collection<LineMarkerInfo<?>> queryLineMarkers(@NotNull PsiFile file, @NotNull Document document) {
+  public static @NotNull Collection<LineMarkerInfo<?>> queryLineMarkers(@NotNull PsiFile file, @NotNull Document document) {
     if (file.getNode() == null) {
       // binary file? see IDEADEV-2809
       return Collections.emptyList();
     }
     LineMarkersPass pass = new LineMarkersPass(file.getProject(), file, document, file.getTextRange(), file.getTextRange(), Mode.ALL);
-    pass.doCollectInformation(new EmptyProgressIndicator());
-    return pass.myMarkers;
+    return pass.doCollectMarkers();
   }
 
-  @NotNull
-  public static LineMarkerInfo<PsiElement> createMethodSeparatorLineMarker(@NotNull PsiElement startFrom, @NotNull EditorColorsManager colorsManager) {
+  public static @NotNull LineMarkerInfo<PsiElement> createMethodSeparatorLineMarker(@NotNull PsiElement startFrom, @NotNull EditorColorsManager colorsManager) {
     LineMarkerInfo<PsiElement> info = new LineMarkerInfo<>(startFrom, startFrom.getTextRange());
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
     info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);

@@ -8,6 +8,7 @@ import com.intellij.openapi.module.impl.scopes.JdkScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
@@ -190,9 +191,10 @@ class K1MoveConflictCheckerSupport : KotlinMoveConflictCheckerSupport {
         targetScope: VirtualFile
     ): MultiMap<PsiElement, String> {
         val conflicts = MultiMap<PsiElement, String>()
-        val targetModule = ModuleUtilCore.findModuleForFile(targetScope, moveChecker.project) ?: return MultiMap.empty()
-        val fileIndex = ModuleRootManager.getInstance(targetModule).fileIndex
-        val isInTestSources = fileIndex.getKotlinSourceRootType(targetScope) == TestSourceKotlinRootType
+        val project = moveChecker.project
+        val targetModule = ModuleUtilCore.findModuleForFile(targetScope, project) ?: return MultiMap.empty()
+        val projectFileIndex = ProjectFileIndex.getInstance(project)
+        val isInTestSources = projectFileIndex.getKotlinSourceRootType(targetScope) == TestSourceKotlinRootType
         NextUsage@ for (usage in usages) {
             val element = usage.element ?: continue
             if (PsiTreeUtil.getParentOfType(element, PsiImportStatement::class.java, false) != null) continue

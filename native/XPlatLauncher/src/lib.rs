@@ -80,6 +80,12 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     mini_logger::init(level).expect("Cannot initialize the logger");
     debug!("Executable: {exe_path:?}");
     debug!("Mode: {}", if remote_dev { "remote-dev" } else { "standard" });
+
+    #[cfg(target_os = "macos")]
+    {
+        // on macOS, `open` doesn't properly set a current working directory
+        restore_working_directory()?;
+    }
     debug!("Current directory: {:?}", env::current_dir());
 
     debug!("** Preparing launch configuration");
@@ -96,6 +102,23 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     debug!("** Launching JVM");
     let args = configuration.get_args();
     java::run_jvm_and_event_loop(&jre_home, vm_options, main_class, args.to_vec()).context("Cannot start the runtime")?;
+
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn restore_working_directory() -> Result<()> {
+    let (cwd_res, pwd_var) = (env::current_dir(), env::var("PWD"));
+    debug!("Adjusting current directory (current={:?} $PWD={:?})", cwd_res, pwd_var);
+
+    if let Ok(cwd) = cwd_res {
+        if cwd == PathBuf::from("/") {
+            if let Ok(pwd) = pwd_var {
+                env::set_current_dir(&pwd)
+                    .with_context(|| format!("Cannot set current directory to '{pwd}'"))?;
+            }
+        }
+    }
 
     Ok(())
 }
@@ -318,8 +341,10 @@ impl PathExt for Path {
     #[cfg(target_os = "windows")]
     fn strip_ns_prefix(&self) -> Result<PathBuf> {
         let path_str = self.to_string_checked()?;
-        Ok(if path_str.starts_with("\\\\?\\") {
-            // Windows namespace prefixes are misunderstood both by JVM and classloaders
+        // Windows namespace prefixes are misunderstood both by JVM and classloaders
+        Ok(if path_str.starts_with("\\\\?\\UNC\\") {
+            PathBuf::from("\\\\".to_string() + &path_str[8..])
+        } else if path_str.starts_with("\\\\?\\") {
             PathBuf::from(&path_str[4..])
         } else {
             self.to_path_buf()

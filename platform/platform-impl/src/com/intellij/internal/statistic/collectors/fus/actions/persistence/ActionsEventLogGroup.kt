@@ -3,72 +3,69 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
 import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventField
-import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.ObjectEventField
-import com.intellij.internal.statistic.eventLog.events.VarargEventId
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 class ActionsEventLogGroup : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    const val ACTION_FINISHED_EVENT_ID = "action.finished"
+    const val ACTION_FINISHED_EVENT_ID: String = "action.finished"
 
     @JvmField
-    val GROUP = EventLogGroup("actions", 72)
+    val GROUP: EventLogGroup = EventLogGroup("actions", 72)
 
     @JvmField
-    val ACTION_ID = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
+    val ACTION_ID: StringEventField = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
 
     @JvmField
-    val ACTION_CLASS = EventFields.StringValidatedByCustomRule("class", ClassNameRuleValidator::class.java)
+    val ACTION_CLASS: StringEventField = EventFields.StringValidatedByCustomRule("class", ClassNameRuleValidator::class.java)
 
     @JvmField
-    val ACTION_PARENT = EventFields.StringValidatedByCustomRule("parent", ClassNameRuleValidator::class.java)
+    val ACTION_PARENT: StringEventField = EventFields.StringValidatedByCustomRule("parent", ClassNameRuleValidator::class.java)
 
     @JvmField
-    val TOGGLE_ACTION = EventFields.Boolean("enable")
+    val TOGGLE_ACTION: BooleanEventField = EventFields.Boolean("enable")
 
     @JvmField
-    val CONTEXT_MENU = EventFields.Boolean("context_menu")
+    val CONTEXT_MENU: BooleanEventField = EventFields.Boolean("context_menu")
 
     @JvmField
-    val IS_SUBMENU = EventFields.Boolean("isSubmenu")
+    val IS_SUBMENU: BooleanEventField = EventFields.Boolean("isSubmenu")
 
     @JvmField
-    val DUMB_START = EventFields.Boolean("dumb_start")
+    val DUMB_START: BooleanEventField = EventFields.Boolean("dumb_start")
 
     @JvmField
-    val DUMB = EventFields.Boolean("dumb")
+    val DUMB: BooleanEventField = EventFields.Boolean("dumb")
 
     @JvmField
-    val RESULT_TYPE = EventFields.String("type", arrayListOf("ignored", "performed", "failed", "unknown"))
+    val RESULT_TYPE: StringEventField = EventFields.String("type", arrayListOf("ignored", "performed", "failed", "unknown"))
 
     @JvmField
-    val ERROR = EventFields.Class("error")
+    val ERROR: ClassEventField = EventFields.Class("error")
 
     @JvmField
-    val RESULT = ObjectEventField("result", RESULT_TYPE, ERROR)
+    val RESULT: ObjectEventField = ObjectEventField("result", RESULT_TYPE, ERROR)
 
     @JvmField
-    val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, ACTION_FINISHED_EVENT_ID)
+    val ADDITIONAL: ObjectEventField = EventFields.createAdditionalDataField(GROUP.id, ACTION_FINISHED_EVENT_ID)
 
     @JvmField
-    val ACTION_FINISHED = registerActionEvent(
+    val ACTION_FINISHED: VarargEventId = registerActionEvent(
       GROUP, ACTION_FINISHED_EVENT_ID, EventFields.StartTime, ADDITIONAL, EventFields.Language, EventFields.DurationMs, DUMB_START, RESULT
     )
 
     @JvmField
-    val ACTION_UPDATED = GROUP.registerVarargEvent("action.updated", EventFields.PluginInfo,
-                                                   ACTION_ID, ACTION_CLASS, ACTION_PARENT,
-                                                   EventFields.Language, EventFields.DurationMs)
+    val ACTION_UPDATED: VarargEventId = GROUP.registerVarargEvent("action.updated", EventFields.PluginInfo,
+                                                                  ACTION_ID, ACTION_CLASS, ACTION_PARENT,
+                                                                  EventFields.Language, EventFields.DurationMs)
 
     @JvmField
-    val ACTION_GROUP_EXPANDED = GROUP.registerVarargEvent("action.group.expanded", EventFields.PluginInfo,
-                                                          ACTION_ID, ACTION_CLASS, ACTION_PARENT,
-                                                          EventFields.ActionPlace, IS_SUBMENU, EventFields.Size,
-                                                          EventFields.Language, EventFields.DurationMs)
+    val ACTION_GROUP_EXPANDED: VarargEventId = GROUP.registerVarargEvent("action.group.expanded", EventFields.PluginInfo,
+                                                                         ACTION_ID, ACTION_CLASS, ACTION_PARENT,
+                                                                         EventFields.ActionPlace, IS_SUBMENU, EventFields.Size,
+                                                                         EventFields.Language, EventFields.DurationMs)
 
 
     @JvmStatic
@@ -90,7 +87,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     }
 
     @JvmField
-    val CUSTOM_ACTION_INVOKED = GROUP.registerEvent(
+    val CUSTOM_ACTION_INVOKED: EventId2<String?, FusInputEvent?> = GROUP.registerEvent(
       "custom.action.invoked",
       EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java),
       EventFields.InputEvent)

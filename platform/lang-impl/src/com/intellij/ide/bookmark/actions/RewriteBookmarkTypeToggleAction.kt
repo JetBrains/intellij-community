@@ -7,7 +7,7 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 
 internal class RewriteBookmarkTypeToggleAction : DumbAwareToggleAction() {
 
-  override fun isSelected(event: AnActionEvent) = event.bookmarksViewState?.rewriteBookmarkType?.not() ?: true
+  override fun isSelected(event: AnActionEvent): Boolean = event.bookmarksViewState?.rewriteBookmarkType?.not() ?: true
 
   override fun setSelected(event: AnActionEvent, isSelected: Boolean) {
     event.bookmarksViewState?.rewriteBookmarkType = !isSelected

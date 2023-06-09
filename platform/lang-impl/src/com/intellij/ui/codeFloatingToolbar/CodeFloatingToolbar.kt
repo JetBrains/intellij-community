@@ -13,16 +13,25 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.LightweightHint
 import java.awt.Point
 
+/**
+ * Represents floating toolbar which is shown for selected text inside editor.
+ * Toolbar is visible only if mouse was used for the selection.
+ */
 class CodeFloatingToolbar(editor: Editor): FloatingToolbar(editor, "Floating.CodeToolbar") {
 
   override fun hasIgnoredParent(element: PsiElement): Boolean {
     return AdvancedSettings.getBoolean("floating.codeToolbar.hide")
+           || !element.isWritable
            || TemplateManagerImpl.getInstance(element.project).getActiveTemplate(editor) != null
   }
 
+  override fun disableForDoubleClickSelection(): Boolean = true
+
   override fun shouldReviveAfterClose(): Boolean = false
 
-  override fun shouldSurviveDocumentChange() = false
+  override fun shouldSurviveDocumentChange(): Boolean = false
+
+  override fun hideByOtherHints(): Boolean = true
 
   override fun getHintPosition(hint: LightweightHint): Point {
     val isOneLineSelection = isOneLineSelection(editor)

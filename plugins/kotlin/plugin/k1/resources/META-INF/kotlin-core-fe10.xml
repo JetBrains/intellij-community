@@ -17,6 +17,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.K1PluginStartupActivity"/>
+
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10ShortenReferencesFacility"/>
@@ -75,8 +77,6 @@
             implementation="org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineNonBlockingContextChecker"/>
     <codeInsight.blockingMethodChecker
             implementation="org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingMethodChecker"/>
-
-    <typeDeclarationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinTypeDeclarationProvider"/>
 
     <codeInsight.implementMethod language="kotlin"
                                  implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler"/>

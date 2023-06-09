@@ -51,7 +51,7 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
   override fun revalidateNotEmptyStripes() {
   }
 
-  override fun getBottomHeight() = 0
+  override fun getBottomHeight(): Int = 0
 
   override fun getStripeFor(anchor: ToolWindowAnchor, isSplit: Boolean?): AbstractDroppableStripe {
     return when (anchor) {
@@ -176,5 +176,5 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
     return manager
   }
 
-  override fun hasButtons() = left.hasButtons() || right.hasButtons()
+  override fun hasButtons(): Boolean = left.hasButtons() || right.hasButtons()
 }

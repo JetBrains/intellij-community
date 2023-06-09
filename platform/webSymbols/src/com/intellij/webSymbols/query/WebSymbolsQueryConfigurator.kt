@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 
 interface WebSymbolsQueryConfigurator {
@@ -27,6 +28,7 @@ interface WebSymbolsQueryConfigurator {
   companion object {
 
     @TestOnly
+    @Internal
     val EP_NAME = ExtensionPointName<WebSymbolsQueryConfigurator>("com.intellij.webSymbols.queryConfigurator")
 
   }

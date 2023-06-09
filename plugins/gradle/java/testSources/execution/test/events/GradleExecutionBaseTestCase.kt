@@ -84,7 +84,7 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     }
   }
 
-  fun executeTasks(commandLine: String, isRunAsTest: Boolean = true) {
+  fun executeTasks(commandLine: String, isRunAsTest: Boolean) {
     val runManager = RunManager.getInstance(project)
     val runConfigurationName = "GradleTestExecutionTestCase (" + LocalTimeCounter.currentTime() + ")"
     val runnerSettings = runManager.createConfiguration(runConfigurationName, GradleExternalTaskConfigurationType::class.java)

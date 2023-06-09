@@ -222,8 +222,8 @@ public class CustomizableActionsPanel {
     TreeUtil.treeNodeTraverser(root).traverse()
       .filter(node -> node instanceof DefaultMutableTreeNode && ((DefaultMutableTreeNode)node).getUserObject() instanceof Pair)
       .forEach(node -> doSetIcon(mySelectedSchema, (DefaultMutableTreeNode)node, null));
-    CustomActionsSchema source = restoreLastState ? CustomActionsSchema.getInstance() : new CustomActionsSchema();
-    if (mySelectedSchema == null) mySelectedSchema = new CustomActionsSchema();
+    CustomActionsSchema source = restoreLastState ? CustomActionsSchema.getInstance() : new CustomActionsSchema(null);
+    if (mySelectedSchema == null) mySelectedSchema = new CustomActionsSchema(null);
     mySelectedSchema.copyFrom(source);
     updateLocalSchema(mySelectedSchema);
     mySelectedSchema.initActionIcons();
@@ -531,9 +531,13 @@ public class CustomizableActionsPanel {
               ActionUrl url = new ActionUrl(getGroupPath(new TreePath(node.getPath()), true), action, ADDED, newActionPosition);
               addCustomizedAction(url);
               DefaultMutableTreeNode newNode = addPathToActionsTree(myActionsTree, url);
-              if (newNode != null && action instanceof String) {
-                Icon icon = CustomizationUtil.getIconForPath(ActionManager.getInstance(),mySelectedSchema.getIconPath((String)action));
-                newNode.setUserObject(Pair.create(action, icon));
+              if (newNode != null && action instanceof String actionId) {
+                String path = mySelectedSchema.getIconPath(actionId);
+                if (path.isEmpty()) {
+                  path = actionId;
+                }
+                Icon icon = CustomizationUtil.getIconForPath(ActionManager.getInstance(), path);
+                newNode.setUserObject(Pair.create(actionId, icon));
               }
             }
 
@@ -861,7 +865,7 @@ public class CustomizableActionsPanel {
     public void actionPerformed(@NotNull AnActionEvent e) {
       final List<ActionUrl> otherActions = new ArrayList<>(mySelectedSchema.getActions());
       otherActions.removeAll(findActionsUnderSelection().second);
-      mySelectedSchema.copyFrom(new CustomActionsSchema());
+      mySelectedSchema.copyFrom(new CustomActionsSchema(null));
       for (ActionUrl otherAction : otherActions) {
         mySelectedSchema.addAction(otherAction);
       }
@@ -895,13 +899,13 @@ public class CustomizableActionsPanel {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      mySelectedSchema.copyFrom(new CustomActionsSchema());
+      mySelectedSchema.copyFrom(new CustomActionsSchema(null));
       patchActionsTreeCorrespondingToSchema((DefaultMutableTreeNode)myActionsTree.getModel().getRoot());
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(mySelectedSchema.isModified(new CustomActionsSchema()));
+      e.getPresentation().setEnabled(mySelectedSchema.isModified(new CustomActionsSchema(null)));
     }
 
     @Override

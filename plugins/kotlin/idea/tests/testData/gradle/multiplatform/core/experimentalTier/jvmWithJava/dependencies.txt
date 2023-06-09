@@ -41,7 +41,6 @@ project.kotlinJvmOnly.test
     jvmWithJavaProducer.commonMain (COMPILE)
     jvmWithJavaProducer.jvmMain (COMPILE)
     kotlinJvmOnly.main (friend, COMPILE)
-    kotlinJvmOnly.main (friend, RUNTIME)
 
 
 Test configuration:

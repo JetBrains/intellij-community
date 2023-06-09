@@ -37,6 +37,8 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.q
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
+import org.jetbrains.idea.maven.server.MavenArtifactEvent
+import org.jetbrains.idea.maven.server.MavenArtifactEvent.ArtifactEventType
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -551,6 +553,19 @@ class MavenSyncConsole(private val myProject: Project) {
 
     private fun debugLog(s: String, exception: Throwable? = null) {
       MavenLog.LOG.debug(s, exception)
+    }
+  }
+
+  @Synchronized
+  fun handleDownloadEvents(downloadEvents: List<MavenArtifactEvent>) {
+    for (e in downloadEvents) {
+      val listener = getListener(e.resolveType)
+      val id = e.dependencyId
+      when (e.artifactEventType) {
+        ArtifactEventType.DOWNLOAD_STARTED -> listener.downloadStarted(id)
+        ArtifactEventType.DOWNLOAD_COMPLETED -> listener.downloadCompleted(id)
+        ArtifactEventType.DOWNLOAD_FAILED -> listener.downloadFailed(id, e.errorMessage, e.stackTrace)
+      }
     }
   }
 }

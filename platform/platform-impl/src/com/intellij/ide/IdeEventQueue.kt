@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "FunctionName")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "FunctionName", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide
 
@@ -40,7 +40,6 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.ui.ComponentUtil
-import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
@@ -92,7 +91,7 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   @VisibleForTesting
   @JvmField
-  val keyboardEventDispatched = AtomicInteger()
+  val keyboardEventDispatched: AtomicInteger = AtomicInteger()
 
   private var isInInputEvent = false
   var trueCurrentEvent: AWTEvent = InvocationEvent(this, EmptyRunnable.getInstance())
@@ -124,14 +123,30 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   private var idleTracker: () -> Unit = {}
 
-  @RequiresEdt
-  internal fun setIdleTracker(value: () -> Unit) {
-    EDT.assertIsEdt()
-    idleTracker = value
+
+  private var testMode: Boolean? = null
+
+  init {
+    assert(isDispatchThread()) { Thread.currentThread() }
+    val systemEventQueue = Toolkit.getDefaultToolkit().systemEventQueue
+    assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
+    systemEventQueue.push(this)
+    EDT.updateEdt()
+    replaceDefaultKeyboardFocusManager()
+    addDispatcher(WindowsAltSuppressor(), null)
+    if (SystemInfoRt.isWindows && java.lang.Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
+      // 'Windows+Up' shortcut would maximize active dialog under Win 7+
+      addDispatcher(WindowsUpMaximizer(), null)
+    }
+    addDispatcher(EditingCanceller(), null)
+    //addDispatcher(new UIMouseTracker(), null);
+    abracadabraDaberBoreh()
+    if (java.lang.Boolean.parseBoolean(System.getProperty("skip.move.resize.events", "true"))) {
+      postEventListeners.add { skipMoveResizeEvents(it) } // hot path, do not use method reference
+    }
   }
 
   companion object {
-    @JvmStatic
     private val _instance by lazy { IdeEventQueue() }
 
     @JvmStatic
@@ -144,6 +159,12 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
+  @RequiresEdt
+  internal fun setIdleTracker(value: () -> Unit) {
+    EDT.assertIsEdt()
+    idleTracker = value
+  }
+
   /**
    * Executes given `runnable` after all focus activities are finished.
    *
@@ -154,11 +175,11 @@ class IdeEventQueue private constructor() : EventQueue() {
   fun executeWhenAllFocusEventsLeftTheQueue(runnable: Runnable) {
     ifFocusEventsInTheQueue(
       yes = { e ->
-        var runnables = runnablesWaitingFocusChange[e]
+        var runnables = runnablesWaitingFocusChange.get(e)
         if (runnables == null) {
           runnables = mutableListOf()
           runnables.add(runnable)
-          runnablesWaitingFocusChange[e] = runnables
+          runnablesWaitingFocusChange.put(e, runnables)
         }
         else {
           Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "We have already had a runnable for the event: $e" }
@@ -185,7 +206,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       yes(lastFocusGainedEvent)
     }
     else {
-      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "No focus gained event in the queue runnable is run on EDT if needed : " + no.javaClass.name }
+      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "No focus gained event in the queue runnable is run on EDT if needed : ${no.javaClass.name}" }
       EdtInvocationManager.invokeLaterIfNeeded(no)
     }
   }
@@ -558,14 +579,14 @@ class IdeEventQueue private constructor() : EventQueue() {
       return
     }
 
-    val application = ApplicationManager.getApplication()
+    val application = ApplicationManagerEx.getApplicationEx()
     if (e is ComponentEvent && appIsLoaded && !application.isHeadlessEnvironment) {
       (application.serviceIfCreated<WindowManager>() as WindowManagerEx?)?.dispatchComponentEvent(e)
     }
     when (e) {
       is KeyEvent -> dispatchKeyEvent(e)
       is MouseEvent -> dispatchMouseEvent(e)
-      else -> application.withoutImplicitRead { defaultDispatchEvent(e) }
+      else -> application.runWithoutImplicitRead { defaultDispatchEvent(e) }
     }
   }
 
@@ -820,28 +841,6 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   @Deprecated("Does nothing currently")
   fun flushDelayedKeyEvents() {
-  }
-
-  private var testMode: Boolean? = null
-
-  init {
-    assert(isDispatchThread()) { Thread.currentThread() }
-    val systemEventQueue = Toolkit.getDefaultToolkit().systemEventQueue
-    assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
-    systemEventQueue.push(this)
-    EDT.updateEdt()
-    replaceDefaultKeyboardFocusManager()
-    addDispatcher(WindowsAltSuppressor(), null)
-    if (SystemInfoRt.isWindows && java.lang.Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
-      // 'Windows+Up' shortcut would maximize active dialog under Win 7+
-      addDispatcher(WindowsUpMaximizer(), null)
-    }
-    addDispatcher(EditingCanceller(), null)
-    //addDispatcher(new UIMouseTracker(), null);
-    abracadabraDaberBoreh()
-    if (SystemProperties.getBooleanProperty("skip.move.resize.events", true)) {
-      postEventListeners.add { skipMoveResizeEvents(it) } // hot path, do not use method reference
-    }
   }
 
   private fun isTestMode(): Boolean {
@@ -1161,7 +1160,7 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
     val uiSettings = UISettings.instanceOrNull
     if (uiSettings == null ||
         !SystemInfoRt.isWindows ||
-        !Registry.`is`("actionSystem.win.suppressAlt") ||
+        !Registry.`is`("actionSystem.win.suppressAlt", true) ||
         !(uiSettings.hideToolStripes || uiSettings.presentationMode)) {
       return false
     }
@@ -1177,7 +1176,7 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
         dispatch = false
       }
       else if (component != null) {
-        SwingUtilities.invokeLater {
+        EventQueue.invokeLater {
           try {
             val window = ComponentUtil.getWindow(component)
             if (window == null || !window.isActive) {

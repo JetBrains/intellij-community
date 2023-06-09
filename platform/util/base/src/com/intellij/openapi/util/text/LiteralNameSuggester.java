@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 /**
  * A utility class to suggest variable names for literals based on their content
  */
-public class LiteralNameSuggester {
+public final class LiteralNameSuggester {
   private static final class PatternBasedSuggestions {
     private final @NotNull Pattern pattern;
     private final @NotNull List<@NotNull String> names;

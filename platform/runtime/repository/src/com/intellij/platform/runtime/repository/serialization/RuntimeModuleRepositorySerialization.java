@@ -7,6 +7,7 @@ import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer;
 import com.intellij.platform.runtime.repository.serialization.impl.ProductModulesXmlLoader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
@@ -19,10 +20,11 @@ import java.util.Map;
 public final class RuntimeModuleRepositorySerialization {
   private RuntimeModuleRepositorySerialization() {}
 
-  public static void saveToJar(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors, @NotNull Path jarPath, int generatorVersion)
+  public static void saveToJar(@NotNull Collection<RawRuntimeModuleDescriptor> descriptors, @Nullable String bootstrapModuleName, 
+                               @NotNull Path jarPath, int generatorVersion)
     throws IOException {
     try {
-      JarFileSerializer.saveToJar(descriptors, jarPath, generatorVersion);
+      JarFileSerializer.saveToJar(descriptors, bootstrapModuleName, jarPath, generatorVersion);
     }
     catch (XMLStreamException e) {
       throw new IOException(e);

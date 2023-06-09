@@ -17,6 +17,7 @@ package com.siyeh.ig;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -76,7 +77,6 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
   /**
    * Build a fix for this inspection based on infos passed to {@link BaseInspectionVisitor#registerError(PsiElement, Object...)}
    * or similar methods. Override this method in concrete inspection to provide a fix.
-   * Use {@link DelegatingFix} if your fix does not extend {@link InspectionGadgetsFix}.
    *
    * <p>
    * This method is ignored is {@link #buildFixes(Object...)} is overridden as well and returns a non-empty result.
@@ -86,19 +86,18 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
    * @return a new fix or null if no fix is available
    */
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return null;
   }
 
   /**
    * Build fixes based on infos passed to {@link BaseInspectionVisitor#registerError(PsiElement, Object...)} or similar methods.
-   * Override this method in concrete inspection to provide fixes. Use {@link DelegatingFix} if your fix does not extend
-   * {@link InspectionGadgetsFix}.
+   * Override this method in concrete inspection to provide fixes.
    *
    * @param infos additional information which was supplied by {@link BaseInspectionVisitor} during error registration.
    * @return an array of fixes (empty array if no fix is available).
    */
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     return InspectionGadgetsFix.EMPTY_ARRAY;
   }
 

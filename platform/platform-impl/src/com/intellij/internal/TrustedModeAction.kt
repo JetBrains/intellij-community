@@ -12,7 +12,7 @@ internal sealed class TrustedModeAction(val targetState: Boolean) : DumbAwareAct
     e.project?.setTrusted(targetState)
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = (targetState != e.project?.isTrusted())

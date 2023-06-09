@@ -2,15 +2,15 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
@@ -84,23 +84,23 @@ public class AmbiguousFieldAccessInspection extends BaseInspection implements Cl
   }
 
   @Override
-  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new AmbiguousFieldAccessFix();
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     boolean isOnTheFly = (boolean)infos[2];
     final PsiVariable variable = (PsiVariable)infos[1];
     if (isOnTheFly) {
-      return new InspectionGadgetsFix[] { new NavigateToApparentlyAccessedElementFix(variable), new AmbiguousFieldAccessFix() };
+      return new LocalQuickFix[] { new NavigateToApparentlyAccessedElementFix(variable), new AmbiguousFieldAccessFix() };
     }
     else {
-      return new InspectionGadgetsFix[] { new AmbiguousFieldAccessFix() };
+      return new LocalQuickFix[] { new AmbiguousFieldAccessFix() };
     }
   }
 
-  private static class AmbiguousFieldAccessFix extends InspectionGadgetsFix {
+  private static class AmbiguousFieldAccessFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -109,8 +109,7 @@ public class AmbiguousFieldAccessInspection extends BaseInspection implements Cl
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
@@ -119,7 +118,7 @@ public class AmbiguousFieldAccessInspection extends BaseInspection implements Cl
     }
   }
 
-  private static class NavigateToApparentlyAccessedElementFix extends InspectionGadgetsFix {
+  private static class NavigateToApparentlyAccessedElementFix extends ModCommandQuickFix {
 
     private final int type;
 
@@ -135,12 +134,16 @@ public class AmbiguousFieldAccessInspection extends BaseInspection implements Cl
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiVariable variable = getApparentlyAccessedVariable(project, element);
       if (variable != null) {
-        variable.navigate(true);
+        PsiIdentifier identifier = variable.getNameIdentifier();
+        if (identifier != null) {
+          return ModCommands.select(identifier);
+        }
       }
+      return ModCommands.nop();
     }
 
     private static @Nullable PsiVariable getApparentlyAccessedVariable(Project project, PsiElement element) {

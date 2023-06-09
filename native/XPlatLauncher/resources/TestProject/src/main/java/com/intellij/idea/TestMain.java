@@ -20,6 +20,9 @@ public class TestMain {
         case "dump-launch-parameters" -> {
           dumpLaunchParameters(args);
         }
+        case "print-cwd" -> {
+          printCwd();
+        }
         case "async-profiler" -> {
           asyncProfiler();
         }
@@ -38,7 +41,7 @@ public class TestMain {
             "usage: " + TestMain.class.getName() + " [command [options ...]]\n" +
             "commands:\n" +
             "  dump-launch-parameters [test-args ...] --output /path/to/output/file\n" +
-            "  vm-options-overloading <property>\n" +
+            "  print-cwd\n" +
             "  async-profiler\n" +
             "  exit-code <number>\n" +
             "  sigsegv");
@@ -77,6 +80,10 @@ public class TestMain {
 
     Files.writeString(outputFile, jsonText);
     System.out.println("Dumped to " + outputFile.toAbsolutePath());
+  }
+
+  private static void printCwd() {
+    System.out.println("CWD=" + Path.of(".").toAbsolutePath());
   }
 
   @SuppressWarnings("SpellCheckingInspection")

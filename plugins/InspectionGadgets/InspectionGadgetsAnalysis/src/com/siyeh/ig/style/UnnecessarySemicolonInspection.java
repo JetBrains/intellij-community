@@ -15,8 +15,7 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.LanguageUtil;
@@ -62,11 +61,11 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new UnnecessarySemicolonFix();
   }
 
-  private static class UnnecessarySemicolonFix extends InspectionGadgetsFix {
+  private static class UnnecessarySemicolonFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -75,8 +74,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement semicolonElement = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement semicolonElement, @NotNull EditorUpdater updater) {
       if (semicolonElement instanceof PsiFile) return;
       final PsiElement parent = semicolonElement.getParent();
       if (parent instanceof PsiEmptyStatement) {
@@ -85,11 +83,11 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
           parent.replace(lastChild);
         }
         else {
-          deleteElement(parent);
+          parent.delete();
         }
       }
       else {
-        deleteElement(semicolonElement);
+        semicolonElement.delete();
       }
     }
   }

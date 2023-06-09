@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.*
@@ -39,6 +40,7 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
+import com.intellij.ui.content.tabs.TabbedContentAction
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Consumer
 import com.intellij.util.ModalityUiUtil
@@ -71,11 +73,11 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   var windowInfoDuringInit: WindowInfoImpl? = null
 
   private val focusTask by lazy { FocusTask(this) }
-  val focusAlarm by lazy { SingleAlarm(focusTask, 0, disposable) }
+  val focusAlarm: SingleAlarm by lazy { SingleAlarm(focusTask, 0, disposable) }
 
-  override fun getId() = id
+  override fun getId(): String = id
 
-  override fun getProject() = toolWindowManager.project
+  override fun getProject(): Project = toolWindowManager.project
 
   override fun getDecoration(): ToolWindowEx.ToolWindowDecoration {
     return ToolWindowEx.ToolWindowDecoration(icon, additionalGearActions)
@@ -90,7 +92,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     private set
 
   private var hideOnEmptyContent = false
-  var isPlaceholderMode = false
+  var isPlaceholderMode: Boolean = false
 
   private var pendingContentManagerListeners: MutableList<ContentManagerListener>? = null
 
@@ -243,7 +245,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     return null
   }
 
-  override fun getDisposable() = parentDisposable
+  override fun getDisposable(): Disposable = parentDisposable
 
   override fun remove() {
     @Suppress("DEPRECATION")
@@ -283,9 +285,9 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     callLater(runnable)
   }
 
-  override fun isVisible() = windowInfo.isVisible
+  override fun isVisible(): Boolean = windowInfo.isVisible
 
-  override fun getAnchor() = windowInfo.anchor
+  override fun getAnchor(): ToolWindowAnchor = windowInfo.anchor
 
   override fun setAnchor(anchor: ToolWindowAnchor, runnable: Runnable?) {
     EDT.assertIsEdt()
@@ -293,7 +295,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     callLater(runnable)
   }
 
-  override fun isSplitMode() = windowInfo.isSplit
+  override fun isSplitMode(): Boolean = windowInfo.isSplit
 
   override fun setContentUiType(type: ToolWindowContentUiType, runnable: Runnable?) {
     EDT.assertIsEdt()
@@ -305,7 +307,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     toolWindowManager.setDefaultContentUiType(this, type)
   }
 
-  override fun getContentUiType() = windowInfo.contentUiType
+  override fun getContentUiType(): ToolWindowContentUiType = windowInfo.contentUiType
 
   override fun setSplitMode(isSideTool: Boolean, runnable: Runnable?) {
     EDT.assertIsEdt()
@@ -321,9 +323,9 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     toolWindowManager.setToolWindowAutoHide(id, value)
   }
 
-  override fun isAutoHide() = windowInfo.isAutoHide
+  override fun isAutoHide(): Boolean = windowInfo.isAutoHide
 
-  override fun getType() = windowInfo.type
+  override fun getType(): ToolWindowType = windowInfo.type
 
   override fun setType(type: ToolWindowType, runnable: Runnable?) {
     EDT.assertIsEdt()
@@ -331,7 +333,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     callLater(runnable)
   }
 
-  override fun getInternalType() = windowInfo.internalType
+  override fun getInternalType(): ToolWindowType = windowInfo.internalType
 
   override fun stretchWidth(value: Int) {
     toolWindowManager.stretchWidth(this, value)
@@ -398,7 +400,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     ContentManagerWatcher.watchContentManager(this, contentManager)
   }
 
-  override fun isAvailable() = isAvailable
+  override fun isAvailable(): Boolean = isAvailable
 
   override fun getComponent(): JComponent {
     if (toolWindowManager.project.isDisposed) {
@@ -434,13 +436,13 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  override fun canCloseContents() = canCloseContent
+  override fun canCloseContents(): Boolean = canCloseContent
 
-  override fun getIcon() = icon
+  override fun getIcon(): ToolWindowIcon? = icon
 
   override fun getTitle(): String? = contentManager.value.selectedContent?.displayName
 
-  override fun getStripeTitle() = stripeTitle
+  override fun getStripeTitle(): String = stripeTitle
 
   override fun setIcon(newIcon: Icon) {
     EDT.assertIsEdt()
@@ -501,7 +503,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     hideOnEmptyContent = value
   }
 
-  fun isToHideOnEmptyContent() = hideOnEmptyContent
+  fun isToHideOnEmptyContent(): Boolean = hideOnEmptyContent
 
   override fun setShowStripeButton(value: Boolean) {
     val windowInfoDuringInit = windowInfoDuringInit
@@ -513,9 +515,9 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  override fun isShowStripeButton() = windowInfo.isShowStripeButton
+  override fun isShowStripeButton(): Boolean = windowInfo.isShowStripeButton
 
-  override fun isDisposed() = contentManager.isInitialized() && contentManager.value.isDisposed
+  override fun isDisposed(): Boolean = contentManager.isInitialized() && contentManager.value.isDisposed
 
   private fun ensureContentManagerInitialized() {
     contentManager.value
@@ -553,7 +555,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  override fun getHelpId() = helpId
+  override fun getHelpId(): String? = helpId
 
   override fun setHelpId(value: String) {
     helpId = value
@@ -566,38 +568,19 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   @JvmOverloads
   fun createPopupGroup(skipHideAction: Boolean = false): ActionGroup {
-    val group = GearActionGroup()
-    if (!skipHideAction) {
-      group.addSeparator()
-      group.add(HideAction())
+    return object : ActionGroupWrapper(GearActionGroup()) {
+      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+        val result = mutableListOf<AnAction>()
+        result.addAll(super.getChildren(e))
+        if (!skipHideAction) {
+          result.add(Separator.getInstance())
+          result.add(HideAction())
+        }
+        result.add(Separator.getInstance())
+        result.add(HelpAction())
+        return result.toTypedArray()
+      }
     }
-    group.addSeparator()
-    group.add(object : ContextHelpAction() {
-      override fun getHelpId(dataContext: DataContext): String? {
-        val content = contentManagerIfCreated?.selectedContent
-        if (content != null) {
-          val helpId = content.helpId
-          if (helpId != null) {
-            return helpId
-          }
-        }
-
-        val id = getHelpId()
-        if (id != null) {
-          return id
-        }
-
-        val context = if (content == null) dataContext else DataManager.getInstance().getDataContext(content.component)
-        return super.getHelpId(context)
-      }
-
-      override fun update(e: AnActionEvent) {
-        super.update(e)
-
-        e.presentation.isEnabledAndVisible = getHelpId(e.dataContext) != null
-      }
-    })
-    return group
   }
 
   override fun getEmptyText(): StatusText = (contentManager.value.component as ComponentWithEmptyText).emptyText
@@ -606,40 +589,70 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     decorator?.background = color
   }
 
-  private inner class GearActionGroup : DefaultActionGroup(), DumbAware {
+  private inner class HelpAction : ContextHelpAction() {
+    override fun getHelpId(dataContext: DataContext): String? {
+      val content = contentManagerIfCreated?.selectedContent
+      if (content != null) {
+        val helpId = content.helpId
+        if (helpId != null) {
+          return helpId
+        }
+      }
+      val id = getHelpId()
+      if (id != null) {
+        return id
+      }
+      val context = if (content == null) dataContext else DataManager.getInstance().getDataContext(content.component)
+      return super.getHelpId(context)
+    }
+
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isEnabledAndVisible = getHelpId(e.dataContext) != null
+    }
+  }
+
+  private inner class GearActionGroup : ActionGroup(), DumbAware {
     init {
       templatePresentation.icon = AllIcons.General.GearPlain
       if (toolWindowManager.isNewUi) {
         templatePresentation.icon = AllIcons.Actions.More
       }
       templatePresentation.text = IdeBundle.message("show.options.menu")
+    }
+
+    override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+      val group = DefaultActionGroup()
       val additionalGearActions = additionalGearActions
       if (additionalGearActions != null) {
         if (additionalGearActions.isPopup && !additionalGearActions.templatePresentation.text.isNullOrEmpty()) {
-          add(additionalGearActions)
+          group.add(additionalGearActions)
         }
         else {
-          addSorted(this, additionalGearActions)
+          addSorted(group, additionalGearActions)
         }
-        addSeparator()
+        group.addSeparator()
       }
-
+      getContentManagerIfCreated()?.let {
+        group.add(TabbedContentAction.CloseAllAction(it))
+      }
       val toggleToolbarGroup = ToggleToolbarAction.createToggleToolbarGroup(toolWindowManager.project, this@ToolWindowImpl)
       if (ToolWindowId.PREVIEW != id) {
         toggleToolbarGroup.addAction(ToggleContentUiTypeAction())
       }
 
-      addAction(toggleToolbarGroup).setAsSecondary(true)
-      add(ActionManager.getInstance().getAction("TW.ViewModeGroup"))
+      group.addAction(toggleToolbarGroup).setAsSecondary(true)
+      group.add(ActionManager.getInstance().getAction("TW.ViewModeGroup"))
       if (toolWindowManager.isNewUi) {
-        add(SquareStripeButton.createMoveGroup())
+        group.add(SquareStripeButton.createMoveGroup())
       }
       else {
-        add(ToolWindowMoveAction.Group())
+        group.add(ToolWindowMoveAction.Group())
       }
-      add(ResizeActionGroup())
-      addSeparator()
-      add(RemoveStripeButtonAction())
+      group.add(ResizeActionGroup())
+      group.addSeparator()
+      group.add(RemoveStripeButtonAction())
+      return group.getChildren(e)
     }
   }
 

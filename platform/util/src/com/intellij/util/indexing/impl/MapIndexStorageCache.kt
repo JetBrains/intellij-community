@@ -5,11 +5,10 @@ import com.intellij.util.containers.SLRUCache
 import com.intellij.util.containers.hash.EqualityPolicy
 import com.intellij.util.io.IOCancellationCallbackHolder
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.ServiceLoader
+import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.BiConsumer
-import java.util.function.Consumer
 import java.util.function.Function
 import kotlin.concurrent.withLock
 import kotlin.math.ceil
@@ -20,7 +19,7 @@ interface MapIndexStorageCache<Key, Value> {
 
   fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>?
 
-  fun processCachedValues(processor: Consumer<ChangeTrackingValueContainer<Value>>)
+  fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>>
 
   fun invalidateAll()
 }
@@ -34,7 +33,7 @@ interface MapIndexStorageCacheProvider {
 
   companion object {
     @JvmStatic
-    val actualProvider by lazy {
+    val actualProvider: MapIndexStorageCacheProvider by lazy {
       ServiceLoader.load(MapIndexStorageCacheProvider::class.java).firstOrNull()
       ?: MapIndexStorageCacheSlruProvider
     }
@@ -55,7 +54,7 @@ private class MapIndexStorageSlruCache<Key, Value>(val valueReader: Function<Key
                                                    val evictionListener: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
                                                    hashingStrategy: EqualityPolicy<Key>,
                                                    cacheSize: Int): MapIndexStorageCache<Key, Value> {
-  private val cache = object : SLRUCache<Key, ChangeTrackingValueContainer<Value>?>(
+  private val cache = object : SLRUCache<Key, ChangeTrackingValueContainer<Value>>(
     cacheSize, ceil(cacheSize * 0.25).toInt(), hashingStrategy) {
     override fun createValue(key: Key): ChangeTrackingValueContainer<Value> = valueReader.apply(key)
 
@@ -70,10 +69,8 @@ private class MapIndexStorageSlruCache<Key, Value>(val valueReader: Function<Key
 
   override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? = cacheAccessLock.withLock { cache.getIfCached(key) }
 
-  override fun processCachedValues(processor: Consumer<ChangeTrackingValueContainer<Value>>) = cacheAccessLock.withLock {
-    for ((_, valueContainer) in cache.entrySet()) {
-      processor.accept(valueContainer!!)
-    }
+  override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> = cacheAccessLock.withLock {
+    cache.values()
   }
 
   override fun invalidateAll() {

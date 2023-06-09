@@ -15,6 +15,7 @@ import org.cef.browser.CefBrowser;
 import org.cef.callback.CefDragData;
 import org.cef.handler.CefRenderHandler;
 import org.cef.handler.CefScreenInfo;
+import org.cef.misc.CefRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +57,9 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   private volatile @Nullable VolatileImage myVolatileImage;
   private volatile boolean myContentOutdated = false;
+  private volatile CefRange mySelectionRange = new CefRange(0, 0);
+  private volatile String mySelectedText = "";
+  private volatile @Nullable Rectangle[] myCompositionCharactersBBoxes;
 
   JBCefOsrHandler(@NotNull JBCefOsrComponent component, @Nullable Function<? super JComponent, ? extends Rectangle> screenBoundsProvider) {
     myComponent = component;
@@ -127,6 +131,7 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public void onPaint(CefBrowser browser, boolean popup, Rectangle[] dirtyRects, ByteBuffer buffer, int width, int height) {
+    myFpsMeter.onPaintStarted();
     JBHiDPIScaledImage image = popup ? myPopupImage : myImage;
 
     Dimension size = getRealImageSize(image);
@@ -158,6 +163,13 @@ class JBCefOsrHandler implements CefRenderHandler {
       // NOTE: should mark area outside browser (otherwise background component won't be repainted)
       rm.addDirtyRegion(root, dirtyDst.x - dx, dirtyDst.y - dx, dirtyDst.width + dx * 2, dirtyDst.height + dx * 2);
     });
+
+    { // notify fps-meter
+      long pixCount = 0;
+      for (Rectangle r : dirtyRects)
+        pixCount += r.width * r.height;
+      myFpsMeter.onPaintFinished(pixCount);
+    }
   }
 
   @Override
@@ -173,6 +185,18 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public void updateDragCursor(CefBrowser browser, int operation) {
+  }
+
+  @Override
+  public void OnImeCompositionRangeChanged(CefBrowser browser, CefRange selectionRange, Rectangle[] characterBounds) {
+    this.mySelectionRange = selectionRange;
+    this.myCompositionCharactersBBoxes = characterBounds;
+  }
+
+  @Override
+  public void OnTextSelectionChanged(CefBrowser browser, String selectedText, CefRange selectionRange) {
+    this.mySelectedText = selectedText;
+    this.mySelectionRange = selectionRange;
   }
 
   public void paint(Graphics2D g) {
@@ -214,6 +238,18 @@ class JBCefOsrHandler implements CefRenderHandler {
   private void updateLocation() {
     // getLocationOnScreen() is an expensive op, so do not request it on every mouse move, but cache
     myLocationOnScreenRef.set(myComponent.getLocationOnScreen());
+  }
+
+  public CefRange getSelectionRange() {
+    return mySelectionRange;
+  }
+
+  public @Nullable Rectangle[] getCompositionCharactersBBoxes() {
+    return myCompositionCharactersBBoxes;
+  }
+
+  public String getSelectedText() {
+    return mySelectedText;
   }
 
   private @NotNull Point getLocation() {

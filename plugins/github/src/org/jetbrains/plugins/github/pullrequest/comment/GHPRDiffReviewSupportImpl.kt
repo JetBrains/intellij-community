@@ -149,15 +149,14 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
   }
 
   private fun mapThread(thread: GHPullRequestReviewThread): DiffMappedValue<GHPullRequestReviewThread>? {
-    val originalCommitSha = thread.originalCommit?.oid ?: return null
-    if (!diffData.contains(originalCommitSha, thread.path)) return null
     if (thread.line == null && thread.originalLine == null) return null
 
     val mappedLocation = if (thread.line != null) {
-      val commit = thread.commit?.oid ?: return null
+      val commitSha = thread.commit?.oid ?: return null
+      if (!diffData.contains(commitSha, thread.path)) return null
       when (thread.side) {
         Side.RIGHT -> {
-          diffData.mapLine(commit, thread.line - 1, Side.RIGHT)
+          diffData.mapLine(commitSha, thread.line - 1, Side.RIGHT)
         }
         Side.LEFT -> {
           diffData.fileHistory.findStartCommit()?.let { baseSha ->
@@ -167,6 +166,8 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
       }
     }
     else if (thread.originalLine != null) {
+      val originalCommitSha = thread.originalCommit?.oid ?: return null
+      if (!diffData.contains(originalCommitSha, thread.path)) return null
       when (thread.side) {
         Side.RIGHT -> {
           diffData.mapLine(originalCommitSha, thread.originalLine - 1, Side.RIGHT)

@@ -3,7 +3,7 @@ package com.intellij.lang.jvm.actions
 
 import com.intellij.lang.jvm.JvmModifier
 
-fun modifierRequest(modifier: JvmModifier, shouldBePresent: Boolean) = object : ChangeModifierRequest {
+fun modifierRequest(modifier: JvmModifier, shouldBePresent: Boolean): ChangeModifierRequest = object : ChangeModifierRequest {
   override fun isValid(): Boolean = true
   override fun getModifier(): JvmModifier = modifier
   override fun shouldBePresent(): Boolean = shouldBePresent

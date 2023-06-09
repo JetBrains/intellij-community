@@ -51,7 +51,7 @@ import javax.swing.ScrollPaneConstants
 @Suppress("OVERRIDE_DEPRECATION")
 internal class ProjectsTabFactory : WelcomeTabFactory {
   companion object {
-    const val PRIMARY_BUTTONS_NUM = 3
+    const val PRIMARY_BUTTONS_NUM: Int = 3
   }
 
   override fun createWelcomeTab(parentDisposable: Disposable): WelcomeScreenTab = ProjectsTab(parentDisposable)

@@ -85,7 +85,7 @@ class ReferencesInStorageTest {
     builder.addEntity(parent2)
     builder.assertConsistency()
     val child = XChildEntity("child", MySource) {
-      dataClass = DataClassX("data", builder.createReference(parent2))
+      dataClass = DataClassX("data", parent2.createReference())
       this.parentEntity = parent1
       this.childChild = emptyList()
     }
@@ -158,7 +158,7 @@ class ReferencesInStorageTest {
     val child1 = builder addEntity XChildEntity("child", MySource) {
       parentEntity = builder addEntity XParentEntity("parent", MySource)
       dataClass = null
-      childChild = emptyList<XChildChildEntity>()
+      childChild = emptyList()
     }
     builder addEntity XChildEntity("child", MySource) {
       parentEntity = child1.parentEntity

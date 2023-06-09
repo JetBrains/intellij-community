@@ -35,6 +35,18 @@ public interface AbstractAttributesStorage extends Forceable, Closeable {
   int WARN_ATTRIBUTE_VALUE_SIZE = SystemProperties.getIntProperty("vfs.file-attribute-size-warn", 100 * IOUtil.KiB);
 
   /**
+   * Limit the total number of attributes. It seems to have too many different attributes is not a good idea,
+   * looks more like an ab-use of the attribute API.
+   * <p>
+   * Actual limit value is kind of arbitrary: the actual implementation limits may be wider, or not have limit
+   * at all.
+   * <p>
+   * I.e. the {@link AttributesStorageOverBlobStorage} binary format allows for 16k attributeId, see {@link AttributesStorageOverBlobStorage#MAX_SUPPORTED_ATTRIBUTE_ID},
+   * while {@link AttributesStorageOld} has MAX_INT as a limit.
+   */
+  int MAX_ATTRIBUTE_ID = 8 * 1024;
+
+  /**
    * Exclusive upper bound for inline attribute size: attribute is inlined if its size < this value
    */
   int INLINE_ATTRIBUTE_SMALLER_THAN = 64;
@@ -74,17 +86,19 @@ public interface AbstractAttributesStorage extends Forceable, Closeable {
   static void checkAttributeValueSize(@NotNull FileAttribute attribute,
                                       int attributeValueSize) throws FileTooBigException {
     if (attributeValueSize > MAX_ATTRIBUTE_VALUE_SIZE) {
-      throw new FileTooBigException(
-        "Attribute " + attribute + " value is too large: " +
-        attributeValueSize + " b > max(" + MAX_ATTRIBUTE_VALUE_SIZE + ")" +
-        " -> please, do not use VFS file attributes for huge blobs of data"
-      );
+      String message = "Attribute " + attribute + " value is too large: " +
+                       attributeValueSize + " b > max(" + MAX_ATTRIBUTE_VALUE_SIZE + ")" +
+                       " -> please, do not use VFS file attributes for huge blobs of data. Consider using GistManager or GistStorage.";
+      //RC: exceptions from .close() methods are frequently ignored (see e.g. kryo/Output)
+      //    => log the error right here, so ONE CAN'T SILENCE THE TRUTH!!!111
+      FSRecords.LOG.error(message);
+      throw new FileTooBigException(message);
     }
     else if (attributeValueSize > WARN_ATTRIBUTE_VALUE_SIZE) {
       FSRecords.LOG.warn(
         "Attribute " + attribute + " value is quite large: " +
         attributeValueSize + " b > warn threshold(" + WARN_ATTRIBUTE_VALUE_SIZE + ")" +
-        " -> please, do not use VFS file attributes for huge blobs of data"
+        " -> please, do not use VFS file attributes for huge blobs of data. Consider using GistManager or GistStorage."
       );
     }
   }

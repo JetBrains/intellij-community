@@ -12,7 +12,6 @@ import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,6 +34,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Functions;
@@ -234,18 +234,17 @@ final class PassExecutorService implements Disposable {
     }
   }
 
-  @NotNull
-  private ScheduledPass createScheduledPass(@NotNull FileEditor fileEditor,
-                                            @NotNull Document document,
-                                            @NotNull VirtualFile virtualFile,
-                                            @NotNull PsiFile psiFile,
-                                            @NotNull TextEditorHighlightingPass pass,
-                                            @NotNull Int2ObjectMap<ScheduledPass> toBeSubmitted,
-                                            @NotNull Int2ObjectMap<TextEditorHighlightingPass> id2Pass,
-                                            @NotNull List<ScheduledPass> freePasses,
-                                            @NotNull List<ScheduledPass> dependentPasses,
-                                            @NotNull DaemonProgressIndicator updateProgress,
-                                            @NotNull AtomicInteger threadsToStartCountdown) {
+  private @NotNull ScheduledPass createScheduledPass(@NotNull FileEditor fileEditor,
+                                                     @NotNull Document document,
+                                                     @NotNull VirtualFile virtualFile,
+                                                     @NotNull PsiFile psiFile,
+                                                     @NotNull TextEditorHighlightingPass pass,
+                                                     @NotNull Int2ObjectMap<ScheduledPass> toBeSubmitted,
+                                                     @NotNull Int2ObjectMap<TextEditorHighlightingPass> id2Pass,
+                                                     @NotNull List<ScheduledPass> freePasses,
+                                                     @NotNull List<ScheduledPass> dependentPasses,
+                                                     @NotNull DaemonProgressIndicator updateProgress,
+                                                     @NotNull AtomicInteger threadsToStartCountdown) {
     int passId = pass.getId();
     ScheduledPass scheduledPass = toBeSubmitted.get(passId);
     if (scheduledPass != null) return scheduledPass;
@@ -334,7 +333,7 @@ final class PassExecutorService implements Disposable {
     private final AtomicInteger myRunningPredecessorsCount = new AtomicInteger(0);
     private final List<ScheduledPass> mySuccessorsOnCompletion = new ArrayList<>();
     private final List<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<>();
-    @NotNull private final DaemonProgressIndicator myUpdateProgress;
+    private final @NotNull DaemonProgressIndicator myUpdateProgress;
 
     private ScheduledPass(@NotNull FileEditor fileEditor,
                           @NotNull HighlightingPass pass,
@@ -436,9 +435,8 @@ final class PassExecutorService implements Disposable {
       }
     }
 
-    @NonNls
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "SP: " + myPass;
     }
 

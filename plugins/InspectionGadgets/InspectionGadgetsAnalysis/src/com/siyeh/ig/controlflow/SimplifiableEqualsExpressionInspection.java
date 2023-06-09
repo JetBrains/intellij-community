@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.options.OptPane;
@@ -15,7 +13,6 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -43,11 +40,11 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection imple
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new SimplifiableEqualsExpressionFix((String)infos[0]);
   }
 
-  private static class SimplifiableEqualsExpressionFix extends InspectionGadgetsFix {
+  private static class SimplifiableEqualsExpressionFix extends PsiUpdateModCommandQuickFix {
 
     private final String myMethodName;
 
@@ -68,8 +65,7 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection imple
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(element);
       if (!(parent instanceof PsiPolyadicExpression polyadicExpression)) {
         return;
@@ -193,7 +189,7 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection imple
       }
     }
 
-    private String getMethodName(PsiMethodCallExpression methodCallExpression) {
+    private static String getMethodName(PsiMethodCallExpression methodCallExpression) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       return methodExpression.getReferenceName();
     }

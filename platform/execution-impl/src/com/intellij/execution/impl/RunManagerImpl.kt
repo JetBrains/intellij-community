@@ -7,7 +7,6 @@ import com.intellij.configurationStore.*
 import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.execution.*
 import com.intellij.execution.actions.ChooseRunConfigurationPopup
-import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runToolbar.RunToolbarSlotManager
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -50,7 +49,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import com.intellij.util.containers.filterSmart
 import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
 import com.intellij.util.containers.toMutableSmartList
@@ -235,18 +233,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
-    val messageBusConnection = project.messageBus.connect()
-    messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChange) {
-        if (event.getChanges(ContentRootEntity::class.java).any() || event.getChanges(SourceRootEntity::class.java).any()) {
-          clearSelectedConfigurationIcon()
-
-          deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
-        }
-      }
-    })
-
-    messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+    project.messageBus.connect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         iconAndInvalidCache.clear()
       }
@@ -270,8 +257,8 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
   }
 
   private fun clearSelectedConfigurationIcon() {
-    selectedConfiguration?.let {
-      iconAndInvalidCache.remove(it.uniqueID)
+    selectedConfigurationId?.let {
+      iconAndInvalidCache.remove(it)
     }
   }
 
@@ -337,7 +324,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
 
   fun getSettings(configuration: RunConfiguration) = allSettings.firstOrNull { it.configuration === configuration } as? RunnerAndConfigurationSettingsImpl
 
-  override fun getConfigurationSettingsList(type: ConfigurationType) = allSettings.filterSmart { it.type === type }
+  override fun getConfigurationSettingsList(type: ConfigurationType) = allSettings.filter { it.type === type }
 
   fun getConfigurationsGroupedByTypeAndFolder(isIncludeUnknown: Boolean): Map<ConfigurationType, Map<String?, List<RunnerAndConfigurationSettings>>> {
     val result = LinkedHashMap<ConfigurationType, MutableMap<String?, MutableList<RunnerAndConfigurationSettings>>>()
@@ -775,6 +762,15 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
 
   @VisibleForTesting
   protected open fun onFirstLoadingFinished() {
+    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        if (event.getChanges(ContentRootEntity::class.java).any() || event.getChanges(SourceRootEntity::class.java).any()) {
+          clearSelectedConfigurationIcon()
+          deleteRunConfigsFromArbitraryFilesNotWithinProjectContent()
+        }
+      }
+    })
+
     @Suppress("TestOnlyProblems")
     if (ProjectManagerImpl.isLight(project)) {
       return
@@ -1114,7 +1110,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
   }
 
   override val tempConfigurationsList: List<RunnerAndConfigurationSettings>
-    get() = allSettings.filterSmart { it.isTemporary }
+    get() = allSettings.filter { it.isTemporary }
 
   override fun makeStable(settings: RunnerAndConfigurationSettings) {
     settings.isTemporary = false
@@ -1426,25 +1422,8 @@ private fun getNameWeight(n1: String) = if (n1.startsWith("<template> of ") || n
 internal fun doGetBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> {
   return when (configuration) {
     is WrappingRunConfiguration<*> -> doGetBeforeRunTasks(configuration.peer)
-    else -> configuration.beforeRunTasks.flatMap {
-      return@flatMap beforeRunTasks(it, configuration)
-    }
+    else -> configuration.beforeRunTasks
   }
-}
-
-private fun beforeRunTasks(it: BeforeRunTask<*>,
-                           configuration: RunConfiguration): List<BeforeRunTask<*>> {
-  val compound = (it as? RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)?.settings?.configuration as? CompoundRunConfiguration
-  if (compound != null) {
-    val provider = RunConfigurationBeforeRunProvider(configuration.project)
-    val runManager = RunManagerImpl.getInstanceImpl(configuration.project)
-    return compound.getConfigurationsWithTargets(runManager).map {
-      val task = provider.createTask(it.key)
-      task.setSettingsWithTarget(runManager.findSettings(it.key), it.value)
-      task
-    }
-  }
-  return listOf(it)
 }
 
 internal fun RunConfiguration.cloneBeforeRunTasks() {

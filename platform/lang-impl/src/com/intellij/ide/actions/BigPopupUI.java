@@ -244,9 +244,14 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     resultsScroll.setPreferredSize(JBUI.size(670, JBUI.CurrentTheme.BigPopup.maxListHeight()));
     pnl.add(resultsScroll, BorderLayout.CENTER);
 
+    return createFooterPanel(pnl);
+  }
+
+  @NotNull
+  protected JPanel createFooterPanel(@NotNull JPanel panel) {
     myHintLabel = createHint();
-    pnl.add(myHintLabel.getAdComponent(), BorderLayout.SOUTH);
-    return pnl;
+    panel.add(myHintLabel.getAdComponent(), BorderLayout.SOUTH);
+    return panel;
   }
 
   @NotNull

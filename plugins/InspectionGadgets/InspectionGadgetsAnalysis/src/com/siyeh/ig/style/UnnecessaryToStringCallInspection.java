@@ -2,9 +2,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -45,12 +43,12 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final String text = (String)infos[0];
     return new UnnecessaryToStringCallFix(text);
   }
 
-  private static final class UnnecessaryToStringCallFix extends InspectionGadgetsFix {
+  private static final class UnnecessaryToStringCallFix extends PsiUpdateModCommandQuickFix {
     private final @Nullable String replacementText;
 
     private UnnecessaryToStringCallFix(@Nullable String replacementText) {
@@ -73,9 +71,9 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
       final PsiMethodCallExpression call =
-        ObjectUtils.tryCast(descriptor.getPsiElement().getParent().getParent(), PsiMethodCallExpression.class);
+        ObjectUtils.tryCast(startElement.getParent().getParent(), PsiMethodCallExpression.class);
       if (!isRedundantToString(call)) return;
       final PsiReferenceExpression methodExpression = call.getMethodExpression();
       final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodExpression);

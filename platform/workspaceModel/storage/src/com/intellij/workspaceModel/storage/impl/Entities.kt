@@ -6,6 +6,7 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.workspaceModel.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 abstract class WorkspaceEntityBase : WorkspaceEntity, Any() {
@@ -28,7 +29,7 @@ abstract class WorkspaceEntityBase : WorkspaceEntity, Any() {
     var connectionId = mySnapshot.refs.findConnectionId(getEntityInterface(), entityClass)
     if (connectionId != null) {
       val entitiesSequence = when (connectionId.connectionType) {
-        ConnectionId.ConnectionType.ONE_TO_MANY -> mySnapshot.extractOneToManyChildren(connectionId, id)
+        ConnectionId.ConnectionType.ONE_TO_MANY -> mySnapshot.extractOneToManyChildren(connectionId, this)
         ConnectionId.ConnectionType.ONE_TO_ONE -> mySnapshot.extractOneToOneChild<R>(connectionId, id)
           ?.let { sequenceOf(it) }
           ?: emptySequence()
@@ -579,6 +580,7 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
     abstract fun symbolicId(): SymbolicEntityId<*>
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   protected fun <T : WorkspaceEntity> getCached(storage: EntityStorage, init: () -> T): T {
     if (storage !is EntityStorageInstrumentation) {
       error("Entities implementation is supposed to work with ${EntityStorageInstrumentation::class.simpleName} storage only")

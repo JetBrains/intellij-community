@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -144,9 +144,8 @@ final class FilePageCache {
         return oldShouldBeNull;
       }
 
-      @Nullable
       @Override
-      public DirectBufferWrapper remove(long key) {
+      public @Nullable DirectBufferWrapper remove(long key) {
         assert pagesAccessLock.isHeldByCurrentThread();
         // this method can be called after removeEldestEntry
         DirectBufferWrapper wrapper = super.remove(key);
@@ -427,8 +426,7 @@ final class FilePageCache {
 
   /* ======================= implementation ==================================================================================== */
 
-  @NotNull("Seems accessed storage has been closed")
-  private PagedFileStorage getRegisteredPagedFileStorageByIndex(long storageId) throws ClosedStorageException {
+  private @NotNull("Seems accessed storage has been closed") PagedFileStorage getRegisteredPagedFileStorageByIndex(long storageId) throws ClosedStorageException {
     int storageIndex = (int)((storageId & FILE_INDEX_MASK) >> 32);
     synchronized (storageById) {
       PagedFileStorage storage = storageById.get(storageIndex);
@@ -477,8 +475,7 @@ final class FilePageCache {
     disposeRemovedSegments(null);
   }
 
-  @NotNull
-  private static DirectBufferWrapper allocateAndLoadPage(long pageId, boolean read, PagedFileStorage owner, boolean checkAccess)
+  private static @NotNull DirectBufferWrapper allocateAndLoadPage(long pageId, boolean read, PagedFileStorage owner, boolean checkAccess)
     throws IOException {
     if (checkAccess) {
       StorageLockContext context = owner.getStorageLockContext();
@@ -494,8 +491,7 @@ final class FilePageCache {
     return new DirectBufferWrapper(owner, offsetInFile);
   }
 
-  @NotNull
-  private Map<Long, DirectBufferWrapper> getBuffersForOwner(@NotNull PagedFileStorage storage) {
+  private @NotNull Map<Long, DirectBufferWrapper> getBuffersForOwner(@NotNull PagedFileStorage storage) {
     StorageLockContext storageLockContext = storage.getStorageLockContext();
     pagesAccessLock.lock();
     try {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -220,8 +220,7 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
     }
   }
 
-  @NotNull
-  private static RangeHighlighter createHighlighter(MarkupModel mm, TextRange range) {
+  private static @NotNull RangeHighlighter createHighlighter(MarkupModel mm, TextRange range) {
     RangeHighlighter highlighter = mm.addRangeHighlighter(null, range.getStartOffset(), range.getEndOffset(), 0,
                                                                 HighlighterTargetArea.EXACT_RANGE);
     highlighter.setCustomRenderer(RENDERER);
@@ -239,10 +238,10 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
   }
 
   private class IndentsCalculator {
-    @NotNull final Map<Language, TokenSet> myComments = new HashMap<>();
+    final @NotNull Map<Language, TokenSet> myComments = new HashMap<>();
     final int @NotNull [] lineIndents; // negative value means the line is empty (or contains a comment) and indent
     // (denoted by absolute value) was deduced from enclosing non-empty lines
-    @NotNull final CharSequence myChars;
+    final @NotNull CharSequence myChars;
 
     IndentsCalculator() {
       lineIndents = new int[myDocument.getLineCount()];

@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Pair;
@@ -164,9 +165,8 @@ final class DirectoryPathMatcher {
 
   @NotNull
   private static List<Pair<VirtualFile, String>> getProjectRoots(GotoFileModel model) {
-    Set<VirtualFile> roots = new HashSet<>();
+    Set<VirtualFile> roots = new HashSet<>(BaseProjectDirectories.getBaseDirectories(model.getProject()));
     for (Module module : ModuleManager.getInstance(model.getProject()).getModules()) {
-      Collections.addAll(roots, ModuleRootManager.getInstance(module).getContentRoots());
       for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
         if (entry instanceof LibraryOrSdkOrderEntry) {
           Collections.addAll(roots, ((LibraryOrSdkOrderEntry)entry).getRootFiles(OrderRootType.CLASSES));

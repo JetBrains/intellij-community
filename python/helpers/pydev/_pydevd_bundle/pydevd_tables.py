@@ -5,7 +5,7 @@ from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_constants import NEXT_VALUE_SEPARATOR
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
 
-MAX_COLS = 500
+MAX_COLS = None
 MAX_COLWIDTH = 200
 
 

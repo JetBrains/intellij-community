@@ -22,7 +22,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
     testJunit5Project(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT5_TESTS)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertNode("test assert equals for ints") {
@@ -82,7 +82,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             """.trimMargin())
           }
           assertNode("test multiple assert equals for texts") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               assertTestConsoleContains("""
                 |
                 |assertion message 1
@@ -124,7 +124,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
     testJunit5Project(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_RAW_JUNIT5_TESTS)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertNode("test assert equals for ints") {
@@ -150,7 +150,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             """.trimMargin())
           }
           assertNode("test assert equals for objects") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               assertTestConsoleContains("""
                 |
                 |assertion message
@@ -169,7 +169,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             }
           }
           assertNode("test assert equals for same objects") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               assertTestConsoleContains("""
                 |
                 |assertion message
@@ -199,7 +199,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
     testJunit5AssertJProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_ASSERTJ_JUNIT5_TESTS)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertNode("test assert equals for ints") {
@@ -283,7 +283,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
     testJunit4Project(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT4_TESTS)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertNode("test_assert_equals_for_ints") {
@@ -363,7 +363,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
     testJunit4Project(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_DEPRECATED_JUNIT4_TESTS)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertNode("test_assert_equals_for_ints") {
@@ -443,7 +443,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
     testTestNGProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_TESTNG_TESTS)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("Gradle suite") {
           assertNode("Gradle test") {
@@ -527,7 +527,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
     testTestNGProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT_TESTNG_TESTS)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("Gradle suite") {
           assertNode("Gradle test") {
@@ -644,7 +644,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertNode("test_file_comparison_failure") {
@@ -712,7 +712,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestConsoleDoesNotContain("DAEMON_CLASSPATH: " + projectRoot.toNioPath())
       assertTestConsoleContains("TEST_CLASSPATH: " + projectRoot.toNioPath())
     }
@@ -743,7 +743,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertNode("test_assert_null") {

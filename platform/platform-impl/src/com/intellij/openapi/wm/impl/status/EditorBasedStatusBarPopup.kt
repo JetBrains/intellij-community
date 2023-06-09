@@ -87,7 +87,7 @@ abstract class EditorBasedStatusBarPopup(
     component
   }
 
-  var isActionEnabled = false
+  var isActionEnabled: Boolean = false
     protected set
 
   private val update = MutableSharedFlow<Runnable?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -334,20 +334,20 @@ abstract class EditorBasedStatusBarPopup(
        * Return this state if you want to hide the widget
        */
       @JvmField
-      val HIDDEN = WidgetState()
+      val HIDDEN: WidgetState = WidgetState()
 
       /**
        * Return this state if you don't want to change widget presentation
        */
       @JvmField
-      val NO_CHANGE = WidgetState()
+      val NO_CHANGE: WidgetState = WidgetState()
 
       /**
        * Return this state if you want to show widget in its previous state
        * but without updating its content
        */
       @JvmField
-      val NO_CHANGE_MAKE_VISIBLE = WidgetState()
+      val NO_CHANGE_MAKE_VISIBLE: WidgetState = WidgetState()
 
       /**
        * Returns a special state for dumb mode (when indexes are not ready).

@@ -111,13 +111,15 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
             val data = mergeWithEventData(groupData, metric.data)
             val eventData = data?.build() ?: emptyMap()
             launch {
-              logger.logAsync(group, metric.eventId, eventData, true).asDeferred().join()
+              blockingContext { logger.logAsync(group, metric.eventId, eventData, true) }.asDeferred().join()
             }
           }
         }
 
         launch {
-          logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, FeatureUsageData().addProject(project).build(), true).join()
+          blockingContext {
+            logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, FeatureUsageData().addProject(project).build(), true).join()
+          }
         }
       }
     }

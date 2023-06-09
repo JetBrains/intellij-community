@@ -2,16 +2,10 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiReference
-import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.psi.*
 
 class K2MoveRefactoringSupport : KotlinMoveRefactoringSupport {
-    override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope): Collection<PsiReference> {
-        TODO("Not yet implemented")
-    }
-
     override fun isExtensionRef(expr: KtSimpleNameExpression): Boolean {
         TODO("Not yet implemented")
     }

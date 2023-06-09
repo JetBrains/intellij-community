@@ -146,8 +146,7 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
     }
 
     private fun getConstructorResolvedDelegationCall(constructor: ConstructorDescriptor): ResolvedCall<ConstructorDescriptor>? {
-        val constructorPSI = constructor.safeAs<KtSymbolBasedConstructorDescriptor>()?.ktSymbol?.psi
-        when (constructorPSI) {
+        when (val constructorPSI = constructor.safeAs<KtSymbolBasedConstructorDescriptor>()?.ktSymbol?.psi) {
             is KtSecondaryConstructor -> {
                 val delegationCall = constructorPSI.getDelegationCall()
                 val ktCallInfo = context.withAnalysisSession { delegationCall.resolveCall() }

@@ -28,7 +28,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     @JvmStatic
     fun getInstance(): ToolWindowDefaultLayoutManager = service()
 
-    const val INITIAL_LAYOUT_NAME = "Custom"
+    const val INITIAL_LAYOUT_NAME: String = "Custom"
   }
 
   @Volatile
@@ -49,7 +49,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
   fun getLayoutCopy(): DesktopLayout = state.getActiveLayoutCopy(isNewUi)
 
-  fun setLayout(layout: DesktopLayout) = setLayout(activeLayoutName, layout)
+  fun setLayout(layout: DesktopLayout): Unit = setLayout(activeLayoutName, layout)
 
   fun setLayout(name: String, layout: DesktopLayout) {
     tracker.incModificationCount()
@@ -68,9 +68,9 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     state = state.withoutLayout(name)
   }
 
-  override fun getState() = state
+  override fun getState(): ToolWindowLayoutStorageManagerState = state
 
-  override fun getStateModificationCount() = tracker.modificationCount
+  override fun getStateModificationCount(): Long = tracker.modificationCount
 
   override fun noStateLoaded() {
     if (!isNewUi) {
@@ -145,7 +145,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
           layouts = layouts + (name to layouts[name].withUpdatedLayout(layout, isNewUi, weights))
         )
 
-    fun withoutLayout(name: String) = copy(layouts = layouts - name)
+    fun withoutLayout(name: String): ToolWindowLayoutStorageManagerState = copy(layouts = layouts - name)
 
   }
 

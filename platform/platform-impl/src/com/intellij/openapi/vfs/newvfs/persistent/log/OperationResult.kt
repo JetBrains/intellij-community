@@ -9,8 +9,8 @@ class OperationResult<out T : Any> private constructor(
   private val valueNullable: T?,
   val exceptionClass: String
 ) {
-  val hasValue get() = valueNullable != null
-  val value get() = valueNullable!!
+  val hasValue: Boolean get() = valueNullable != null
+  val value: T get() = valueNullable!!
 
   infix fun <R : Any> fmap(action: (T) -> R): OperationResult<R> {
     if (hasValue) return fromValue(action(value))
@@ -21,7 +21,7 @@ class OperationResult<out T : Any> private constructor(
     fun <T : Any> fromValue(value: T): OperationResult<T> =
       OperationResult(value, "")
 
-    fun fromException(exceptionClass: String) =
+    fun fromException(exceptionClass: String): OperationResult<Nothing> =
       OperationResult(null, exceptionClass)
 
     /*
@@ -29,7 +29,7 @@ class OperationResult<out T : Any> private constructor(
      * this class is used only with T in {Unit, Int (with value >= 0), Boolean} and exception class name gets enumerated,
      * so it is possible to serialize it using only one Int field (4 bytes)
      */
-    const val SIZE_BYTES = Int.SIZE_BYTES
+    const val SIZE_BYTES: Int = Int.SIZE_BYTES
 
     inline fun <reified T : Any> OperationResult<T>.serialize(enumerator: (String) -> Int): Int {
       if (!hasValue) {
@@ -94,4 +94,4 @@ internal inline fun <R : Any> catchResult(processor: (result: OperationResult<R>
   }
 }
 
-internal inline infix fun <R : Any> (() -> R).catchResult(processor: (result: OperationResult<R>) -> Unit) = catchResult(processor, this)
+internal inline infix fun <R : Any> (() -> R).catchResult(processor: (result: OperationResult<R>) -> Unit): R = catchResult(processor, this)

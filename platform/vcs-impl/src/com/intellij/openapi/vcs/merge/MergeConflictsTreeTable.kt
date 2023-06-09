@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.merge
 
 import com.intellij.openapi.util.text.StringUtil
@@ -6,6 +6,7 @@ import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.JBUI
+import kotlin.math.max
 
 class MergeConflictsTreeTable(private val tableModel: ListTreeTableModelOnColumns) : TreeTable(tableModel) {
   init {
@@ -37,12 +38,12 @@ class MergeConflictsTreeTable(private val tableModel: ListTreeTableModelOnColumn
       size -= columnModel.getColumn(i).preferredWidth
     }
 
-    columnModel.getColumn(fileColumn).preferredWidth = Math.max(size, JBUI.scale(200))
+    columnModel.getColumn(fileColumn).preferredWidth = max(size, JBUI.scale(200))
   }
 
   private fun calcColumnWidth(maxStringValue: String, columnInfo: ColumnInfo<Any, Any>): Int {
     val columnName = StringUtil.shortenTextWithEllipsis(columnInfo.name, 15, 7, true)
-    return Math.max(getFontMetrics(font).stringWidth(maxStringValue),
+    return max(getFontMetrics(font).stringWidth(maxStringValue),
                     getFontMetrics(tableHeader.font).stringWidth(columnName)) + columnInfo.additionalWidth
   }
 }

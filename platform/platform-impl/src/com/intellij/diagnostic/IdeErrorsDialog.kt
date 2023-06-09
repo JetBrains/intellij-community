@@ -582,7 +582,7 @@ open class IdeErrorsDialog internal constructor(private val myMessagePool: Messa
   private fun disablePlugin() {
     val plugin = selectedCluster().plugin
     if (plugin != null) {
-      confirmDisablePlugins(myProject, java.util.List.of(plugin))
+      confirmDisablePlugins(myProject, listOf(plugin))
     }
   }
 
@@ -893,7 +893,7 @@ open class IdeErrorsDialog internal constructor(private val myMessagePool: Messa
     private const val LAST_OK_ACTION = "IdeErrorsDialog.LAST_OK_ACTION"
 
     @JvmField
-    val CURRENT_TRACE_KEY = DataKey.create<String>("current_stack_trace_key")
+    val CURRENT_TRACE_KEY: DataKey<String> = DataKey.create("current_stack_trace_key")
 
     private fun scrollPane(component: JComponent, width: Int, height: Int): JScrollPane {
       val scrollPane: JScrollPane = JBScrollPane(component)

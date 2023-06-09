@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -60,7 +63,7 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
   }
 
   @Override
-  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     String castTo = (String)infos[0];
     return new IntegerDivisionInFloatingPointContextFix(castTo);
   }
@@ -106,7 +109,7 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
     }
   }
 
-  private static class IntegerDivisionInFloatingPointContextFix extends InspectionGadgetsFix {
+  private static class IntegerDivisionInFloatingPointContextFix extends PsiUpdateModCommandQuickFix {
     private final String myCastTo;
 
     private IntegerDivisionInFloatingPointContextFix(String castTo) {
@@ -114,8 +117,8 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!(descriptor.getPsiElement() instanceof PsiPolyadicExpression expression)) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      if (!(startElement instanceof PsiPolyadicExpression expression)) {
         return;
       }
       PsiExpression[] operands = expression.getOperands();

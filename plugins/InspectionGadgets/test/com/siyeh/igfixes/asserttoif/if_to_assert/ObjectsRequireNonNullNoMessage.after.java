@@ -20,6 +20,6 @@ import java.util.Objects;
 class Parentheses {
   void s(String s) {
       //keep me
-      <caret>Objects.requireNonNull(s);
+      Objects.requireNonNull(s);<caret>
   }
 }

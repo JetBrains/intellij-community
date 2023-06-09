@@ -12,7 +12,6 @@
         <xs:element type="aboutType" name="about"/>
         <xs:element type="iconType" name="icon"/>
         <xs:element type="iconEapType" name="icon-eap" minOccurs="0"/>
-        <xs:element type="packageType" name="package" minOccurs="0"/>
         <xs:element type="licenseeType" name="licensee" minOccurs="0"/>
         <xs:element type="namesType" name="names"/>
         <xs:element type="essentialPluginType" name="essential-plugin" minOccurs="0" maxOccurs="unbounded"/>
@@ -298,9 +297,6 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-  </xs:complexType>
-  <xs:complexType name="packageType">
-    <xs:attribute type="xs:string" name="code"/>
   </xs:complexType>
   <xs:complexType name="licenseeType">
     <xs:attribute type="xs:boolean" name="show">

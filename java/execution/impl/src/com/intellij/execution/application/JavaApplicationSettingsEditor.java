@@ -74,7 +74,9 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
       return editor == null ? field : editor.getContentComponent();
     });
     mainClassFragment.setValidation((configuration) ->
-      Collections.singletonList(RuntimeConfigurationException.validate(mainClass, () -> configuration.checkClass())));
+      Collections.singletonList(RuntimeConfigurationException.validate(mainClass, () -> {
+        if (!isDefaultSettings()) configuration.checkClass();
+      })));
     return mainClassFragment;
   }
 }

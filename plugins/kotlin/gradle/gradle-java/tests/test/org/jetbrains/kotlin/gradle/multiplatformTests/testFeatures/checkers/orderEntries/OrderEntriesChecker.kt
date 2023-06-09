@@ -24,7 +24,7 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
     override fun renderTestConfigurationDescription(testConfiguration: TestConfiguration): List<String> {
         val configuration = testConfiguration.getConfiguration(OrderEntriesChecker)
 
-        val hiddenStandardDependencies = buildList<String> {
+        val hiddenStandardDependencies = buildList {
             if (configuration.hideStdlib) add("stdlib")
             if (configuration.hideKotlinTest) add("kotlin-test")
             if (configuration.hideKonanDist) add("Kotlin/Native distribution")
@@ -92,7 +92,7 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
     }
 
     private fun PrinterContext.render(orderEntry: OrderEntry, isDependsOn: Boolean, isFriend: Boolean): String {
-        val modifiers = buildList<String> {
+        val modifiers = buildList {
             if (isDependsOn) add("refines")
             if (isFriend) add("friend")
             if (orderEntry is ExportableOrderEntry) add(orderEntry.scope.name)

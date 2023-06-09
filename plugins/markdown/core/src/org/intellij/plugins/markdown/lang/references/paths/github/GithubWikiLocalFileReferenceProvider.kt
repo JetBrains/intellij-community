@@ -43,8 +43,7 @@ internal class GithubWikiLocalFileReferenceProvider: PsiReferenceProvider() {
       return null
     }
     val start = matcher.end()
-    val end = PathReferenceProviderBase.getLastPosOfURL(start, text)
-    return when (end) {
+    return when (val end = PathReferenceProviderBase.getLastPosOfURL(start, text)) {
       -1 -> TextRange(start, text.length)
       else -> TextRange(start, end)
     }

@@ -66,17 +66,17 @@ enum class DslComponentProperty {
 /**
  * Default comment width
  */
-const val DEFAULT_COMMENT_WIDTH = 70
+const val DEFAULT_COMMENT_WIDTH: Int = 70
 
 /**
  * Text uses word wrap if there is no enough width
  */
-const val MAX_LINE_LENGTH_WORD_WRAP = -1
+const val MAX_LINE_LENGTH_WORD_WRAP: Int = -1
 
 /**
  * Text is not wrapped and uses only html markup like <br>
  */
-const val MAX_LINE_LENGTH_NO_WRAP = Int.MAX_VALUE
+const val MAX_LINE_LENGTH_NO_WRAP: Int = Int.MAX_VALUE
 
 fun interface HyperlinkEventAction {
 
@@ -85,7 +85,7 @@ fun interface HyperlinkEventAction {
      * Opens URL in a browser
      */
     @JvmField
-    val HTML_HYPERLINK_INSTANCE = HyperlinkEventAction { e ->
+    val HTML_HYPERLINK_INSTANCE: HyperlinkEventAction = HyperlinkEventAction { e ->
       e.url?.let { BrowserUtil.browse(it) }
     }
   }

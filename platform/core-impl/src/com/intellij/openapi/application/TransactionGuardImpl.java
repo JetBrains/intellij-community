@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.LoadingState;
@@ -51,7 +51,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public void submitTransactionAndWait(@NotNull final Runnable runnable) throws ProcessCanceledException {
+  public void submitTransactionAndWait(final @NotNull Runnable runnable) throws ProcessCanceledException {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteIntentLockAcquired()) {
       if (!myWritingAllowed) {
@@ -157,7 +157,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public void submitTransactionLater(@NotNull final Disposable parentDisposable, @NotNull final Runnable transaction) {
+  public void submitTransactionLater(final @NotNull Disposable parentDisposable, final @NotNull Runnable transaction) {
     TransactionIdImpl ctx = getContextTransaction();
     ApplicationManager.getApplication().invokeLaterOnWriteThread(transaction, ctx == null ? ModalityState.NON_MODAL : ctx.myModality);
   }
@@ -181,8 +181,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
     myWriteSafeModalities.put(modality, myWritingAllowed);
   }
 
-  @NotNull
-  public Runnable wrapLaterInvocation(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
+  public @NotNull Runnable wrapLaterInvocation(final @NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     return new Runnable() {
       @Override
       public void run() {

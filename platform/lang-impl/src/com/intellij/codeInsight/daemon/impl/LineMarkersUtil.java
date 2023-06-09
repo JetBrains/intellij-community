@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ import java.util.List;
 
 final class LineMarkersUtil {
   private static final Logger LOG = Logger.getInstance(LineMarkersUtil.class);
-
+  private static final Object LOCK = ObjectUtils.sentinel(LineMarkersUtil.class.getName());
   static boolean processLineMarkers(@NotNull Project project,
                                     @NotNull Document document,
                                     @NotNull Segment bounds,
@@ -49,39 +50,47 @@ final class LineMarkersUtil {
                                      @NotNull Collection<? extends LineMarkerInfo<?>> newMarkers,
                                      int group) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     HighlightersRecycler toReuse = new HighlightersRecycler();
-    processLineMarkers(project, document, bounds, group, info -> {
-      RangeHighlighter highlighter = info.highlighter;
-      if (highlighter != null) {
-        toReuse.recycleHighlighter(highlighter);
+    synchronized (LOCK) {
+      try {
+        processLineMarkers(project, document, bounds, group, info -> {
+          RangeHighlighterEx highlighter = (RangeHighlighterEx)info.highlighter;
+          if (highlighter != null) {
+            toReuse.recycleHighlighter(highlighter);
+          }
+          return true;
+        });
+
+        if (LOG.isDebugEnabled()) {
+          List<LineMarkerInfo<?>> oldMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project);
+          LOG.debug("LineMarkersUtil.setLineMarkersToEditor(markers: " + newMarkers + ", group: " + group +
+                    "); oldMarkers: " + oldMarkers + "; reused: " + toReuse.forAllInGarbageBin().size());
+        }
+
+        for (LineMarkerInfo<?> info : newMarkers) {
+          PsiElement element = info.getElement();
+          if (element == null) {
+            continue;
+          }
+
+          TextRange textRange = element.getTextRange();
+          if (textRange == null) continue;
+          TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, textRange);
+          if (bounds.contains(elementRange)) {
+            createOrReuseLineMarker(info, markupModel, toReuse);
+          }
+        }
+
+        for (RangeHighlighter highlighter : toReuse.forAllInGarbageBin()) {
+          highlighter.dispose();
+        }
       }
-      return true;
-    });
-
-    if (LOG.isDebugEnabled()) {
-      List<LineMarkerInfo<?>> oldMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project);
-      LOG.debug("LineMarkersUtil.setLineMarkersToEditor(markers: "+newMarkers+", group: " + group+
-                "); oldMarkers: "+oldMarkers+"; reused: "+toReuse.forAllInGarbageBin().size());
-    }
-
-    for (LineMarkerInfo<?> info : newMarkers) {
-      PsiElement element = info.getElement();
-      if (element == null) {
-        continue;
+      finally {
+        toReuse.releaseHighlighters();
       }
-
-      TextRange textRange = element.getTextRange();
-      if (textRange == null) continue;
-      TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, textRange);
-      if (bounds.contains(elementRange)) {
-        createOrReuseLineMarker(info, markupModel, toReuse);
-      }
-    }
-
-    for (RangeHighlighter highlighter : toReuse.forAllInGarbageBin()) {
-      highlighter.dispose();
     }
   }
 
@@ -90,7 +99,7 @@ final class LineMarkersUtil {
                                               @Nullable HighlightersRecycler toReuse) {
     LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer<?>)info.createGutterRenderer();
 
-    RangeHighlighter highlighter = toReuse == null ? null : toReuse.pickupHighlighterFromGarbageBin(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX);
+    RangeHighlighterEx highlighter = toReuse == null ? null : toReuse.pickupHighlighterFromGarbageBin(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX);
     boolean newHighlighter = false;
     if (highlighter == null) {
       newHighlighter = true;
@@ -120,7 +129,7 @@ final class LineMarkersUtil {
       boolean lineSeparatorPlacementChanged = !Comparing.equal(highlighter.getLineSeparatorPlacement(), info.separatorPlacement);
 
       if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged) {
-        markupModel.changeAttributesInBatch((RangeHighlighterEx)highlighter, markerEx -> {
+        markupModel.changeAttributesInBatch(highlighter, markerEx -> {
           if (rendererChanged) {
             markerEx.setGutterIconRenderer(newRenderer);
           }
@@ -140,21 +149,24 @@ final class LineMarkersUtil {
                                                  @NotNull Document document,
                                                  @NotNull LineMarkerInfo<?> marker) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     LineMarkerInfo<?>[] markerInTheWay = {null};
-    boolean allIsClear = markupModel.processRangeHighlightersOverlappingWith(marker.startOffset, marker.endOffset,
-            highlighter -> (markerInTheWay[0] = getLineMarkerInfo(highlighter)) == null);
-    if (allIsClear) {
-      createOrReuseLineMarker(marker, markupModel, null);
+    boolean allIsClear;
+    synchronized (LOCK) {
+      allIsClear = markupModel.processRangeHighlightersOverlappingWith(marker.startOffset, marker.endOffset,
+                                                                               highlighter -> (markerInTheWay[0] = getLineMarkerInfo(highlighter)) == null);
+      if (allIsClear) {
+        createOrReuseLineMarker(marker, markupModel, null);
+      }
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("LineMarkersUtil.addLineMarkerToEditorIncrementally: "+marker+" "+(allIsClear ? "created" : " (was not added because "+markerInTheWay[0] +" was in the way)"));
     }
   }
 
-  @Nullable
-  static LineMarkerInfo<?> getLineMarkerInfo(@NotNull RangeHighlighter highlighter) {
+  static @Nullable LineMarkerInfo<?> getLineMarkerInfo(@NotNull RangeHighlighter highlighter) {
     return highlighter.getUserData(LINE_MARKER_INFO);
   }
 

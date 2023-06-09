@@ -142,5 +142,14 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
       val uElement = context.toUElementOfType<UExpression>() ?: return null
       return createFromUExpression(uElement)
     }
+
+    @JvmStatic
+    fun getConcatenationsFacade(context: PsiElement): UStringConcatenationsFacade? {
+      val uElement = context.toUElementOfExpectedTypes(UInjectionHost::class.java, UPolyadicExpression::class.java) ?: return null
+      if (uElement.sourcePsi !== context) return null
+      if (isConcatenation(uElement.uastParent)) return null
+      return if (uElement is UInjectionHost) createFromUExpression(uElement, false) else createFromUExpression(uElement, true)
+    }
   }
+
 }

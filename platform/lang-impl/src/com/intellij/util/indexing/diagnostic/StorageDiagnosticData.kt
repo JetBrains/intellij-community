@@ -212,7 +212,7 @@ object StorageDiagnosticData {
     val statsPerEnumerator: SortedMap<String, PersistentEnumeratorStatistics>,
   ) {
     companion object {
-      val EMPTY = StatsPerStorage(sortedMapOf(), sortedMapOf())
+      val EMPTY: StatsPerStorage = StatsPerStorage(sortedMapOf(), sortedMapOf())
     }
 
     operator fun plus(another: StatsPerStorage): StatsPerStorage {

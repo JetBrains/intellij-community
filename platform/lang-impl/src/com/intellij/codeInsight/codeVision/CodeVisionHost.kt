@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.impl.BaseRemoteFileEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
@@ -352,7 +353,9 @@ open class CodeVisionHost(val project: Project) {
       mergingQueueFront.queue(object : Update("") {
         override fun run() {
           project.coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(editor.contentComponent).asContextElement()) {
-            recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate)
+            blockingContext {
+              recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate)
+            }
           }
         }
       })

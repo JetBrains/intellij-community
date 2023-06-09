@@ -7,7 +7,9 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.search.IndexPatternProvider;
+import com.intellij.util.ThreeState;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.BaseFileTypeInputFilter;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,6 +24,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.AFTER_SUBSTITUTION;
 
 /**
  * @author Eugene Zhuravlev
@@ -125,14 +129,18 @@ public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<Todo
 
   @Override
   public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-    return new FileBasedIndex.ProjectSpecificInputFilter() {
+    return new BaseFileTypeInputFilter(AFTER_SUBSTITUTION) {
       @Override
-      public boolean acceptInput(@NotNull IndexedFile file) {
-        if (!TodoIndexers.needsTodoIndex(file)) return false;
-        FileType fileType = file.getFileType();
+      public boolean slowPathIfFileTypeHintUnsure(@NotNull IndexedFile file) {
+        return TodoIndexers.needsTodoIndex(file);
+      }
 
+      @NotNull
+      @Override
+      public ThreeState acceptFileType(@NotNull FileType fileType) {
         DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = PlatformIdTableBuilding.getTodoIndexer(fileType);
-        return indexer != null;
+        if (indexer == null) return ThreeState.NO;
+        else return ThreeState.UNSURE;
       }
     };
   }

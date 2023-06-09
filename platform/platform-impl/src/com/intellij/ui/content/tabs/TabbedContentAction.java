@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content.tabs;
 
 import com.intellij.idea.ActionsBundle;
@@ -68,7 +68,6 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     }
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
   public static class CloseAction extends ForContent {
     public CloseAction(@NotNull Content content) {
       super(content, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
@@ -140,7 +139,9 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      presentation.setEnabledAndVisible(myManager.getContentCount() > 1 && myManager.canCloseAllContents());
+      Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+      boolean notForTheOnlyContent = myManager.getContentCount() > 1 || !(component instanceof ContentTabLabel);
+      presentation.setEnabledAndVisible(notForTheOnlyContent && myManager.canCloseAllContents());
     }
 
     @Override

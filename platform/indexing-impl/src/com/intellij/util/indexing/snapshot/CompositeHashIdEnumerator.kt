@@ -22,11 +22,11 @@ internal class CompositeHashIdEnumerator(private val indexId: ID<*, *>): Closeab
   private var enumerator = init()
 
   @Throws(IOException::class)
-  override fun close() = enumerator.close()
+  override fun close(): Unit = enumerator.close()
 
   override fun isDirty(): Boolean = enumerator.isDirty
 
-  override fun force() = enumerator.force()
+  override fun force(): Unit = enumerator.force()
 
   @Throws(IOException::class)
   fun clear() {
@@ -42,7 +42,7 @@ internal class CompositeHashIdEnumerator(private val indexId: ID<*, *>): Closeab
     }
   }
 
-  fun enumerate(hashId: Int, subIndexerTypeId: Int) = enumerator.enumerate(CompositeHashId(hashId, subIndexerTypeId))
+  fun enumerate(hashId: Int, subIndexerTypeId: Int): Int = enumerator.enumerate(CompositeHashId(hashId, subIndexerTypeId))
 
   private fun getBasePath() = IndexInfrastructure.getIndexRootDir(indexId).resolve("compositeHashId")
 

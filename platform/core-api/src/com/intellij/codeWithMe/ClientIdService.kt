@@ -4,15 +4,20 @@ package com.intellij.codeWithMe
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 
 interface ClientIdService {
   companion object {
     fun tryGetInstance(): ClientIdService? {
-      if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred || ApplicationManager.getApplication().isDisposed) {
+      if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
         return null
       }
-      return ApplicationManager.getApplication().service<ClientIdService>()
+
+      val app = ApplicationManager.getApplication()
+      if (app == null || app.isDisposed) {
+        return null
+      }
+      return app.serviceOrNull<ClientIdService>()
     }
   }
 

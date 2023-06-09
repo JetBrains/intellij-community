@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.Language;
@@ -28,7 +28,7 @@ import java.util.Map;
     category = SettingsCategory.CODE )
 public final class TemplateDataLanguagePatterns implements PersistentStateComponent<Element> {
   private FileTypeAssocTable<Language> myAssocTable = FileTypeAssocTableUtil.newScalableFileTypeAssocTable();
-  @NonNls private static final String SEPARATOR = ";";
+  private static final @NonNls String SEPARATOR = ";";
 
   public static TemplateDataLanguagePatterns getInstance() {
     return ApplicationManager.getApplication().getService(TemplateDataLanguagePatterns.class);
@@ -38,8 +38,7 @@ public final class TemplateDataLanguagePatterns implements PersistentStateCompon
     return myAssocTable.copy();
   }
 
-  @Nullable
-  public Language getTemplateDataLanguageByFileName(VirtualFile file) {
+  public @Nullable Language getTemplateDataLanguageByFileName(VirtualFile file) {
     return myAssocTable.findAssociatedFileType(file.getName());
   }
 

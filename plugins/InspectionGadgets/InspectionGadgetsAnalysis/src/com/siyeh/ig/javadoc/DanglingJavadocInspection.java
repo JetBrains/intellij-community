@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -14,7 +16,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,14 +47,14 @@ public class DanglingJavadocInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    return new InspectionGadgetsFix[] {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    return new LocalQuickFix[] {
       new DeleteCommentFix(),
       new ConvertCommentFix()
     };
   }
 
-  private static class ConvertCommentFix extends InspectionGadgetsFix {
+  private static class ConvertCommentFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -62,8 +63,7 @@ public class DanglingJavadocInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElement docComment = element.getParent();
       final StringBuilder newCommentText = new StringBuilder();
       for (PsiElement child = docComment.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -86,7 +86,7 @@ public class DanglingJavadocInspection extends BaseInspection {
     }
   }
 
-  private static class DeleteCommentFix extends InspectionGadgetsFix {
+  private static class DeleteCommentFix extends PsiUpdateModCommandQuickFix {
 
     @Nls
     @NotNull
@@ -96,8 +96,7 @@ public class DanglingJavadocInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       element.getParent().delete();
     }
   }

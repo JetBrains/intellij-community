@@ -48,7 +48,7 @@ class LibraryUsageStatisticsStorageService : PersistentStateComponent<LibraryUsa
   class LibraryUsageStatisticsState {
     @XMap
     @JvmField
-    val statistics = HashMap<LibraryUsage, Int>()
+    val statistics: HashMap<LibraryUsage, Int> = HashMap()
   }
 
   companion object {

@@ -16,6 +16,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestDiscussionResolve
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.createReplyNote
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.util.*
 
 interface GitLabDiscussion {
@@ -78,6 +79,7 @@ class LoadedGitLabDiscussion(
               notesData.clear()
               notesData.addAll(event.notes)
             }
+            is GitLabNoteEvent.AllDeleted -> notesData.clear()
           }
 
           if (notesData.isEmpty()) {
@@ -104,7 +106,7 @@ class LoadedGitLabDiscussion(
       }
       .modelFlow(cs, LOG)
 
-  override val canAddNotes: Boolean = mr.userPermissions.value.createNote
+  override val canAddNotes: Boolean = mr.userPermissions.value.canComment
 
   // a little cheat that greatly simplifies the implementation
   override val resolvable: Boolean = discussionData.notes.first().resolvable
@@ -118,23 +120,25 @@ class LoadedGitLabDiscussion(
       operationsGuard.withLock {
         val resolved = resolved.first()
         val result = withContext(Dispatchers.IO) {
-          api.changeMergeRequestDiscussionResolve(project, apiId, !resolved).getResultOrThrow()
+          api.graphQL.changeMergeRequestDiscussionResolve(project, apiId, !resolved).getResultOrThrow()
         }
         noteEvents.emit(GitLabNoteEvent.Changed(result.notes))
       }
     }
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.CHANGE_DISCUSSION_RESOLVE)
   }
 
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        api.createReplyNote(project, mr.gid, id, body).getResultOrThrow()
+        api.graphQL.createReplyNote(project, mr.gid, id, body).getResultOrThrow()
       }.also {
         withContext(NonCancellable) {
           noteEvents.emit(GitLabNoteEvent.Added(it))
         }
       }
     }
+    GitLabStatistics.logMrActionExecuted(GitLabStatistics.MergeRequestAction.ADD_DISCUSSION_NOTE)
   }
 
   fun update(data: GitLabDiscussionDTO) {

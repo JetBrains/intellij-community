@@ -31,7 +31,7 @@ import java.util.concurrent.CancellationException
 import javax.swing.JLabel
 
 
-val WizardContext.projectOrDefault get() = project ?: ProjectManager.getInstance().defaultProject
+val WizardContext.projectOrDefault: Project get() = project ?: ProjectManager.getInstance().defaultProject
 
 @Deprecated(
   message = "Use NewProjectWizardChainStep.nextStep instead",

@@ -33,7 +33,6 @@ import com.intellij.psi.codeStyle.WordPrefixMatcher;
 import com.intellij.ui.*;
 import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.render.IconCompOptionalCompPanel;
-import com.intellij.ui.render.RendererPanelsUtils;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
@@ -919,7 +918,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       Insets ipad = nameComponent.getIpad();
       int freeSpace = list.getWidth()
                       - (list.getInsets().right + list.getInsets().left)
-                      - RendererPanelsUtils.calculateNonResizeableWidth(panel)
+                      - panel.calculateNonResizeableWidth()
                       - (insets.right + insets.left)
                       - (ipad.right + ipad.left);
 

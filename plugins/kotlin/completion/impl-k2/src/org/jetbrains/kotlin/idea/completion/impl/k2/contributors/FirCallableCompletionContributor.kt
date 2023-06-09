@@ -447,8 +447,7 @@ internal open class FirCallableCompletionContributor(
     context(KtAnalysisSession)
     private fun collectUninitializedCallablesForPosition(position: PsiElement): Set<KtCallableDeclaration> = buildSet {
         for (parent in position.parents(withSelf = false)) {
-            val grandParent = parent.parent
-            when (grandParent) {
+            when (val grandParent = parent.parent) {
                 is KtParameter -> {
                     if (grandParent.defaultValue == parent) {
                         // Filter out current parameter and all parameters initialized after current parameter. In the following example:

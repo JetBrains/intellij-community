@@ -3,7 +3,6 @@ package com.intellij.remoteDev.tests.impl
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.diagnostic.DebugLogManager
-import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.IdeEventQueue
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -16,6 +15,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
+import com.intellij.remoteDev.tests.modelGenerated.RdAgentType
 import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
 import com.intellij.util.application
 import com.intellij.util.ui.ImageUtil
@@ -29,8 +29,6 @@ import java.awt.image.BufferedImage
 import java.io.File
 import java.io.IOException
 import java.net.InetAddress
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
@@ -92,7 +90,7 @@ class DistributedTestHost {
       try {
         logger.info("Setting up loggers")
         AgentTestLoggerFactory.bindSession(sessionLifetime, session)
-        if (session.testMethodName == null) {
+        if (session.testMethodName == null || session.testClassName == null ) {
           logger.info("Test session without test class to run.")
         }
         else {
@@ -102,7 +100,7 @@ class DistributedTestHost {
           val testClassObject = testClass.kotlin.createInstance() as DistributedTestPlayer
 
           // Tell test we are running it inside an agent
-          val agentInfo = AgentInfo(session.agentId, session.testMethodName)
+          val agentInfo = AgentInfo(session.agentInfo, session.testClassName, session.testMethodName)
           val queue = testClassObject.initAgent(agentInfo)
 
           // Play test method
@@ -127,7 +125,11 @@ class DistributedTestHost {
 
               // Execute test method
               lateinit var result: RdTask<Boolean>
-              val context = AgentContext(session.agentId, application, projectOrNull, protocol)
+              val context =  when (session.agentInfo.agentType) {
+                RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, application, projectOrNull, protocol)
+                RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, application, projectOrNull, protocol)
+                RdAgentType.GATEWAY -> GatewayAgentContextImpl(session.agentInfo, application, projectOrNull, protocol)
+              }
               logger.info("'$actionTitle': starting action")
               val elapsedAction = measureTimeMillis {
                 result = action.action.invoke(context)
@@ -150,7 +152,7 @@ class DistributedTestHost {
               return@set result
             }
             catch (ex: Throwable) {
-              val msg = "${session.agentId}: ${actionTitle?.let { "'$it' " }.orEmpty()}hasn't finished successfully"
+              val msg = "${session.agentInfo.id}: ${actionTitle?.let { "'$it' " }.orEmpty()}hasn't finished successfully"
               logger.warn(msg, ex)
               if (!application.isHeadlessEnvironment)
                 actionTitle?.let { makeScreenshot("${it}_$screenshotOnFailureFileName") }
@@ -162,7 +164,7 @@ class DistributedTestHost {
         session.closeProject.set { _, _ ->
           when (projectOrNull) {
             null ->
-              return@set RdTask.faulted(IllegalStateException("${session.agentId}: Nothing to close"))
+              return@set RdTask.faulted(IllegalStateException("${session.agentInfo.id}: Nothing to close"))
             else -> {
               logger.info("Close project...")
               try {
@@ -197,15 +199,6 @@ class DistributedTestHost {
           application.exit(true, true, false)
         }
 
-        session.dumpThreads.adviseOn(lifetime, DistributedTestInplaceScheduler) {
-          logger.info("Dump threads...")
-          val threadDump = ThreadDumper.dumpThreadsToString()
-          val threadDumpStamp = LocalTime.now().format(DateTimeFormatter.ofPattern("HH_mm_ss_SSS"))
-          val threadDumpFileName = "${AgentConstants.threadDumpFilePrefix}_$threadDumpStamp.log"
-          val threadDumpFile = File(PathManager.getLogPath()).resolve(threadDumpFileName)
-          threadDumpFile.writeText(threadDump)
-        }
-
         session.makeScreenshot.set { fileName ->
           return@set makeScreenshot(fileName)
         }
@@ -224,10 +217,12 @@ class DistributedTestHost {
     }
   }
 
-  private fun makeScreenshot(fileName: String): Boolean {
+  private fun makeScreenshot(actionName: String): Boolean {
     if (application.isHeadlessEnvironment) {
       error("Don't try making screenshots on application in headless mode.")
     }
+    val fileNameWithPostfix = if (actionName.endsWith(".png")) actionName else "$actionName.png"
+    val finalFileName = fileNameWithPostfix.replace("[^a-zA-Z.]".toRegex(), "_").replace("_+".toRegex(), "_")
 
     val result = CompletableFuture<Boolean>()
     ApplicationManager.getApplication().invokeLater {
@@ -238,7 +233,6 @@ class DistributedTestHost {
         component.printAll(img.createGraphics())
         ApplicationManager.getApplication().executeOnPooledThread {
           try {
-            val finalFileName = if (fileName.endsWith(".png")) fileName else "$fileName.png"
             result.complete(ImageIO.write(img, "png", File(PathManager.getLogPath()).resolve(finalFileName)))
           }
           catch (e: IOException) {
@@ -256,7 +250,7 @@ class DistributedTestHost {
 
     try {
       if (result[45, TimeUnit.SECONDS])
-        logger.info("Screenshot is saved at: $fileName")
+        logger.info("Screenshot is saved at: $finalFileName")
       else
         logger.info("No writers were found for screenshot")
     }

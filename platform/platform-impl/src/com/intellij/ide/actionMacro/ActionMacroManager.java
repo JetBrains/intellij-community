@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actionMacro;
 
 import com.intellij.icons.AllIcons;
@@ -58,6 +58,7 @@ import java.util.*;
 public final class ActionMacroManager implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(ActionMacroManager.class);
 
+  @SuppressWarnings("SpellCheckingInspection")
   private static final String TYPING_SAMPLE = "WWWWWWWWWWWWWWWWWWWW";
   public static final String NO_NAME_NAME = "<noname>";
 
@@ -156,6 +157,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
       return;
     }
     myWidget = new Widget(statusBar);
+    //noinspection deprecation
     statusBar.addWidget(myWidget);
   }
 
@@ -371,7 +373,6 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     }
 
     final PlaybackRunner runner = new PlaybackRunner(script.toString(), new PlaybackRunner.StatusCallback.Edt() {
-
       @Override
       public void messageEdt(PlaybackContext context, @NlsContexts.StatusBarText String text, Type type) {
         if (type == Type.message || type == Type.error) {
@@ -389,11 +390,12 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     myIsPlaying = true;
 
     runner.run()
-      .doWhenDone(() -> {
+      .thenRun(() -> {
         StatusBar statusBar = frame.getStatusBar();
+        assert statusBar != null;
         statusBar.setInfo(IdeBundle.message("status.bar.text.script.execution.finished"));
       })
-      .doWhenProcessed(() -> myIsPlaying = false);
+      .whenComplete((unused, throwable) -> myIsPlaying = false);
   }
 
   public boolean isRecording() {
@@ -578,6 +580,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
       final boolean isEnter = e.getKeyCode() == KeyEvent.VK_ENTER;
 
       if (plainType && ready && !isEnter) {
+        //noinspection MagicConstant,deprecation
         myRecordingMacro.appendKeyPressed(e.getKeyChar(), e.getKeyCode(), e.getModifiers());
         notifyUser(Character.valueOf(e.getKeyChar()).toString(), true);
       }

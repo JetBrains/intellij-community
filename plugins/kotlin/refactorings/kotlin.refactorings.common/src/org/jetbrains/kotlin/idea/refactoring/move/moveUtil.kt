@@ -3,7 +3,8 @@ package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.ide.util.DirectoryUtil
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -27,7 +28,6 @@ import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector
-import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -35,6 +35,8 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.io.File
 import java.util.*
+
+private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.refactoring.move.MoveUtil")
 
 var KtFile.allElementsToMove: List<PsiElement>? by UserDataProperty(Key.create("SCOPE_TO_MOVE"))
 
@@ -188,7 +190,7 @@ private fun processReference(
             else -> reference?.bindToElement(newElement)
         }
     } catch (e: IncorrectOperationException) {
-        // Suppress exception if bindToElement is not implemented
+        LOG.warn("bindToElement not implemented for ${reference!!::class.qualifiedName}")
     }
 }
 
@@ -240,16 +242,15 @@ fun collectOuterInstanceReferences(member: KtNamedDeclaration): List<OuterInstan
 }
 
 @Throws(IncorrectOperationException::class)
-fun getOrCreateDirectory(path: String, project: Project): PsiDirectory {
-
+fun getOrCreateDirectory(project: Project, path: String): PsiDirectory {
     File(path).toPsiDirectory(project)?.let { return it }
-
-    return project.executeCommand(RefactoringBundle.message("move.title"), null) {
-        runWriteAction {
+    return WriteCommandAction
+        .writeCommandAction(project)
+        .withName(RefactoringBundle.message("move.title"))
+        .compute<PsiDirectory, Exception> {
             val fixUpSeparators = path.replace(File.separatorChar, '/')
             DirectoryUtil.mkdirs(PsiManager.getInstance(project), fixUpSeparators)
         }
-    }
 }
 
 fun <T> List<KtNamedDeclaration>.mapWithReadActionInProcess(

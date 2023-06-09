@@ -278,7 +278,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     settings.PROXY_HOST = getText(myProxyHostTextField);
 
     if (modified && JBCefApp.isStarted()) {
-      JBCefApp.NOTIFICATION_GROUP.getValue()
+      JBCefApp.getNotificationGroup()
         .createNotification(IdeBundle.message("notification.title.jcef.proxyChanged"), IdeBundle.message("notification.content.jcef.applySettings"), NotificationType.WARNING)
         .addAction(NotificationAction.createSimple(IdeBundle.message("action.jcef.restart"), () -> ApplicationManager.getApplication().restart()))
         .notify(null);

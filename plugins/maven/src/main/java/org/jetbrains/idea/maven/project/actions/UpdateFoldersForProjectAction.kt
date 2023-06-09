@@ -19,9 +19,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import org.jetbrains.idea.maven.project.MavenFolderResolver
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.performInBackground
 
 class UpdateFoldersForProjectAction : MavenProjectsAction() {
   override fun perform(manager: MavenProjectsManager, mavenProjects: List<MavenProject>, e: AnActionEvent) {
-    MavenFolderResolver(manager.project).resolveFoldersAndImport(mavenProjects)
+    performInBackground {
+      MavenFolderResolver(manager.project).resolveFoldersAndImport(mavenProjects)
+    }
   }
 }

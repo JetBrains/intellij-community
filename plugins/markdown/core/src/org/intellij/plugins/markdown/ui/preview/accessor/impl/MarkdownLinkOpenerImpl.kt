@@ -180,8 +180,7 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
         return false
       }
       val headers = runReadAction {
-        val file = PsiManager.getInstance(project).findFile(targetFile)
-        val scope = when (file) {
+        val scope = when (val file = PsiManager.getInstance(project).findFile(targetFile)) {
           null -> GlobalSearchScope.EMPTY_SCOPE
           else -> GlobalSearchScope.fileScope(file)
         }

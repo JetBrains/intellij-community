@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.SingleFileSourcesTracker;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,17 +39,21 @@ public class AdjustPackageNameFix implements LocalQuickFix {
     if (directory == null) return;
     PsiPackage myTargetPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (myTargetPackage == null) return;
+    String myTargetPackageName = myTargetPackage.getQualifiedName();
+    SingleFileSourcesTracker singleFileSourcesTracker = SingleFileSourcesTracker.getInstance(file.getProject());
+    String singleFileSourcePackageName = singleFileSourcesTracker.getPackageNameForSingleFileSource(file.getVirtualFile());
+    if (singleFileSourcePackageName != null) myTargetPackageName = singleFileSourcePackageName;
 
     PsiPackageStatement statement = ((PsiJavaFile)file).getPackageStatement();
 
-    if (myTargetPackage.getQualifiedName().isEmpty()) {
+    if (myTargetPackageName.isEmpty()) {
       if (statement != null) {
         statement.delete();
       }
     }
     else {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(file.getProject());
-      final PsiPackageStatement packageStatement = factory.createPackageStatement(myTargetPackage.getQualifiedName());
+      final PsiPackageStatement packageStatement = factory.createPackageStatement(myTargetPackageName);
       if (statement != null) {
         statement.getPackageReference().replace(packageStatement.getPackageReference());
       }

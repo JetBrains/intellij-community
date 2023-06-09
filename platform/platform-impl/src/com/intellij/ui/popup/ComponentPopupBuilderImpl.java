@@ -65,6 +65,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myPlaceWithinScreen = true;
   private Processor<? super JBPopup> myPinCallback;
   private Dimension myMinSize;
+  private boolean myStretchToOwnerWidth = false;
+  private boolean myStretchToOwnerHeight = false;
   private MaskProvider myMaskProvider;
   private float myAlpha;
   private List<Object> myUserData;
@@ -250,6 +252,9 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
       myShowShadow, myShowBorder, myBorderColor, myCancelOnWindowDeactivation, myKeyEventHandler
     );
 
+    popup.setStretchToOwnerWidth(myStretchToOwnerWidth);
+    popup.setStretchToOwnerHeight(myStretchToOwnerHeight);
+
     popup.setNormalWindowLevel(myNormalWindowLevel);
     popup.setOkHandler(myOkHandler);
     if (myAdvertiser != null) {
@@ -305,6 +310,18 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public ComponentPopupBuilder setMinSize(final Dimension minSize) {
     myMinSize = minSize;
+    return this;
+  }
+
+  @Override
+  public @NotNull ComponentPopupBuilder setStretchToOwnerWidth(boolean stretchToOwnerWidth) {
+    myStretchToOwnerWidth = stretchToOwnerWidth;
+    return this;
+  }
+
+  @Override
+  public @NotNull ComponentPopupBuilder setStretchToOwnerHeight(boolean stretchToOwnerHeight) {
+    myStretchToOwnerHeight = stretchToOwnerHeight;
     return this;
   }
 

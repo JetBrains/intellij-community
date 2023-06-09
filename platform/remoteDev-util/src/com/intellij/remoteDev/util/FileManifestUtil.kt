@@ -193,13 +193,13 @@ object FileManifestUtil {
       start[0] == 0x50.toByte() && start[1] == 0x4B.toByte() ->
         Decompressor.Zip(archiveFile)
           .withZipExtensions()
-          .allowEscapingSymlinks(false)
+          .externalSymlinkPolicy(Decompressor.EscapingSymlinkPolicy.DISALLOW)
           .postProcessor(manifestor)
           .extract(targetDir)
       // 0x1F 0x8B for gzip
       start[0] == 0x1F.toByte() && start[1] == 0x8B.toByte() ->
         Decompressor.Tar(archiveFile)
-          .allowEscapingSymlinks(false)
+          .externalSymlinkPolicy(Decompressor.EscapingSymlinkPolicy.DISALLOW)
           .postProcessor(manifestor)
           .extract(targetDir)
       else -> error("Unsupported archive: " +

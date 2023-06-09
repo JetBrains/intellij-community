@@ -19,10 +19,4 @@ public final class LightEdit {
   public static boolean owns(@Nullable Project project) {
     return project instanceof LightEditCompatible;
   }
-
-  public static boolean isActionCompatible(@NotNull AnAction action) {
-    return (action instanceof ActionGroup) && action.isDumbAware()
-           || action instanceof LightEditCompatible;
-  }
-
 }

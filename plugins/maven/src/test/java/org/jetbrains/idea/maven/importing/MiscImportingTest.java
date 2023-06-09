@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.utils.MavenImportingTestCaseKt;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -23,6 +24,7 @@ import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporte
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -378,7 +380,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
     removeFromLocalRepository("junit");
 
-    scheduleResolveAll(); // force resolving
+    resolveAndImportAllMavenProjects(); // force resolving
     resolveDependenciesAndImport();
 
     File jarFile = new File(getRepositoryFile(), "junit/junit/4.0/junit-4.0.jar");
@@ -402,7 +404,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     assertFalse(jarFile.exists());
 
     try {
-      scheduleResolveAll(); // force resolving
+      resolveAndImportAllMavenProjects(); // force resolving
       resolveDependenciesAndImport();
     }
     finally {
@@ -414,7 +416,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
     restoreSettingsFile();
 
-    scheduleResolveAll(); // force resolving
+    resolveAndImportAllMavenProjects(); // force resolving
     resolveDependenciesAndImport();
     assertTrue(jarFile.exists());
   }
@@ -483,8 +485,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     importProject();
     assertModules("project", "m1", "m2");
 
-    myProjectsManager.scheduleImportInTests(myProjectsManager.getProjectsFiles());
-    myProjectsManager.importProjects(new IdeModifiableModelsProviderImpl(myProject) {
+    IdeModifiableModelsProviderImpl modelsProvider = new IdeModifiableModelsProviderImpl(myProject) {
       @Override
       public void commit() {
         ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
@@ -493,7 +494,9 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
         model.commit();
         super.commit();
       }
-    });
+    };
+
+    MavenImportingTestCaseKt.importMavenProjectsSync(myProjectsManager, modelsProvider, myProjectsManager.getProjectsFiles());
   }
 
 }

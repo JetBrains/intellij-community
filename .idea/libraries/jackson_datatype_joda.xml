@@ -12,6 +12,9 @@
       <root url="jar://$MAVEN_REPOSITORY$/joda-time/joda-time/2.10.14/joda-time-2.10.14.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.15.0/jackson-datatype-joda-2.15.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/joda-time/joda-time/2.10.14/joda-time-2.10.14-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

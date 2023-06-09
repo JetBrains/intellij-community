@@ -5,11 +5,12 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.ui.UIBundle
 import com.intellij.util.ui.JBUI
+import javax.swing.border.Border
 
 internal class ToolWindowRightToolbar(paneId: String, isPrimary: Boolean) : ToolWindowToolbar(isPrimary) {
-  override val topStripe = StripeV2(this, paneId, ToolWindowAnchor.RIGHT)
-  override val bottomStripe = StripeV2(this, paneId, ToolWindowAnchor.BOTTOM, split = true)
-  override val moreButton = MoreSquareStripeButton(this, ToolWindowAnchor.RIGHT, ToolWindowAnchor.LEFT)
+  override val topStripe: StripeV2 = StripeV2(this, paneId, ToolWindowAnchor.RIGHT)
+  override val bottomStripe: StripeV2 = StripeV2(this, paneId, ToolWindowAnchor.BOTTOM, split = true)
+  override val moreButton: MoreSquareStripeButton = MoreSquareStripeButton(this, ToolWindowAnchor.RIGHT, ToolWindowAnchor.LEFT)
   override val accessibleGroupName: String get() = UIBundle.message("toolbar.group.right.accessible.group.name")
 
   init {
@@ -23,5 +24,5 @@ internal class ToolWindowRightToolbar(paneId: String, isPrimary: Boolean) : Tool
     }
   }
 
-  override fun createBorder() = JBUI.Borders.customLineLeft(getBorderColor())
+  override fun createBorder(): Border = JBUI.Borders.customLineLeft(getBorderColor())
 }

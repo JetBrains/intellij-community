@@ -11,7 +11,7 @@ import java.util.function.Supplier
 
 class GHPRReloadDetailsAction
   : RefreshAction(GithubBundle.messagePointer("pull.request.refresh.details.action"),
-                  Supplier<String?> { null },
+                  Supplier { null },
                   AllIcons.Actions.Refresh) {
 
   override fun update(e: AnActionEvent) {

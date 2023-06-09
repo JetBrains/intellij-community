@@ -210,7 +210,6 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     }
   }
 
-  @SuppressWarnings("ComponentNotRegistered")
   public static class GroupPopupWrapper extends AnActionButtonWrapper {
     public GroupPopupWrapper(@NotNull ActionGroup group) {
       super(group.getTemplatePresentation(), group);

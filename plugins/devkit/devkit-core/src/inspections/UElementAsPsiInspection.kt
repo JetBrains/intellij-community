@@ -17,6 +17,13 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 private const val NOT_UELEMENT = -2
 private const val NOT_PSI_ELEMENT = -1
 
+private val ALLOWED_REDEFINITION = setOf(
+  UClass::class.java.name,
+  UMethod::class.java.name,
+  UVariable::class.java.name,
+  UClassInitializer::class.java.name
+)
+
 class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
 
   override fun checkMethod(method: UMethod, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
@@ -127,12 +134,4 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
   private fun psiClassType(fqn: String, searchScope: GlobalSearchScope): PsiClassType? =
     PsiType.getTypeByName(fqn, searchScope.project!!, searchScope).takeIf { it.resolve() != null }
 
-  private companion object {
-    val ALLOWED_REDEFINITION = setOf(
-      UClass::class.java.name,
-      UMethod::class.java.name,
-      UVariable::class.java.name,
-      UClassInitializer::class.java.name
-    )
-  }
 }

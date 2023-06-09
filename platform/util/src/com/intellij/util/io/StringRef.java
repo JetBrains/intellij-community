@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.Contract;
@@ -88,20 +88,17 @@ public final class StringRef {
     return source == null ? null : new StringRef(source);
   }
 
-  @NotNull
-  public static StringRef fromNullableString(@Nullable String source) {
+  public static @NotNull StringRef fromNullableString(@Nullable String source) {
     return new StringRef(source == null ? "" : source);
   }
 
-  @Nullable
-  public static StringRef fromStream(@NotNull DataInput in, @NotNull AbstractStringEnumerator store) throws IOException {
+  public static @Nullable StringRef fromStream(@NotNull DataInput in, @NotNull AbstractStringEnumerator store) throws IOException {
     final int nameId = DataInputOutputUtil.readINT(in);
 
     return nameId != 0 ? new StringRef(nameId, store) : null;
   }
 
-  @Nullable
-  public static String stringFromStream(@NotNull DataInput in, @NotNull AbstractStringEnumerator store) throws IOException {
+  public static @Nullable String stringFromStream(@NotNull DataInput in, @NotNull AbstractStringEnumerator store) throws IOException {
     final int nameId = DataInputOutputUtil.readINT(in);
     return nameId != 0 ? store.valueOf(nameId) : null;
   }

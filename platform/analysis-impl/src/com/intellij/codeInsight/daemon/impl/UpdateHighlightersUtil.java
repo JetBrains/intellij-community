@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
@@ -75,7 +75,7 @@ public final class UpdateHighlightersUtil {
            && info.getGutterIconRenderer() == null;
   }
 
-  static class HighlightInfoPostFilters {
+  static final class HighlightInfoPostFilters {
     private final static ExtensionPointName<HighlightInfoPostFilter> EP_NAME = new ExtensionPointName<>("com.intellij.highlightInfoPostFilter");
     static boolean accept(@NotNull Project project, @NotNull HighlightInfo info) {
       for (HighlightInfoPostFilter filter : EP_NAME.getExtensions(project)) {
@@ -146,7 +146,8 @@ public final class UpdateHighlightersUtil {
     }
 
     if (psiFile != null) {
-      HighlightingSession session = HighlightingSessionImpl.createHighlightingSession(psiFile, new DaemonProgressIndicator(), colorsScheme, ProperTextRange.create(startOffset, endOffset), CanISilentlyChange.Result.UH_UH);
+      HighlightingSession session = HighlightingSessionImpl.createHighlightingSession(psiFile, new DaemonProgressIndicator(), colorsScheme, ProperTextRange.create(startOffset, endOffset), CanISilentlyChange.Result.UH_UH,
+                                                                                      0);
       setHighlightersInRange(document, range, new ArrayList<>(infos), markup, group, session);
     }
   }
@@ -164,7 +165,7 @@ public final class UpdateHighlightersUtil {
     HighlightersRecycler infosToRemove = new HighlightersRecycler();
     DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
       if (info.getGroup() == group) {
-        RangeHighlighter highlighter = info.getHighlighter();
+        RangeHighlighterEx highlighter = info.getHighlighter();
         int hiStart = highlighter.getStartOffset();
         int hiEnd = highlighter.getEndOffset();
         boolean willBeRemoved = range.containsRange(hiStart, hiEnd)
@@ -321,7 +322,7 @@ public final class UpdateHighlightersUtil {
       info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 
-    RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
+    RangeHighlighterEx highlighter = infosToRemove == null ? null : infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
     if (highlighter == null) {
       highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                                   HighlighterTargetArea.EXACT_RANGE, false, changeAttributes);

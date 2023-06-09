@@ -2,6 +2,7 @@
 package com.intellij.internal
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.workspaceModel.ide.workspaceModel
@@ -31,6 +32,6 @@ class PrintModulesAndEntitySources : DumbAwareAction("Print Modules and Entity S
   }
 
   companion object {
-    val log = logger<PrintModulesAndEntitySources>()
+    val log: Logger = logger<PrintModulesAndEntitySources>()
   }
 }

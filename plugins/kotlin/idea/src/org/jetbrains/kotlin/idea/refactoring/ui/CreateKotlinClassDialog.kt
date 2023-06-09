@@ -217,7 +217,9 @@ open class CreateKotlinClassDialog(
     }
 
     protected open fun getBaseDir(packageName: String?): PsiDirectory? {
-        return if (myModule == null) null else PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName)
+        return if (myModule == null || packageName == null) null else {
+            PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName)
+        }
     }
 
     val className: String

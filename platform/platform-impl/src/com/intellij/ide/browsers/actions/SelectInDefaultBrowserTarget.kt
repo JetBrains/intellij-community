@@ -8,19 +8,20 @@ import com.intellij.ide.StandardTargetWeights
 import com.intellij.ide.browsers.OpenInBrowserRequest
 import com.intellij.ide.browsers.createOpenInBrowserRequest
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.Nls
 
 internal class SelectInDefaultBrowserTarget : SelectInTarget {
   override fun canSelect(context: SelectInContext): Boolean {
     return doCreateOpenRequest(context)?.isPhysicalFile() ?: return false
   }
 
-  override fun toString() = IdeBundle.message("browser.select.in.default.name")
+  override fun toString(): @Nls String = IdeBundle.message("browser.select.in.default.name")
 
   override fun selectIn(context: SelectInContext, requestFocus: Boolean) {
     doCreateOpenRequest(context)?.let { BaseOpenInBrowserAction.Handler.openInBrowser(it) }
   }
 
-  override fun getWeight() = StandardTargetWeights.OS_FILE_MANAGER
+  override fun getWeight(): Float = StandardTargetWeights.OS_FILE_MANAGER
 }
 
 private fun doCreateOpenRequest(context: SelectInContext): OpenInBrowserRequest? {

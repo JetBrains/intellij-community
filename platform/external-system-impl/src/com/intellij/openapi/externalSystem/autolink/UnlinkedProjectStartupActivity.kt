@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileCha
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware.Companion.EP_NAME
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.ProjectActivity
@@ -161,10 +162,13 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
 
   private suspend fun updateNotification(project: Project, projectRoot: String, extension: ExternalSystemUnlinkedProjectAware) {
     when {
-      extension.isLinkedProject(project, projectRoot) ->
+      extension.isLinkedProject(project, projectRoot) -> blockingContext {
         expireNotification(project, projectRoot, extension)
+      }
       extension.hasBuildFiles(project, projectRoot) ->
-        notifyNotification(project, projectRoot, extension)
+        blockingContext {
+          notifyNotification(project, projectRoot, extension)
+        }
       else ->
         expireNotification(project, projectRoot, extension)
     }

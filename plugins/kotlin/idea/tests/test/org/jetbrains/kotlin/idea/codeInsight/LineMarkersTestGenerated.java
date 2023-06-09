@@ -132,6 +132,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/overrideImplement/Interface.kt");
         }
 
+        @TestMetadata("InterfaceDisabledImplOption.kt")
+        public void testInterfaceDisabledImplOption() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/InterfaceDisabledImplOption.kt");
+        }
+
         @TestMetadata("NavigateFromPrivateAbstractClass.kt")
         public void testNavigateFromPrivateAbstractClass() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/NavigateFromPrivateAbstractClass.kt");

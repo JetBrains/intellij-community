@@ -11,8 +11,6 @@ class MyClass {
 
   private static final LightServiceAppLevelAnnotation <warning descr="Application service must not be assigned to a static final field">myAppService2</warning> = ApplicationManager.getApplication().getService(LightServiceAppLevelAnnotation.class);
 
-  static final LightServiceDefaultAnnotation <warning descr="Application service must not be assigned to a static final field">myAppService3</warning> = LightServiceDefaultAnnotation.getInstance();
-
   public static final LightServiceEmptyAnnotation <warning descr="Application service must not be assigned to a static final field">myAppService4</warning> = LightServiceEmptyAnnotation.getInstance();
 
   // not final

@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -10,7 +13,7 @@ import com.siyeh.ig.psiutils.FinalUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class MakeFieldFinalFix extends InspectionGadgetsFix {
+public final class MakeFieldFinalFix extends PsiUpdateModCommandQuickFix {
 
   private final String fieldName;
 
@@ -19,7 +22,7 @@ public final class MakeFieldFinalFix extends InspectionGadgetsFix {
   }
 
   @Nullable
-  public static InspectionGadgetsFix buildFix(PsiField field) {
+  public static LocalQuickFix buildFix(PsiField field) {
     if (!FinalUtils.canBeFinal(field)) {
       return null;
     }
@@ -28,7 +31,7 @@ public final class MakeFieldFinalFix extends InspectionGadgetsFix {
   }
 
   @NotNull
-  public static InspectionGadgetsFix buildFixUnconditional(PsiField field) {
+  public static LocalQuickFix buildFixUnconditional(PsiField field) {
     return new MakeFieldFinalFix(field.getName());
   }
 
@@ -46,8 +49,7 @@ public final class MakeFieldFinalFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
     final PsiField field;
     if (element instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement target = referenceExpression.resolve();

@@ -18,7 +18,7 @@ internal class GitLabMergeRequestMergeAction(
       combineAndCollect(
         reviewFlowVm.isBusy,
         reviewFlowVm.isMergeable,
-        reviewFlowVm.userCanMergeReview
+        reviewFlowVm.userCanMerge
       ) { isBusy, isMergeable, userCanMergeReview ->
         isEnabled = !isBusy && isMergeable && userCanMergeReview
       }

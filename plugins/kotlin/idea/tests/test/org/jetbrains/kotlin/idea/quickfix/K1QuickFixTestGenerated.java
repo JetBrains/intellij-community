@@ -2875,6 +2875,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/changeSignature/addConstructorParameterForConstantTypeMismatch.kt");
         }
 
+        @TestMetadata("addConstructorParameterForInlineClass.kt")
+        public void testAddConstructorParameterForInlineClass() throws Exception {
+            runTest("testData/quickfix/changeSignature/addConstructorParameterForInlineClass.kt");
+        }
+
+        @TestMetadata("addConstructorParameterForValueClass.kt")
+        public void testAddConstructorParameterForValueClass() throws Exception {
+            runTest("testData/quickfix/changeSignature/addConstructorParameterForValueClass.kt");
+        }
+
         @TestMetadata("addEnumConstructorParameter.kt")
         public void testAddEnumConstructorParameter() throws Exception {
             runTest("testData/quickfix/changeSignature/addEnumConstructorParameter.kt");
@@ -6877,6 +6887,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/decreaseVisibility/exposedReceiverType.kt");
         }
 
+        @TestMetadata("exposedReceiverTypeInternal.kt")
+        public void testExposedReceiverTypeInternal() throws Exception {
+            runTest("testData/quickfix/decreaseVisibility/exposedReceiverTypeInternal.kt");
+        }
+
+        @TestMetadata("exposedReceiverTypePrivate.kt")
+        public void testExposedReceiverTypePrivate() throws Exception {
+            runTest("testData/quickfix/decreaseVisibility/exposedReceiverTypePrivate.kt");
+        }
+
         @TestMetadata("exposedReturnType.kt")
         public void testExposedReturnType() throws Exception {
             runTest("testData/quickfix/decreaseVisibility/exposedReturnType.kt");
@@ -7864,6 +7884,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 @TestMetadata("kt36225.kt")
                 public void testKt36225() throws Exception {
                     runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/kt36225.kt");
+                }
+
+                @TestMetadata("ktij-14750.kt")
+                public void testKtij_14750() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/typeArguments/ktij-14750.kt");
                 }
 
                 @TestMetadata("noImplicitTypeArgImportRuntime.kt")
@@ -11858,6 +11883,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("negate3.kt")
         public void testNegate3() throws Exception {
             runTest("testData/quickfix/redundantIf/negate3.kt");
+        }
+
+        @TestMetadata("notAvailableOnCondition.kt")
+        public void testNotAvailableOnCondition() throws Exception {
+            runTest("testData/quickfix/redundantIf/notAvailableOnCondition.kt");
         }
 
         @TestMetadata("returnWithoutElse.kt")

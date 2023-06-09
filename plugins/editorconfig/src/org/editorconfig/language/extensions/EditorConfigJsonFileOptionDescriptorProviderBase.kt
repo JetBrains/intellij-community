@@ -16,7 +16,7 @@ abstract class EditorConfigJsonFileOptionDescriptorProviderBase : EditorConfigOp
 
   final override fun getOptionDescriptors() = cachedDescriptors
 
-  private fun deserialize(text: String) = try {
+  private fun deserialize(text: String): List<EditorConfigOptionDescriptor> = try {
     EditorConfigOptionDescriptorJsonDeserializer
       .buildGson()
       .fromJson(text, Array<EditorConfigOptionDescriptor?>::class.java)
@@ -25,7 +25,7 @@ abstract class EditorConfigJsonFileOptionDescriptorProviderBase : EditorConfigOp
   catch (ex: JsonSyntaxException) {
     logger<EditorConfigJsonFileOptionDescriptorProviderBase>()
       .warn("Json syntax error in descriptor")
-    emptyList<EditorConfigOptionDescriptor>()
+    emptyList()
   }
 
   private fun loadFileContent(): String {

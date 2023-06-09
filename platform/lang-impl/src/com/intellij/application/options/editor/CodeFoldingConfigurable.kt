@@ -23,7 +23,7 @@ class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingOptionsPro
                                 EditorOptionsProvider, WithEpDependencies {
 
   companion object {
-    const val ID = "editor.preferences.folding"
+    const val ID: String = "editor.preferences.folding"
 
     @JvmStatic
     fun applyCodeFoldingSettingsChanges() {

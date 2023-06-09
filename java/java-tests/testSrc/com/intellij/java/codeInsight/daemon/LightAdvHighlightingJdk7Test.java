@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -89,6 +89,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
 
   public void testNumericLiterals() { doTest(false, false); }
   public void testMultiCatch() { doTest(false, false); }
+  public void testMultiCatchRethrowConditional() { doTest(false, false); }
   public void testTryWithResources() { doTest(false, false); }
   public void testTryWithResourcesWarn() { doTest(true, false, new DefUseInspection()); }
   public void testSafeVarargsApplicability() { doTest(true, false); }

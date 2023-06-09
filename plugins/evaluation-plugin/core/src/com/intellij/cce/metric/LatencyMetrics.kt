@@ -31,7 +31,7 @@ abstract class LatencyMetric(override val name: String) : Metric {
 class MaxLatencyMetric : LatencyMetric(NAME) {
   override val valueType = MetricValueType.INT
 
-  override fun compute(sample: List<Double>): Double = sample.max()
+  override fun compute(sample: List<Double>): Double = sample.maxOrNull() ?: Double.NaN
 
   companion object {
     const val NAME = "Max Latency"

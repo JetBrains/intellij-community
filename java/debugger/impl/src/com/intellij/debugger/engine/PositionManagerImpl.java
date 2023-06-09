@@ -11,6 +11,7 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,14 +31,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.sun.jdi.AbsentInformationException;
-import com.sun.jdi.Location;
-import com.sun.jdi.Method;
-import com.sun.jdi.ReferenceType;
+import com.sun.jdi.*;
 import com.sun.jdi.request.ClassPrepareRequest;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -181,6 +180,22 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
         lambdaOrdinal = lambdasList.indexOf(method);
       }
     }
+
+    // Adjust position if we've stopped on conditional return.
+    if (myDebugProcess.getVirtualMachineProxy().canGetBytecodes()) {
+      PsiElement ret = JavaLineBreakpointType.findSingleConditionalReturn(sourcePosition);
+      if (ret != null) {
+        byte[] bytecodes = method.bytecodes();
+        int bytecodeOffs = Math.toIntExact(location.codeIndex());
+        if (0 <= bytecodeOffs && bytecodeOffs < bytecodes.length) {
+          int opcode = bytecodes[bytecodeOffs] & 0xFF;
+          if (Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
+            sourcePosition = SourcePosition.createFromOffset(sourcePosition.getFile(), ret.getTextOffset());
+          }
+        }
+      }
+    }
+
     return new JavaSourcePosition(sourcePosition, location.declaringType(), method, lambdaOrdinal);
   }
 

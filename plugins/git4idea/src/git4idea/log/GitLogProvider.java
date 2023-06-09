@@ -153,7 +153,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       validateDataAndReportError(root, allRefs, sortedCommits, data, branches, currentTagNames, commitsFromTags);
     }
 
-    return new LogDataImpl(allRefs, GitBekParentFixer.fixCommits(sortedCommits));
+    return new LogDataImpl(allRefs, sortedCommits);
   }
 
   private void validateDataAndReportError(@NotNull VirtualFile root,
@@ -309,11 +309,10 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     List<String> parameters = new ArrayList<>(GitLogUtil.LOG_ALL);
     parameters.add("--date-order");
 
-    GitBekParentFixer parentFixer = GitBekParentFixer.prepare(myProject, root);
     Set<VcsUser> userRegistry = new HashSet<>();
     Set<VcsRef> refs = new HashSet<>();
     GitLogUtil.readTimedCommits(myProject, root, parameters, new CollectConsumer<>(userRegistry), new CollectConsumer<>(refs),
-                                commit -> commitConsumer.consume(parentFixer.fixCommit(commit)));
+                                commitConsumer::consume);
     return new LogDataImpl(refs, userRegistry);
   }
 

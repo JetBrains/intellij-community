@@ -36,7 +36,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivity;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivityKt;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -430,8 +430,10 @@ public final class PluginManagerConfigurable
             for (String host : UpdateSettings.getInstance().getPluginHosts()) {
               List<PluginNode> allDescriptors = customRepositoriesMap.get(host);
               if (allDescriptors != null) {
+                String groupName = IdeBundle.message("plugins.configurable.repository.0", host);
+                LOG.info("Marketplace tab: '" + groupName + "' group load started");
                 addGroup(groups,
-                         IdeBundle.message("plugins.configurable.repository.0", host),
+                         groupName,
                          PluginsGroupType.CUSTOM_REPOSITORY,
                          "/repository:\"" + host + "\"",
                          allDescriptors,
@@ -722,7 +724,7 @@ public final class PluginManagerConfigurable
 
                 if (parser.suggested) {
                   if (project != null) {
-                    result.descriptors.addAll(PluginsAdvertiserStartupActivity.getSuggestedPlugins(project, customRepositoriesMap));
+                    result.descriptors.addAll(PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customRepositoriesMap));
                   }
                   return;
                 }
@@ -913,7 +915,7 @@ public final class PluginManagerConfigurable
           String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");
           visiblePlugins.get(Boolean.TRUE)
             .stream()
-            .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getCategory(), defaultCategory)))
+            .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getDisplayCategory(), defaultCategory)))
             .entrySet()
             .stream()
             .map(entry -> new ComparablePluginsGroup(entry.getKey(), entry.getValue()))
@@ -1210,8 +1212,10 @@ public final class PluginManagerConfigurable
   private void addSuggestedGroup(@NotNull List<? super PluginsGroup> groups,
                                  @NotNull Project project,
                                  Map<String, @NotNull List<PluginNode>> customMap) {
-    List<IdeaPluginDescriptor> plugins = PluginsAdvertiserStartupActivity.getSuggestedPlugins(project, customMap);
-    addGroup(groups, IdeBundle.message("plugins.configurable.suggested"), PluginsGroupType.SUGGESTED, "", plugins, group -> false);
+    String groupName = IdeBundle.message("plugins.configurable.suggested");
+    LOG.info("Marketplace tab: '" + groupName + "' group load started");
+    List<IdeaPluginDescriptor> plugins = PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customMap);
+    addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", plugins, group -> false);
   }
 
   private final class ComparablePluginsGroup extends PluginsGroup
@@ -1523,6 +1527,13 @@ public final class PluginManagerConfigurable
                                                     () -> configurable.select(pluginIds));
   }
 
+  public static void showSuggestedPlugins(@Nullable Project project) {
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
+    ShowSettingsUtil.getInstance().editConfigurable(project,
+                                                    configurable,
+                                                    () -> configurable.openMarketplaceTab("/suggested"));
+  }
+
   public static void showPluginConfigurable(@Nullable Component parent,
                                             @Nullable Project project,
                                             @NotNull Collection<PluginId> pluginIds) {
@@ -1739,7 +1750,6 @@ public final class PluginManagerConfigurable
                         @NotNull String showAllQuery,
                         @NotNull List<? extends IdeaPluginDescriptor> customPlugins,
                         @NotNull Predicate<? super PluginsGroup> showAllPredicate) {
-    LOG.info("Marketplace tab: '" + name + "' group load started");
     PluginsGroup group = new PluginsGroup(name, type);
 
     int i = 0;
@@ -1766,6 +1776,7 @@ public final class PluginManagerConfigurable
                                           @NotNull PluginsGroupType type,
                                           @NotNull @NonNls String query,
                                           @NotNull @NonNls String showAllQuery) throws IOException {
+    LOG.info("Marketplace tab: '" + name + "' group load started");
     List<PluginNode> pluginNodes = MarketplaceRequests.getInstance().searchPlugins(query, ITEMS_PER_GROUP * 2);
     addGroup(groups,
              name,

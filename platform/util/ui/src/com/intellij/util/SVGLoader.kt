@@ -37,7 +37,7 @@ private val iconMaxSize: Float by lazy {
  */
 @ApiStatus.Internal
 object SVGLoader {
-  const val ICON_DEFAULT_SIZE = 16
+  const val ICON_DEFAULT_SIZE: Int = 16
 
   @Throws(IOException::class)
   @JvmStatic

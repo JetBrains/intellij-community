@@ -181,7 +181,7 @@ class JdkUpdateTest : BareTestFixtureTestCase() {
     Assert.assertEquals(1, listOurActions().size)
 
     runWriteAction {
-      old1.jdk.sdkModificator.also { it.homePath = it.homePath + "-123" }.commitChanges()
+      old1.jdk.sdkModificator.also { it.homePath += "-123" }.commitChanges()
     }
     service<JdkUpdaterNotifications>().showNotification(old1.jdk, old1.oldItem, old1.newItem)
 

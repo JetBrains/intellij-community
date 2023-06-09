@@ -29,4 +29,5 @@ internal fun configureJetBrainsProduct(properties: ProductProperties) {
       Path.of(JpsPathUtil.urlToPath(url)).startsWith(context.paths.communityHomeDir)
     }
   }
+  properties.embeddedJetBrainsClientMainModule = "intellij.cwm.guest"
 }

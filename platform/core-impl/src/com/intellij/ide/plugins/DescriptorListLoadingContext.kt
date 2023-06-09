@@ -30,7 +30,7 @@ class DescriptorListLoadingContext(
   @JvmField val transient: Boolean = false
 ) : AutoCloseable, ReadModuleContext {
   @JvmField
-  internal val globalErrors = CopyOnWriteArrayList<Supplier<String>>()
+  internal val globalErrors: CopyOnWriteArrayList<Supplier<String>> = CopyOnWriteArrayList<Supplier<String>>()
 
   internal fun copyGlobalErrors(): MutableList<Supplier<String>> = ArrayList(globalErrors)
 

@@ -780,15 +780,13 @@ public abstract class DialogWrapper {
         protected void fireActionPerformed(ActionEvent event) {
           Window window = UIUtil.getWindow(this);
           DialogWrapper wrapper = window instanceof DialogWrapperDialog dwd ? dwd.getDialogWrapper() : null;
-          if (wrapper == null) return;
-          if (wrapper.myClosed) return;
-          if (wrapper.myPerformAction) return;
-          wrapper.myPerformAction = true;
+          if (wrapper != null && (wrapper.myClosed || wrapper.myPerformAction)) return;
+          if (wrapper != null) wrapper.myPerformAction = true;
           try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
             super.fireActionPerformed(event);
           }
           finally {
-            wrapper.myPerformAction = false;
+            if (wrapper != null) wrapper.myPerformAction = false;
           }
         }
       };

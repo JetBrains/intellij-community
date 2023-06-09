@@ -85,7 +85,7 @@ internal class ProcessManagerServerService(
 
   override fun writeStream(requests: Flow<WriteStreamRequest>): Flow<Empty> {
     @Suppress("EXPERIMENTAL_API_USAGE")
-    return channelFlow<Unit> {
+    return channelFlow {
       @Suppress("EXPERIMENTAL_API_USAGE")
       requests.produceIn(this).consume {
         val fileHandle = receive().also { request ->

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.base.analysisApiProviders
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -10,11 +11,18 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory
+import org.jetbrains.kotlin.analysis.providers.impl.KotlinDeclarationProviderMergerBase
+import org.jetbrains.kotlin.analysis.providers.impl.declarationProviders.CompositeKotlinDeclarationProvider
+import org.jetbrains.kotlin.analysis.providers.impl.declarationProviders.FileBasedKotlinDeclarationProvider
+import org.jetbrains.kotlin.analysis.providers.impl.util.mergeOnly
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.getNamesInPackage
+import org.jetbrains.kotlin.idea.base.indices.processElementsAndMeasure
+import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfoForOutsider
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinModuleMappingIndex
 import org.jetbrains.kotlin.name.CallableId
@@ -25,15 +33,36 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class IdeKotlinDeclarationProviderFactory(private val project: Project) : KotlinDeclarationProviderFactory() {
-    override fun createDeclarationProvider(searchScope: GlobalSearchScope): KotlinDeclarationProvider {
-        return IdeKotlinDeclarationProvider(project, searchScope)
+    override fun createDeclarationProvider(scope: GlobalSearchScope, contextualModule: KtModule?): KotlinDeclarationProvider {
+        val mainProvider = IdeKotlinDeclarationProvider(project, scope)
+
+        if (contextualModule is KtSourceModuleByModuleInfoForOutsider) {
+            val fakeKtFile = PsiManager.getInstance(contextualModule.project).findFile(contextualModule.fakeVirtualFile)
+            if (fakeKtFile is KtFile) {
+                val providerForFake = FileBasedKotlinDeclarationProvider(fakeKtFile)
+                return CompositeKotlinDeclarationProvider.create(listOf(providerForFake, mainProvider))
+            }
+        }
+
+        return mainProvider
     }
+}
+
+internal class IdeKotlinDeclarationProviderMerger(private val project: Project) : KotlinDeclarationProviderMergerBase() {
+    override fun mergeToList(declarationProviders: List<KotlinDeclarationProvider>): List<KotlinDeclarationProvider> =
+        declarationProviders.mergeOnly<_, IdeKotlinDeclarationProvider> { providers ->
+            IdeKotlinDeclarationProvider(
+                project,
+                GlobalSearchScope.union(providers.map { it.scope }),
+            )
+        }
 }
 
 private class IdeKotlinDeclarationProvider(
     private val project: Project,
-    private val scope: GlobalSearchScope
+    val scope: GlobalSearchScope
 ) : KotlinDeclarationProvider() {
+    private val log = Logger.getInstance(IdeKotlinDeclarationProvider::class.java)
     private val stubIndex: StubIndex = StubIndex.getInstance()
     private val psiManager = PsiManager.getInstance(project)
 
@@ -43,13 +72,15 @@ private class IdeKotlinDeclarationProvider(
         crossinline filter: (Psi) -> Boolean = { true }
     ): Psi? {
         var result: Psi? = null
-        stubIndex.processElements(stubKey, key, project, scope, Psi::class.java) { candidate ->
-            ProgressManager.checkCanceled()
-            if (filter(candidate)) {
-                result = candidate
-                return@processElements false // do not continue searching over PSI
+        processElementsAndMeasure(stubKey, log) {
+            stubIndex.processElements(stubKey, key, project, scope, Psi::class.java) { candidate ->
+                ProgressManager.checkCanceled()
+                if (filter(candidate)) {
+                    result = candidate
+                    return@processElements false // do not continue searching over PSI
+                }
+                return@processElements true
             }
-            return@processElements true
         }
         return result
     }

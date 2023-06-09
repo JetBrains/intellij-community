@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.tools.projectWizard.plugins.templates
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.Defaults.SRC_DIR
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.Task1
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
 import org.jetbrains.kotlin.tools.projectWizard.core.service.TemplateEngineService
@@ -49,7 +50,7 @@ class TemplatesPlugin(context: Context) : Plugin(context) {
             }
         }
 
-        val addFileTemplates by task1<List<FileTemplate>, Unit> {
+        val addFileTemplates: Task1<List<FileTemplate>, Unit> by task1 {
             withAction { templates ->
                 fileTemplatesToRender.addValues(templates)
             }

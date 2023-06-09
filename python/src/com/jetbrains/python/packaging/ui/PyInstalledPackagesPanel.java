@@ -19,7 +19,6 @@ import com.intellij.webcore.packaging.*;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.packaging.*;
-import com.jetbrains.python.packaging.statistics.PythonPackagesDialogStatisticsCollector;
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -257,29 +256,5 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   @Override
   protected @NotNull PackagesNotificationPanel createNotificationPanel() {
     return new PyPackagesNotificationPanel();
-  }
-
-
-  @Override
-  protected @NotNull ManagePackagesDialog createManagePackagesDialog() {
-    PythonPackagesDialogStatisticsCollector.getPackagingDialogEvent().log(myProject);
-    return new ManagePackagesDialog(myProject,
-                                    myPackageManagementService,
-                                    new PackageManagementService.Listener() {
-                                      @Override
-                                      public void operationStarted(String packageName) {
-                                        PythonPackagesDialogStatisticsCollector.getPackagingOperationEvent().log(myProject);
-                                        myNotificationArea.hide();
-                                        myPackagesTable.setPaintBusy(true);
-                                      }
-
-                                      @Override
-                                      public void operationFinished(String packageName,
-                                                                    @Nullable PackageManagementService.ErrorDescription errorDescription) {
-                                        myNotificationArea.showResult(packageName, errorDescription);
-                                        myPackagesTable.clearSelection();
-                                        doUpdatePackages(myPackageManagementService);
-                                      }
-                                    }, createNotificationPanel());
   }
 }

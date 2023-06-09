@@ -502,6 +502,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     Presentation presentation = myPresentationFactory.getPresentation(action);
     JComponent customComponent = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (customComponent == null) {
+      presentation.putClientProperty(CustomComponentAction.MINIMAL_DEMENTION_SUPPLIER, myMinimumButtonSizeFunction);
       customComponent = createCustomComponent((CustomComponentAction)action, presentation);
       if (customComponent.getParent() != null && customComponent.getClientProperty(SUPPRESS_ACTION_COMPONENT_WARNING) == null) {
         customComponent.putClientProperty(SUPPRESS_ACTION_COMPONENT_WARNING, true);

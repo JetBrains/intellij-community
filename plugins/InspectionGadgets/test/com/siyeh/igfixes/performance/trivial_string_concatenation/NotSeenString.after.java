@@ -2,7 +2,7 @@ package com.siyeh.igfixes.performance.trivial_string_concatenation;
 
 class NotSeenString {
     void m(Integer i) {
-        String s1 = String.valueOf(1<caret> + i);
+        String s1 = String.valueOf(1 + i)<caret>;
         String s1_expr = String.valueOf(1 + (i + /*hi*/ 2));
         String s2 = String.valueOf(1) + i + null;
         String s2_expr = String.valueOf(3 + /*hi*/ 2) + i + null;

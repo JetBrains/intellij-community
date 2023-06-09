@@ -781,14 +781,13 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
       );
 
       var pluginResolver = new MavenPluginResolver(myTree);
-      pluginResolver.resolvePlugins(List.of(new MavenProjectWithHolder(parentProject, nativeProject[0])),
+      pluginResolver.resolvePlugins(List.of(new MavenProjectWithHolder(parentProject, nativeProject[0], MavenProjectChanges.ALL)),
                                     embeddersManager,
                                     NULL_MAVEN_CONSOLE,
                                     getMavenProgressIndicator(),
                                     false);
 
-      var folderResolver = new MavenFolderResolver(myProject);
-      folderResolver.resolveFoldersBlocking(List.of(parentProject));
+      MavenFolderResolverTestUtilKt.resolveFoldersSync(myProject, List.of(parentProject));
     }
     finally {
       embeddersManager.releaseInTests();
@@ -799,7 +798,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
         .add("updated", "parent", "child")
         .add("deleted")
         .add("resolved", "parent")
-        .add("plugins", "parent")
         .add("folders", "parent"),
       listener.log);
     myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
@@ -808,7 +806,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
         .add("updated", "parent", "child")
         .add("deleted")
         .add("resolved", "parent")
-        .add("plugins", "parent")
         .add("folders", "parent"),
       listener.log);
   }
@@ -2588,7 +2585,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                        @NotNull MavenConsole console,
                        @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
     var resolver = MavenProjectResolver.getInstance(project);
-    resolver.resolve(List.of(mavenProject), myTree, generalSettings, embeddersManager, console, process);
+    resolver.resolve(List.of(mavenProject), myTree, generalSettings, embeddersManager, console, process.getIndicator(), process.getSyncConsole());
   }
 
   private static ListenerLog log() {

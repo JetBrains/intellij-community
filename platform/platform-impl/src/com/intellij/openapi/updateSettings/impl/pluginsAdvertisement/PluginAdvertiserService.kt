@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import kotlin.coroutines.coroutineContext
 
 @ApiStatus.Internal
@@ -48,7 +49,7 @@ sealed interface PluginAdvertiserService {
     fun getIde(ideCode: String?): SuggestedIde? = ides[ideCode]
 
     @Suppress("HardCodedStringLiteral")
-    val ideaUltimate = SuggestedIde("IntelliJ IDEA Ultimate", "https://www.jetbrains.com/idea/download/")
+    val ideaUltimate: SuggestedIde = SuggestedIde("IntelliJ IDEA Ultimate", "https://www.jetbrains.com/idea/download/")
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
     private val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
@@ -141,7 +142,6 @@ open class PluginAdvertiserServiceImpl(
           bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
           suggestionPlugins = suggestToInstall,
           disabledDescriptors = disabledDescriptors,
-          customPlugins = customPlugins,
           featuresMap = featuresMap,
           allUnknownFeatures = unknownFeatures,
           dependencies = PluginFeatureCacheService.getInstance().dependencies,
@@ -217,6 +217,15 @@ open class PluginAdvertiserServiceImpl(
       .filter { pluginManagerFilters.allowInstallingPlugin(it) }
       .toList())
 
+    for (compatibleUpdate in MarketplaceRequests.getLastCompatiblePluginUpdate(result.map { it.pluginId }.toSet())) {
+      val node = result.find { it.pluginId.idString == compatibleUpdate.pluginId }
+      if (node is PluginNode) {
+        node.externalPluginId = compatibleUpdate.externalPluginId
+        node.externalUpdateId = compatibleUpdate.externalUpdateId
+        node.description = null
+      }
+    }
+
     val localPluginIdMap = PluginManagerCore.buildPluginIdMap()
 
     if (result.size < plugins.size) {
@@ -227,12 +236,13 @@ open class PluginAdvertiserServiceImpl(
 
     result.removeAll { localPluginIdMap[it.pluginId]?.isEnabled == true }
 
-    result.forEach { descriptor ->
+    for (descriptor in result) {
       val features = featuresMap[descriptor.pluginId]
       if (features.isNotEmpty()) {
-        val suggestedFeatures = features.filter { "dependency" == it.featureDisplayName }.map {
-          IdeBundle.message("plugins.configurable.suggested.features.dependency", it.implementationDisplayName)
-        }
+        val suggestedFeatures = features
+          .filter { "dependency" == it.featureDisplayName }
+          .map { getSuggestionReason(it) }
+
         if (suggestedFeatures.isNotEmpty()) {
           (descriptor as PluginNode).suggestedFeatures = suggestedFeatures
         }
@@ -240,6 +250,18 @@ open class PluginAdvertiserServiceImpl(
     }
 
     return result
+  }
+
+  private fun getSuggestionReason(it: UnknownFeature): @Nls String {
+    val kind = it.implementationName.substringBefore(":")
+    if (kind == "executable") {
+      val executableName = it.implementationName.substringAfter(":")
+      if (executableName.isNotBlank()) {
+        return IdeBundle.message("plugins.configurable.suggested.features.executable", executableName)
+      }
+    }
+
+    return IdeBundle.message("plugins.configurable.suggested.features.dependency", it.implementationDisplayName)
   }
 
   private fun convertToNode(descriptor: IdeaPluginDescriptor?): PluginNode? {
@@ -254,6 +276,7 @@ open class PluginAdvertiserServiceImpl(
     node.vendor = descriptor.vendor
     node.organization = descriptor.organization
     node.dependencies = descriptor.dependencies
+    node.isConverted = true
 
     return node
   }
@@ -286,7 +309,6 @@ open class PluginAdvertiserServiceImpl(
     bundledPlugins: List<String>,
     suggestionPlugins: List<PluginDownloader>,
     disabledDescriptors: List<IdeaPluginDescriptorImpl>,
-    customPlugins: List<PluginNode>,
     featuresMap: MultiMap<PluginId, UnknownFeature>,
     allUnknownFeatures: Collection<UnknownFeature>,
     dependencies: PluginFeatureMap?,
@@ -296,7 +318,8 @@ open class PluginAdvertiserServiceImpl(
       val action = if (disabledDescriptors.isEmpty()) {
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
           FUSEventSource.NOTIFICATION.logConfigurePlugins(project)
-          PluginsAdvertiserDialog(project, suggestionPlugins, customPlugins).show()
+
+          PluginManagerConfigurable.showSuggestedPlugins(project)
         }
       }
       else {
@@ -393,6 +416,7 @@ open class PluginAdvertiserServiceImpl(
 
     val pluginNames = (plugins.map { it.pluginName } + disabledPlugins.map { it.name })
       .sorted()
+      .distinct()
       .joinToString(", ")
 
     val addressedFeatures = collectFeaturesByName(ids, features)

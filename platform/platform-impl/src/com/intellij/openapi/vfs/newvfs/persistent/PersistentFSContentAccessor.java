@@ -223,7 +223,17 @@ public final class PersistentFSContentAccessor {
 
   @NotNull
   private static MessageDigest getContentHashDigest() {
-    // TODO replace with sha-256
+    // MAYBE: consider replace it with sha-256? It is 20%-30% slower than sha1, but more secure.
+    //        For now I think this is not really a priority -- but we may consider the move at some point.
+
+    //        Git has been used sha1 for years, and still uses it for legacy repos.
+    //        If the question is about casual collisions probability, then sha1 is still good -- typically
+    //        we have much less data in our content storage than a typical git-repository has, so it is
+    //        likely we'll be fine with sha1 collisions probability.
+    //        Malicious collisions are another topic: it is easier to generate a collision for sha1 than for
+    //        sha256, but it is still quite expensive. And if the Evil is able to inject a carefully-crafted
+    //        source file in my IDE source tree -- this itself is a huge security breach, because I could run
+    //        a code from that file -- which seems much more dangerous than hash-collision.
     return DigestUtil.sha1();
   }
 
@@ -241,11 +251,11 @@ public final class PersistentFSContentAccessor {
     private final boolean myFixedSize;
     boolean myModified;
 
-    ContentOutputStream(int fileId, boolean readOnly) {
+    ContentOutputStream(int fileId, boolean fixedSize) {
       super(new BufferExposingByteArrayOutputStream());
       PersistentFSConnection.ensureIdIsValid(fileId);
       myFileId = fileId;
-      myFixedSize = readOnly;
+      myFixedSize = fixedSize;
     }
 
     @Override

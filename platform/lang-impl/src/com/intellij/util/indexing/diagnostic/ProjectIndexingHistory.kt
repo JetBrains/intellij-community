@@ -18,14 +18,36 @@ typealias BytesNumber = Long
  * Extend this extension point to receive project scanning & indexing statistics
  * (e.g.: indexed file count, indexation speed, etc.) after each **dumb** indexation task was performed.
  */
+@ApiStatus.ScheduledForRemoval
+@Deprecated(message = "Use ProjectIndexingActivityHistoryListener instead")
 interface ProjectIndexingHistoryListener {
   companion object {
     @Topic.AppLevel
-    val TOPIC = Topic(ProjectIndexingHistoryListener::class.java, Topic.BroadcastDirection.NONE)
+    val TOPIC: Topic<ProjectIndexingHistoryListener> = Topic(ProjectIndexingHistoryListener::class.java, Topic.BroadcastDirection.NONE)
   }
-  fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) = Unit
+  fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) {}
 
   fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory)
+}
+
+/**
+ * Extend this extension point to receive project scanning & indexing statistics
+ * (e.g.: indexed file count, indexation speed, etc.) after each scanning or **dumb** indexation task was performed.
+ */
+interface ProjectIndexingActivityHistoryListener {
+  companion object {
+    @Topic.AppLevel
+    val TOPIC: Topic<ProjectIndexingActivityHistoryListener> = Topic(ProjectIndexingActivityHistoryListener::class.java,
+                                                                     Topic.BroadcastDirection.NONE)
+  }
+
+  fun onStartedScanning(history: ProjectScanningHistory) {}
+
+  fun onFinishedScanning(history: ProjectScanningHistory) {}
+
+  fun onStartedDumbIndexing(history: ProjectDumbIndexingHistory) {}
+
+  fun onFinishedDumbIndexing(history: ProjectDumbIndexingHistory) {}
 }
 
 @ApiStatus.Obsolete
@@ -49,18 +71,19 @@ interface ProjectIndexingActivityHistory {
 
 interface ProjectScanningHistory : ProjectIndexingActivityHistory {
   override val project: Project
+  val indexingActivitySessionId: Long
   val scanningReason: String?
   val scanningSessionId: Long
   val times: ScanningTimes
   val scanningStatistics: List<JsonScanningStatistics>
 
-  override val type
+  override val type: IndexDiagnosticDumper.IndexingActivityType
     get() = IndexDiagnosticDumper.IndexingActivityType.Scanning
 }
 
 interface ProjectDumbIndexingHistory : ProjectIndexingActivityHistory {
   override val project: Project
-  val indexingSessionId: Long
+  val indexingActivitySessionId: Long
   val times: DumbIndexingTimes
   val refreshedScanningStatistics: JsonScanningStatistics?
   val providerStatistics: List<JsonFileProviderIndexStatistics>
@@ -68,7 +91,7 @@ interface ProjectDumbIndexingHistory : ProjectIndexingActivityHistory {
   val totalStatsPerIndexer: Map<String, StatsPerIndexer>
   val visibleTimeToAllThreadsTimeRatio: Double
 
-  override val type
+  override val type: IndexDiagnosticDumper.IndexingActivityType
     get() = IndexDiagnosticDumper.IndexingActivityType.DumbIndexing
 }
 
@@ -185,7 +208,6 @@ interface DumbIndexingTimes {
   val totalUpdatingTime: TimeNano
   val updatingEnd: ZonedDateTime
   val contentLoadingVisibleDuration: Duration
-  val readLockWaitingVisibleDuration: Duration
   val refreshedScanFilesDuration: Duration
   val pausedDuration: Duration
   val appliedAllValuesSeparately: Boolean

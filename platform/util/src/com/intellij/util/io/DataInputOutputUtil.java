@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.ThrowableComputable;
@@ -145,14 +145,12 @@ public final class DataInputOutputUtil {
    * Reads an element from the stream, using the given function to read it when a not-null element is expected, or returns null otherwise.
    * Should be coupled with {@link #writeNullable}
    */
-  @Nullable
-  public static <T> T readNullable(@NotNull DataInput in, @NotNull ThrowableComputable<? extends T, ? extends IOException> readValue) throws IOException {
+  public static @Nullable <T> T readNullable(@NotNull DataInput in, @NotNull ThrowableComputable<? extends T, ? extends IOException> readValue) throws IOException {
     return in.readBoolean() ? readValue.compute() : null;
   }
 
-  @NotNull
-  public static <T> List<T> readSeq(@NotNull DataInput in,
-                                    @SuppressWarnings("BoundedWildcard")
+  public static @NotNull <T> List<T> readSeq(@NotNull DataInput in,
+                                             @SuppressWarnings("BoundedWildcard")
                                     @NotNull ThrowableComputable<? extends T, IOException> readElement) throws IOException {
     return DataInputOutputUtilRt.readSeq(in, readElement);
   }

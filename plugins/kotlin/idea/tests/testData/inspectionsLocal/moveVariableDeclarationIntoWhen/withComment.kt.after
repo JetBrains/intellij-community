@@ -1,5 +1,4 @@
 fun foo() {
-
     // comment
     when (<caret>1) {
         1 -> {

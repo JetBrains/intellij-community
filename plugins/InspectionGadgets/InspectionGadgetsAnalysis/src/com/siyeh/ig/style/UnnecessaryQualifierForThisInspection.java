@@ -15,8 +15,7 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -44,11 +43,11 @@ public class UnnecessaryQualifierForThisInspection extends BaseInspection implem
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryQualifierForThisFix();
   }
 
-  private static class UnnecessaryQualifierForThisFix extends InspectionGadgetsFix {
+  private static class UnnecessaryQualifierForThisFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -58,8 +57,7 @@ public class UnnecessaryQualifierForThisInspection extends BaseInspection implem
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement qualifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement qualifier, @NotNull EditorUpdater updater) {
       final PsiElement parent = qualifier.getParent();
       CommentTracker tracker = new CommentTracker();
       if (parent instanceof PsiThisExpression) {

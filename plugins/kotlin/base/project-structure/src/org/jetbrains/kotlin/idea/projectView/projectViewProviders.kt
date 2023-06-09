@@ -83,7 +83,7 @@ class KotlinSelectInProjectViewProvider(private val project: Project) : Selectab
         val virtualFile = file.virtualFile
         if (!fileInRoots(virtualFile)) return file
 
-        var current = element.parentsWithSelf.firstOrNull() { it.isSelectable() }
+        var current = element.parentsWithSelf.firstOrNull { it.isSelectable() }
 
         if (current is KtFile) {
             val declaration = current.declarations.singleOrNull()

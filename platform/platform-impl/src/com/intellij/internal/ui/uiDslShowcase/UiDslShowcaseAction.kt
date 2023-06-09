@@ -40,7 +40,7 @@ private val DEMOS = arrayOf(
 
 internal class UiDslShowcaseAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     UiDslShowcaseDialog(e.project, templatePresentation.text).show()

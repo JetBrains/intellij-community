@@ -2,6 +2,7 @@ package org.jetbrains.intellij.build.images.sync.dotnet
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.isDirectory
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -53,8 +54,8 @@ object RiderIconsJsonGenerator {
       .map { g ->
         val obj = JsonObject()
         g.value
-          .sortedBy { it.originFile }
-          .forEach { obj.addProperty(it.originFile.name, it.originFile.relativeTo(iconsResourcesPath).toString()) }
+          .sortedBy { it.originFile.toString().lowercase() }
+          .forEach { obj.addProperty(it.originFile.name, FileUtil.toSystemIndependentName(it.originFile.relativeTo (iconsResourcesPath).toString())) }
 
         g.key.relativeTo(iconsResourcesPath) to obj
       }

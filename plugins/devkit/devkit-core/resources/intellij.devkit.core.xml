@@ -268,7 +268,7 @@
     <localInspection language="JVM" shortName="LightServiceMustBeFinal"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="false" level="ERROR"
+                     enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalInspection"
                      key="inspection.light.service.must.be.final.display.name"/>
     <localInspection language="JVM" shortName="MismatchedLightServiceLevelAndCtor"
@@ -301,6 +301,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMigrationCodeInspection"
                      key="inspection.light.service.migration.display.name"/>
+    <localInspection language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ActionPresentationInitializedInCtorInspection"
+                     key="inspection.an.action.initializes.template.presentation.in.ctor.display.name"/>
     <localInspection language="UAST" shortName="NonDefaultConstructor"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -385,6 +391,12 @@
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      shortName="CallingMethodShouldBeRequiresBlockingContext"
                      implementationClass="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection"/>
+    <localInspection language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.IncorrectProcessCanceledExceptionHandlingInspection"
+                     key="inspections.incorrect.process.canceled.exception.handling.display.name"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
@@ -509,6 +521,7 @@
   <extensions defaultExtensionNs="DevKit.lang">
     <goodCodeRedVisitor language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.internal.JavaGoodCodeRedVisitor"/>
     <cancellationCheckProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.JavaCancellationCheckProvider"/>
+    <cancellationCheckInLoopsFixProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaCancellationCheckInLoopsFixProvider"/>
     <visitorProviderForRBCInspection language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProviderForJava"/>
     <extensionClassShouldNotBePublicProvider language="JAVA"
@@ -519,6 +532,9 @@
       implementationClass="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractorForJava"/>
     <lightServiceMustBeFinalErrorMessageProvider language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalErrorMessageProvider"/>
+    <appServiceAsStaticFinalFieldQuickFixProvider
+      language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAppServiceAsStaticFinalFieldFixProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -531,6 +547,11 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
     <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.CancellationCheckProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.cancellationCheckInLoopsFixProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.quickfix.CancellationCheckInLoopsFixProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.visitorProviderForRBCInspection"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
@@ -555,7 +576,12 @@
     <extensionPoint qualifiedName="DevKit.lang.lightServiceMustBeFinalErrorMessageProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
-      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalErrorMessageProvider"/>
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.ErrorMessageProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.appServiceAsStaticFinalFieldQuickFixProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldFixProvider"/>
     </extensionPoint>
   </extensionPoints>
 

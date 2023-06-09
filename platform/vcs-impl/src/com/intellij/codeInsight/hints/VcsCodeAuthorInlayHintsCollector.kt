@@ -113,7 +113,7 @@ fun addPreviewInfo(psiFile: PsiFile) {
   psiFile.putUserData(PREVIEW_INFO_KEY, VcsCodeAuthorInfo("John Smith", 2, false))
 }
 
-fun hasPreviewInfo(psiFile: PsiFile) = PREVIEW_INFO_KEY.get(psiFile) != null
+fun hasPreviewInfo(psiFile: PsiFile): Boolean = PREVIEW_INFO_KEY.get(psiFile) != null
 
 private val VcsCodeAuthorInfo.isMultiAuthor: Boolean get() = otherAuthorsCount > 0
 

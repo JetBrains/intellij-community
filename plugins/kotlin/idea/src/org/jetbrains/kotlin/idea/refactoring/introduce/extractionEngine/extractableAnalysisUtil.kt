@@ -405,7 +405,7 @@ private fun KotlinType.collectReferencedTypes(processTypeArguments: Boolean): Li
     if (!processTypeArguments) return Collections.singletonList(this)
     return dfsFromNode(
         this,
-        Neighbors<KotlinType> { current -> current.arguments.map { it.type } },
+        Neighbors { current -> current.arguments.map { it.type } },
         VisitedWithSet(),
         object : CollectingNodeHandler<KotlinType, KotlinType, ArrayList<KotlinType>>(ArrayList()) {
             override fun afterChildren(current: KotlinType) {

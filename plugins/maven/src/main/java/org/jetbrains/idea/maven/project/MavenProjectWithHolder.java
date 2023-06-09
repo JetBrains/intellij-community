@@ -4,5 +4,7 @@ package org.jetbrains.idea.maven.project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
-public record MavenProjectWithHolder(@NotNull MavenProject mavenProject, @NotNull NativeMavenProjectHolder mavenProjectHolder) {
+public record MavenProjectWithHolder(@NotNull MavenProject mavenProject,
+                                     @NotNull NativeMavenProjectHolder mavenProjectHolder,
+                                     @NotNull MavenProjectChanges changes) {
 }

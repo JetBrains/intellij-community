@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
@@ -40,17 +43,17 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
   );
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final Boolean onTheFly = (Boolean)infos[0];
     final Boolean canBeConvertedToConstructor = (Boolean)infos[1];
-    List<InspectionGadgetsFix> fixes = new ArrayList<>();
+    List<LocalQuickFix> fixes = new ArrayList<>();
     if (onTheFly) {
       fixes.add(new RenameFix());
     }
     if (canBeConvertedToConstructor) {
       fixes.add(new MethodNameSameAsClassNameFix());
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override
@@ -71,7 +74,7 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
   }
 
   private static class MethodNameSameAsClassNameFix
-    extends InspectionGadgetsFix {
+    extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -80,8 +83,7 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiMethod method = ObjectUtils.tryCast(element.getParent(), PsiMethod.class);
       if (method == null) return;
       final PsiTypeElement returnTypeElement = method.getReturnTypeElement();

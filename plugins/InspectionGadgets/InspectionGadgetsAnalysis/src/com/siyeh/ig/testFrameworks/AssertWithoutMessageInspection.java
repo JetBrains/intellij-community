@@ -15,17 +15,16 @@
  */
 package com.siyeh.ig.testFrameworks;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,19 +63,18 @@ public class AssertWithoutMessageInspection extends BaseInspection {
   }
 
   @Override
-  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new AssertWithoutMessageFix((boolean)infos[0]);
   }
 
-  private static final class AssertWithoutMessageFix extends InspectionGadgetsFix {
+  private static final class AssertWithoutMessageFix extends PsiUpdateModCommandQuickFix {
     private final boolean myMessageIsOnFirstPosition;
 
     private AssertWithoutMessageFix(boolean messageIsOnFirstPosition) {myMessageIsOnFirstPosition = messageIsOnFirstPosition;}
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-
-      PsiMethodCallExpression methodCallExpr = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiMethodCallExpression methodCallExpr = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (methodCallExpr == null) return;
 
       PsiExpression newMessageExpr = JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText("\"\"", methodCallExpr);
@@ -91,10 +89,7 @@ public class AssertWithoutMessageInspection extends BaseInspection {
         createdMessageExpr = methodArgs.add(newMessageExpr);
       }
 
-      if (!createdMessageExpr.isPhysical()) return;
-      Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-      if (editor == null) return;
-      editor.getCaretModel().moveToOffset(createdMessageExpr.getTextOffset() + 1);
+      updater.moveTo(createdMessageExpr.getTextRange().getStartOffset() + 1);
     }
 
     @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.google.common.util.concurrent.Futures;
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.serviceContainer.AlreadyDisposedException;
-import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
@@ -37,9 +36,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReadWriteLock;
 
 public final class StubIndexImpl extends StubIndexEx {
   static final Logger LOG = Logger.getInstance(StubIndexImpl.class);
@@ -196,8 +193,7 @@ public final class StubIndexImpl extends StubIndexEx {
    * @implNote obtaining modification stamps might be expensive due to execution of StubIndex update on each invocation
    */
   @ApiStatus.Experimental
-  @NotNull
-  public ModificationTracker getIndexModificationTracker(@NotNull StubIndexKey<?, ?> indexId, @NotNull Project project) {
+  public @NotNull ModificationTracker getIndexModificationTracker(@NotNull StubIndexKey<?, ?> indexId, @NotNull Project project) {
     return () -> getIndexModificationStamp(indexId, project);
   }
 
@@ -375,9 +371,8 @@ public final class StubIndexImpl extends StubIndexEx {
       return state;
     }
 
-    @NotNull
     @Override
-    protected Collection<ThrowableRunnable<?>> prepareTasks() {
+    protected @NotNull Collection<ThrowableRunnable<?>> prepareTasks() {
       Iterator<StubIndexExtension<?, ?>> extensionsIterator;
       if (IndexInfrastructure.hasIndices()) {
         extensionsIterator = StubIndexExtension.EP_NAME.getIterable().iterator();
@@ -401,9 +396,8 @@ public final class StubIndexImpl extends StubIndexEx {
       return tasks;
     }
 
-    @NotNull
     @Override
-    protected String getInitializationFinishedMessage(AsyncState initializationResult) {
+    protected @NotNull String getInitializationFinishedMessage(AsyncState initializationResult) {
       return "Initialized stub indexes: " + initializationResult.myIndices.keySet() + ".";
     }
   }

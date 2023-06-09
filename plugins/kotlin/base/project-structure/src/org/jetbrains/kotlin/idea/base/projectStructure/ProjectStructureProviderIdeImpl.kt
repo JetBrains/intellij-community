@@ -1,14 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.projectStructure
 
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
+import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
@@ -22,18 +27,10 @@ interface KtModuleFactory {
     }
 
     fun createModule(moduleInfo: ModuleInfo): KtModule?
-
-    fun createModuleWithNonOriginalFile(
-        moduleInfo: ModuleInfo,
-        fakeFile: VirtualFile,
-        originalFile: VirtualFile,
-    ): KtModule? = createModule(moduleInfo)
 }
 
 @ApiStatus.Internal
-fun IdeaModuleInfo.toKtModule(): KtModule {
-    return ProjectStructureProviderIdeImpl.getInstance(project).getKtModuleByModuleInfo(this)
-}
+fun IdeaModuleInfo.toKtModule(): KtModule = ProjectStructureProviderIdeImpl.getKtModuleByModuleInfo(this)
 
 @ApiStatus.Internal
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
@@ -42,54 +39,72 @@ inline fun <reified T : KtModule> IdeaModuleInfo.toKtModuleOfType(): @kotlin.int
 }
 
 internal class ProjectStructureProviderIdeImpl(private val project: Project) : ProjectStructureProvider() {
-    override fun getKtModuleForKtElement(element: PsiElement): KtModule {
-        val config = ModuleInfoProvider.Configuration(createSourceLibraryInfoForLibraryBinaries = false)
-        val moduleInfo = ModuleInfoProvider.getInstance(element.project).firstOrNull(element, config)
-            ?: NotUnderContentRootModuleInfo(project, element.containingFile as? KtFile)
-
+    override fun getModule(element: PsiElement, contextualModule: KtModule?): KtModule {
         val virtualFile = element.containingFile?.virtualFile
-        val originalFile = virtualFile?.let { getOutsiderFileOrigin(project, it) }
-        if (originalFile != null) {
-            forEachModuleFactory {
-                createModuleWithNonOriginalFile(
-                    moduleInfo = moduleInfo,
-                    fakeFile = virtualFile,
-                    originalFile = originalFile,
-                )?.let { return it }
+        if (contextualModule is KtSourceModuleByModuleInfoForOutsider && virtualFile != null) {
+            if (virtualFile in contextualModule.contentScope) {
+                return contextualModule
             }
         }
 
-        return getKtModuleByModuleInfo(moduleInfo)
-    }
-
-    // TODO maybe introduce some cache?
-    fun getKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule =
-        createKtModuleByModuleInfo(moduleInfo)
-
-    private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
-        forEachModuleFactory {
-            createModule(moduleInfo)?.let { return it }
-        }
-
-        return when (moduleInfo) {
-            is ModuleSourceInfo -> KtSourceModuleByModuleInfo(moduleInfo)
-            is LibraryInfo -> KtLibraryModuleByModuleInfo(moduleInfo)
-            is SdkInfo -> SdkKtModuleByModuleInfo(moduleInfo)
-            is LibrarySourceInfo -> KtLibrarySourceModuleByModuleInfo(moduleInfo)
-            is NotUnderContentRootModuleInfo -> NotUnderContentRootModuleByModuleInfo(moduleInfo)
-            else -> NotUnderContentRootModuleByModuleInfo(moduleInfo as IdeaModuleInfo)
+        val psiFile = ModuleInfoProvider.findAnchorFile(element)
+        return if (psiFile != null) {
+            cachedKtModule(psiFile)
+        } else {
+            calculateKtModule(element)
         }
     }
 
     companion object {
-        fun getInstance(project: Project): ProjectStructureProviderIdeImpl {
-            return project.getService(ProjectStructureProvider::class.java) as ProjectStructureProviderIdeImpl
-        }
+        // TODO maybe introduce some cache?
+        fun getKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule = createKtModuleByModuleInfo(moduleInfo)
     }
+}
+
+private fun cachedKtModule(psiFile: PsiFile): KtModule = CachedValuesManager.getCachedValue<KtModule>(psiFile) {
+    val project = psiFile.project
+    CachedValueProvider.Result.create(
+        calculateKtModule(psiFile),
+        ProjectRootModificationTracker.getInstance(project),
+        JavaLibraryModificationTracker.getInstance(project),
+        KotlinModificationTrackerFactory.getService(project).createProjectWideOutOfBlockModificationTracker(),
+    )
 }
 
 private inline fun forEachModuleFactory(action: KtModuleFactory.() -> Unit) {
     for (extension in KtModuleFactory.EP_NAME.extensions) {
         extension.action()
     }
+}
+
+private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
+    forEachModuleFactory {
+        createModule(moduleInfo)?.let { return it }
+    }
+
+    return when (moduleInfo) {
+        is ModuleSourceInfo -> KtSourceModuleByModuleInfo(moduleInfo)
+        is LibraryInfo -> KtLibraryModuleByModuleInfo(moduleInfo)
+        is SdkInfo -> SdkKtModuleByModuleInfo(moduleInfo)
+        is LibrarySourceInfo -> KtLibrarySourceModuleByModuleInfo(moduleInfo)
+        is NotUnderContentRootModuleInfo -> NotUnderContentRootModuleByModuleInfo(moduleInfo)
+        else -> NotUnderContentRootModuleByModuleInfo(moduleInfo as IdeaModuleInfo)
+    }
+}
+
+private fun calculateKtModule(psiElement: PsiElement): KtModule {
+    val virtualFile = psiElement.containingFile?.virtualFile
+    val project = psiElement.project
+    val config = ModuleInfoProvider.Configuration(createSourceLibraryInfoForLibraryBinaries = false)
+    val moduleInfo = ModuleInfoProvider.getInstance(project).firstOrNull(psiElement, config)
+        ?: NotUnderContentRootModuleInfo(project, psiElement.containingFile as? KtFile)
+
+    if (virtualFile != null && moduleInfo is ModuleSourceInfo) {
+        val originalFile = getOutsiderFileOrigin(project, virtualFile)
+        if (originalFile != null) {
+            return KtSourceModuleByModuleInfoForOutsider(virtualFile, originalFile, moduleInfo)
+        }
+    }
+
+    return ProjectStructureProviderIdeImpl.getKtModuleByModuleInfo(moduleInfo)
 }

@@ -38,7 +38,7 @@ class KotlinDeclarationNameValidator(
             KotlinNameSuggestionProvider.ValidatorTarget.PROPERTY, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE, KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER -> {
                 val scope =
                     visibleDeclarationsContext.containingKtFile.getScopeContextForPosition(visibleDeclarationsContext).getCompositeScope()
-                scope.getCallableSymbols { it == identifier }.any()
+                scope.getCallableSymbols(identifier).any()
             }
             else -> false
         }

@@ -80,8 +80,8 @@ class AsyncImageIcon private constructor(
     return request
   }
 
-  override fun getIconHeight() = defaultIcon.iconHeight
-  override fun getIconWidth() = defaultIcon.iconWidth
+  override fun getIconHeight(): Int = defaultIcon.iconHeight
+  override fun getIconWidth(): Int = defaultIcon.iconWidth
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     val imageRequest = imageRequestsCache.getOrProvide(ScaleContext.create(c))!!

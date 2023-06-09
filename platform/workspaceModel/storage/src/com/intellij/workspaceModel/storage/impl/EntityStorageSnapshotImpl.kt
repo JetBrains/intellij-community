@@ -20,6 +20,7 @@ import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingIm
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.workspaceModel.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.workspaceModel.storage.instrumentation.EntityStorageSnapshotInstrumentation
 import com.intellij.workspaceModel.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
@@ -31,10 +32,11 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
-internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: EntityId) : EntityReference<E>() {
+@OptIn(EntityStorageInstrumentationApi::class)
+internal data class EntityReferenceImpl<E : WorkspaceEntity>(internal val id: EntityId) : EntityReference<E>() {
   override fun resolve(storage: EntityStorage): E? {
-    @Suppress("UNCHECKED_CAST")
-    return (storage as AbstractEntityStorage).entityDataById(id)?.createEntity(storage) as? E
+    storage as EntityStorageInstrumentation
+    return storage.resolveReference(this)
   }
 
   override fun isReferenceTo(entity: WorkspaceEntity): Boolean {
@@ -50,6 +52,7 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: Ent
   }
 }
 
+@OptIn(EntityStorageInstrumentationApi::class)
 internal class EntityStorageSnapshotImpl(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
@@ -89,6 +92,7 @@ internal class EntityStorageSnapshotImpl(
 }
 
 
+@OptIn(EntityStorageInstrumentationApi::class)
 internal class MutableEntityStorageImpl(
   override val entitiesByType: MutableEntitiesBarrel,
   override val refs: MutableRefsTable,
@@ -902,6 +906,7 @@ internal class MutableEntityStorageImpl(
   }
 }
 
+@OptIn(EntityStorageInstrumentationApi::class)
 internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
 
   internal abstract val entitiesByType: EntitiesBarrel
@@ -976,8 +981,6 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
     return indexes.virtualFileIndex
   }
 
-  override fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E> = EntityReferenceImpl((e as WorkspaceEntityBase).id)
-
 
   override fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T = newInstance()
 
@@ -1011,6 +1014,42 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
     else {
       report()
     }
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun <T : WorkspaceEntity> resolveReference(reference: EntityReference<T>): T? {
+    reference as EntityReferenceImpl<T>
+    return this.entityDataById(reference.id)?.createEntity(this) as? T
+  }
+
+  override fun <Child : WorkspaceEntity> extractOneToAbstractOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): Child? {
+    val parentId = parent.asBase().id
+    val childId = refs.getAbstractOneToOneChildren(connectionId, parentId.asParent())?.id
+    return childId?.let {
+      @Suppress("UNCHECKED_CAST")
+      entityDataByIdOrDie(it).createEntity(this) as Child
+    }
+  }
+
+  override fun <Child : WorkspaceEntity> extractOneToManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<Child> {
+    val parentId = parent.asBase().id
+    val entitiesList = entitiesByType[connectionId.childClass] ?: return emptySequence()
+    return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map {
+      val entityData = entitiesList[it]
+      if (entityData == null) {
+        if (!brokenConsistency) {
+          error(
+            """Cannot resolve entity.
+          |Connection id: $connectionId
+          |Unresolved array id: $it
+          |All child array ids: ${refs.getOneToManyChildren(connectionId, parentId.arrayId)?.toArray()}
+        """.trimMargin()
+          )
+        }
+        null
+      }
+      else entityData.createEntity(this)
+    }?.filterNotNull() as? Sequence<Child> ?: emptySequence()
   }
 
   companion object {

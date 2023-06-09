@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.jvmcompat
 
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
@@ -15,11 +14,27 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
   parser = GradleCompatibilityDataParser,
   defaultState = DEFAULT_DATA
 ) {
-  private lateinit var mySupportedGradleVersions: List<GradleVersion>
-  private lateinit var mySupportedJavaVersions: List<JavaVersion>
-  private lateinit var myCompatibility: List<Pair<Ranges<JavaVersion>, Ranges<GradleVersion>>>
+  @Volatile
+  private var mySupportedGradleVersions: List<GradleVersion> = emptyList()
+
+  @Volatile
+  private var mySupportedJavaVersions: List<JavaVersion> = emptyList()
+
+  @Volatile
+  private var myCompatibility: List<Pair<Ranges<JavaVersion>, Ranges<GradleVersion>>> = emptyList()
+
+  private fun applyState(state: GradleCompatibilityState) {
+    myCompatibility = getCompatibilityRanges(state)
+    mySupportedGradleVersions = state.supportedGradleVersions.map(GradleVersion::version)
+    mySupportedJavaVersions = state.supportedJavaVersions.map(JavaVersion::parse)
+  }
+
+  init {
+    applyState(DEFAULT_DATA)
+  }
 
   override fun newState(): GradleCompatibilityState = GradleCompatibilityState()
+
 
   private fun getCompatibilityRanges(data: GradleCompatibilityState): List<Pair<Ranges<JavaVersion>, Ranges<GradleVersion>>> {
     return data.versionMappings.map { entry ->
@@ -32,9 +47,7 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
   }
 
   override fun onStateChanged(newState: GradleCompatibilityState) {
-    myCompatibility = getCompatibilityRanges(newState)
-    mySupportedGradleVersions = newState.supportedGradleVersions.map(GradleVersion::version)
-    mySupportedJavaVersions = newState.supportedJavaVersions.map(JavaVersion::parse)
+    applyState(newState)
   }
 
   fun getAllSupportedGradleVersions(): List<GradleVersion> {

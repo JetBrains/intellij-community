@@ -6,6 +6,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.selected
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.ApiStatus
@@ -48,7 +49,7 @@ fun <T : AbstractButton> Cell<T>.actionListener(actionListener: (event: ActionEv
   return this
 }
 
-val Cell<AbstractButton>.selected
+val Cell<AbstractButton>.selected: ComponentPredicate
   get() = component.selected
 
 @ApiStatus.Experimental

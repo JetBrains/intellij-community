@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.ReviseWhenPortedToJDK
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.util.io.StreamUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -11,8 +12,11 @@ import com.sun.net.httpserver.Authenticator
 import com.sun.net.httpserver.BasicAuthenticator
 import com.sun.net.httpserver.HttpServer
 import junit.framework.TestCase
+import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.model.MavenProjectProblem
+import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.server.MisconfiguredPlexusDummyEmbedder
 import org.junit.Test
 import java.io.File
 import java.io.FileInputStream
@@ -139,6 +143,82 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals(1, myProjectsManager.rootProjects.size)
     TestCase.assertEquals("status code: 401, reason phrase: Unauthorized (401)",
                           myProjectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.REPOSITORY }.description)
+
+  }
+
+  @Test
+  fun `settings xml respected at the very start of the container`() {
+    val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
+    val remoteRepoPath = helper.getTestDataPath("remote")
+    val localRepoPath = helper.getTestDataPath("local1")
+    setupRemoteRepositoryServer(remoteRepoPath, object : BasicAuthenticator("/") {
+      override fun checkCredentials(username: String?, password: String?): Boolean {
+        return username == USERNAME && password == PASSWORD
+      }
+    })
+    repositoryPath = localRepoPath
+    @Language(value = "XML") val settingsXmlText = """
+       <settings>
+          <localRepository>$localRepoPath</localRepository>
+          <servers>
+            <server>
+              <id>artifacts</id>
+              <username>$USERNAME</username>
+              <password>$PASSWORD</password>
+            </server>
+          </servers>
+          
+          <profiles>
+            <profile>
+              <id>artifacts</id>
+              <repositories>
+                <repository>
+                  <id>artifacts</id>
+                  <url>$myUrl</url>
+                </repository>
+              </repositories>
+              <pluginRepositories>
+                <pluginRepository>
+                  <id>artifacts</id>
+                  <url>$myUrl</url>
+                </pluginRepository>
+              </pluginRepositories>
+            </profile>
+          </profiles>
+          <activeProfiles>
+              <activeProfile>artifacts</activeProfile>
+          </activeProfiles>
+       </settings>
+       """.trimIndent()
+
+    val settingsXml = createProjectSubFile("settings.xml", settingsXmlText)
+
+    mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
+
+    createProjectPom("""<groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """);
+
+    val extensionsXml = createProjectSubFile(".mvn/extensions.xml", """
+    <extensions xmlns="http://maven.apache.org/EXTENSIONS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/EXTENSIONS/1.0.0 http://maven.apache.org/xsd/core-extensions-1.0.0.xsd">
+      <extension>
+        <groupId>org.mytest</groupId>
+        <artifactId>myartifact</artifactId>
+        <version>1.0</version>
+      </extension>
+    </extensions>
+    """.trimIndent());
+
+    Registry.get("maven.server.debug").setValue(false)
+    removeFromLocalRepository("org/mytest/myartifact/")
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    val embedderWrapper = MavenServerManager.getInstance().createEmbedder(myProject, true, myProjectRoot.toNioPath().toString())
+    val embedder = embedderWrapper.getEmbedder()
+    assertTrue("Embedder should be remote object: got class ${embedder.javaClass.name}", embedder.javaClass.name.contains("\$Proxy"))
+    assertFalse(embedder.javaClass.isAssignableFrom(MisconfiguredPlexusDummyEmbedder::class.java))
+
 
   }
 

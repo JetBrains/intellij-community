@@ -3,6 +3,7 @@ package com.intellij.coverage.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.coverage.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -89,6 +90,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   protected JComponent createNorthPanel() {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new AddExternalSuiteAction());
+    group.add(new RemoveSuiteAction());
     group.add(new DeleteSuiteAction());
     group.add(new SwitchEngineAction());
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CoverageSuiteChooser", group, true);
@@ -343,9 +345,39 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     }
   }
 
+  private class RemoveSuiteAction extends AnAction {
+    RemoveSuiteAction() {
+      super(CommonBundle.message("button.remove"), CommonBundle.message("button.remove"), PlatformIcons.DELETE_ICON);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      final CheckedTreeNode[] selectedNodes = mySuitesTree.getSelectedNodes(CheckedTreeNode.class, null);
+      for (CheckedTreeNode selectedNode : selectedNodes) {
+        final Object userObject = selectedNode.getUserObject();
+        if (userObject instanceof CoverageSuite selectedSuite) {
+            myCoverageManager.unregisterCoverageSuite(selectedSuite);
+            TreeUtil.removeLastPathComponent(mySuitesTree, new TreePath(selectedNode.getPath()));
+          }
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      final CheckedTreeNode[] selectedSuites = mySuitesTree.getSelectedNodes(CheckedTreeNode.class, null);
+      final Presentation presentation = e.getPresentation();
+      presentation.setEnabled(selectedSuites.length > 0);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+  }
+
   private class DeleteSuiteAction extends AnAction {
     DeleteSuiteAction() {
-      super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), PlatformIcons.DELETE_ICON);
+      super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), AllIcons.Actions.GC);
       registerCustomShortcutSet(CommonShortcuts.getDelete(), mySuitesTree);
     }
 

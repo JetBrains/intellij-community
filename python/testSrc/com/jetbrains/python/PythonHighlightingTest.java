@@ -565,6 +565,21 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.getLatest(), false, true);
   }
 
+  // PY-32302
+  public void testLocalVariables() {
+    doTest(LanguageLevel.getLatest(), false, true);
+  }
+
+  // PY-32302
+  public void testVariableAnnotatedWithNonLocalNotHighlightedAsLocal() {
+    doTest(LanguageLevel.getLatest(), false, true);
+  }
+
+  // PY-32302
+  public void testVariableAnnotatedWithGlobalNotHighlightedAsLocal() {
+    doTest(LanguageLevel.getLatest(), false, true);
+  }
+
   @NotNull
   private static EditorColorsScheme createTemporaryColorScheme() {
     EditorColorsManager manager = EditorColorsManager.getInstance();

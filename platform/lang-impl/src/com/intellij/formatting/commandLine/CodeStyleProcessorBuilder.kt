@@ -12,22 +12,22 @@ private val LOG = Logger.getInstance(CodeStyleProcessorBuilder::class.java)
 
 class CodeStyleProcessorBuilder(private val messageOutput: MessageOutput) {
   private var isDryRun = false
-  var isRecursive = false
+  var isRecursive: Boolean = false
   private var primaryCodeStyle: CodeStyleSettings? = null
   private var defaultCodeStyle: CodeStyleSettings? = null
   private var fileMasks = emptyList<Regex>()
-  val entries = arrayListOf<File>()
+  val entries: ArrayList<File> = arrayListOf()
   var charset: Charset? = null
 
-  fun dryRun() = this.also { isDryRun = true }
+  fun dryRun(): CodeStyleProcessorBuilder = this.also { isDryRun = true }
 
-  fun recursive() = this.also { isRecursive = true }
+  fun recursive(): CodeStyleProcessorBuilder = this.also { isRecursive = true }
 
-  fun allowFactoryDefaults() = this.also { defaultCodeStyle = CodeStyleSettingsManager.getInstance().createSettings() }
+  fun allowFactoryDefaults(): CodeStyleProcessorBuilder = this.also { defaultCodeStyle = CodeStyleSettingsManager.getInstance().createSettings() }
 
-  fun withCodeStyleSettings(settings: CodeStyleSettings) = this.also { primaryCodeStyle = settings }
+  fun withCodeStyleSettings(settings: CodeStyleSettings): CodeStyleProcessorBuilder = this.also { primaryCodeStyle = settings }
 
-  fun withFileMasks(masks: String) = this.also {
+  fun withFileMasks(masks: String): CodeStyleProcessorBuilder = this.also {
     fileMasks = masks
       .split(",")
       .asSequence()
@@ -44,9 +44,9 @@ class CodeStyleProcessorBuilder(private val messageOutput: MessageOutput) {
       .toList()
   }
 
-  fun withEntry(entryPath: String) = this.also { entries.add(File(entryPath)) }
+  fun withEntry(entryPath: String): CodeStyleProcessorBuilder = this.also { entries.add(File(entryPath)) }
 
-  fun withCharset(charset: Charset) = this.also { this.charset = charset }
+  fun withCharset(charset: Charset): CodeStyleProcessorBuilder = this.also { this.charset = charset }
 
   private fun FileSetCodeStyleProcessor.configure() = apply {
     fileMasks.forEach { mask ->

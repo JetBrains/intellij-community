@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -107,12 +106,11 @@ public final class CheckRegExpForm {
       fileType = RegExpFileType.forLanguage(language);
     }
     myRegExp = new EditorTextField(document, project, fileType, false, false) {
-      private Disposable disposable;
+      private final Disposable disposable = Disposer.newDisposable();
 
       @Override
       protected void onEditorAdded(@NotNull Editor editor) {
         super.onEditorAdded(editor);
-        disposable = ApplicationManager.getApplication().getService(RegExpDisposable.class);
         editor.getCaretModel().addCaretListener(new CaretListener() {
 
           @Override
@@ -166,12 +164,11 @@ public final class CheckRegExpForm {
 
     String sampleText = PropertiesComponent.getInstance(project).getValue(LAST_EDITED_REGEXP, RegExpBundle.message("checker.sample.text"));
     mySampleText = new EditorTextField(sampleText, project, PlainTextFileType.INSTANCE) {
-      private Disposable disposable;
+      private final Disposable disposable = Disposer.newDisposable();
 
       @Override
       protected void onEditorAdded(@NotNull Editor editor) {
         super.onEditorAdded(editor);
-        disposable = ApplicationManager.getApplication().getService(RegExpDisposable.class);
         editor.getCaretModel().addCaretListener(new CaretListener() {
 
           @Override
@@ -228,14 +225,12 @@ public final class CheckRegExpForm {
     mySampleText.setPreferredWidth(preferredWidth);
 
     myRootPanel = new JPanel(new GridBagLayout()) {
-      Disposable disposable;
-      Alarm updater;
+      private final Disposable disposable = Disposer.newDisposable();
+      private Alarm updater;
 
       @Override
       public void addNotify() {
         super.addNotify();
-        disposable = Disposer.newDisposable();
-
         IdeFocusManager.getGlobalInstance().requestFocus(mySampleText, true);
 
         registerFocusShortcut(myRegExp, "shift TAB", mySampleText);
@@ -588,12 +583,5 @@ public final class CheckRegExpForm {
     }
     while (matcher.find());
     return matches;
-  }
-}
-
-@Service
-final class RegExpDisposable implements Disposable {
-  @Override
-  public void dispose() {
   }
 }

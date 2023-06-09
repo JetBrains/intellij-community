@@ -5,6 +5,5 @@ data class SlowIndexedFile(
   val fileName: String,
   val processingTime: TimeNano,
   val evaluationOfIndexValueChangerTime: TimeNano,
-  val contentLoadingTime: TimeNano,
-  val readLockWaitingTime: TimeNano
+  val contentLoadingTime: TimeNano
 )

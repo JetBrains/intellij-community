@@ -256,7 +256,6 @@ class KtSymbolBasedClassDescriptor(override val ktSymbol: KtNamedClassOrObjectSy
             ?.let { KtSymbolBasedConstructorDescriptor(it, this@KtSymbolBasedClassDescriptor) }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     override fun getConstructors(): Collection<ClassConstructorDescriptor> = context.withAnalysisSession {
         ktSymbol.getDeclaredMemberScope().getConstructors().map {
             KtSymbolBasedConstructorDescriptor(it, this@KtSymbolBasedClassDescriptor)

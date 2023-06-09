@@ -3,10 +3,10 @@ package com.intellij.util
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Awaits cancellation of [this] scope, and executes [action] in the context dispatcher of the scope after the scope is cancelled.
@@ -16,14 +16,13 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * but there are cases when the cleanup action is expected to be invoked on a certain thread (e.g. EDT).
  * See https://github.com/Kotlin/kotlinx.coroutines/issues/3505
  *
- * TODO consider suspend [action] when a use case arrives
+ * @param ctx additional context for the cleaner-coroutine, e.g. [CoroutineName]
  */
-@IntellijInternalApi
-@Internal
 @Experimental
-fun CoroutineScope.awaitCancellationAndInvoke(action: () -> Unit) {
+fun CoroutineScope.awaitCancellationAndInvoke(ctx: CoroutineContext = EmptyCoroutineContext, action: suspend CoroutineScope.() -> Unit) {
+  requireNoJob(ctx)
   // UNDISPATCHED guarantees that the coroutine will execute until the first suspension point (awaitCancellation)
-  launch(start = CoroutineStart.UNDISPATCHED) {
+  launch(ctx, start = CoroutineStart.UNDISPATCHED) {
     try {
       awaitCancellation()
     }

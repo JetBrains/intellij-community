@@ -45,9 +45,17 @@ class ObsoleteApiUsageInspection : LocalInspectionTool() {
         if (declaration !is UClass && declaration !is UMethod && declaration !is UField) return
         if (declaration.findAnnotation(OBSOLETE_ANNOTATION_NAME) != null) {
           val elementToHighlight = (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi ?: return
-          problemsHolder.registerProblem(
-            elementToHighlight, JvmAnalysisBundle.message("jvm.inspections.usages.of.obsolete.api.description")
-          )
+          if (elementToHighlight is PsiReference) {
+            problemsHolder.registerProblem(
+              elementToHighlight as PsiReference, JvmAnalysisBundle.message("jvm.inspections.usages.of.obsolete.api.description"),
+              ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+            )
+          }
+          else {
+            problemsHolder.registerProblem(
+              elementToHighlight, JvmAnalysisBundle.message("jvm.inspections.usages.of.obsolete.api.description")
+            )
+          }
         }
       }
     }

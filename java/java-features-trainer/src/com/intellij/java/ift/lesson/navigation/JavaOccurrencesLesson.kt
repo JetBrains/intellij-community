@@ -5,6 +5,7 @@ import com.intellij.find.SearchTextArea
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.usageView.UsageViewBundle
 import training.dsl.LessonContext
+import training.dsl.LessonSample
 import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.parseLessonSample
@@ -14,9 +15,9 @@ import training.learn.course.LessonType
 class JavaOccurrencesLesson
   : KLesson("java.occurrences.lesson", JavaLessonsBundle.message("java.find.occurrences.lesson.name")) {
 
-  override val lessonType = LessonType.SINGLE_EDITOR
+  override val lessonType: LessonType = LessonType.SINGLE_EDITOR
 
-  val sample = parseLessonSample("""
+  val sample: LessonSample = parseLessonSample("""
     class OccurrencesDemo {
         final private String DATABASE = "MyDataBase";
         DataEntry myPerson;

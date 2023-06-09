@@ -107,7 +107,7 @@ class BatchSpanProcessor(
   override fun onStart(parentContext: Context, span: ReadWriteSpan) {
   }
 
-  override fun isStartRequired() = false
+  override fun isStartRequired(): Boolean = false
 
   override fun onEnd(span: ReadableSpan) {
     if (span.spanContext.isSampled) {
@@ -115,7 +115,7 @@ class BatchSpanProcessor(
     }
   }
 
-  override fun isEndRequired() = true
+  override fun isEndRequired(): Boolean = true
 
   override fun shutdown(): CompletableResultCode {
     if (isShutdown.getAndSet(true)) {

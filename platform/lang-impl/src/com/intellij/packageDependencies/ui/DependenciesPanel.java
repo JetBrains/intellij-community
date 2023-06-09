@@ -1040,19 +1040,19 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     public void update(@NotNull final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
-      final PackageDependenciesNode leftNode = myLeftTree.getSelectedNode();
-      final PackageDependenciesNode rightNode = myRightTree.getSelectedNode();
-      if (leftNode != null && rightNode != null) {
+      Pair<PackageDependenciesNode, PackageDependenciesNode> pair = e.getUpdateSession()
+        .compute(this, "getSelectedNodes", ActionUpdateThread.EDT, () -> Pair.pair(myLeftTree.getSelectedNode(), myRightTree.getSelectedNode()));
+      if (pair.first != null && pair.second != null) {
         final PatternDialectProvider provider = PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE);
         assert provider != null;
-        presentation.setEnabled((provider.createPackageSet(leftNode, true) != null || provider.createPackageSet(leftNode, false) != null) &&
-                                (provider.createPackageSet(rightNode, true) != null || provider.createPackageSet(rightNode, false) != null));
+        presentation.setEnabled((provider.createPackageSet(pair.first, true) != null || provider.createPackageSet(pair.first, false) != null) &&
+                                (provider.createPackageSet(pair.second, true) != null || provider.createPackageSet(pair.second, false) != null));
       }
     }
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+      return ActionUpdateThread.BGT;
     }
   }
 

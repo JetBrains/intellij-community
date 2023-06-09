@@ -18,7 +18,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.1/languagetool-core-6.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.1/languagetool-core-6.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
@@ -28,7 +30,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.1/language-ru-6.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.1/language-ru-6.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
@@ -46,7 +50,11 @@
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.1/language-de-6.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.5/jwordsplitter-4.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
@@ -56,7 +64,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.1/language-it-6.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.1/language-it-6.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
@@ -64,7 +74,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.grazie.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.markdown" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.grazie.markdown" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
   </component>

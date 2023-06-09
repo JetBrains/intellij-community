@@ -13,11 +13,11 @@ import javax.swing.JComponent
 
 internal class TestCoroutineProgressAction : AnAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     try {
-      runBlockingModal(ModalTaskOwner.guess(), "Synchronous never-ending modal progress") {
+      withModalProgressBlocking(ModalTaskOwner.guess(), "Synchronous never-ending modal progress") {
         awaitCancellation()
       }
     }
@@ -58,12 +58,12 @@ internal class TestCoroutineProgressAction : AnAction() {
         }
         row {
           button("Cancellable Synchronous Modal Progress") {
-            runBlockingModal(project, "Cancellable synchronous modal progress") {
+            withModalProgressBlocking(project, "Cancellable synchronous modal progress") {
               doStuff()
             }
           }
           button("Non-Cancellable Synchronous Modal Progress") {
-            runBlockingModal(
+            withModalProgressBlocking(
               ModalTaskOwner.project(project),
               "Non-cancellable synchronous modal progress",
               TaskCancellation.nonCancellable(),

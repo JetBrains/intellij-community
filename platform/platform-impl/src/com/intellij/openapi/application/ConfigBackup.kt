@@ -81,7 +81,7 @@ class ConfigBackup(private val configDir: Path) {
   }
 
   companion object {
-    const val MAX_BACKUPS_NUMBER = 10
+    const val MAX_BACKUPS_NUMBER: Int = 10
     private val LOG = logger<ConfigBackup>()
     private const val DATE_FORMAT = "yyyy-MM-dd-HH-mm"
 

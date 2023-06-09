@@ -1,9 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseInputStreamReader;
 import com.intellij.util.io.BaseOutputReader;
@@ -33,16 +36,14 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
   }
 
   @Override
-  @NotNull
-  public Future<?> executeTask(@NotNull Runnable task) {
+  public @NotNull Future<?> executeTask(@NotNull Runnable task) {
     return ProcessIOExecutorService.INSTANCE.submit(task);
   }
 
   /**
    * Override this method to fine-tune {@link BaseOutputReader} behavior.
    */
-  @NotNull
-  protected Options readerOptions() {
+  protected @NotNull Options readerOptions() {
     if (Boolean.getBoolean("output.reader.blocking.mode")) {
       return Options.BLOCKING;
     }
@@ -63,7 +64,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
 
     addProcessListener(new ProcessAdapter() {
       @Override
-      public void startNotified(@NotNull final ProcessEvent event) {
+      public void startNotified(final @NotNull ProcessEvent event) {
         try {
           BaseDataReader stdOutReader = createOutputDataReader();
           BaseDataReader stdErrReader = processHasSeparateErrorStream() ? createErrorDataReader() : null;
@@ -94,28 +95,23 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
     super.startNotify();
   }
 
-  @NotNull
-  protected BaseDataReader createErrorDataReader() {
+  protected @NotNull BaseDataReader createErrorDataReader() {
     return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, readerOptions(), "error stream of " + myPresentableName);
   }
 
-  @NotNull
-  protected BaseDataReader createOutputDataReader() {
+  protected @NotNull BaseDataReader createOutputDataReader() {
     return new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, readerOptions(), "output stream of " + myPresentableName);
   }
 
-  @NotNull
-  protected Reader createProcessOutReader() {
+  protected @NotNull Reader createProcessOutReader() {
     return createInputStreamReader(myProcess.getInputStream());
   }
 
-  @NotNull
-  protected Reader createProcessErrReader() {
+  protected @NotNull Reader createProcessErrReader() {
     return createInputStreamReader(myProcess.getErrorStream());
   }
 
-  @NotNull
-  private Reader createInputStreamReader(@NotNull InputStream streamToRead) {
+  private @NotNull Reader createInputStreamReader(@NotNull InputStream streamToRead) {
     Charset charset = getCharset();
     if (charset == null) charset = Charset.defaultCharset();
     return new BaseInputStreamReader(streamToRead, charset);
@@ -130,9 +126,8 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
       start(presentableName);
     }
 
-    @NotNull
     @Override
-    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
+    protected @NotNull Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
       return BaseOSProcessHandler.this.executeTask(runnable);
     }
 

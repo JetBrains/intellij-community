@@ -18,7 +18,7 @@ class AlphaAnimationContext(private val base: AlphaComposite, val consumer: Cons
   var composite: AlphaComposite? = null
     private set
 
-  val animator = ShowHideAnimator {
+  val animator: ShowHideAnimator = ShowHideAnimator {
     composite = when {
       it <= 0.0 -> null
       it >= 1.0 -> base

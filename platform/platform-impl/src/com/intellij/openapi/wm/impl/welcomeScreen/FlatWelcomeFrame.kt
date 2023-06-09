@@ -18,6 +18,7 @@ import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -31,6 +32,7 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent.Companion.getCustomContentHolder
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.DefaultFrameHeader
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.JActionLinkPanel
 import com.intellij.ui.*
@@ -50,7 +52,6 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import com.intellij.util.ui.update.UiNotifyConnector
-import com.jetbrains.JBR
 import kotlinx.coroutines.launch
 import net.miginfocom.swing.MigLayout
 import java.awt.*
@@ -76,11 +77,11 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 
   companion object {
     @JvmField
-    var USE_TABBED_WELCOME_SCREEN = java.lang.Boolean.parseBoolean(System.getProperty("use.tabbed.welcome.screen", "true"))
-    const val BOTTOM_PANEL = "BOTTOM_PANEL"
+    var USE_TABBED_WELCOME_SCREEN: Boolean = java.lang.Boolean.parseBoolean(System.getProperty("use.tabbed.welcome.screen", "true"))
+    const val BOTTOM_PANEL: String = "BOTTOM_PANEL"
     @JvmField
-    val DEFAULT_HEIGHT = if (USE_TABBED_WELCOME_SCREEN) 650 else 460
-    const val MAX_DEFAULT_WIDTH = 800
+    val DEFAULT_HEIGHT: Int = if (USE_TABBED_WELCOME_SCREEN) 650 else 460
+    const val MAX_DEFAULT_WIDTH: Int = 800
 
     private fun saveSizeAndLocation(location: Rectangle) {
       val middle = Point(location.x + location.width / 2, location.y + location.height / 2)
@@ -215,7 +216,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 
   override fun addNotify() {
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true)
+      CustomHeader.enableCustomHeader(this)
     }
     super.addNotify()
   }
@@ -473,6 +474,11 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 }
 
 private class WelcomeFrameMenuBar : IdeMenuBar() {
+  override suspend fun getMainMenuActionGroupAsync(): ActionGroup {
+    val manager = service<ActionManager>()
+    return DefaultActionGroup(manager.getAction(IdeActions.GROUP_FILE), manager.getAction(IdeActions.GROUP_HELP_MENU))
+  }
+
   override fun getMainMenuActionGroup(): ActionGroup {
     val manager = ActionManager.getInstance()
     return DefaultActionGroup(manager.getAction(IdeActions.GROUP_FILE), manager.getAction(IdeActions.GROUP_HELP_MENU))

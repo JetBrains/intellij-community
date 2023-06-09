@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.types.Variance
 internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclarationNavigationPolicy {
     override fun getNavigationElement(declaration: KtDeclaration): KtElement {
         val project = declaration.project
-        when (val ktModule = declaration.getKtModule(project)) {
+        when (val ktModule = ProjectStructureProvider.getModule(project, declaration, null)) {
             is KtLibraryModule -> {
                 val librarySource = ktModule.librarySources ?: return declaration
                 val scope = librarySource.getContentScopeWithCommonDependencies()
@@ -37,7 +37,7 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
 
     override fun getOriginalElement(declaration: KtDeclaration): KtElement {
         val project = declaration.project
-        when (val ktModule = declaration.getKtModule(project)) {
+        when (val ktModule = ProjectStructureProvider.getModule(project, declaration, null)) {
             is KtLibrarySourceModule -> {
                 val libraryBinary = ktModule.binaryLibrary
                 val scope = libraryBinary.getContentScopeWithCommonDependencies()

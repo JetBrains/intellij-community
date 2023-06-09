@@ -11,10 +11,8 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.intellij.openapi.progress.blockingContext
+import kotlinx.coroutines.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -53,7 +51,9 @@ private suspend fun runValidationRulesUpdate() {
     val providers = getEventLogProviders()
     for (provider in providers) {
       if (provider.isLoggingEnabled()) {
-        IntellijSensitiveDataValidator.getInstance(provider.recorderId).update()
+        blockingContext {
+          IntellijSensitiveDataValidator.getInstance(provider.recorderId).update()
+        }
       }
     }
 
@@ -77,7 +77,9 @@ private suspend fun runEventLogStatisticsService() {
         continue
       }
 
-      val statisticsService = StatisticsUploadAssistant.getEventLogStatisticsService(provider.recorderId)
+      val statisticsService = blockingContext {
+        StatisticsUploadAssistant.getEventLogStatisticsService(provider.recorderId)
+      }
       launch {
         delay((5 * 60).seconds)
 

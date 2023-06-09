@@ -21,6 +21,7 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.util.gist.GistManager
+import com.intellij.util.gist.PsiFileGist
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.EnumeratorStringDescriptor
@@ -51,7 +52,7 @@ private fun resolveFieldFromIndexValue(method: PsiMethod, isGetter: Boolean): Ps
 }
 
 @VisibleForTesting
-val javaSimplePropertyGist = GistManager.getInstance().newPsiFileGist("java.simple.property", 2, SimplePropertiesExternalizer()) { file ->
+val javaSimplePropertyGist: PsiFileGist<Int2ObjectMap<PropertyIndexValue>> = GistManager.getInstance().newPsiFileGist("java.simple.property", 2, SimplePropertiesExternalizer()) { file ->
   findSimplePropertyCandidates(file.node.lighterAST)
 }
 

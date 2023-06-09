@@ -16,9 +16,10 @@ public final class Maven40ModelInheritanceAssembler {
     if (null != parentModel) {
       Properties parentProperties = parentModel.getProperties();
       Properties properties = model.getProperties();
-      for (Object key : parentProperties.keySet()) {
+      for (Object keyObject : parentProperties.keySet()) {
+        String key = keyObject.toString();
         if (!properties.containsKey(key)) {
-          properties.put(key, parentProperties.get(key));
+          properties.setProperty(key, parentProperties.getProperty(key));
         }
       }
     }

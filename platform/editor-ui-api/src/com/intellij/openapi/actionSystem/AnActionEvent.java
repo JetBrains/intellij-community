@@ -138,7 +138,7 @@ public class AnActionEvent implements PlaceProvider {
    * <li> Menu event, see {@link com.intellij.openapi.actionSystem.impl.ActionMenuItem ActionMenuItem}
    * <li> Standard button in toolbar, see {@link com.intellij.openapi.actionSystem.impl.ActionButton ActionButton}
    * </ul>
-   *
+   * <p>
    * In other cases the value is null, for example:
    * <ul>
    * <li> Search everywhere and find actions
@@ -206,7 +206,7 @@ public class AnActionEvent implements PlaceProvider {
    */
   public @NotNull <T> T getRequiredData(@NotNull DataKey<T> key) {
     T data = getData(key);
-    assert data != null;
+    assert data != null : key.getName() + " is missing";
     return data;
   }
 

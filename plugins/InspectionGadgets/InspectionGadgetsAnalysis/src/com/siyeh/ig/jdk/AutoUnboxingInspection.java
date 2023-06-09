@@ -17,7 +17,9 @@ package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -31,7 +33,6 @@ import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
@@ -67,7 +68,7 @@ public class AutoUnboxingInspection extends BaseInspection {
 
   @Override
   @Nullable
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     if (infos.length == 0 || !isFixApplicable((PsiExpression)infos[0])) {
       return null;
     }
@@ -110,7 +111,7 @@ public class AutoUnboxingInspection extends BaseInspection {
     return references.size() <= 1;
   }
 
-  private static class AutoUnboxingFix extends InspectionGadgetsFix {
+  private static class AutoUnboxingFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -119,8 +120,8 @@ public class AutoUnboxingInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiExpression expression = (PsiExpression)startElement;
       final PsiType type = expression.getType();
       if (type == null) {
         return;

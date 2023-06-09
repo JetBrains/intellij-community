@@ -38,6 +38,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,7 @@ import java.util.Collections;
 import java.util.Objects;
 
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getFileAttributes;
+import static com.intellij.ide.projectView.impl.nodes.ProjectViewNodeExtensionsKt.getVirtualFileForNodeOrItsPSI;
 import static com.intellij.ide.util.treeView.NodeRenderer.getSimpleTextAttributes;
 
 /**
@@ -132,7 +134,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   }
 
   @Nullable
-  private VirtualFile getVirtualFileForValue() {
+  VirtualFile getVirtualFileForValue() {
     Object value = getEqualityObject();
     if (value instanceof SmartPsiElementPointer<?> pointer) {
       return pointer.getVirtualFile(); // do not retrieve PSI element
@@ -224,7 +226,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       timestamp = 0; // skip for performance reasons
       return;
     }
-    var attributes = getFileAttributes(getVirtualFile());
+    var attributes = getFileAttributes(getVirtualFileForNodeOrItsPSI(this));
     timestamp = attributes == null ? 0 : attributes.lastModifiedTime().toMillis();
   }
 
@@ -295,6 +297,9 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   @RequiresBackgroundThread
   @Override
   public @Nullable NavigationRequest navigationRequest() {
+    if (ReflectionUtil.getMethodDeclaringClass(getClass(), "navigate", boolean.class) != AbstractPsiBasedNode.class) {
+      return super.navigationRequest(); // raw
+    }
     PsiElement element = extractPsiFromValue();
     if (element == null) {
       return null;

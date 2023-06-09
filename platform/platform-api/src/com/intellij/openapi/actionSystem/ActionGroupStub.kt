@@ -21,7 +21,7 @@ class ActionGroupStub(override val id: String, val actionClass: String, override
   val classLoader: ClassLoader
     get() = plugin.classLoader
 
-  var popupDefinedInXml = false
+  var popupDefinedInXml: Boolean = false
 
   override var iconPath: String? = null
 

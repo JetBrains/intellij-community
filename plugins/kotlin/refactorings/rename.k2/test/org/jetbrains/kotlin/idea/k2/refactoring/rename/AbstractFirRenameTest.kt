@@ -62,7 +62,7 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
                         ?.let { classId -> getClassOrObjectSymbolByClassId(classId)!!.getMemberScope() }
                         ?: getPackageSymbolIfPackageExists(callableId.packageName)!!.getPackageScope()
 
-                    val callablesOfProperType = scope.getCallableSymbols { it == callableId.callableName }
+                    val callablesOfProperType = scope.getCallableSymbols(callableId.callableName)
                         .mapNotNull {
                             when (target.type) {
                                 KotlinTarget.CallableType.FUNCTION -> it as? KtFunctionSymbol

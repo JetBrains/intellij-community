@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -143,6 +143,35 @@ object EventFields {
 
   inline fun <reified T : Enum<*>> Enum(@NonNls name: String, noinline transform: (T) -> String = defaultEnumTransform): EnumEventField<T> =
     EnumEventField(name, T::class.java, transform)
+
+
+  /**
+   * Creates a field that allows nullable Enum
+   * @param name  name of the field
+   * @param enumClass class of Enum
+   * @param nullValue if value is null and nullValue isn't null then nullValue is written
+   * @param transform function that transforms Enum to String
+   */
+  @JvmStatic
+  @JvmOverloads
+  fun <T : Enum<*>> NullableEnum(@NonNls name: String,
+                                 enumClass: Class<T>,
+                                 nullValue: String? = null,
+                                 transform: (T) -> String = defaultEnumTransform): NullableEnumEventField<T> = NullableEnumEventField(name,
+                                                                                                                                      enumClass,
+                                                                                                                                      nullValue,
+                                                                                                                                      transform)
+
+  /**
+   * Creates a field that allows nullable Enum
+   * @param name  name of the field
+   * @param nullValue if value is null and nullValue isn't null then nullValue is written
+   * @param transform function that transforms Enum to String
+   */
+  inline fun <reified T : Enum<*>> NullableEnum(@NonNls name: String,
+                                                nullValue: String? = null,
+                                                noinline transform: (T) -> String = defaultEnumTransform): NullableEnumEventField<T> = NullableEnumEventField(
+    name, T::class.java, nullValue, transform)
 
   /**
    * Creates a field for a list, each element of which will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
@@ -364,6 +393,35 @@ object EventFields {
       }
     }
   }
+
+  /**
+   * Can be used to report unique identifiers safely by anonymizing them using hash function and local salt
+   * */
+  @JvmStatic
+  fun AnonymizedField(@NonNls name: String): EventField<String?> = AnonymizedEventField(name)
+
+  /**
+   * Can be used to report unique identifiers safely by anonymizing them using hash function and local salt
+   *
+   * Intended for ids which are unique inside some context (during one IDE run, during some process)
+   *
+   * Reduces amount of data reported from user, but increases probability of collisions
+   * */
+  @JvmStatic
+  fun ShortAnonymizedField(@NonNls name: String): EventField<String?> = ShortAnonymizedEventField(name)
+
+  /**
+   * Can be used to report unique identifiers safely by anonymizing them using hash function and local salt
+   *
+   * Intended for ids which are unique inside some context (during one IDE run, during some process),
+   * but leaves ability to track id creation date
+   *
+   * Reduces amount of data reported from user, but increases probability of collisions
+   *
+   * @param dateAndValueProvider extracts timestamp and value to hash from reporting object
+   * */
+  @JvmStatic
+  fun <T> DatedShortAnonymizedField(@NonNls name: String, dateAndValueProvider: (T) -> Pair<Long, String?>): EventField<T> = DatedShortAnonymizedEventField(name, dateAndValueProvider)
 
   @JvmField
   val CodeWithMeClientId = object : PrimitiveEventField<String?>() {

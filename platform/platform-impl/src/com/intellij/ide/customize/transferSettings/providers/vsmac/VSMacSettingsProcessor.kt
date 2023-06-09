@@ -14,13 +14,13 @@ class VSMacSettingsProcessor {
     private val homeDirectory = System.getProperty("user.home")
 
     private val vsHome = "$homeDirectory/Library/VisualStudio"
-    internal val vsPreferences = "$homeDirectory/Library/Preferences/VisualStudio"
+    internal val vsPreferences: String = "$homeDirectory/Library/Preferences/VisualStudio"
 
-    internal fun getRecentlyUsedFile(version: String) = File("$vsPreferences/$version/RecentlyUsed.xml")
-    internal fun getKeyBindingsFile(version: String) = File("$vsHome/$version/KeyBindings/Custom.mac-kb.xml")
-    internal fun getGeneralSettingsFile(version: String) = File("$vsPreferences/$version/MonoDevelopProperties.xml")
+    internal fun getRecentlyUsedFile(version: String): File = File("$vsPreferences/$version/RecentlyUsed.xml")
+    internal fun getKeyBindingsFile(version: String): File = File("$vsHome/$version/KeyBindings/Custom.mac-kb.xml")
+    internal fun getGeneralSettingsFile(version: String): File = File("$vsPreferences/$version/MonoDevelopProperties.xml")
 
-    fun getDefaultSettings() = Settings(
+    fun getDefaultSettings(): Settings = Settings(
       laf = KnownLafs.Light,
       syntaxScheme = KnownColorSchemes.Light,
       keymap = KnownKeymaps.VSMac

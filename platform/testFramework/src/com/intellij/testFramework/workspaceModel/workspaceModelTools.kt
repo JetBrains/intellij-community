@@ -8,6 +8,6 @@ fun WorkspaceModel.updateProjectModel(updater: (MutableEntityStorage) -> Unit) {
   updateProjectModel("Test update", updater)
 }
 
-suspend fun WorkspaceModel.updateProjectModelAsync(updater: (MutableEntityStorage) -> Unit) {
-  updateProjectModelAsync("Test update", updater)
+suspend fun WorkspaceModel.update(updater: (MutableEntityStorage) -> Unit) {
+  update("Test update", updater)
 }

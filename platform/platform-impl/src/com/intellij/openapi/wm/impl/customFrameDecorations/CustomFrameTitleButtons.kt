@@ -20,20 +20,16 @@ import javax.swing.border.Border
 import javax.swing.plaf.ButtonUI
 import javax.swing.plaf.basic.BasicButtonUI
 
-internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
+internal open class CustomFrameTitleButtons(myCloseAction: Action) {
   companion object {
-    private val closeIcon = freezeIconUserSize(AllIcons.Windows.CloseActive)
-    private val closeHoverIcon = freezeIconUserSize(AllIcons.Windows.CloseHover)
-    private val closeInactive = freezeIconUserSize(AllIcons.Windows.CloseInactive)
+    private val closeIcon = AllIcons.Windows.CloseActive
+    private val closeHoverIcon = AllIcons.Windows.CloseHover
+    private val closeInactive = AllIcons.Windows.CloseInactive
 
     fun create(myCloseAction: Action): CustomFrameTitleButtons {
       val darculaTitleButtons = CustomFrameTitleButtons(myCloseAction)
       darculaTitleButtons.createChildren()
       return darculaTitleButtons
-    }
-
-    fun freezeIconUserSize(icon: Icon): Icon {
-      return overrideIconScale(IconUtil.deepCopy(icon, null), ScaleType.USR_SCALE.of(UISettings.defFontScale))
     }
   }
 
@@ -68,7 +64,7 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
     }
   }
 
-  val closeStyleBuilder = ComponentStyle.ComponentStyleBuilder<JButton> {
+  val closeStyleBuilder: ComponentStyle.ComponentStyleBuilder<JButton> = ComponentStyle.ComponentStyleBuilder<JButton> {
     isOpaque = false
     border = Borders.empty()
     icon = closeIcon
@@ -87,7 +83,7 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
   private val activeCloseStyle = closeStyleBuilder.build()
 
   private val inactiveCloseStyle = closeStyleBuilder
-    .updateDefault() {
+    .updateDefault {
       icon = closeInactive
     }.build()
 
@@ -103,7 +99,7 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
       return panel.isCompactMode
     }
 
-  var isSelected = false
+  var isSelected: Boolean = false
     set(value) {
       if(field != value) {
         field = value

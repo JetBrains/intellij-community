@@ -203,19 +203,10 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
         @Override
         public void documentChanged(@NotNull final DocumentEvent e) {
           myMapper.clear();
-          var rangeHighlighters = getOrCreateHighlighters(false);
-          if (rangeHighlighters == null) return;
           int offset = e.getOffset();
           final int lineNumber = document.getLineNumber(offset);
           final int lastLineNumber = document.getLineNumber(offset + e.getNewLength());
-          var changeRange = new TextRange(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lastLineNumber));
-          for (var it = rangeHighlighters.iterator(); it.hasNext(); ) {
-            final RangeHighlighter highlighter = it.next();
-            if (!highlighter.isValid() || highlighter.getTextRange().intersects(changeRange)) {
-              ApplicationManager.getApplication().invokeLater(() -> highlighter.dispose());
-              it.remove();
-            }
-          }
+          if (!removeChangedHighlighters(lineNumber, lastLineNumber, document)) return;
           if (!myUpdateAlarm.isDisposed()) {
             myUpdateAlarm.addRequest(() -> {
               Int2IntMap newToOldLineMapping = myMapper.canGetFastMapping() ? myMapper.getNewToOldLineMapping() : null;
@@ -236,6 +227,20 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
       document.addDocumentListener(documentListener);
       editor.putUserData(COVERAGE_DOCUMENT_LISTENER, documentListener);
     }
+  }
+
+  private synchronized boolean removeChangedHighlighters(int lineNumber, int lastLineNumber, Document document) {
+    var rangeHighlighters = getOrCreateHighlighters(false);
+    if (rangeHighlighters == null) return false;
+    var changeRange = new TextRange(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lastLineNumber));
+    for (var it = rangeHighlighters.iterator(); it.hasNext(); ) {
+      final RangeHighlighter highlighter = it.next();
+      if (!highlighter.isValid() || highlighter.getTextRange().intersects(changeRange)) {
+        ApplicationManager.getApplication().invokeLater(() -> highlighter.dispose());
+        it.remove();
+      }
+    }
+    return true;
   }
 
   protected void collectLinesInFile(@NotNull CoverageSuitesBundle suite,

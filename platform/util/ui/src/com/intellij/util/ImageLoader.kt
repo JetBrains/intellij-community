@@ -23,16 +23,16 @@ import java.util.*
 
 object ImageLoader {
   @Suppress("unused")
-  const val ALLOW_FLOAT_SCALING = 0x01
+  const val ALLOW_FLOAT_SCALING: Int = 0x01
 
   @Suppress("unused")
-  const val USE_CACHE = 0x02
+  const val USE_CACHE: Int = 0x02
 
   @Suppress("unused")
-  const val USE_DARK = 0x04
+  const val USE_DARK: Int = 0x04
 
   @Suppress("unused")
-  const val USE_SVG = 0x08
+  const val USE_SVG: Int = 0x08
 
   @JvmStatic
   fun loadFromUrl(url: URL): Image? {

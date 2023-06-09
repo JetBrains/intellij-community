@@ -2,9 +2,7 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
@@ -82,12 +80,12 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return (InspectionGadgetsFix)infos[0];
+  protected LocalQuickFix buildFix(Object... infos) {
+    return (LocalQuickFix)infos[0];
   }
 
   @Nullable
-  private static InspectionGadgetsFix createFix(PsiElement target) {
+  private static LocalQuickFix createFix(PsiElement target) {
     if (target instanceof PsiTypeElement && target.getParent() instanceof PsiVariable variable) {
       final PsiType type = getSuggestedType(variable);
       if (type != null) {
@@ -255,7 +253,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
 
     private void reportProblem(@NotNull PsiElement element) {
-      InspectionGadgetsFix fix = createFix(element);
+      LocalQuickFix fix = createFix(element);
       if (fix == null && ignoreWhenQuickFixNotAvailable) return;
       registerError(element, fix);
     }
@@ -325,7 +323,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     return type;
   }
 
-  private static class UseDiamondFix extends InspectionGadgetsFix implements HighPriorityAction {
+  private static class UseDiamondFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
     @NotNull
     @Override
     public String getFamilyName() {
@@ -333,8 +331,8 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiJavaCodeReferenceElement element = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiJavaCodeReferenceElement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      PsiJavaCodeReferenceElement element = ObjectUtils.tryCast(startElement, PsiJavaCodeReferenceElement.class);
       if (element == null) return;
       PsiReferenceParameterList parameterList = element.getParameterList();
       if (parameterList == null) return;
@@ -343,7 +341,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
   }
 
 
-  private static class CastQuickFix extends InspectionGadgetsFix {
+  private static class CastQuickFix extends PsiUpdateModCommandQuickFix {
     private final String myTargetType;
 
     private CastQuickFix(String type) {
@@ -361,8 +359,8 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiTypeElement cast = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiTypeElement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      PsiTypeElement cast = PsiTreeUtil.getNonStrictParentOfType(startElement, PsiTypeElement.class);
       if (cast == null) return;
       CodeStyleManager.getInstance(project).reformat(new CommentTracker().replace(cast, myTargetType));
     }

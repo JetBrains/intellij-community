@@ -22,5 +22,5 @@ interface ObservableMutableProperty<T> : ReadWriteProperty<Any?, T>, ObservableP
    */
   override fun getValue(thisRef: Any?, property: KProperty<*>): T = get()
 
-  override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) = set(value)
+  override fun setValue(thisRef: Any?, property: KProperty<*>, value: T): Unit = set(value)
 }

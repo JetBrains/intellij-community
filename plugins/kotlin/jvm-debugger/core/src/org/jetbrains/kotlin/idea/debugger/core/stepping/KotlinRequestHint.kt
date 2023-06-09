@@ -160,6 +160,8 @@ class KotlinStepOverRequestHint(
     }
 }
 
+interface StopOnReachedMethodFilter
+
 class KotlinStepIntoRequestHint(
     stepThread: ThreadReferenceProxyImpl,
     suspendContext: SuspendContextImpl,
@@ -188,6 +190,12 @@ class KotlinStepIntoRequestHint(
                 lastWasKotlinFakeLineNumber = false
                 return STOP
             }
+
+            val filter = methodFilter
+            if (filter is StopOnReachedMethodFilter && filter.locationMatches(context.debugProcess, location)) {
+                return STOP
+            }
+
             return super.getNextStepDepth(context)
         } catch (ignored: VMDisconnectedException) {
         } catch (e: EvaluateException) {

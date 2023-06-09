@@ -49,6 +49,6 @@ class VcsFeatureProvider : ElementFeatureProvider {
 
   companion object {
     private const val MAX_CHANGES_TO_ANALYZE = 1000
-    internal val changesCountKey = Key<Int>("VcsFeatureProvider.changesCount")
+    internal val changesCountKey: Key<Int> = Key<Int>("VcsFeatureProvider.changesCount")
   }
 }

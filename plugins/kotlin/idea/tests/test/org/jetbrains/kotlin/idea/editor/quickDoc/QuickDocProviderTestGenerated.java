@@ -98,6 +98,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/Formatting.kt");
     }
 
+    @TestMetadata("FunctionTypeParameter.kt")
+    public void testFunctionTypeParameter() throws Exception {
+        runTest("testData/editor/quickDoc/FunctionTypeParameter.kt");
+    }
+
     @TestMetadata("IndentedCodeBlock.kt")
     public void testIndentedCodeBlock() throws Exception {
         runTest("testData/editor/quickDoc/IndentedCodeBlock.kt");

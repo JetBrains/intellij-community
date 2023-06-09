@@ -334,7 +334,9 @@ fn read_product_info(product_info_path: &Path) -> Result<ProductInfo> {
 fn find_ide_home(current_exe: &Path) -> Result<(PathBuf, PathBuf)> {
     debug!("Looking for: '{PRODUCT_INFO_REL_PATH}'");
 
-    let mut candidate = current_exe.to_path_buf();
+    let mut candidate = current_exe
+        .canonicalize().with_context(|| format!("Resolving symlinks in '{}'", current_exe.display()))?
+        .strip_ns_prefix().with_context(|| format!("Resolving symlinks in '{}'", current_exe.display()))?;
     for _ in 0..IDE_HOME_LOOKUP_DEPTH {
         candidate = candidate.parent_or_err()?;
         debug!("Probing for IDE home: {:?}", candidate);

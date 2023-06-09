@@ -39,18 +39,18 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   }
 
   init {
-    val log = Logger.getInstance("ide.frame.events")
-    if (log.isDebugEnabled) {
-      addComponentListener(EventLogger(frame = this, log = log))
+    if (IDE_FRAME_EVENT_LOG.isDebugEnabled) {
+      addComponentListener(EventLogger(frame = this, log = IDE_FRAME_EVENT_LOG))
     }
   }
 
   var frameHelper: FrameHelper? = null
     private set
 
-  var reusedFullScreenState = false
+  var reusedFullScreenState: Boolean = false
 
   var normalBounds: Rectangle? = null
+  var screenBounds: Rectangle? = null
 
   // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
   @JvmField
@@ -91,6 +91,10 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
     // do not load FrameInfoHelper class
     if (LoadingState.COMPONENTS_REGISTERED.isOccurred && extendedState == NORMAL && isMaximized(state)) {
       normalBounds = bounds
+      screenBounds = graphicsConfiguration?.bounds
+      if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+        IDE_FRAME_EVENT_LOG.debug("Saved bounds for IDE frame ${normalBounds} and screen ${screenBounds} before maximizing")
+      }
     }
     super.setExtendedState(state)
   }

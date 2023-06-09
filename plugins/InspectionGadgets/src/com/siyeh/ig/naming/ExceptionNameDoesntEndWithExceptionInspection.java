@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiTypeParameter;
@@ -31,7 +32,7 @@ public class ExceptionNameDoesntEndWithExceptionInspection
   extends BaseInspection {
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new RenameFix();
   }
 

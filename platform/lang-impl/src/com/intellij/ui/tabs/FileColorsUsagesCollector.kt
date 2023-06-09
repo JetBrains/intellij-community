@@ -16,7 +16,7 @@ class FileColorsUsagesCollector : ProjectUsagesCollector() {
   private val EDITOR_TABS: EventId1<Boolean> = GROUP.registerEvent("editor.tabs", EventFields.Enabled)
   private val PROJECT_VIEW: EventId1<Boolean> = GROUP.registerEvent("project.view", EventFields.Enabled)
 
-  override fun getGroup() = GROUP
+  override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     val set = mutableSetOf<MetricEvent>()

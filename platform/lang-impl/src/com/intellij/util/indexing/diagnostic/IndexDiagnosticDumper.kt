@@ -27,6 +27,7 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.sizeOrNull
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
@@ -40,10 +41,10 @@ import kotlin.streams.asSequence
 private const val DIAGNOSTIC_LIMIT_OF_FILES_PROPERTY = "intellij.indexes.diagnostics.limit.of.files"
 
 class IndexDiagnosticDumper : Disposable {
-  private val indexingHistoryListenerPublisher = ApplicationManager
-    .getApplication()
-    .messageBus
-    .syncPublisher(ProjectIndexingHistoryListener.TOPIC)
+  private val indexingHistoryListenerPublisher =
+    ApplicationManager.getApplication().messageBus.syncPublisher(ProjectIndexingHistoryListener.TOPIC)
+  private val indexingActivityHistoryListenerPublisher =
+    ApplicationManager.getApplication().messageBus.syncPublisher(ProjectIndexingActivityHistoryListener.TOPIC)
 
   companion object {
     @JvmStatic
@@ -52,8 +53,12 @@ class IndexDiagnosticDumper : Disposable {
     private const val FILE_NAME_PREFIX = "diagnostic-"
 
     @JvmStatic
-    val projectIndexingHistoryListenerEpName =
-      ExtensionPointName.create<ProjectIndexingHistoryListener>("com.intellij.projectIndexingHistoryListener")
+    val projectIndexingHistoryListenerEpName: ExtensionPointName<ProjectIndexingHistoryListener> =
+      ExtensionPointName.create("com.intellij.projectIndexingHistoryListener")
+
+    @JvmStatic
+    val projectIndexingActivityHistoryListenerEpName: ExtensionPointName<ProjectIndexingActivityHistoryListener> =
+      ExtensionPointName.create("com.intellij.projectIndexingActivityHistoryListener")
 
     @JvmStatic
     private val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean
@@ -119,12 +124,12 @@ class IndexDiagnosticDumper : Disposable {
     var shouldDumpInUnitTestMode: Boolean = false
 
     @JvmStatic
-    val shouldDumpPathsOfFilesIndexedByInfrastructureExtensions =
+    val shouldDumpPathsOfFilesIndexedByInfrastructureExtensions: Boolean =
       SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.indexed.by.infrastructure.extensions",
                                           ApplicationManagerEx.isInIntegrationTest())
 
     @JvmStatic
-    val shouldPrintScanningRefreshedFilesInformationDuringIndexingActionInAggregateHtml = false
+    val shouldPrintScanningRefreshedFilesInformationDuringIndexingActionInAggregateHtml: Boolean = false
 
     @JvmStatic
     private val shouldDumpOldDiagnostics: Boolean
@@ -243,45 +248,63 @@ class IndexDiagnosticDumper : Disposable {
   private val unsavedOldIndexingHistories = ConcurrentCollectionFactory.createConcurrentIdentitySet<ProjectIndexingHistoryImpl>()
   private val unsavedIndexingActivityHistories = ConcurrentCollectionFactory.createConcurrentIdentitySet<ProjectIndexingActivityHistory>()
 
+  @Deprecated("Use onDumbIndexingStarted or onScanningStarted instead")
+  @ApiStatus.ScheduledForRemoval
   fun onIndexingStarted(projectIndexingHistory: ProjectIndexingHistoryImpl) {
-    runAllListenersSafely { onStartedIndexing(projectIndexingHistory) }
+    runAllListenersSafely(projectIndexingHistoryListenerEpName, indexingHistoryListenerPublisher) {
+      onStartedIndexing(projectIndexingHistory)
+    }
   }
 
+  @Deprecated("Use onDumbIndexingFinished or onScanningFinished instead")
+  @ApiStatus.ScheduledForRemoval
   fun onIndexingFinished(projectIndexingHistory: ProjectIndexingHistoryImpl) {
     try {
-      if (!shouldDumpOldDiagnostics) {
-        return
-      }
-      if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
-        return
-      }
+      projectIndexingHistory.indexingFinished()
       if (projectIndexingHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
         return
       }
-      projectIndexingHistory.indexingFinished()
-      unsavedOldIndexingHistories.add(projectIndexingHistory)
-      NonUrgentExecutor.getInstance().execute { dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory) }
+      if (shouldDumpOldDiagnostics && (!ApplicationManager.getApplication().isUnitTestMode || shouldDumpInUnitTestMode)) {
+        unsavedOldIndexingHistories.add(projectIndexingHistory)
+        NonUrgentExecutor.getInstance().execute { dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory) }
+      }
     }
     finally {
-      runAllListenersSafely { onFinishedIndexing(projectIndexingHistory) }
+      runAllListenersSafely(projectIndexingHistoryListenerEpName, indexingHistoryListenerPublisher) {
+        onFinishedIndexing(projectIndexingHistory)
+      }
+    }
+  }
+
+  fun onScanningStarted(history: ProjectScanningHistory) {
+    runAllListenersSafely(projectIndexingActivityHistoryListenerEpName, indexingActivityHistoryListenerPublisher) {
+      onStartedScanning(history)
     }
   }
 
   fun onScanningFinished(projectScanningHistory: ProjectScanningHistoryImpl) {
-    // try {
-    if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
-      return
+    try {
+      projectScanningHistory.scanningFinished()
+      if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
+        return
+      }
+      if (projectScanningHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
+        return
+      }
+      unsavedIndexingActivityHistories.add(projectScanningHistory)
+      NonUrgentExecutor.getInstance().execute { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectScanningHistory) }
     }
-    if (projectScanningHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
-      return
-    }
-    projectScanningHistory.scanningFinished()
-    unsavedIndexingActivityHistories.add(projectScanningHistory)
-    NonUrgentExecutor.getInstance().execute { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectScanningHistory) }
-    /* }
      finally {
-       runAllListenersSafely { onFinishedIndexing(projectIndexingHistory) } //todo[lene] support listeners
-     }*/
+       runAllListenersSafely(projectIndexingActivityHistoryListenerEpName, indexingActivityHistoryListenerPublisher) {
+         onFinishedScanning(projectScanningHistory)
+       }
+     }
+  }
+
+  fun onDumbIndexingStarted(history: ProjectDumbIndexingHistory) {
+    runAllListenersSafely(projectIndexingActivityHistoryListenerEpName, indexingActivityHistoryListenerPublisher) {
+      onStartedDumbIndexing(history)
+    }
   }
 
   fun onDumbIndexingFinished(projectDumbIndexingHistory: ProjectDumbIndexingHistoryImpl) {
@@ -298,16 +321,18 @@ class IndexDiagnosticDumper : Disposable {
       NonUrgentExecutor.getInstance().execute { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectDumbIndexingHistory) }
     }
     finally {
-      //todo[lene] l8r runAllListenersSafely { onFinishedIndexing(projectIndexingHistory) }
+      runAllListenersSafely(projectIndexingActivityHistoryListenerEpName, indexingActivityHistoryListenerPublisher) {
+        onFinishedDumbIndexing(projectDumbIndexingHistory)
+      }
     }
   }
 
-  private fun runAllListenersSafely(block: ProjectIndexingHistoryListener.() -> Unit) {
-    val listeners = ProgressManager.getInstance().computeInNonCancelableSection<List<ProjectIndexingHistoryListener>, Exception> {
-      projectIndexingHistoryListenerEpName.extensionList
+  private fun <T : Any> runAllListenersSafely(extensionPointName: ExtensionPointName<T>, publisher: T, block: T.() -> Unit) {
+    val listeners = ProgressManager.getInstance().computeInNonCancelableSection<List<T>, Exception> {
+      extensionPointName.extensionList
     }
 
-    for (listener in listeners.asSequence() + indexingHistoryListenerPublisher) {
+    for (listener in listeners.asSequence() + publisher) {
       try {
         listener.block()
       }

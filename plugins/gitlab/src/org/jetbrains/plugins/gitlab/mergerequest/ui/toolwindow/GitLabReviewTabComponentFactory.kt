@@ -21,6 +21,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
@@ -34,6 +35,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeReq
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -46,6 +48,7 @@ internal class GitLabReviewTabComponentFactory(
     cs: CoroutineScope,
     projectContext: GitLabProjectUIContext
   ): ReviewListTabComponentDescriptor {
+    GitLabStatistics.logMrListOpened()
     return GitLabReviewListTabComponentDescriptor(project, cs, toolwindowViewModel.accountManager, projectContext)
   }
 
@@ -54,12 +57,14 @@ internal class GitLabReviewTabComponentFactory(
                                   reviewTabType: GitLabReviewTab): JComponent {
     return when (reviewTabType) {
       is GitLabReviewTab.ReviewSelected -> {
+        GitLabStatistics.logMrDetailsOpened()
         createReviewDetailsComponent(cs, projectContext, reviewTabType.reviewId)
       }
     }
   }
 
   override fun createEmptyTabContent(cs: CoroutineScope): JComponent {
+    GitLabStatistics.logMrTwLoginOpened()
     return createSelectorsComponent(cs)
   }
 
@@ -76,6 +81,10 @@ internal class GitLabReviewTabComponentFactory(
     val detailsVmFlow = reviewDetailsVm.mergeRequestLoadingFlow.mapLatest {
       (it as? GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result)?.detailsVm
     }.filterNotNull()
+
+    val contextHolder = project.service<GitLabProjectUIContextHolder>()
+    val accountManager = contextHolder.accountManager
+    val accountVm = GitLabAccountViewModelImpl(project, cs, ctx.account, accountManager)
 
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
       detailsVmFlow.flatMapLatest {
@@ -118,7 +127,9 @@ internal class GitLabReviewTabComponentFactory(
 
 
     val avatarIconsProvider = ctx.avatarIconProvider
-    return GitLabMergeRequestDetailsComponentFactory.createDetailsComponent(project, cs, reviewDetailsVm, avatarIconsProvider).also {
+    return GitLabMergeRequestDetailsComponentFactory.createDetailsComponent(
+      project, cs, reviewDetailsVm, accountVm, avatarIconsProvider
+    ).also {
       DataManager.registerDataProvider(it) { dataId ->
         when {
           GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> ctx.filesController

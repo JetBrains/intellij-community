@@ -17,7 +17,7 @@ internal class ImmutableZipFileDataLoader(private val resolver: EntryResolver,
   }
 
   // yes, by identity - ImmutableZipFileDataLoader is created for the same Path object from plugin JARs list
-  override fun isExcludedFromSubSearch(jarFile: Path) = jarFile === zipPath
+  override fun isExcludedFromSubSearch(jarFile: Path): Boolean = jarFile === zipPath
 
-  override fun toString() = resolver.toString()
+  override fun toString(): String = resolver.toString()
 }

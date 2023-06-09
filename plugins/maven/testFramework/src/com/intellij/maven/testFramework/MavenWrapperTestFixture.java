@@ -104,6 +104,6 @@ public class MavenWrapperTestFixture {
   }
 
   public void tearDown() throws Exception {
-    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
+    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHomeNoFire(MavenServerManager.BUNDLED_MAVEN_3);
   }
 }

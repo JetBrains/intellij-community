@@ -2,6 +2,8 @@
 package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.CancellationManager;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
@@ -49,6 +51,7 @@ public class SSAConstructorSparseEx {
   private FastSparseSetFactory<Integer> factory;
 
   public void splitVariables(RootStatement root, StructMethod mt) {
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
 
     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
@@ -71,6 +74,7 @@ public class SSAConstructorSparseEx {
     HashSet<String> updated = new HashSet<>();
     do {
       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
+      cancellationManager.checkSavedCancelled();
       ssaStatements(dgraph, updated);
       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
     }

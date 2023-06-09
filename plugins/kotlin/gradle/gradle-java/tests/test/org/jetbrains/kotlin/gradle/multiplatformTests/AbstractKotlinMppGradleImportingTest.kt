@@ -14,11 +14,15 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.face
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingCheckDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.ExecuteRunConfigurationsChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.RunConfigurationChecksDsl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.RunConfigurationsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.WorkspaceChecksDsl
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
+import org.jetbrains.kotlin.idea.codeInsight.gradle.combineMultipleFailures
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -32,6 +36,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.Description
 import org.junit.runner.RunWith
+import org.junit.runners.model.MultipleFailureException
 import java.io.File
 import java.io.PrintStream
 import java.util.TreeSet
@@ -69,13 +74,14 @@ import kotlin.Comparator
 @TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
 abstract class AbstractKotlinMppGradleImportingTest :
     GradleImportingTestCase(), WorkspaceChecksDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl, HighlightingCheckDsl,
-    TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl, AllFilesUnderContentRootConfigurationDsl, CustomGradlePropertiesDsl {
+    TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl, AllFilesUnderContentRootConfigurationDsl,
+    RunConfigurationChecksDsl, CustomGradlePropertiesDsl {
 
     internal val installedFeatures = listOf<TestFeature<*>>(
         GradleProjectsPublishingTestsFeature,
         LinkedProjectPathsTestsFeature,
         NoErrorEventsDuringImportFeature,
-        CustomImportChecker, // NB: Disabled by default in most suites to not pollute the DSL
+        CustomImportChecker, // NB: Corresponding DSL is not implemented by default in most suites to not pollute the DSL
         CustomGradlePropertiesTestFeature,
 
         ContentRootsChecker,
@@ -83,6 +89,8 @@ abstract class AbstractKotlinMppGradleImportingTest :
         OrderEntriesChecker,
         TestTasksChecker,
         HighlightingChecker,
+        RunConfigurationsChecker,
+        ExecuteRunConfigurationsChecker,
         AllFilesAreUnderContentRootChecker,
     )
 
@@ -117,7 +125,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
     }
 
     private fun KotlinMppTestsContextImpl.doTest(runImport: Boolean) {
-        installedFeatures.forEach { feature -> with(feature) { context.beforeTestExecution() } }
+        installedFeatures.combineMultipleFailures { feature -> with(feature) { context.beforeTestExecution() } }
         createProjectSubFile(
             "local.properties",
             """
@@ -128,11 +136,11 @@ abstract class AbstractKotlinMppGradleImportingTest :
 
         configureByFiles()
 
-        installedFeatures.forEach { feature -> with(feature) { context.beforeImport() } }
+        installedFeatures.combineMultipleFailures { feature -> with(feature) { context.beforeImport() } }
 
         if (runImport) importProject()
 
-        installedFeatures.forEach { feature ->
+        installedFeatures.combineMultipleFailures { feature ->
             with(feature) {
                 if (feature !is AbstractTestChecker<*> || isCheckerEnabled(feature)) context.afterImport()
             }
@@ -143,6 +151,9 @@ abstract class AbstractKotlinMppGradleImportingTest :
     private fun KotlinMppTestsContextImpl.isCheckerEnabled(checker: AbstractTestChecker<*>): Boolean {
         // Temporary mute TEST_TASKS checks due to issues with hosts on CI. See KT-56332
         if (checker is TestTasksChecker) return false
+
+        // Custom checker is always enabled
+        if (checker is CustomImportChecker) return true
 
         val config = testConfiguration.getConfiguration(GeneralWorkspaceChecks)
         if (config.disableCheckers != null && checker in config.disableCheckers!!) return false

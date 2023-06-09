@@ -11,6 +11,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -276,7 +277,9 @@ public class GradleExecutionHelper {
         // if autoimport is active, it should be notified of new files creation as early as possible,
         // to avoid triggering unnecessary re-imports (caused by creation of wrapper)
         VfsUtil.markDirtyAndRefresh(false, true, true, Path.of(projectPath, "gradle").toFile());
-      } catch (IllegalPathStateException ignore) {}
+      }
+      catch (IllegalPathStateException ignore) {
+      }
     }
   }
 
@@ -354,7 +357,7 @@ public class GradleExecutionHelper {
 
     setupJavaHome(operation, settings);
 
-    setupProgressListeners(operation, id, listener, buildEnvironment);
+    setupProgressListeners(operation, settings, id, listener, buildEnvironment);
 
     setupStandardIO(operation, settings, id, listener);
 
@@ -372,6 +375,7 @@ public class GradleExecutionHelper {
 
   private static void setupProgressListeners(
     @NotNull LongRunningOperation operation,
+    @NotNull GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskId id,
     @NotNull ExternalSystemTaskNotificationListener listener,
     @Nullable BuildEnvironment buildEnvironment
@@ -380,7 +384,7 @@ public class GradleExecutionHelper {
     GradleProgressListener progressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)progressListener);
     operation.addProgressListener(progressListener, OperationType.TASK, OperationType.FILE_DOWNLOAD);
-    if (operation instanceof TestLauncher) {
+    if (settings.isRunAsTest() && settings.isBuiltInTestEventsUsed()) {
       operation.addProgressListener(progressListener, OperationType.TEST, OperationType.TEST_OUTPUT);
     }
   }
@@ -457,7 +461,7 @@ public class GradleExecutionHelper {
       setupTestLauncherArguments(testLauncher, commandLine);
     }
     else if (operation instanceof BuildLauncher buildLauncher) {
-      setupBuildLauncherArguments(buildLauncher, commandLine, settings.isRunAsTest());
+      setupBuildLauncherArguments(buildLauncher, commandLine, settings);
     }
     else {
       operation.withArguments(commandLine.getTokens());
@@ -505,12 +509,12 @@ public class GradleExecutionHelper {
   private static void setupBuildLauncherArguments(
     @NotNull BuildLauncher buildLauncher,
     @NotNull GradleCommandLine commandLine,
-    boolean isRunAsTest
+    @NotNull GradleExecutionSettings settings
   ) {
     buildLauncher.forTasks(ArrayUtil.toStringArray(commandLine.getTasks().getTokens()));
     buildLauncher.withArguments(commandLine.getOptions().getTokens());
-    if (isRunAsTest) {
-      var initScript = GradleInitScriptUtil.createTestInitScript(commandLine.getTasks());
+    if (settings.isTestTaskRerun()) {
+      var initScript = GradleInitScriptUtil.createTestInitScript();
       buildLauncher.addArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString());
     }
   }
@@ -534,17 +538,18 @@ public class GradleExecutionHelper {
 
     if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))
         && gradleLogLevel != null) {
-          try {
-            LogLevel logLevel = LogLevel.valueOf(gradleLogLevel.toUpperCase());
-            switch (logLevel) {
-              case DEBUG -> settings.withArgument("-d");
-              case INFO -> settings.withArgument("-i");
-              case WARN -> settings.withArgument("-w");
-              case QUIET -> settings.withArgument("-q");
-            }
-          } catch (IllegalArgumentException e) {
-            LOG.warn("org.gradle.logging.level must be one of quiet, warn, lifecycle, info, or debug");
-          }
+      try {
+        LogLevel logLevel = LogLevel.valueOf(gradleLogLevel.toUpperCase());
+        switch (logLevel) {
+          case DEBUG -> settings.withArgument("-d");
+          case INFO -> settings.withArgument("-i");
+          case WARN -> settings.withArgument("-w");
+          case QUIET -> settings.withArgument("-q");
+        }
+      }
+      catch (IllegalArgumentException e) {
+        LOG.warn("org.gradle.logging.level must be one of quiet, warn, lifecycle, info, or debug");
+      }
     }
 
     // Default logging level for integration tests
@@ -559,7 +564,8 @@ public class GradleExecutionHelper {
   private static boolean isRootDirAvailable(@NotNull BuildEnvironment environment) {
     try {
       environment.getBuildIdentifier().getRootDir();
-    } catch (UnsupportedMethodException e) {
+    }
+    catch (UnsupportedMethodException e) {
       return false;
     }
     return true;
@@ -828,9 +834,10 @@ public class GradleExecutionHelper {
         }
         if (FileUtil.normalize(path).endsWith("lib/app.jar")) {
           final String message = "Attempting to pass whole IDEA app [" + path + "] into Gradle Daemon for class [" + aClass + "]";
-          if (Boolean.parseBoolean(System.getProperty("idea.is.integration.test"))) {
+          if (ApplicationManagerEx.isInIntegrationTest()) {
             LOG.error(message);
-          } else {
+          }
+          else {
             LOG.warn(message);
           }
         }

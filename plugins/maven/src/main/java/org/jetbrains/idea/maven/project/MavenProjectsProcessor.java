@@ -15,13 +15,10 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.issue.BuildIssueException;
-import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
-import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
@@ -32,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.BTWMavenConsole;
 import org.jetbrains.idea.maven.utils.*;
 
-import java.util.Collections;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -60,26 +56,18 @@ public class MavenProjectsProcessor {
   public void scheduleTask(MavenProjectsProcessorTask task) {
     if (myQueue.contains(task)) return;
     myQueue.add(task);
-
-    if (!MavenUtil.isNoBackgroundMode()) {
-      startProcessing();
-    }
+    startProcessing();
   }
 
   public void waitForCompletion() {
     if (isStopped) return;
 
-    if (MavenUtil.isNoBackgroundMode()) {
-      startProcessing();
-    }
-    else {
-      final Semaphore semaphore = new Semaphore();
-      semaphore.down();
-      scheduleTask(new MavenProjectsProcessorWaitForCompletionTask(semaphore));
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    scheduleTask(new MavenProjectsProcessorWaitForCompletionTask(semaphore));
 
-      while (true) {
-        if (isStopped || semaphore.waitFor(1000)) return;
-      }
+    while (true) {
+      if (isStopped || semaphore.waitFor(1000)) return;
     }
   }
 
@@ -136,9 +124,6 @@ public class MavenProjectsProcessor {
   }
 
   private void processTask(MavenProgressIndicator indicator, MavenProjectsProcessorTask task) throws MavenProcessCanceledException {
-    StructuredIdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(myProject, MavenUtil.SYSTEM_ID, () ->
-      Collections.singletonList(ProjectImportCollector.TASK_CLASS.with(task.getClass()))
-    );
     long startTime = System.currentTimeMillis();
     try {
       final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
@@ -153,7 +138,6 @@ public class MavenProjectsProcessor {
       logImportErrorIfNotControlFlow(e);
     }
     finally {
-      activity.finished();
       long duration = System.currentTimeMillis() - startTime;
       if (duration > 10) {
         LOG.info("[maven import] " + StringUtil.getShortName(task.getClass()) + " took " + duration + "ms");

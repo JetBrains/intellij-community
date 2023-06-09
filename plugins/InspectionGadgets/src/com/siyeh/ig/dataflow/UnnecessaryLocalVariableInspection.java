@@ -16,6 +16,7 @@
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInspection.JavaSuppressionUtil;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.WriteExternalException;
@@ -48,7 +49,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
   public boolean m_ignoreAnnotatedVariablesNew = true;
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new InlineVariableFix();
   }
 

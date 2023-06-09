@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.*
 import com.intellij.debugger.engine.jdi.StackFrameProxy
+import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
@@ -318,6 +319,14 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
                 override fun jdiInvokeMethod(obj: ObjectReference, method: Method, args: List<Value?>, policy: Int): Value? {
                     return context.invokeMethod(obj, method, args, ObjectReference.INVOKE_NONVIRTUAL)
+                }
+
+                override fun jdiNewInstance(clazz: ClassType, ctor: Method, args: List<Value?>, policy: Int): Value {
+                    return context.newInstance(clazz, ctor, args)
+                }
+
+                override fun loadString(str: String): org.jetbrains.eval4j.Value {
+                    return DebuggerUtilsEx.mirrorOfString(str, context.vm, context.evaluationContext).asValue()
                 }
             }
             interpreterLoop(mainMethod, makeInitialFrame(mainMethod, args.map { it.asValue() }), eval)

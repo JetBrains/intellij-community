@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
 import com.google.common.collect.HashMultiset
@@ -14,6 +14,7 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vcs.VcsException
@@ -25,6 +26,7 @@ import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogUiImpl
+import git4idea.branch.GitBranchUtil
 import git4idea.config.*
 import git4idea.repo.GitCommitTemplateTracker
 import git4idea.repo.GitRemote
@@ -89,6 +91,8 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       set.add(repositoryMetric)
     }
 
+    addCommonBranchesMetrics(repositories, set)
+
     addCommitTemplateMetrics(project, repositories, set)
 
     addGitLogMetrics(project, set)
@@ -96,7 +100,18 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     return set
   }
 
-  private fun addCommitTemplateMetrics(project: Project, repositories: List<GitRepository>, set: java.util.HashSet<MetricEvent>) {
+  private fun addCommonBranchesMetrics(repositories: List<GitRepository>, set: MutableSet<MetricEvent>) {
+    val commonLocalBranches = GitBranchUtil.getCommonLocalBranches(repositories)
+    val commonRemoteBranches = GitBranchUtil.getCommonRemoteBranches(repositories)
+    if (commonLocalBranches.isEmpty() && commonRemoteBranches.isEmpty()) return
+
+    set.add(COMMON_BRANCHES_COUNT_EVENT.metric(
+      COMMON_LOCAL_BRANCHES with commonLocalBranches.size,
+      COMMON_REMOTE_BRANCHES with commonRemoteBranches.size
+    ))
+  }
+
+  private fun addCommitTemplateMetrics(project: Project, repositories: List<GitRepository>, set: MutableSet<MetricEvent>) {
     if (repositories.isEmpty()) return
 
     val templatesCount = project.service<GitCommitTemplateTracker>().templatesCount()
@@ -131,7 +146,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("git.configuration", 10)
+    private val GROUP = EventLogGroup("git.configuration", 11)
 
     private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
     private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
@@ -149,6 +164,11 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
 
     private val TYPE = EventFields.Enum("type", GitVersion.Type::class.java) { it.name }
     private val EXECUTABLE = GROUP.registerVarargEvent("executable", EventFields.Version, TYPE)
+
+    private val COMMON_LOCAL_BRANCHES = EventFields.RoundedInt("common_local_branches")
+    private val COMMON_REMOTE_BRANCHES = EventFields.RoundedInt("common_remote_branches")
+    private val COMMON_BRANCHES_COUNT_EVENT = GROUP.registerVarargEvent("common_branches_count",
+                                                                        COMMON_LOCAL_BRANCHES, COMMON_REMOTE_BRANCHES)
 
     private val LOCAL_BRANCHES = EventFields.RoundedInt("local_branches")
     private val REMOTE_BRANCHES = EventFields.RoundedInt("remote_branches")
@@ -220,7 +240,12 @@ private fun GitRepository.workingCopySize(): Long = try {
   val root = this.root.toNioPath().toFile()
   root.walk()
     .onEnter { it.name != GitUtil.DOT_GIT && !isInnerRepo(root, it) }
-    .filter { it.isFile }
+    .onEach {
+      ProgressManager.checkCanceled()
+    }
+    .filter {
+      it.isFile
+    }
     .map { it.length() }
     .sumWithLimits() // don't calculate working copy size over 4 gb to reduce CPU usage
 }

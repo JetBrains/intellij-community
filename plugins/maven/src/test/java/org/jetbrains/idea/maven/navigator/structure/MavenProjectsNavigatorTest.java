@@ -11,6 +11,7 @@ import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
+import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorState;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -192,7 +193,9 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     assertEquals(1, getRootNodes().size());
     MavenUtil.cleanAllRunnables();
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     myProjectsManager.removeManagedFiles(Collections.singletonList(myProjectPom));
     waitForImportCompletion();
     waitForMavenUtilRunnablesComplete();
@@ -271,12 +274,12 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     myNavigator.setShowIgnored(true);
     waitForMavenUtilRunnablesComplete();
     assertTrue(getRootNodes().get(0).isVisible());
-    assertEquals(2, getRootNodes().get(0).getChildren().length);
+    assertEquals(3, getRootNodes().get(0).getChildren().length); // Lifecycle, Plugins, m
 
     myNavigator.setShowIgnored(false);
     waitForMavenUtilRunnablesComplete();
     assertTrue(getRootNodes().get(0).isVisible());
-    assertEquals(1, getRootNodes().get(0).getChildren().length);
+    assertEquals(2, getRootNodes().get(0).getChildren().length); // Lifecycle, Plugins
   }
 
   @Test

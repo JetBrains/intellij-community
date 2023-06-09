@@ -39,7 +39,7 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
   }
 
   companion object {
-    const val PROPERTY_TEXT = "TextPanel.text"
+    const val PROPERTY_TEXT: String = "TextPanel.text"
 
     fun getFont(): Font = if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) JBFont.small() else JBUI.CurrentTheme.StatusBar.font()
 

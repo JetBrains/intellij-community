@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
 import com.intellij.openapi.components.service
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 interface KotlinMemberInfoSupport {
@@ -10,5 +11,9 @@ interface KotlinMemberInfoSupport {
         fun getInstance(): KotlinMemberInfoSupport = service()
     }
 
+    @RequiresBackgroundThread
     fun getOverrides(member: KtNamedDeclaration): Boolean?
+
+    @RequiresBackgroundThread
+    fun renderMemberInfo(member: KtNamedDeclaration): String
 }

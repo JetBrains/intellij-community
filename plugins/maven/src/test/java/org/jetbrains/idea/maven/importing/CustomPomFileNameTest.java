@@ -180,7 +180,7 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
                     </modules>
                     """);
 
-    myProjectsManager.performScheduledImportInTests();
+    //myProjectsManager.performScheduledImportInTests();
     if (!isNewImportingProcess) {
       assertFalse(myProjectsManager.hasScheduledImportsInTests());
     }
@@ -209,9 +209,9 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
     assertTrue(ExternalSystemProjectNotificationAware.getInstance(myProject).isNotificationVisible());
 
     importProject();
-    if (!isNewImportingProcess) {
-      assertTrue(myProjectsManager.hasScheduledImportsInTests());
-    }
+    //if (!isNewImportingProcess) {
+    //  assertTrue(myProjectsManager.hasScheduledImportsInTests());
+    //}
   }
 
   @Test

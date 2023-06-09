@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui
 
 import com.intellij.execution.*
@@ -12,12 +12,14 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
+import com.intellij.ide.dnd.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.components.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
@@ -27,11 +29,14 @@ import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiFile
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.GroupedElementsRenderer
 import com.intellij.ui.components.JBList
+import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
@@ -58,13 +63,17 @@ private const val DEBUG: String = ToolWindowId.DEBUG
 
 private val recentLimit: Int get() = AdvancedSettings.getInt("max.recent.run.configurations")
 
+@ApiStatus.Internal
+val RUN_CONFIGURATION_KEY = DataKey.create<RunnerAndConfigurationSettings>("sub.popup.parent.action")
+
 internal fun createRunConfigurationsActionGroup(project: Project, e: AnActionEvent): ActionGroup {
   val actions = DefaultActionGroup()
   val registry = ExecutorRegistry.getInstance()
   val runExecutor = registry.getExecutorById(RUN) ?: error("No '${RUN}' executor found")
   val debugExecutor = registry.getExecutorById(DEBUG) ?: error("No '${DEBUG}' executor found")
-  val recents = RunConfigurationStartHistory.getInstance(project).history().take(max(recentLimit, 0))
-  var shouldShowRecent: Boolean = recents.isNotEmpty()
+  val pinned = RunConfigurationStartHistory.getInstance(project).pinned()
+  val recents = RunConfigurationStartHistory.getInstance(project).historyWithoutPinned().take(max(recentLimit, 0))
+  var shouldShowRecent: Boolean = recents.isNotEmpty() || pinned.isNotEmpty()
 
   val shouldBeShown = { configuration: RunnerAndConfigurationSettings?, holdingFilter: Boolean ->
     when {
@@ -76,13 +85,13 @@ internal fun createRunConfigurationsActionGroup(project: Project, e: AnActionEve
   }
 
   val createActionFn: (RunnerAndConfigurationSettings) -> AnAction = { configuration ->
-    createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project, e) { shouldBeShown(configuration, it) }
+    createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project, e, pinned) { shouldBeShown(configuration, it) }
   }
   val createFolderFn: (String) -> DefaultActionGroup = { folderName ->
     HideableDefaultActionGroup(folderName) { shouldBeShown(null, it) }
   }
   val filteringSubActions: (RunnerAndConfigurationSettings, String) -> AnAction = { configuration, folderName ->
-    createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project, e) { holdingFilter ->
+    createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project, e, pinned) { holdingFilter ->
       holdingFilter && !recents.contains(configuration)
     }.also {
       it.templatePresentation.putClientProperty(Presentation.PROP_VALUE, folderName)
@@ -95,10 +104,19 @@ internal fun createRunConfigurationsActionGroup(project: Project, e: AnActionEve
     shouldShowRecent = false
   }
 
+  if (pinned.isNotEmpty()) {
+    actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.pinned.separator.text")))
+    for (conf in pinned) {
+      val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project, e, pinned)
+      actions.add(actionGroupWithInlineActions)
+    }
+    actions.add(Separator.create())
+  }
+
   if (shouldShowRecent) {
     actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
     for (conf in recents) {
-      val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project, e)
+      val actionGroupWithInlineActions = createRunConfigurationWithInlines(runExecutor, debugExecutor, conf, project, e, pinned)
       actions.add(actionGroupWithInlineActions)
     }
     actions.add(Separator.create())
@@ -126,8 +144,23 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
   PopupFactoryImpl.ActionGroupPopup(null, actionGroup, dataContext, false, false, true, false,
                                     disposeCallback, 30, null, null, PresentationFactory(), false) {
 
+  private val pinnedSize = RunConfigurationStartHistory.getInstance(project).pinned().size
+
   init {
-    (list as? JBList<*>)?.setExpandableItemsEnabled(false)
+    list.setExpandableItemsEnabled(false)
+    (step as ActionPopupStep).setSubStepContextAdjuster { context, action ->
+      if (action is SelectConfigAction) {
+        CustomizedDataContext.create(context) { dataId ->
+          if (RUN_CONFIGURATION_KEY.`is`(dataId)) action.configuration else null
+        }
+      }
+      else context
+    }
+    if (pinnedSize != 0) {
+      val dndManager = DnDManager.getInstance()
+      dndManager.registerSource(MyDnDSource(), list, this)
+      dndManager.registerTarget(MyDnDTarget(), list, this)
+    }
   }
 
   override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
@@ -144,6 +177,72 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
 
   fun shouldBeShowing(action: AnAction, holdingFilter: Boolean): Boolean {
     return if (action is HideableAction) return action.shouldBeShown(holdingFilter) else true
+  }
+
+  override fun getList(): JBList<*> {
+    return super.getList() as JBList<*>
+  }
+
+  private data class DraggedIndex(val from: Int)
+
+  private fun<E> offsetFromElementTopForDnD(list: JList<E>, dropTargetIndex: Int): Int {
+    if (dropTargetIndex == pinnedSize) {
+      return 0
+    }
+    val elementAt = list.model.getElementAt(dropTargetIndex)
+    val c: Component = list.cellRenderer.getListCellRendererComponent(list, elementAt, dropTargetIndex, false, false)
+    return if (c is GroupedElementsRenderer.MyComponent && StringUtil.isNotEmpty(c.separator.caption)) {
+      c.separator.preferredSize.height
+    }
+    else 0
+  }
+
+  private inner class MyDnDTarget : DnDTarget {
+    override fun update(aEvent: DnDEvent): Boolean {
+      val from = (aEvent.attachedObject as? DraggedIndex)?.from
+      if (from is Int) {
+        val targetIndex: Int = list.locationToIndex(aEvent.point)
+        val possible: Boolean = (0 until pinnedSize + 1).contains(targetIndex)
+        list.setDropTargetIndex(if (possible && wouldActuallyMove(from, targetIndex)) targetIndex else -1)
+        aEvent.isDropPossible = possible
+      }
+      else {
+        aEvent.isDropPossible = false
+      }
+      return false
+    }
+
+    override fun drop(aEvent: DnDEvent) {
+      list.setDropTargetIndex(-1)
+      val from = (aEvent.attachedObject as? DraggedIndex)?.from
+      if (from is Int) {
+        val targetIndex: Int = list.locationToIndex(aEvent.point)
+        if (wouldActuallyMove(from, targetIndex)) {
+          (step as ActionPopupStep).reorderItems(from, targetIndex, 0)
+          RunConfigurationStartHistory.getInstance(project).reorderItems(from, targetIndex)
+          listModel.syncModel()
+        }
+      }
+    }
+
+    private fun wouldActuallyMove(from: Int, targetIndex: Int) = from != targetIndex && from + 1 != targetIndex
+
+    override fun cleanUpOnLeave() {
+      list.setDropTargetIndex(-1)
+    }
+  }
+
+  private inner class MyDnDSource : DnDSource {
+    override fun canStartDragging(action: DnDAction, dragOrigin: Point): Boolean {
+      return (0 until pinnedSize).contains(list.locationToIndex(dragOrigin))
+    }
+
+    override fun startDragging(action: DnDAction, dragOrigin: Point): DnDDragStartBean? {
+      val index: Int = list.locationToIndex(dragOrigin)
+      if (index < 0) return null
+      list.setOffsetFromElementTopForDnD { offsetFromElementTopForDnD(list, it) }
+      return DnDDragStartBean(DraggedIndex(index))
+    }
   }
 }
 
@@ -182,6 +281,7 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
                                               conf: RunnerAndConfigurationSettings,
                                               project: Project,
                                               e: AnActionEvent,
+                                              pinned: List<RunnerAndConfigurationSettings>,
                                               shouldBeShown: (Boolean) -> Boolean = { true }
 ): SelectRunConfigurationWithInlineActions {
   val activeExecutor = getActiveExecutor(project, conf)
@@ -203,6 +303,14 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
     val extraAction = ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(extraExecutor, conf, false)
     result.addAction(extraAction, Constraints.FIRST)
   }
+  val wasPinned = pinned.contains(conf)
+  val text = if (wasPinned) ExecutionBundle.message("run.toolbar.widget.dropdown.unpin.action.text")
+  else ExecutionBundle.message("run.toolbar.widget.dropdown.pin.action.text")
+  result.addAction(object : AnAction(text) {
+    override fun actionPerformed(e: AnActionEvent) {
+      RunConfigurationStartHistory.getInstance(project).togglePin(conf)
+    }
+  })
   addAdditionalActionsToRunConfigurationOptions(project, e, conf, result, false)
   return result
 }
@@ -395,15 +503,21 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
     @OptionTag("element")
     var history: MutableSet<Element>
 
+    @XCollection(style = XCollection.Style.v2)
+    @OptionTag("element")
+    var pinned: MutableSet<Element>
+
     var allConfigurationsExpanded: Boolean
 
     constructor() {
       history = mutableSetOf()
+      pinned = mutableSetOf()
       allConfigurationsExpanded = false
     }
 
-    internal constructor(history: MutableSet<Element>, allConfigurationsExpanded: Boolean) {
+    internal constructor(history: MutableSet<Element>, pinned: MutableSet<Element>, allConfigurationsExpanded: Boolean) {
       this.history = history
+      this.pinned = LinkedHashSet(pinned)
       this.allConfigurationsExpanded = allConfigurationsExpanded
     }
   }
@@ -414,15 +528,46 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
     var setting: String? = "",
   )
 
+  fun pinned(): List<RunnerAndConfigurationSettings> {
+    val settings = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
+    return _state.pinned.mapNotNull { settings[it.setting] }
+  }
+
+  fun historyWithoutPinned(): List<RunnerAndConfigurationSettings> {
+    val settings = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
+    return (_state.history - _state.pinned).mapNotNull { settings[it.setting] }
+  }
+
   fun history(): List<RunnerAndConfigurationSettings> {
     val settings = RunManager.getInstance(project).allSettings.associateBy { it.uniqueID }
     return _state.history.mapNotNull { settings[it.setting] }
   }
 
+  fun togglePin(setting: RunnerAndConfigurationSettings) {
+    val element = Element(setting.uniqueID)
+    val wasPinned = _state.pinned.contains(element)
+    val newPinned = _state.pinned.toMutableList().also {
+      if (wasPinned) {
+        it.remove(element)
+      }
+      else {
+        it.add(element)
+      }
+    }.toMutableSet()
+    _state = State(_state.history, newPinned, _state.allConfigurationsExpanded)
+  }
+
+  fun reorderItems(from: Int, where: Int) {
+    val list = _state.pinned.toMutableList()
+    list.add(where, list[from])
+    list.removeAt(if (where < from) from + 1 else from)
+    _state = State(_state.history, list.toMutableSet(), _state.allConfigurationsExpanded)
+  }
+
   fun register(setting: RunnerAndConfigurationSettings) {
-    _state = State(_state.history.take(max(5, recentLimit*2)).toMutableList().apply {
+    _state = State(_state.history.take(max(5, _state.pinned.size + recentLimit*2)).toMutableList().apply {
       add(0, Element(setting.uniqueID))
-    }.toMutableSet(), _state.allConfigurationsExpanded)
+    }.toMutableSet(), _state.pinned, _state.allConfigurationsExpanded)
   }
 
   private var _state = State()
@@ -440,7 +585,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
 }
 
 private class ExecutionReasonableHistoryManager : ProjectActivity {
-  override suspend fun execute(project: Project) {
+  override suspend fun execute(project: Project) : Unit = blockingContext {
     project.messageBus.connect(project).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
       override fun processStartScheduled(executorId: String, env: ExecutionEnvironment) {
         onAnyChange(executorId, env, RunState.SCHEDULED)

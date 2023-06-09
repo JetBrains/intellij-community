@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 interface UnscaledGapsY {
   companion object {
     @JvmField
-    val EMPTY = UnscaledGapsY()
+    val EMPTY: UnscaledGapsY = UnscaledGapsY()
   }
 
   val top: Int

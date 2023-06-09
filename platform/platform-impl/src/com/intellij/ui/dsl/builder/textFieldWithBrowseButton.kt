@@ -49,10 +49,10 @@ fun <T : TextFieldWithBrowseButton> Cell<T>.text(text: String): Cell<T> {
   return this
 }
 
-fun <T : TextFieldWithBrowseButton> Cell<T>.trimmedTextValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
+fun <T : TextFieldWithBrowseButton> Cell<T>.trimmedTextValidation(vararg validations: DialogValidation.WithParameter<() -> String>): Cell<T> =
   textValidation(*validations.map2Array { it.trimParameter() })
 
-fun <T : TextFieldWithBrowseButton> Cell<T>.textValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
+fun <T : TextFieldWithBrowseButton> Cell<T>.textValidation(vararg validations: DialogValidation.WithParameter<() -> String>): Cell<T> =
   validation(*validations.map2Array { it.forTextFieldWithBrowseButton() })
 
 @ApiStatus.Experimental

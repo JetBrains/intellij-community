@@ -26,7 +26,7 @@ internal class GitLabMergeRequestRequestReviewAction(
 ) : AbstractAction(CollaborationToolsBundle.message("review.details.action.request")) {
   init {
     scope.launch {
-      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.userCanManageReview) { isBusy, userCanManageReview ->
+      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.userCanManage) { isBusy, userCanManageReview ->
         isEnabled = !isBusy && userCanManageReview
       }
     }

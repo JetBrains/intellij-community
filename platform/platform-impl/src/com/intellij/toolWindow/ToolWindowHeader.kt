@@ -61,7 +61,7 @@ abstract class ToolWindowHeader internal constructor(
     override fun popupMenuCanceled(event: PopupMenuEvent) = setPopupShowing(false)
   }
 
-  var isPopupShowing = false
+  var isPopupShowing: Boolean = false
     private set
 
   private fun setPopupShowing(showing: Boolean) {
@@ -239,13 +239,13 @@ abstract class ToolWindowHeader internal constructor(
     super.removeNotify()
   }
 
-  fun getToolbar() = toolbar
+  fun getToolbar(): ActionToolbar = toolbar
 
-  fun getToolbarWest() = toolbarWest
+  fun getToolbarWest(): ActionToolbar? = toolbarWest
 
-  fun getToolbarActions() = actionGroup
+  fun getToolbarActions(): DefaultActionGroup = actionGroup
 
-  fun getToolbarWestActions() = actionGroupWest
+  fun getToolbarWestActions(): DefaultActionGroup = actionGroupWest
 
   override fun getData(dataId: String): Any? {
     if (MorePopupAware.KEY.`is`(dataId)) {

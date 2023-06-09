@@ -61,6 +61,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
    */
   var zkmScriptStub: String? = null
   var pluginCompatibilityExactVersion: Boolean = false
+  var pluginCompatibilitySameRelease: Boolean = false
   var retainProductDescriptorForBundledPlugin: Boolean = false
   var enableSymlinksAndExecutableResources: Boolean = false
 
@@ -262,6 +263,14 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
      */
     fun pluginCompatibilityExactVersion() {
       layout.pluginCompatibilityExactVersion = true
+    }
+
+    /**
+     * This plugin will be compatible with IDE versions with the same two digits of the build number.
+     * See [org.jetbrains.intellij.build.CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE]
+     */
+    fun pluginCompatibilitySameRelease() {
+      layout.pluginCompatibilitySameRelease = true
     }
 
     /**

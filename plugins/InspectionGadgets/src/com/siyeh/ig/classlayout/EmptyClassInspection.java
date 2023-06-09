@@ -17,7 +17,10 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -79,12 +82,12 @@ public class EmptyClassInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final Object info = infos[0];
     if (!(info instanceof PsiModifierListOwner)) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
-    InspectionGadgetsFix[] fixes = AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)info, ignorableAnnotations);
+    LocalQuickFix[] fixes = AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)info, ignorableAnnotations);
     if (info instanceof PsiAnonymousClass) {
       return ArrayUtil.prepend(new ConvertEmptyAnonymousToNewFix(), fixes);
     }
@@ -96,11 +99,9 @@ public class EmptyClassInspection extends BaseInspection {
     return new EmptyClassVisitor();
   }
 
-  private static class ConvertEmptyAnonymousToNewFix extends InspectionGadgetsFix {
+  private static class ConvertEmptyAnonymousToNewFix extends PsiUpdateModCommandQuickFix {
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      if (element == null) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       PsiElement parent = element.getParent();
       final PsiAnonymousClass aClass;
       if (parent instanceof PsiAnonymousClass) {

@@ -49,8 +49,8 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
                             """.trimIndent())
     importProject("apply plugin: 'java'\n")
 
-    assertModuleOutput("project.buildSrc.main", projectPath + "/buildSrc/build/foo", "");
-    assertModuleOutput("project.buildSrc.test", "", projectPath + "/buildSrc/build/bar");
+    assertModuleOutput("project.buildSrc.main", "$projectPath/buildSrc/build/foo", "");
+    assertModuleOutput("project.buildSrc.test", "", "$projectPath/buildSrc/build/bar");
   }
 
 

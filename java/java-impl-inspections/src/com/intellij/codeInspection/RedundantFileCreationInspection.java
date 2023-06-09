@@ -96,7 +96,7 @@ public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspec
     return false;
   }
 
-  private static class DeleteRedundantFileCreationFix implements LocalQuickFix {
+  private static class DeleteRedundantFileCreationFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -105,8 +105,7 @@ public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspec
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiNewExpression newExpression)) return;
 
       final PsiExpressionList argList = newExpression.getArgumentList();

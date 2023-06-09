@@ -39,7 +39,7 @@ class EntityStorageSerializationTest {
     mutableSetOf("c", "d")
     VirtualFileUrlManagerImpl()
     builder addEntity SampleEntity(false, stringProperty = "MyEntity",
-                                   stringListProperty = mutableListOf<String>("a", "b"),
+                                   stringListProperty = mutableListOf("a", "b"),
                                    stringMapProperty = HashMap(), fileProperty = virtualFileManager.fromUrl("file:///tmp"),
                                    entitySource = SampleEntitySource("test"))
 

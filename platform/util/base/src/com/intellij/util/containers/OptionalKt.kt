@@ -28,7 +28,7 @@ internal class OptionalKt<out T : Any?> private constructor(
 
   companion object {
 
-    val EMPTY = OptionalKt<Nothing>(false, null)
+    val EMPTY: OptionalKt<Nothing> = OptionalKt(false, null)
 
     fun <T> of(value: T): OptionalKt<T> {
       return OptionalKt(true, value)

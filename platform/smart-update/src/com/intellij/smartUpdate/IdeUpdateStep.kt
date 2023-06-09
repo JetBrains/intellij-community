@@ -1,5 +1,6 @@
 package com.intellij.smartUpdate
 
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -37,6 +38,7 @@ class IdeRestartStep: SmartUpdateStep {
   override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
     val updateAction = getUpdateAction()
     if (updateAction != null && e != null && updateAction.isRestartRequired) {
+      RecentProjectsManagerBase.getInstanceEx().forceReopenProjects()
       PropertiesComponent.getInstance().setValue(IDE_RESTARTED_KEY, true)
       updateAction.actionPerformed(e)
     }

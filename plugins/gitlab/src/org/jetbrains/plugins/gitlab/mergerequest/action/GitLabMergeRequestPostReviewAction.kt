@@ -19,7 +19,7 @@ internal class GitLabMergeRequestPostReviewAction(
       combine(
         reviewFlowVm.isBusy,
         reviewFlowVm.reviewRequestState,
-        reviewFlowVm.userCanManageReview
+        reviewFlowVm.userCanManage
       ) { isBusy, reviewRequestState, userCanManageReview ->
         isEnabled = !isBusy && reviewRequestState == ReviewRequestState.DRAFT && userCanManageReview
       }

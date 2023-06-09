@@ -17,19 +17,19 @@ class ReaderModeSettingsImpl(override val coroutineScope: CoroutineScope) : Pers
 
   class State : BaseState() {
     class SchemeState : BaseState() {
-      var name by string(CodeStyleScheme.DEFAULT_SCHEME_NAME)
-      var isProjectLevel by property(false)
+      var name: String? by string(CodeStyleScheme.DEFAULT_SCHEME_NAME)
+      var isProjectLevel: Boolean by property(false)
     }
 
-    var visualFormattingChosenScheme by property(SchemeState())
-    @get:ReportValue var enableVisualFormatting by property(true)
-    @get:ReportValue var useActiveSchemeForVisualFormatting by property(true)
-    @get:ReportValue var showLigatures by property(EditorColorsManager.getInstance().globalScheme.fontPreferences.useLigatures())
-    @get:ReportValue var increaseLineSpacing by property(false)
-    @get:ReportValue var showRenderedDocs by property(true)
-    @get:ReportValue var showInlayHints by property(true)
-    @get:ReportValue var showWarnings by property(false)
-    @get:ReportValue var enabled by property(Experiments.getInstance().isFeatureEnabled("editor.reader.mode"))
+    var visualFormattingChosenScheme: SchemeState by property(SchemeState())
+    @get:ReportValue var enableVisualFormatting: Boolean by property(true)
+    @get:ReportValue var useActiveSchemeForVisualFormatting: Boolean by property(true)
+    @get:ReportValue var showLigatures: Boolean by property(EditorColorsManager.getInstance().globalScheme.fontPreferences.useLigatures())
+    @get:ReportValue var increaseLineSpacing: Boolean by property(false)
+    @get:ReportValue var showRenderedDocs: Boolean by property(true)
+    @get:ReportValue var showInlayHints: Boolean by property(true)
+    @get:ReportValue var showWarnings: Boolean by property(false)
+    @get:ReportValue var enabled: Boolean by property(Experiments.getInstance().isFeatureEnabled("editor.reader.mode"))
 
     var mode: ReaderMode = ReaderMode.LIBRARIES_AND_READ_ONLY
   }
@@ -106,5 +106,5 @@ class ReaderModeSettingsImpl(override val coroutineScope: CoroutineScope) : Pers
     myState = state
   }
 
-  override fun getStateModificationCount() = state.modificationCount
+  override fun getStateModificationCount(): Long = state.modificationCount
 }

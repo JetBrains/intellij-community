@@ -232,4 +232,14 @@ public interface ApplicationEx extends Application {
    */
   @ApiStatus.Internal
   <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName);
+
+  /**
+   * Runs specified action with disabled implicit read lock, if this feature is enabled with system property.
+   * @see com.intellij.idea.StartupUtil#isImplicitReadOnEDTDisabled() StartupUtil.isImplicitReadOnEDTDisabled()
+   * @param runnable action to run with disabled implicit read lock.
+   */
+  @ApiStatus.Internal
+  default void runWithoutImplicitRead(@NotNull Runnable runnable) {
+    runnable.run();
+  }
 }

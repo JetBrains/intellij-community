@@ -5,14 +5,16 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.modcommand.*;
+import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -21,20 +23,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 public class ModCommandServiceImpl implements ModCommandService {
@@ -53,9 +56,20 @@ public class ModCommandServiceImpl implements ModCommandService {
     return action instanceof ModCommandActionWrapper wrapper ? wrapper.action() : null;
   }
 
+  @RequiresEdt
   @Override
-  public @NotNull ModStatus execute(@NotNull Project project, @NotNull ModCommand command) {
-    if (command instanceof ModUpdatePsiFile upd) {
+  public void execute(@NotNull Project project, @NotNull ModCommand command) {
+    Set<VirtualFile> files = command.modifiedFiles();
+    if (!files.isEmpty()) {
+      if (!ReadonlyStatusHandler.ensureFilesWritable(project, files.toArray(VirtualFile.EMPTY_ARRAY))) {
+        return;
+      }
+    }
+    doExecute(project, command);
+  }
+
+  private boolean doExecute(@NotNull Project project, @NotNull ModCommand command) {
+    if (command instanceof ModUpdateFileText upd) {
       return executeUpdate(project, upd);
     }
     if (command instanceof ModCompositeCommand cmp) {
@@ -65,7 +79,7 @@ public class ModCommandServiceImpl implements ModCommandService {
       return executeNavigate(project, nav);
     }
     if (command instanceof ModNothing) {
-      return ModStatus.SUCCESS;
+      return true;
     }
     if (command instanceof ModChooseTarget<?> cht) {
       return executeChoose(project, cht);
@@ -73,21 +87,20 @@ public class ModCommandServiceImpl implements ModCommandService {
     throw new IllegalArgumentException("Unknown command: " + command);
   }
 
-  @NotNull
-  private static <T extends @NotNull PsiElement> ModStatus executeChoose(@NotNull Project project, ModChooseTarget<@NotNull T> cht) {
+  private static <T extends @NotNull PsiElement> boolean executeChoose(@NotNull Project project, ModChooseTarget<@NotNull T> cht) {
     String name = CommandProcessor.getInstance().getCurrentCommandName();
     var elements = cht.elements();
     var nextStep = cht.nextStep();
-    if (elements.isEmpty()) return ModStatus.ABORT;
+    if (elements.isEmpty()) return false;
     T element = elements.get(0).element();
     if (elements.size() == 1) {
       executeNextStep(project, nextStep, element, name);
-      return ModStatus.DEFERRED;
+      return true;
     }
     VirtualFile file = element.getContainingFile().getVirtualFile();
-    if (file == null) return ModStatus.ABORT;
+    if (file == null) return false;
     Editor editor = getEditor(project, file);
-    if (editor == null) return ModStatus.ABORT;
+    if (editor == null) return false;
     var map = StreamEx.of(elements).toMap(ModChooseTarget.ListItem::element, Function.identity());
     List<T> elementList = ContainerUtil.map(elements, ModChooseTarget.ListItem::element);
     Pass<T> callback = new Pass<>() {
@@ -96,12 +109,11 @@ public class ModCommandServiceImpl implements ModCommandService {
         executeNextStep(project, cht.nextStep(), t, name);
       }
     };
-    //noinspection SuspiciousMethodCalls
     NotNullFunction<PsiElement, TextRange> ranger = e -> map.get(e).selection();
     IntroduceTargetChooser.showChooser(editor, elementList, callback,
                                        e -> map.get(e).toString(), cht.title(), cht.selection(),
                                        ranger);
-    return ModStatus.DEFERRED;
+    return true;
   }
 
   private static <T extends @NotNull PsiElement> void executeNextStep(@NotNull Project project,
@@ -119,22 +131,21 @@ public class ModCommandServiceImpl implements ModCommandService {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  @NotNull
-  private static ModStatus executeNavigate(@NotNull Project project, ModNavigate nav) {
+  private static boolean executeNavigate(@NotNull Project project, ModNavigate nav) {
     VirtualFile file = nav.file();
     int selectionStart = nav.selectionStart();
     int selectionEnd = nav.selectionEnd();
     int caret = nav.caret();
 
     Editor editor = getEditor(project, file);
-    if (editor == null) return ModStatus.ABORT;
+    if (editor == null) return false;
     if (selectionStart != -1 && selectionEnd != -1) {
       editor.getSelectionModel().setSelection(selectionStart, selectionEnd);
     }
     if (caret != -1) {
       editor.getCaretModel().moveToOffset(caret);
     }
-    return ModStatus.SUCCESS;
+    return true;
   }
 
   private static Editor getEditor(@NotNull Project project, VirtualFile file) {
@@ -145,33 +156,42 @@ public class ModCommandServiceImpl implements ModCommandService {
     return null;
   }
 
-  @NotNull
-  private ModStatus executeComposite(@NotNull Project project, ModCompositeCommand cmp) {
+  private boolean executeComposite(@NotNull Project project, ModCompositeCommand cmp) {
     for (ModCommand command : cmp.commands()) {
-      ModStatus status = execute(project, command);
-      if (status != ModStatus.SUCCESS) {
-        return status;
+      boolean status = doExecute(project, command);
+      if (!status) {
+        return false;
       }
     }
-    return ModStatus.SUCCESS;
+    return true;
   }
 
-  private static @NotNull ModStatus executeUpdate(@NotNull Project project, @NotNull ModUpdatePsiFile upd) {
-    PsiFile file = upd.file();
+  private static boolean executeUpdate(@NotNull Project project, @NotNull ModUpdateFileText upd) {
+    VirtualFile file = upd.file();
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null) return false;
     String oldText = upd.oldText();
     String newText = upd.newText();
-    if (!file.textMatches(oldText)) return ModStatus.ABORT;
-    List<LineFragment> fragments = ComparisonManager.getInstance().compareLines(oldText, newText, ComparisonPolicy.DEFAULT,
-                                                                                DumbProgressIndicator.INSTANCE);
-    Document document = file.getViewProvider().getDocument();
+    if (!document.getText().equals(oldText)) return false;
+    List<@NotNull Fragment> ranges = calculateRanges(upd);
     return WriteAction.compute(() -> {
-      StreamEx.ofReversed(fragments)
-          .forEach(fragment -> {
-            document.replaceString(fragment.getStartOffset1(), fragment.getEndOffset1(), 
-                                   newText.substring(fragment.getStartOffset2(), fragment.getEndOffset2()));
-          });
+      for (Fragment range : ranges) {
+        document.replaceString(range.offset(), range.offset() + range.oldLength(),
+                               newText.substring(range.offset(), range.offset() + range.newLength()));
+      }
       PsiDocumentManager.getInstance(project).commitDocument(document);
-      return ModStatus.SUCCESS;
+      return true;
     });
+  }
+  
+  private static @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {
+    List<@NotNull Fragment> ranges = upd.updatedRanges();
+    if (!ranges.isEmpty()) return ranges;
+    String oldText = upd.oldText();
+    String newText = upd.newText();
+    List<DiffFragment> fragments = ComparisonManager.getInstance().compareChars(oldText, newText, ComparisonPolicy.DEFAULT,
+                                                                                DumbProgressIndicator.INSTANCE);
+    return ContainerUtil.map(fragments, fr -> new Fragment(fr.getStartOffset2(), fr.getEndOffset1() - fr.getStartOffset1(),
+                                                           fr.getEndOffset2() - fr.getStartOffset2()));
   }
 }

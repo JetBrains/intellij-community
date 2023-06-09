@@ -112,7 +112,7 @@ object VcsLogNavigationUtil {
     if (mainLogContent != null) {
       ChangesViewContentManager.getInstanceImpl(project)?.initLazyContent(mainLogContent)
 
-      val mainLogContentProvider = VcsLogContentProvider.getInstance(project)
+      val mainLogContentProvider = getVcsLogContentProvider(project)
       if (mainLogContentProvider != null) {
         val mainLogUi = mainLogContentProvider.waitMainUiCreation().await()
         if (!selectedUis.contains(mainLogUi)) {

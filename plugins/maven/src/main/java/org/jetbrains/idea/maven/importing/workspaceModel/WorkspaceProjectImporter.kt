@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.externalSystem.statistics.runImportActivitySync
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
@@ -659,6 +660,12 @@ private class AfterImportConfiguratorsTask(private val contextData: UserDataHold
                        embeddersManager: MavenEmbeddersManager,
                        console: MavenConsole,
                        indicator: MavenProgressIndicator) {
+    runImportActivitySync(project, MavenUtil.SYSTEM_ID, AfterImportConfiguratorsTask::class.java) {
+      doPerform(project, indicator)
+    }
+  }
+
+  private fun doPerform(project: Project, indicator: MavenProgressIndicator) {
     val context = object : MavenAfterImportConfigurator.Context, UserDataHolder by contextData {
       override val project = project
       override val mavenProjectsWithModules = appliedProjectsWithModules.asSequence()

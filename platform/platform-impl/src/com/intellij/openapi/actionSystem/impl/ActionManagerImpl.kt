@@ -8,6 +8,7 @@ import com.intellij.BundleBase.message
 import com.intellij.DynamicBundle
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
+import com.intellij.concurrency.installThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.icons.AllIcons
@@ -30,6 +31,7 @@ import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -47,16 +49,20 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.DefaultBundleService
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.createChildContext
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.xml.dom.XmlElement
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.AWTEvent
@@ -72,6 +78,7 @@ import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.Timer
+import kotlin.coroutines.CoroutineContext
 
 open class ActionManagerImpl protected constructor() : ActionManagerEx(), Disposable {
   private val lock = Any()
@@ -128,11 +135,15 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   companion object {
-    fun convertStub(stub: ActionStub): AnAction? {
-      val anAction = instantiate(stubClassName = stub.className, pluginDescriptor = stub.plugin, expectedClass = AnAction::class.java)
+    internal fun convertStub(stub: ActionStub): AnAction? {
+      val componentManager = ApplicationManager.getApplication() ?: throw AlreadyDisposedException("Application is already disposed")
+      val anAction = instantiate(stubClassName = stub.className,
+                                 pluginDescriptor = stub.plugin,
+                                 expectedClass = AnAction::class.java,
+                                 componentManager = componentManager)
                      ?: return null
       stub.initAction(anAction)
-      updateIconFromStub(stub = stub, anAction = anAction)
+      updateIconFromStub(stub = stub, anAction = anAction, componentManager = componentManager)
       return anAction
     }
 
@@ -175,8 +186,10 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       timer = MyTimer()
       timer!!.start()
     }
-    timer!!.listeners.add(listener)
+    val wrappedListener = if (AppExecutorUtil.propagateContextOrCancellation()) CapturingListener(listener) else listener
+    timer!!.listeners.add(wrappedListener)
   }
+
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
@@ -306,16 +319,15 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   override fun getAction(id: String): AnAction? = getActionImpl(id = id, canReturnStub = false)
 
   private fun getActionImpl(id: String, canReturnStub: Boolean): AnAction? {
-    var action: AnAction?
-    synchronized(lock) {
-      action = idToAction[id]
-      if (canReturnStub || action !is ActionStubBase) {
-        return action
-      }
+    var action = synchronized(lock) {
+      idToAction.get(id)
+    }
+    if (canReturnStub || action !is ActionStubBase) {
+      return action
     }
 
     val converted = if (action is ActionStub) {
-      convertStub(action as ActionStub)
+      convertStub(action)
     }
     else {
       convertGroupStub(stub = action as ActionGroupStub, actionManager = this)
@@ -1054,7 +1066,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   /**
-   * Unregisters already registered action and prevents the action from being registered in the future.
+   * Unregisters already registered action and prevented the action from being registered in the future.
    * Should be used only in IDE configuration
    */
   @ApiStatus.Internal
@@ -1295,6 +1307,25 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       }, ModalityState.defaultModalityState())
   }
 
+
+  private class CapturingListener(private val myTimerListener: TimerListener) : TimerListener by myTimerListener {
+    val myContext: CoroutineContext
+    val myJob: Job?
+
+    init {
+      val (context, job) = createChildContext()
+      myContext = context
+      myJob = job
+    }
+
+    override fun run() {
+      installThreadContext(myContext).use {
+        myTimerListener.run()
+      }
+    }
+  }
+
+
   private inner class MyTimer : Timer(TIMER_DELAY, null), ActionListener {
     @JvmField
     val listeners: MutableList<TimerListener> = ContainerUtil.createLockFreeCopyOnWriteList()
@@ -1387,9 +1418,12 @@ private fun managerPublisher(): ActionManagerListener {
   return ApplicationManager.getApplication().messageBus.syncPublisher(ActionManagerListener.TOPIC)
 }
 
-private fun <T> instantiate(stubClassName: String, pluginDescriptor: PluginDescriptor, expectedClass: Class<T>): T? {
+private fun <T> instantiate(stubClassName: String,
+                            pluginDescriptor: PluginDescriptor,
+                            expectedClass: Class<T>,
+                            componentManager: ComponentManager): T? {
   val obj = try {
-    ApplicationManager.getApplication().instantiateClass<Any>(stubClassName, pluginDescriptor)
+    componentManager.instantiateClass<Any>(stubClassName, pluginDescriptor)
   }
   catch (e: CancellationException) {
     throw e
@@ -1414,26 +1448,31 @@ private fun <T> instantiate(stubClassName: String, pluginDescriptor: PluginDescr
   return null
 }
 
-private fun updateIconFromStub(stub: ActionStubBase, anAction: AnAction) {
+private fun updateIconFromStub(stub: ActionStubBase, anAction: AnAction, componentManager: ComponentManager) {
   val iconPath = stub.iconPath
   if (iconPath != null) {
-    val icon = loadIcon(stub.plugin, iconPath, anAction.javaClass.name)
+    val icon = loadIcon(module = stub.plugin, iconPath = iconPath, requestor = anAction.javaClass.name)
     anAction.templatePresentation.icon = icon
   }
-  val customActionsSchema = ApplicationManager.getApplication().serviceIfCreated<CustomActionsSchema>()
+
+  val customActionsSchema = componentManager.serviceIfCreated<CustomActionsSchema>()
   if (customActionsSchema != null && !customActionsSchema.getIconPath(stub.id).isEmpty()) {
     RecursionManager.doPreventingRecursion<Any?>(stub.id, false) {
-      customActionsSchema.initActionIcon(anAction, stub.id, ActionManager.getInstance())
+      customActionsSchema.initActionIcon(anAction = anAction, actionId = stub.id, actionManager = ActionManager.getInstance())
       null
     }
   }
 }
 
 private fun convertGroupStub(stub: ActionGroupStub, actionManager: ActionManager): ActionGroup? {
-  val group = instantiate(stubClassName = stub.actionClass, pluginDescriptor = stub.plugin, expectedClass = ActionGroup::class.java)
+  val componentManager = ApplicationManager.getApplication()
+  val group = instantiate(stubClassName = stub.actionClass,
+                          pluginDescriptor = stub.plugin,
+                          expectedClass = ActionGroup::class.java,
+                          componentManager = componentManager)
               ?: return null
   stub.initGroup(group, actionManager)
-  updateIconFromStub(stub = stub, anAction = group)
+  updateIconFromStub(stub = stub, anAction = group, componentManager = componentManager)
   return group
 }
 

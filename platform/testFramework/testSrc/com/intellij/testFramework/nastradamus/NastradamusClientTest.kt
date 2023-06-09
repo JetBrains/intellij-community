@@ -5,7 +5,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.nastradamus.NastradamusClient
 import com.intellij.nastradamus.model.*
 import com.intellij.teamcity.TeamCityClient
-import com.intellij.tool.Cache
+import com.intellij.tool.NastradamusCache
 import com.intellij.tool.withErrorThreshold
 import com.intellij.util.io.readText
 import okhttp3.mockwebserver.MockResponse
@@ -23,12 +23,12 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class NastradamusClientTest {
   init {
-    Cache.eraseCache()
+    NastradamusCache.eraseCache()
   }
 
   @JvmField
   @Rule
-  val timeoutRule = Timeout(30, TimeUnit.SECONDS)
+  val timeoutRule: Timeout = Timeout(30, TimeUnit.SECONDS)
 
   @JvmField
   @Rule
@@ -54,7 +54,7 @@ class NastradamusClientTest {
   @After
   fun afterEach() {
     tcMockServer.shutdown()
-    Cache.eraseCache()
+    NastradamusCache.eraseCache()
   }
 
   private fun setBuildParams(vararg buildProperties: Pair<String, String>): Path {
@@ -207,7 +207,7 @@ class NastradamusClientTest {
   @Test
   fun successfulErrorThresholdTest() {
     (1..3).forEach {
-      val result = withErrorThreshold<String>(
+      val result = withErrorThreshold(
         objName = testName.methodName,
         errorThreshold = 1,
         action = { it.toString() },
@@ -224,7 +224,7 @@ class NastradamusClientTest {
 
     (1..3).forEach {
       try {
-        withErrorThreshold<String>(
+        withErrorThreshold(
           objName = testName.methodName,
           errorThreshold = 3,
           action = { throw Exception("Badums") },
@@ -238,7 +238,7 @@ class NastradamusClientTest {
 
     Assert.assertEquals("Count of failures should be 3", 3, counter.get())
 
-    val result = withErrorThreshold<String>(
+    val result = withErrorThreshold(
       objName = testName.methodName,
       errorThreshold = 3,
       action = { "action" },

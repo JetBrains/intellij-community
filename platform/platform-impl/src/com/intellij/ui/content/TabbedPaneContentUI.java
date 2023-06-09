@@ -9,8 +9,10 @@ import com.intellij.ui.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.IJSwingUtilities;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -63,6 +65,11 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     }
     myManager = manager;
     myManager.addContentManagerListener(new MyContentManagerListener());
+  }
+
+  @ApiStatus.Internal
+  public @Nullable ContentManager getManager() {
+    return myManager;
   }
 
   @Override

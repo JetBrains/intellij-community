@@ -16,8 +16,8 @@ import java.util.concurrent.Future
 
 abstract class JBProtocolCommand(private val command: String) {
   companion object {
-    const val SCHEME = "jetbrains"
-    const val FRAGMENT_PARAM_NAME = "__fragment"
+    const val SCHEME: String = "jetbrains"
+    const val FRAGMENT_PARAM_NAME: String = "__fragment"
 
     private val EP_NAME = ExtensionPointName<JBProtocolCommand>("com.intellij.jbProtocolCommand")
 

@@ -7,18 +7,17 @@ import com.intellij.platform.diagnostic.telemetry.impl.use
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
+import com.intellij.util.lang.ImmutableZipFile
 import com.jetbrains.util.filetype.FileType
 import com.jetbrains.util.filetype.FileTypeDetector.DetectFileType
 import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.JetBrainsClientModuleFilter
-import org.jetbrains.intellij.build.SignNativeFileMode
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
@@ -27,7 +26,6 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.copyZipRaw
 import org.jetbrains.intellij.build.io.transformZipUsingTempFile
-import org.jetbrains.intellij.build.tasks.*
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -227,15 +225,13 @@ class JarPackager private constructor(private val outputDir: Path, private val c
     }
   }
 
-  private fun packModules(includedModules: Collection<ModuleItem>,
-                          moduleNameToSize: ConcurrentHashMap<String, Int>,
-                          moduleOutputPatcher: ModuleOutputPatcher,
-                          layout: BaseLayout?) {
+  private suspend fun packModules(includedModules: Collection<ModuleItem>,
+                                  moduleNameToSize: ConcurrentHashMap<String, Int>,
+                                  moduleOutputPatcher: ModuleOutputPatcher,
+                                  layout: BaseLayout?) {
     for (item in includedModules) {
       val descriptor = jarDescriptors.computeIfAbsent(outputDir.resolve(item.relativeOutputFile)) { jarFile ->
-        createJarDescriptor(outputDir = outputDir,
-                            targetFile = jarFile,
-                            context = context)
+        createJarDescriptor(outputDir = outputDir, targetFile = jarFile, context = context)
       }
       descriptor.includedModules = descriptor.includedModules.add(item)
 
@@ -278,10 +274,10 @@ class JarPackager private constructor(private val outputDir: Path, private val c
     }
   }
 
-  private fun packModuleLibs(item: ModuleItem,
-                             layout: BaseLayout,
-                             copiedFiles: MutableMap<Path, CopiedFor>,
-                             sources: MutableList<Source>) {
+  private suspend fun packModuleLibs(item: ModuleItem,
+                                     layout: BaseLayout,
+                                     copiedFiles: MutableMap<Path, CopiedFor>,
+                                     sources: MutableList<Source>) {
     if (item.relativeOutputFile.contains('/')) {
       return
     }
@@ -314,7 +310,7 @@ class JarPackager private constructor(private val outputDir: Path, private val c
       for (i in (files.size - 1) downTo 0) {
         val file = files.get(i)
         val fileName = file.fileName.toString()
-        if (fileName.endsWith("-rt.jar") || fileName.contains("-agent")) {
+        if (item.relativeOutputFile.contains('/') || isSeparateJar(fileName, file)) {
           files.removeAt(i)
           addLibrary(library, outputDir.resolve(removeVersionFromJar(fileName)), listOf(file))
         }
@@ -322,11 +318,31 @@ class JarPackager private constructor(private val outputDir: Path, private val c
 
       for (file in files) {
         sources.add(ZipSource(file) { size ->
-          libraryEntries.add(ModuleLibraryFileEntry(path = targetFile, moduleName = moduleName, 
-                                                    libraryName = LibraryLicensesListGenerator.getLibraryName(library), libraryFile = file, size = size))
+          libraryEntries.add(ModuleLibraryFileEntry(path = targetFile,
+                                                    moduleName = moduleName,
+                                                    libraryName = LibraryLicensesListGenerator.getLibraryName(library),
+                                                    libraryFile = file,
+                                                    size = size))
         })
       }
     }
+  }
+
+  private suspend fun isSeparateJar(fileName: String, file: Path): Boolean {
+    if (fileName.endsWith("-rt.jar") || fileName.contains("-agent")) {
+      return true
+    }
+
+    val result = withContext(Dispatchers.IO) {
+      ImmutableZipFile.load(file).use {
+        @Suppress("SpellCheckingInspection")
+        it.getResource("META-INF/sisu/javax.inject.Named") != null
+      }
+    }
+    if (result) {
+      Span.current().addEvent("$fileName contains file that prevent merging")
+    }
+    return result
   }
 
   private fun alreadyHasLibrary(layout: BaseLayout, libraryName: String): Boolean {
@@ -478,14 +494,17 @@ private fun getLibraryFiles(library: JpsLibrary,
   // allow duplication if packed into the same target file and have the same common prefix
   files.removeIf {
     val alreadyCopiedFor = copiedFiles.get(it) ?: return@removeIf false
+    val alreadyCopiedLibraryName = alreadyCopiedFor.library.name
     alreadyCopiedFor.targetFile == targetFile &&
-    (alreadyCopiedFor.library.name.startsWith("ktor-") || (isModuleLevel && alreadyCopiedFor.library.name == libName))
+    (alreadyCopiedLibraryName.startsWith("ktor-") ||
+     alreadyCopiedLibraryName.startsWith("ai.grazie.") ||
+     (isModuleLevel && alreadyCopiedLibraryName == libName))
   }
 
   for (file in files) {
     val alreadyCopiedFor = copiedFiles.putIfAbsent(file, CopiedFor(library, targetFile))
     if (alreadyCopiedFor != null) {
-      // check name - we allow having same named module level library name
+      // check name - we allow having the same named module level library name
       if (isModuleLevel && alreadyCopiedFor.library.name == libName) {
         continue
       }

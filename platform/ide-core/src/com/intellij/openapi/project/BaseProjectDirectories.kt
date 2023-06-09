@@ -14,7 +14,7 @@ import org.jetbrains.annotations.TestOnly
 abstract class BaseProjectDirectories(private val project: Project) {
   companion object {
     @Topic.ProjectLevel
-    val TOPIC = Topic("Change of base project directories", BaseProjectDirectoriesListener::class.java, Topic.BroadcastDirection.NONE)
+    val TOPIC: Topic<BaseProjectDirectoriesListener> = Topic("Change of base project directories", BaseProjectDirectoriesListener::class.java, Topic.BroadcastDirection.NONE)
 
     /**
      * Return top-level directories which contain files related to the project. Usually the returned sequence contains a single element, but
@@ -50,7 +50,7 @@ abstract class BaseProjectDirectories(private val project: Project) {
   /**
    * Returns true if this file is located in one of base directories
    */
-  fun contains(file: VirtualFile) = getBaseDirectoryFor(file) != null
+  fun contains(file: VirtualFile): Boolean = getBaseDirectoryFor(file) != null
 
   /**
    * Call this method when list of project base directories was changed

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.diagnostic.Logger
@@ -20,7 +20,7 @@ import kotlin.io.path.forEachDirectoryEntry
 @ApiStatus.Experimental
 class VfsLog(
   private val storagePath: Path,
-  val readOnly: Boolean = false
+  private val readOnly: Boolean = false
 ) {
   private var version by PersistentVar.integer(storagePath / "version")
 
@@ -105,7 +105,7 @@ class VfsLog(
     )
   }
 
-  val vFileEventApplicationListener = if (readOnly) {
+  val vFileEventApplicationListener: VFileEventApplicationListener = if (readOnly) {
     object : VFileEventApplicationListener {} // no op
   } else {
     VFileEventApplicationLogListener(context)
@@ -114,10 +114,10 @@ class VfsLog(
   companion object {
     private val LOG = Logger.getInstance(VfsLog::class.java)
 
-    const val VERSION = -48
+    const val VERSION: Int = -48
 
     @JvmField
-    val LOG_VFS_OPERATIONS_ENABLED = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled", false)
+    val LOG_VFS_OPERATIONS_ENABLED: Boolean = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled", false)
     private val WORKER_THREADS_COUNT = SystemProperties.getIntProperty("idea.vfs.log-vfs-operations.workers", 4)
     // TODO: compaction & its options
   }

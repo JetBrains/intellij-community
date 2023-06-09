@@ -77,7 +77,6 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
     }
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @Throws(IOException::class)
   private suspend fun loadContext(contextScope: CoroutineScope,
                                   account: GithubAccount,

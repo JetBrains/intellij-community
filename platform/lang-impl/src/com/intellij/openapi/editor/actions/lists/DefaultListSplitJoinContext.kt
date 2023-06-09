@@ -31,7 +31,7 @@ abstract class DefaultListSplitJoinContext : ListSplitJoinContext {
    * Returns true if the element is an acceptable part of the list
    * e.g. spread element if it is a top level element in the list, custom comments and so on. Shouldn't include separators
    */
-  open fun isValidIntermediateElement(data: ListWithElements, element: PsiElement) = element is PsiWhiteSpace
+  open fun isValidIntermediateElement(data: ListWithElements, element: PsiElement): Boolean = element is PsiWhiteSpace
 
   /**
    * Checks if we need to insert (to keep) new line at the start of list:
@@ -87,7 +87,7 @@ abstract class DefaultListSplitJoinContext : ListSplitJoinContext {
   override fun isJoinAvailable(data: ListWithElements): Boolean =
     data.elements.size > 1 && validateRange(data) && getReplacementsForJoining(data).isNotEmpty()
 
-  override fun reformatRange(file: PsiFile, rangeToAdjust: TextRange, split: JoinOrSplit) =
+  override fun reformatRange(file: PsiFile, rangeToAdjust: TextRange, split: JoinOrSplit): Unit =
     CodeStyleManager.getInstance(file.project).adjustLineIndent(file, rangeToAdjust)
 
   override fun getReplacementsForSplitting(data: ListWithElements): List<Pair<TextRange, String>> {
@@ -178,8 +178,8 @@ abstract class DefaultListSplitJoinContext : ListSplitJoinContext {
     }
   }
 
-  protected open fun getTailBreakJoinReplacement(lastElement: PsiElement) = ""
-  protected open fun getHeadBreakJoinReplacement(firstElement: PsiElement) = ""
+  protected open fun getTailBreakJoinReplacement(lastElement: PsiElement): String = ""
+  protected open fun getHeadBreakJoinReplacement(firstElement: PsiElement): String = ""
 
   protected fun findOffsetForBreakAfter(data: ListWithElements, element: PsiElement): Int {
     val after = skipAcceptableElements(data, element)
@@ -313,7 +313,7 @@ abstract class DefaultListSplitJoinContext : ListSplitJoinContext {
 enum class TrailingComma { ADD_IF_NOT_EXISTS, REMOVE_IF_EXISTS, IGNORE }
 
 abstract class CommaListSplitJoinContext : DefaultListSplitJoinContext() {
-  override fun isSeparator(element: PsiElement) = isComma(element)
+  override fun isSeparator(element: PsiElement): Boolean = isComma(element)
 
   override fun getSplitText(data: ListWithElements): String = CodeInsightBundle.message("intention.name.split.comma.values")
   override fun getJoinText(data: ListWithElements): String = CodeInsightBundle.message("intention.name.join.comma.values")

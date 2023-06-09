@@ -13,10 +13,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 
 internal interface GitLabMergeRequestDetailsInfoViewModel : CodeReviewDetailsViewModel {
   val mergeRequest: GitLabMergeRequest
-
-  val targetBranch: Flow<String>
-  val sourceBranch: Flow<String>
-
   val showTimelineRequests: Flow<Unit>
 
   fun showTimeline()
@@ -34,8 +30,6 @@ internal class GitLabMergeRequestDetailsInfoViewModelImpl(
 
   override val title: Flow<String> = mergeRequest.title
   override val description: Flow<String> = mergeRequest.description
-  override val targetBranch: Flow<String> = mergeRequest.targetBranch
-  override val sourceBranch: Flow<String> = mergeRequest.sourceBranch
   override val reviewRequestState: Flow<ReviewRequestState> = mergeRequest.reviewRequestState
 
   private val _showTimelineRequests = MutableSharedFlow<Unit>()

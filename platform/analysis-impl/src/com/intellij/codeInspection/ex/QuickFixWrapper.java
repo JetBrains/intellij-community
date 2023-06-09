@@ -45,7 +45,10 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
     final QuickFix<?> fix = fixes[fixNumber];
     if (fix instanceof ModCommandQuickFix modCommandFix) {
-      return new ModCommandQuickFixAction(descriptor, modCommandFix).asIntention();
+      IntentionAction intention = new ModCommandQuickFixAction(descriptor, modCommandFix).asIntention();
+      PsiFile file = descriptor.getPsiElement().getContainingFile();
+      intention.isAvailable(file.getProject(), null, file); // cache presentation in wrapper
+      return intention;
     }
     return fix instanceof IntentionAction ? (IntentionAction)fix : new QuickFixWrapper(descriptor, (LocalQuickFix)fix);
   }
@@ -134,7 +137,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
   /**
    * @return fix wrapped by this {@link QuickFixWrapper}
-   * @deprecated use {@link QuickFixWrapper#unwrap(IntentionAction)} instead. Avoid {@code instanceof QuickFixWrapper} checks,
+   * @deprecated use {@link QuickFixWrapper#unwrap(CommonIntentionAction)} instead. Avoid {@code instanceof QuickFixWrapper} checks,
    * as the implementation may be different in the future
    */
   @Deprecated
@@ -150,8 +153,14 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
   }
 
   @TestOnly
-  public ProblemHighlightType getHighlightType() {
-    return myDescriptor.getHighlightType();
+  public static @Nullable ProblemHighlightType getHighlightType(@NotNull IntentionAction action) {
+    if (action instanceof QuickFixWrapper wrapper) {
+      return wrapper.myDescriptor.getHighlightType();
+    }
+    if (ModCommandAction.unwrap(action) instanceof ModCommandQuickFixAction qfAction) {
+      return qfAction.myDescriptor.getHighlightType();
+    }
+    return null;
   }
 
   @Nullable
@@ -189,7 +198,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
   @Override
   public @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
-    return myFix.getRangesToHighlight(editor.getProject(), myDescriptor);
+    return myFix.getRangesToHighlight(file.getProject(), myDescriptor);
   }
 
   private static class ModCommandQuickFixAction implements ModCommandAction {
@@ -228,6 +237,11 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     @Override
     public @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
       return myFix.generatePreview(context.project(), myDescriptor.getDescriptorForPreview(context.file()));
+    }
+
+    @Override
+    public String toString() {
+      return "ModCommandQuickFixAction[fix=" + myFix + "]";
     }
   }
 }

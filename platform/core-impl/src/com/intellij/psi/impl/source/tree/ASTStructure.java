@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -17,8 +17,7 @@ public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
   }
 
   @Override
-  @NotNull
-  public ASTNode getRoot() {
+  public @NotNull ASTNode getRoot() {
     return myRoot;
   }
 
@@ -56,9 +55,8 @@ public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
   public void disposeChildren(ASTNode[] nodes, int count) {
   }
 
-  @NotNull
   @Override
-  public CharSequence toString(@NotNull ASTNode node) {
+  public @NotNull CharSequence toString(@NotNull ASTNode node) {
     return node.getChars();
   }
 

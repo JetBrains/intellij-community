@@ -6,7 +6,7 @@ enum class SettingsPreferencesKind {
 
   companion object {
     private val noneList = listOf(None)
-    val keysWithoutNone = values().toList() - noneList
+    val keysWithoutNone: List<SettingsPreferencesKind> = values().toList() - noneList
   }
 }
 
@@ -50,5 +50,5 @@ data class SettingsPreferences(
     )
   }
 
-  fun toListOfTrue(settings: Settings) = toList(settings).filter { it.second }.map { it.first }
+  fun toListOfTrue(settings: Settings): List<SettingsPreferencesKind> = toList(settings).filter { it.second }.map { it.first }
 }

@@ -18,7 +18,7 @@ class UPhiValue private constructor(val values: Set<UValue>) : UValueBase() {
     private const val PHI_LIMIT = 4
 
     fun create(values: Iterable<UValue>): UValue {
-      val flattenedValues = values.flatMapTo(linkedSetOf<UValue>()) { (it as? UPhiValue)?.values ?: listOf(it) }
+      val flattenedValues = values.flatMapTo(linkedSetOf()) { (it as? UPhiValue)?.values ?: listOf(it) }
       if (flattenedValues.size <= 1) {
         throw AssertionError("UPhiValue should contain two or more values: $flattenedValues")
       }

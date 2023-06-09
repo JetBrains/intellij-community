@@ -312,7 +312,7 @@ data class MarkersMapping(val hostMarker: RangeMarker,
   }
 }
 
-infix fun TextRange?.union(another: TextRange?) = another?.let { this?.union(it) ?: it } ?: this
+infix fun TextRange?.union(another: TextRange?): TextRange? = another?.let { this?.union(it) ?: it } ?: this
 
 inline val Segment.range: TextRange get() = TextRange.create(this)
 inline val RangeMarker.range: TextRange get() = this.textRange
@@ -321,7 +321,7 @@ inline val PsiLanguageInjectionHost.Shred.innerRange: TextRange
   get() = TextRange.create(this.range.startOffset + this.prefix.length,
                            this.range.endOffset - this.suffix.length)
 
-val PsiLanguageInjectionHost.contentRange
+val PsiLanguageInjectionHost.contentRange: TextRange
   get() = ElementManipulators.getValueTextRange(this).shiftRight(textRange.startOffset)
 
 private val PsiElement.withNextSiblings: Sequence<PsiElement>

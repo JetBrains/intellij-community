@@ -16,7 +16,10 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -27,7 +30,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -40,6 +42,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.stream.Stream;
 
 public class TrivialStringConcatenationInspection extends BaseInspection implements CleanupLocalInspectionTool {
+  public boolean skipIfNecessary = true;
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(
+      OptPane.checkbox("skipIfNecessary",
+                       InspectionGadgetsBundle.message("trivial.string.concatenation.option.only.necessary"))
+    );
+  }
 
   @Override
   @NotNull
@@ -97,7 +108,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
     }
 
     String text = builder.toString().trim();
-    if(!seenStringBefore){
+    if (!seenStringBefore) {
       text = "String.valueOf(" + text + ')';
     }
 
@@ -244,11 +255,11 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryTemporaryObjectFix();
   }
 
-  private static class UnnecessaryTemporaryObjectFix extends InspectionGadgetsFix {
+  private static class UnnecessaryTemporaryObjectFix extends PsiUpdateModCommandQuickFix {
 
     private final @IntentionName String m_name;
 
@@ -269,9 +280,9 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement current = descriptor.getPsiElement();
-      while (current != null && current.getParent() instanceof PsiParenthesizedExpression) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      PsiElement current = startElement;
+      while (current.getParent() instanceof PsiParenthesizedExpression) {
         current = current.getParent();
       }
       if (!(current instanceof PsiExpression expression)) {
@@ -323,7 +334,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
     return new TrivialStringConcatenationVisitor();
   }
 
-  private static class TrivialStringConcatenationVisitor extends BaseInspectionVisitor {
+  private class TrivialStringConcatenationVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
@@ -332,10 +343,18 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
         return;
       }
       final PsiExpression[] operands = expression.getOperands();
-      for (PsiExpression operand : operands) {
+      boolean seenString = false;
+      for (int i = 0; i < operands.length; i++) {
+        PsiExpression operand = operands[i];
         operand = PsiUtil.skipParenthesizedExprDown(operand);
         if (operand == null) {
           return;
+        }
+        if (i > 0 && !seenString) {
+          PsiExpression previous = operands[i - 1];
+          if (isString(previous)) {
+            seenString = true;
+          }
         }
         if (!ExpressionUtils.isEmptyStringLiteral(operand)) {
           continue;
@@ -344,8 +363,42 @@ public class TrivialStringConcatenationInspection extends BaseInspection impleme
             ContainerUtil.exists(operands, o -> !TypeUtils.isJavaLangString(o.getType()))) {
           return;
         }
+        if (skipIfNecessary && !seenString) {
+          if (i == operands.length - 1) {
+            //example (where x is int):
+            // ... + x + "";
+            continue;
+          }
+
+          PsiExpression next = operands[i + 1];
+          if (!isString(next)) {
+            if (operands.length == 2) {
+              //example (where x is int):
+              // "" + x;
+              continue;
+            }
+
+            if (i == 0) {
+              PsiExpression nextNext = operands[i + 2];
+              if (!isString(nextNext) || ExpressionUtils.isEmptyStringLiteral(nextNext)) {
+                //example (where x is int):
+                // "" + x + 1 + ...;
+                continue;
+              }
+            }
+            else {
+              //example (where x is int):
+              // ... + x + "" + x + ...;
+              continue;
+            }
+          }
+        }
         registerError(operand, operand);
       }
+    }
+
+    private static boolean isString(PsiExpression next) {
+      return next != null && TypeUtils.isJavaLangString(next.getType());
     }
   }
 }

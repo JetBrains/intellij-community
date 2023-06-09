@@ -1,0 +1,2 @@
+val foo: String? = "text"
+val bar = "${foo}bar"

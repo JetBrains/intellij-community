@@ -67,7 +67,6 @@ data class JsonProjectScanningHistoryTimes(
 data class JsonProjectDumbIndexingHistoryTimes(
   val scanningIds: Set<Long> = setOf(),
   val contentLoadingVisibleTime: JsonDuration = JsonDuration(),
-  val readLockWaitingVisibleTime: JsonDuration = JsonDuration(),
   val refreshedFilesScanTime: JsonDuration = JsonDuration(),
   val isAppliedAllValuesSeparately: Boolean = true,
   val separateApplyingIndexesVisibleTime: JsonDuration = JsonDuration(),

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.diagnostic.Logger
@@ -12,7 +12,6 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.TabGroupId
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogUi
@@ -25,20 +24,21 @@ import com.intellij.vcs.log.impl.VcsProjectLog.ProjectLogListener
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem
 import com.intellij.vcs.log.visible.filters.getPresentation
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
 class VcsLogTabsManager internal constructor(private val project: Project,
                                              private val uiProperties: VcsLogProjectTabsProperties,
-                                             busConnection: SimpleMessageBusConnection) {
+                                             scope: CoroutineScope) {
   private var isLogDisposing = false
 
   // for statistics
   val tabs: Collection<String> get() = uiProperties.tabs.keys
 
   init {
-    busConnection.subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, object : ProjectLogListener {
+    project.messageBus.connect(scope).subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, object : ProjectLogListener {
       override fun logCreated(manager: VcsLogManager) {
         isLogDisposing = false
         val savedTabs = uiProperties.tabs

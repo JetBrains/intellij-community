@@ -6,10 +6,14 @@ import com.intellij.collaboration.ui.toolwindow.ReviewListTabComponentDescriptor
 import com.intellij.ide.DataManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLazyProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
@@ -22,45 +26,40 @@ import javax.swing.JComponent
 
 internal class GitLabReviewListTabComponentDescriptor(
   project: Project,
-  cs: CoroutineScope,
+  parentCs: CoroutineScope,
   accountManager: GitLabAccountManager,
   ctx: GitLabProjectUIContext
 ) : ReviewListTabComponentDescriptor {
+  private val cs = parentCs.childScope(Dispatchers.Default)
 
-  override val viewModel: GitLabMergeRequestsListViewModel
+  private val avatarIconsProvider: IconsProvider<GitLabUserDTO> = ctx.avatarIconProvider
+  private val projectData: GitLabLazyProject = ctx.projectData
 
-  override val component: JComponent
+  private val accountVm = GitLabAccountViewModelImpl(project, cs, ctx.account, accountManager)
+  private val filterVm: GitLabMergeRequestsFiltersViewModel = GitLabMergeRequestsFiltersViewModelImpl(
+    cs,
+    currentUser = ctx.currentUser,
+    historyModel = GitLabMergeRequestsFiltersHistoryModel(project.service<GitLabMergeRequestsPersistentFiltersHistory>()),
+    avatarIconsProvider = avatarIconsProvider,
+    projectData = projectData
+  )
 
-  init {
-    val avatarIconsProvider: IconsProvider<GitLabUserDTO> = ctx.avatarIconProvider
+  override val viewModel: GitLabMergeRequestsListViewModel = GitLabMergeRequestsListViewModelImpl(
+    cs,
+    filterVm = filterVm,
+    repository = ctx.projectName,
+    avatarIconsProvider = avatarIconsProvider,
+    tokenRefreshFlow = ctx.tokenRefreshFlow,
+    loaderSupplier = { filtersValue -> projectData.mergeRequests.getListLoader(filtersValue.toSearchQuery()) }
+  )
 
-    val projectData = ctx.projectData
-    val filterVm: GitLabMergeRequestsFiltersViewModel = GitLabMergeRequestsFiltersViewModelImpl(
-      cs,
-      currentUser = ctx.currentUser,
-      historyModel = GitLabMergeRequestsFiltersHistoryModel(project.service<GitLabMergeRequestsPersistentFiltersHistory>()),
-      avatarIconsProvider = avatarIconsProvider,
-      projectData = projectData
-    )
-
-    viewModel = GitLabMergeRequestsListViewModelImpl(
-      cs,
-      filterVm = filterVm,
-      repository = ctx.projectName,
-      account = ctx.account,
-      avatarIconsProvider = avatarIconsProvider,
-      accountManager = accountManager,
-      tokenRefreshFlow = ctx.tokenRefreshFlow,
-      loaderSupplier = { filtersValue -> projectData.mergeRequests.getListLoader(filtersValue.toSearchQuery()) }
-    )
-
-    component = GitLabMergeRequestsPanelFactory().create(project, cs, viewModel).also {
-      DataManager.registerDataProvider(it) { dataId ->
+  override val component: JComponent = GitLabMergeRequestsPanelFactory()
+    .create(cs.childScope(Dispatchers.Main), accountVm, viewModel).also { panel ->
+      DataManager.registerDataProvider(panel) { dataId ->
         when {
           GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> ctx.filesController
           else -> null
         }
       }
     }
-  }
 }

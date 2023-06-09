@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "OVERRIDE_DEPRECATION", "ReplacePutWithAssignment", "LeakingThis")
 
 package com.intellij.openapi.wm.impl.status
@@ -20,10 +20,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.TaskInfo
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.BalloonHandler
@@ -104,10 +101,10 @@ open class IdeStatusBarImpl internal constructor(
   private val listeners = EventDispatcher.create(StatusBarListener::class.java)
 
   companion object {
-    internal val HOVERED_WIDGET_ID = DataKey.create<String>("HOVERED_WIDGET_ID")
-    internal val WIDGET_EFFECT_KEY = Key.create<WidgetEffect>("TextPanel.widgetEffect")
+    internal val HOVERED_WIDGET_ID: DataKey<String> = DataKey.create("HOVERED_WIDGET_ID")
+    internal val WIDGET_EFFECT_KEY: Key<WidgetEffect> = Key.create("TextPanel.widgetEffect")
 
-    const val NAVBAR_WIDGET_KEY = "NavBar"
+    const val NAVBAR_WIDGET_KEY: String = "NavBar"
   }
 
   override fun findChild(c: Component): StatusBar {
@@ -275,7 +272,9 @@ open class IdeStatusBarImpl internal constructor(
   internal suspend fun init(project: Project, extraItems: List<kotlin.Pair<StatusBarWidget, LoadingOrder>> = emptyList()) {
     val service = project.service<StatusBarWidgetsManager>()
     val items = runActivity("status bar pre-init") {
-      service.init()
+      blockingContext {
+        service.init()
+      }
     }
     runActivity("status bar init") {
       doInit(widgets = items + extraItems, parentDisposable = service)
@@ -286,14 +285,18 @@ open class IdeStatusBarImpl internal constructor(
     val items: List<WidgetBean> = runActivity("status bar widget creating") {
       widgets.map { (widget, anchor) ->
         val component = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          val component = wrap(widget)
-          if (component is StatusBarWidgetWrapper) {
-            component.beforeUpdate()
+          blockingContext {
+            val component = wrap(widget)
+            if (component is StatusBarWidgetWrapper) {
+              component.beforeUpdate()
+            }
+            component
           }
-          component
         }
         val item = WidgetBean(widget = widget, position = Position.RIGHT, component = component, order = anchor)
-        widget.install(this)
+        blockingContext {
+          widget.install(this)
+        }
         Disposer.register(parentDisposable, widget)
         item
       }
@@ -720,7 +723,7 @@ private class WidgetBean(
 
 @RequiresEdt
 internal fun createComponentByWidgetPresentation(presentation: WidgetPresentation, project: Project, scope: CoroutineScope): JComponent {
-  val toolTipTextSupplier = { runBlockingModal(project, title = "") { presentation.getTooltipText() } }
+  val toolTipTextSupplier = { withModalProgressBlocking(project, title = "") { presentation.getTooltipText() } }
   return when (presentation) {
     is TextWidgetPresentation -> {
       val panel = TextPanel(toolTipTextSupplier)
@@ -778,7 +781,7 @@ private fun configurePresentationComponent(presentation: WidgetPresentation, pan
     StatusBarWidgetClickListener(it).installOn(panel, true)
   }
   ClientProperty.put(panel, HelpTooltipManager.SHORTCUT_PROPERTY,
-                     Supplier { runBlockingModal(ModalTaskOwner.component(panel), title = "") { presentation.getShortcutText() } })
+                     Supplier { withModalProgressBlocking(ModalTaskOwner.component(panel), title = "") { presentation.getShortcutText() } })
 }
 
 private fun wrap(widget: StatusBarWidget): JComponent {

@@ -83,7 +83,7 @@ internal class SingleContentLayout(
     return (component as? DataProvider)?.let(SingleContentSupplier.KEY::getData)
   }
 
-  fun getSupplier() = getSingleContentOrNull()?.getSupplier()
+  fun getSupplier(): SingleContentSupplier? = getSingleContentOrNull()?.getSupplier()
 
   private fun getSingleContentOrNull(): Content? {
     return if (Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {

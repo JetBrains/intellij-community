@@ -17,7 +17,6 @@ import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.project.SingleTaskExecutor.AutoclosableProgressive
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
-import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import kotlinx.coroutines.flow.StateFlow
@@ -92,7 +91,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
   private val mySingleTaskExecutor: SingleTaskExecutor
   private val mySuspended = AtomicBoolean()
   private val myListener: ExecutorStateListener
-  protected val guiSuspender = MergingQueueGuiSuspender()
+  protected val guiSuspender: MergingQueueGuiSuspender = MergingQueueGuiSuspender()
   private val myProgressTitle: @ProgressTitle String
   private val mySuspendedText: @ProgressText String
   private val backgroundTasksSubmitted = AtomicInteger(0)
@@ -169,7 +168,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
       catch (t: Throwable) {
         task.close()
         mySingleTaskExecutor.clearScheduledFlag()
-        LOG.error("Failed to start background index update task")
+        LOG.error("Failed to start background index update task", t)
         throw t
       }
     }
@@ -204,8 +203,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
     }
 
     ProgressSuspender.markSuspendable(visibleIndicator, mySuspendedText).use { suspender ->
-      return ShutDownTracker.getInstance().computeWithStopperThread<SubmissionReceipt?, RuntimeException>(
-        Thread.currentThread()) { processTasksWithProgress(suspender, visibleIndicator, null) }
+      return processTasksWithProgress(suspender, visibleIndicator, null)
     }
   }
 

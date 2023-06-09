@@ -25,11 +25,15 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 
 public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JTextField myKeepBlankLines;
@@ -46,7 +50,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JCheckBox myInEmptyTag;
   private JCheckBox myWrapText;
   private JCheckBox myKeepLineBreaksInText;
-  private JComboBox myWhiteSpaceAroundCDATA;
+  private JComboBox<String> myWhiteSpaceAroundCDATA;
   private JCheckBox myKeepWhitespaceInsideCDATACheckBox;
   private JBScrollPane myJBScrollPane;
   private JPanel myRightMarginPanel;
@@ -55,10 +59,12 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   public CodeStyleXmlPanel(CodeStyleSettings settings) {
     super(settings);
     installPreviewPanel(myPreviewPanel);
-
     fillWrappingCombo(myWrapAttributes);
-
     addPanelToWatch(myPanel);
+    myWhiteSpaceAroundCDATA.setModel(new CollectionComboBoxModel<@Nls String>(
+      Arrays.asList(XmlBundle.message("preserve"),
+                    XmlBundle.message("remove.keep.with.tags"),
+                    XmlBundle.message("add.new.lines"))));
   }
 
   @Override

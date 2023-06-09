@@ -68,7 +68,7 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
         val classSymbol = classDescriptor.ktSymbol
 
         val copyFunction: KtCallableSymbol? = context.withAnalysisSession {
-            classSymbol.getMemberScope().getCallableSymbols { it == Name.identifier("copy") }.singleOrNull {
+            classSymbol.getMemberScope().getCallableSymbols(Name.identifier("copy")).singleOrNull {
                 it.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
             }
         }

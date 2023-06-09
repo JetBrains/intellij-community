@@ -4,6 +4,7 @@ package com.intellij.analysis.problemsView.toolWindow
 import com.intellij.analysis.problemsView.FileProblem
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.ide.projectView.PresentationData
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,7 +15,9 @@ import com.intellij.ui.tree.LeafState
 import java.util.Objects.hash
 
 class ProblemNode(parent: Node, val file: VirtualFile, val problem: Problem) : Node(parent) {
-
+  init {
+    Logger.getInstance(javaClass).assertTrue(project != null, this)
+  }
   var text: String = ""
     private set
 
@@ -27,8 +30,8 @@ class ProblemNode(parent: Node, val file: VirtualFile, val problem: Problem) : N
   var severity: Int = 0
     private set
 
-  override val descriptor: OpenFileDescriptor?
-    get() = project?.let { OpenFileDescriptor(it, file, line, column) }
+  override val descriptor: OpenFileDescriptor
+    get() = OpenFileDescriptor(project!!, file, line, column)
 
   override fun getLeafState(): LeafState = LeafState.ALWAYS
 

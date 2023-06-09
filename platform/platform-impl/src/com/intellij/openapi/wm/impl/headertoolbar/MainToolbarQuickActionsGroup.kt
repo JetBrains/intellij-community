@@ -14,5 +14,5 @@ class MainToolbarQuickActionsGroup: DefaultActionGroup() {
     e.presentation.isEnabledAndVisible = ExperimentalUI.isNewUI() && e.place == ActionPlaces.MAIN_TOOLBAR
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

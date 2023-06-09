@@ -672,6 +672,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @NotNull
   protected State getNodeStatus(@NotNull ChangesBrowserNode<?> node) {
+    if (getInclusionModel().isInclusionEmpty()) return State.NOT_SELECTED;
+
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
@@ -688,6 +690,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         hasIncluded = true;
         hasExcluded = true;
       }
+      if (hasIncluded && hasExcluded) break;
     }
 
     if (hasIncluded && hasExcluded) return State.DONT_CARE;

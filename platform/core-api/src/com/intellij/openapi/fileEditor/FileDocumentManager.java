@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkListener;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
@@ -163,7 +164,12 @@ public abstract class FileDocumentManager implements SavingRequestor {
    *
    * @param document the document to reload.
    */
-  public abstract void reloadFromDisk(@NotNull Document document);
+  public void reloadFromDisk(@NotNull Document document) {
+    VirtualFile file = Objects.requireNonNull(getFile(document));
+    reloadFromDisk(document, ProjectLocator.getInstance().guessProjectForFile(file));
+  }
+
+  public abstract void reloadFromDisk(@NotNull Document document, @Nullable Project project);
 
   public abstract @NotNull String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project);
 

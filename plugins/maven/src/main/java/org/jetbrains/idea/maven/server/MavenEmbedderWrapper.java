@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory.Transformer;
@@ -52,7 +55,8 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   @NotNull
   public Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<VirtualFile> files,
                                                                @NotNull MavenExplicitProfiles explicitProfiles,
-                                                               @Nullable MavenProgressIndicator progressIndicator,
+                                                               @Nullable ProgressIndicator indicator,
+                                                               @Nullable MavenSyncConsole syncConsole,
                                                                @Nullable MavenConsole console,
                                                                @Nullable MavenWorkspaceMap workspaceMap,
                                                                boolean updateSnapshots)
@@ -70,7 +74,8 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
       updateSnapshots
     );
 
-    var results = runLongRunningTask((embedder, taskId) -> embedder.resolveProjects(taskId, request, ourToken), progressIndicator, console);
+    var results = runLongRunningTask(
+      (embedder, taskId) -> embedder.resolveProjects(taskId, request, ourToken), indicator, syncConsole, console);
 
     if (transformer != Transformer.ID) {
       for (MavenServerExecutionResult result : results) {
@@ -104,15 +109,17 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   @NotNull
   public MavenArtifact resolve(@NotNull MavenArtifactInfo info,
                                @NotNull List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
-    return resolveArtifacts(List.of(new MavenArtifactResolutionRequest(info, remoteRepositories)), null, null).get(0);
+    var requests = List.of(new MavenArtifactResolutionRequest(info, remoteRepositories));
+    return resolveArtifacts(requests, null, null, null).get(0);
   }
 
   @NotNull
   public List<MavenArtifact> resolveArtifacts(@NotNull Collection<MavenArtifactResolutionRequest> requests,
-                                              @Nullable MavenProgressIndicator progressIndicator,
+                                              @Nullable ProgressIndicator indicator,
+                                              @Nullable MavenSyncConsole syncConsole,
                                               @Nullable MavenConsole console) throws MavenProcessCanceledException {
     return runLongRunningTask(
-      (embedder, longRunningTaskId) -> embedder.resolveArtifacts(longRunningTaskId, requests, ourToken), progressIndicator, console
+      (embedder, taskId) -> embedder.resolveArtifacts(taskId, requests, ourToken), indicator, syncConsole, console
     );
   }
 
@@ -153,8 +160,10 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
       }
     }
 
+    var indicator = null == progressIndicator ? null : progressIndicator.getIndicator();
+    var syncConsole = null == progressIndicator ? null : progressIndicator.getSyncConsole();
     return runLongRunningTask(
-      (embedder, taskId) -> embedder.resolvePlugins(taskId, pluginResolutionRequests, ourToken), progressIndicator, console);
+      (embedder, taskId) -> embedder.resolvePlugins(taskId, pluginResolutionRequests, ourToken), indicator, syncConsole, console);
   }
 
   public Collection<MavenArtifact> resolvePlugin(@NotNull MavenPlugin plugin, @NotNull NativeMavenProjectHolder nativeMavenProject)
@@ -175,8 +184,10 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                                     @Nullable MavenProgressIndicator progressIndicator,
                                                     @Nullable MavenConsole console)
     throws MavenProcessCanceledException {
+    var indicator = null == progressIndicator ? null : progressIndicator.getIndicator();
+    var syncConsole = null == progressIndicator ? null : progressIndicator.getSyncConsole();
     return runLongRunningTask(
-      (embedder, longRunningTaskId) -> embedder.executeGoal(longRunningTaskId, requests, goal, ourToken), progressIndicator, console);
+      (embedder, taskId) -> embedder.executeGoal(taskId, requests, goal, ourToken), indicator, syncConsole, console);
   }
 
   @NotNull
@@ -199,6 +210,11 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     return perform(() -> getOrCreateWrappee().resolveAndGetArchetypeDescriptor(groupId, artifactId, version, repositories, url, ourToken));
   }
 
+
+  @TestOnly
+  public MavenServerEmbedder getEmbedder() throws RemoteException {
+    return getOrCreateWrappee();
+  }
   public void release() {
     MavenServerEmbedder w = getWrappee();
     if (w == null) return;
@@ -219,7 +235,8 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   }
 
   protected abstract <R> R runLongRunningTask(@NotNull LongRunningEmbedderTask<R> task,
-                                              @Nullable MavenProgressIndicator progressIndicator,
+                                              @Nullable ProgressIndicator progressIndicator,
+                                              @Nullable MavenSyncConsole syncConsole,
                                               @Nullable MavenConsole console) throws MavenProcessCanceledException;
 
   @FunctionalInterface

@@ -13,7 +13,7 @@ class ChunkMMappedFileIO(
   private val fileChannel: FileChannel,
   private val mapMode: MapMode
 ) : StorageIO {
-  private val chunks = SmallIndexMap<MappedByteBuffer>(::mapChunk)
+  private val chunks: SmallIndexMap<MappedByteBuffer> = SmallIndexMap(::mapChunk)
 
   private fun mapChunk(chunkId: Int): MappedByteBuffer {
     return fileChannel.map(mapMode, CHUNK_SIZE * chunkId, CHUNK_SIZE)
@@ -98,7 +98,7 @@ class ChunkMMappedFileIO(
     fileChannel.close()
   }
 
-  override fun offsetOutputStream(startPosition: Long) = OffsetOutputStream(this, startPosition)
+  override fun offsetOutputStream(startPosition: Long): OffsetOutputStream = OffsetOutputStream(this, startPosition)
 
   class OffsetOutputStream(
     private val mmapIO: ChunkMMappedFileIO,

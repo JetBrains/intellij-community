@@ -2,9 +2,12 @@ package com.intellij.settingsSync
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.junit.Assert
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
 
   @Test
@@ -110,6 +113,8 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     }
 
     testPluginManager.disablePlugin(git4idea.pluginId)
+    // PluginEnabledStateListener.invoke is called in coroutine scope, so we'll have to wait a bit until it's ready
+    testScheduler.runCurrent()
 
     assertPluginManagerState {
       quickJump(enabled = true)
@@ -117,9 +122,11 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       git4idea(enabled = false)
     }
 
+    // here we test concurrency, because PluginEnabledStateListener processes only plugins that were affected
     testPluginManager.disablePlugin(typengo.pluginId)
     testPluginManager.enablePlugin(git4idea.pluginId)
 
+    testScheduler.runCurrent()
     assertPluginManagerState {
       quickJump(enabled = true)
       typengo(enabled = false)
@@ -275,5 +282,50 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
 
     assertIdeState(pushedState)
     assertPluginManagerState(pushedState)
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-303581"])
+  fun `turn-off sync of plugin that fails to install`() {
+    testPluginManager.addPluginDescriptors(git4idea)
+    pluginManager.updateStateFromIdeOnStart(null)
+
+    testPluginManager.installer.installPluginExceptionThrower = {
+      if (it == quickJump.pluginId)
+        throw RuntimeException("Some arbitrary install exception")
+    }
+
+    val pushedState = state {
+      git4idea(enabled = false)
+      quickJump(enabled = true)
+      typengo(enabled = true)
+    }
+
+    pluginManager.pushChangesToIde(pushedState)
+
+    assertIdeState{
+      git4idea(enabled = false)
+      typengo(enabled = true)
+    }
+    assertPluginManagerState(pushedState)
+    Thread.sleep(100)
+    assertFalse(SettingsSyncSettings.getInstance().isSubcategoryEnabled(SettingsCategory.PLUGINS, quickJump.idString))
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-305325"])
+  fun `don't disable incompatible on start`() {
+    testPluginManager.addPluginDescriptors(git4idea, cvsOutdated.withEnabled(false))
+    pluginManager.updateStateFromIdeOnStart(state {
+      cvsOutdated(enabled = true)
+    })
+
+    assertIdeState {
+      git4idea(enabled = true)
+      cvsOutdated(enabled = false)
+    }
+    assertPluginManagerState {
+      cvsOutdated(enabled = true) // remains the same as it's incompatible
+    }
   }
 }

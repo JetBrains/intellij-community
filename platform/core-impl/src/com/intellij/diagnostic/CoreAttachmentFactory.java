@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class CoreAttachmentFactory {
+public final class CoreAttachmentFactory {
   private static final Logger LOG = Logger.getInstance(CoreAttachmentFactory.class);
   
   public static @NotNull Attachment createAttachment(@NotNull Document document) {

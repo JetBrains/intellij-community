@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.StreamProvider
@@ -9,6 +9,8 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -36,7 +38,7 @@ import kotlin.time.Duration.Companion.milliseconds
 internal val LOG = logger<IcsManager>()
 
 internal val icsManager by lazy(LazyThreadSafetyMode.NONE) {
-  ApplicationLoadListener.EP_NAME.findExtensionOrFail(IcsApplicationLoadListener::class.java).icsManager!!
+  service<IcsManagerService>().icsManager
 }
 
 @OptIn(FlowPreview::class)
@@ -232,20 +234,26 @@ class IcsManager @JvmOverloads constructor(
   }
 }
 
-internal class IcsApplicationLoadListener : ApplicationLoadListener {
-  var icsManager: IcsManager? = null
-    private set
+@Service
+internal class IcsManagerService {
+  lateinit var icsManager: IcsManager
 
+  fun init(app: Application, configPath: Path) {
+    val customPath = System.getProperty("ics.settingsRepository")
+    val pluginSystemDir = if (customPath == null) configPath.resolve("settingsRepository") else Path.of(FileUtil.expandUserHome(customPath))
+    @Suppress("DEPRECATION")
+    val icsManager = IcsManager(pluginSystemDir, app.coroutineScope.childScope())
+    this.icsManager = icsManager
+    icsManager.beforeApplicationLoaded(app)
+  }
+}
+
+private class IcsApplicationLoadListener : ApplicationLoadListener {
   override fun beforeApplicationLoaded(application: Application, configPath: Path) {
     if (application.isUnitTestMode) {
       return
     }
 
-    val customPath = System.getProperty("ics.settingsRepository")
-    val pluginSystemDir = if (customPath == null) configPath.resolve("settingsRepository") else Path.of(FileUtil.expandUserHome(customPath))
-    @Suppress("DEPRECATION")
-    val icsManager = IcsManager(pluginSystemDir, application.coroutineScope.childScope())
-    this.icsManager = icsManager
-    icsManager.beforeApplicationLoaded(application)
+    application.service<IcsManagerService>().init(application, configPath)
   }
 }

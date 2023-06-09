@@ -101,47 +101,53 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
         if (starterContext.isCreatingNewProject) {
             assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
         }
-        
+
         if (configType == ComposePWInitialStep.ComposeConfigurationType.SINGLE_PLATFORM) {
-            if (platform == ComposePWInitialStep.ComposePlatform.DESKTOP) {
-                assets.add(
-                    GeneratorTemplateFile(
-                        "build.gradle.kts",
-                        ftManager.getCodeTemplate(ComposeModuleTemplateGroup.COMPOSE_DESKTOP_BUILD_GRADLE)
+            when (platform) {
+                ComposePWInitialStep.ComposePlatform.DESKTOP -> {
+                    assets.add(
+                        GeneratorTemplateFile(
+                            "build.gradle.kts",
+                            ftManager.getCodeTemplate(ComposeModuleTemplateGroup.COMPOSE_DESKTOP_BUILD_GRADLE)
+                        )
                     )
-                )
-                assets.add(
-                    GeneratorTemplateFile(
-                        "src/jvmMain/kotlin/Main.kt",
-                        ftManager.getCodeTemplate(ComposeModuleTemplateGroup.COMPOSE_DESKTOP_MAINKT)
+                    assets.add(
+                        GeneratorTemplateFile(
+                            "src/jvmMain/kotlin/Main.kt",
+                            ftManager.getCodeTemplate(ComposeModuleTemplateGroup.COMPOSE_DESKTOP_MAINKT)
+                        )
                     )
-                )
-                assets.add(GeneratorEmptyDirectory("src/jvmMain/resources"))
-                assets.add(GeneratorEmptyDirectory("src/jvmTest/kotlin"))
-                assets.add(GeneratorEmptyDirectory("src/jvmTest/resources"))
-            } else if (platform == ComposePWInitialStep.ComposePlatform.WEB) {
-                assets.add(
-                    GeneratorTemplateFile(
-                        "build.gradle.kts",
-                        ftManager.getCodeTemplate(ComposeModuleTemplateGroup.COMPOSE_WEB_BUILD_GRADLE)
+                    assets.add(GeneratorEmptyDirectory("src/jvmMain/resources"))
+                    assets.add(GeneratorEmptyDirectory("src/jvmTest/kotlin"))
+                    assets.add(GeneratorEmptyDirectory("src/jvmTest/resources"))
+                }
+
+                ComposePWInitialStep.ComposePlatform.WEB -> {
+                    assets.add(
+                        GeneratorTemplateFile(
+                            "build.gradle.kts",
+                            ftManager.getCodeTemplate(ComposeModuleTemplateGroup.COMPOSE_WEB_BUILD_GRADLE)
+                        )
                     )
-                )
-                assets.add(
-                    GeneratorTemplateFile(
-                        "src/jsMain/kotlin/Main.kt",
-                        ftManager.getCodeTemplate(ComposeModuleTemplateGroup.COMPOSE_WEB_MAINKT)
+                    assets.add(
+                        GeneratorTemplateFile(
+                            "src/jsMain/kotlin/Main.kt",
+                            ftManager.getCodeTemplate(ComposeModuleTemplateGroup.COMPOSE_WEB_MAINKT)
+                        )
                     )
-                )
-                assets.add(
-                    GeneratorTemplateFile(
-                        "src/jsMain/resources/index.html",
-                        ftManager.getCodeTemplate(ComposeModuleTemplateGroup.COMPOSE_WEB_INDEX_HTML)
+                    assets.add(
+                        GeneratorTemplateFile(
+                            "src/jsMain/resources/index.html",
+                            ftManager.getCodeTemplate(ComposeModuleTemplateGroup.COMPOSE_WEB_INDEX_HTML)
+                        )
                     )
-                )
-                assets.add(GeneratorEmptyDirectory("src/jsTest/kotlin"))
-                assets.add(GeneratorEmptyDirectory("src/jsTest/resources"))
-            } else {
-                throw IllegalStateException("Unsupported platform!")
+                    assets.add(GeneratorEmptyDirectory("src/jsTest/kotlin"))
+                    assets.add(GeneratorEmptyDirectory("src/jsTest/resources"))
+                }
+
+                else -> {
+                    throw IllegalStateException("Unsupported platform!")
+                }
             }
         } else if (configType == ComposePWInitialStep.ComposeConfigurationType.MULTI_PLATFORM) {
             assets.addAll(getMppAssets(ftManager, packagePath))

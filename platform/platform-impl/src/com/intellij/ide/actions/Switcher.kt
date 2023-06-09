@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
+import com.intellij.codeInsight.daemon.HighlightingPassesCache
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
@@ -76,12 +77,13 @@ import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 import kotlin.math.max
+import kotlin.math.min
 
 /**
  * @author Konstantin Bulenkov
  */
 object Switcher : BaseSwitcherAction(null) {
-  val SWITCHER_KEY = Key.create<SwitcherPanel>("SWITCHER_KEY")
+  val SWITCHER_KEY: Key<SwitcherPanel> = Key.create("SWITCHER_KEY")
 
   @Deprecated("Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, boolean, boolean)}")
   @JvmStatic
@@ -102,7 +104,7 @@ object Switcher : BaseSwitcherAction(null) {
     val toolWindows: JBList<SwitcherListItem>
     val files: JBList<SwitcherVirtualFile>
     val cbShowOnlyEditedFiles: JCheckBox?
-    val pathLabel = HintUtil.createAdComponent(
+    val pathLabel: JLabel = HintUtil.createAdComponent(
       " ",
       if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Advertiser.border()
       else JBUI.Borders.compound(
@@ -332,6 +334,15 @@ object Switcher : BaseSwitcherAction(null) {
       old?.cancel()
       project.putUserData(SWITCHER_KEY, this)
       myPopup.showCenteredInCurrentWindow(project)
+
+      if (Registry.`is`("highlighting.passes.cache")) {
+        HighlightingPassesCache.getInstance(project).schedule(getNotOpenedRecentFiles());
+      }
+    }
+    private fun getNotOpenedRecentFiles(): List<VirtualFile> {
+      val recentFiles = getInstance(project).fileList
+      val openFiles = FileEditorManager.getInstance(project).openFiles
+      return recentFiles.subtract(openFiles.toSet()).toList()
     }
 
     override fun dispose() {
@@ -423,7 +434,7 @@ object Switcher : BaseSwitcherAction(null) {
       if (files === selectedList) {
         val size = files.itemsCount
         if (size > 0) {
-          val index = Math.min(Math.max(selectedIndex, 0), size - 1)
+          val index = min(max(selectedIndex, 0), size - 1)
           files.selectedIndex = index
           files.ensureIndexIsVisible(index)
         }
@@ -643,7 +654,7 @@ object Switcher : BaseSwitcherAction(null) {
     }
 
     companion object {
-      const val SWITCHER_ELEMENTS_LIMIT = 30
+      const val SWITCHER_ELEMENTS_LIMIT: Int = 30
       private fun collectFiles(project: Project, onlyEdited: Boolean): List<VirtualFile> {
         return if (onlyEdited) IdeDocumentHistory.getInstance(project).changedFiles else getRecentFiles(project)
       }
@@ -753,8 +764,7 @@ object Switcher : BaseSwitcherAction(null) {
       private fun addSmartShortcut(window: SwitcherToolWindow, keymap: MutableMap<String?, SwitcherToolWindow?>): Boolean {
         val title = window.mainText
         if (StringUtil.isEmpty(title)) return false
-        for (i in 0 until title.length) {
-          val c = title[i]
+        for (c in title) {
           if (Character.isUpperCase(c) && addShortcut(keymap, window, c.toString())) {
             return true
           }
@@ -763,7 +773,7 @@ object Switcher : BaseSwitcherAction(null) {
       }
 
       private fun getIndexShortcut(index: Int): String {
-        return Strings.toUpperCase(Integer.toString(index, index + 1))
+        return Strings.toUpperCase(index.toString(radix = (index + 1).coerceIn(2..36)))
       }
 
       private fun findAppropriateWindow(window: EditorWindow?): EditorWindow? {
@@ -807,7 +817,7 @@ object Switcher : BaseSwitcherAction(null) {
       if (size.width < min.width) size.width = min.width
       if (size.height < min.height) size.height = min.height
       if (HORIZONTAL_SCROLLBAR_NEVER != getHorizontalScrollBarPolicy()) return size
-      width = Math.max(size.width, width)
+      width = max(size.width, width)
       size.width = width
       return size
     }

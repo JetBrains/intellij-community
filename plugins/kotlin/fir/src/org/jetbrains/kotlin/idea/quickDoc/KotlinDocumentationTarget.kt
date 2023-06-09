@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callabl
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KtSingleTypeParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -252,12 +253,25 @@ private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
     preBuild: KDocTemplate.() -> Unit = {}
 ) {
     analyze(declaration) {
+        // it's not possible to create symbol for function type parameter, so we need to process this case separately
+        // see KTIJ-22404
+        if (declaration is KtParameter && declaration.isFunctionTypeParameter) {
+            val definition = renderFunctionTypeParameter(declaration) ?: return
+
+            insert(KDocTemplate()) {
+                definition {
+                    append(definition.escape())
+                }
+            }
+            return
+        }
+
         val symbol = symbolFinder(declaration.getSymbol())
         if (symbol !is KtDeclarationSymbol) return
 
         insert(KDocTemplate()) {
             definition {
-                append(HtmlEscapers.htmlEscaper().escape(symbol.render(KotlinDocumentationTarget.RENDERING_OPTIONS)))
+                append(symbol.render(KotlinDocumentationTarget.RENDERING_OPTIONS).escape())
             }
 
             if (!onlyDefinition) {
@@ -272,6 +286,14 @@ private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
             }
             preBuild()
         }
+    }
+}
+
+context(KtAnalysisSession)
+private fun renderFunctionTypeParameter(parameter: KtParameter): String? = with(KotlinDocumentationTarget.RENDERING_OPTIONS) {
+    prettyPrint {
+        parameter.nameAsName?.let { name -> withSuffix(": ") { nameRenderer.renderName(name, symbol = null, printer = this) } }
+        parameter.typeReference?.getKtType()?.let { type -> typeRenderer.renderType(type, printer = this) }
     }
 }
 
@@ -315,3 +337,5 @@ private fun KtAnalysisSession.findKDoc(symbol: KtSymbol): KDocContent? {
     }
     return null
 }
+
+private fun String.escape(): String = HtmlEscapers.htmlEscaper().escape(this)

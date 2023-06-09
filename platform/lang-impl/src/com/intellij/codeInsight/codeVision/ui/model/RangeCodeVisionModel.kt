@@ -25,7 +25,7 @@ class RangeCodeVisionModel(
 
   private val projectModel = ProjectCodeVisionModel.getInstance(project)
   private val lensForRange: List<CodeVisionEntry>
-  val inlays: ArrayList<Inlay<*>> = ArrayList<Inlay<*>>()
+  val inlays: ArrayList<Inlay<*>> = ArrayList()
 
   init {
     lensForRange = lensMap.flatMap { it.value }

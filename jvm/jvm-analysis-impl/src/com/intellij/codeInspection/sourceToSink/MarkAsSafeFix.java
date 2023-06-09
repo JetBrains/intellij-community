@@ -80,16 +80,11 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     catch (DeepTaintAnalyzerException e) {
       return null;
     }
-    List<PsiElement> elements = new ArrayList<>(ContainerUtil.map(taintAnalyzer.getNonMarkedElements(), e -> e.myNonMarked));
-    ContainerUtil.removeDuplicates(elements);
-    ContainerUtil.sort(elements, Comparator.comparing(element -> {
-      //methods are always last
-      if (element instanceof PsiMethod) {
-        return 1;
-      }
-      return 0;
-    }));
-    return elements;
+    return taintAnalyzer.getNonMarkedElements().stream()
+      .map(e -> (PsiElement)e.myNonMarked)
+      .distinct()
+      .sorted(Comparator.comparing(e -> e instanceof PsiMethod))
+      .toList();
   }
 
   @Override

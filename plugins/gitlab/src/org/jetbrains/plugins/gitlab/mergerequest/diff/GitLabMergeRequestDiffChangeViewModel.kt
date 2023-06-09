@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.diff
 
 import com.intellij.collaboration.async.mapCaching
+import com.intellij.collaboration.async.mapFiltered
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
@@ -28,9 +29,13 @@ private typealias DiscussionsFlow = Flow<Collection<GitLabMergeRequestDiffDiscus
 private typealias NewDiscussionsFlow = Flow<Map<DiffLineLocation, NewGitLabNoteViewModel>>
 
 internal interface GitLabMergeRequestDiffChangeViewModel {
+  val isCumulativeChange: Boolean
+
   val discussions: DiscussionsFlow
   val draftDiscussions: DiscussionsFlow
   val newDiscussions: NewDiscussionsFlow
+
+  val discussionsViewOption: StateFlow<DiscussionsViewOption>
 
   fun requestNewDiscussion(location: DiffLineLocation, focus: Boolean)
   fun cancelNewDiscussion(location: DiffLineLocation)
@@ -43,10 +48,12 @@ internal class GitLabMergeRequestDiffChangeViewModelImpl(
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
   private val diffData: GitTextFilePatchWithHistory,
-  discussionsViewOption: Flow<DiscussionsViewOption>
+  override val discussionsViewOption: StateFlow<DiscussionsViewOption>
 ) : GitLabMergeRequestDiffChangeViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default + CoroutineName("GitLab Merge Request Review Diff Change"))
+
+  override val isCumulativeChange: Boolean = !diffData.isCumulative
 
   override val discussions: DiscussionsFlow = mergeRequest.discussions
     .mapCaching(
@@ -55,7 +62,7 @@ internal class GitLabMergeRequestDiffChangeViewModelImpl(
       GitLabMergeRequestDiffDiscussionViewModelImpl::destroy
     ).modelFlow(cs, LOG)
 
-  override val draftDiscussions: DiscussionsFlow = mergeRequest.standaloneDraftNotes
+  override val draftDiscussions: DiscussionsFlow = mergeRequest.draftNotes.mapFiltered { it.discussionId == null }
     .mapCaching(
       GitLabNote::id,
       { cs, note -> GitLabMergeRequestDiffDraftDiscussionViewModel(cs, diffData, note) },

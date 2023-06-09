@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -48,8 +48,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
     myTextRangeMarker = myDocument.createRangeMarker(range.getStartOffset(), range.getEndOffset());
   }
 
-  @NotNull
-  public CodeStyleSettingsToShow getFieldNamesAffectingCodeFragment(LanguageCodeStyleSettingsProvider.SettingsType... types) {
+  public @NotNull CodeStyleSettingsToShow getFieldNamesAffectingCodeFragment(LanguageCodeStyleSettingsProvider.SettingsType... types) {
     Ref<CodeStyleSettingsToShow> settingsToShow = new Ref<>();
     CodeStyle.doWithTemporarySettings(myProject,
                                       CodeStyle.getSettings(myFile),
@@ -57,8 +56,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
     return settingsToShow.get();
   }
 
-  @NotNull
-  private CodeStyleSettingsToShow computeFieldsWithTempSettings(@NotNull CodeStyleSettings tempSettings, LanguageCodeStyleSettingsProvider.SettingsType @NotNull [] types) {
+  private @NotNull CodeStyleSettingsToShow computeFieldsWithTempSettings(@NotNull CodeStyleSettings tempSettings, LanguageCodeStyleSettingsProvider.SettingsType @NotNull [] types) {
     CommonCodeStyleSettings commonSettings = tempSettings.getCommonSettings(myProvider.getLanguage());
     CustomCodeStyleSettings customSettings = getCustomSettings(myProvider, tempSettings);
 
@@ -100,9 +98,8 @@ public class CodeStyleSettingsCodeFragmentFilter {
     };
   }
 
-  @Nullable
-  private static CustomCodeStyleSettings getCustomSettings(@NotNull LanguageCodeStyleSettingsProvider languageProvider,
-                                                           @NotNull CodeStyleSettings tempSettings) {
+  private static @Nullable CustomCodeStyleSettings getCustomSettings(@NotNull LanguageCodeStyleSettingsProvider languageProvider,
+                                                                     @NotNull CodeStyleSettings tempSettings) {
     CustomCodeStyleSettings fromLanguageProvider = getCustomSettingsFromProvider(languageProvider, tempSettings);
     if (fromLanguageProvider != null) {
       return fromLanguageProvider;
@@ -118,9 +115,8 @@ public class CodeStyleSettingsCodeFragmentFilter {
     return null;
   }
 
-  @Nullable
-  private static CustomCodeStyleSettings getCustomSettingsFromProvider(@NotNull CodeStyleSettingsProvider languageProvider,
-                                                                       @NotNull CodeStyleSettings tempSettings) {
+  private static @Nullable CustomCodeStyleSettings getCustomSettingsFromProvider(@NotNull CodeStyleSettingsProvider languageProvider,
+                                                                                 @NotNull CodeStyleSettings tempSettings) {
     CustomCodeStyleSettings modelSettings = languageProvider.createCustomSettings(tempSettings);
     return modelSettings != null ? tempSettings.getCustomSettings(modelSettings.getClass()) : null;
   }
@@ -149,7 +145,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
 
     private List<String> myAffectingFields = new ArrayList<>();
     private final Object myCommonSettings;
-    @Nullable private final CustomCodeStyleSettings myCustomSettings;
+    private final @Nullable CustomCodeStyleSettings myCustomSettings;
 
     FilterFieldsTask(@NotNull CommonCodeStyleSettings commonSettings,
                      @Nullable CustomCodeStyleSettings customSettings,

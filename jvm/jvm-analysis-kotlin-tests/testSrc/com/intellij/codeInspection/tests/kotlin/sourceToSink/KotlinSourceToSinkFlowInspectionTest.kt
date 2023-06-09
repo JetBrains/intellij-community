@@ -133,4 +133,14 @@ class KotlinSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase(
     prepareCheckFramework()
     myFixture.testHighlighting("DropLocality.kt")
   }
+
+  fun `test forEachLoop`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("ForEachLoop.kt")
+  }
+
+  fun `test lambdaWithForEachLoop`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("LambdaWithForEachLoop.kt")
+  }
 }

@@ -24,7 +24,7 @@ class JavaUastAnalysisPlugin : UastAnalysisPlugin {
     }
   }
 
-  override val language = JavaLanguage.INSTANCE
+  override val language: JavaLanguage = JavaLanguage.INSTANCE
 
   private fun DfaNullability.toUNullability() = when (this) {
     DfaNullability.NULL -> UNullability.NULL

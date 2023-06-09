@@ -14,7 +14,7 @@ import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
   companion object {
-    const val AUTHOR_HINT = "John Smith +2"
+    const val AUTHOR_HINT: String = "John Smith +2"
   }
 
   protected open val onlyCodeVisionHintsAllowed: Boolean

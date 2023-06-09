@@ -16,7 +16,7 @@ warn () {
 die () {
     echo 2>&1
     echo "$@"  2>&1
-    echo  2>&1
+    echo 2>&1
     exit 1
 }
 
@@ -160,7 +160,7 @@ fi
 
 _java_args_file="$JPS_BOOTSTRAP_PREPARE_DIR/java.args.$$.txt"
 # shellcheck disable=SC2064
-trap "rm -f '$_java_args_file'" EXIT INT HUP
+trap "{ set +x; } >/dev/null 2>&1; rm -f '$_java_args_file'" EXIT INT HUP
 
 # Run jps-bootstrap and produce java args file to run actual user class
 export JPS_BOOTSTRAP_COMMUNITY_HOME

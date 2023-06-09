@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.countUsages
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.previousStatement
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.lexer.KtTokens.ELVIS
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
@@ -31,10 +32,7 @@ class MoveVariableDeclarationIntoWhenInspection : AbstractKotlinInspection(), Cl
             val property = expression.findDeclarationNear() ?: return
             val identifier = property.nameIdentifier ?: return
             val initializer = property.initializer ?: return
-            if (!initializer.isOneLiner()) return
-            if (initializer.anyDescendantOfType<KtExpression> {
-                    it is KtThrowExpression || it is KtReturnExpression || it is KtBreakExpression || it is KtContinueExpression
-                }) return
+            if (initializer.isComplex()) return
 
             val action = property.action(expression)
             if (action == Action.NOTHING) return
@@ -48,6 +46,17 @@ class MoveVariableDeclarationIntoWhenInspection : AbstractKotlinInspection(), Cl
             )
         })
 }
+
+private fun KtExpression.isComplex(): Boolean {
+    if (!isOneLiner()) return true
+    return anyDescendantOfType<KtExpression> {
+        it is KtThrowExpression || it is KtReturnExpression || it is KtBreakExpression || it is KtContinueExpression ||
+        it is KtIfExpression || it is KtWhenExpression || it is KtTryExpression || it is KtLambdaExpression || it.isElvisExpression()
+    }
+}
+
+private fun KtExpression.isElvisExpression(): Boolean =
+  this is KtBinaryExpression && operationToken == ELVIS
 
 private enum class Action {
     NOTHING,
@@ -137,7 +146,7 @@ private class VariableDeclarationIntoWhenFix(
         }
 
         val resultElement = subjectExpression.replace(toReplace)
-        property.delete()
+        property.parent.deleteChildRange(property, property.nextSibling as? PsiWhiteSpace ?: property)
 
         val editor = resultElement.findExistingEditor() ?: return
         editor.moveCaret((resultElement as? KtProperty)?.nameIdentifier?.startOffset ?: resultElement.startOffset)

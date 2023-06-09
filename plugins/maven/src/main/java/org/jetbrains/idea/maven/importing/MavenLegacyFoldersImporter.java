@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.module.Module;
@@ -415,9 +416,10 @@ class MavenLegacyFoldersImporter {
     if (sourceFolder == null) return false;
 
     MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
-    MavenProject containingProject = mavenProjectsManager.findContainingProject(sourceFolder);
+
+    MavenProject containingProject = ReadAction.compute(() -> mavenProjectsManager.findContainingProject(sourceFolder));
     if (containingProject != null) {
-      Module module = mavenProjectsManager.findModule(containingProject);
+      Module module = ReadAction.compute(() -> mavenProjectsManager.findModule(containingProject));
       if (module == null) return false;
 
       for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {

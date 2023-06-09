@@ -28,7 +28,7 @@
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
-    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" exported="" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
@@ -64,7 +64,10 @@
           <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/mockwebserver3/5.0.0-alpha.11/mockwebserver3-5.0.0-alpha.11.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/mockwebserver/5.0.0-alpha.11/mockwebserver-5.0.0-alpha.11-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/mockwebserver3/5.0.0-alpha.11/mockwebserver3-5.0.0-alpha.11-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="okhttp" level="project" />
