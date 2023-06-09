@@ -75,6 +75,8 @@ internal open class IconsClassGenerator(private val projectHome: Path,
   private val openSourceRoot: Path? by lazy {
     val communityFolderMarkerFile = "intellij.idea.community.main.iml"
     if (projectHome.resolve(communityFolderMarkerFile).exists()) return@lazy projectHome
+    /* we also have open source plugins under 'contrib' directory, but the license is specified for each plugin separately, so it won't be
+       safe to use the generic Apache 2.0 license for all of them */
     val communityRoot = projectHome.resolve("community")
     if (communityRoot.resolve(communityFolderMarkerFile).exists()) return@lazy communityRoot
     return@lazy null
