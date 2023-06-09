@@ -267,23 +267,6 @@ public class MavenUtil {
     }
   }
 
-  @TestOnly
-  public static void setNotUpdateSuspendable() {
-    updateSuspendable = false;
-  }
-
-  @TestOnly
-  public static void resetNotUpdateSuspendable() {
-    updateSuspendable = true;
-  }
-
-  @ApiStatus.Internal
-  public static boolean updateSuspendable() {
-    return updateSuspendable;
-  }
-
-  private static volatile boolean updateSuspendable = true;
-
   public static boolean isInModalContext() {
     return LaterInvocator.isInModalContext();
   }
