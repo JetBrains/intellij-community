@@ -15,10 +15,12 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.LazyInitializer;
@@ -32,6 +34,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public final class PythonHelpersLocator {
   private static final Logger LOG = Logger.getInstance(PythonHelpersLocator.class);
@@ -59,7 +62,7 @@ public final class PythonHelpersLocator {
       return new File(PathManager.getCommunityHomePath(), moduleHelpers.myCommunityRepoRelativePath);
     }
     else {
-      @Nullable File helpersRootDir = moduleHelpers.copyRoot.get();
+      @Nullable File helpersRootDir = ProgressIndicatorUtils.awaitWithCheckCanceled(moduleHelpers.copyRoot.get());
       if (helpersRootDir != null) {
         return helpersRootDir;
       }
@@ -141,7 +144,7 @@ public final class PythonHelpersLocator {
      * There is no check for macOS though, since such problems may appear in other operating systems as well, and since it's a bad
      * idea to modify the IDE distributive during running in general.
      */
-    final LazyInitializer.LazyValue<@Nullable File> copyRoot;
+    final LazyInitializer.LazyValue<@NotNull CompletableFuture<@Nullable File>> copyRoot;
 
     ModuleHelpers(@NotNull String moduleName, @NotNull String pluginRelativePath, @NotNull String communityRelativePath) {
       myModuleName = moduleName;
@@ -151,25 +154,30 @@ public final class PythonHelpersLocator {
         String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
         final File pluginBaseDir = getPluginBaseDir(jarPath);
         if (pluginBaseDir == null) {
-          return null;
+          return CompletableFuture.completedFuture(null);
         }
-        try {
-          File rootDir = new File(
-            new File(
-              PathManager.getSystemPath(),
-              "python-helpers-" + ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode()
-            ),
-            moduleName
-          );
-          if (!rootDir.isDirectory()) {
-            NioFiles.createDirectories(rootDir.toPath().getParent());
-            FileUtil.copyDir(new File(pluginBaseDir, pluginRelativePath), rootDir, true);
-          }
-          return rootDir;
-        }
-        catch (IOException e) {
-          throw new UncheckedIOException("Failed to create temporary directory for helpers", e);
-        }
+        return CompletableFuture.supplyAsync(
+          () -> {
+            try {
+              File rootDir = new File(
+                new File(
+                  PathManager.getSystemPath(),
+                  "python-helpers-" + ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode()
+                ),
+                moduleName
+              );
+              if (!rootDir.isDirectory()) {
+                NioFiles.createDirectories(rootDir.toPath().getParent());
+                FileUtil.copyDir(new File(pluginBaseDir, pluginRelativePath), rootDir, true);
+              }
+              return rootDir;
+            }
+            catch (IOException e) {
+              throw new UncheckedIOException("Failed to create temporary directory for helpers", e);
+            }
+          },
+          ProcessIOExecutorService.INSTANCE
+        );
       });
     }
   }
