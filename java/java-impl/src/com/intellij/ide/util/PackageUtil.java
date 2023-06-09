@@ -26,7 +26,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -47,16 +46,17 @@ public final class PackageUtil {
   public static List<PsiClass> getClasses(@NotNull PsiPackage pkg, boolean withInnerClasses, @NotNull GlobalSearchScope scope) {
     ProgressManager.checkCanceled();
     return ReadAction.compute(() -> {
-      List<PsiClass> classes = ContainerUtil.flatMap(new SmartList<>(pkg.getClasses(scope)), cls -> {
-        List<PsiClass> allClasses = new SmartList<>(cls);
-        if (withInnerClasses) allClasses.addAll(new SmartList<>(cls.getAllInnerClasses()));
-        return allClasses;
-      });
-      List<PsiClass> subPkgClasses = ContainerUtil.flatMap(
-        new SmartList<>(pkg.getSubPackages(scope)),
-        subPkg -> getClasses(subPkg, withInnerClasses, scope)
-      );
-      return ContainerUtil.concat(classes, subPkgClasses);
+      List<PsiClass> classes = new ArrayList<>();
+      for (PsiClass clazz : pkg.getClasses(scope)) {
+        classes.add(clazz);
+        if (withInnerClasses) {
+          classes.addAll(new SmartList<>(clazz.getAllInnerClasses()));
+        }
+      }
+      for (PsiPackage subPkg : pkg.getSubPackages(scope)) {
+        classes.addAll(getClasses(subPkg, withInnerClasses, scope));
+      }
+      return classes;
     });
   }
 
