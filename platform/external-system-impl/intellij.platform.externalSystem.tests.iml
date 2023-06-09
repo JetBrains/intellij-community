@@ -30,5 +30,6 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" scope="TEST" />
   </component>
 </module>

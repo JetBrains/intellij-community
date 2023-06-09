@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.workspaceModel.storage.bridgeEntities
+package com.intellij.platform.workspaceModel.jps.entities
 
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
@@ -8,36 +8,37 @@ import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.SdkEntity
 import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
 import com.intellij.platform.workspaceModel.storage.impl.EntityLink
 import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspaceModel.storage.impl.containers.MutableWorkspaceList
-import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspaceModel.storage.impl.updateOneToOneParentOfChild
+import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) : ModuleGroupPathEntity, WorkspaceEntityBase() {
+open class SdkEntityImpl(val dataSource: SdkEntityData) : SdkEntity, WorkspaceEntityBase() {
 
   companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleGroupPathEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, SdkEntity::class.java,
+                                                                           ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     val connections = listOf<ConnectionId>(
-      MODULE_CONNECTION_ID,
+      LIBRARY_CONNECTION_ID,
     )
 
   }
 
-  override val module: ModuleEntity
-    get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
+  override val library: LibraryEntity
+    get() = snapshot.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)!!
 
-  override val path: List<String>
-    get() = dataSource.path
+  override val homeUrl: VirtualFileUrl
+    get() = dataSource.homeUrl
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -46,9 +47,8 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
     return connections
   }
 
-  class Builder(result: ModuleGroupPathEntityData?) : ModifiableWorkspaceEntityBase<ModuleGroupPathEntity, ModuleGroupPathEntityData>(
-    result), ModuleGroupPathEntity.Builder {
-    constructor() : this(ModuleGroupPathEntityData())
+  class Builder(result: SdkEntityData?) : ModifiableWorkspaceEntityBase<SdkEntity, SdkEntityData>(result), SdkEntity.Builder {
+    constructor() : this(SdkEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -57,7 +57,7 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
           return
         }
         else {
-          error("Entity ModuleGroupPathEntity is already created in a different builder")
+          error("Entity SdkEntity is already created in a different builder")
         }
       }
 
@@ -69,6 +69,7 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
       // Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
 
+      index(this, "homeUrl", this.homeUrl)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -80,17 +81,17 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (_diff != null) {
-        if (_diff.extractOneToOneParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
-          error("Field ModuleGroupPathEntity#module should be initialized")
+        if (_diff.extractOneToOneParent<WorkspaceEntityBase>(LIBRARY_CONNECTION_ID, this) == null) {
+          error("Field SdkEntity#library should be initialized")
         }
       }
       else {
-        if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
-          error("Field ModuleGroupPathEntity#module should be initialized")
+        if (this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] == null) {
+          error("Field SdkEntity#library should be initialized")
         }
       }
-      if (!getEntityData().isPathInitialized()) {
-        error("Field ModuleGroupPathEntity#path should be initialized")
+      if (!getEntityData().isHomeUrlInitialized()) {
+        error("Field SdkEntity#homeUrl should be initialized")
       }
     }
 
@@ -98,18 +99,11 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
       return connections
     }
 
-    override fun afterModification() {
-      val collection_path = getEntityData().path
-      if (collection_path is MutableWorkspaceList<*>) {
-        collection_path.cleanModificationUpdateAction()
-      }
-    }
-
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as ModuleGroupPathEntity
+      dataSource as SdkEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.path != dataSource.path) this.path = dataSource.path.toMutableList()
+      if (this.homeUrl != dataSource.homeUrl) this.homeUrl = dataSource.homeUrl
       updateChildToParentReferences(parents)
     }
 
@@ -123,15 +117,15 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
 
       }
 
-    override var module: ModuleEntity
+    override var library: LibraryEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                 MODULE_CONNECTION_ID)]!! as ModuleEntity
+          _diff.extractOneToOneParent(LIBRARY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                  LIBRARY_CONNECTION_ID)]!! as LibraryEntity
         }
         else {
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
+          this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)]!! as LibraryEntity
         }
       }
       set(value) {
@@ -139,82 +133,63 @@ open class ModuleGroupPathEntityImpl(val dataSource: ModuleGroupPathEntityData) 
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneParentOfChild(MODULE_CONNECTION_ID, this, value)
+          _diff.updateOneToOneParentOfChild(LIBRARY_CONNECTION_ID, this, value)
         }
         else {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
 
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] = value
         }
-        changedProperty.add("module")
+        changedProperty.add("library")
       }
 
-    private val pathUpdater: (value: List<String>) -> Unit = { value ->
-
-      changedProperty.add("path")
-    }
-    override var path: MutableList<String>
-      get() {
-        val collection_path = getEntityData().path
-        if (collection_path !is MutableWorkspaceList) return collection_path
-        if (diff == null || modifiable.get()) {
-          collection_path.setModificationUpdateAction(pathUpdater)
-        }
-        else {
-          collection_path.cleanModificationUpdateAction()
-        }
-        return collection_path
-      }
+    override var homeUrl: VirtualFileUrl
+      get() = getEntityData().homeUrl
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).path = value
-        pathUpdater.invoke(value)
+        getEntityData(true).homeUrl = value
+        changedProperty.add("homeUrl")
+        val _diff = diff
+        if (_diff != null) index(this, "homeUrl", value)
       }
 
-    override fun getEntityClass(): Class<ModuleGroupPathEntity> = ModuleGroupPathEntity::class.java
+    override fun getEntityClass(): Class<SdkEntity> = SdkEntity::class.java
   }
 }
 
-class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
-  lateinit var path: MutableList<String>
+class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
+  lateinit var homeUrl: VirtualFileUrl
 
-  fun isPathInitialized(): Boolean = ::path.isInitialized
+  fun isHomeUrlInitialized(): Boolean = ::homeUrl.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ModuleGroupPathEntity> {
-    val modifiable = ModuleGroupPathEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SdkEntity> {
+    val modifiable = SdkEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ModuleGroupPathEntity {
+  override fun createEntity(snapshot: EntityStorage): SdkEntity {
     return getCached(snapshot) {
-      val entity = ModuleGroupPathEntityImpl(this)
+      val entity = SdkEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
     }
   }
 
-  override fun clone(): ModuleGroupPathEntityData {
-    val clonedEntity = super.clone()
-    clonedEntity as ModuleGroupPathEntityData
-    clonedEntity.path = clonedEntity.path.toMutableWorkspaceList()
-    return clonedEntity
-  }
-
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return ModuleGroupPathEntity::class.java
+    return SdkEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -224,14 +199,14 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return ModuleGroupPathEntity(path, entitySource) {
-      parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.module = it }
+    return SdkEntity(homeUrl, entitySource) {
+      parents.filterIsInstance<LibraryEntity>().singleOrNull()?.let { this.library = it }
     }
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
     val res = mutableListOf<Class<out WorkspaceEntity>>()
-    res.add(ModuleEntity::class.java)
+    res.add(LibraryEntity::class.java)
     return res
   }
 
@@ -239,10 +214,10 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ModuleGroupPathEntityData
+    other as SdkEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.path != other.path) return false
+    if (this.homeUrl != other.homeUrl) return false
     return true
   }
 
@@ -250,26 +225,26 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ModuleGroupPathEntityData
+    other as SdkEntityData
 
-    if (this.path != other.path) return false
+    if (this.homeUrl != other.homeUrl) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + path.hashCode()
+    result = 31 * result + homeUrl.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + path.hashCode()
+    result = 31 * result + homeUrl.hashCode()
     return result
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.path?.let { collector.add(it::class.java) }
+    this.homeUrl?.let { collector.add(it::class.java) }
     collector.sameForAllEntities = false
   }
 }

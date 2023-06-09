@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.workspaceModel.storage.bridgeEntities
+package com.intellij.platform.workspaceModel.jps.entities
 
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
@@ -8,38 +8,37 @@ import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.CustomSourceRootPropertiesEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
 import com.intellij.platform.workspaceModel.storage.impl.EntityLink
 import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspaceModel.storage.impl.containers.MutableWorkspaceList
-import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspaceModel.storage.impl.updateOneToOneParentOfChild
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ExcludeUrlOrderEntityImpl(val dataSource: ExcludeUrlOrderEntityData) : ExcludeUrlOrderEntity, WorkspaceEntityBase() {
+open class CustomSourceRootPropertiesEntityImpl(val dataSource: CustomSourceRootPropertiesEntityData) : CustomSourceRootPropertiesEntity, WorkspaceEntityBase() {
 
   companion object {
-    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java,
-                                                                               ExcludeUrlOrderEntity::class.java,
-                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
+                                                                              CustomSourceRootPropertiesEntity::class.java,
+                                                                              ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     val connections = listOf<ConnectionId>(
-      CONTENTROOT_CONNECTION_ID,
+      SOURCEROOT_CONNECTION_ID,
     )
 
   }
 
-  override val order: List<VirtualFileUrl>
-    get() = dataSource.order
+  override val sourceRoot: SourceRootEntity
+    get() = snapshot.extractOneToOneParent(SOURCEROOT_CONNECTION_ID, this)!!
 
-  override val contentRoot: ContentRootEntity
-    get() = snapshot.extractOneToOneParent(CONTENTROOT_CONNECTION_ID, this)!!
+  override val propertiesXmlTag: String
+    get() = dataSource.propertiesXmlTag
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -48,9 +47,9 @@ open class ExcludeUrlOrderEntityImpl(val dataSource: ExcludeUrlOrderEntityData) 
     return connections
   }
 
-  class Builder(result: ExcludeUrlOrderEntityData?) : ModifiableWorkspaceEntityBase<ExcludeUrlOrderEntity, ExcludeUrlOrderEntityData>(
-    result), ExcludeUrlOrderEntity.Builder {
-    constructor() : this(ExcludeUrlOrderEntityData())
+  class Builder(result: CustomSourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<CustomSourceRootPropertiesEntity, CustomSourceRootPropertiesEntityData>(
+    result), CustomSourceRootPropertiesEntity.Builder {
+    constructor() : this(CustomSourceRootPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -59,7 +58,7 @@ open class ExcludeUrlOrderEntityImpl(val dataSource: ExcludeUrlOrderEntityData) 
           return
         }
         else {
-          error("Entity ExcludeUrlOrderEntity is already created in a different builder")
+          error("Entity CustomSourceRootPropertiesEntity is already created in a different builder")
         }
       }
 
@@ -71,7 +70,6 @@ open class ExcludeUrlOrderEntityImpl(val dataSource: ExcludeUrlOrderEntityData) 
       // Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
 
-      index(this, "order", this.order)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -82,18 +80,18 @@ open class ExcludeUrlOrderEntityImpl(val dataSource: ExcludeUrlOrderEntityData) 
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isOrderInitialized()) {
-        error("Field ExcludeUrlOrderEntity#order should be initialized")
-      }
       if (_diff != null) {
-        if (_diff.extractOneToOneParent<WorkspaceEntityBase>(CONTENTROOT_CONNECTION_ID, this) == null) {
-          error("Field ExcludeUrlOrderEntity#contentRoot should be initialized")
+        if (_diff.extractOneToOneParent<WorkspaceEntityBase>(SOURCEROOT_CONNECTION_ID, this) == null) {
+          error("Field CustomSourceRootPropertiesEntity#sourceRoot should be initialized")
         }
       }
       else {
-        if (this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] == null) {
-          error("Field ExcludeUrlOrderEntity#contentRoot should be initialized")
+        if (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] == null) {
+          error("Field CustomSourceRootPropertiesEntity#sourceRoot should be initialized")
         }
+      }
+      if (!getEntityData().isPropertiesXmlTagInitialized()) {
+        error("Field CustomSourceRootPropertiesEntity#propertiesXmlTag should be initialized")
       }
     }
 
@@ -101,18 +99,11 @@ open class ExcludeUrlOrderEntityImpl(val dataSource: ExcludeUrlOrderEntityData) 
       return connections
     }
 
-    override fun afterModification() {
-      val collection_order = getEntityData().order
-      if (collection_order is MutableWorkspaceList<*>) {
-        collection_order.cleanModificationUpdateAction()
-      }
-    }
-
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as ExcludeUrlOrderEntity
+      dataSource as CustomSourceRootPropertiesEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.order != dataSource.order) this.order = dataSource.order.toMutableList()
+      if (this.propertiesXmlTag != dataSource.propertiesXmlTag) this.propertiesXmlTag = dataSource.propertiesXmlTag
       updateChildToParentReferences(parents)
     }
 
@@ -126,38 +117,15 @@ open class ExcludeUrlOrderEntityImpl(val dataSource: ExcludeUrlOrderEntityData) 
 
       }
 
-    private val orderUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-      val _diff = diff
-      if (_diff != null) index(this, "order", value)
-      changedProperty.add("order")
-    }
-    override var order: MutableList<VirtualFileUrl>
-      get() {
-        val collection_order = getEntityData().order
-        if (collection_order !is MutableWorkspaceList) return collection_order
-        if (diff == null || modifiable.get()) {
-          collection_order.setModificationUpdateAction(orderUpdater)
-        }
-        else {
-          collection_order.cleanModificationUpdateAction()
-        }
-        return collection_order
-      }
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).order = value
-        orderUpdater.invoke(value)
-      }
-
-    override var contentRoot: ContentRootEntity
+    override var sourceRoot: SourceRootEntity
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(CONTENTROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                      CONTENTROOT_CONNECTION_ID)]!! as ContentRootEntity
+          _diff.extractOneToOneParent(SOURCEROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                     SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
         }
         else {
-          this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)]!! as ContentRootEntity
+          this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
         }
       }
       set(value) {
@@ -165,60 +133,61 @@ open class ExcludeUrlOrderEntityImpl(val dataSource: ExcludeUrlOrderEntityData) 
         val _diff = diff
         if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
           _diff.addEntity(value)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneParentOfChild(CONTENTROOT_CONNECTION_ID, this, value)
+          _diff.updateOneToOneParentOfChild(SOURCEROOT_CONNECTION_ID, this, value)
         }
         else {
           if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
+            value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
 
-          this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = value
+          this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] = value
         }
-        changedProperty.add("contentRoot")
+        changedProperty.add("sourceRoot")
       }
 
-    override fun getEntityClass(): Class<ExcludeUrlOrderEntity> = ExcludeUrlOrderEntity::class.java
+    override var propertiesXmlTag: String
+      get() = getEntityData().propertiesXmlTag
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).propertiesXmlTag = value
+        changedProperty.add("propertiesXmlTag")
+      }
+
+    override fun getEntityClass(): Class<CustomSourceRootPropertiesEntity> = CustomSourceRootPropertiesEntity::class.java
   }
 }
 
-class ExcludeUrlOrderEntityData : WorkspaceEntityData<ExcludeUrlOrderEntity>() {
-  lateinit var order: MutableList<VirtualFileUrl>
+class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRootPropertiesEntity>() {
+  lateinit var propertiesXmlTag: String
 
-  fun isOrderInitialized(): Boolean = ::order.isInitialized
+  fun isPropertiesXmlTagInitialized(): Boolean = ::propertiesXmlTag.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ExcludeUrlOrderEntity> {
-    val modifiable = ExcludeUrlOrderEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<CustomSourceRootPropertiesEntity> {
+    val modifiable = CustomSourceRootPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ExcludeUrlOrderEntity {
+  override fun createEntity(snapshot: EntityStorage): CustomSourceRootPropertiesEntity {
     return getCached(snapshot) {
-      val entity = ExcludeUrlOrderEntityImpl(this)
+      val entity = CustomSourceRootPropertiesEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
     }
   }
 
-  override fun clone(): ExcludeUrlOrderEntityData {
-    val clonedEntity = super.clone()
-    clonedEntity as ExcludeUrlOrderEntityData
-    clonedEntity.order = clonedEntity.order.toMutableWorkspaceList()
-    return clonedEntity
-  }
-
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return ExcludeUrlOrderEntity::class.java
+    return CustomSourceRootPropertiesEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -228,14 +197,14 @@ class ExcludeUrlOrderEntityData : WorkspaceEntityData<ExcludeUrlOrderEntity>() {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return ExcludeUrlOrderEntity(order, entitySource) {
-      parents.filterIsInstance<ContentRootEntity>().singleOrNull()?.let { this.contentRoot = it }
+    return CustomSourceRootPropertiesEntity(propertiesXmlTag, entitySource) {
+      parents.filterIsInstance<SourceRootEntity>().singleOrNull()?.let { this.sourceRoot = it }
     }
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
     val res = mutableListOf<Class<out WorkspaceEntity>>()
-    res.add(ContentRootEntity::class.java)
+    res.add(SourceRootEntity::class.java)
     return res
   }
 
@@ -243,10 +212,10 @@ class ExcludeUrlOrderEntityData : WorkspaceEntityData<ExcludeUrlOrderEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ExcludeUrlOrderEntityData
+    other as CustomSourceRootPropertiesEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.order != other.order) return false
+    if (this.propertiesXmlTag != other.propertiesXmlTag) return false
     return true
   }
 
@@ -254,26 +223,25 @@ class ExcludeUrlOrderEntityData : WorkspaceEntityData<ExcludeUrlOrderEntity>() {
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ExcludeUrlOrderEntityData
+    other as CustomSourceRootPropertiesEntityData
 
-    if (this.order != other.order) return false
+    if (this.propertiesXmlTag != other.propertiesXmlTag) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + order.hashCode()
+    result = 31 * result + propertiesXmlTag.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + order.hashCode()
+    result = 31 * result + propertiesXmlTag.hashCode()
     return result
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.order?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
+    collector.sameForAllEntities = true
   }
 }
