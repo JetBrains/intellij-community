@@ -57,7 +57,7 @@ class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
   }
 
   object VFSHealthCheckRunner {
-    private lateinit var cancelToken: AccessToken;
+    private lateinit var cancelToken: AccessToken
 
     fun start() {
       cancelToken = IdleTracker.getInstance().addIdleListener(HEALTH_CHECKING_PERIOD_MS, ::checkHealth)
@@ -184,7 +184,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
           //}
 
           if (nameId == DataEnumeratorEx.NULL_ID) {
-            nullNameIds++;
+            nullNameIds++
             log.info("file[#$fileId]: nameId is not set (NULL_ID) -> file record is incorrect (broken?)")
           }
           val fileName = namesEnumerator.valueOf(nameId)
@@ -223,10 +223,10 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             for (i in children.indices) {
               childrenChecked++
               val childId = children[i]
-              if (childId < FSRecords.MIN_REGULAR_FILE_ID || childId >= recordsCount) {
+              if (childId < FSRecords.MIN_REGULAR_FILE_ID || childId > recordsCount) {
                 generalErrors++ //MAYBE RC: dedicated counter?
                 log.info("file[#$fileId]{$fileName}: children[$i][#$childId] " +
-                         "is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$recordsCount) ")
+                         "is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$recordsCount]")
               }
               else {
                 val childParentId = fileRecords.getParent(childId)
@@ -246,7 +246,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
           //TODO RC: try read _all_ attributes, check all them are readable
         }
         catch (t: Throwable) {
-          generalErrors++;
+          generalErrors++
           log.info("file[#$fileId]: exception while checking", t)
         }
       }
@@ -264,9 +264,9 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
         rootsCount = rootIds.size
 
         for (rootId in rootIds) {
-          if (rootId < FSRecords.MIN_REGULAR_FILE_ID || rootId >= recordsCount) {
+          if (rootId < FSRecords.MIN_REGULAR_FILE_ID || rootId > recordsCount) {
             generalErrors++ //MAYBE RC: dedicated counter for that kind of errors?
-            log.info("root[#$rootId]: is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$recordsCount) ")
+            log.info("root[#$rootId]: is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$recordsCount]")
             continue
           }
           val rootParentId = records.getParent(rootId)

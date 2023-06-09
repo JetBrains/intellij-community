@@ -77,7 +77,10 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
   private final @NotNull MMappedFileStorage storage;
 
-  /** How many records were allocated already. allocatedRecordsCount-1 == last record id */
+  /**
+   * How many records were allocated already. Since id=0 is reserved (NULL_ID), we start assigning ids from 1,
+   * and hence (last record id == allocatedRecordsCount)
+   */
   private final AtomicInteger allocatedRecordsCount = new AtomicInteger(0);
 
   /**
