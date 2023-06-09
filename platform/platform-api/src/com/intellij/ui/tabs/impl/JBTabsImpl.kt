@@ -799,7 +799,8 @@ open class JBTabsImpl(private var project: Project?,
 
   override fun showMorePopup(): JBPopup? {
     val rect = lastLayoutPass?.moreRect ?: return null
-    val hiddenInfos = getVisibleInfos().filter { effectiveLayout!!.isTabHidden(it) }
+    val hiddenInfos = getVisibleInfos().filter { effectiveLayout!!.isTabHidden(it) }.takeIf { it.isNotEmpty() }
+                      ?: return null
     if (ExperimentalUI.isNewUI()) {
       return showListPopup(rect = rect, hiddenInfos = hiddenInfos)
     }
