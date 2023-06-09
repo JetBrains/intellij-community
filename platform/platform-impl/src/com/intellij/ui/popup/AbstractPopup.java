@@ -106,6 +106,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private boolean myCancelKeyEnabled;
   private boolean myLocateByContent;
   private Dimension myMinSize;
+  private boolean myStretchToOwnerWidth;
+  private boolean myStretchToOwnerHeight;
   private List<Object> myUserData;
   private boolean myShadowed;
 
@@ -599,6 +601,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (UiInterceptors.tryIntercept(this, aPoint)) return;
     HelpTooltip.setMasterPopup(aPoint.getOriginalComponent(), this);
     Point screenPoint = aPoint.getScreenPoint();
+
+    stretchContentToOwnerIfNecessary(aPoint.getOriginalComponent());
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
   }
 
@@ -925,6 +929,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void show(final @NotNull Component owner) {
+    stretchContentToOwnerIfNecessary(owner);
     show(owner, -1, -1, true);
   }
 
@@ -1894,6 +1899,17 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (!isBusy()) setBounds(bounds.getLocation(), bounds.getSize());
   }
 
+  private void stretchContentToOwnerIfNecessary(@NotNull Component owner) {
+    if (myForcedSize != null) return;
+    if (!myStretchToOwnerWidth && !myStretchToOwnerHeight) return;
+
+    Dimension filledSize = myContent.getPreferredSize();
+    if (myStretchToOwnerWidth) filledSize.width = owner.getWidth();
+    if (myStretchToOwnerHeight) filledSize.height = owner.getHeight();
+
+    myContent.setPreferredSize(filledSize);
+  }
+
   /**
    * Updates the popup location and size at once.
    * Note that this internal implementation modifies input parameters.
@@ -2137,6 +2153,26 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   public Dimension getMinimumSize() {
     return myMinSize != null ? myMinSize : calcHeaderSize();
+  }
+
+  /**
+   * Use this method if you need the popup to have the same width as the owner
+   * @see JBPopup#show(Component) for the meaning of the owner
+   *
+   * Note that setting owner.getWidth() to popup beforehand won't work in remote development scenario
+   */
+  public void setStretchToOwnerWidth(boolean stretchToOwnerWidth) {
+    myStretchToOwnerWidth = stretchToOwnerWidth;
+  }
+
+  /**
+   * Use this method if you need the popup to have the same height as the owner
+   * @see JBPopup#show(Component) for the meaning of the owner
+   *
+   * Note that setting owner.getHeight() to popup beforehand won't work in remote development scenario
+   */
+  public void setStretchToOwnerHeight(boolean stretchToOwnerHeight) {
+    myStretchToOwnerHeight = stretchToOwnerHeight;
   }
 
   @NotNull
