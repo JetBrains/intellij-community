@@ -137,7 +137,7 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
   }
 
   private fun createDiffs(origText: String, modifiedText: String, fileName: String? = null): String {
-    return fromCustomDiff(CustomDiff(JavaFileType.INSTANCE, fileName, origText, modifiedText, true)).createDiffs().joinToString(
+    return fromCustomDiff(CustomDiff(JavaFileType.INSTANCE, fileName, origText, modifiedText, true)).diffs.joinToString(
       separator = "\n---------------------\n") { diffInfo ->
       val addends = diffInfo.fragments.flatMap { fragment ->
         listOf(fragment.start to when (fragment.type) {

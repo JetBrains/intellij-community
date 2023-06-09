@@ -20,7 +20,7 @@ internal class IntentionPreviewEditorFactory {
     fun createEditors(project: Project, result: IntentionPreviewDiffResult?): List<EditorEx> {
       if (result == null) return emptyList()
 
-      val diffs = result.createDiffs()
+      val diffs = result.diffs
       if (diffs.isNotEmpty()) {
         val maxLine = diffs.maxOfOrNull { diff -> 
           if (diff.startLine == -1) 0 else diff.startLine + diff.length } ?: 0

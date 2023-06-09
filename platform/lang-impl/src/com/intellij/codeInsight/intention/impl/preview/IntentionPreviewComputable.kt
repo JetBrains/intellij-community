@@ -13,7 +13,6 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.diagnostic.PluginException
-import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
@@ -24,7 +23,6 @@ import com.intellij.model.SideEffectGuard
 import com.intellij.model.SideEffectGuard.SideEffectNotAllowedException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -148,15 +146,13 @@ internal class IntentionPreviewComputable(private val project: Project,
         val document = copyFile.viewProvider.document
         val policy = if (info == IntentionPreviewInfo.DIFF) ComparisonPolicy.TRIM_WHITESPACES else ComparisonPolicy.DEFAULT
         val text = origFile.text
-        IntentionPreviewDiffResult(
+        IntentionPreviewDiffResult.create(
           fileType = copyFile.fileType,
-          newText = document.text,
+          updatedText = document.text,
           origText = text,
-          policy = policy,
           fileName = if (anotherFile) copyFile.name else null,
           normalDiff = !anotherFile,
-          lineFragments = ComparisonManager.getInstance().compareLines(text, document.text, policy,
-                                                                       DumbProgressIndicator.INSTANCE))
+          policy = policy)
       }
       IntentionPreviewInfo.EMPTY, IntentionPreviewInfo.FALLBACK_DIFF -> null
       is IntentionPreviewInfo.CustomDiff -> IntentionPreviewDiffResult.fromCustomDiff(info)
