@@ -1487,6 +1487,22 @@
                  defaultValue="false"
                  description="Enables highlighting passes cache"/>
 
+    <registryKey key="highlighting.passes.cache.experiment"
+                 defaultValue="false"
+                 description="Turns on preloading highlighting passes experiment"/>
+
+    <registryKey key="highlighting.passes.cache.file.size.limit"
+                 defaultValue="500"
+                 description="Only the files with line count not bigger that the value are aviable for highlighting passes preloading"/>
+
+    <registryKey key="highlighting.passes.cache.size"
+                 defaultValue="25"
+                 description="Highlighting passes cache size"/>
+
+    <registryKey key="highlighting.passes.cache.experiment.group"
+                 defaultValue="false"
+                 description="Turn on the highlighting passes preload experiment"/>
+
     <actionConfigurationCustomizer implementation="com.intellij.openapi.project.impl.SeparateProcessActionsCustomizer" />
   </extensions>
 
