@@ -66,6 +66,7 @@ public abstract class ModalityState {
    * Please don't use it unless absolutely needed. The code under this modality can only perform purely UI operations,
    * it shouldn't access any PSI, VFS or project model.
    */
+  @SuppressWarnings("deprecation")
   public static @NotNull ModalityState any() {
     return ApplicationManager.getApplication().getAnyModalityState();
   }

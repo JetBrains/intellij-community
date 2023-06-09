@@ -440,7 +440,11 @@ public interface Application extends ComponentManager {
    * Please use {@link ModalityState#any()} instead, and only if you absolutely must, after carefully reading its documentation.
    *
    * @return modality state which is always applicable
+   * @deprecated for attention
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  @ApiStatus.Internal
   @NotNull ModalityState getAnyModalityState();
 
   /**
