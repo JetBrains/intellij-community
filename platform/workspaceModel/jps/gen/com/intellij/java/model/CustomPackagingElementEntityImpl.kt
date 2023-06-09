@@ -1,6 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.workspaceModel.storage.bridgeEntities
+package com.intellij.java.model
 
+import com.intellij.java.model.ArtifactEntity
+import com.intellij.java.model.CompositePackagingElementEntity
+import com.intellij.java.model.CustomPackagingElementEntity
+import com.intellij.java.model.PackagingElementEntity
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage
@@ -24,7 +28,7 @@ import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractOneP
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingElementEntityData) : ArchivePackagingElementEntity, WorkspaceEntityBase() {
+open class CustomPackagingElementEntityImpl(val dataSource: CustomPackagingElementEntityData) : CustomPackagingElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -54,8 +58,11 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
   override val children: List<PackagingElementEntity>
     get() = snapshot.extractOneToAbstractManyChildren<PackagingElementEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
 
-  override val fileName: String
-    get() = dataSource.fileName
+  override val typeId: String
+    get() = dataSource.typeId
+
+  override val propertiesXmlTag: String
+    get() = dataSource.propertiesXmlTag
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -64,9 +71,9 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
     return connections
   }
 
-  class Builder(result: ArchivePackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ArchivePackagingElementEntity, ArchivePackagingElementEntityData>(
-    result), ArchivePackagingElementEntity.Builder {
-    constructor() : this(ArchivePackagingElementEntityData())
+  class Builder(result: CustomPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<CustomPackagingElementEntity, CustomPackagingElementEntityData>(
+    result), CustomPackagingElementEntity.Builder {
+    constructor() : this(CustomPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -75,7 +82,7 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
           return
         }
         else {
-          error("Entity ArchivePackagingElementEntity is already created in a different builder")
+          error("Entity CustomPackagingElementEntity is already created in a different builder")
         }
       }
 
@@ -108,8 +115,11 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
           error("Field CompositePackagingElementEntity#children should be initialized")
         }
       }
-      if (!getEntityData().isFileNameInitialized()) {
-        error("Field ArchivePackagingElementEntity#fileName should be initialized")
+      if (!getEntityData().isTypeIdInitialized()) {
+        error("Field CustomPackagingElementEntity#typeId should be initialized")
+      }
+      if (!getEntityData().isPropertiesXmlTagInitialized()) {
+        error("Field CustomPackagingElementEntity#propertiesXmlTag should be initialized")
       }
     }
 
@@ -119,9 +129,10 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as ArchivePackagingElementEntity
+      dataSource as CustomPackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.fileName != dataSource.fileName) this.fileName = dataSource.fileName
+      if (this.typeId != dataSource.typeId) this.typeId = dataSource.typeId
+      if (this.propertiesXmlTag != dataSource.propertiesXmlTag) this.propertiesXmlTag = dataSource.propertiesXmlTag
       updateChildToParentReferences(parents)
     }
 
@@ -252,34 +263,44 @@ open class ArchivePackagingElementEntityImpl(val dataSource: ArchivePackagingEle
         changedProperty.add("children")
       }
 
-    override var fileName: String
-      get() = getEntityData().fileName
+    override var typeId: String
+      get() = getEntityData().typeId
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).fileName = value
-        changedProperty.add("fileName")
+        getEntityData(true).typeId = value
+        changedProperty.add("typeId")
       }
 
-    override fun getEntityClass(): Class<ArchivePackagingElementEntity> = ArchivePackagingElementEntity::class.java
+    override var propertiesXmlTag: String
+      get() = getEntityData().propertiesXmlTag
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).propertiesXmlTag = value
+        changedProperty.add("propertiesXmlTag")
+      }
+
+    override fun getEntityClass(): Class<CustomPackagingElementEntity> = CustomPackagingElementEntity::class.java
   }
 }
 
-class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingElementEntity>() {
-  lateinit var fileName: String
+class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElementEntity>() {
+  lateinit var typeId: String
+  lateinit var propertiesXmlTag: String
 
-  fun isFileNameInitialized(): Boolean = ::fileName.isInitialized
+  fun isTypeIdInitialized(): Boolean = ::typeId.isInitialized
+  fun isPropertiesXmlTagInitialized(): Boolean = ::propertiesXmlTag.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ArchivePackagingElementEntity> {
-    val modifiable = ArchivePackagingElementEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<CustomPackagingElementEntity> {
+    val modifiable = CustomPackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ArchivePackagingElementEntity {
+  override fun createEntity(snapshot: EntityStorage): CustomPackagingElementEntity {
     return getCached(snapshot) {
-      val entity = ArchivePackagingElementEntityImpl(this)
+      val entity = CustomPackagingElementEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -287,7 +308,7 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return ArchivePackagingElementEntity::class.java
+    return CustomPackagingElementEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -297,7 +318,7 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return ArchivePackagingElementEntity(fileName, entitySource) {
+    return CustomPackagingElementEntity(typeId, propertiesXmlTag, entitySource) {
       this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
       this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
     }
@@ -312,10 +333,11 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ArchivePackagingElementEntityData
+    other as CustomPackagingElementEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.fileName != other.fileName) return false
+    if (this.typeId != other.typeId) return false
+    if (this.propertiesXmlTag != other.propertiesXmlTag) return false
     return true
   }
 
@@ -323,21 +345,24 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ArchivePackagingElementEntityData
+    other as CustomPackagingElementEntityData
 
-    if (this.fileName != other.fileName) return false
+    if (this.typeId != other.typeId) return false
+    if (this.propertiesXmlTag != other.propertiesXmlTag) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + fileName.hashCode()
+    result = 31 * result + typeId.hashCode()
+    result = 31 * result + propertiesXmlTag.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + fileName.hashCode()
+    result = 31 * result + typeId.hashCode()
+    result = 31 * result + propertiesXmlTag.hashCode()
     return result
   }
 

@@ -6,7 +6,7 @@ import com.intellij.platform.workspaceModel.jps.*
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ArtifactEntity
+import com.intellij.java.model.ArtifactEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity

@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.workspaceModel.storage.bridgeEntities
+package com.intellij.java.model
 
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
@@ -9,6 +9,7 @@ import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.SymbolicEntityId
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
 import com.intellij.platform.workspaceModel.storage.impl.EntityLink
 import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -22,7 +23,7 @@ import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractMany
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ModuleTestOutputPackagingElementEntityImpl(val dataSource: ModuleTestOutputPackagingElementEntityData) : ModuleTestOutputPackagingElementEntity, WorkspaceEntityBase() {
+open class ModuleSourcePackagingElementEntityImpl(val dataSource: ModuleSourcePackagingElementEntityData) : ModuleSourcePackagingElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -48,9 +49,9 @@ open class ModuleTestOutputPackagingElementEntityImpl(val dataSource: ModuleTest
     return connections
   }
 
-  class Builder(result: ModuleTestOutputPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ModuleTestOutputPackagingElementEntity, ModuleTestOutputPackagingElementEntityData>(
-    result), ModuleTestOutputPackagingElementEntity.Builder {
-    constructor() : this(ModuleTestOutputPackagingElementEntityData())
+  class Builder(result: ModuleSourcePackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ModuleSourcePackagingElementEntity, ModuleSourcePackagingElementEntityData>(
+    result), ModuleSourcePackagingElementEntity.Builder {
+    constructor() : this(ModuleSourcePackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -59,7 +60,7 @@ open class ModuleTestOutputPackagingElementEntityImpl(val dataSource: ModuleTest
           return
         }
         else {
-          error("Entity ModuleTestOutputPackagingElementEntity is already created in a different builder")
+          error("Entity ModuleSourcePackagingElementEntity is already created in a different builder")
         }
       }
 
@@ -89,7 +90,7 @@ open class ModuleTestOutputPackagingElementEntityImpl(val dataSource: ModuleTest
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as ModuleTestOutputPackagingElementEntity
+      dataSource as ModuleSourcePackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.module != dataSource?.module) this.module = dataSource.module
       updateChildToParentReferences(parents)
@@ -153,11 +154,11 @@ open class ModuleTestOutputPackagingElementEntityImpl(val dataSource: ModuleTest
 
       }
 
-    override fun getEntityClass(): Class<ModuleTestOutputPackagingElementEntity> = ModuleTestOutputPackagingElementEntity::class.java
+    override fun getEntityClass(): Class<ModuleSourcePackagingElementEntity> = ModuleSourcePackagingElementEntity::class.java
   }
 }
 
-class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTestOutputPackagingElementEntity>(), SoftLinkable {
+class ModuleSourcePackagingElementEntityData : WorkspaceEntityData<ModuleSourcePackagingElementEntity>(), SoftLinkable {
   var module: ModuleId? = null
 
 
@@ -213,17 +214,17 @@ class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTes
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ModuleTestOutputPackagingElementEntity> {
-    val modifiable = ModuleTestOutputPackagingElementEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ModuleSourcePackagingElementEntity> {
+    val modifiable = ModuleSourcePackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ModuleTestOutputPackagingElementEntity {
+  override fun createEntity(snapshot: EntityStorage): ModuleSourcePackagingElementEntity {
     return getCached(snapshot) {
-      val entity = ModuleTestOutputPackagingElementEntityImpl(this)
+      val entity = ModuleSourcePackagingElementEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -231,7 +232,7 @@ class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTes
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return ModuleTestOutputPackagingElementEntity::class.java
+    return ModuleSourcePackagingElementEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -241,8 +242,8 @@ class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTes
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return ModuleTestOutputPackagingElementEntity(entitySource) {
-      this.module = this@ModuleTestOutputPackagingElementEntityData.module
+    return ModuleSourcePackagingElementEntity(entitySource) {
+      this.module = this@ModuleSourcePackagingElementEntityData.module
       this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
     }
   }
@@ -256,7 +257,7 @@ class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTes
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ModuleTestOutputPackagingElementEntityData
+    other as ModuleSourcePackagingElementEntityData
 
     if (this.entitySource != other.entitySource) return false
     if (this.module != other.module) return false
@@ -267,7 +268,7 @@ class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTes
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ModuleTestOutputPackagingElementEntityData
+    other as ModuleSourcePackagingElementEntityData
 
     if (this.module != other.module) return false
     return true

@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.workspaceModel.storage.bridgeEntities
+package com.intellij.java.model
 
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
@@ -7,20 +7,23 @@ import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.SymbolicEntityId
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
 import com.intellij.platform.workspaceModel.storage.impl.EntityLink
 import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.platform.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspaceModel.storage.impl.extractOneToAbstractManyParent
+import com.intellij.platform.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractManyParentOfChild
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingElementEntityData) : FileCopyPackagingElementEntity, WorkspaceEntityBase() {
+open class ModuleTestOutputPackagingElementEntityImpl(val dataSource: ModuleTestOutputPackagingElementEntityData) : ModuleTestOutputPackagingElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -36,11 +39,8 @@ open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingE
   override val parentEntity: CompositePackagingElementEntity?
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
 
-  override val filePath: VirtualFileUrl
-    get() = dataSource.filePath
-
-  override val renamedOutputFileName: String?
-    get() = dataSource.renamedOutputFileName
+  override val module: ModuleId?
+    get() = dataSource.module
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -49,9 +49,9 @@ open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingE
     return connections
   }
 
-  class Builder(result: FileCopyPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<FileCopyPackagingElementEntity, FileCopyPackagingElementEntityData>(
-    result), FileCopyPackagingElementEntity.Builder {
-    constructor() : this(FileCopyPackagingElementEntityData())
+  class Builder(result: ModuleTestOutputPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ModuleTestOutputPackagingElementEntity, ModuleTestOutputPackagingElementEntityData>(
+    result), ModuleTestOutputPackagingElementEntity.Builder {
+    constructor() : this(ModuleTestOutputPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -60,7 +60,7 @@ open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingE
           return
         }
         else {
-          error("Entity FileCopyPackagingElementEntity is already created in a different builder")
+          error("Entity ModuleTestOutputPackagingElementEntity is already created in a different builder")
         }
       }
 
@@ -82,9 +82,6 @@ open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingE
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isFilePathInitialized()) {
-        error("Field FileOrDirectoryPackagingElementEntity#filePath should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -93,10 +90,9 @@ open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingE
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as FileCopyPackagingElementEntity
+      dataSource as ModuleTestOutputPackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.filePath != dataSource.filePath) this.filePath = dataSource.filePath
-      if (this.renamedOutputFileName != dataSource?.renamedOutputFileName) this.renamedOutputFileName = dataSource.renamedOutputFileName
+      if (this.module != dataSource?.module) this.module = dataSource.module
       updateChildToParentReferences(parents)
     }
 
@@ -149,45 +145,86 @@ open class FileCopyPackagingElementEntityImpl(val dataSource: FileCopyPackagingE
         changedProperty.add("parentEntity")
       }
 
-    override var filePath: VirtualFileUrl
-      get() = getEntityData().filePath
+    override var module: ModuleId?
+      get() = getEntityData().module
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).filePath = value
-        changedProperty.add("filePath")
-        val _diff = diff
-        if (_diff != null) index(this, "filePath", value)
+        getEntityData(true).module = value
+        changedProperty.add("module")
+
       }
 
-    override var renamedOutputFileName: String?
-      get() = getEntityData().renamedOutputFileName
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).renamedOutputFileName = value
-        changedProperty.add("renamedOutputFileName")
-      }
-
-    override fun getEntityClass(): Class<FileCopyPackagingElementEntity> = FileCopyPackagingElementEntity::class.java
+    override fun getEntityClass(): Class<ModuleTestOutputPackagingElementEntity> = ModuleTestOutputPackagingElementEntity::class.java
   }
 }
 
-class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackagingElementEntity>() {
-  lateinit var filePath: VirtualFileUrl
-  var renamedOutputFileName: String? = null
+class ModuleTestOutputPackagingElementEntityData : WorkspaceEntityData<ModuleTestOutputPackagingElementEntity>(), SoftLinkable {
+  var module: ModuleId? = null
 
-  fun isFilePathInitialized(): Boolean = ::filePath.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FileCopyPackagingElementEntity> {
-    val modifiable = FileCopyPackagingElementEntityImpl.Builder(null)
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
+    val optionalLink_module = module
+    if (optionalLink_module != null) {
+      result.add(optionalLink_module)
+    }
+    return result
+  }
+
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+    val optionalLink_module = module
+    if (optionalLink_module != null) {
+      index.index(this, optionalLink_module)
+    }
+  }
+
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+    // TODO verify logic
+    val mutablePreviousSet = HashSet(prev)
+    val optionalLink_module = module
+    if (optionalLink_module != null) {
+      val removedItem_optionalLink_module = mutablePreviousSet.remove(optionalLink_module)
+      if (!removedItem_optionalLink_module) {
+        index.index(this, optionalLink_module)
+      }
+    }
+    for (removed in mutablePreviousSet) {
+      index.remove(this, removed)
+    }
+  }
+
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
+    var changed = false
+    var module_data_optional = if (module != null) {
+      val module___data = if (module!! == oldLink) {
+        changed = true
+        newLink as ModuleId
+      }
+      else {
+        null
+      }
+      module___data
+    }
+    else {
+      null
+    }
+    if (module_data_optional != null) {
+      module = module_data_optional
+    }
+    return changed
+  }
+
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ModuleTestOutputPackagingElementEntity> {
+    val modifiable = ModuleTestOutputPackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): FileCopyPackagingElementEntity {
+  override fun createEntity(snapshot: EntityStorage): ModuleTestOutputPackagingElementEntity {
     return getCached(snapshot) {
-      val entity = FileCopyPackagingElementEntityImpl(this)
+      val entity = ModuleTestOutputPackagingElementEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -195,7 +232,7 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return FileCopyPackagingElementEntity::class.java
+    return ModuleTestOutputPackagingElementEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -205,8 +242,8 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return FileCopyPackagingElementEntity(filePath, entitySource) {
-      this.renamedOutputFileName = this@FileCopyPackagingElementEntityData.renamedOutputFileName
+    return ModuleTestOutputPackagingElementEntity(entitySource) {
+      this.module = this@ModuleTestOutputPackagingElementEntityData.module
       this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
     }
   }
@@ -220,11 +257,10 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as FileCopyPackagingElementEntityData
+    other as ModuleTestOutputPackagingElementEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.filePath != other.filePath) return false
-    if (this.renamedOutputFileName != other.renamedOutputFileName) return false
+    if (this.module != other.module) return false
     return true
   }
 
@@ -232,29 +268,26 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as FileCopyPackagingElementEntityData
+    other as ModuleTestOutputPackagingElementEntityData
 
-    if (this.filePath != other.filePath) return false
-    if (this.renamedOutputFileName != other.renamedOutputFileName) return false
+    if (this.module != other.module) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + filePath.hashCode()
-    result = 31 * result + renamedOutputFileName.hashCode()
+    result = 31 * result + module.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + filePath.hashCode()
-    result = 31 * result + renamedOutputFileName.hashCode()
+    result = 31 * result + module.hashCode()
     return result
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.filePath?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
+    collector.add(ModuleId::class.java)
+    collector.sameForAllEntities = true
   }
 }

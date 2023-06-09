@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspaceModel.jps.serialization.impl
 
+import com.intellij.java.model.ArtifactEntity
+import com.intellij.java.model.ArtifactId
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
@@ -491,7 +493,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           // We have a situations when we don't have an association at for `fileIdToFileName` entity source returned from `getActualFileSource`
           // but we have it for the original `JpsImportedEntitySource.internalFile` and base on it we try to calculate actual file url
           if (source is JpsImportedEntitySource && source.internalFile is JpsProjectFileEntitySource.FileInDirectory && source.storedExternally) {
-            fileIdToFileName.get((source.internalFile as JpsProjectFileEntitySource.FileInDirectory).fileNameId)?.substringBeforeLast(
+            fileIdToFileName.get(source.internalFile.fileNameId)?.substringBeforeLast(
               ".")?.let { "$it.xml" }
           }
           else null
