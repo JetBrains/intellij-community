@@ -8,7 +8,7 @@ import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
 import com.intellij.platform.workspaceModel.jps.serialization.impl.*
 import com.intellij.workspaceModel.ide.EntitiesOrphanage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
+import com.intellij.platform.workspaceModel.jps.entities.ModuleSettingsBase
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 
 abstract class BaseIdeSerializationContext : SerializationContext {

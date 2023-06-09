@@ -18,9 +18,9 @@ import com.intellij.platform.workspaceModel.jps.UnloadedModulesNameHolder
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.getModuleLevelLibraries
 import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.platform.workspaceModel.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleId
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.launch
 

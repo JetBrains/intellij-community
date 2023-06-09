@@ -10,9 +10,9 @@ import com.intellij.platform.workspaceModel.jps.serialization.SerializationConte
 import com.intellij.util.PathUtilRt
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.ExternalSystemModuleOptionsEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleCustomImlDataEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element

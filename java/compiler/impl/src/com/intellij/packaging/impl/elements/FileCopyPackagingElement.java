@@ -17,7 +17,6 @@ import com.intellij.workspaceModel.ide.VirtualFileUrls;
 import com.intellij.platform.workspaceModel.storage.EntitySource;
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage;
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExtensionsKt;
 import com.intellij.java.workspaceModel.entities.FileCopyPackagingElementEntity;
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager;

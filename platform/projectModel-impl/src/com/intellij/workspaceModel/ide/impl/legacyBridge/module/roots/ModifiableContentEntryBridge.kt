@@ -6,6 +6,10 @@ import com.intellij.java.workspaceModel.entities.asJavaSourceRoot
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.modifyEntity
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
 import com.intellij.workspaceModel.ide.getInstance
@@ -13,7 +17,6 @@ import com.intellij.workspaceModel.ide.isEqualOrParentOf
 import com.intellij.workspaceModel.ide.toVirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.JpsElement

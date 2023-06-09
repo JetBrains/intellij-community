@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.platform.workspaceModel.jps.entities.*
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -18,7 +19,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.toVirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.junit.jupiter.api.AfterAll
@@ -56,7 +56,8 @@ class ProjectFileIndexPerformanceTest {
         }
         builder addEntity ModuleEntity("big", listOf(ModuleDependencyItem.InheritedSdkDependency, ModuleDependencyItem.ModuleSourceDependency), NonPersistentEntitySource) {
           contentRoots = listOf(ContentRootEntity(bigModuleRoot.toVirtualFileUrl(fileUrlManager), emptyList(), NonPersistentEntitySource) {
-            sourceRoots = listOf(SourceRootEntity(bigModuleRoot.toVirtualFileUrl(fileUrlManager), JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, NonPersistentEntitySource))
+            sourceRoots = listOf(
+              SourceRootEntity(bigModuleRoot.toVirtualFileUrl(fileUrlManager), JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, NonPersistentEntitySource))
           })
         }
         for (i in 0..499) {
@@ -74,7 +75,7 @@ class ProjectFileIndexPerformanceTest {
             .createManyFiles(10, "Lib", ".java", ourLibrarySourceFilesToTest)
 
           val dependencies = listOf(
-            ModuleDependencyItem.InheritedSdkDependency, 
+            ModuleDependencyItem.InheritedSdkDependency,
             ModuleDependencyItem.ModuleSourceDependency,
             ModuleDependencyItem.Exportable.LibraryDependency(library.symbolicId, false, ModuleDependencyItem.DependencyScope.COMPILE)
           )

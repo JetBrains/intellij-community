@@ -7,7 +7,7 @@ import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
 import com.intellij.platform.workspaceModel.jps.UnloadedModulesNameHolder
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId
 import com.intellij.platform.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.TestOnly

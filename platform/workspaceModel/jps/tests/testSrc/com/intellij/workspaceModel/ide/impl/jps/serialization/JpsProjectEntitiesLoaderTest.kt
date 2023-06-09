@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
+import com.intellij.platform.workspaceModel.jps.entities.*
 import com.intellij.platform.workspaceModel.storage.tests.checkConsistency
 import com.intellij.project.stateStore
 import com.intellij.testFramework.HeavyPlatformTestCase
@@ -16,7 +17,6 @@ import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer

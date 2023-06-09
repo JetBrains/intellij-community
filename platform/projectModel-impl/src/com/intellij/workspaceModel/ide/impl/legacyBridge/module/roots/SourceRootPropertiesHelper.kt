@@ -4,9 +4,10 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 import com.intellij.java.workspaceModel.entities.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.workspaceModel.jps.entities.CustomSourceRootPropertiesEntity
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.modifyEntity
 import org.jdom.Element
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement

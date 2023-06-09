@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.configurationStore.ComponentSerializationUtil
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
@@ -22,9 +21,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.FileContainerDe
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.JarDirectoryDescription
 import com.intellij.workspaceModel.ide.toExternalSource
 import com.intellij.platform.workspaceModel.storage.EntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryRoot
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryPropertiesEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryRoot
 import java.io.StringReader
 
 class LibraryStateSnapshot(

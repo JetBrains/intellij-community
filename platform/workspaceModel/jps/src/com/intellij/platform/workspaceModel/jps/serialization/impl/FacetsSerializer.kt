@@ -9,10 +9,10 @@ import com.intellij.platform.workspaceModel.jps.serialization.SerializationConte
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.FacetsOrderEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.facetOrder
+import com.intellij.platform.workspaceModel.jps.entities.FacetsOrderEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleSettingsBase
+import com.intellij.platform.workspaceModel.jps.entities.facetOrder
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.facet.FacetManagerState

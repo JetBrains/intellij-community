@@ -17,6 +17,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
+import com.intellij.platform.workspaceModel.jps.entities.ModuleCustomImlDataEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleId
+import com.intellij.platform.workspaceModel.jps.entities.modifyEntity
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener

@@ -6,7 +6,7 @@ import com.intellij.platform.workspaceModel.jps.serialization.impl.CustomFacetRe
 import com.intellij.platform.workspaceModel.jps.serialization.impl.CustomModuleComponentSerializer
 import com.intellij.platform.workspaceModel.jps.serialization.impl.CustomModuleRootsSerializer
 import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsFileContentReader
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
+import com.intellij.platform.workspaceModel.jps.entities.ModuleSettingsBase
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 
 /**

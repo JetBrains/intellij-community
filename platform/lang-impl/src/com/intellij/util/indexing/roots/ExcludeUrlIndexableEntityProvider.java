@@ -2,9 +2,9 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.workspaceModel.jps.entities.*;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

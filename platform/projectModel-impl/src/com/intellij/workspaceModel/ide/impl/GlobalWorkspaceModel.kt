@@ -19,10 +19,10 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.platform.workspaceModel.storage.*
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryRoot
+import com.intellij.platform.workspaceModel.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryPropertiesEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryRoot
 import com.intellij.platform.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import com.intellij.platform.workspaceModel.storage.impl.assertConsistency
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl

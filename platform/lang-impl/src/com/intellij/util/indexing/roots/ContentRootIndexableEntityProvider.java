@@ -10,8 +10,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.platform.workspaceModel.storage.EntityStorage;
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity;
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity;
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl;
 import org.jetbrains.annotations.NotNull;
 

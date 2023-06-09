@@ -9,8 +9,8 @@ import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.workspaceModel.jps.entities.*
 import com.intellij.workspaceModel.ide.toPath
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.idea.eclipse.IdeaXml

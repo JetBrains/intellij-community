@@ -62,8 +62,8 @@ import com.intellij.util.text.StringSearcher;
 import com.intellij.util.ui.EDT;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.platform.workspaceModel.storage.EntityStorage;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId;
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity;
+import com.intellij.platform.workspaceModel.jps.entities.ModuleId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

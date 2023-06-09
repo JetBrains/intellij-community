@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider;
+import com.intellij.platform.workspaceModel.jps.entities.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription;
@@ -13,7 +14,6 @@ import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspace
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

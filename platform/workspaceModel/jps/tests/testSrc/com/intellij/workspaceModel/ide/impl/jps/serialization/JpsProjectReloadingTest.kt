@@ -9,9 +9,9 @@ import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.platform.workspaceModel.jps.UnloadedModulesNameHolder
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.projectLibraries
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.sourceRoots
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.projectLibraries
+import com.intellij.platform.workspaceModel.jps.entities.sourceRoots
 import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil

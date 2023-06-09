@@ -8,9 +8,9 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryId;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryTableId;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId;
+import com.intellij.platform.workspaceModel.jps.entities.LibraryId;
+import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId;
+import com.intellij.platform.workspaceModel.jps.entities.ModuleId;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 

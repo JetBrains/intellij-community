@@ -2,6 +2,7 @@
 package com.intellij.platform.workspaceModel.storage.bridgeEntities
 
 import com.intellij.java.workspaceModel.entities.JavaModuleSettingsEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage

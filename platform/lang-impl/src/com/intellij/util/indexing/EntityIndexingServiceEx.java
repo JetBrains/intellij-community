@@ -11,7 +11,7 @@ import com.intellij.platform.workspaceModel.storage.EntityChange;
 import com.intellij.platform.workspaceModel.storage.EntityReference;
 import com.intellij.platform.workspaceModel.storage.EntityStorage;
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryId;
+import com.intellij.platform.workspaceModel.jps.entities.LibraryId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

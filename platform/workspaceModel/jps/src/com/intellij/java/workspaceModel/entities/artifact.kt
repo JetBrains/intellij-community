@@ -13,8 +13,8 @@ import com.intellij.platform.workspaceModel.storage.ObjBuilder
 import com.intellij.platform.workspaceModel.storage.Type
 import com.intellij.platform.workspaceModel.storage.annotations.Abstract
 import com.intellij.platform.workspaceModel.storage.annotations.Child
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.platform.workspaceModel.jps.entities.LibraryId
+import com.intellij.platform.workspaceModel.jps.entities.ModuleId
 import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 
 data class ArtifactId(val name: @NlsSafe String) : SymbolicEntityId<ArtifactEntity> {

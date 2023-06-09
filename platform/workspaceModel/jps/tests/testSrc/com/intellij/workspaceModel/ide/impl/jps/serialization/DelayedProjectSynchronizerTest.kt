@@ -35,9 +35,9 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.platform.workspaceModel.storage.EntityStorageSerializer
 import com.intellij.platform.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.FacetEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.Dispatchers

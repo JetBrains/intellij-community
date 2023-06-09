@@ -3,7 +3,7 @@ package com.intellij.platform.workspaceModel.jps.serialization.impl
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.workspaceModel.jps.JpsGlobalFileEntitySource
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 
 object JpsGlobalEntitiesSerializers {

@@ -4,7 +4,7 @@ package com.intellij.java.workspaceModel.entities
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspaceModel.storage.*
 import com.intellij.platform.workspaceModel.storage.annotations.Child
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity
 
 interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
   val sourceRoot: SourceRootEntity

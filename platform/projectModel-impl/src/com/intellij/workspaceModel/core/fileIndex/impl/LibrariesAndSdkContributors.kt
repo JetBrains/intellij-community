@@ -24,7 +24,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 import com.intellij.platform.workspaceModel.storage.EntityReference
 import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.platform.workspaceModel.jps.entities.LibraryId
 import java.util.*
 
 internal class LibrariesAndSdkContributors(private val project: Project,

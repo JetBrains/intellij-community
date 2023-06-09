@@ -5,8 +5,8 @@ import com.intellij.java.workspaceModel.entities.JavaResourceRootPropertiesEntit
 import com.intellij.java.workspaceModel.entities.JavaRootsKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity;
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity;
+import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity;
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import kotlin.Pair;
