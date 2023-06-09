@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * @deprecated Use {@link OSProcessUtil} methods
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class OSProcessManager {
   public static OSProcessManager getInstance() {
     return ApplicationManager.getApplication().getService(OSProcessManager.class);
@@ -18,7 +18,7 @@ public abstract class OSProcessManager {
   /**
    * @deprecated Use {@link OSProcessUtil#getProcessList()} and then {@link ProcessInfo#getCommandLine()} on items
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public abstract List<String> getCommandLinesOfRunningProcesses();
 }

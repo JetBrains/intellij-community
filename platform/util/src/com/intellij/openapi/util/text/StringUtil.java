@@ -3051,6 +3051,7 @@ public class StringUtil extends StringUtilRt {
    * @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatAndList(java.util.Collection)} instead to get properly localized concatenation
    */
   @SuppressWarnings("HardCodedStringLiteral")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @Nls @NotNull String naturalJoin(List<String> strings) {
     if (strings.isEmpty()) return "";

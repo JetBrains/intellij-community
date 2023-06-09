@@ -35,7 +35,7 @@ public interface ChangesViewEx extends ChangesViewI {
   /**
    * @deprecated Use {@link ChangesViewWorkflowManager#getCommitWorkflowHandler}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   ChangesViewCommitWorkflowHandler getCommitWorkflowHandler();
 }

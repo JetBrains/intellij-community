@@ -223,9 +223,11 @@ public final class Disposer {
     return ourTree.isDisposed(disposable);
   }
 
+
   /**
    * @deprecated use {@link #isDisposed(Disposable)} instead
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isDisposing(@NotNull Disposable disposable) {
     String message = "this method is deprecated and going to be removed soon. Please use isDisposed() instead";

@@ -603,6 +603,7 @@ public interface Application extends ComponentManager {
   @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
 
   /** @deprecated Internal API */
+  @ApiStatus.ScheduledForRemoval
   @ApiStatus.Internal
   @Deprecated
   @SuppressWarnings({"override", "DeprecatedIsStillUsed"})

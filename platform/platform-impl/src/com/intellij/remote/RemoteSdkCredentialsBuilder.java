@@ -38,7 +38,7 @@ public class RemoteSdkCredentialsBuilder {
   /**
    * @deprecated Just inline this method.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void copyCredentials(@NotNull RemoteCredentials data, @NotNull MutableRemoteCredentials copyTo) {
     RemoteCredentialsHolder.copyRemoteCredentials(data, copyTo);
   }

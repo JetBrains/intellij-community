@@ -43,7 +43,7 @@ public abstract class ManagingFS implements FileSystemInterface {
    * @deprecated to be dropped as there is no real use for it
    */
   //FIXME RC: drop this method from API -- the only use is in test code
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract int getModificationCount(@NotNull VirtualFile fileOrDirectory);
 
   /**
@@ -54,7 +54,7 @@ public abstract class ManagingFS implements FileSystemInterface {
    * @deprecated to be dropped as there is no real use for it 
    */
   //FIXME RC: drop this method from API -- the only use is in test code
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract int getModificationCount();
 
   /**

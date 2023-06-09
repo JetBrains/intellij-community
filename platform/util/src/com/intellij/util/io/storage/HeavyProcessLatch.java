@@ -7,10 +7,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -52,6 +49,7 @@ public final class HeavyProcessLatch {
   }
 
   /** @deprecated use {@link #performOperation} instead */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public @NotNull AccessToken processStarted(@NotNull @Nls String displayName) {
     Op op = new Op(Type.Processing, displayName);

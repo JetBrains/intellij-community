@@ -208,13 +208,13 @@ public interface EditorSettings {
   /**
    * @deprecated This method is a stub. Related functionality has been moved to {@code VisualFormattingLayerService}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default @Nullable Boolean isShowVisualFormattingLayer() { return null; }
 
   /**
    * @deprecated This method is a stub. Related functionality has been moved to {@code VisualFormattingLayerService}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void setShowVisualFormattingLayer(@Nullable Boolean showVisualFormattingLayer) {}
 
   boolean isInsertParenthesesAutomatically();

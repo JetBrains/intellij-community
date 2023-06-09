@@ -61,7 +61,7 @@ public class EventLogStatisticsService implements StatisticsService {
    * @deprecated Use {@link EventLogStatisticsService#send(EventLogSendConfig, EventLogSettingsService, EventLogResultDecorator)}
    * Kept for compatibility with TBE.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static StatisticsResult send(@NotNull DeviceConfiguration device,
                                       @NotNull EventLogRecorderConfig config,
                                       @NotNull EventLogSettingsService settings,

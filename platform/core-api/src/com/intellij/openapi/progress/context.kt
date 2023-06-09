@@ -10,6 +10,7 @@ import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -21,6 +22,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 )
 fun <X> withCurrentJob(job: Job, action: () -> X): X = blockingContext(job, action)
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Renamed to `withCurrentJob`",
   replaceWith = ReplaceWith(
