@@ -9,52 +9,52 @@ import java.util.List;
 
 @ApiStatus.Experimental
 public interface EditorSettingsListener extends EventListener {
-  void isRightMarginShownChanged(boolean newValue);
-  void isWhitespacesShownChanged(boolean newValue);
-  void isLeadingWhitespaceShownChanged(boolean newValue);
-  void isInnerWhitespaceShownChanged(boolean newValue);
-  void isTrailingWhitespaceShownChanged(boolean newValue);
-  void isSelectionWhitespaceShownChanged(boolean newValue);
-  void rightMarginChanged(int newValue);
-  void softMarginsChanged(@NotNull List<Integer> newValue);
-  void isWrapWhenTypingReachesRightMarginChanged(boolean newValue);
-  void isLineNumbersShownChanged(boolean newValue);
-  void additionalLinesCountChanged(int newValue);
-  void additionalColumnsCountChanged(int newValue);
-  void isLineMarkerAreaShownChanged(boolean newValue);
-  void areGutterIconsShownChanged(boolean newValue);
-  void isFoldingOutlineShownChanged(boolean newValue);
-  void isAutoCodeFoldingEnabledChanged(boolean newValue);
-  void isUseTabCharacterChanged(boolean newValue);
-  void tabSizeChanged(int newValue);
-  void isSmartHomeChanged(boolean newValue);
-  void isVirtualSpaceChanged(boolean newValue);
-  void verticalScrollOffsetChanged(int newValue);
-  void verticalScrollJumpChanged(int newValue);
-  void horizontalScrollOffsetChanged(int newValue);
-  void horizontalScrollJumpChanged(int newValue);
-  void isCaretInsideTabsChanged(boolean newValue);
-  void isBlinkCaretChanged(boolean newValue);
-  void caretBlinkPeriodChanged(int newValue);
-  void isBlockCursorChanged(boolean newValue);
-  void isCaretRowShownChanged(boolean newValue);
-  void lineCursorWidthChanged(int newValue);
-  void isAnimatedScrollingChanged(boolean newValue);
-  void isCamelWordsChanged(boolean newValue);
-  void isAdditionalPageAtBottomChanged(boolean newValue);
-  void isDndEnabledChanged(boolean newValue);
-  void isWheelFontChangeEnabledChanged(boolean newValue);
-  void isMouseClickSelectionHonorsCamelWordsChanged(boolean newValue);
-  void isVariableInplaceRenameEnabledChanged(boolean newValue);
-  void isRefrainFromScrollingChanged(boolean newValue);
-  void isIndentGuidesShownChanged(boolean newValue);
-  void isUseSoftWrapsChanged(boolean newValue);
-  void isPaintSoftWrapsChanged(boolean newValue);
-  void isUseCustomSoftWrapIndentChanged(boolean newValue);
-  void customSoftWrapIndentChanged(int newValue);
-  void isAllowSingleLogicalLineFoldingChanged(boolean newValue);
-  void isPreselectRenameChanged(boolean newValue);
-  void isShowIntentionBulbChanged(boolean newValue);
-  void isShowingSpecialCharsChanged(boolean newValue);
-  void lineNumerationTypeChanged(@NotNull EditorSettings.LineNumerationType newValue);
+  default void isRightMarginShownChanged(boolean newValue) {}
+  default void isWhitespacesShownChanged(boolean newValue) {}
+  default void isLeadingWhitespaceShownChanged(boolean newValue) {}
+  default void isInnerWhitespaceShownChanged(boolean newValue) {}
+  default void isTrailingWhitespaceShownChanged(boolean newValue) {}
+  default void isSelectionWhitespaceShownChanged(boolean newValue) {}
+  default void rightMarginChanged(int newValue) {}
+  default void softMarginsChanged(@NotNull List<Integer> newValue) {}
+  default void isWrapWhenTypingReachesRightMarginChanged(boolean newValue) {}
+  default void isLineNumbersShownChanged(boolean newValue) {}
+  default void additionalLinesCountChanged(int newValue) {}
+  default void additionalColumnsCountChanged(int newValue) {}
+  default void isLineMarkerAreaShownChanged(boolean newValue) {}
+  default void areGutterIconsShownChanged(boolean newValue) {}
+  default void isFoldingOutlineShownChanged(boolean newValue) {}
+  default void isAutoCodeFoldingEnabledChanged(boolean newValue) {}
+  default void isUseTabCharacterChanged(boolean newValue) {}
+  default void tabSizeChanged(int newValue) {}
+  default void isSmartHomeChanged(boolean newValue) {}
+  default void isVirtualSpaceChanged(boolean newValue) {}
+  default void verticalScrollOffsetChanged(int newValue) {}
+  default void verticalScrollJumpChanged(int newValue) {}
+  default void horizontalScrollOffsetChanged(int newValue) {}
+  default void horizontalScrollJumpChanged(int newValue) {}
+  default void isCaretInsideTabsChanged(boolean newValue) {}
+  default void isBlinkCaretChanged(boolean newValue) {}
+  default void caretBlinkPeriodChanged(int newValue) {}
+  default void isBlockCursorChanged(boolean newValue) {}
+  default void isCaretRowShownChanged(boolean newValue) {}
+  default void lineCursorWidthChanged(int newValue) {}
+  default void isAnimatedScrollingChanged(boolean newValue) {}
+  default void isCamelWordsChanged(boolean newValue) {}
+  default void isAdditionalPageAtBottomChanged(boolean newValue) {}
+  default void isDndEnabledChanged(boolean newValue) {}
+  default void isWheelFontChangeEnabledChanged(boolean newValue) {}
+  default void isMouseClickSelectionHonorsCamelWordsChanged(boolean newValue) {}
+  default void isVariableInplaceRenameEnabledChanged(boolean newValue) {}
+  default void isRefrainFromScrollingChanged(boolean newValue) {}
+  default void isIndentGuidesShownChanged(boolean newValue) {}
+  default void isUseSoftWrapsChanged(boolean newValue) {}
+  default void isPaintSoftWrapsChanged(boolean newValue) {}
+  default void isUseCustomSoftWrapIndentChanged(boolean newValue) {}
+  default void customSoftWrapIndentChanged(int newValue) {}
+  default void isAllowSingleLogicalLineFoldingChanged(boolean newValue) {}
+  default void isPreselectRenameChanged(boolean newValue) {}
+  default void isShowIntentionBulbChanged(boolean newValue) {}
+  default void isShowingSpecialCharsChanged(boolean newValue) {}
+  default void lineNumerationTypeChanged(@NotNull EditorSettings.LineNumerationType newValue) {}
 }
