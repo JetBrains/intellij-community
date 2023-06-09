@@ -37,7 +37,7 @@ abstract class MacDistributionCustomizer(
   /**
    * The minimum version of macOS where the product is allowed to be installed
    */
-  var minOSXVersion = "10.8"
+  var minOSXVersion = "10.15"
 
   /**
    * String with declarations of additional file types that should be automatically opened by the application.
