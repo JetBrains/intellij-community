@@ -42,21 +42,23 @@ public final class PythonHelpersLocator {
    * There is no check for macOS though, since such problems may appear in other operating systems as well, and since it's a bad
    * idea to modify the IDE distributive during running in general.
    */
-  private static final LazyInitializer.LazyValue<@Nullable File> ourTemporaryHelpersRootDir =
-    new LazyInitializer.LazyValue<>(PythonHelpersLocator::initializeTemporaryHelpersRootDir);
+  private static final LazyInitializer.LazyValue<@Nullable File> ourHelpersCopyRootDir =
+    new LazyInitializer.LazyValue<>(PythonHelpersLocator::initializeHelpersCopyRootDir);
 
-  private static @Nullable File initializeTemporaryHelpersRootDir() {
+  private static @Nullable File initializeHelpersCopyRootDir() {
     String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
     final File pluginBaseDir = getPluginBaseDir(jarPath);
     if (pluginBaseDir == null) {
       return null;
     }
     try {
-      File rootDir = FileUtil.createTempDirectory(
-        "python-helpers-" + ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode(),
-        null,
-        true);
-      FileUtil.copyDir(pluginBaseDir, rootDir, true);
+      File rootDir = new File(
+        PathManager.getSystemPath(),
+        "python-helpers-" + ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode()
+      );
+      if (!rootDir.isDirectory()) {
+        FileUtil.copyDir(pluginBaseDir, rootDir, true);
+      }
       return rootDir;
     }
     catch (IOException e) {
@@ -86,7 +88,7 @@ public final class PythonHelpersLocator {
       return new File(PathManager.getCommunityHomePath() + relativePath);
     }
     else {
-      @Nullable File helpersRootDir = ourTemporaryHelpersRootDir.get();
+      @Nullable File helpersRootDir = ourHelpersCopyRootDir.get();
       if (helpersRootDir != null) {
         return new File(helpersRootDir, PathUtil.getFileName(relativePath));
       }
