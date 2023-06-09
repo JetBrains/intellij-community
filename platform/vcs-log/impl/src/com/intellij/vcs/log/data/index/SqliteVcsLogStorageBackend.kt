@@ -270,7 +270,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     val result = hashMapOf<Int, MutableList<Hash>>()
     val paramBinder = ObjectBinder(paramCount = 0)
     val inClause = commitIds.toInClause()
-    val sql = "select c.rowid, c.hash from commit_hashes c inner join parent p on p.parent = c.rowid where p.commitId in $inClause"
+    val sql = "select p.rowid, c.hash from commit_hashes c inner join parent p on p.parent = c.rowid where p.commitId in $inClause"
 
     connection.prepareStatement(sql, paramBinder).use { statement ->
       val rs = statement.executeQuery()
