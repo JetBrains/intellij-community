@@ -11,6 +11,7 @@ import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.TestModulePropertiesEntity
+import com.intellij.java.model.modifyEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.modifyEntity
 
 class TestModulePropertiesBridge(private val currentModule: Module): TestModuleProperties() {

@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide.java
 
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity
+import com.intellij.java.model.JavaModuleSettingsEntity
 
 var JavaModuleSettingsEntity.Builder.languageLevel: LanguageLevel?
   get() = idToLanguageLevel(languageLevelId)
