@@ -111,23 +111,56 @@ class JavaSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() 
     myFixture.addClass("""
          @SuppressWarnings({"FieldMayBeStatic", "StaticNonFinalField", "RedundantSuppression"}) 
         public class Limit2 {
-
+ 
           public final static String fromAnotherFile = "1";
           public final static String fromAnotherFile2 = fromAnotherFile;
           public final static String fromAnotherFile3 = fromMethod();
           public static String fromAnotherFile4 = "1";
           public final String fromAnotherFile5 = "1";
           public final String fromAnotherFile6;
-
+ 
           public Limit2() {
               this.fromAnotherFile6 = "";
           }
-
+ 
           private static String fromMethod() {
               return "null";
           }
       }
     """.trimIndent())
     myFixture.testHighlighting("Limits.java")
+  }
+
+  fun `test custom through tables`() {
+    inspection.untaintedParameterIndex.apply {
+      this.clear()
+      this.add("1")
+    }
+    inspection.untaintedParameterMethodClass.apply {
+      this.clear()
+      this.add("FromMethod")
+    }
+    inspection.untaintedParameterMethodName.apply {
+      this.clear()
+      this.add("sink")
+    }
+
+    inspection.taintedParameterIndex.apply {
+      this.clear()
+      this.add("0")
+    }
+    inspection.taintedParameterMethodClass.apply {
+      this.clear()
+      this.add("FromMethod")
+    }
+    inspection.taintedParameterMethodName.apply {
+      this.clear()
+      this.add("test")
+    }
+
+    inspection.setTaintedMethod("java.lang.String", "toString")
+    inspection.setUntaintedMethod("java.lang.String", "trim")
+
+    myFixture.testHighlighting("FromMethod.java")
   }
 }
