@@ -56,6 +56,13 @@ public abstract class ModalityState {
   }
 
   /**
+   * @return state when no modal dialogs are open
+   */
+  public static @NotNull ModalityState nonModal() {
+    return NON_MODAL;
+  }
+
+  /**
    * @return the modality state corresponding to the currently opened modal dialogs. Can only be invoked on AWT thread.
    */
   @SuppressWarnings("deprecation")
