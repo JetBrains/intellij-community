@@ -3,11 +3,13 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope as NewKotlinSourceFilterScope
 
 @Deprecated("Use 'org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope' instead")
 class KotlinSourceFilterScope private constructor() {
     companion object {
+        @ApiStatus.ScheduledForRemoval
         @Deprecated(
             "Use 'org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope.projectSourcesAndLibraryClasses()' instead.",
             ReplaceWith(
@@ -19,6 +21,7 @@ class KotlinSourceFilterScope private constructor() {
         fun projectSourceAndClassFiles(delegate: GlobalSearchScope, project: Project): GlobalSearchScope =
             NewKotlinSourceFilterScope.projectSourcesAndLibraryClasses(delegate, project)
 
+        @ApiStatus.ScheduledForRemoval
         @Deprecated(
             "Use 'org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope.projectSources()' instead.",
             ReplaceWith(
@@ -30,6 +33,7 @@ class KotlinSourceFilterScope private constructor() {
         fun projectSources(delegate: GlobalSearchScope, project: Project): GlobalSearchScope =
             NewKotlinSourceFilterScope.projectSources(delegate, project)
 
+        @ApiStatus.ScheduledForRemoval
         @Deprecated(
             "Use 'org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope.librarySources()' instead.",
             ReplaceWith(

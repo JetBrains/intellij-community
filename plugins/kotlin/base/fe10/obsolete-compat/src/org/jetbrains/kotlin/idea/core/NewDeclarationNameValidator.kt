@@ -2,10 +2,12 @@
 package org.jetbrains.kotlin.idea.core
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider.ValidatorTarget
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.psi.KtDeclaration
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use 'Fe10KotlinNewDeclarationNameValidator' instead")
 class NewDeclarationNameValidator(
     container: PsiElement,

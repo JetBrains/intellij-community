@@ -47,6 +47,7 @@ import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.VisibilityUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -317,6 +318,7 @@ fun PsiFile.getLineStartOffset(line: Int): Int? {
     return null
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Use org.jetbrains.kotlin.idea.base.psi.getLineEndOffset() instead",
     ReplaceWith("this.getLineEndOffset(line)", "org.jetbrains.kotlin.idea.base.psi.getLineEndOffset"),
@@ -1033,6 +1035,7 @@ fun <T : KtExpression> T.replaceWithCopyWithResolveCheck(
     return if (originDescriptor.canonicalRender() == newDescriptor.canonicalRender()) elementCopy.postHook() else null
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Use org.jetbrains.kotlin.idea.base.psi.getLineCount() instead",
     ReplaceWith("this.getLineCount()", "org.jetbrains.kotlin.idea.base.psi.getLineCount"),
