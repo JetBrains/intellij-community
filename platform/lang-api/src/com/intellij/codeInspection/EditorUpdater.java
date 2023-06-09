@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
@@ -15,6 +16,14 @@ import java.util.function.BiConsumer;
  */
 @ApiStatus.Experimental
 public interface EditorUpdater {
+  /**
+   * @param e element to update
+   * @return a copy of this element inside a writable non-physical file, whose changes are tracked and will be added to the final command
+   * @param <E> type of the element
+   */
+  @Contract(value = "null -> null; !null -> !null")
+  <E extends PsiElement> E getWritable(E e);
+  
   /**
    * Selects given element
    * 
@@ -32,7 +41,7 @@ public interface EditorUpdater {
   /**
    * Navigates to a given offset
    *
-   * @param element element to navigate to
+   * @param offset offset to move to
    */
   void moveTo(int offset);
 

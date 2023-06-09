@@ -10,11 +10,8 @@ import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -28,9 +25,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -86,6 +81,38 @@ public final class ModCommands {
   }
 
   /**
+   * @param context a context of the original action
+   * @param updater a function that accepts an updater, so it can query writable copies from it and perform modifications;
+   *                also additional editor operation like caret positioning could be performed
+   * @return a command that will perform the corresponding update to the original elements and the editor
+   */
+  public static @NotNull ModCommand psiUpdate(@NotNull ModCommandAction.ActionContext context,
+                                              @NotNull Consumer<@NotNull EditorUpdater> updater) {
+    var runnable = new Runnable() {
+      private EditorUpdaterImpl myUpdater;
+
+      @Override
+      public void run() {
+        myUpdater = new EditorUpdaterImpl(context);
+        updater.accept(myUpdater);
+      }
+
+      void dispose() {
+        if (myUpdater != null) {
+          Disposer.dispose(myUpdater);
+        }
+      }
+    };
+    try {
+      PostprocessReformattingAspect.getInstance(context.project()).postponeFormattingInside(runnable);
+      return runnable.myUpdater.getCommand();
+    }
+    finally {
+      runnable.dispose();
+    }
+  }
+
+  /**
    * @param orig    PsiElement to update
    * @param updater a function that accepts a non-physical copy of the supplied orig element and performs
    *                PSI write operations in background to modify this copy
@@ -104,30 +131,7 @@ public final class ModCommands {
    */
   public static <E extends PsiElement> @NotNull ModCommand psiUpdate(@NotNull E orig,
                                                                      @NotNull BiConsumer<@NotNull E, @NotNull EditorUpdater> updater) {
-    var runnable = new Runnable() {
-      private EditorUpdaterImpl myContext;
-      private FileTracker myTracker;
-
-      @Override
-      public void run() {
-        myTracker = new FileTracker(orig.getContainingFile());
-        myContext = new EditorUpdaterImpl(myTracker);
-        E copy = myTracker.getCopy(orig);
-        updater.accept(copy, myContext);
-      }
-      
-      void dispose() {
-        Disposer.dispose(myTracker);
-        Disposer.dispose(myContext);
-      }
-    };
-    try {
-      PostprocessReformattingAspect.getInstance(orig.getProject()).postponeFormattingInside(runnable);
-      return runnable.myTracker.getUpdateCommand().andThen(runnable.myContext.getNavigateCommand());
-    }
-    finally {
-      runnable.dispose();
-    }
+    return psiUpdate(ModCommandAction.ActionContext.from(null, orig.getContainingFile()), eu -> updater.accept(eu.getWritable(orig), eu));
   }
 
   private static class FileTracker implements DocumentListener, Disposable {
@@ -140,13 +144,11 @@ public final class ModCommands {
     private final @NotNull String myOrigText;
     private final @NotNull PsiFile myOrigFile;
     private final @NotNull PsiFile myCopyFile;
-    private final ModCommandAction.@NotNull ActionContext myActionContext;
     private final @NotNull PsiDocumentManager myManager;
 
     FileTracker(@NotNull PsiFile origFile) {
       myProject = origFile.getProject();
-      myActionContext = createContext(myProject, origFile);
-      myCopyFile = myActionContext.file();
+      myCopyFile = copyFile(myProject, origFile);
       myDocument = myCopyFile.getViewProvider().getDocument();
       InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(myProject);
       boolean injected = injectionManager.isInjectedFragment(origFile);
@@ -225,6 +227,9 @@ public final class ModCommands {
     }
 
     <E extends PsiElement> @NotNull E getCopy(@NotNull E orig) {
+      if (!myFragments.isEmpty()) {
+        throw new IllegalStateException("File is already modified. Elements to update must be requested before any modifications");
+      }
       return PsiTreeUtil.findSameElementInCopy(orig, this.myCopyFile);
     }
   }
@@ -249,43 +254,45 @@ public final class ModCommands {
     return Objects.requireNonNull(visitor.injectedFileCopy);
   }
 
-  private static ModCommandAction.@NotNull ActionContext createContext(Project project, PsiFile origFile) {
+  private static @NotNull PsiFile copyFile(Project project, PsiFile origFile) {
     var manager = InjectedLanguageManager.getInstance(project);
     boolean injectedFragment = manager.isInjectedFragment(origFile);
-    VirtualFile origVirtualFile = (injectedFragment ? manager.getTopLevelFile(origFile) : origFile).getOriginalFile().getVirtualFile();
-    Editor origEditor =
-      origVirtualFile != null && FileEditorManager.getInstance(project).getSelectedEditor(origVirtualFile) instanceof TextEditor textEditor
-      ?
-      textEditor.getEditor()
-      : null;
-    int offset = 0, start = 0, end = 0;
-    if (origEditor != null) {
-      offset = origEditor.getCaretModel().getOffset();
-      start = origEditor.getSelectionModel().getSelectionStart();
-      end = origEditor.getSelectionModel().getSelectionEnd();
-    }
-    PsiFile copyFile;
     if (!injectedFragment) {
-      copyFile = (PsiFile)origFile.copy();
+      return (PsiFile)origFile.copy();
     } else {
-      copyFile = PsiFileFactory.getInstance(project).createFileFromText(
-        origFile.getName(), origFile.getFileType(), manager.getUnescapedText(origFile),
-        LocalTimeCounter.currentTime(), false);
+      return PsiFileFactory.getInstance(project).createFileFromText(
+          origFile.getName(), origFile.getFileType(), manager.getUnescapedText(origFile),
+          LocalTimeCounter.currentTime(), false);
     }
-    return new ModCommandAction.ActionContext(project, copyFile, offset, TextRange.create(start, end));
   }
 
   private static class EditorUpdaterImpl implements EditorUpdater, DocumentListener, Disposable {
     private final @NotNull FileTracker myTracker;
+    private final @NotNull Map<PsiFile, FileTracker> myChangedFiles = new HashMap<>();
     private int myCaretOffset, mySelectionStart, mySelectionEnd;
+    private boolean myPositionUpdated = false;
 
-    private EditorUpdaterImpl(@NotNull FileTracker tracker) {
-      myTracker = tracker;
-      ModCommandAction.ActionContext actionContext = tracker.myActionContext;
+    private EditorUpdaterImpl(@NotNull ModCommandAction.ActionContext actionContext) {
       myCaretOffset = actionContext.offset();
       mySelectionStart = actionContext.selection().getStartOffset();
       mySelectionEnd = actionContext.selection().getEndOffset();
+      // TODO: lazily get the tracker for the current file
+      myTracker = tracker(actionContext.file());
       myTracker.myPositionDocument.addDocumentListener(this, this);
+    }
+    
+    private @NotNull FileTracker tracker(@NotNull PsiFile file) {
+      return myChangedFiles.computeIfAbsent(file, origFile -> {
+        var tracker = new FileTracker(origFile);
+        Disposer.register(this, tracker);
+        return tracker;
+      });
+    }
+
+    @Override
+    public <E extends PsiElement> E getWritable(E e) {
+      if (e == null) return null;
+      return tracker(e.getContainingFile()).getCopy(e);
     }
 
     @Override
@@ -302,6 +309,7 @@ public final class ModCommands {
 
     @Override
     public void select(@NotNull TextRange range) {
+      myPositionUpdated = true;
       PsiLanguageInjectionHost host = myTracker.myHostCopy;
       if (host != null) {
         InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myTracker.myProject);
@@ -317,6 +325,7 @@ public final class ModCommands {
     
     @Override
     public void moveTo(int offset) {
+      myPositionUpdated = true;
       PsiLanguageInjectionHost host = myTracker.myHostCopy;
       if (host != null) {
         InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myTracker.myProject);
@@ -352,6 +361,7 @@ public final class ModCommands {
 
     @Override
     public void moveToPrevious(char ch) {
+      myPositionUpdated = true;
       myTracker.unblock();
       String text = myTracker.myPositionDocument.getText();
       int idx = text.lastIndexOf(ch, myCaretOffset);
@@ -379,9 +389,15 @@ public final class ModCommands {
       if (pos >= offset + oldLength) return pos + newLength - oldLength;
       return offset + newLength;
     }
+    
+    private @NotNull ModCommand getCommand() {
+      return myChangedFiles.values().stream().map(FileTracker::getUpdateCommand).reduce(nop(), ModCommand::andThen)
+        .andThen(getNavigateCommand());
+    }
 
     @NotNull
     private ModCommand getNavigateCommand() {
+      if (!myPositionUpdated) return nop();
       int length = myTracker.myTargetFile.getTextLength();
       int start = -1, end = -1, caret = -1;
       if (this.mySelectionEnd <= length) {
@@ -391,14 +407,10 @@ public final class ModCommands {
       if (this.myCaretOffset <= length) {
         caret = this.myCaretOffset;
       }
-      ModCommand next;
       VirtualFile origVirtualFile = myTracker.myOrigFile.getOriginalFile().getVirtualFile();
-      if (origVirtualFile != null && (start != -1 || end != -1 || caret != -1)) {
-        next = new ModNavigate(origVirtualFile, start, end, caret);
-      } else {
-        next = nop();
-      }
-      return next;
+      if (origVirtualFile == null) return nop();
+      if (start == -1 && end == -1 && caret == -1) return nop();
+      return new ModNavigate(origVirtualFile, start, end, caret);
     }
   }
 }

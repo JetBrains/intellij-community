@@ -16,10 +16,13 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.codeInspection.ModCommands;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -172,7 +175,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     }
   }
 
-  private static class SpinLoopFix extends PsiUpdateModCommandQuickFix {
+  private static class SpinLoopFix extends ModCommandQuickFix {
     private final String myFieldName;
     private final boolean myAddOnSpinWait;
     private final boolean myAddVolatile;
@@ -204,13 +207,20 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
-      if (myAddVolatile) {
-        addVolatile(startElement);
-      }
-      if (myAddOnSpinWait) {
-        addOnSpinWait(startElement);
-      }
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      var element = descriptor.getStartElement();
+      return ModCommands.psiUpdate(ModCommandAction.ActionContext.from(descriptor), updater -> {
+        PsiModifierList modifierList = null;
+        if (myAddVolatile) {
+          modifierList = updater.getWritable(getFieldModifierList(element));
+        }
+        if (myAddOnSpinWait) {
+          addOnSpinWait(updater.getWritable(element));
+        }
+        if (modifierList != null) {
+          modifierList.setModifierProperty(PsiModifier.VOLATILE, true);
+        }
+      });
     }
 
     private static void addOnSpinWait(PsiElement element) {
@@ -229,15 +239,14 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       CodeStyleManager.getInstance(element.getProject()).reformat(loop);
     }
 
-    private static void addVolatile(PsiElement element) {
+    @Nullable
+    private static PsiModifierList getFieldModifierList(PsiElement element) {
       PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiWhileStatement whileStatement)) return;
+      if (!(parent instanceof PsiWhileStatement whileStatement)) return null;
       PsiExpression condition = whileStatement.getCondition();
       PsiField field = getFieldIfSimpleFieldComparison(condition);
-      if (field == null) return;
-      PsiModifierList list = field.getModifierList();
-      if (list == null) return;
-      list.setModifierProperty(PsiModifier.VOLATILE, true);
+      if (field == null) return null;
+      return field.getModifierList();
     }
   }
 }
