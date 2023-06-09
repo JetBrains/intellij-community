@@ -6,10 +6,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspaceModel.jps.entities.*
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.platform.workspaceModel.storage.*
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.workspaceModel.jps.entities.contentRoot
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlin.reflect.KClass

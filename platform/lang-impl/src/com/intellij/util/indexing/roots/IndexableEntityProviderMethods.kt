@@ -18,9 +18,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.platform.workspaceModel.storage.EntityReference
 import com.intellij.platform.workspaceModel.storage.EntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 
 object IndexableEntityProviderMethods {
   fun createIterators(entity: ModuleEntity,

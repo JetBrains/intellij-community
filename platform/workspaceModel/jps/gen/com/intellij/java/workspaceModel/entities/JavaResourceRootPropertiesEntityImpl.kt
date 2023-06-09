@@ -8,7 +8,7 @@ import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity
 import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
 import com.intellij.platform.workspaceModel.storage.impl.EntityLink
 import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase

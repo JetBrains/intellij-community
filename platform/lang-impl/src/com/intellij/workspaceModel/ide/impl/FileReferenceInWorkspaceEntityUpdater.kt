@@ -19,8 +19,8 @@ import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.workspaceModel.core.fileIndex.impl.getOldAndNewUrls
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.modifyEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleId
+import com.intellij.platform.workspaceModel.jps.entities.modifyEntity
 import java.nio.file.Path
 import java.nio.file.Paths
 

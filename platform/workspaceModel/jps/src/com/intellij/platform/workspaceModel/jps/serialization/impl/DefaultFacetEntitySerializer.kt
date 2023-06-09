@@ -4,10 +4,10 @@ package com.intellij.platform.workspaceModel.jps.serialization.impl
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.platform.workspaceModel.storage.EntitySource
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.FacetId
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.childrenFacets
+import com.intellij.platform.workspaceModel.jps.entities.FacetEntity
+import com.intellij.platform.workspaceModel.jps.entities.FacetId
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.childrenFacets
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
 

@@ -2,9 +2,10 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.workspaceModel.jps.entities.LibraryId;
+import com.intellij.platform.workspaceModel.jps.entities.LibraryPropertiesEntity;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

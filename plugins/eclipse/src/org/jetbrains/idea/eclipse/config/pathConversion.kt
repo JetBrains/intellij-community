@@ -16,9 +16,9 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem
 import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.ide.virtualFile
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryRoot
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryRoot
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader

@@ -3,7 +3,7 @@ package com.intellij.java.workspaceModel.entities
 
 import com.intellij.platform.workspaceModel.storage.*
 import com.intellij.platform.workspaceModel.storage.annotations.Child
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 

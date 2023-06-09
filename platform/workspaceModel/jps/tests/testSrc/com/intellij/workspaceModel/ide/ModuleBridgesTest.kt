@@ -18,6 +18,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.workspaceModel.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspaceModel.jps.entities.*
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
@@ -37,7 +38,6 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.platform.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.toBuilder
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager

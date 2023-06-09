@@ -15,6 +15,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.workspaceModel.jps.entities.*
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
@@ -22,7 +23,6 @@ import com.intellij.workspaceModel.ide.toVirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenImportUtil

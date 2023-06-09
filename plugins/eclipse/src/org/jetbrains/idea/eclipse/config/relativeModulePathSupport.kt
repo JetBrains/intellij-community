@@ -8,7 +8,7 @@ import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsFileContentReader
 import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsModuleListSerializer
 import com.intellij.platform.workspaceModel.storage.EntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil

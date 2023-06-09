@@ -8,14 +8,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePrefixTreeFactory
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.platform.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableSharedFlow
 import java.util.concurrent.atomic.AtomicInteger
 
 open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScope) : BaseProjectDirectories(project) {

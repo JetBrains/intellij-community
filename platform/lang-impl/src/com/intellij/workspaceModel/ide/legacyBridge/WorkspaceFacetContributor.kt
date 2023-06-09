@@ -4,8 +4,8 @@ import com.intellij.facet.Facet
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleSettingsBase
 import org.jetbrains.annotations.ApiStatus
 
 /**

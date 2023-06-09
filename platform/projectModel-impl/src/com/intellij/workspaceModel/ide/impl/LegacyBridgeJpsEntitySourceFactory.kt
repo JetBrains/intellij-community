@@ -10,8 +10,8 @@ import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirecto
 import com.intellij.workspaceModel.ide.*
 import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsGlobalEntitiesSerializers
 import com.intellij.platform.workspaceModel.storage.EntitySource
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 

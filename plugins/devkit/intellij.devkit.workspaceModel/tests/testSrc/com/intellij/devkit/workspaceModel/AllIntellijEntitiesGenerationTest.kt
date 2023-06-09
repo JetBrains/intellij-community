@@ -23,8 +23,8 @@ import com.intellij.platform.workspaceModel.storage.CodeGeneratorVersions
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.java.workspaceModel.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspaceModel.entities.javaSourceRoots
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity
 import com.intellij.platform.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import junit.framework.AssertionFailedError

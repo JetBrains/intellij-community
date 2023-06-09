@@ -19,9 +19,9 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
 import com.intellij.platform.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import java.util.*

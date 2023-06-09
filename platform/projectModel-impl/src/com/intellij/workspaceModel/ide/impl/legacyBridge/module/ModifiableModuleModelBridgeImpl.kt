@@ -15,6 +15,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.jps.model.diagnostic.JpsMetrics
+import com.intellij.platform.workspaceModel.jps.entities.*
 import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
@@ -29,7 +30,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import java.io.IOException

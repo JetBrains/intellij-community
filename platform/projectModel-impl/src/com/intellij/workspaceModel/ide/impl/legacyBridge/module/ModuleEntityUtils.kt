@@ -6,6 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId
+import com.intellij.platform.workspaceModel.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge

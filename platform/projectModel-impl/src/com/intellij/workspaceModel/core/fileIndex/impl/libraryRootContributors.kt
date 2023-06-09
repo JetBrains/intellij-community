@@ -14,11 +14,11 @@ import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.platform.workspaceModel.storage.EntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryRoot.InclusionOptions.*
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryId
+import com.intellij.platform.workspaceModel.jps.entities.LibraryRoot.InclusionOptions.*
+import com.intellij.platform.workspaceModel.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 
 class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEntity>, PlatformInternalWorkspaceFileIndexContributor {
@@ -98,7 +98,7 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
   }
 }
 
-internal class LibrarySourceRootFileSetData(projectLibraryId: LibraryId?, packagePrefix: String) 
+internal class LibrarySourceRootFileSetData(projectLibraryId: LibraryId?, packagePrefix: String)
   : LibraryRootFileSetData(projectLibraryId, packagePrefix), ModuleOrLibrarySourceRootData, JvmPackageRootDataInternal
 
 internal open class LibraryRootFileSetData(internal val projectLibraryId: LibraryId?,

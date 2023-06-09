@@ -8,12 +8,12 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.platform.workspaceModel.jps.entities.*
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.platform.workspaceModel.storage.EntityChange
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import org.junit.*
 import org.junit.Assert.*
 

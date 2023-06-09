@@ -6,8 +6,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleSettingsBase
 import org.jetbrains.annotations.ApiStatus
 
 /**

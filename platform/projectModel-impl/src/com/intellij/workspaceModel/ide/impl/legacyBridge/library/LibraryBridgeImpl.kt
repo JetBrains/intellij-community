@@ -31,8 +31,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibr
 import com.intellij.platform.workspaceModel.storage.CachedValue
 import com.intellij.platform.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
+import com.intellij.platform.workspaceModel.jps.entities.LibraryId
+import com.intellij.platform.workspaceModel.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus

@@ -10,10 +10,10 @@ import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.platform.workspaceModel.storage.EntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryId
+import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId
+import com.intellij.platform.workspaceModel.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 
 class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   override fun accepts(builder: IndexableEntityProvider.IndexableIteratorBuilder): Boolean =

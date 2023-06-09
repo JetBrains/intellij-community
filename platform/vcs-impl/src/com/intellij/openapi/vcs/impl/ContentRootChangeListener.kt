@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 
 abstract class ContentRootChangeListener(

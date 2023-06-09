@@ -8,13 +8,15 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.jps.model.diagnostic.JpsMetrics
 import com.intellij.platform.workspaceModel.jps.*
+import com.intellij.platform.workspaceModel.jps.entities.LibraryId
+import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId
+import com.intellij.platform.workspaceModel.jps.entities.ModuleId
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter

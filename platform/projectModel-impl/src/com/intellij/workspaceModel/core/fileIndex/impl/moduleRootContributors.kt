@@ -7,12 +7,13 @@ import com.intellij.java.workspaceModel.entities.asJavaResourceRoot
 import com.intellij.java.workspaceModel.entities.asJavaSourceRoot
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry
 import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.platform.workspaceModel.storage.EntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.annotations.ApiStatus
 
 class ContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRootEntity>, PlatformInternalWorkspaceFileIndexContributor {

@@ -24,9 +24,9 @@ import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.intellij.platform.workspaceModel.storage.EntityChange
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
+import com.intellij.platform.workspaceModel.jps.entities.FacetEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleSettingsBase
 import com.intellij.platform.workspaceModel.storage.orderToRemoveReplaceAdd
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineScope

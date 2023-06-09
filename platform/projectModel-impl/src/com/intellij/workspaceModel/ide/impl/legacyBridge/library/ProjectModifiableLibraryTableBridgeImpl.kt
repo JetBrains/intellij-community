@@ -8,6 +8,10 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryId
+import com.intellij.platform.workspaceModel.jps.entities.LibraryPropertiesEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
@@ -18,7 +22,6 @@ import com.intellij.workspaceModel.ide.legacyBridge.ProjectModifiableLibraryTabl
 import com.intellij.platform.workspaceModel.storage.CachedValue
 import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class ProjectModifiableLibraryTableBridgeImpl(

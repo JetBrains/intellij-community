@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.platform.workspaceModel.storage.EntitySource
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.platform.workspaceModel.storage.impl.MatchedEntitySource
 import com.intellij.platform.workspaceModel.storage.impl.SimpleEntityTypesResolver

@@ -89,7 +89,7 @@ import com.intellij.platform.workspaceModel.storage.EntityChange;
 import com.intellij.platform.workspaceModel.storage.EntityStorage;
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity;
+import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;

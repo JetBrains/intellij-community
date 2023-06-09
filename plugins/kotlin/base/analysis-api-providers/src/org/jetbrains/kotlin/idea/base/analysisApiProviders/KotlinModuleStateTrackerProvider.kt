@@ -19,6 +19,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -28,7 +32,6 @@ import com.intellij.platform.workspaceModel.storage.EntityChange
 import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analysis.providers.KtModuleStateTracker

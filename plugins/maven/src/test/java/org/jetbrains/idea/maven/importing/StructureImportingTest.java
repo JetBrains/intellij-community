@@ -9,14 +9,12 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.RunAll;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.platform.workspaceModel.storage.EntitySource;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId;
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity;
+import com.intellij.platform.workspaceModel.jps.entities.ModuleId;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assume;
 import org.junit.Test;
 

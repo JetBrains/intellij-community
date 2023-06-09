@@ -7,9 +7,9 @@ import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
 import com.intellij.java.workspaceModel.entities.ArtifactEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.FacetEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 
 /**
  * This class is used to reuse [JpsFileEntitySource.FileInDirectory] instances when project is synchronized with JPS files after loading
@@ -22,9 +22,12 @@ class FileInDirectorySourceNames private constructor(entitiesBySource: Map<Entit
     val sourcesMap = HashMap<Pair<Class<out WorkspaceEntity>, String>, JpsProjectFileEntitySource.FileInDirectory>()
     for ((source, entities) in entitiesBySource) {
       val (type, entityName) = when {
-        ModuleEntity::class.java in entities -> ModuleEntity::class.java to (entities.getValue(ModuleEntity::class.java).first() as ModuleEntity).name
-        FacetEntity::class.java in entities -> ModuleEntity::class.java to (entities.getValue(FacetEntity::class.java).first() as FacetEntity).module.name
-        LibraryEntity::class.java in entities -> LibraryEntity::class.java to (entities.getValue(LibraryEntity::class.java).first() as LibraryEntity).name
+        ModuleEntity::class.java in entities -> ModuleEntity::class.java to (entities.getValue(
+          ModuleEntity::class.java).first() as ModuleEntity).name
+        FacetEntity::class.java in entities -> ModuleEntity::class.java to (entities.getValue(
+          FacetEntity::class.java).first() as FacetEntity).module.name
+        LibraryEntity::class.java in entities -> LibraryEntity::class.java to (entities.getValue(
+          LibraryEntity::class.java).first() as LibraryEntity).name
         ArtifactEntity::class.java in entities -> ArtifactEntity::class.java to (entities.getValue(ArtifactEntity::class.java).first() as ArtifactEntity).name
         else -> null to null
       }

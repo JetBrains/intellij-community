@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.impl.ModuleLibraryTableBase
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.workspaceModel.jps.entities.*
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
@@ -17,7 +18,6 @@ import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGe
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: ModifiableRootModelBridgeImpl)

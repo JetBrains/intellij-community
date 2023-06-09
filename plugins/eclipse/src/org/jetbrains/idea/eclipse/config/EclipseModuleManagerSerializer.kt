@@ -5,7 +5,7 @@ import com.intellij.platform.workspaceModel.jps.serialization.impl.CustomModuleC
 import com.intellij.platform.workspaceModel.jps.serialization.impl.ErrorReporter
 import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsFileContentReader
 import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsFileContentWriter
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element

@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.platform.workspaceModel.storage.EntityChange
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryPropertiesEntity
 
 private class RepositoryLibraryChangeListener(private val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {

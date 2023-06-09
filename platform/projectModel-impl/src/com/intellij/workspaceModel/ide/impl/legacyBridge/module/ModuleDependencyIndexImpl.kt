@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.platform.workspaceModel.jps.entities.*
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.containers.MultiMap
@@ -23,7 +24,6 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.orderToRemoveReplaceAdd
 import java.util.function.Supplier
 

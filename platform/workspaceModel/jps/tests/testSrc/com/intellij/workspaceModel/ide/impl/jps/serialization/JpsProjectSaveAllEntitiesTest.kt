@@ -4,12 +4,14 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.platform.workspaceModel.jps.JpsEntitySourceFactory
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryRoot
+import com.intellij.platform.workspaceModel.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Before
 import org.junit.ClassRule

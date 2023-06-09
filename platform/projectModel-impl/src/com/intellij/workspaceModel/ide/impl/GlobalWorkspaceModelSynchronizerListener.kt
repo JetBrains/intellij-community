@@ -8,9 +8,9 @@ import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.platform.workspaceModel.storage.EntityChange
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
+import com.intellij.platform.workspaceModel.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryPropertiesEntity
 import kotlin.reflect.KClass
 
 class GlobalWorkspaceModelSynchronizerListener(private val project: Project) : WorkspaceModelChangeListener {

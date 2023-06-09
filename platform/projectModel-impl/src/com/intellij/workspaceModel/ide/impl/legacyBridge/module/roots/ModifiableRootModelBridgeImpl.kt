@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspaceModel.jps.CustomModuleEntitySource
 import com.intellij.platform.workspaceModel.jps.JpsFileDependentEntitySource
 import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
+import com.intellij.platform.workspaceModel.jps.entities.*
 import com.intellij.util.ArrayUtilRt
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
@@ -34,7 +35,6 @@ import com.intellij.platform.workspaceModel.storage.CachedValue
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element

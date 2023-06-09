@@ -31,7 +31,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.platform.workspaceModel.storage.EntityChange;
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.PathUtil;

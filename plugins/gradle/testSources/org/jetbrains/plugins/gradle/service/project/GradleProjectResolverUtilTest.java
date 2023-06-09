@@ -6,8 +6,8 @@ import com.intellij.openapi.externalSystem.service.project.ExternalSystemModuleP
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.platform.workspaceModel.jps.entities.ExternalSystemModuleOptionsEntity;
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity;
 import com.intellij.platform.workspaceModel.storage.impl.VersionedEntityStorageOnStorage;
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;

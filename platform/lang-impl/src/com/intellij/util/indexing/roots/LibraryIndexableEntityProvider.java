@@ -3,9 +3,9 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryRoot;
+import com.intellij.platform.workspaceModel.jps.entities.ExcludeUrlEntity;
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity;
+import com.intellij.platform.workspaceModel.jps.entities.LibraryRoot;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

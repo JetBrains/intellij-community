@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspaceModel.jps.serialization.impl
 
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.platform.workspaceModel.jps.entities.LibraryId
+import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 object LibraryNameGenerator {

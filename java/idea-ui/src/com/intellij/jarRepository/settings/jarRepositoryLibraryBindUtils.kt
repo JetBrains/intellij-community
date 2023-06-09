@@ -11,10 +11,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
-import com.intellij.java.workspaceModel.entities.modifyEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.modifyEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
+import com.intellij.platform.workspaceModel.jps.entities.LibraryPropertiesEntity
+import com.intellij.platform.workspaceModel.jps.entities.modifyEntity
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 

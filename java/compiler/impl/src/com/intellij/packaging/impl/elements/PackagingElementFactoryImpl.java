@@ -22,7 +22,7 @@ import com.intellij.packaging.elements.*;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity;
+import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

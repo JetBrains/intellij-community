@@ -13,7 +13,7 @@ import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import junit.framework.Assert.*
 import org.junit.Assert
 import org.junit.ClassRule
