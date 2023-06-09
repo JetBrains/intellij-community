@@ -81,7 +81,7 @@ public abstract class TextProblem {
    * @deprecated use {@link #getSuggestions()} instead
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull TextRange getReplacementRange() {
     return getHighlightRanges().get(0);
   }
@@ -100,7 +100,7 @@ public abstract class TextProblem {
    * @deprecated use {@link #getSuggestions()} instead
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull List<String> getCorrections() {
     return List.of();
   }

@@ -1107,7 +1107,7 @@ public class MavenProject {
    * @deprecated this API was intended for internal use and will be removed after migration to WorkpsaceModel API
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull List<MavenImporter> getSuitableImporters() {
     return MavenImporter.getSuitableImporters(this);
   }

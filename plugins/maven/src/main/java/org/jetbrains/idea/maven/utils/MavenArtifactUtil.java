@@ -86,7 +86,7 @@ public final class MavenArtifactUtil {
   /**
    * @deprecated use {@link #getArtifactNioPath(File, String, String, String, String)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static File getArtifactFile(File localRepository, String groupId, String artifactId, String version, String type) {
     return getArtifactNioPath(localRepository, groupId, artifactId, version, type).toFile();

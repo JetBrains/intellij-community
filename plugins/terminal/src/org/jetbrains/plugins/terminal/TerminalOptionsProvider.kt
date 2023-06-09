@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @State(name = "TerminalOptionsProvider", presentableName = TerminalOptionsProvider.PresentableNameGetter::class,
@@ -108,6 +109,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
       service<TerminalUiSettingsManager>().cursorShape = value
     }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("To be removed", ReplaceWith("org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider.setEnvData"))
   fun setEnvData(@Suppress("UNUSED_PARAMETER") envData: EnvironmentVariablesData) {
   }
