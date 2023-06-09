@@ -789,6 +789,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("ifElseBranches.kt")
+            public void testIfElseBranches() throws Exception {
+                runTest("testData/inspectionsLocal/branched/introduceWhenSubject/ifElseBranches.kt");
+            }
+
             @TestMetadata("lineBreaksAndComments.kt")
             public void testLineBreaksAndComments() throws Exception {
                 runTest("testData/inspectionsLocal/branched/introduceWhenSubject/lineBreaksAndComments.kt");
