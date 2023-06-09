@@ -46,22 +46,6 @@
 
   <resource-bundle>messages.EvaluationPluginBundle</resource-bundle>
 
-  <actions>
-    <action id="EvaluateCompletionForSelectedFilesAction"
-            class="com.intellij.cce.actions.EvaluateCompletionForSelectedFilesAction">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
-    </action>
-    <action id="GenerateEvaluationReportAction"
-            class="com.intellij.cce.actions.GenerateEvaluationReportAction">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="after"
-                    relative-to-action="EvaluateCompletionForSelectedFilesAction"/>
-    </action>
-    <action id="EvaluateCompletionHereAction"
-            class="com.intellij.cce.actions.EvaluateCompletionHereAction">
-      <add-to-group group-id="EditorPopupMenu" anchor="first"/>
-    </action>
-  </actions>
-
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.completion.ml.ranking</depends>
   <depends optional="true" config-file="evaluationPlugin-java.xml">com.intellij.modules.java</depends>
