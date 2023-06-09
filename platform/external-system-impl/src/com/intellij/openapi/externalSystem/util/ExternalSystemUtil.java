@@ -111,7 +111,6 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType.*;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public final class ExternalSystemUtil {
@@ -1104,17 +1103,13 @@ public final class ExternalSystemUtil {
   }
 
   public static @Nullable VirtualFile findLocalFileByPath(String path) {
-    return ApplicationManager.getApplication().isReadAccessAllowed()
-           ? findLocalFileByPathUnderReadAction(path)
-           : findLocalFileByPathUnderWriteAction(path);
-  }
-
-  private static @Nullable VirtualFile findLocalFileByPathUnderWriteAction(final String path) {
-    return doWriteAction(() -> StandardFileSystems.local().refreshAndFindFileByPath(path));
-  }
-
-  private static @Nullable VirtualFile findLocalFileByPathUnderReadAction(final String path) {
-    return ReadAction.compute(() -> StandardFileSystems.local().findFileByPath(path));
+    Application application = ApplicationManager.getApplication();
+    if (!application.isDispatchThread() && application.isReadAccessAllowed()) {
+      // can not refresh under Read lock on non-dispatch thread. See VirtualFileSystem.refreshAndFindFileByPath javadoc
+      return StandardFileSystems.local().findFileByPath(path);
+    } else {
+      return StandardFileSystems.local().refreshAndFindFileByPath(path);
+    }
   }
 
   public static void scheduleExternalViewStructureUpdate(final @NotNull Project project, final @NotNull ProjectSystemId systemId) {
