@@ -89,8 +89,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenProjectsTree myProjectsTree;
   private MavenProjectsManagerWatcher myWatcher;
 
-  private MavenProjectsProcessor myReadingProcessor;
-
   protected MavenMergingUpdateQueue myImportingQueue;
   protected final ConcurrentHashMap<@NotNull MavenProject, @NotNull MavenProjectChanges> myProjectsToImport = new ConcurrentHashMap<>();
   protected final Set<MavenProject> myProjectsToResolve = ConcurrentHashMap.newKeySet();
@@ -399,8 +397,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void initWorkers() {
-    myReadingProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.reading"), false, myEmbeddersManager);
-
     myWatcher = new MavenProjectsManagerWatcher(myProject, myProjectsTree, getGeneralSettings());
 
     myImportingQueue =
@@ -503,7 +499,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
       myWatcher.stop();
 
-      myReadingProcessor.stop();
       mySaveQueue.flush();
 
       if (MavenUtil.isMavenUnitTestModeEnabled()) {
@@ -983,7 +978,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void waitForReadingCompletion() {
-    waitForTasksCompletion(null);
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+    }
   }
 
   /**
@@ -991,15 +988,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
    */
   @Deprecated(forRemoval = true)
   public void waitForPostImportTasksCompletion() {
-  }
-
-  private void waitForTasksCompletion(MavenProjectsProcessor processor) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      FileDocumentManager.getInstance().saveAllDocuments();
-    }
-
-    myReadingProcessor.waitForCompletion();
-    if (processor != null) processor.waitForCompletion();
   }
 
   public void updateProjectTargetFolders() {
