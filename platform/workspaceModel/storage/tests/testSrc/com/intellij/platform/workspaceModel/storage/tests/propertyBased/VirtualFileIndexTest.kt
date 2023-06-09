@@ -1,17 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspaceModel.storage.tests.propertyBased
 
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
-import com.intellij.platform.workspaceModel.storage.impl.ClassToIntConverter
 import com.intellij.platform.workspaceModel.storage.impl.EntityId
 import com.intellij.platform.workspaceModel.storage.impl.createEntityId
 import com.intellij.platform.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.TemporaryDirectory
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
@@ -32,7 +29,7 @@ class VirtualFileIndexTest {
   @JvmField
   var disposableRule = DisposableRule()
 
-  val manager = VirtualFileUrlManagerImpl()
+  private val manager = VirtualFileUrlManagerImpl()
 
   @Test
   fun `property test`() {
@@ -71,7 +68,7 @@ class VirtualFileIndexTest {
 
   private inner class RemoveValue(private val index: VirtualFileIndex.MutableVirtualFileIndex) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
-      val (pointer, id, prop) = generateData(env)
+      val (_, id, prop) = generateData(env)
       index.index(id, prop, null)
       env.logMessage("Remove pointer")
       index.assertConsistency()
@@ -80,7 +77,7 @@ class VirtualFileIndexTest {
 
   private inner class AddEmpty(private val index: VirtualFileIndex.MutableVirtualFileIndex) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
-      val (pointer, id, prop) = generateData(env)
+      val (_, id, prop) = generateData(env)
       index.index(id, prop, emptySet())
       env.logMessage("Remove pointer")
       index.assertConsistency()
@@ -89,7 +86,7 @@ class VirtualFileIndexTest {
 
   private inner class RemoveByIdValue(private val index: VirtualFileIndex.MutableVirtualFileIndex) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
-      val (pointer, id, prop) = generateData(env)
+      val (_, id, _) = generateData(env)
       index.removeRecordsByEntityId(id)
       env.logMessage("Remove by id")
       index.assertConsistency()
@@ -136,20 +133,14 @@ class VirtualFileIndexTest {
     manager.fromPath(file.toString())
   }
 
-  internal val entityIdGenerator = Generator.from { env ->
-    val clazz: Class<out WorkspaceEntity> = env.generate(Generator.sampledFrom(
-      ModuleEntity::class.java,
-      ContentRootEntity::class.java,
-      SourceRootEntity::class.java,
-      FacetEntity::class.java,
-      ArtifactEntity::class.java,
-    ))
+  private val entityIdGenerator = Generator.from { env ->
+    val clazzId = env.generate(Generator.integers(0, 5))
     val id = env.generate(Generator.integers(0, 100))
 
-    createEntityId(id, ClassToIntConverter.INSTANCE.getInt(clazz))
+    createEntityId(id, clazzId)
   }
 
-  internal val propertyGenerator = Generator.from { env ->
+  private val propertyGenerator = Generator.from { env ->
     env.generate(Generator.sampledFrom(
       "One",
       "Two",
