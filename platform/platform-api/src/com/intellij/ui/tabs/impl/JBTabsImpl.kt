@@ -933,7 +933,7 @@ open class JBTabsImpl(private var project: Project?,
           component!!.invalidate()
         }
 
-        override fun setComponentIcon(icon: Icon, disabledIcon: Icon) {
+        override fun setComponentIcon(icon: Icon?, disabledIcon: Icon?) {
           // the icon will be set in customizeComponent
         }
 
