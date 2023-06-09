@@ -434,10 +434,13 @@ public interface Application extends ComponentManager {
   @NotNull ModalityState getDefaultModalityState();
 
   /**
-   * Please use {@link ModalityState#NON_MODAL} instead.
+   * Please use {@link ModalityState#nonModal()} instead.
    *
    * @return the modality state for no modal dialogs.
+   * @deprecated for attention
    */
+  @Deprecated
+  @ApiStatus.Internal
   @NotNull ModalityState getNoneModalityState();
 
   /**
