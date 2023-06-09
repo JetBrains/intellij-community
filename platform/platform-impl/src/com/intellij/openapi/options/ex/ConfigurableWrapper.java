@@ -1,11 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.newEditor.ConfigurableMarkerProvider;
 import com.intellij.openapi.project.Project;
@@ -123,7 +125,14 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     if (myConfigurable == null) {
       myConfigurable = createConfigurable(myEp, false);
       if (myConfigurable == null) {
-        LOG.error("Can't instantiate configurable for " + myEp);
+        String message = "Can't instantiate configurable for " + myEp;
+        PluginDescriptor pluginDescriptor = myEp.getPluginDescriptor();
+        if (pluginDescriptor != null) {
+          LOG.error(new PluginException(message, pluginDescriptor.getPluginId()));
+        }
+        else {
+          LOG.error(message);
+        }
       }
       else if (LOG.isDebugEnabled()) {
         LOG.debug("created configurable for " + myConfigurable.getClass());
