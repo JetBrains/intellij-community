@@ -11885,6 +11885,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/redundantIf/negate3.kt");
         }
 
+        @TestMetadata("notAvailableOnCondition.kt")
+        public void testNotAvailableOnCondition() throws Exception {
+            runTest("testData/quickfix/redundantIf/notAvailableOnCondition.kt");
+        }
+
         @TestMetadata("returnWithoutElse.kt")
         public void testReturnWithoutElse() throws Exception {
             runTest("testData/quickfix/redundantIf/returnWithoutElse.kt");
