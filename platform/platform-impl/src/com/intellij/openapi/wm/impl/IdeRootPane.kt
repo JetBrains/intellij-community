@@ -466,7 +466,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
 
   fun makeComponentToBeMouseTransparentInTitleBar(component: JComponent) {
-    val customTitleBar = ((helper as? DecoratedHelper)?.customFrameTitlePane as? ToolbarFrameHeader)?.customTitleBar ?: return
+    val customTitleBar = ((helper as? DecoratedHelper)?.customFrameTitlePane as? CustomHeader)?.customTitleBar ?: return
 
     val listener = HeaderClickTransparentListener(customTitleBar)
     component.addMouseListener(listener)
