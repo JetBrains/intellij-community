@@ -11,7 +11,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
-import com.intellij.testFramework.workspaceModel.updateProjectModelAsync
+import com.intellij.testFramework.workspaceModel.update
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
@@ -55,7 +55,7 @@ class CustomExternalFileSetTest {
       assertEquals(module, ModuleUtilCore.findModuleForFile(file, projectModel.project))
     }
     
-    WorkspaceModel.getInstance(projectModel.project).updateProjectModelAsync {
+    WorkspaceModel.getInstance(projectModel.project).update {
       val url = externalRoot.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
       val excludedUrl = excludedRoot.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
       it.addEntity(IndexingTestEntity(listOf(url), listOf(excludedUrl), NonPersistentEntitySource))
@@ -68,7 +68,7 @@ class CustomExternalFileSetTest {
       assertNull(ModuleUtilCore.findModuleForPsiElement(psiFile.parent!!))
     }
 
-    WorkspaceModel.getInstance(projectModel.project).updateProjectModelAsync {
+    WorkspaceModel.getInstance(projectModel.project).update {
       it.removeEntity(it.entities(IndexingTestEntity::class.java).single())
     }
 
