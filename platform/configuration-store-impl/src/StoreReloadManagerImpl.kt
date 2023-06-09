@@ -75,13 +75,7 @@ internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private va
 
     val projectsToReload = LinkedHashSet<Project>()
     withContext(Dispatchers.EDT) {
-      for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: return@withContext)) {
-        if (project.isDisposed || !project.isInitialized) {
-          continue
-        }
-
-        applyProjectChanges(project, projectsToReload)
-      }
+      applyProjectChanges(projectsToReload)
 
       if (projectsToReload.isNotEmpty()) {
         for (project in projectsToReload) {
@@ -92,7 +86,7 @@ internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private va
   }
 
   @RequiresEdt
-  private suspend fun applyProjectChanges(project: Project, projectsToReload: LinkedHashSet<Project>) {
+  private suspend fun applyProjectChanges(projectsToReload: LinkedHashSet<Project>) {
     if (changedSchemes.isEmpty() && changedStorages.isEmpty()
         && !JpsProjectModelSynchronizer.getInstance(project).needToReloadProjectEntities()) {
       return
