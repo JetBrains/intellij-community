@@ -227,7 +227,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
   override fun edtEventFinished() {
     activeEvents--
     if (sampleJob != null) {
-      currentEdtEventChecker!!.stop()
+      currentEdtEventChecker?.stop()
       currentEdtEventChecker = if (activeEvents > 0) FreezeCheckerTask(System.nanoTime()) else null
     }
   }
