@@ -130,7 +130,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   private fun renderPreview(result: IntentionPreviewInfo) {
     when (result) {
       is IntentionPreviewDiffResult -> {
-        val editors = IntentionPreviewEditorFactory.createEditors(project, result)
+        val editors = IntentionPreviewEditorsPanel.createEditors(project, result)
         if (editors.isEmpty()) {
           selectNoPreview()
           return
