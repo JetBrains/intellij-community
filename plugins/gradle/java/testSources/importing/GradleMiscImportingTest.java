@@ -99,7 +99,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     importProject(
       """
         apply plugin: 'java'
-        sourceCompatibility = 1.5
+        java.sourceCompatibility = 1.5
         compileTestJava {
           sourceCompatibility = 1.8
         }
@@ -117,7 +117,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     int feature = LanguageLevel.HIGHEST.toJavaVersion().feature;
     importProject(
       "apply plugin: 'java'\n" +
-      "sourceCompatibility = " + feature+ "\n" +
+      "java.sourceCompatibility = " + feature+ "\n" +
       "apply plugin: 'java'\n" +
       "compileTestJava {\n" +
       "  sourceCompatibility = " + feature +"\n" +
@@ -137,7 +137,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     importProject(
       """
         apply plugin: 'java'
-        targetCompatibility = 1.8
+        java.targetCompatibility = 1.8
         compileJava {
           targetCompatibility = 1.5
         }

@@ -123,7 +123,13 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     val tryScanSuggestion = if (isGradleNewerOrSameAs("4.10")) " Run with --scan to get full insights." else ""
     val className = if (isGradleNewerOrSameAs("6.8")) "class 'example.SomePlugin'." else "[class 'example.SomePlugin']"
 
-    val tryText = if (isGradleNewerOrSameAs("7.4")) {
+    val tryText = if (isGradleNewerOrSameAs("8.2")) {
+                              """|> Run with --stacktrace option to get the stack trace.
+                                 |> Run with --debug option to get more log output.
+                                 |> Run with --scan to get full insights.
+                                 |> Get more help at https://help.gradle.org."""
+
+    } else if (isGradleNewerOrSameAs("7.4")) {
                               """|> Run with --stacktrace option to get the stack trace.
                                  |> Run with --debug option to get more log output.
                                  |> Run with --scan to get full insights."""
@@ -373,23 +379,32 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
 
     val filePath = FileUtil.toSystemDependentName(myProjectConfig.path)
     assertSyncViewSelectedNode("Cannot get property 'foo' on null object", true) {
-      val tryScanSuggestion = if (isGradleNewerOrSameAs("4.10")) " Run with --scan to get full insights." else ""
-      val trySuggestion = if (isGradleOlderThan("7.4")) {
-        "Run with --debug option to get more log output.$tryScanSuggestion\n"
+      val trySuggestion = when {
+        isGradleNewerOrSameAs("8.2") ->
+          """|> Run with --debug option to get more log output.
+             |> Run with --scan to get full insights.
+             |> Get more help at https://help.gradle.org."""
+
+        isGradleNewerOrSameAs("7.4") ->
+          """|> Run with --debug option to get more log output.
+             |> Run with --scan to get full insights."""
+
+        isGradleNewerOrSameAs("4.10") ->
+          "|Run with --debug option to get more log output. Run with --scan to get full insights."
+
+        else ->
+          "|Run with --debug option to get more log output."
       }
-      else {
-        "> Run with --debug option to get more log output.\n" +
-        "> Run with --scan to get full insights.\n"
-      }
-      assertThat(it).startsWith("Build file '$filePath' line: 1\n\n" +
-                                "A problem occurred evaluating root project 'project'.\n" +
-                                "> Cannot get property 'foo' on null object\n" +
-                                "\n" +
-                                "* Try:\n" +
-                                trySuggestion +
-                                "\n" +
-                                "* Exception is:\n" +
-                                "org.gradle.api.GradleScriptException: A problem occurred evaluating root project 'project'.")
+      assertThat(it).startsWith("""|Build file '$filePath' line: 1
+                                   |
+                                   |A problem occurred evaluating root project 'project'.
+                                   |> Cannot get property 'foo' on null object
+                                   |
+                                   |* Try:
+                                   $trySuggestion
+                                   |
+                                   |* Exception is:
+                                   |org.gradle.api.GradleScriptException: A problem occurred evaluating root project 'project'.""".trimMargin())
     }
   }
 
