@@ -13,12 +13,15 @@ import java.util.Collection;
 // in java - don't use kotlin to avoid loading non-JDK classes
 public final class DevMainKt {
   public static void main(String[] rawArgs) throws Throwable {
+    long start = System.currentTimeMillis();
     // separate method to not retain local variables like implClass
     build();
 
     System.setProperty("idea.vendor.name", "JetBrains");
     System.setProperty("idea.use.dev.build.server", "true");
 
+    //noinspection UseOfSystemOutOrSystemErr
+    System.out.println("build completed in " + (System.currentTimeMillis() - start) + "ms");
     Main.main(rawArgs);
   }
 

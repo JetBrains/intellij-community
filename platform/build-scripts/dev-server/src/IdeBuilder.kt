@@ -14,8 +14,6 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.*
-import org.jetbrains.intellij.build.impl.projectStructureMapping.LibraryFileEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.xxh3.Xx3UnencodedString
 import java.lang.invoke.MethodHandles
@@ -38,15 +36,13 @@ data class BuildRequest(
                                                       ?: homePath.resolve("out/classes/production").toString()).toAbsolutePath(),
   @JvmField val keepHttpClient: Boolean = true,
   @JvmField val platformClassPathConsumer: ((classPath: Set<Path>, runDir: Path) -> Unit)? = null,
-  @JvmField val isPackagedLib: Boolean = true,
 ) {
   override fun toString(): String {
     return "BuildRequest(platformPrefix='$platformPrefix', " +
            "additionalModules=$additionalModules, " +
            "isIdeProfileAware=$isIdeProfileAware, homePath=$homePath, " +
            "productionClassOutput=$productionClassOutput, " +
-           "keepHttpClient=$keepHttpClient, " +
-           "isPackagedLib=$isPackagedLib)"
+           "keepHttpClient=$keepHttpClient"
   }
 }
 
@@ -84,71 +80,70 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
                                    request = request,
                                    runDir = runDir,
                                    jarCacheDir = rootDir.resolve("jar-cache"))
-
-  val bundledMainModuleNames = getBundledMainModuleNames(context.productProperties, request.additionalModules)
-
-  val pluginRootDir = runDir.resolve("plugins")
-  val pluginCacheRootDir = runDir.resolve(PLUGIN_CACHE_DIR_NAME)
-
-  val moduleNameToPluginBuildDescriptor = HashMap<String, PluginBuildDescriptor>()
-  val pluginBuildDescriptors = mutableListOf<PluginBuildDescriptor>()
-  for (plugin in getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)) {
-    if (!isPluginApplicable(bundledMainModuleNames = bundledMainModuleNames, plugin = plugin, context = context)) {
-      continue
-    }
-
-    // remove all modules without content root
-    val modules = plugin.includedModules.asSequence()
-      .map { it.moduleName }
-      .distinct()
-      .filter { it == plugin.mainModule || !context.findRequiredModule(it).contentRootsList.urls.isEmpty() }
-      .toList()
-    val pluginBuildDescriptor = PluginBuildDescriptor(dir = pluginRootDir.resolve(plugin.directoryName),
-                                                      layout = plugin,
-                                                      moduleNames = modules)
-    for (name in modules) {
-      moduleNameToPluginBuildDescriptor.put(name, pluginBuildDescriptor)
-    }
-    pluginBuildDescriptors.add(pluginBuildDescriptor)
-  }
-
-  val artifactOutDir = request.homePath.resolve("out/classes/artifacts").toString()
-  for (artifact in JpsArtifactService.getInstance().getArtifacts(context.project)) {
-    artifact.outputPath = "$artifactOutDir/${PathUtilRt.getFileName(artifact.outputPath)}"
-  }
-
   coroutineScope {
-    val buildPluginsJob = launch {
-      withContext(Dispatchers.IO) {
-        Files.createDirectories(pluginRootDir)
-      }
-      buildPlugins(pluginBuildDescriptors = pluginBuildDescriptors,
-                   outDir = request.productionClassOutput,
-                   pluginCacheRootDir = pluginCacheRootDir,
-                   context = context)
-    }
-    val buildClassPathJob = launch {
-      val isPackagedLib = request.isPackagedLib
-      val classPath = spanBuilder("compute lib classpath").useWithScope2 {
-        layoutPlatform(homePath = request.homePath, runDir = runDir, isPackagedLib = isPackagedLib, context = context)
-      }
-
-      val platformClassPathConsumer = request.platformClassPathConsumer
-
-      withContext(Dispatchers.IO) {
+    launch {
+      launch(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
         Files.createDirectories(runDir.resolve("bin"))
         Files.writeString(runDir.resolve("build.txt"), context.fullBuildNumber)
       }
 
-      withContext(Dispatchers.IO) {
+      val classPath = spanBuilder("compute lib classpath").useWithScope2 {
+        layoutPlatform(runDir = runDir, context = context)
+      }
+
+      launch(Dispatchers.IO) {
         Files.writeString(runDir.resolve("core-classpath.txt"), classPath.joinToString(separator = "\n"))
       }
 
-      platformClassPathConsumer?.invoke(classPath, runDir)
+      request.platformClassPathConsumer?.invoke(classPath, runDir)
     }
 
-    joinAll(buildPluginsJob, buildClassPathJob)
+    launch {
+      val artifactTask = launch {
+        val artifactOutDir = request.homePath.resolve("out/classes/artifacts").toString()
+        for (artifact in JpsArtifactService.getInstance().getArtifacts(context.project)) {
+          artifact.outputPath = "$artifactOutDir/${PathUtilRt.getFileName(artifact.outputPath)}"
+        }
+      }
+
+      val bundledMainModuleNames = getBundledMainModuleNames(context.productProperties, request.additionalModules)
+
+      val pluginRootDir = runDir.resolve("plugins")
+      val pluginCacheRootDir = runDir.resolve(PLUGIN_CACHE_DIR_NAME)
+
+      val moduleNameToPluginBuildDescriptor = HashMap<String, PluginBuildDescriptor>()
+      val pluginBuildDescriptors = mutableListOf<PluginBuildDescriptor>()
+      for (plugin in getPluginLayoutsByJpsModuleNames(bundledMainModuleNames, context.productProperties.productLayout)) {
+        if (!isPluginApplicable(bundledMainModuleNames = bundledMainModuleNames, plugin = plugin, context = context)) {
+          continue
+        }
+
+        // remove all modules without content root
+        val modules = plugin.includedModules.asSequence()
+          .map { it.moduleName }
+          .distinct()
+          .filter { it == plugin.mainModule || !context.findRequiredModule(it).contentRootsList.urls.isEmpty() }
+          .toList()
+        val pluginBuildDescriptor = PluginBuildDescriptor(dir = pluginRootDir.resolve(plugin.directoryName),
+                                                          layout = plugin,
+                                                          moduleNames = modules)
+        for (name in modules) {
+          moduleNameToPluginBuildDescriptor.put(name, pluginBuildDescriptor)
+        }
+        pluginBuildDescriptors.add(pluginBuildDescriptor)
+      }
+
+      withContext(Dispatchers.IO) {
+        Files.createDirectories(pluginRootDir)
+      }
+
+      artifactTask.join()
+      buildPlugins(pluginBuildDescriptors = pluginBuildDescriptors,
+                   outDir = request.productionClassOutput,
+                   pluginCacheRootDir = pluginCacheRootDir,
+                   context = context)
+    }
   }
 }
 
@@ -276,39 +271,18 @@ private fun getBuildModules(productConfiguration: ProductConfiguration): Sequenc
   return sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
 }
 
-@Suppress("SpellCheckingInspection")
-private val extraJarNames = arrayOf("ideaLicenseDecoder.jar", "ls-client-api.jar", "y.jar", "ysvg.jar")
-
-private suspend fun layoutPlatform(homePath: Path, runDir: Path, isPackagedLib: Boolean, context: BuildContext): Set<Path> {
+private suspend fun layoutPlatform(runDir: Path, context: BuildContext): Set<Path> {
   val platformLayout = createPlatformLayout(pluginsToPublish = emptySet(), context = context)
   val projectStructureMapping = layoutPlatformDistribution(moduleOutputPatcher = ModuleOutputPatcher(),
                                                            targetDirectory = runDir,
                                                            platform = platformLayout,
                                                            context = context,
-                                                           copyFiles = isPackagedLib)
-  // for some reasons, maybe duplicated paths - use set
+                                                           copyFiles = true)
+  // for some reason, maybe duplicated paths - use set
   val classPath = LinkedHashSet<Path>()
-  if (isPackagedLib) {
-    projectStructureMapping.mapTo(classPath) { it.path }
-
+  projectStructureMapping.mapTo(classPath) { it.path }
+  withContext(Dispatchers.IO) {
     copyDistFiles(context = context, newDir = runDir, os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch)
-  }
-  else {
-    for (entry in projectStructureMapping) {
-      when (entry) {
-        is ModuleOutputEntry -> classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)))
-        is LibraryFileEntry -> classPath.add(entry.libraryFile!!)
-        else -> throw UnsupportedOperationException("Entry $entry is not supported")
-      }
-    }
-
-    val projectLibDir = homePath.resolve("lib")
-    for (extraJarName in extraJarNames) {
-      val extraJar = projectLibDir.resolve(extraJarName)
-      if (Files.exists(extraJar)) {
-        classPath.add(extraJar)
-      }
-    }
   }
   return classPath
 }
