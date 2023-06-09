@@ -92,7 +92,7 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
 
   @Override
   public void addActivity(@NotNull final Project project, @NotNull final UiActivity activity) {
-    addActivity(project, activity, getDefaultModalityState());
+    addActivity(project, activity, ModalityState.nonModal());
   }
 
   @Override
@@ -114,11 +114,7 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
 
   @Override
   public void addActivity(@NotNull final UiActivity activity) {
-    addActivity(activity, getDefaultModalityState());
-  }
-
-  private static ModalityState getDefaultModalityState() {
-    return ModalityState.nonModal();
+    addActivity(activity, ModalityState.nonModal());
   }
 
   @Override
