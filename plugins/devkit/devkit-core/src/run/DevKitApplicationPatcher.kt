@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.run
 import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.openapi.application.PathManager
@@ -98,6 +99,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
 
     vmParameters.addProperty("idea.vendor.name", "JetBrains")
     vmParameters.addProperty("idea.use.dev.build.server", "true")
+    setPropertyIfAbsent(vmParameters, "idea.dev.build.unpacked")
 
     vmParameters.addProperty("sun.io.useCanonCaches", "false")
     vmParameters.addProperty("sun.awt.disablegrab", "true")
@@ -112,6 +114,12 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
 
   override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean {
     return configuration is ApplicationConfiguration
+  }
+}
+
+private fun setPropertyIfAbsent(vmParameters: ParametersList, @Suppress("SameParameterValue") name: String) {
+  if (!vmParameters.hasProperty(name)) {
+    vmParameters.addProperty(name, "true")
   }
 }
 

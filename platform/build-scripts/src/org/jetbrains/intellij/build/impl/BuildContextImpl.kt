@@ -191,8 +191,12 @@ class BuildContextImpl(
 
   override val jetBrainsClientModuleFilter: JetBrainsClientModuleFilter by lazy {
     val mainModule = productProperties.embeddedJetBrainsClientMainModule
-    if (mainModule != null && options.enableEmbeddedJetBrainsClient) JetBrainsClientModuleFilterImpl(mainModule, this)
-    else EmptyJetBrainsClientModuleFilter
+    if (mainModule != null && options.enableEmbeddedJetBrainsClient) {
+      JetBrainsClientModuleFilterImpl(mainModule, this)
+    }
+    else {
+      EmptyJetBrainsClientModuleFilter
+    }
   }
   
   override val isEmbeddedJetBrainsClientEnabled: Boolean

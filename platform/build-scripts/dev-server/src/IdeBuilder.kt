@@ -141,11 +141,8 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
         Files.writeString(runDir.resolve("build.txt"), context.fullBuildNumber)
       }
 
-      if (platformClassPathConsumer == null || System.getProperty("idea.dev.skip.build").toBoolean()) {
-        withContext(Dispatchers.IO) {
-          val classPathFile = runDir.resolve("core-classpath.txt")
-          Files.writeString(classPathFile, classPath.joinToString(separator = "\n"))
-        }
+      withContext(Dispatchers.IO) {
+        Files.writeString(runDir.resolve("core-classpath.txt"), classPath.joinToString(separator = "\n"))
       }
 
       platformClassPathConsumer?.invoke(classPath, runDir)
@@ -180,6 +177,9 @@ private suspend fun createBuildContext(productConfiguration: ProductConfiguratio
         options.outputRootPath = runDir
         options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES)
         options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
+        if (options.enableEmbeddedJetBrainsClient && System.getProperty("idea.dev.build.unpacked").toBoolean()) {
+          options.enableEmbeddedJetBrainsClient = false
+        }
 
         CompilationContextImpl.createCompilationContext(
           communityHome = getCommunityHomePath(request.homePath),
