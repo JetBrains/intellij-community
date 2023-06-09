@@ -42,7 +42,10 @@ import com.intellij.spellchecker.grazie.dictionary.WordListAdapter
 import kotlinx.coroutines.*
 
 @Service(Service.Level.PROJECT)
-internal class GrazieSpellCheckerEngine(project: Project, private val coroutineScope: CoroutineScope) : SpellCheckerEngine, Disposable {
+internal class GrazieSpellCheckerEngine(
+  project: Project,
+  private val coroutineScope: CoroutineScope
+): SpellCheckerEngine, Disposable {
   override fun getTransformation(): Transformation = Transformation()
 
   private val loader = WordListLoader(project, coroutineScope)
@@ -50,12 +53,10 @@ internal class GrazieSpellCheckerEngine(project: Project, private val coroutineS
 
   internal class SpellerLoadActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
-      // what for do we join?
-      // 1. to make sure that in unit test mode speller will be fully loaded before use
-      // 2. SpellCheckerManager uses it
-      project.service<GrazieSpellCheckerEngine>().deferredSpeller.join()
-      // preload
       if (!ApplicationManager.getApplication().isUnitTestMode) {
+        // Do not preload speller in test mode, so it won't slow down tests not related to the spellchecker.
+        // We will still load it in tests, but only when it is actually needed.
+        project.service<GrazieSpellCheckerEngine>().waitForSpeller()
         SpellCheckerManager.getInstance(project)
       }
     }
@@ -69,6 +70,10 @@ internal class GrazieSpellCheckerEngine(project: Project, private val coroutineS
       }
     }
     speller
+  }
+
+  suspend fun waitForSpeller() {
+    deferredSpeller.join()
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
