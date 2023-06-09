@@ -4,20 +4,20 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
-import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
+import com.intellij.codeInspection.ProblemHighlightType.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.core.moveCaret
+import org.jetbrains.kotlin.idea.inspections.Action.*
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.countUsages
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.previousStatement
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -35,13 +35,16 @@ class MoveVariableDeclarationIntoWhenInspection : AbstractKotlinInspection(), Cl
             if (initializer.isComplex()) return
 
             val action = property.action(expression)
-            if (action == Action.NOTHING) return
-            if (action == Action.MOVE && !property.isOneLiner()) return
+            if (action == NOTHING) return
+            if (action == MOVE && !property.isOneLiner()) return
 
-            holder.registerProblem(
+            val highlightType = if (action == INLINE) INFORMATION else GENERIC_ERROR_OR_WARNING
+            holder.registerProblemWithoutOfflineInformation(
                 property,
-                TextRange.from(identifier.startOffsetInParent, identifier.textLength),
                 action.description,
+                isOnTheFly,
+                highlightType,
+                TextRange.from(identifier.startOffsetInParent, identifier.textLength),
                 action.createFix(subjectExpression.createSmartPointer())
             )
         })
@@ -78,8 +81,8 @@ private enum class Action {
 }
 
 private fun KtProperty.action(element: KtElement): Action = when (val elementUsages = countUsages(element)) {
-    countUsages() -> if (elementUsages == 1) Action.INLINE else Action.MOVE
-    else -> Action.NOTHING
+    countUsages() -> if (elementUsages == 1) INLINE else MOVE
+    else -> NOTHING
 }
 
 private fun KtWhenExpression.findDeclarationNear(): KtProperty? {
