@@ -2,6 +2,7 @@
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
 import com.intellij.configurationStore.deserializeInto
+import com.intellij.java.model.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil
@@ -14,12 +15,11 @@ import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
-import com.intellij.util.EventDispatcher
-import com.intellij.workspaceModel.ide.*
 import com.intellij.platform.workspaceModel.storage.*
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
 import com.intellij.platform.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.util.EventDispatcher
+import com.intellij.workspaceModel.ide.*
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.util.JpsPathUtil
 

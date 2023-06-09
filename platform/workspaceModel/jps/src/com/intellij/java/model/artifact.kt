@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.workspaceModel.storage.bridgeEntities
+package com.intellij.java.model
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspaceModel.storage.*
@@ -13,6 +13,8 @@ import com.intellij.platform.workspaceModel.storage.ObjBuilder
 import com.intellij.platform.workspaceModel.storage.Type
 import com.intellij.platform.workspaceModel.storage.annotations.Abstract
 import com.intellij.platform.workspaceModel.storage.annotations.Child
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 
 data class ArtifactId(val name: @NlsSafe String) : SymbolicEntityId<ArtifactEntity> {
@@ -21,17 +23,17 @@ data class ArtifactId(val name: @NlsSafe String) : SymbolicEntityId<ArtifactEnti
 }
 
 interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
-    val name: String
+  val name: String
 
-    val artifactType: @NonNls String
-    val includeInProjectBuild: Boolean
-    val outputUrl: VirtualFileUrl?
+  val artifactType: @NonNls String
+  val includeInProjectBuild: Boolean
+  val outputUrl: VirtualFileUrl?
 
-    @Child val rootElement: CompositePackagingElementEntity?
-    val customProperties: List<@Child ArtifactPropertiesEntity>
-    @Child val artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity?
-    override val symbolicId: ArtifactId
-        get() = ArtifactId(name)
+  @Child val rootElement: CompositePackagingElementEntity?
+  val customProperties: List<@Child ArtifactPropertiesEntity>
+  @Child val artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity?
+  override val symbolicId: ArtifactId
+    get() = ArtifactId(name)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -74,10 +76,10 @@ fun MutableEntityStorage.modifyEntity(entity: ArtifactEntity, modification: Arti
 //endregion
 
 interface ArtifactPropertiesEntity : WorkspaceEntity {
-    val artifact: ArtifactEntity
+  val artifact: ArtifactEntity
 
-    val providerType: @NonNls String
-    val propertiesXmlTag: @NonNls String?
+  val providerType: @NonNls String
+  val propertiesXmlTag: @NonNls String?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -111,7 +113,7 @@ fun MutableEntityStorage.modifyEntity(entity: ArtifactPropertiesEntity,
 //endregion
 
 @Abstract interface PackagingElementEntity : WorkspaceEntity {
-    val parentEntity: CompositePackagingElementEntity?
+  val parentEntity: CompositePackagingElementEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -136,9 +138,9 @@ fun MutableEntityStorage.modifyEntity(entity: ArtifactPropertiesEntity,
 }
 
 @Abstract interface CompositePackagingElementEntity : PackagingElementEntity {
-    val artifact: ArtifactEntity?
+  val artifact: ArtifactEntity?
 
-    val children: List<@Child PackagingElementEntity>
+  val children: List<@Child PackagingElementEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -166,7 +168,7 @@ fun MutableEntityStorage.modifyEntity(entity: ArtifactPropertiesEntity,
 }
 
 interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
-    val directoryName: @NlsSafe String
+  val directoryName: @NlsSafe String
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -203,7 +205,7 @@ fun MutableEntityStorage.modifyEntity(entity: DirectoryPackagingElementEntity,
 //endregion
 
 interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
-    val fileName: @NlsSafe String
+  val fileName: @NlsSafe String
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -269,7 +271,7 @@ fun MutableEntityStorage.modifyEntity(entity: ArtifactRootElementEntity,
 //endregion
 
 interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
-    val artifact: ArtifactId?
+  val artifact: ArtifactId?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -304,10 +306,10 @@ var ArtifactOutputPackagingElementEntity.Builder.artifactEntity: ArtifactEntity
 //endregion
 
 val ArtifactOutputPackagingElementEntity.artifactEntity: ArtifactEntity
-    by WorkspaceEntity.extension()
+  by WorkspaceEntity.extension()
 
 interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
-    val module: ModuleId?
+  val module: ModuleId?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -339,7 +341,7 @@ fun MutableEntityStorage.modifyEntity(entity: ModuleOutputPackagingElementEntity
 //endregion
 
 interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
-    val library: LibraryId?
+  val library: LibraryId?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -372,7 +374,7 @@ fun MutableEntityStorage.modifyEntity(entity: LibraryFilesPackagingElementEntity
 //endregion
 
 interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
-    val module: ModuleId?
+  val module: ModuleId?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -404,7 +406,7 @@ fun MutableEntityStorage.modifyEntity(entity: ModuleSourcePackagingElementEntity
 //endregion
 
 interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
-    val module: ModuleId?
+  val module: ModuleId?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -436,7 +438,7 @@ fun MutableEntityStorage.modifyEntity(entity: ModuleTestOutputPackagingElementEn
 //endregion
 
 @Abstract interface FileOrDirectoryPackagingElementEntity : PackagingElementEntity {
-    val filePath: VirtualFileUrl
+  val filePath: VirtualFileUrl
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -498,7 +500,7 @@ fun MutableEntityStorage.modifyEntity(entity: DirectoryCopyPackagingElementEntit
 //endregion
 
 interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElementEntity {
-    val pathInArchive: @NlsSafe String
+  val pathInArchive: @NlsSafe String
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -536,7 +538,7 @@ fun MutableEntityStorage.modifyEntity(entity: ExtractedDirectoryPackagingElement
 //endregion
 
 interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity {
-    val renamedOutputFileName: @NlsSafe String?
+  val renamedOutputFileName: @NlsSafe String?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -572,8 +574,8 @@ fun MutableEntityStorage.modifyEntity(entity: FileCopyPackagingElementEntity,
 //endregion
 
 interface CustomPackagingElementEntity : CompositePackagingElementEntity {
-    val typeId: @NonNls String
-    val propertiesXmlTag: @NonNls String
+  val typeId: @NonNls String
+  val propertiesXmlTag: @NonNls String
 
   //region generated code
   @GeneratedCodeApiVersion(1)

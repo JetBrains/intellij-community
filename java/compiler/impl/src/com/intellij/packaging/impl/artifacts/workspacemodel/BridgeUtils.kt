@@ -2,6 +2,7 @@
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
 import com.intellij.configurationStore.serialize
+import com.intellij.java.model.*
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
 import com.intellij.openapi.project.Project

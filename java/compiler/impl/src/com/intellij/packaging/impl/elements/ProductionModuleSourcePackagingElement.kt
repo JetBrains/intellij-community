@@ -15,7 +15,7 @@ import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleSourcePackagingElementEntity
+import com.intellij.java.model.ModuleSourcePackagingElementEntity
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 

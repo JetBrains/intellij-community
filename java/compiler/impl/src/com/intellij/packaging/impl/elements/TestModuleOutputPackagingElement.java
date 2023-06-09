@@ -15,7 +15,7 @@ import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage;
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ExtensionsKt;
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleId;
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleTestOutputPackagingElementEntity;
+import com.intellij.java.model.ModuleTestOutputPackagingElementEntity;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;

@@ -22,9 +22,9 @@ import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.platform.workspaceModel.storage.EntityChange
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ArtifactEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ArtifactId
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
+import com.intellij.java.model.ArtifactEntity
+import com.intellij.java.model.ArtifactId
+import com.intellij.java.model.CompositePackagingElementEntity
 import com.intellij.platform.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 

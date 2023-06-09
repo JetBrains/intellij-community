@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.workspaceModel.storage.bridgeEntities
+package com.intellij.java.model
 
+import com.intellij.java.model.CompositePackagingElementEntity
+import com.intellij.java.model.DirectoryCopyPackagingElementEntity
+import com.intellij.java.model.PackagingElementEntity
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage
@@ -20,7 +23,7 @@ import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: ExtractedDirectoryPackagingElementEntityData) : ExtractedDirectoryPackagingElementEntity, WorkspaceEntityBase() {
+open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopyPackagingElementEntityData) : DirectoryCopyPackagingElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -39,9 +42,6 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
   override val filePath: VirtualFileUrl
     get() = dataSource.filePath
 
-  override val pathInArchive: String
-    get() = dataSource.pathInArchive
-
   override val entitySource: EntitySource
     get() = dataSource.entitySource
 
@@ -49,9 +49,9 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
     return connections
   }
 
-  class Builder(result: ExtractedDirectoryPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ExtractedDirectoryPackagingElementEntity, ExtractedDirectoryPackagingElementEntityData>(
-    result), ExtractedDirectoryPackagingElementEntity.Builder {
-    constructor() : this(ExtractedDirectoryPackagingElementEntityData())
+  class Builder(result: DirectoryCopyPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<DirectoryCopyPackagingElementEntity, DirectoryCopyPackagingElementEntityData>(
+    result), DirectoryCopyPackagingElementEntity.Builder {
+    constructor() : this(DirectoryCopyPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -60,7 +60,7 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
           return
         }
         else {
-          error("Entity ExtractedDirectoryPackagingElementEntity is already created in a different builder")
+          error("Entity DirectoryCopyPackagingElementEntity is already created in a different builder")
         }
       }
 
@@ -85,9 +85,6 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
       if (!getEntityData().isFilePathInitialized()) {
         error("Field FileOrDirectoryPackagingElementEntity#filePath should be initialized")
       }
-      if (!getEntityData().isPathInArchiveInitialized()) {
-        error("Field ExtractedDirectoryPackagingElementEntity#pathInArchive should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -96,10 +93,9 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as ExtractedDirectoryPackagingElementEntity
+      dataSource as DirectoryCopyPackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.filePath != dataSource.filePath) this.filePath = dataSource.filePath
-      if (this.pathInArchive != dataSource.pathInArchive) this.pathInArchive = dataSource.pathInArchive
       updateChildToParentReferences(parents)
     }
 
@@ -162,36 +158,26 @@ open class ExtractedDirectoryPackagingElementEntityImpl(val dataSource: Extracte
         if (_diff != null) index(this, "filePath", value)
       }
 
-    override var pathInArchive: String
-      get() = getEntityData().pathInArchive
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).pathInArchive = value
-        changedProperty.add("pathInArchive")
-      }
-
-    override fun getEntityClass(): Class<ExtractedDirectoryPackagingElementEntity> = ExtractedDirectoryPackagingElementEntity::class.java
+    override fun getEntityClass(): Class<DirectoryCopyPackagingElementEntity> = DirectoryCopyPackagingElementEntity::class.java
   }
 }
 
-class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<ExtractedDirectoryPackagingElementEntity>() {
+class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCopyPackagingElementEntity>() {
   lateinit var filePath: VirtualFileUrl
-  lateinit var pathInArchive: String
 
   fun isFilePathInitialized(): Boolean = ::filePath.isInitialized
-  fun isPathInArchiveInitialized(): Boolean = ::pathInArchive.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ExtractedDirectoryPackagingElementEntity> {
-    val modifiable = ExtractedDirectoryPackagingElementEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<DirectoryCopyPackagingElementEntity> {
+    val modifiable = DirectoryCopyPackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): ExtractedDirectoryPackagingElementEntity {
+  override fun createEntity(snapshot: EntityStorage): DirectoryCopyPackagingElementEntity {
     return getCached(snapshot) {
-      val entity = ExtractedDirectoryPackagingElementEntityImpl(this)
+      val entity = DirectoryCopyPackagingElementEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -199,7 +185,7 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return ExtractedDirectoryPackagingElementEntity::class.java
+    return DirectoryCopyPackagingElementEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -209,7 +195,7 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return ExtractedDirectoryPackagingElementEntity(filePath, pathInArchive, entitySource) {
+    return DirectoryCopyPackagingElementEntity(filePath, entitySource) {
       this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
     }
   }
@@ -223,11 +209,10 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ExtractedDirectoryPackagingElementEntityData
+    other as DirectoryCopyPackagingElementEntityData
 
     if (this.entitySource != other.entitySource) return false
     if (this.filePath != other.filePath) return false
-    if (this.pathInArchive != other.pathInArchive) return false
     return true
   }
 
@@ -235,24 +220,21 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as ExtractedDirectoryPackagingElementEntityData
+    other as DirectoryCopyPackagingElementEntityData
 
     if (this.filePath != other.filePath) return false
-    if (this.pathInArchive != other.pathInArchive) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
     result = 31 * result + filePath.hashCode()
-    result = 31 * result + pathInArchive.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     result = 31 * result + filePath.hashCode()
-    result = 31 * result + pathInArchive.hashCode()
     return result
   }
 

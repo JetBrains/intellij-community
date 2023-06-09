@@ -1,26 +1,32 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.workspaceModel.storage.bridgeEntities
+package com.intellij.java.model
 
+import com.intellij.java.model.ArtifactId
+import com.intellij.java.model.ArtifactOutputPackagingElementEntity
+import com.intellij.java.model.CompositePackagingElementEntity
+import com.intellij.java.model.PackagingElementEntity
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspaceModel.storage.SymbolicEntityId
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
 import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
 import com.intellij.platform.workspaceModel.storage.impl.EntityLink
 import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.platform.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspaceModel.storage.impl.extractOneToAbstractManyParent
+import com.intellij.platform.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractManyParentOfChild
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopyPackagingElementEntityData) : DirectoryCopyPackagingElementEntity, WorkspaceEntityBase() {
+open class ArtifactOutputPackagingElementEntityImpl(val dataSource: ArtifactOutputPackagingElementEntityData) : ArtifactOutputPackagingElementEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositePackagingElementEntity::class.java,
@@ -36,8 +42,8 @@ open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopy
   override val parentEntity: CompositePackagingElementEntity?
     get() = snapshot.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this)
 
-  override val filePath: VirtualFileUrl
-    get() = dataSource.filePath
+  override val artifact: ArtifactId?
+    get() = dataSource.artifact
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -46,9 +52,9 @@ open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopy
     return connections
   }
 
-  class Builder(result: DirectoryCopyPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<DirectoryCopyPackagingElementEntity, DirectoryCopyPackagingElementEntityData>(
-    result), DirectoryCopyPackagingElementEntity.Builder {
-    constructor() : this(DirectoryCopyPackagingElementEntityData())
+  class Builder(result: ArtifactOutputPackagingElementEntityData?) : ModifiableWorkspaceEntityBase<ArtifactOutputPackagingElementEntity, ArtifactOutputPackagingElementEntityData>(
+    result), ArtifactOutputPackagingElementEntity.Builder {
+    constructor() : this(ArtifactOutputPackagingElementEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -57,7 +63,7 @@ open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopy
           return
         }
         else {
-          error("Entity DirectoryCopyPackagingElementEntity is already created in a different builder")
+          error("Entity ArtifactOutputPackagingElementEntity is already created in a different builder")
         }
       }
 
@@ -79,9 +85,6 @@ open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopy
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
       }
-      if (!getEntityData().isFilePathInitialized()) {
-        error("Field FileOrDirectoryPackagingElementEntity#filePath should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -90,9 +93,9 @@ open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopy
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as DirectoryCopyPackagingElementEntity
+      dataSource as ArtifactOutputPackagingElementEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.filePath != dataSource.filePath) this.filePath = dataSource.filePath
+      if (this.artifact != dataSource?.artifact) this.artifact = dataSource.artifact
       updateChildToParentReferences(parents)
     }
 
@@ -145,36 +148,86 @@ open class DirectoryCopyPackagingElementEntityImpl(val dataSource: DirectoryCopy
         changedProperty.add("parentEntity")
       }
 
-    override var filePath: VirtualFileUrl
-      get() = getEntityData().filePath
+    override var artifact: ArtifactId?
+      get() = getEntityData().artifact
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).filePath = value
-        changedProperty.add("filePath")
-        val _diff = diff
-        if (_diff != null) index(this, "filePath", value)
+        getEntityData(true).artifact = value
+        changedProperty.add("artifact")
+
       }
 
-    override fun getEntityClass(): Class<DirectoryCopyPackagingElementEntity> = DirectoryCopyPackagingElementEntity::class.java
+    override fun getEntityClass(): Class<ArtifactOutputPackagingElementEntity> = ArtifactOutputPackagingElementEntity::class.java
   }
 }
 
-class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCopyPackagingElementEntity>() {
-  lateinit var filePath: VirtualFileUrl
+class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOutputPackagingElementEntity>(), SoftLinkable {
+  var artifact: ArtifactId? = null
 
-  fun isFilePathInitialized(): Boolean = ::filePath.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<DirectoryCopyPackagingElementEntity> {
-    val modifiable = DirectoryCopyPackagingElementEntityImpl.Builder(null)
+  override fun getLinks(): Set<SymbolicEntityId<*>> {
+    val result = HashSet<SymbolicEntityId<*>>()
+    val optionalLink_artifact = artifact
+    if (optionalLink_artifact != null) {
+      result.add(optionalLink_artifact)
+    }
+    return result
+  }
+
+  override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+    val optionalLink_artifact = artifact
+    if (optionalLink_artifact != null) {
+      index.index(this, optionalLink_artifact)
+    }
+  }
+
+  override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
+    // TODO verify logic
+    val mutablePreviousSet = HashSet(prev)
+    val optionalLink_artifact = artifact
+    if (optionalLink_artifact != null) {
+      val removedItem_optionalLink_artifact = mutablePreviousSet.remove(optionalLink_artifact)
+      if (!removedItem_optionalLink_artifact) {
+        index.index(this, optionalLink_artifact)
+      }
+    }
+    for (removed in mutablePreviousSet) {
+      index.remove(this, removed)
+    }
+  }
+
+  override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
+    var changed = false
+    var artifact_data_optional = if (artifact != null) {
+      val artifact___data = if (artifact!! == oldLink) {
+        changed = true
+        newLink as ArtifactId
+      }
+      else {
+        null
+      }
+      artifact___data
+    }
+    else {
+      null
+    }
+    if (artifact_data_optional != null) {
+      artifact = artifact_data_optional
+    }
+    return changed
+  }
+
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ArtifactOutputPackagingElementEntity> {
+    val modifiable = ArtifactOutputPackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): DirectoryCopyPackagingElementEntity {
+  override fun createEntity(snapshot: EntityStorage): ArtifactOutputPackagingElementEntity {
     return getCached(snapshot) {
-      val entity = DirectoryCopyPackagingElementEntityImpl(this)
+      val entity = ArtifactOutputPackagingElementEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -182,7 +235,7 @@ class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCop
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return DirectoryCopyPackagingElementEntity::class.java
+    return ArtifactOutputPackagingElementEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -192,7 +245,8 @@ class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCop
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return DirectoryCopyPackagingElementEntity(filePath, entitySource) {
+    return ArtifactOutputPackagingElementEntity(entitySource) {
+      this.artifact = this@ArtifactOutputPackagingElementEntityData.artifact
       this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
     }
   }
@@ -206,10 +260,10 @@ class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCop
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as DirectoryCopyPackagingElementEntityData
+    other as ArtifactOutputPackagingElementEntityData
 
     if (this.entitySource != other.entitySource) return false
-    if (this.filePath != other.filePath) return false
+    if (this.artifact != other.artifact) return false
     return true
   }
 
@@ -217,26 +271,26 @@ class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCop
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as DirectoryCopyPackagingElementEntityData
+    other as ArtifactOutputPackagingElementEntityData
 
-    if (this.filePath != other.filePath) return false
+    if (this.artifact != other.artifact) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + filePath.hashCode()
+    result = 31 * result + artifact.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + filePath.hashCode()
+    result = 31 * result + artifact.hashCode()
     return result
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.filePath?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
+    collector.add(ArtifactId::class.java)
+    collector.sameForAllEntities = true
   }
 }

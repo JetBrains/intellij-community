@@ -6,7 +6,9 @@ import com.intellij.compiler.artifacts.MockArtifactProperties
 import com.intellij.compiler.artifacts.MockArtifactPropertiesProvider
 import com.intellij.compiler.artifacts.TestPackagingElementBuilder
 import com.intellij.compiler.artifacts.propertybased.*
+import com.intellij.compiler.artifacts.propertybased.artifactEntity
 import com.intellij.concurrency.JobSchedulerImpl
+import com.intellij.java.model.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
@@ -35,9 +37,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ArtifactEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ArtifactPropertiesEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.ArtifactRootElementEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.modifyEntity
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase
 import org.junit.runner.RunWith
@@ -87,7 +87,7 @@ class ArtifactTest : ArtifactsTestCase() {
 
     // Add via model
     workspaceModel.updateProjectModel {
-      val root = it addEntity ArtifactRootElementEntity(MySource) 
+      val root = it addEntity ArtifactRootElementEntity(MySource)
       it addEntity ArtifactEntity("MyName", PlainArtifactType.ID, true, MySource) {
         rootElement = root
       }
@@ -109,7 +109,7 @@ class ArtifactTest : ArtifactsTestCase() {
 
     // Add via model
     workspaceModel.updateProjectModel {
-      val root = it addEntity ArtifactRootElementEntity(MySource) 
+      val root = it addEntity ArtifactRootElementEntity(MySource)
       it addEntity ArtifactEntity("MyName", PlainArtifactType.ID, true, MySource) {
         rootElement = root
       }
