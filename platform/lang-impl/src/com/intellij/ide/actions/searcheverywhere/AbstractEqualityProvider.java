@@ -3,7 +3,6 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 public abstract class AbstractEqualityProvider implements SEResultsEqualityProvider {
@@ -35,9 +34,8 @@ public abstract class AbstractEqualityProvider implements SEResultsEqualityProvi
 
   private static boolean canBeMerged(@NotNull SearchEverywhereFoundElementInfo lhs,
                                      @NotNull SearchEverywhereFoundElementInfo rhs) {
-    if (lhs.getElement() instanceof PossiblySemanticElement lhsElement
-        && rhs.getElement() instanceof PossiblySemanticElement rhsElement) {
-      return lhsElement.isSemantic() || rhsElement.isSemantic();
+    if (lhs.getElement() instanceof MergeableElement lhsElement && rhs.getElement() instanceof MergeableElement rhsElement) {
+      return lhsElement.shouldBeMergedIntoAnother() || rhsElement.shouldBeMergedIntoAnother();
     }
     return false;
   }

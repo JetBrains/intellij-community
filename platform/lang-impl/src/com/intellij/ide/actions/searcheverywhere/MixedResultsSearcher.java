@@ -331,26 +331,24 @@ class MixedResultsSearcher implements SESearcher {
         ArrayList<SearchEverywhereFoundElementInfo> toAdd = new ArrayList<>();
 
         if (action instanceof SEEqualElementsActionType.Merge mergeAction) {
+          var newElement = (MergeableElement)newElementInfo.element;
           boolean isNewElementAdded = false;
           for (SearchEverywhereFoundElementInfo oldElementInfo : mergeAction.getToBeMerged()) {
-            if (newElementInfo.element instanceof PossiblySemanticElement newElement
-                && oldElementInfo.element instanceof PossiblySemanticElement oldElement) {
-
-              if (newElement.isSemantic()) {
-                toRemove.add(oldElementInfo);
-                oldElement.mergeWith(newElement);
-                // Here we cannot use true priority from oldElementInfo before applying ML because
-                // SearchEverywhereFoundElementInfoWithMl is not yet available in the Platform API
-                // TODO: replace priority with ((SearchEverywhereFoundElementInfoWithMl)oldElementInfo).sePriority
-                toAdd.add(prepareFoundElementInfo(oldElement, oldElementInfo.contributor, priority));
-              } else if (oldElement.isSemantic()) {
-                toRemove.add(oldElementInfo);
-                newElement.mergeWith(oldElement);
-                // Do not add a new element more than once:
-                if (!isNewElementAdded) {
-                  toAdd.add(prepareFoundElementInfo(newElement, newElementInfo.contributor, priority));
-                  isNewElementAdded = true;
-                }
+            var oldElement = (MergeableElement)oldElementInfo.element;
+            toRemove.add(oldElementInfo);
+            if (newElement.shouldBeMergedIntoAnother()) {
+              oldElement.mergeWith(newElement);
+              // Here we cannot use true priority from oldElementInfo before applying ML because
+              // SearchEverywhereFoundElementInfoWithMl is not yet available in the Platform API
+              // TODO: replace priority with ((SearchEverywhereFoundElementInfoWithMl)oldElementInfo).sePriority
+              toAdd.add(prepareFoundElementInfo(oldElement, oldElementInfo.contributor, priority));
+            }
+            else {
+              newElement.mergeWith(oldElement);
+              // Do not add a new element more than once:
+              if (!isNewElementAdded) {
+                toAdd.add(prepareFoundElementInfo(newElement, newElementInfo.contributor, priority));
+                isNewElementAdded = true;
               }
             }
           }
@@ -398,7 +396,9 @@ class MixedResultsSearcher implements SESearcher {
       return updatedList.isEmpty() ? SEEqualElementsActionType.Skip.INSTANCE : new SEEqualElementsActionType.Replace(updatedList);
     }
 
-    private static SearchEverywhereFoundElementInfo prepareFoundElementInfo(Object element, SearchEverywhereContributor<?> contributor, int priority) {
+    private static SearchEverywhereFoundElementInfo prepareFoundElementInfo(Object element,
+                                                                            SearchEverywhereContributor<?> contributor,
+                                                                            int priority) {
       final var mlService = SearchEverywhereMlService.getInstance();
       if (mlService == null) {
         return new SearchEverywhereFoundElementInfo(element, priority, contributor);

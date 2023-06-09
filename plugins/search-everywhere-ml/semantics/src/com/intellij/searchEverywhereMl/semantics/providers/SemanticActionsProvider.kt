@@ -12,12 +12,6 @@ private val LOG = logger<SemanticActionsProvider>()
 abstract class SemanticActionsProvider: SemanticItemsProvider<GotoActionModel.MatchedValue> {
   private val actionManager = ActionManager.getInstance()
 
-  private val MIN_SIMILARITY_SCORE = -1
-  private val MAX_SIMILARITY_SCORE = 1
-
-  private val MIN_WEIGHT = 0
-  private val MAX_WEIGHT = 100_000
-
   protected fun createItemDescriptor(
     actionId: String, similarityScore: Double,
     pattern: String, model: GotoActionModel): FoundItemDescriptor<GotoActionModel.MatchedValue>? {
@@ -40,5 +34,13 @@ abstract class SemanticActionsProvider: SemanticItemsProvider<GotoActionModel.Ma
       similarityScore - MIN_SIMILARITY_SCORE) / (MAX_SIMILARITY_SCORE - MIN_SIMILARITY_SCORE) * (MAX_WEIGHT - MIN_WEIGHT)
 
     return FoundItemDescriptor(element, shiftedScore.toInt())
+  }
+
+  companion object {
+    private const val MIN_SIMILARITY_SCORE = -1
+    private const val MAX_SIMILARITY_SCORE = 1
+
+    private const val MIN_WEIGHT = 0
+    private const val MAX_WEIGHT = 100_000
   }
 }

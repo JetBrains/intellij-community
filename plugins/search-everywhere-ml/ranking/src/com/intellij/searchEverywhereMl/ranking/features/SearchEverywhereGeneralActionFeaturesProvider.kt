@@ -43,7 +43,7 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
       data.add(ITEM_TYPE.with(element.type))
       data.add(TYPE_WEIGHT.with(element.valueTypeWeight))
 
-      if (element.isSemantic) {
+      if (element.similarityScore != null) {
         data.add(SIMILARITY_SCORE.with(element.similarityScore))
       }
     }

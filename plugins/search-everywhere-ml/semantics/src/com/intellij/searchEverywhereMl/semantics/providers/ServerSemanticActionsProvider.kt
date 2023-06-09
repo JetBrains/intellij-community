@@ -6,8 +6,11 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.searchEverywhereMl.semantics.utils.RequestResult
 import com.intellij.searchEverywhereMl.semantics.utils.sendRequest
-import java.util.*
+import com.intellij.openapi.diagnostic.logger
+
+private val LOG = logger<ServerSemanticActionsProvider>()
 
 class ServerSemanticActionsProvider(val model: GotoActionModel) : SemanticActionsProvider() {
   private val mapper = jacksonObjectMapper()
@@ -26,9 +29,15 @@ class ServerSemanticActionsProvider(val model: GotoActionModel) : SemanticAction
       "similarity_threshold" to SIMILARITY_THRESHOLD
     ))
 
-    val responseJson: String = sendRequest("$URL_BASE/$SEARCH_ENDPOINT/", requestJson) ?: return emptyList()
-
-    val modelResponse: ModelResponse = mapper.readValue(responseJson)
+    val modelResponse: ModelResponse = when (
+      val requestResult = sendRequest("$URL_BASE/$SEARCH_ENDPOINT/", requestJson)
+    ) {
+      is RequestResult.Success -> mapper.readValue(requestResult.data)
+      is RequestResult.Error -> {
+        LOG.warn(requestResult.message)
+        return emptyList()
+      }
+    }
 
     return modelResponse.nearestCandidates.mapNotNull { createItemDescriptor(it.actionId, it.similarityScore, pattern, model) }
   }

@@ -26,7 +26,7 @@ import javax.swing.ListCellRenderer
 /**
  * Contributor that adds semantic search functionality when searching for actions in Search Everywhere
  * Delegates rendering and data retrieval functionality to [ActionSearchEverywhereContributor].
- * Can work with two actions providers: remote and local
+ * Can work with two types of action providers: server-based and local
  */
 class SemanticActionSearchEverywhereContributor(
   project: Project?,

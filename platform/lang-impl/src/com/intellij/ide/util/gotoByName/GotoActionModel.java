@@ -7,7 +7,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
-import com.intellij.ide.actions.searcheverywhere.PossiblySemanticElement;
+import com.intellij.ide.actions.searcheverywhere.MergeableElement;
 import com.intellij.ide.ui.RegistryTextOptionDescriptor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -172,7 +172,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
   public enum MatchedValueType {ABBREVIATION, INTENTION, TOP_HIT, OPTION, ACTION, SEMANTIC}
 
-  public static class MatchedValue implements PossiblySemanticElement, UiInspectorContextProvider {
+  public static class MatchedValue implements MergeableElement, UiInspectorContextProvider {
     @NotNull public final Object value;
     @NotNull final MatchedValueType type;
     @NotNull final String pattern;
@@ -202,16 +202,17 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     }
 
     @Override
-    public void mergeWith(Object other) {
+    public MergeableElement mergeWith(MergeableElement other) {
       if (other instanceof MatchedValue otherMatchedValue) {
         if (otherMatchedValue.type == MatchedValueType.SEMANTIC) {
           similarityScore = otherMatchedValue.similarityScore;
         }
       }
+      return this;
     }
 
     @Override
-    public boolean isSemantic() {
+    public boolean shouldBeMergedIntoAnother() {
       return similarityScore != null;
     }
 
