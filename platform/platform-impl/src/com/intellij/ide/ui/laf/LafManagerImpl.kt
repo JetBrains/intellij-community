@@ -617,6 +617,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
     // set L&F
     val lafClassName = lookAndFeelInfo.className
+    val previousScheme = getPreviousSchemeForLaF(lookAndFeelInfo)
     if (DarculaLookAndFeelInfo.CLASS_NAME == lafClassName) {
       val laf = DarculaLaf()
       try {
@@ -672,7 +673,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     }
     if (lookAndFeelInfo is UIThemeBasedLookAndFeelInfo) {
       try {
-        lookAndFeelInfo.installTheme(UIManager.getLookAndFeelDefaults(), !installEditorScheme)
+        lookAndFeelInfo.installTheme(UIManager.getLookAndFeelDefaults(), !installEditorScheme || previousScheme != null)
 
         //IntelliJ Light is the only theme which is, in fact, a LaF.
         if (lookAndFeelInfo.name != "IntelliJ Light") {
@@ -691,7 +692,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     }
 
     if (installEditorScheme) {
-      val previousScheme = getPreviousSchemeForLaF(lookAndFeelInfo)
       if (previousScheme != null) {
         EditorColorsManager.getInstance().globalScheme = previousScheme
       }
