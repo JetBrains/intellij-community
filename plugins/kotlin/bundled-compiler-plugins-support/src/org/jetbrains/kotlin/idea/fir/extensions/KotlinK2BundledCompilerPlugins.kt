@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.extensions
 
+import androidx.compose.compiler.plugins.kotlin.ComposeComponentRegistrar
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.kotlin.allopen.AllOpenComponentRegistrar
 import org.jetbrains.kotlin.assignment.plugin.AssignmentComponentRegistrar
@@ -11,7 +12,6 @@ import org.jetbrains.kotlin.lombok.LombokComponentRegistrar
 import org.jetbrains.kotlin.noarg.NoArgComponentRegistrar
 import org.jetbrains.kotlin.parcelize.ParcelizeComponentRegistrar
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverComponentRegistrar
-import org.jetbrains.kotlin.scripting.compiler.plugin.FirScriptingCompilerExtensionRegistrar
 import org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingK2CompilerPluginRegistrar
 import org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationComponentRegistrar
 import java.nio.file.FileSystems
@@ -72,6 +72,10 @@ enum class KotlinK2BundledCompilerPlugins(
 
     SCRIPTING_COMPILER_PLUGIN(
         ScriptingK2CompilerPluginRegistrar::class,
+    ),
+
+    COMPOSE_COMPILER_PLUGIN(
+        ComposeComponentRegistrar::class,
     );
 
     private val registrarClassName: String =
