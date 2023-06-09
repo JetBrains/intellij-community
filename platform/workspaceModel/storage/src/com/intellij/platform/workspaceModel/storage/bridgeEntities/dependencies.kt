@@ -23,7 +23,6 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
     val excludedRoots: List<@Child ExcludeUrlEntity>
     @Child val sdk: SdkEntity?
     @Child val libraryProperties: LibraryPropertiesEntity?
-    @Child val libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
 
     override val symbolicId: LibraryId
         get() = LibraryId(name, tableId)
@@ -38,7 +37,6 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
     override var excludedRoots: List<ExcludeUrlEntity>
     override var sdk: SdkEntity?
     override var libraryProperties: LibraryPropertiesEntity?
-    override var libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
   }
 
   companion object : Type<LibraryEntity, Builder>() {

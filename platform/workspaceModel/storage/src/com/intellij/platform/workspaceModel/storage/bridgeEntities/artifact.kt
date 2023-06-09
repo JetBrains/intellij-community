@@ -369,12 +369,7 @@ fun MutableEntityStorage.modifyEntity(entity: LibraryFilesPackagingElementEntity
                                       modification: LibraryFilesPackagingElementEntity.Builder.() -> Unit) = modifyEntity(
   LibraryFilesPackagingElementEntity.Builder::class.java, entity, modification)
 
-var LibraryFilesPackagingElementEntity.Builder.libraryEntity: LibraryEntity
-  by WorkspaceEntity.extension()
 //endregion
-
-val LibraryFilesPackagingElementEntity.libraryEntity: LibraryEntity
-    by WorkspaceEntity.extension()
 
 interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
     val module: ModuleId?

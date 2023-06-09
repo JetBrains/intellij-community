@@ -37,16 +37,11 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
     internal val LIBRARYPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java,
                                                                                      LibraryPropertiesEntity::class.java,
                                                                                      ConnectionId.ConnectionType.ONE_TO_ONE, false)
-    internal val LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java,
-                                                                                                LibraryFilesPackagingElementEntity::class.java,
-                                                                                                ConnectionId.ConnectionType.ONE_TO_ONE,
-                                                                                                false)
 
     val connections = listOf<ConnectionId>(
       EXCLUDEDROOTS_CONNECTION_ID,
       SDK_CONNECTION_ID,
       LIBRARYPROPERTIES_CONNECTION_ID,
-      LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID,
     )
 
   }
@@ -68,9 +63,6 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
 
   override val libraryProperties: LibraryPropertiesEntity?
     get() = snapshot.extractOneToOneChild(LIBRARYPROPERTIES_CONNECTION_ID, this)
-
-  override val libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
-    get() = snapshot.extractOneToOneChild(LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -334,41 +326,6 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
           this.entityLinks[EntityLink(true, LIBRARYPROPERTIES_CONNECTION_ID)] = value
         }
         changedProperty.add("libraryProperties")
-      }
-
-    override var libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          _diff.extractOneToOneChild(LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                                      LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] as? LibraryFilesPackagingElementEntity
-        }
-        else {
-          this.entityLinks[EntityLink(true, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] as? LibraryFilesPackagingElementEntity
-        }
-      }
-      set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID, this, value)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
-          this.entityLinks[EntityLink(true, LIBRARYFILESPACKAGINGELEMENT_CONNECTION_ID)] = value
-        }
-        changedProperty.add("libraryFilesPackagingElement")
       }
 
     override fun getEntityClass(): Class<LibraryEntity> = LibraryEntity::class.java
