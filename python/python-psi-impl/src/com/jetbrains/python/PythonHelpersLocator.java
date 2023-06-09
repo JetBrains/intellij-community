@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.LazyInitializer;
@@ -159,18 +160,28 @@ public final class PythonHelpersLocator {
         return CompletableFuture.supplyAsync(
           () -> {
             try {
-              File rootDir = new File(
+              BuildNumber build = ApplicationInfo.getInstance().getBuild();
+              File systemRootDir;
+              if (build.isSnapshot()) {
+                // Although it runs not directly from the IDE, it's still built locally from sources, and it's supposed that
+                // copied code may change between runs.
+                systemRootDir = FileUtil.createTempDirectory("python-helpers", null, true);
+              }
+              else {
+                systemRootDir = new File(PathManager.getSystemPath());
+              }
+              File helpersRootDir = new File(
                 new File(
-                  PathManager.getSystemPath(),
-                  "python-helpers-" + ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode()
+                  systemRootDir,
+                  "python-helpers-" + build.asStringWithoutProductCode()
                 ),
                 moduleName
               );
-              if (!rootDir.isDirectory()) {
-                NioFiles.createDirectories(rootDir.toPath().getParent());
-                FileUtil.copyDir(new File(pluginBaseDir, pluginRelativePath), rootDir, true);
+              if (!helpersRootDir.isDirectory()) {
+                NioFiles.createDirectories(helpersRootDir.toPath().getParent());
+                FileUtil.copyDir(new File(pluginBaseDir, pluginRelativePath), helpersRootDir, true);
               }
-              return rootDir;
+              return helpersRootDir;
             }
             catch (IOException e) {
               throw new UncheckedIOException("Failed to create temporary directory for helpers", e);
