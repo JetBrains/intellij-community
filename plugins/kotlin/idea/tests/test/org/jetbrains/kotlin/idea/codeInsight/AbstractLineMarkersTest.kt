@@ -3,7 +3,9 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
+import com.intellij.codeInsight.daemon.GutterIconDescriptor
 import com.intellij.codeInsight.daemon.LineMarkerInfo
+import com.intellij.codeInsight.daemon.LineMarkerSettings
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.InheritorsLineMarkerNavigator
 import com.intellij.codeInsight.navigation.GotoImplementationHandler
@@ -22,6 +24,7 @@ import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerCodeMetaInfo
 import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerConfiguration
 import org.jetbrains.kotlin.idea.base.test.KotlinExpectedHighlightingData
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMarkerNavigator
+import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
 import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
@@ -50,12 +53,25 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
 
     fun doTest(@Suppress("UNUSED_PARAMETER") unused: String, additionalCheck: () -> Unit) {
         val fileText = FileUtil.loadFile(dataFile())
-        try {
-            ConfigLibraryUtil.configureLibrariesByDirective(myFixture.module, fileText)
-            if (InTextDirectivesUtils.findStringWithPrefixes(fileText, "METHOD_SEPARATORS") != null) {
-                DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS = true
+        ConfigLibraryUtil.configureLibrariesByDirective(myFixture.module, fileText)
+        if (InTextDirectivesUtils.findStringWithPrefixes(fileText, "METHOD_SEPARATORS") != null) {
+            DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS = true
+        }
+        val disabledOptions = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// OPTION: ")
+            .mapNotNull {
+                if (it.startsWith("-")) {
+                    val optionName = it.substring(1)
+                    val field = KotlinLineMarkerOptions::class.java.getDeclaredField(optionName)
+                    field.isAccessible = true
+                    field.get(KotlinLineMarkerOptions) as GutterIconDescriptor
+                } else {
+                    null
+                }
             }
-
+        disabledOptions.forEach {
+            LineMarkerSettings.getSettings().setEnabled(it, false)
+        }
+        try {
             val dependencySuffixes = listOf(".dependency.kt", ".dependency.java", ".dependency1.kt", ".dependency2.kt")
             for (suffix in dependencySuffixes) {
                 val dependencyPath = fileName().replace(".kt", suffix)
@@ -84,6 +100,9 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
         } finally {
             ConfigLibraryUtil.unconfigureLibrariesByDirective(module, fileText)
             DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS = false
+            disabledOptions.forEach {
+                LineMarkerSettings.getSettings().setEnabled(it, true)
+            }
         }
 
     }
