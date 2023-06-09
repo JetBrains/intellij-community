@@ -2,6 +2,9 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
@@ -11,11 +14,10 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.*
 
 /**
  * A parent class for K1 and K2 RedundantIfInspection.
@@ -34,20 +36,42 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
         val returnAfterIf: KtExpression?,
     )
 
+    @JvmField
+    var ignoreChainedIf = true
+
+    override fun getOptionsPane(): OptPane {
+        return pane(
+            checkbox("ignoreChainedIf", KotlinBundle.message("redundant.if.option.ignore.chained")),
+        )
+    }
+
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return ifExpressionVisitor { expression ->
             if (expression.condition == null) return@ifExpressionVisitor
             val (redundancyType, branchType, returnAfterIf) = RedundancyType.of(expression)
             if (redundancyType == RedundancyType.NONE) return@ifExpressionVisitor
 
+            if (isUnitTestMode()) {
+                ignoreChainedIf = expression.containingKtFile
+                    .findDescendantOfType<PsiComment> { it.text.startsWith("// IGNORE_CHAINED_IF:") }
+                    ?.let { it.text.removePrefix("// IGNORE_CHAINED_IF:").trim().toBoolean() }
+                    ?: false
+            }
+            val highlightType = if (ignoreChainedIf && expression.getPrevSiblingIgnoringWhitespaceAndComments() is KtIfExpression) {
+                ProblemHighlightType.INFORMATION
+            } else {
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+            }
+
             val highlightRange = TextRange(
                 expression.ifKeyword.startOffset,
                 (expression.rightParenthesis ?: expression).endOffset
             ).shiftLeft(expression.startOffset)
-            holder.registerProblem(
+            holder.registerProblemWithoutOfflineInformation(
                 expression,
                 KotlinBundle.message("redundant.if.statement"),
-                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                isOnTheFly,
+                highlightType,
                 highlightRange,
                 RemoveRedundantIf(redundancyType, branchType, returnAfterIf)
             )

@@ -8988,6 +8988,45 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/redundantIf")
+    public abstract static class RedundantIf extends AbstractLocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/redundantIf/ignoreChaineIf")
+        public abstract static class IgnoreChaineIf extends AbstractLocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/redundantIf/ignoreChaineIf/false")
+            public static class False extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("chainedIf.kt")
+                public void testChainedIf() throws Exception {
+                    runTest("testData/inspectionsLocal/redundantIf/ignoreChaineIf/false/chainedIf.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/redundantIf/ignoreChaineIf/true")
+            public static class True extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("chainedIf.kt")
+                public void testChainedIf() throws Exception {
+                    runTest("testData/inspectionsLocal/redundantIf/ignoreChaineIf/true/chainedIf.kt");
+                }
+
+                @TestMetadata("notChainedIf.kt")
+                public void testNotChainedIf() throws Exception {
+                    runTest("testData/inspectionsLocal/redundantIf/ignoreChaineIf/true/notChainedIf.kt");
+                }
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantInnerClassModifier")
     public static class RedundantInnerClassModifier extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
