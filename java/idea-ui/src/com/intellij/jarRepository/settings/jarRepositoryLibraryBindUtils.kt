@@ -13,6 +13,7 @@ import com.intellij.platform.workspaceModel.storage.EntityStorage
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
+import com.intellij.java.model.modifyEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.modifyEntity
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer

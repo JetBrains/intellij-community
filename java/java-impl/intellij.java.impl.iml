@@ -76,6 +76,7 @@
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
     <orderEntry type="module" module-name="intellij.platform.ml" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
   </component>
   <component name="copyright">
     <Base>

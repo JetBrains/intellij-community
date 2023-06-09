@@ -29,7 +29,6 @@ import com.intellij.java.model.ArtifactEntity
 import com.intellij.java.model.ArtifactId
 import com.intellij.java.model.CustomPackagingElementEntity
 import com.intellij.java.model.modifyEntity
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.modifyEntity
 
 class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), Disposable {
 

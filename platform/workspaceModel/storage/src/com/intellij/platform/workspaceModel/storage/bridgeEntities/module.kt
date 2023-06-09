@@ -23,7 +23,6 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
     val contentRoots: List<@Child ContentRootEntity>
     @Child val customImlData: ModuleCustomImlDataEntity?
     @Child val groupPath: ModuleGroupPathEntity?
-    @Child val javaSettings: JavaModuleSettingsEntity?
     @Child val exModuleOptions: ExternalSystemModuleOptionsEntity?
     @Child val testProperties: TestModulePropertiesEntity?
     val facets: List<@Child FacetEntity>
@@ -41,7 +40,6 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
     override var contentRoots: List<ContentRootEntity>
     override var customImlData: ModuleCustomImlDataEntity?
     override var groupPath: ModuleGroupPathEntity?
-    override var javaSettings: JavaModuleSettingsEntity?
     override var exModuleOptions: ExternalSystemModuleOptionsEntity?
     override var testProperties: TestModulePropertiesEntity?
     override var facets: List<FacetEntity>

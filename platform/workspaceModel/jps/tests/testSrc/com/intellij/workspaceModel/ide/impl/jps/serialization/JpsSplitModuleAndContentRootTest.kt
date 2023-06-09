@@ -4,6 +4,8 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
 import com.intellij.idea.TestFor
+import com.intellij.java.model.JavaModuleSettingsEntity
+import com.intellij.java.model.javaSettings
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.util.NlsSafe
@@ -21,7 +23,6 @@ import com.intellij.platform.workspaceModel.jps.UnloadedModulesNameHolder
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.*
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue

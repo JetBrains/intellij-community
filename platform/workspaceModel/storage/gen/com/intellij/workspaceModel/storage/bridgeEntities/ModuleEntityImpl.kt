@@ -36,9 +36,6 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
                                                                                  ConnectionId.ConnectionType.ONE_TO_ONE, false)
     internal val GROUPPATH_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ModuleGroupPathEntity::class.java,
                                                                              ConnectionId.ConnectionType.ONE_TO_ONE, false)
-    internal val JAVASETTINGS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
-                                                                                JavaModuleSettingsEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_ONE, false)
     internal val EXMODULEOPTIONS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
                                                                                    ExternalSystemModuleOptionsEntity::class.java,
                                                                                    ConnectionId.ConnectionType.ONE_TO_ONE, false)
@@ -52,7 +49,6 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
       CONTENTROOTS_CONNECTION_ID,
       CUSTOMIMLDATA_CONNECTION_ID,
       GROUPPATH_CONNECTION_ID,
-      JAVASETTINGS_CONNECTION_ID,
       EXMODULEOPTIONS_CONNECTION_ID,
       TESTPROPERTIES_CONNECTION_ID,
       FACETS_CONNECTION_ID,
@@ -77,9 +73,6 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
 
   override val groupPath: ModuleGroupPathEntity?
     get() = snapshot.extractOneToOneChild(GROUPPATH_CONNECTION_ID, this)
-
-  override val javaSettings: JavaModuleSettingsEntity?
-    get() = snapshot.extractOneToOneChild(JAVASETTINGS_CONNECTION_ID, this)
 
   override val exModuleOptions: ExternalSystemModuleOptionsEntity?
     get() = snapshot.extractOneToOneChild(EXMODULEOPTIONS_CONNECTION_ID, this)
@@ -341,41 +334,6 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
           this.entityLinks[EntityLink(true, GROUPPATH_CONNECTION_ID)] = value
         }
         changedProperty.add("groupPath")
-      }
-
-    override var javaSettings: JavaModuleSettingsEntity?
-      get() {
-        val _diff = diff
-        return if (_diff != null) {
-          _diff.extractOneToOneChild(JAVASETTINGS_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                      JAVASETTINGS_CONNECTION_ID)] as? JavaModuleSettingsEntity
-        }
-        else {
-          this.entityLinks[EntityLink(true, JAVASETTINGS_CONNECTION_ID)] as? JavaModuleSettingsEntity
-        }
-      }
-      set(value) {
-        checkModificationAllowed()
-        val _diff = diff
-        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, JAVASETTINGS_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
-        }
-        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
-          _diff.updateOneToOneChildOfParent(JAVASETTINGS_CONNECTION_ID, this, value)
-        }
-        else {
-          if (value is ModifiableWorkspaceEntityBase<*, *>) {
-            value.entityLinks[EntityLink(false, JAVASETTINGS_CONNECTION_ID)] = this
-          }
-          // else you're attaching a new entity to an existing entity that is not modifiable
-
-          this.entityLinks[EntityLink(true, JAVASETTINGS_CONNECTION_ID)] = value
-        }
-        changedProperty.add("javaSettings")
       }
 
     override var exModuleOptions: ExternalSystemModuleOptionsEntity?

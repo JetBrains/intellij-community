@@ -25,6 +25,7 @@ import com.intellij.platform.workspaceModel.storage.*
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
+import com.intellij.java.model.modifyEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.modifyEntity
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
