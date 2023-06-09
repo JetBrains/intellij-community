@@ -2374,6 +2374,7 @@
     <inspection_tool class="UnusedProperty" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="fileNameMask" value=".*Bundle\.properties" />
     </inspection_tool>
+    <inspection_tool class="UsagesOfObsoleteApi" enabled="true" level="TEXT ATTRIBUTES" enabled_by_default="true" editorAttributes="DEPRECATED_ATTRIBUTES" />
     <inspection_tool class="UseJBColor" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="Tests" level="WARNING" enabled="false" />
     </inspection_tool>
