@@ -79,7 +79,25 @@ public interface IntentionPreviewInfo {
   };
 
   /**
-   * Diff preview where original text and new text are explicitly displayed.
+   * Diff preview for multiple files. UI may show only some of them if there are too many.
+   */
+  class MultiFileDiff implements IntentionPreviewInfo {
+    private final @NotNull List<@NotNull CustomDiff> myDiffs;
+
+    public MultiFileDiff(@NotNull List<@NotNull CustomDiff> diffs) {
+      myDiffs = diffs;
+    }
+
+    /**
+     * @return list of individual CustomDiff objects to display
+     */
+    public @NotNull List<@NotNull CustomDiff> getDiffs() {
+      return myDiffs;
+    }
+  }
+  
+  /**
+   * Diff preview where original text and new text are explicitly specified.
    * Could be used to generate custom diff previews (e.g. when changes are to be applied to another file).
    * <p>
    * In most of the cases, original text could be empty, so simply the new text will be displayed.

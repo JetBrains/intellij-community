@@ -268,7 +268,7 @@ public final class ModCommands {
 
   private static class EditorUpdaterImpl implements EditorUpdater, DocumentListener, Disposable {
     private final @NotNull FileTracker myTracker;
-    private final @NotNull Map<PsiFile, FileTracker> myChangedFiles = new HashMap<>();
+    private final @NotNull Map<PsiFile, FileTracker> myChangedFiles = new LinkedHashMap<>();
     private int myCaretOffset, mySelectionStart, mySelectionEnd;
     private boolean myPositionUpdated = false;
 

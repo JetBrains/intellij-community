@@ -22,6 +22,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Utils to support intention preview feature
  */
@@ -153,30 +156,30 @@ public final class IntentionPreviewUtils {
   @ApiStatus.Experimental
   public static @NotNull IntentionPreviewInfo getModCommandPreview(@NotNull ModCommand modCommand, @NotNull PsiFile file) {
     Project project = file.getProject();
-    IntentionPreviewInfo info = null;
-    IntentionPreviewInfo info2 = IntentionPreviewInfo.EMPTY;
+    List<IntentionPreviewInfo.CustomDiff> customDiffList = new ArrayList<>();
+    IntentionPreviewInfo navigateInfo = IntentionPreviewInfo.EMPTY;
     for (ModCommand command : modCommand.unpack()) {
       if (command instanceof ModUpdateFileText modFile) {
-        if (info != null) {
-          return IntentionPreviewInfo.EMPTY;
-        }
         VirtualFile vFile = modFile.file();
         var currentFile =
           vFile.equals(file.getOriginalFile().getVirtualFile()) ||
           vFile.equals(InjectedLanguageManager.getInstance(project).getTopLevelFile(file).getOriginalFile().getVirtualFile());
-        info = new IntentionPreviewInfo.CustomDiff(vFile.getFileType(), vFile.getName(), modFile.oldText(), modFile.newText(), currentFile);
+        customDiffList.add(new IntentionPreviewInfo.CustomDiff(vFile.getFileType(), 
+                                                               currentFile ? null : vFile.getName(), modFile.oldText(), modFile.newText(), true));
       }
       else if (command instanceof ModNavigate navigate && navigate.caret() != -1) {
         PsiFile target = PsiManager.getInstance(project).findFile(navigate.file());
         if (target != null) {
-          info2 = IntentionPreviewInfo.navigate(target, navigate.caret());
+          navigateInfo = IntentionPreviewInfo.navigate(target, navigate.caret());
         }
       }
       else if (command instanceof ModChooseTarget<?> target) {
         return getChoosePreview(file, target);
       }
     }
-    return info == null ? info2 : info;
+    return customDiffList.isEmpty() ? navigateInfo :
+           customDiffList.size() == 1 ? customDiffList.get(0) :
+           new IntentionPreviewInfo.MultiFileDiff(customDiffList);
   }
 
   private static @NotNull <T extends PsiElement> IntentionPreviewInfo getChoosePreview(@NotNull PsiFile file, @NotNull ModChooseTarget<@NotNull T> target) {

@@ -58,7 +58,7 @@ data class IntentionPreviewDiffResult(val diffs: List<DiffInfo>, @TestOnly val n
       return DiffInfo(fileType, comment, -1, comment.length, listOf())
     }
 
-
+    @JvmStatic
     fun create(fileType: FileType,
                updatedText: String,
                origText: String,
@@ -132,6 +132,14 @@ data class IntentionPreviewDiffResult(val diffs: List<DiffInfo>, @TestOnly val n
         fileName = result.fileName(),
         normalDiff = result.showLineNumbers(),
         policy = ComparisonPolicy.TRIM_WHITESPACES)
+    }
+
+    @JvmStatic
+    fun fromMultiDiff(info: IntentionPreviewInfo.MultiFileDiff): IntentionPreviewDiffResult {
+      val diffs = info.diffs.map { diff -> fromCustomDiff(diff) }
+      val diffInfos = diffs.flatMap { diff -> diff.diffs }
+      val text = diffs.joinToString("\n----------\n") { diff -> diff.newText }
+      return IntentionPreviewDiffResult(diffInfos, text)
     }
   }
 }
