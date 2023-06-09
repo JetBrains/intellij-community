@@ -31,7 +31,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.Alarm
 import com.intellij.util.SystemProperties
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand.Companion.shouldOpenInSmartMode
-import com.jetbrains.performancePlugin.commands.takeScreenshotOfFrame
+import com.jetbrains.performancePlugin.commands.takeScreenshotOfAllWindows
 import com.jetbrains.performancePlugin.profilers.ProfilersController
 import com.jetbrains.performancePlugin.utils.ReporterCommandAsTelemetrySpan
 import io.opentelemetry.context.Context
@@ -198,11 +198,11 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
     private var screenshotJob: kotlinx.coroutines.Job? = null
     private var ourScriptStarted = false
 
-    private fun registerScreenshotTaking(fileName: String, coroutineScope: CoroutineScope) {
+    private fun registerScreenshotTaking(folder: String, coroutineScope: CoroutineScope) {
       screenshotJob = coroutineScope.launch {
         while (true) {
           delay(1.minutes)
-          takeScreenshotOfFrame(fileName)
+          takeScreenshotOfAllWindows(folder)
         }
       }
     }
@@ -387,10 +387,8 @@ private fun registerOnFinishRunnables(future: CompletableFuture<*>, mustExitOnFa
         storeFailureToFile(e.message)
       }
       LOG.error(message)
-      if (System.getProperty("ide.performance.screenshot.on.failure") != null) {
-        runBlocking {
-          takeScreenshotOfFrame(System.getProperty("ide.performance.screenshot.on.failure"))
-        }
+      runBlocking {
+        takeScreenshotOfAllWindows("onFailure")
       }
       val threadDump = """
             Thread dump before IDE termination:
