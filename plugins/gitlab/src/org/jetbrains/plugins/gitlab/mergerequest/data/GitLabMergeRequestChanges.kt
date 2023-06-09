@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
+import com.intellij.collaboration.api.page.ApiPageUtil
+import com.intellij.collaboration.api.page.foldToList
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
@@ -16,12 +18,11 @@ import git4idea.commands.GitHandlerInputProcessorUtil
 import git4idea.commands.GitLineHandler
 import git4idea.fetch.GitFetchSupport
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadCommit
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadCommitDiffs
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestDiffs
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.nio.charset.StandardCharsets
 
@@ -65,14 +66,18 @@ class GitLabMergeRequestChangesImpl(
         commits.map { commit ->
           async {
             val commitWithParents = api.rest.loadCommit(glProject, commit.sha).body()!!
-            val patches = api.rest.loadCommitDiffs(glProject, commit.sha).body()!!.map(GitLabDiffDTO::toPatch)
+            val patches = ApiPageUtil.createPagesFlowByLinkHeader(getCommitDiffsURI(glProject, commit.sha)) {
+              api.rest.loadCommitDiffs(glProject.serverPath, it)
+            }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
             GitCommitShaWithPatches(commit.sha, commitWithParents.parentIds, patches)
           }
         }.awaitAll()
       }
     }
     val headPatches = withContext(Dispatchers.IO) {
-      api.rest.loadMergeRequestDiffs(glProject, mergeRequestDetails).body()!!.map(GitLabDiffDTO::toPatch)
+      ApiPageUtil.createPagesFlowByLinkHeader(getMergeRequestDiffsURI(glProject, mergeRequestDetails)) {
+        api.rest.loadMergeRequestDiffs(glProject.serverPath, it)
+      }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
     }
     return GitBranchComparisonResultImpl(repository.project, repository.root, baseSha, mergeBaseSha, commitsWithPatches, headPatches)
   }
