@@ -330,7 +330,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
     }
     else {
-      return runBlockingCancellableUnderIndicator {
+      runBlockingCancellableUnderIndicator {
         updateMavenProjects(spec, filesToUpdate, filesToDelete)
       }
     }
