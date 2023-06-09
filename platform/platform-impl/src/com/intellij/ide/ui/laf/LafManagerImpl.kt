@@ -69,8 +69,6 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.*
 import com.intellij.util.ui.LafIconLookup.getIcon
 import com.intellij.util.ui.LafIconLookup.getSelectedIcon
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -100,7 +98,6 @@ private const val ELEMENT_PREFERRED_DARK_LAF: @NonNls String = "preferred-dark-l
 private const val ATTRIBUTE_AUTODETECT: @NonNls String = "autodetect"
 private const val ATTRIBUTE_CLASS_NAME: @NonNls String = "class-name"
 private const val ATTRIBUTE_THEME_NAME: @NonNls String = "themeId"
-private const val ATTRIBUTE_LAF_TO_PREVIOUS_SCHEME: @NonNls String = "laf-to-previous-scheme"
 private const val HIGH_CONTRAST_THEME_ID = "JetBrainsHighContrastTheme"
 private const val DARCULA_EDITOR_THEME_KEY = "Darcula.SavedEditorTheme"
 private const val DEFAULT_EDITOR_THEME_KEY = "Default.SavedEditorTheme"
@@ -181,8 +178,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private var isUpdatingPlugin = false
   private var themeIdBeforePluginUpdate: String? = null
   private var autodetect = false
-  // We remember the last used editor scheme for each laf in order to restore it after switching laf
-  private val lafToPreviousScheme: MutableMap<String, String> = mutableMapOf()
 
   override fun getDefaultLightLaf(): LookAndFeelInfo {
     return if (ExperimentalUI.isNewUI()) {
@@ -396,10 +391,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     autodetect = java.lang.Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_AUTODETECT))
     preferredLightLaf = loadLafState(element, ELEMENT_PREFERRED_LIGHT_LAF)
     preferredDarkLaf = loadLafState(element, ELEMENT_PREFERRED_DARK_LAF)
-
-    val storedLafToScheme: Map<String, String> = Json.decodeFromString(element.getAttributeValue(ATTRIBUTE_LAF_TO_PREVIOUS_SCHEME, "{}"))
-    lafToPreviousScheme.putAll(storedLafToScheme)
-
     if (autodetect) {
       orCreateLafDetector
     }
@@ -470,7 +461,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     if (preferredDarkLaf != null && preferredDarkLaf !== getDefaultDarkLaf()) {
       getLafState(element, ELEMENT_PREFERRED_DARK_LAF, preferredDarkLaf)
     }
-    element.setAttribute(ATTRIBUTE_LAF_TO_PREVIOUS_SCHEME, Json.encodeToString(lafToPreviousScheme))
     return element
   }
 
@@ -572,11 +562,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
    */
   private fun setLookAndFeelImpl(lookAndFeelInfo: LookAndFeelInfo, installEditorScheme: Boolean, processChangeSynchronously: Boolean) {
     val oldLaf = myCurrentLaf
-
-    if (oldLaf != null) {
-      rememberSchemeForLaf(oldLaf, EditorColorsManager.getInstance().globalScheme)
-    }
-
     if (oldLaf !== lookAndFeelInfo && oldLaf is UIThemeBasedLookAndFeelInfo) {
       oldLaf.dispose()
     }
@@ -689,14 +674,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
         return true
       }
     }
-
-    if (installEditorScheme) {
-      val previousScheme = getPreviousSchemeForLaF(lookAndFeelInfo)
-      if (previousScheme != null) {
-        EditorColorsManager.getInstance().globalScheme = previousScheme
-      }
-    }
-
     if (SystemInfoRt.isMac) {
       installMacOSXFonts(UIManager.getLookAndFeelDefaults())
     }
@@ -821,11 +798,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
         return
       }
     }
-
-    if (myCurrentLaf?.let { getPreviousSchemeForLaF(it) } != null) {
-      return
-    }
-
     val dark = StartupUiUtil.isUnderDarcula
     val editorColorManager = EditorColorsManager.getInstance()
     val current = editorColorManager.globalScheme
@@ -1010,15 +982,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
   override fun setPreferredLightLaf(value: LookAndFeelInfo) {
     preferredLightLaf = value
-  }
-
-  private fun getPreviousSchemeForLaF(lookAndFeelInfo: LookAndFeelInfo): EditorColorsScheme? {
-    val schemeName = lafToPreviousScheme[lookAndFeelInfo.name] ?: return null
-    return EditorColorsManager.getInstance().getScheme(schemeName)
-  }
-
-  private fun rememberSchemeForLaf(lookAndFeelInfo: LookAndFeelInfo, editorColorsScheme: EditorColorsScheme) {
-    lafToPreviousScheme[lookAndFeelInfo.name] = editorColorsScheme.name
   }
 
   private inner class UiThemeEpListener : ExtensionPointListener<UIThemeProvider> {
