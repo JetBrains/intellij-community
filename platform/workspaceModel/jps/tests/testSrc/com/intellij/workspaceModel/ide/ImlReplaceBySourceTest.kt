@@ -13,7 +13,7 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import com.intellij.platform.workspaceModel.storage.EntityChange
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.bridgeEntities.JavaSourceRootPropertiesEntity
+import com.intellij.java.model.JavaSourceRootPropertiesEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.platform.workspaceModel.storage.impl.url.toVirtualFileUrl

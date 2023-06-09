@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.workspaceModel.storage.bridgeEntities
+package com.intellij.java.model
 
 import com.intellij.platform.workspaceModel.storage.EntityInformation
 import com.intellij.platform.workspaceModel.storage.EntitySource
@@ -8,6 +8,7 @@ import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
 import com.intellij.platform.workspaceModel.storage.impl.EntityLink
 import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -19,11 +20,11 @@ import com.intellij.platform.workspaceModel.storage.impl.updateOneToManyParentOf
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
-open class JavaSourceRootPropertiesEntityImpl(val dataSource: JavaSourceRootPropertiesEntityData) : JavaSourceRootPropertiesEntity, WorkspaceEntityBase() {
+open class JavaResourceRootPropertiesEntityImpl(val dataSource: JavaResourceRootPropertiesEntityData) : JavaResourceRootPropertiesEntity, WorkspaceEntityBase() {
 
   companion object {
     internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
-                                                                              JavaSourceRootPropertiesEntity::class.java,
+                                                                              JavaResourceRootPropertiesEntity::class.java,
                                                                               ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     val connections = listOf<ConnectionId>(
@@ -36,8 +37,8 @@ open class JavaSourceRootPropertiesEntityImpl(val dataSource: JavaSourceRootProp
     get() = snapshot.extractOneToManyParent(SOURCEROOT_CONNECTION_ID, this)!!
 
   override val generated: Boolean get() = dataSource.generated
-  override val packagePrefix: String
-    get() = dataSource.packagePrefix
+  override val relativeOutputPath: String
+    get() = dataSource.relativeOutputPath
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -46,9 +47,9 @@ open class JavaSourceRootPropertiesEntityImpl(val dataSource: JavaSourceRootProp
     return connections
   }
 
-  class Builder(result: JavaSourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<JavaSourceRootPropertiesEntity, JavaSourceRootPropertiesEntityData>(
-    result), JavaSourceRootPropertiesEntity.Builder {
-    constructor() : this(JavaSourceRootPropertiesEntityData())
+  class Builder(result: JavaResourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<JavaResourceRootPropertiesEntity, JavaResourceRootPropertiesEntityData>(
+    result), JavaResourceRootPropertiesEntity.Builder {
+    constructor() : this(JavaResourceRootPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
       if (this.diff != null) {
@@ -57,7 +58,7 @@ open class JavaSourceRootPropertiesEntityImpl(val dataSource: JavaSourceRootProp
           return
         }
         else {
-          error("Entity JavaSourceRootPropertiesEntity is already created in a different builder")
+          error("Entity JavaResourceRootPropertiesEntity is already created in a different builder")
         }
       }
 
@@ -81,16 +82,16 @@ open class JavaSourceRootPropertiesEntityImpl(val dataSource: JavaSourceRootProp
       }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(SOURCEROOT_CONNECTION_ID, this) == null) {
-          error("Field JavaSourceRootPropertiesEntity#sourceRoot should be initialized")
+          error("Field JavaResourceRootPropertiesEntity#sourceRoot should be initialized")
         }
       }
       else {
         if (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] == null) {
-          error("Field JavaSourceRootPropertiesEntity#sourceRoot should be initialized")
+          error("Field JavaResourceRootPropertiesEntity#sourceRoot should be initialized")
         }
       }
-      if (!getEntityData().isPackagePrefixInitialized()) {
-        error("Field JavaSourceRootPropertiesEntity#packagePrefix should be initialized")
+      if (!getEntityData().isRelativeOutputPathInitialized()) {
+        error("Field JavaResourceRootPropertiesEntity#relativeOutputPath should be initialized")
       }
     }
 
@@ -100,10 +101,10 @@ open class JavaSourceRootPropertiesEntityImpl(val dataSource: JavaSourceRootProp
 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
-      dataSource as JavaSourceRootPropertiesEntity
+      dataSource as JavaResourceRootPropertiesEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.generated != dataSource.generated) this.generated = dataSource.generated
-      if (this.packagePrefix != dataSource.packagePrefix) this.packagePrefix = dataSource.packagePrefix
+      if (this.relativeOutputPath != dataSource.relativeOutputPath) this.relativeOutputPath = dataSource.relativeOutputPath
       updateChildToParentReferences(parents)
     }
 
@@ -164,36 +165,36 @@ open class JavaSourceRootPropertiesEntityImpl(val dataSource: JavaSourceRootProp
         changedProperty.add("generated")
       }
 
-    override var packagePrefix: String
-      get() = getEntityData().packagePrefix
+    override var relativeOutputPath: String
+      get() = getEntityData().relativeOutputPath
       set(value) {
         checkModificationAllowed()
-        getEntityData(true).packagePrefix = value
-        changedProperty.add("packagePrefix")
+        getEntityData(true).relativeOutputPath = value
+        changedProperty.add("relativeOutputPath")
       }
 
-    override fun getEntityClass(): Class<JavaSourceRootPropertiesEntity> = JavaSourceRootPropertiesEntity::class.java
+    override fun getEntityClass(): Class<JavaResourceRootPropertiesEntity> = JavaResourceRootPropertiesEntity::class.java
   }
 }
 
-class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSourceRootPropertiesEntity>() {
+class JavaResourceRootPropertiesEntityData : WorkspaceEntityData<JavaResourceRootPropertiesEntity>() {
   var generated: Boolean = false
-  lateinit var packagePrefix: String
+  lateinit var relativeOutputPath: String
 
 
-  fun isPackagePrefixInitialized(): Boolean = ::packagePrefix.isInitialized
+  fun isRelativeOutputPathInitialized(): Boolean = ::relativeOutputPath.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<JavaSourceRootPropertiesEntity> {
-    val modifiable = JavaSourceRootPropertiesEntityImpl.Builder(null)
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<JavaResourceRootPropertiesEntity> {
+    val modifiable = JavaResourceRootPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
 
-  override fun createEntity(snapshot: EntityStorage): JavaSourceRootPropertiesEntity {
+  override fun createEntity(snapshot: EntityStorage): JavaResourceRootPropertiesEntity {
     return getCached(snapshot) {
-      val entity = JavaSourceRootPropertiesEntityImpl(this)
+      val entity = JavaResourceRootPropertiesEntityImpl(this)
       entity.snapshot = snapshot
       entity.id = createEntityId()
       entity
@@ -201,7 +202,7 @@ class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSourceRootPro
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
-    return JavaSourceRootPropertiesEntity::class.java
+    return JavaResourceRootPropertiesEntity::class.java
   }
 
   override fun serialize(ser: EntityInformation.Serializer) {
@@ -211,7 +212,7 @@ class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSourceRootPro
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return JavaSourceRootPropertiesEntity(generated, packagePrefix, entitySource) {
+    return JavaResourceRootPropertiesEntity(generated, relativeOutputPath, entitySource) {
       parents.filterIsInstance<SourceRootEntity>().singleOrNull()?.let { this.sourceRoot = it }
     }
   }
@@ -226,11 +227,11 @@ class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSourceRootPro
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as JavaSourceRootPropertiesEntityData
+    other as JavaResourceRootPropertiesEntityData
 
     if (this.entitySource != other.entitySource) return false
     if (this.generated != other.generated) return false
-    if (this.packagePrefix != other.packagePrefix) return false
+    if (this.relativeOutputPath != other.relativeOutputPath) return false
     return true
   }
 
@@ -238,24 +239,24 @@ class JavaSourceRootPropertiesEntityData : WorkspaceEntityData<JavaSourceRootPro
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
 
-    other as JavaSourceRootPropertiesEntityData
+    other as JavaResourceRootPropertiesEntityData
 
     if (this.generated != other.generated) return false
-    if (this.packagePrefix != other.packagePrefix) return false
+    if (this.relativeOutputPath != other.relativeOutputPath) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
     result = 31 * result + generated.hashCode()
-    result = 31 * result + packagePrefix.hashCode()
+    result = 31 * result + relativeOutputPath.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     result = 31 * result + generated.hashCode()
-    result = 31 * result + packagePrefix.hashCode()
+    result = 31 * result + relativeOutputPath.hashCode()
     return result
   }
 

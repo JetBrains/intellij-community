@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspaceModel.jps.serialization.impl
 
-import com.intellij.java.model.javaSettings
+import com.intellij.java.model.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs

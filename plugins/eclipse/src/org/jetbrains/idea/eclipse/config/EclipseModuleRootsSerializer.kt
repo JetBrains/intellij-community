@@ -5,6 +5,7 @@ import com.intellij.configurationStore.StorageManagerFileWriteRequestor
 import com.intellij.configurationStore.getOrCreateVirtualFile
 import com.intellij.configurationStore.runAsWriteActionIfNeeded
 import com.intellij.java.model.JavaModuleSettingsEntity
+import com.intellij.java.model.JavaSourceRootPropertiesEntity
 import com.intellij.java.model.javaSettings
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.logger

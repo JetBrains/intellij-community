@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.workspaceModel.storage.bridgeEntities
+package com.intellij.java.model
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspaceModel.storage.*
+import com.intellij.platform.workspaceModel.storage.annotations.Child
+import com.intellij.platform.workspaceModel.storage.bridgeEntities.SourceRootEntity
 
 interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
   val sourceRoot: SourceRootEntity
@@ -39,7 +41,13 @@ interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
 
 }
 
+val SourceRootEntity.javaSourceRoots: List<@Child JavaSourceRootPropertiesEntity>
+  by WorkspaceEntity.extension()
+
 //region generated code
+var SourceRootEntity.Builder.javaSourceRoots: List<@Child JavaSourceRootPropertiesEntity>
+  by WorkspaceEntity.extension()
+
 fun MutableEntityStorage.modifyEntity(entity: JavaSourceRootPropertiesEntity,
                                       modification: JavaSourceRootPropertiesEntity.Builder.() -> Unit) = modifyEntity(
   JavaSourceRootPropertiesEntity.Builder::class.java, entity, modification)
@@ -80,8 +88,17 @@ interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
 
 }
 
+val SourceRootEntity.javaResourceRoots: List<@Child JavaResourceRootPropertiesEntity>
+  by WorkspaceEntity.extension()
+
 //region generated code
+var SourceRootEntity.Builder.javaResourceRoots: List<@Child JavaResourceRootPropertiesEntity>
+  by WorkspaceEntity.extension()
+
 fun MutableEntityStorage.modifyEntity(entity: JavaResourceRootPropertiesEntity,
                                       modification: JavaResourceRootPropertiesEntity.Builder.() -> Unit) = modifyEntity(
   JavaResourceRootPropertiesEntity.Builder::class.java, entity, modification)
 //endregion
+
+fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootPropertiesEntity? = javaSourceRoots.firstOrNull()
+fun SourceRootEntity.asJavaResourceRoot(): JavaResourceRootPropertiesEntity? = javaResourceRoots.firstOrNull()
