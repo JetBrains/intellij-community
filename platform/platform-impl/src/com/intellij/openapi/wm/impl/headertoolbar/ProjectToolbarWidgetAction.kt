@@ -78,7 +78,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
       }
 
       if (paintingType.isDropdown() && project != null) {
-        widget.highlightBackground = customizer.getProjectColor(project)
+        widget.highlightBackground = customizer.getBackgroundProjectColor(project)
       }
     }
   }
