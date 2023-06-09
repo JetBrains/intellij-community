@@ -3,8 +3,8 @@
 
 package org.jetbrains.intellij.build.devServer
 
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.util.PathUtilRt
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
@@ -138,19 +138,17 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
       withContext(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
         Files.createDirectories(runDir.resolve("bin"))
-
         Files.writeString(runDir.resolve("build.txt"), context.fullBuildNumber)
       }
 
-      if (platformClassPathConsumer == null) {
+      if (platformClassPathConsumer == null || System.getProperty("idea.dev.skip.build").toBoolean()) {
         withContext(Dispatchers.IO) {
           val classPathFile = runDir.resolve("core-classpath.txt")
           Files.writeString(classPathFile, classPath.joinToString(separator = "\n"))
         }
       }
-      else {
-        platformClassPathConsumer(classPath, runDir)
-      }
+
+      platformClassPathConsumer?.invoke(classPath, runDir)
     }
 
     joinAll(buildPluginsJob, buildClassPathJob)

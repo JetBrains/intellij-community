@@ -6,9 +6,15 @@ import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunnerSettings
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.PlatformUtils
+import com.intellij.util.system.CpuArch
 import org.jetbrains.idea.devkit.util.PsiUtil
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal class DevKitApplicationPatcher : RunConfigurationExtension() {
   @Suppress("SpellCheckingInspection")
@@ -70,11 +76,24 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     }
 
     if (!vmParameters.hasProperty("idea.config.path")) {
-      val lowerCasedProductClassifier = productClassifier.lowercase()
-      vmParameters.addProperty("idea.config.path",
-                               FileUtilRt.toSystemIndependentName("${configuration.workingDirectory}/out/dev-data/$lowerCasedProductClassifier/config"))
-      vmParameters.addProperty("idea.system.path",
-                               FileUtilRt.toSystemIndependentName("${configuration.workingDirectory}/out/dev-data/$lowerCasedProductClassifier/system"))
+      val dir = FileUtilRt.toSystemIndependentName("${configuration.workingDirectory}/out/dev-data/${productClassifier.lowercase()}")
+      vmParameters.addProperty("idea.config.path", "$dir/config")
+      vmParameters.addProperty("idea.system.path", "$dir/system")
+    }
+
+    val runDir = Path.of("${configuration.workingDirectory}/out/dev-run/${productClassifier}")
+    for ((name, value) in getIdeSystemProperties(runDir)) {
+      vmParameters.addProperty(name, value)
+    }
+
+    if (vmParameters.getPropertyValue("idea.dev.skip.build").toBoolean()) {
+      try {
+        vmParameters.addProperty(PathManager.PROPERTY_HOME_PATH, runDir.invariantSeparatorsPathString)
+        javaParameters.classPath.addAll(Files.readAllLines(runDir.resolve("core-classpath.txt")))
+        javaParameters.mainClass = "com.intellij.idea.Main"
+      }
+      catch (ignore: NoSuchFileException) {
+      }
     }
 
     vmParameters.addProperty("idea.vendor.name", "JetBrains")
@@ -95,3 +114,17 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     return configuration is ApplicationConfiguration
   }
 }
+
+@Suppress("SpellCheckingInspection")
+private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
+  // see BuildContextImpl.getAdditionalJvmArguments - we should somehow deduplicate code
+  val libDir = runDir.resolve("lib")
+  return mapOf(
+    "jna.boot.library.path" to "$libDir/jna/${if (CpuArch.isArm64()) "aarch64" else "amd64"}",
+    "pty4j.preferred.native.folder" to "$libDir/pty4j",
+    // require bundled JNA dispatcher lib
+    "jna.nosys" to "true",
+    "jna.noclasspath" to "true",
+  )
+}
+

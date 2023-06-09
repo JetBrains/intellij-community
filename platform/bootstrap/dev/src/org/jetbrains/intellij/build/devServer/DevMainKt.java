@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 
 // in java - don't use kotlin to avoid loading non-JDK classes
-public class DevMainKt {
+public final class DevMainKt {
   public static void main(String[] rawArgs) throws Throwable {
     // separate method to not retain local variables like implClass
     build();
@@ -29,7 +29,7 @@ public class DevMainKt {
 
     @SuppressWarnings("unchecked")
     Collection<Path> newClassPath = (Collection<Path>)MethodHandles.lookup()
-      .findStatic(implClass, "build", MethodType.methodType(Collection.class))
+      .findStatic(implClass, "buildDevMain", MethodType.methodType(Collection.class))
       .invokeExact();
 
     classLoader.reset(newClassPath);
