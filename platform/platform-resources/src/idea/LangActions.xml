@@ -796,7 +796,6 @@
     </group>
 
     <group id="ProjectViewPopupMenuModifyGroup">
-      <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
       <reference ref="$Delete"/>
