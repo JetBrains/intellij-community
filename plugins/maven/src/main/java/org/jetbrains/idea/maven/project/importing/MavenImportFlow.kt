@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -34,7 +35,6 @@ import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.FileFinder
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.runBlockingCancellableUnderIndicator
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -271,8 +271,8 @@ class MavenImportFlow {
     val projectsFoldersResolved = Collections.synchronizedList(ArrayList<MavenProject>())
     Disposer.register(MavenDisposable.getInstance(project), d)
     val folderResolver = MavenFolderResolver(project)
-    val projectsWithChanges = runBlockingCancellableUnderIndicator {
-      return@runBlockingCancellableUnderIndicator folderResolver.resolveFolders(projects)
+    val projectsWithChanges = runBlockingMaybeCancellable {
+      return@runBlockingMaybeCancellable folderResolver.resolveFolders(projects)
     }
     for (projectWithChanges in projectsWithChanges) {
       if (projectWithChanges.value.hasChanges()) {

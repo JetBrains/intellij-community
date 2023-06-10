@@ -34,7 +34,10 @@ import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
-import org.jetbrains.idea.maven.utils.*
+import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
+import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.performInBackground
 import java.util.*
 import java.util.function.Supplier
 
@@ -98,7 +101,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   override fun resolveAndImportMavenProjectsSync(spec: MavenImportSpec): List<Module> {
-    return runBlockingCancellableUnderIndicator { resolveAndImportMavenProjects(spec) }
+    return runBlockingMaybeCancellable { resolveAndImportMavenProjects(spec) }
   }
 
   override suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module> {
@@ -150,7 +153,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         return importMavenProjectsEdt()
       }
       else {
-        return runBlockingCancellableUnderIndicator { importMavenProjectsBg() }
+        return runBlockingMaybeCancellable { importMavenProjectsBg() }
       }
     }
 
@@ -330,7 +333,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
     }
     else {
-      runBlockingCancellableUnderIndicator {
+      runBlockingMaybeCancellable {
         updateMavenProjects(spec, filesToUpdate, filesToDelete)
       }
     }
@@ -407,7 +410,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
     }
     else {
-      runBlockingCancellableUnderIndicator {
+      runBlockingMaybeCancellable {
         updateAllMavenProjects(spec)
       }
     }
@@ -497,7 +500,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     if (ApplicationManager.getApplication().isDispatchThread) {
       return doDownloadArtifacts(projects, artifacts, sources, docs)
     }
-    return runBlockingCancellableUnderIndicator { downloadArtifacts(projects, artifacts, sources, docs) }
+    return runBlockingMaybeCancellable { downloadArtifacts(projects, artifacts, sources, docs) }
   }
 
   override suspend fun downloadArtifacts(projects: Collection<MavenProject>,
