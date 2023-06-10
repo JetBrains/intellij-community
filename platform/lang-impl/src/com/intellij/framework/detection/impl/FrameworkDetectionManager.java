@@ -131,13 +131,13 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
   }
 
   public void doInitialize() {
-    myDetectionQueue = new MergingUpdateQueue("FrameworkDetectionQueue", 500, true, null, myProject, null, false);
+    myDetectionQueue = new MergingUpdateQueue("FrameworkDetectionQueue", 500, true, null, this, null, false);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myDetectionQueue.hideNotify();
     }
     myDetectedFrameworksData = new DetectedFrameworksData(myProject);
     FrameworkDetectionIndex.getInstance().addListener(this, myProject);
-    myProject.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+    myProject.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void enteredDumbMode() {
         myDetectionQueue.suspend();
@@ -209,14 +209,16 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
     }
 
     if (!newDescriptions.isEmpty()) {
-      Set<String> frameworkNames =
-      ReadAction.nonBlocking(() -> {
-        Set<String> names = new HashSet<>();
-        for (final DetectedFrameworkDescription description : FrameworkDetectionUtil.removeDisabled(newDescriptions, oldDescriptions)) {
-          names.add(description.getDetector().getFrameworkType().getPresentableName());
-        }
-        return names;
-      }).executeSynchronously();
+      Set<String> frameworkNames = ReadAction.nonBlocking(() -> {
+          Set<String> names = new HashSet<>();
+          for (final DetectedFrameworkDescription description : FrameworkDetectionUtil.removeDisabled(newDescriptions, oldDescriptions)) {
+            names.add(description.getDetector().getFrameworkType().getPresentableName());
+          }
+          return names;
+        })
+        .expireWith(this)
+        .executeSynchronously();
+
       if (!frameworkNames.isEmpty()) {
         String names = StringUtil.join(frameworkNames, ", ");
         final String text = ProjectBundle.message("framework.detected.info.text", names, frameworkNames.size());
