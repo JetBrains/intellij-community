@@ -63,8 +63,10 @@ class UserFactorsManagerImpl : UserFactorsManager {
 
         register(TemplatesRatio())
 
-        for (duration in HALF_LIFE_DURATIONS) {
+        for (duration in DURATIONS) {
           register(FullLineSmoothedAcceptanceRate(duration))
+          register(FullLineSelectionNumberDecayedBy(duration))
+          register(FullLineShowUpNumberDecayedBy(duration))
         }
         register(FullLineTimeSinceLastSelection())
         register(FullLineTimeSinceLastShowUp())
