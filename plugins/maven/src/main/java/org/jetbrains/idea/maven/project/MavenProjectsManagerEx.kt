@@ -295,8 +295,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
     val projectsToImport = resolutionResult.mavenProjectMap.entries
       .flatMap { it.value }
-      .filter { it.changes.hasChanges() }
-      .associateBy({ it.mavenProject }, { it.changes })
+      .associateBy({ it.mavenProject }, { MavenProjectChanges.ALL })
 
     // TODO: plugins and artifacts can be resolved in parallel with import
     val indicator = MavenProgressIndicator(project, Supplier { syncConsole })

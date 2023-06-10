@@ -469,7 +469,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
           }
         }
 
-        scheduleForNextImport(toImport);
+        //scheduleForNextImport(toImport);
         scheduleForNextResolve(toResolve);
       }
     }, this);
