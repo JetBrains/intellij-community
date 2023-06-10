@@ -75,10 +75,10 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     ResourceBundle resourceBundle = findBundle();
     if (resourceBundle == null || key == null) {
       if (key == null) {
-        LOG.warn("Bundle key missed for " + displayName);
+        LOG.warn("Bundle key missed for " + instanceClass);
       }
       else {
-        LOG.warn("Bundle missed for " + displayName);
+        LOG.warn("Bundle missed for " + key);
       }
 
       if (providerClass == null) {
