@@ -54,6 +54,7 @@ public interface CommonClassNames {
   String JAVA_UTIL_HASH_SET = "java.util.HashSet";
   String JAVA_UTIL_LINKED_HASH_SET = "java.util.LinkedHashSet";
   String JAVA_UTIL_SORTED_SET = "java.util.SortedSet";
+  String JAVA_UTIL_NAVIGABLE_SET = "java.util.NavigableSet";
   String JAVA_UTIL_QUEUE = "java.util.Queue";
   String JAVA_UTIL_STACK = "java.util.Stack";
   String JAVA_UTIL_PROPERTIES = "java.util.Properties";
