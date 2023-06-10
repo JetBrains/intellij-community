@@ -5238,6 +5238,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/equalsOrHashCode/equalsInExpectClass.kt");
         }
 
+        @TestMetadata("equalsInInterface.kt")
+        public void testEqualsInInterface() throws Exception {
+            runTest("testData/inspectionsLocal/equalsOrHashCode/equalsInInterface.kt");
+        }
+
         @TestMetadata("equalsWithKotlinAnyParam.kt")
         public void testEqualsWithKotlinAnyParam() throws Exception {
             runTest("testData/inspectionsLocal/equalsOrHashCode/equalsWithKotlinAnyParam.kt");
