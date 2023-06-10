@@ -260,9 +260,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
             if (containerFqName.isRoot) return false
 
             val container = target.containingDeclaration
-            if (container is ClassDescriptor && container.kind == ClassKind.OBJECT) return false // cannot import with '*' from object
-
-            return true
+            return !(container is ClassDescriptor && container.kind == ClassKind.OBJECT) // cannot import with '*' from object
         }
 
         private fun addStarImport(targetDescriptor: DeclarationDescriptor): ImportDescriptorResult {

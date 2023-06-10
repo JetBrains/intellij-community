@@ -351,8 +351,7 @@ class ObjectEventData(private val values: List<EventPair<*>>) {
 
     other as ObjectEventData
 
-    if (values != other.values) return false
-    return true
+    return values == other.values
   }
 }
 

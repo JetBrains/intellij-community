@@ -230,11 +230,8 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
             while (parent is KtParenthesizedExpression) {
                 parent = parent.parent
             }
-            if ((parent as? KtPrefixExpression)?.operationToken == KtTokens.EXCL) {
-                // It's enough to report for parent only
-                return false
-            }
-            return true
+            // It's enough to report for parent only
+            return (parent as? KtPrefixExpression)?.operationToken != KtTokens.EXCL
         }
 
         override fun computeHints(): Map<PsiElement, DfaHint> {

@@ -94,10 +94,7 @@ class KotlinPluginPrePushHandler(private val project: Project) : PrePushHandler 
         .ask(project = null)
     }
 
-    if (commitAsIs)
-      return false
-
-    return true
+    return !commitAsIs
   }
 
   private fun handlerIsApplicable(): Boolean =

@@ -25,9 +25,7 @@ internal class PsiElementNavigationTarget(private val myElement: PsiElement) : N
 
     other as PsiElementNavigationTarget
 
-    if (myElement != other.myElement) return false
-
-    return true
+    return myElement == other.myElement
   }
 
   override fun hashCode(): Int {

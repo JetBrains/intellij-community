@@ -20,9 +20,7 @@ class Problem(val reportedElement: PsiElement, val context: PsiElement) {
 
     other as Problem
 
-    if (context != other.context) return false
-
-    return true
+    return context == other.context
   }
 
   override fun hashCode(): Int {

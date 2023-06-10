@@ -171,8 +171,7 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
                                                 parentEventId: Any,
                                                 messageConsumer: Consumer<in BuildEvent>): Boolean {
     // JDK compatibility issues should be handled by IncompatibleGradleJdkIssueChecker.check method based on exceptions come from Gradle TAPI
-    if (failureCause.startsWith("Could not create service of type ") && failureCause.contains(" using BuildScopeServices.")) return true
-    return false
+    return failureCause.startsWith("Could not create service of type ") && failureCause.contains(" using BuildScopeServices.")
   }
 
   companion object {
