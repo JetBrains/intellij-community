@@ -31,7 +31,7 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
   @NotNull ListResult doLoadChildren(final int parentId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(parentId);
 
-    final PersistentFSRecordsStorage records = myFSConnection.getRecords();
+    final PersistentFSRecordsStorage records = connection.getRecords();
 
     //MAYBE RC: .listIds() and .doLoadChildren() both contains same code for reading&parsing children array. It seems
     //         they were implemented this way for optimization i.e. to avoid creating childrenIds array. Could be

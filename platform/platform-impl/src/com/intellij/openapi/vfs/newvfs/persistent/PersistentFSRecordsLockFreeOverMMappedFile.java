@@ -605,6 +605,11 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   }
 
   @Override
+  public int maxAllocatedID() {
+    return allocatedRecordsCount.get();
+  }
+
+  @Override
   public boolean isDirty() {
     return dirty.get();
   }

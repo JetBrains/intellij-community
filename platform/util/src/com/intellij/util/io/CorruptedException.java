@@ -9,9 +9,12 @@ public class CorruptedException extends IOException {
     this("Storage corrupted " + file);
   }
 
-  protected CorruptedException(String message) {
+  public CorruptedException(String message) {
     super(message);
   }
 
-  //MAYBE RC: why there is no ctor with 'cause'?
+  public CorruptedException(String message,
+                            Throwable cause) {
+    super(message, cause);
+  }
 }

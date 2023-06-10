@@ -345,6 +345,11 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   }
 
   @Override
+  public int maxAllocatedID() {
+    return myRecordCount.get();
+  }
+
+  @Override
   public void close() throws IOException {
     write(() -> {
       saveGlobalModCount();
