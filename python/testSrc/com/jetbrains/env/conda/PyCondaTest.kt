@@ -128,6 +128,27 @@ internal class PyCondaTest {
     Assert.assertTrue("No base conda found", baseFound);
   }
 
+  @Test
+  fun testCondaListUnnamedEnvs(): Unit = runTest {
+    val envs_dirs = Path.of(PyCondaEnv.getEnvsDirs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow().first())
+    var childDir = envs_dirs.resolve("child")
+    val childEnvPrefix = childDir.resolve("childEnv").toString()
+    val siblingDir = envs_dirs.resolveSibling("${envs_dirs.fileName}Sibling")
+    val siblingEnvPrefix = siblingDir.resolve("siblingEnv").toString()
+
+    PyCondaEnv.createEnv(condaRule.condaCommand, EmptyUnnamedEnv(LanguageLevel.PYTHON39, childEnvPrefix)).mapFlat { it.getResultStdout() }
+    PyCondaEnv.createEnv(condaRule.condaCommand, EmptyUnnamedEnv(LanguageLevel.PYTHON39, siblingEnvPrefix)).mapFlat { it.getResultStdout() }
+
+    // Important to check that envIdentity is UnnamedEnv as this is testing to make sure that
+    // getEnvs doesn't mistakenly return a NamedEnv for an environment that isn't a direct child of envs_dirs
+    PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget)
+      .getOrThrow().first { (it.envIdentity is PyCondaEnvIdentity.UnnamedEnv) &&
+                            (it.envIdentity as? PyCondaEnvIdentity.UnnamedEnv)?.envPath == childEnvPrefix }
+    PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget)
+      .getOrThrow().first { (it.envIdentity is PyCondaEnvIdentity.UnnamedEnv) &&
+                            (it.envIdentity as? PyCondaEnvIdentity.UnnamedEnv)?.envPath == siblingEnvPrefix }
+  }
+
   private suspend fun getPythonVersion(condaEnv: PyCondaEnv): String {
     val req = LocalTargetEnvironmentRequest()
     val commandLine = TargetedCommandLineBuilder(req).also { condaEnv.addCondaToTargetBuilder(it) }
