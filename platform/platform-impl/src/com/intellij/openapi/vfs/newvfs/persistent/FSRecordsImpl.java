@@ -402,7 +402,6 @@ public final class FSRecordsImpl {
 
   //========== FS roots manipulation: ========================================
 
-  @TestOnly
   int @NotNull [] listRoots() {
     try {
       return treeAccessor.listRoots();
