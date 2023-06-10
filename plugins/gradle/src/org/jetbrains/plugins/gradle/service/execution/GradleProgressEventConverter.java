@@ -206,7 +206,8 @@ public final class GradleProgressEventConverter {
     if (operationName == null) {
       return null;
     }
-    var esEvent = new ProgressBuildEventImpl(id, null, event.getEventTime(), operationName + "...", total, progress, unit);
+    var eventId = event.getDescriptor().getName();
+    var esEvent = new ProgressBuildEventImpl(eventId, taskId, event.getEventTime(), operationName + "...", total, progress, unit);
     return new ExternalSystemBuildEvent(taskId, esEvent);
   }
 

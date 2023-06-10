@@ -50,7 +50,12 @@ public class ExternalSystemTaskProgressIndicatorUpdater {
       indicator.setFraction((double)progress / total);
     }
     String description = event.getDescription();
-    indicator.setText(textWrapper.apply(description) + (sizeInfo.isEmpty() ? "" : "  (" + sizeInfo + ')'));
+    indicator.setText(getText(description, progress, total, unit, textWrapper));
+  }
+
+  public static String getText(String description, long progress, long total, String unit, Function<String, @NlsContexts.ProgressText String> textWrapper) {
+    String sizeInfo = getSizeInfo(progress, total, unit);
+    return textWrapper.apply(description) + (sizeInfo.isEmpty() ? "" : "  (" + sizeInfo + ')');
   }
 
   private static String getSizeInfo(long progress, long total, String unit) {
