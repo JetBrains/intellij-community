@@ -11,38 +11,39 @@ import kotlin.time.DurationUnit
 private const val WAS_SELECTED = "was_selected"
 private const val SELECTION = "selection"
 private const val SHOW_UP = "show_up"
-private val SMOOTHED_VALUES = listOf(SELECTION, SHOW_UP)
 
 private const val GLOBAL_ACCEPTANCE_RATE = 0.2
 private const val GLOBAL_ALPHA = 10
 
-val HALF_LIFE_DURATIONS = listOf(1.hours, 1.days, 7.days)
+val DURATIONS = listOf(1.hours, 1.days, 7.days)
 
-fun lastTime(name: String) = "last_${name}_time"
-fun smoothedCount(name: String, duration: Duration) = "${name}_count_smoothed_by_$duration"
+fun lastTimeName(name: String) = "last_${name}_time"
+fun decayingNumberName(name: String, duration: Duration) = "${name}_number_decayed_by_$duration"
 
 class FullLineFactorsReader(factor: DailyAggregatedDoubleFactor) : UserFactorReaderBase(factor) {
-  fun lastSelectionTimeToday(): Double? = getTodayFactor(lastTime(SELECTION))
-  fun lastShowUpTimeToday(): Double? = getTodayFactor(lastTime(SHOW_UP))
+  fun lastSelectionTimeToday(): Double? = getTodayFactor(lastTimeName(SELECTION))
+  fun lastShowUpTimeToday(): Double? = getTodayFactor(lastTimeName(SHOW_UP))
   fun wasSelected(): Double? = getTodayFactor(WAS_SELECTED)
 
   private fun getTodayFactor(name: String) = factor.onDate(DateUtil.today())?.get(name)
 
   fun smoothedAcceptanceRate(duration: Duration): Double {
-    val smoothed = factor.aggregateSmoothed(duration)
-    return globallySmoothedRatio(smoothed[smoothedCount(SELECTION, duration)], smoothed[smoothedCount(SHOW_UP, duration)])
+    return globallySmoothedRatio(selectionNumberDecayedBy(duration), showUpNumberDecayedBy(duration))
   }
+  
+  fun selectionNumberDecayedBy(duration: Duration) = factor.aggregateDecayingNumber(SELECTION, duration)
+  fun showUpNumberDecayedBy(duration: Duration) = factor.aggregateDecayingNumber(SHOW_UP, duration)
 }
 
 
 class FullLineFactorsUpdater(factor: MutableDoubleFactor) : UserFactorUpdaterBase(factor) {
   fun fireLookupElementSelected() {
-    factor.smoothedUpdate(SELECTION)
+    factor increment SELECTION
     factor.wasSelected(true)
   }
 
   fun fireLookupElementShowUp() {
-    factor.smoothedUpdate(SHOW_UP)
+    factor increment SHOW_UP
     factor.wasSelected(false)
   }
 }
@@ -51,6 +52,16 @@ class FullLineSmoothedAcceptanceRate(private val duration: Duration)
   : UserFactorBase<FullLineFactorsReader>("fullLineAcceptanceRateSmoothedBy$duration",
                                           UserFactorDescriptions.FULL_LINE_FACTORS) {
   override fun compute(reader: FullLineFactorsReader): String = reader.smoothedAcceptanceRate(duration).toString()
+}
+
+class FullLineSelectionNumberDecayedBy(private val duration: Duration)
+  : UserFactorBase<FullLineFactorsReader>("fullLineSelectionNumberDecayedBy$duration", UserFactorDescriptions.FULL_LINE_FACTORS) {
+  override fun compute(reader: FullLineFactorsReader): String = reader.selectionNumberDecayedBy(duration).toString()
+}
+
+class FullLineShowUpNumberDecayedBy(private val duration: Duration)
+  : UserFactorBase<FullLineFactorsReader>("fullLineShowUpNumberDecayedBy$duration", UserFactorDescriptions.FULL_LINE_FACTORS) {
+  override fun compute(reader: FullLineFactorsReader): String = reader.showUpNumberDecayedBy(duration).toString()
 }
 
 class FullLineTimeSinceLastSelection
@@ -69,20 +80,16 @@ class FullLineWasSelected
   override fun compute(reader: FullLineFactorsReader): String? = reader.wasSelected()?.toString()
 }
 
-private fun DailyAggregatedDoubleFactor.aggregateSmoothed(duration: Duration): Map<String, Double> {
-  val result = mutableMapOf<String, Double>()
-  for (name in SMOOTHED_VALUES) {
-    val lastTimeName = lastTime(name)
-    val smoothedCountName = smoothedCount(name, duration)
-    val now = getLastTimeOrNow(lastTimeName)
-    for (onDate in availableDays().mapNotNull(this::onDate)) {
-      val lastTime = onDate[lastTimeName]
-      val smoothedCount = onDate[smoothedCountName]
-      if (lastTime != null && smoothedCount != null) {
-        result.compute(smoothedCountName) { _, old ->
-          smoothValue(now - lastTime, duration, smoothedCount) + (old ?: 0.0)
-        }
-      }
+private fun DailyAggregatedDoubleFactor.aggregateDecayingNumber(name: String, duration: Duration): Double {
+  var result = 0.0
+  val lastTimeName = lastTimeName(name)
+  val decayingNumberName = decayingNumberName(name, duration)
+  val now = getLastTimeOrNow(lastTimeName)
+  for (onDate in availableDays().mapNotNull(this::onDate)) {
+    val lastTime = onDate[lastTimeName]
+    val dacayingNumber = onDate[decayingNumberName]
+    if (lastTime != null) {
+      result += dacayingNumber.decay(now - lastTime, duration)
     }
   }
   return result
@@ -91,13 +98,13 @@ private fun DailyAggregatedDoubleFactor.aggregateSmoothed(duration: Duration): M
 private fun DailyAggregatedDoubleFactor.getLastTimeOrNow(name: String) = onDate(DateUtil.today())?.get(name)
                                                                          ?: Instant.now().epochSecond.toDouble()
 
-private fun MutableDoubleFactor.smoothedUpdate(name: String) {
-  val last_time = lastTime(name)
+private infix fun MutableDoubleFactor.increment(name: String) {
+  val last_time = lastTimeName(name)
   updateOnDate(DateUtil.today()) {
     val now = Instant.now().epochSecond.toDouble()
-    for (halfLifeDuration in HALF_LIFE_DURATIONS) {
-      val smoothed_count = smoothedCount(name, halfLifeDuration)
-      this[smoothed_count] = this[last_time]?.let { smoothValue(now - it, halfLifeDuration, this[smoothed_count]!!) + 1 } ?: 1.0
+    for (duration in DURATIONS) {
+      val decayingNumber = decayingNumberName(name, duration)
+      this[decayingNumber] = this[last_time]?.let { this[decayingNumber].decay(now - it, duration) + 1 } ?: 1.0
     }
     this[last_time] = now
   }
@@ -109,9 +116,10 @@ private fun MutableDoubleFactor.wasSelected(boolean: Boolean) {
   }
 }
 
-private fun smoothValue(duration: Double, halfLifeDuration: Duration, value: Double) =
-  if (duration == 0.0) value
-  else 0.5.pow(duration / halfLifeDuration.toDouble(DurationUnit.SECONDS)) * value
+private fun Double?.decay(duration: Double, halfLifeDuration: Duration) =
+  if (this == null) 0.0
+  else if (duration * this == 0.0) this
+  else 0.5.pow(duration / halfLifeDuration.toDouble(DurationUnit.SECONDS)) * this
 
 private fun globallySmoothedRatio(quotient: Double?, divisor: Double?) =
   if (divisor == null) GLOBAL_ACCEPTANCE_RATE
