@@ -233,19 +233,17 @@ private fun collectSuperDeclarationMarkers(declaration: KtDeclaration, result: L
 }
 
 private fun collectInheritedClassMarker(element: KtClass, result: LineMarkerInfos) {
-    if (!(KotlinLineMarkerOptions.implementedOption.isEnabled || KotlinLineMarkerOptions.overriddenOption.isEnabled)) return
-
     if (!element.isInheritable()) {
         return
     }
+    val gutter = if (element.isInterface()) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
+    if (!gutter.isEnabled) return
 
     val lightClass = element.toLightClass() ?: element.toFakeLightClass()
 
     if (ClassInheritorsSearch.search(lightClass, false).findFirst() == null) return
 
     val anchor = element.nameIdentifier ?: element
-    val gutter = if (element.isInterface()) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
-    if (!gutter.isEnabled) return
     val icon = gutter.icon ?: return
     val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
         anchor,
