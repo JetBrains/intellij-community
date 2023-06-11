@@ -4,8 +4,8 @@ package com.intellij.ide.actions.searcheverywhere.footer
 import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.ide.actions.OpenInRightSplitAction
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
-import com.intellij.ide.actions.searcheverywhere.ExtendedInfoComponent
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -22,21 +22,41 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.ui.RelativeFont
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.JBLabel
 import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import java.awt.BorderLayout
 import java.util.concurrent.Callable
+import javax.swing.JPanel
 
 @NlsSafe
 private val DEFAULT_TEXT = "<html><br></html>"
 
-class ExtendedInfoComponentBase(val project: Project?, val advertisement: ExtendedInfo) : ExtendedInfoComponent() {
-  private val text = createLabel()
+class ExtendedInfoComponent(val project: Project?, val advertisement: ExtendedInfo) {
+  private val text = JBLabel()
+    .apply {
+      font = RelativeFont.NORMAL
+        .scale(JBUI.CurrentTheme.Advertiser.FONT_SIZE_OFFSET.get())
+        .derive(StartupUiUtil.labelFont)
+      foreground = JBUI.CurrentTheme.Advertiser.foreground()
+    }
   private var actionLink: ActionLink = ActionLink()
 
+  @JvmField
+  val component: JPanel =
+    JPanel(BorderLayout(0, 0))
+      .apply {
+        isOpaque = true
+        background = JBUI.CurrentTheme.Advertiser.background()
+        border = JBUI.CurrentTheme.Advertiser.border()
+      }
+
   init {
-    myComponent.add(text, BorderLayout.WEST)
-    myComponent.add(actionLink, BorderLayout.EAST)
+    component.add(text, BorderLayout.WEST)
+    component.add(actionLink, BorderLayout.EAST)
   }
 
   fun updateElement(element: Any) {
@@ -72,6 +92,15 @@ class ExtendedInfoComponentBase(val project: Project?, val advertisement: Extend
       actionListeners.forEach { removeActionListener(it) }
       addActionListener { _ -> ActionUtil.performActionDumbAwareWithCallbacks(action, event) }
     }
+  }
+}
+
+class ExtendedInfoImpl(val contributors: List<SearchEverywhereContributor<*>>) : ExtendedInfo() {
+  private val list = contributors.mapNotNull { it.createExtendedInfo() }
+
+  init {
+    leftText = fun(element: Any) = list.firstNotNullOfOrNull { it.leftText.invoke(element) }
+    rightAction = fun(element: Any) = list.firstNotNullOfOrNull { it.rightAction.invoke(element) }
   }
 }
 
