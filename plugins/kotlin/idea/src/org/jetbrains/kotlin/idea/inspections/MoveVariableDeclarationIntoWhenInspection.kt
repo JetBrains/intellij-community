@@ -2,17 +2,20 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.*
-import com.intellij.codeInspection.ProblemHighlightType.*
+import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
+import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
-import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
@@ -38,16 +41,31 @@ class MoveVariableDeclarationIntoWhenInspection : AbstractKotlinInspection(), Cl
             if (action == NOTHING) return
             if (action == MOVE && !property.isOneLiner()) return
 
-            val highlightType = if (action == INLINE) INFORMATION else GENERIC_ERROR_OR_WARNING
             holder.registerProblemWithoutOfflineInformation(
                 property,
                 action.description,
                 isOnTheFly,
-                highlightType,
+                highlightType(action, expression, property),
                 TextRange.from(identifier.startOffsetInParent, identifier.textLength),
                 action.createFix(subjectExpression.createSmartPointer())
             )
         })
+}
+
+private fun highlightType(action: Action, whenExpression: KtWhenExpression, property: KtProperty): ProblemHighlightType = when (action) {
+    INLINE -> INFORMATION
+    MOVE -> {
+        val lineStartOffset = whenExpression.containingKtFile.getLineStartOffset(whenExpression.getLineNumber(), skipWhitespace = false)
+        if (lineStartOffset != null) {
+            val newWhenLength = (whenExpression.startOffset - lineStartOffset) + "when (".length + property.text.length + ") {".length
+            val rightMargin = CodeStyle.getSettings(whenExpression.project).RIGHT_MARGIN
+            if (newWhenLength > rightMargin) INFORMATION else GENERIC_ERROR_OR_WARNING
+        } else {
+            GENERIC_ERROR_OR_WARNING
+        }
+    }
+
+    else -> GENERIC_ERROR_OR_WARNING
 }
 
 private fun KtExpression.isComplex(): Boolean {
