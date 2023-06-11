@@ -2,7 +2,6 @@
 package com.intellij.jsonpath;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.json.JsonBundle;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +24,7 @@ public final class JsonPathFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return JsonBundle.message("filetype.jsonpath.description");
+    return JsonPathBundle.message("filetype.jsonpath.description");
   }
 
   @NotNull

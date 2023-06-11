@@ -4,7 +4,7 @@ package com.intellij.jsonpath.ui
 import com.intellij.codeInsight.intention.AbstractIntentionAction
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.icons.AllIcons
-import com.intellij.json.JsonBundle
+import com.intellij.jsonpath.JsonPathBundle
 import com.intellij.jsonpath.JsonPathLanguage
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_EXPRESSION_KEY
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -15,7 +15,7 @@ import com.intellij.psi.PsiFile
 import javax.swing.Icon
 
 internal class JsonPathEvaluateIntentionAction : AbstractIntentionAction(), HighPriorityAction, Iconable {
-  override fun getText(): String = JsonBundle.message("jsonpath.evaluate.intention")
+  override fun getText(): String = JsonPathBundle.message("jsonpath.evaluate.intention")
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     if (file == null) return

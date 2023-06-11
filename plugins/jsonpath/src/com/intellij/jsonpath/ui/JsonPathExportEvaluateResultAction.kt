@@ -3,7 +3,7 @@ package com.intellij.jsonpath.ui
 
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
-import com.intellij.json.JsonBundle
+import com.intellij.jsonpath.JsonPathBundle
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_RESULT_KEY
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -27,7 +27,7 @@ internal class JsonPathExportEvaluateResultAction : DumbAwareAction() {
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
       Runnable {
-        WriteCommandAction.runWriteCommandAction(project, JsonBundle.message("jsonpath.evaluate.export.result"), null, Runnable {
+        WriteCommandAction.runWriteCommandAction(project, JsonPathBundle.message("jsonpath.evaluate.export.result"), null, Runnable {
           val file = ScratchRootType.getInstance()
             .findFile(project, "jsonpath-result.json", ScratchFileService.Option.create_new_always)
 
@@ -38,7 +38,7 @@ internal class JsonPathExportEvaluateResultAction : DumbAwareAction() {
             fileEditorManager.openEditor(OpenFileDescriptor(project, file), true)
           }
         })
-      }, JsonBundle.message("jsonpath.evaluate.progress.export.result"), false, project)
+      }, JsonPathBundle.message("jsonpath.evaluate.progress.export.result"), false, project)
   }
 
   override fun update(e: AnActionEvent) {

@@ -4,7 +4,6 @@ package com.intellij.jsonpath;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
-import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.impl.JsonRecursiveElementVisitor;
@@ -161,7 +160,7 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
         result.addElement(PrioritizedLookupElement.withPriority(
           LookupElementBuilder.create(propertyName)
             .withIcon(AllIcons.Nodes.Field)
-            .withTypeText(JsonBundle.message("jsonpath.completion.key")),
+            .withTypeText(JsonPathBundle.message("jsonpath.completion.key")),
           100));
       }
     }

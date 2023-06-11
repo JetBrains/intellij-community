@@ -2,7 +2,6 @@
 package com.intellij.jsonpath;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.json.JsonBundle;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
@@ -19,25 +18,25 @@ import java.util.Map;
 final class JsonPathColorSettingsPage implements ColorSettingsPage {
 
   private final AttributesDescriptor[] myAttributesDescriptors = new AttributesDescriptor[]{
-    new AttributesDescriptor(JsonBundle.message("jsonpath.color.page.keyword"), JsonPathSyntaxHighlighter.JSONPATH_KEYWORD),
-    new AttributesDescriptor(JsonBundle.message("jsonpath.color.page.identifier"), JsonPathSyntaxHighlighter.JSONPATH_IDENTIFIER),
-    new AttributesDescriptor(JsonBundle.message("jsonpath.color.page.string"), JsonPathSyntaxHighlighter.JSONPATH_STRING),
-    new AttributesDescriptor(JsonBundle.message("jsonpath.color.page.number"), JsonPathSyntaxHighlighter.JSONPATH_NUMBER),
-    new AttributesDescriptor(JsonBundle.message("jsonpath.color.page.boolean"), JsonPathSyntaxHighlighter.JSONPATH_BOOLEAN),
-    new AttributesDescriptor(JsonBundle.message("jsonpath.color.page.brackets"), JsonPathSyntaxHighlighter.JSONPATH_BRACKETS),
-    new AttributesDescriptor(JsonBundle.message("jsonpath.color.page.braces"), JsonPathSyntaxHighlighter.JSONPATH_BRACES),
-    new AttributesDescriptor(JsonBundle.message("jsonpath.color.page.colon"), JsonPathSyntaxHighlighter.JSONPATH_COLON),
-    new AttributesDescriptor(JsonBundle.message("jsonpath.color.page.comma"), JsonPathSyntaxHighlighter.JSONPATH_COMMA),
-    new AttributesDescriptor(JsonBundle.message("jsonpath.color.page.dot"), JsonPathSyntaxHighlighter.JSONPATH_DOT),
-    new AttributesDescriptor(JsonBundle.message("jsonpath.color.page.operation.sign"), JsonPathSyntaxHighlighter.JSONPATH_OPERATIONS),
-    new AttributesDescriptor(JsonBundle.message("jsonpath.color.page.parentheses"), JsonPathSyntaxHighlighter.JSONPATH_PARENTHESES),
-    new AttributesDescriptor(JsonBundle.message("jsonpath.color.page.context"), JsonPathSyntaxHighlighter.JSONPATH_CONTEXT),
-    new AttributesDescriptor(JsonBundle.message("jsonpath.color.page.function"), JsonPathSyntaxHighlighter.JSONPATH_FUNCTION_CALL)
+    new AttributesDescriptor(JsonPathBundle.message("jsonpath.color.page.keyword"), JsonPathSyntaxHighlighter.JSONPATH_KEYWORD),
+    new AttributesDescriptor(JsonPathBundle.message("jsonpath.color.page.identifier"), JsonPathSyntaxHighlighter.JSONPATH_IDENTIFIER),
+    new AttributesDescriptor(JsonPathBundle.message("jsonpath.color.page.string"), JsonPathSyntaxHighlighter.JSONPATH_STRING),
+    new AttributesDescriptor(JsonPathBundle.message("jsonpath.color.page.number"), JsonPathSyntaxHighlighter.JSONPATH_NUMBER),
+    new AttributesDescriptor(JsonPathBundle.message("jsonpath.color.page.boolean"), JsonPathSyntaxHighlighter.JSONPATH_BOOLEAN),
+    new AttributesDescriptor(JsonPathBundle.message("jsonpath.color.page.brackets"), JsonPathSyntaxHighlighter.JSONPATH_BRACKETS),
+    new AttributesDescriptor(JsonPathBundle.message("jsonpath.color.page.braces"), JsonPathSyntaxHighlighter.JSONPATH_BRACES),
+    new AttributesDescriptor(JsonPathBundle.message("jsonpath.color.page.colon"), JsonPathSyntaxHighlighter.JSONPATH_COLON),
+    new AttributesDescriptor(JsonPathBundle.message("jsonpath.color.page.comma"), JsonPathSyntaxHighlighter.JSONPATH_COMMA),
+    new AttributesDescriptor(JsonPathBundle.message("jsonpath.color.page.dot"), JsonPathSyntaxHighlighter.JSONPATH_DOT),
+    new AttributesDescriptor(JsonPathBundle.message("jsonpath.color.page.operation.sign"), JsonPathSyntaxHighlighter.JSONPATH_OPERATIONS),
+    new AttributesDescriptor(JsonPathBundle.message("jsonpath.color.page.parentheses"), JsonPathSyntaxHighlighter.JSONPATH_PARENTHESES),
+    new AttributesDescriptor(JsonPathBundle.message("jsonpath.color.page.context"), JsonPathSyntaxHighlighter.JSONPATH_CONTEXT),
+    new AttributesDescriptor(JsonPathBundle.message("jsonpath.color.page.function"), JsonPathSyntaxHighlighter.JSONPATH_FUNCTION_CALL)
   };
 
   @Override
   public @NotNull @NlsContexts.ConfigurableName String getDisplayName() {
-    return JsonBundle.message("settings.display.name.jsonpath");
+    return JsonPathBundle.message("settings.display.name.jsonpath");
   }
 
   @Override

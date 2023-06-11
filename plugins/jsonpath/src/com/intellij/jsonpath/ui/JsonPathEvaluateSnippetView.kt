@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jsonpath.ui
 
-import com.intellij.json.JsonBundle
 import com.intellij.json.psi.JsonFile
+import com.intellij.jsonpath.JsonPathBundle
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -34,7 +34,7 @@ internal class JsonPathEvaluateSnippetView(project: Project) : JsonPathEvaluateV
     sourcePanel.addToTop(searchWrapper)
 
     val sourceWrapper = BorderLayoutPanel()
-    val sourceLabel = JBLabel(JsonBundle.message("jsonpath.evaluate.input"))
+    val sourceLabel = JBLabel(JsonPathBundle.message("jsonpath.evaluate.input"))
     sourceLabel.border = JBUI.Borders.empty(3, 6)
     sourceWrapper.addToTop(sourceLabel)
     sourceWrapper.addToCenter(sourceEditor.component)

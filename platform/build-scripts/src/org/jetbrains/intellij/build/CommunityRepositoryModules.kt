@@ -68,6 +68,7 @@ object CommunityRepositoryModules {
     plugin("intellij.vcs.svn") { spec ->
       spec.withProjectLibrary("sqlite")
     },
+    plugin("intellij.jsonpath"),
     plugin("intellij.xpath") { spec ->
       spec.withModule("intellij.xpath.rt", "rt/xslt-rt.jar")
     },

@@ -204,5 +204,6 @@
     <orderEntry type="module" module-name="intellij.html.tools.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.lombok" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.xmlbeans" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.jsonpath" scope="TEST" />
   </component>
 </module>

@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jsonpath.ui
 
-import com.intellij.json.JsonBundle
 import com.intellij.json.psi.JsonFile
+import com.intellij.jsonpath.JsonPathBundle
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serialization.ClassUtil
 import com.jayway.jsonpath.*
@@ -30,7 +30,7 @@ class JsonPathEvaluator(val jsonFile: JsonFile?,
 
     val json = jsonFile?.text
     if (json == null) {
-      return IncorrectDocument(JsonBundle.message("jsonpath.evaluate.file.not.found"))
+      return IncorrectDocument(JsonPathBundle.message("jsonpath.evaluate.file.not.found"))
     }
 
     val jsonDocument: DocumentContext = try {

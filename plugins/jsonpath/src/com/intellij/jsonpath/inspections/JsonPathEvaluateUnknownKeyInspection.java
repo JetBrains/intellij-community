@@ -3,10 +3,10 @@ package com.intellij.jsonpath.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.impl.JsonRecursiveElementVisitor;
+import com.intellij.jsonpath.JsonPathBundle;
 import com.intellij.jsonpath.psi.JsonPathId;
 import com.intellij.jsonpath.psi.JsonPathIdSegment;
 import com.intellij.jsonpath.psi.JsonPathVisitor;
@@ -40,7 +40,7 @@ final class JsonPathEvaluateUnknownKeyInspection extends LocalInspectionTool {
 
         if (StringUtil.isNotEmpty(idString) &&
             !allKeys.getValue().contains(idString)) {
-          holder.registerProblem(identifier, null, JsonBundle.message("inspection.message.jsonpath.unknown.key", idString));
+          holder.registerProblem(identifier, null, JsonPathBundle.message("inspection.message.jsonpath.unknown.key", idString));
         }
       }
     };

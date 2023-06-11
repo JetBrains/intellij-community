@@ -3,8 +3,8 @@ package com.intellij.jsonpath.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.ContentManagerWatcher
-import com.intellij.json.JsonBundle
 import com.intellij.json.psi.JsonFile
+import com.intellij.jsonpath.JsonPathBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.DumbAwareAction
@@ -58,7 +58,7 @@ class JsonPathEvaluateManager internal constructor(private val project: Project)
 
     val newView = JsonPathEvaluateFileView(project, file)
     val newContent = cm.factory.createContent(newView.component,
-                                              JsonBundle.message("jsonpath.toolwindow.evaluate.on.file", file.name),
+                                              JsonPathBundle.message("jsonpath.toolwindow.evaluate.on.file", file.name),
                                               false)
     newContent.isCloseable = true
     newContent.isPinnable = true
@@ -76,7 +76,7 @@ class JsonPathEvaluateManager internal constructor(private val project: Project)
     if (toolWindow == null) {
       toolWindow = registerToolwindow(toolWindowManager)
       (toolWindow as? ToolWindowEx)?.setTabActions(
-        object : DumbAwareAction(JsonBundle.message("jsonpath.evaluate.add.tab.text"), null, AllIcons.General.Add) {
+        object : DumbAwareAction(JsonPathBundle.message("jsonpath.evaluate.add.tab.text"), null, AllIcons.General.Add) {
           override fun actionPerformed(e: AnActionEvent) {
             val (content, _) = addSnippetTab(toolWindow.contentManager)
             toolWindow.contentManager.setSelectedContent(content, true)
@@ -94,7 +94,7 @@ class JsonPathEvaluateManager internal constructor(private val project: Project)
         anchor = ToolWindowAnchor.RIGHT,
         component = null,
         icon = AllIcons.Toolwindows.ToolWindowJsonPath,
-        stripeTitle = JsonBundle.messagePointer("jsonpath.toolwindow.evaluate.stripe")
+        stripeTitle = JsonPathBundle.messagePointer("jsonpath.toolwindow.evaluate.stripe")
       )
     )
     ContentManagerWatcher.watchContentManager(toolWindow, toolWindow.contentManager)
@@ -113,16 +113,16 @@ class JsonPathEvaluateManager internal constructor(private val project: Project)
 
   @NlsContexts.TabTitle
   private fun findNextSnippetTitle(cm: ContentManager): @NlsContexts.TabTitle String {
-    val defaultTitle = JsonBundle.message("jsonpath.toolwindow.evaluate.on.snippet")
+    val defaultTitle = JsonPathBundle.message("jsonpath.toolwindow.evaluate.on.snippet")
     if (cm.contents.none { it.tabName == defaultTitle }) {
       return defaultTitle
     }
 
     var index = 2
-    while (cm.contents.any { it.tabName == JsonBundle.message("jsonpath.toolwindow.evaluate.on.snippet.n", index) }) {
+    while (cm.contents.any { it.tabName == JsonPathBundle.message("jsonpath.toolwindow.evaluate.on.snippet.n", index) }) {
       index++
     }
-    return JsonBundle.message("jsonpath.toolwindow.evaluate.on.snippet.n", index)
+    return JsonPathBundle.message("jsonpath.toolwindow.evaluate.on.snippet.n", index)
   }
 
   companion object {

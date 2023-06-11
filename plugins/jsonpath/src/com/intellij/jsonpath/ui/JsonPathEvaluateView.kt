@@ -7,9 +7,9 @@ import com.intellij.find.FindBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.json.JsonBundle
 import com.intellij.json.JsonFileType
 import com.intellij.json.psi.JsonFile
+import com.intellij.jsonpath.JsonPathBundle
 import com.intellij.jsonpath.JsonPathFileType
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_EXPRESSION_KEY
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_HISTORY
@@ -60,14 +60,12 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
   companion object {
     init {
       Configuration.setDefaults(object : Configuration.Defaults {
-        private val jsonProvider = JacksonJsonProvider()
-        private val mappingProvider = JacksonMappingProvider()
+        private val jsonProvider: JacksonJsonProvider = JacksonJsonProvider()
+        private val mappingProvider: JacksonMappingProvider = JacksonMappingProvider()
 
-        override fun jsonProvider() = jsonProvider
-
-        override fun mappingProvider() = mappingProvider
-
-        override fun options() = EnumSet.noneOf(Option::class.java)
+        override fun jsonProvider(): JacksonJsonProvider = jsonProvider
+        override fun mappingProvider(): JacksonMappingProvider = mappingProvider
+        override fun options(): EnumSet<Option> = EnumSet.noneOf(Option::class.java)
       })
     }
   }
@@ -110,7 +108,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
     get() = searchTextField
 
   protected val resultWrapper: JBPanelWithEmptyText = JBPanelWithEmptyText(BorderLayout())
-  private val resultLabel = JBLabel(JsonBundle.message("jsonpath.evaluate.result"))
+  private val resultLabel = JBLabel(JsonPathBundle.message("jsonpath.evaluate.result"))
   private val resultEditor: Editor = initJsonEditor("result.json", true, EditorKind.PREVIEW)
 
   private val errorOutputArea: JBTextArea = JBTextArea()
@@ -121,12 +119,12 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
     resultEditor.putUserData(JSON_PATH_EVALUATE_RESULT_KEY, true)
     resultEditor.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0))
     resultLabel.border = JBUI.Borders.empty(3, 6)
-    resultWrapper.emptyText.text = JsonBundle.message("jsonpath.evaluate.no.result")
+    resultWrapper.emptyText.text = JsonPathBundle.message("jsonpath.evaluate.no.result")
     errorOutputContainer.border = JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0)
 
     val historyButton = SearchHistoryButton(ShowHistoryAction(), false)
     val historyButtonWrapper = NonOpaquePanel(BorderLayout())
-    historyButtonWrapper.border = JBUI.Borders.empty(3, 6, 3, 6)
+    historyButtonWrapper.border = JBUI.Borders.empty(3, 6)
     historyButtonWrapper.add(historyButton, BorderLayout.NORTH)
 
     searchTextField.setFontInheritedFromLAF(false) // use font as in regular editor
@@ -170,8 +168,8 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
 
       override fun createPopupActionGroup(button: JComponent, context: DataContext): DefaultActionGroup {
         val outputItems = DefaultActionGroup()
-        outputItems.add(OutputOptionAction(false, JsonBundle.message("jsonpath.evaluate.output.values")))
-        outputItems.add(OutputOptionAction(true, JsonBundle.message("jsonpath.evaluate.output.paths")))
+        outputItems.add(OutputOptionAction(false, JsonPathBundle.message("jsonpath.evaluate.output.values")))
+        outputItems.add(OutputOptionAction(true, JsonPathBundle.message("jsonpath.evaluate.output.paths")))
         return outputItems
       }
 
@@ -180,16 +178,16 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
         if (e.project == null) return
 
         presentation.text = if (evalOptions.contains(Option.AS_PATH_LIST)) {
-          JsonBundle.message("jsonpath.evaluate.output.paths")
+          JsonPathBundle.message("jsonpath.evaluate.output.paths")
         }
         else {
-          JsonBundle.message("jsonpath.evaluate.output.values")
+          JsonPathBundle.message("jsonpath.evaluate.output.values")
         }
       }
 
       override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
         val panel = JPanel(GridBagLayout())
-        panel.add(JLabel(JsonBundle.message("jsonpath.evaluate.output.option")),
+        panel.add(JLabel(JsonPathBundle.message("jsonpath.evaluate.output.option")),
                   GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insetsLeft(5), 0, 0))
         panel.add(super.createCustomComponent(presentation, place),
                   GridBagConstraints(1, 0, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBInsets.emptyInsets(), 0, 0))
@@ -199,13 +197,13 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
 
     group.add(outputComboBox)
 
-    group.add(DefaultActionGroup(JsonBundle.message("jsonpath.evaluate.options"), true).apply {
+    group.add(DefaultActionGroup(JsonPathBundle.message("jsonpath.evaluate.options"), true).apply {
       templatePresentation.icon = AllIcons.General.Settings
 
-      add(OptionToggleAction(Option.SUPPRESS_EXCEPTIONS, JsonBundle.message("jsonpath.evaluate.suppress.exceptions")))
-      add(OptionToggleAction(Option.ALWAYS_RETURN_LIST, JsonBundle.message("jsonpath.evaluate.return.list")))
-      add(OptionToggleAction(Option.DEFAULT_PATH_LEAF_TO_NULL, JsonBundle.message("jsonpath.evaluate.nullize.missing.leaf")))
-      add(OptionToggleAction(Option.REQUIRE_PROPERTIES, JsonBundle.message("jsonpath.evaluate.require.all.properties")))
+      add(OptionToggleAction(Option.SUPPRESS_EXCEPTIONS, JsonPathBundle.message("jsonpath.evaluate.suppress.exceptions")))
+      add(OptionToggleAction(Option.ALWAYS_RETURN_LIST, JsonPathBundle.message("jsonpath.evaluate.return.list")))
+      add(OptionToggleAction(Option.DEFAULT_PATH_LEAF_TO_NULL, JsonPathBundle.message("jsonpath.evaluate.nullize.missing.leaf")))
+      add(OptionToggleAction(Option.REQUIRE_PROPERTIES, JsonPathBundle.message("jsonpath.evaluate.require.all.properties")))
     })
   }
 
