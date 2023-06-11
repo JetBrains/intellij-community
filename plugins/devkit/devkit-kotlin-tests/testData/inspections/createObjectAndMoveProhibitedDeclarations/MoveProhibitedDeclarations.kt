@@ -2,7 +2,7 @@ import com.intellij.openapi.diagnostic.Logger
 
 class MyExtensionImpl : MyExtension {
 
-  <error descr="Companion objects in extensions may only contain a logger and constants">companion<caret></error> object {
+  <warning descr="Companion objects in IDE extension implementations may only contain a logger and constants">companion<caret></warning> object {
     // loggers are allowed
     private val LOGGER: Logger = Logger()
 

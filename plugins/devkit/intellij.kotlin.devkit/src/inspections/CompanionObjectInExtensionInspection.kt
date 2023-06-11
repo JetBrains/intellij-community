@@ -68,7 +68,7 @@ class CompanionObjectInExtensionInspection : LocalInspectionTool() {
         holder.registerProblem(
           anchor,
           DevKitKotlinBundle.message("inspections.companion.object.in.extension.message"),
-          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+          ProblemHighlightType.WARNING,
           CreateObjectAndMoveProhibitedDeclarationsQuickFix(declaration)
         )
       }
