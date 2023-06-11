@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
@@ -60,6 +59,7 @@ import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -706,12 +706,9 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
   }
 
-  private static boolean isInstantShutdownPossible() {
-    if (!Registry.is("ide.instant.shutdown", true)) {
-      return false;
-    }
-
-    return !ProgressManager.getInstance().hasProgressIndicator();
+  private boolean isInstantShutdownPossible() {
+    InstantShutdown instantShutdown = Objects.requireNonNull(getService(InstantShutdown.class));
+    return instantShutdown.isAllowed() && !ProgressManager.getInstance().hasProgressIndicator();
   }
 
   private @NotNull CompletableFuture<@NotNull ProgressWindow> createProgressWindowAsyncIfNeeded(

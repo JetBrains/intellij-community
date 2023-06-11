@@ -6,7 +6,9 @@ import com.intellij.execution.TerminateRemoteProcessDialog;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.ProcessCloseConfirmation;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.InstantShutdown;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -16,7 +18,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.VetoableProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -136,7 +137,8 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
   }
 
   protected boolean askUserAndWait(@NotNull ProcessHandler processHandler, @NotNull String sessionName, @NotNull WaitForProcessTask task) {
-    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isWriteAccessAllowed()) {
       // This might happen from Application.exit(force=true, ...) call.
       // Do not show any UI, destroy the process silently, do not wait for process termination.
       processHandler.destroyProcess();
@@ -144,14 +146,11 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
                + processHandler.getClass() + ", " + processHandler + ")");
       return true;
     }
-    Disposable disposable = Disposer.newDisposable();
-    Registry.get("ide.instant.shutdown").setValue(false, disposable);
-    try {
+    // Disable instant shutdown to show "Terminating <run configuration name>" dialog awaiting graceful process termination.
+    // The dialog provides 'Kill process' action for cases when graceful process termination takes too long.
+    return application.getService(InstantShutdown.class).computeWithDisabledInstantShutdown(() -> {
       return doAskUserAndWait(processHandler, sessionName, task);
-    }
-    finally {
-      Disposer.dispose(disposable);
-    }
+    });
   }
 
   private boolean doAskUserAndWait(@NotNull ProcessHandler processHandler, @NotNull String sessionName, @NotNull WaitForProcessTask task) {
