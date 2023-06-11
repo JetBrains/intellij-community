@@ -33,7 +33,8 @@ import java.util.List;
 import java.util.function.Function;
 
 public final class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
-                                                               AutoCompletionContributor, PossibleSlowContributor, SearchFieldActionsContributor {
+                                                               AutoCompletionContributor, PossibleSlowContributor,
+                                                               SearchFieldActionsContributor, SearchEverywhereExtendedInfoProvider {
   private final AbstractGotoSEContributor myDelegate;
 
   public PSIPresentationBgRendererWrapper(AbstractGotoSEContributor delegate) { myDelegate = delegate; }

@@ -6,6 +6,7 @@ import com.intellij.ide.actions.OpenInRightSplitAction
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -96,7 +97,7 @@ class ExtendedInfoComponent(val project: Project?, val advertisement: ExtendedIn
 }
 
 class ExtendedInfoImpl(val contributors: List<SearchEverywhereContributor<*>>) : ExtendedInfo() {
-  private val list = contributors.mapNotNull { it.createExtendedInfo() }
+  private val list = contributors.filterIsInstance(SearchEverywhereExtendedInfoProvider::class.java).mapNotNull { it.createExtendedInfo() }
 
   init {
     leftText = fun(element: Any) = list.firstNotNullOfOrNull { it.leftText.invoke(element) }

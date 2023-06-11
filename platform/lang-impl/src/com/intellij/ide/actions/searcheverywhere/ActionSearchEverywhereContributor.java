@@ -48,7 +48,8 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText;
 
 public class ActionSearchEverywhereContributor implements WeightedSearchEverywhereContributor<GotoActionModel.MatchedValue>,
-                                                          LightEditCompatible, SearchFieldActionsContributor {
+                                                          LightEditCompatible, SearchFieldActionsContributor,
+                                                          SearchEverywhereExtendedInfoProvider {
 
   private static final Logger LOG = Logger.getInstance(ActionSearchEverywhereContributor.class);
 

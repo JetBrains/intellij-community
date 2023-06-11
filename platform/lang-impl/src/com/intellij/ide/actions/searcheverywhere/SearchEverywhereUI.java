@@ -603,11 +603,15 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private ExtendedInfoComponent createExtendedInfoComponent() {
     SETab tab = myHeader.getSelectedTab();
 
-    boolean isExtendedInfoAvailable = !ContainerUtil.mapNotNull(tab.getContributors(), it -> it.createExtendedInfo()).isEmpty();
-    if (ALL_CONTRIBUTORS_GROUP_ID.equals(tab.getID()) || isExtendedInfoAvailable) {
-      return new ExtendedInfoComponent(myProject, new ExtendedInfoImpl(tab.getContributors()));
-    }
-    return null;
+    com.intellij.util.Function<SearchEverywhereContributor<?>, @Nullable ExtendedInfo> extendedInfoFunction =
+      it -> it instanceof SearchEverywhereExtendedInfoProvider
+            ? ((SearchEverywhereExtendedInfoProvider)it).createExtendedInfo()
+            : null;
+
+    boolean isExtendedInfoAvailable = !ContainerUtil.mapNotNull(tab.getContributors(), extendedInfoFunction).isEmpty();
+    return ALL_CONTRIBUTORS_GROUP_ID.equals(tab.getID()) || isExtendedInfoAvailable
+           ? new ExtendedInfoComponent(myProject, new ExtendedInfoImpl(tab.getContributors()))
+           : null;
   }
 
   @Override
