@@ -663,9 +663,6 @@
     <!-- Packaging -->
     <keywordArgumentProvider implementation="com.jetbrains.python.packaging.setupPy.SetupKeywordArgumentProvider"/>
 
-    <!-- PyQt -->
-    <typeProvider implementation="com.jetbrains.pyqt.PyQtTypeProvider"/>
-
     <!-- PyFunctionTypeAnnotation and PyTypeHint -->
     <visitorFilter language="PyFunctionTypeComment"
                    implementationClass="com.jetbrains.python.inspections.PyTypeAnnotationVisitorFilter"/>
