@@ -608,10 +608,13 @@ public final class PsiVFSListener implements BulkFileListener {
 
     @Override
     public void beforeRootsChange(@NotNull ModuleRootEvent event) {
+      if (LOG.isTraceEnabled()) LOG.trace("beforeRootsChanged call");
       if (event.isCausedByFileTypesChange()) return;
+      if (LOG.isTraceEnabled()) LOG.trace("Event is not caused by file types change");
       ApplicationManager.getApplication().runWriteAction(
         (ExternalChangeAction)() -> {
           depthCounter++;
+          if (LOG.isTraceEnabled()) LOG.trace("depthCounter increased " + depthCounter);
           if (depthCounter > 1) return;
 
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(psiManager);
@@ -623,13 +626,16 @@ public final class PsiVFSListener implements BulkFileListener {
 
     @Override
     public void rootsChanged(@NotNull ModuleRootEvent event) {
+      if (LOG.isTraceEnabled()) LOG.trace("rootsChanged call");
       fileManager.dispatchPendingEvents();
 
       if (event.isCausedByFileTypesChange()) return;
+      if (LOG.isTraceEnabled()) LOG.trace("Event is not caused by file types change");
       ApplicationManager.getApplication().runWriteAction(
         (ExternalChangeAction)() -> {
           depthCounter--;
-          assert depthCounter >= 0 : depthCounter;
+          if (LOG.isTraceEnabled()) LOG.trace("depthCounter decreased " + depthCounter);
+          assert depthCounter >= 0 : "unbalanced `beforeRootsChange`/`rootsChanged`: " + depthCounter;
           if (depthCounter > 0) return;
 
           DebugUtil.performPsiModification(null, fileManager::possiblyInvalidatePhysicalPsi);

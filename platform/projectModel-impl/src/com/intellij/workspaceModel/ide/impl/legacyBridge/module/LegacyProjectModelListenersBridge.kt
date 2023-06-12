@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.project.Project
@@ -34,6 +35,7 @@ internal class LegacyProjectModelListenersBridge(
 ) : WorkspaceModelChangeListener {
   
   override fun beforeChanged(event: VersionedStorageChange) {
+    LOG.trace { "Get before changed event" }
     moduleRootListenerBridge.fireBeforeRootsChanged(project, event)
     val moduleMap = event.storageBefore.moduleMap
     for (change in event.getChanges(ModuleEntity::class.java)) {
@@ -48,6 +50,7 @@ internal class LegacyProjectModelListenersBridge(
   }
 
   override fun changed(event: VersionedStorageChange) {
+    LOG.trace { "Get changed event" }
     val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
     val changes = event.getChanges(ModuleEntity::class.java)
     if (changes.any() || moduleLibraryChanges.any()) {
@@ -74,6 +77,7 @@ internal class LegacyProjectModelListenersBridge(
       moduleModificationTracker.incModificationCount()
     }
     (ModuleDependencyIndex.getInstance(project) as ModuleDependencyIndexImpl).workspaceModelChanged(event)
+    LOG.trace { "fire roots changed for moduleRootListenerBridge" }
     moduleRootListenerBridge.fireRootsChanged(project, event)
   }
 
