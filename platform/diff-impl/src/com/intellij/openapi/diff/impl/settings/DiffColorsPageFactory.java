@@ -58,9 +58,10 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
 
   @Override
   public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
-    TextDiffTypeFactory.TextDiffTypeImpl[] diffTypes = TextDiffTypeFactory.getInstance().getAllDiffTypes();
-    return ContainerUtil.map2Array(diffTypes, AttributesDescriptor.class, type -> 
-      new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.type.tag.prefix") + type.getName(), type.getKey()));
+    List<TextDiffTypeFactory.TextDiffTypeImpl> diffTypes = TextDiffTypeFactory.getAllDiffTypes();
+    return ContainerUtil.map2Array(diffTypes, AttributesDescriptor.class, type ->
+      new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.type.tag.prefix") + type.getName(),
+                               type.getKey()));
   }
 
   @Override
