@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.CommonBundle;
@@ -104,7 +104,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @NotNull
-  public Promise<XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
+  public Promise<@Nullable XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
                                                                 @NotNull final VirtualFile file,
                                                                 final int line,
                                                                 boolean temporary) {
@@ -131,7 +131,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @NotNull
-  public <P extends XBreakpointProperties> Promise<XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
+  public <P extends XBreakpointProperties> Promise<@Nullable XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
                                                                                                   @NotNull final XLineBreakpointType<P> type,
                                                                                                   @NotNull final VirtualFile file,
                                                                                                   final int line,
@@ -170,7 +170,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @NotNull
-  public static Promise<XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
+  public static Promise<@Nullable XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
                                                                        @NotNull List<? extends XLineBreakpointType> types,
                                                                        @NotNull final XSourcePosition position,
                                                                        final boolean temporary,
