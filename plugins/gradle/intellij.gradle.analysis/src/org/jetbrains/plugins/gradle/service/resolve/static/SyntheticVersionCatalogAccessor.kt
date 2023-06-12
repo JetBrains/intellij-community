@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve.static
 
-import com.android.tools.idea.gradle.dsl.api.GradleVersionCatalogModel
+import com.android.tools.idea.gradle.dsl.api.GradleVersionCatalogsModel
 import com.android.tools.idea.gradle.dsl.api.ext.GradlePropertyModel
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.beans.PropertyKind
@@ -17,19 +17,19 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 /**
  * Serves as a client for PSI infrastructure and as a layer over TOML version catalog files at the same time
  */
-class SyntheticVersionCatalogAccessor(project: Project, scope: GlobalSearchScope, model: GradleVersionCatalogModel, className: String) :
+class SyntheticVersionCatalogAccessor(project: Project, scope: GlobalSearchScope, model: GradleVersionCatalogsModel, className: String) :
   LightClass(JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, scope)!!) {
 
   private val libraries: Array<PsiMethod> =
     SyntheticAccessorBuilder(project, scope, className, Kind.LIBRARY)
-      .buildMethods(this, model.libraries().properties.map(::PropertyModelGraphNode), "")
+      .buildMethods(this, model.libraries(className)!!.properties.map(::PropertyModelGraphNode), "")
       .toTypedArray()
 
   private val plugins: PsiMethod = SyntheticAccessorBuilder(project, scope, className, Kind.PLUGIN)
-    .buildEnclosingMethod(this, model.plugins().properties, "plugins")
+    .buildEnclosingMethod(this, model.plugins(className)!!.properties, "plugins")
 
   private val versions: PsiMethod = SyntheticAccessorBuilder(project, scope, className, Kind.VERSION)
-    .buildEnclosingMethod(this, model.versions().properties, "versions")
+    .buildEnclosingMethod(this, model.versions(className)!!.properties, "versions")
 
   private val bundles: PsiMethod = SyntheticAccessorBuilder(project, scope, className, Kind.BUNDLE)
     .buildEnclosingMethod(this, emptyList(), "bundles")
