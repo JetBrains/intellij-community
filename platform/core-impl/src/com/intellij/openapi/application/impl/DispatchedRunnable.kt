@@ -9,19 +9,30 @@ import kotlinx.coroutines.CompletionHandler
 import kotlinx.coroutines.DisposableHandle
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 
 @OptIn(InternalCoroutinesApi::class)
 internal class DispatchedRunnable(job: Job, runnable: Runnable) : ContextAwareRunnable, CompletionHandler {
 
-  private val runnableRef: AtomicReference<Runnable> = AtomicReference(runnable)
+  private companion object {
+
+    @JvmStatic
+    private val runnableUpdater: AtomicReferenceFieldUpdater<DispatchedRunnable, Runnable> = AtomicReferenceFieldUpdater.newUpdater(
+      DispatchedRunnable::class.java,
+      Runnable::class.java,
+      "_runnable",
+    )
+  }
+
+  @Volatile
+  private var _runnable: Runnable? = runnable
 
   @Volatile
   private var _completionHandle: DisposableHandle? = job.invokeOnCompletion(onCancelling = true, handler = this)
 
   override fun run() {
     // Clear the reference to avoid scheduling the runnable again when cancelled.
-    val runnable = runnableRef.getAndSet(null)
+    val runnable = runnableUpdater.getAndSet(this, null)
     if (runnable == null) {
       // Cleared in `invoke`.
       // This code path means that the coroutine was cancelled externally after being scheduled.
@@ -36,11 +47,11 @@ internal class DispatchedRunnable(job: Job, runnable: Runnable) : ContextAwareRu
   override fun invoke(cause: Throwable?) {
     if (cause == null) {
       // Sanity check: completed means the `run` was executed => the reference must be cleared.
-      check(runnableRef.get() == null)
+      check(_runnable == null)
       return
     }
     // Clear the reference so this runnable does nothing in `run`.
-    val runnable = runnableRef.getAndSet(null)
+    val runnable = runnableUpdater.getAndSet(this, null)
     if (runnable == null) {
       // Cleared in `run`.
       // This code path means that the cancellation happened concurrently with `run`,
