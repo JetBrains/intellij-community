@@ -42,12 +42,19 @@ final class EqualsChecker {
     if (body == null) return false;
     PsiParameter parameter = method.getParameterList().getParameter(0);
     PsiStatement[] statements = body.getStatements();
-    if (statements.length != 4) return false;
-    if (!isThisCheck(statements[0], parameter)) return false;
-    if (!isNullClassCheck(statements[1], parameter)) return false;
-    PsiVariable that = extractThatVariable(statements[2], parameter);
+    int shift;
+    if (statements.length == 4) {
+      if (!isThisCheck(statements[0], parameter)) return false;
+      shift = 1;
+    }
+    else {
+      if (statements.length != 3) return false;
+      shift = 0;
+    }
+    if (!isNullClassCheck(statements[shift], parameter)) return false;
+    PsiVariable that = extractThatVariable(statements[1 + shift], parameter);
     if (that == null) return false;
-    if (!(statements[3] instanceof PsiReturnStatement returnStatement)) return false;
+    if (!(statements[2 + shift] instanceof PsiReturnStatement returnStatement)) return false;
     if (!(PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue()) instanceof PsiPolyadicExpression poly)) return false;
     if (!poly.getOperationTokenType().equals(JavaTokenType.ANDAND)) return false;
     PsiExpression[] operands = poly.getOperands();
