@@ -6,7 +6,6 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.MutableDiffRequestChainProcessor
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
@@ -15,8 +14,6 @@ import com.intellij.diff.requests.LoadingDiffRequest
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.ListSelection
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.diff.impl.GenericDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
@@ -55,12 +52,15 @@ fun createMergeRequestDiffRequestProcessor(project: Project,
           val vm = GitLabMergeRequestDiffReviewViewModelImpl(this, currentUser, mr, avatarIconsProvider)
           processor.putContextUserData(GitLabMergeRequestDiffReviewViewModel.KEY, vm)
 
-          launchNow {
-            diffBridge.displayedChanges.mapToDiffChain(project, mr.changes).collectLatest {
-              processor.chain = it
-            }
+          mr.changes.collectLatest { changes ->
+            handleChanges(project, changes, diffBridge, processor)
           }
-          awaitCancellation()
+          try {
+            awaitCancellation()
+          }
+          catch (e: Exception) {
+            processor.chain = null
+          }
         }
       }
   }
@@ -82,14 +82,14 @@ fun createMergeRequestDiffRequestProcessor(project: Project,
   return processor
 }
 
-private fun Flow<ChangesSelection>.mapToDiffChain(
-  project: Project,
-  changesFlow: Flow<GitLabMergeRequestChanges>
-): Flow<DiffRequestChain?> =
-  combineTransformLatest(this, changesFlow) { selection, changes ->
+private suspend fun handleChanges(project: Project,
+                                  changes: GitLabMergeRequestChanges,
+                                  diffBridge: GitLabMergeRequestDiffBridge,
+                                  processor: MutableDiffRequestChainProcessor) {
+  diffBridge.displayedChanges.collectLatest { selection ->
     if (selection.changes.isEmpty()) {
-      emit(null)
-      return@combineTransformLatest
+      processor.chain = null
+      return@collectLatest
     }
 
     val changesBundle: GitBranchComparisonResult = try {
@@ -99,18 +99,25 @@ private fun Flow<ChangesSelection>.mapToDiffChain(
       throw ce
     }
     catch (e: Exception) {
-      emit(SimpleDiffRequestChain(ErrorDiffRequest(e)))
-      return@combineTransformLatest
+      processor.chain = SimpleDiffRequestChain(ErrorDiffRequest(e))
+      return@collectLatest
     }
 
+    val currentChanges = processor.chain?.requests?.mapNotNull {
+      (it as? ChangeDiffRequestProducer)?.change
+    }.orEmpty()
+
+    if (selection.changes.isEqual(currentChanges) && selection.selectedIdx == processor.currentIndex) {
+      return@collectLatest
+    }
 
     val producers = selection.toProducersSelection { change, location ->
       val changeDataKeys = createData(changesBundle, change, location)
       ChangeDiffRequestProducer.create(project, change, changeDataKeys)
     }
-
-    emit(producers.let(SimpleDiffRequestChain::fromProducers))
+    processor.chain = producers.let(SimpleDiffRequestChain::fromProducers)
   }
+}
 
 private suspend fun loadRevisionsAndParseChanges(changes: GitLabMergeRequestChanges): GitBranchComparisonResult =
   coroutineScope {
@@ -140,17 +147,6 @@ private fun createData(
 
   return requestDataKeys
 }
-
-@OptIn(ExperimentalCoroutinesApi::class)
-private inline fun <reified T1, reified T2, R> combineTransformLatest(
-  flow1: Flow<T1>,
-  flow2: Flow<T2>,
-  noinline transform: suspend FlowCollector<R>.(T1, T2) -> Unit
-): Flow<R> =
-  combine(flow1, flow2) { v1, v2 -> v1 to v2 }
-    .transformLatest { (v1, v2) ->
-      transform(v1, v2)
-    }
 
 private fun ChangesSelection.toProducersSelection(mapper: (Change, DiffLineLocation?) -> DiffRequestProducer?)
   : ListSelection<out DiffRequestProducer> = when (this) {

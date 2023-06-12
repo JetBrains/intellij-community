@@ -39,7 +39,8 @@ class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain
     currentIndex = newValue?.index ?: 0
     updateRequest()
   }
-  private var currentIndex: Int = 0
+  var currentIndex: Int = 0
+    private set
 
   val selectionEventDispatcher = EventDispatcher.create(SelectionListener::class.java)
 
@@ -103,7 +104,10 @@ class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain
     }
 
     override fun onSelected(change: ChangeDiffRequestChain.Producer) {
-      selectionEventDispatcher.multicaster.onSelected(change)
+      val newIndex = chain?.requests?.indexOf(change) ?: return
+      currentIndex = newIndex
+      selectCurrentChange()
+      updateRequest()
     }
   }
 

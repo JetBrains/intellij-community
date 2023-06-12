@@ -20,12 +20,12 @@ import org.jetbrains.plugins.gitlab.mergerequest.diff.isEqual
 internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommitDTO> {
   val changesResult: Flow<Result<Collection<Change>>>
 
-  val userChangesSelection: StateFlow<ListSelection<Change>>
+  val changesSelection: StateFlow<ListSelection<Change>>
   val changeSelectionRequests: Flow<Change>
 
   fun selectChange(change: Change)
 
-  fun updateChangesSelectedByUser(changes: ListSelection<Change>)
+  fun updatesSelectedChanges(changes: ListSelection<Change>)
 
   fun showDiff()
 
@@ -55,7 +55,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
     }.modelFlow(cs, thisLogger())
 
   private val _userChangesSelection = MutableStateFlow<ListSelection<Change>>(ListSelection.empty())
-  override val userChangesSelection: StateFlow<ListSelection<Change>> = _userChangesSelection.asStateFlow()
+  override val changesSelection: StateFlow<ListSelection<Change>> = _userChangesSelection.asStateFlow()
 
   private val _changeSelectionRequests = MutableSharedFlow<Change>()
   override val changeSelectionRequests: Flow<Change> = _changeSelectionRequests.asSharedFlow()
@@ -83,7 +83,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
     return commit.shortId
   }
 
-  override fun updateChangesSelectedByUser(changes: ListSelection<Change>) {
+  override fun updatesSelectedChanges(changes: ListSelection<Change>) {
     _userChangesSelection.update {
       if (isSelectionEqual(it, changes)) it else changes
     }

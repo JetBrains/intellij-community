@@ -8,9 +8,9 @@ import com.intellij.collaboration.ui.TransparentScrollPane
 import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.ScrollableContentBorder
@@ -74,27 +74,27 @@ internal class GitLabMergeRequestDetailsChangesComponentFactory(private val proj
         }
 
         tree.addTreeSelectionListener {
-          // focus transfer happens after selection change :(
-          invokeLater {
-            if (tree.isFocusOwner) {
-              vm.updateChangesSelectedByUser(VcsTreeModelData.getListSelectionOrAll(tree).map { it as? Change })
-            }
-          }
+          updateUserChangesSelection(vm, tree)
         }
+        updateUserChangesSelection(vm, tree)
 
         tree.doubleClickHandler = Processor { e ->
           if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
-          vm.updateChangesSelectedByUser(VcsTreeModelData.getListSelectionOrAll(tree).map { it as? Change })
+          updateUserChangesSelection(vm, tree)
           vm.showDiff()
           true
         }
 
         tree.enterKeyHandler = Processor {
-          vm.updateChangesSelectedByUser(VcsTreeModelData.getListSelectionOrAll(tree).map { it as? Change })
+          updateUserChangesSelection(vm, tree)
           vm.showDiff()
           true
         }
 
         tree.installPopupHandler(ActionManager.getInstance().getAction("GitLab.Merge.Request.Changes.Popup") as ActionGroup)
       }
+
+  private fun updateUserChangesSelection(vm: GitLabMergeRequestChangesViewModel, tree: AsyncChangesTree) {
+    vm.updatesSelectedChanges(VcsTreeModelData.getListSelectionOrAll(tree).map { it as? Change })
+  }
 }
