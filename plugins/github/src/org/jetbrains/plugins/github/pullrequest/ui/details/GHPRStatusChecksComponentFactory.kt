@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.childScope
 import com.intellij.util.ui.JBUI
@@ -23,6 +24,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewM
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JScrollPane
 
 internal object GHPRStatusChecksComponentFactory {
   private const val STATUSES_GAP = 10
@@ -55,11 +57,16 @@ internal object GHPRStatusChecksComponentFactory {
         iconProvider = { iconKey, iconSize -> avatarIconsProvider.getIcon(iconKey, iconSize) }
       ))
     }
+    val scrollableChecksPanel = ScrollPaneFactory.createScrollPane(checksPanel, true).apply {
+      isOpaque = false
+      horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+      viewport.isOpaque = false
+    }
 
     return Wrapper().apply {
       name = "Status check panel"
       bindContentIn(scope, reviewStatusVm.mergeabilityState.map { mergeability ->
-        if (mergeability == null) loadingPanel else checksPanel
+        if (mergeability == null) loadingPanel else scrollableChecksPanel
       })
     }
   }
