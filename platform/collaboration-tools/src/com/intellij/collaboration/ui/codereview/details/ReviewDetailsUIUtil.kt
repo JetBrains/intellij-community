@@ -74,5 +74,5 @@ object ReviewDetailsUIUtil {
       newUI = Insets(0, 15, 18, 13),
     )
 
-  val STATUSES_MAX_HEIGHT: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 143, newUI = 143)
+  val STATUSES_MAX_HEIGHT: Int get() = CollaborationToolsUIUtil.getSize(oldUI = 143, newUI = 149)
 }

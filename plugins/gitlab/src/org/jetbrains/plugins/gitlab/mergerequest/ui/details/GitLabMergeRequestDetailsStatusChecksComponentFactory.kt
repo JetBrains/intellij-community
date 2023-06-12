@@ -16,15 +16,13 @@ import javax.swing.JComponent
 import javax.swing.JScrollPane
 
 internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
-  private const val STATUSES_GAP = 10
-
   fun create(
     scope: CoroutineScope,
     statusVm: CodeReviewStatusViewModel,
     reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
-    val statuses = VerticalListPanel(STATUSES_GAP).apply {
+    val statuses = VerticalListPanel().apply {
       add(CodeReviewDetailsStatusComponentFactory.createCiComponent(scope, statusVm))
       add(CodeReviewDetailsStatusComponentFactory.createConflictsComponent(scope, statusVm.hasConflicts))
       add(CodeReviewDetailsStatusComponentFactory.createNeedReviewerComponent(scope, reviewFlowVm.reviewerReviews))

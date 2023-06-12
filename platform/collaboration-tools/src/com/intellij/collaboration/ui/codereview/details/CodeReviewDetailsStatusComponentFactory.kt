@@ -30,8 +30,8 @@ import javax.swing.*
 
 object CodeReviewDetailsStatusComponentFactory {
   private const val STATUS_COMPONENT_BORDER = 5
+  private const val STATUS_REVIEWER_BORDER = 3
   private const val STATUS_REVIEWER_COMPONENT_GAP = 8
-  private const val STATUS_REVIEWER_GAP = 10
 
   private const val CI_COMPONENTS_GAP = 8
   private const val CI_COMPONENT_BORDER_TOP_BOTTOM = 4
@@ -132,9 +132,9 @@ object CodeReviewDetailsStatusComponentFactory {
     iconProvider: (iconKey: IconKey, iconSize: Int) -> Icon,
     statusIconsEnabled: Boolean = true
   ): JComponent {
-    val panel = VerticalListPanel(STATUS_REVIEWER_GAP).apply {
+    val panel = VerticalListPanel().apply {
       name = "Code review status: reviewers"
-      border = JBUI.Borders.empty(1, 0)
+      border = JBUI.Borders.empty(STATUS_REVIEWER_BORDER, 0)
       bindVisibilityIn(scope, reviewersReview.map { it.isNotEmpty() })
     }
 
