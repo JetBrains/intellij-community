@@ -4,7 +4,6 @@
 package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -28,8 +27,6 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import org.intellij.lang.annotations.Language
 import org.jetbrains.sqlite.*
 import java.io.IOException
@@ -95,9 +92,6 @@ private class ProjectLevelConnectionManager(project: Project, logId: String) : D
                                  "$SQLITE_VCS_LOG_DB_FILENAME_PREFIX$DB_VERSION-${VcsLogPersistentIndex.VERSION}", "db")
   private val dbFile = storageId.storagePath
 
-  @Suppress("DEPRECATION")
-  private val coroutineScope: CoroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
-
   @Volatile
   var isFresh = false
 
@@ -125,14 +119,7 @@ private class ProjectLevelConnectionManager(project: Project, logId: String) : D
     connection = connect()
   }
 
-  override fun dispose() {
-    try {
-      connection.close()
-    }
-    finally {
-      coroutineScope.cancel()
-    }
-  }
+  override fun dispose() = connection.close()
 }
 
 private const val RENAME_SQL = "insert into rename(parent, child, rename) values(?, ?, ?)"
