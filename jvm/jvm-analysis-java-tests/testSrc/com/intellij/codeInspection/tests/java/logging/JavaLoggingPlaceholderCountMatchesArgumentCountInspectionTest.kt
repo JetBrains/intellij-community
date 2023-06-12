@@ -579,5 +579,17 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
       }
       """.trimIndent())
   }
+
+  fun `test without arguments`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.apache.logging.log4j.*;
+      class Logging {
+       private static final Logger logger = LogManager.getLogger();
+       public static void test(String t) {
+        logger.info();
+       }
+      }
+      """.trimIndent())
+  }
 }
 

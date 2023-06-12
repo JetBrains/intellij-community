@@ -41,6 +41,7 @@ abstract class LoggingInspectionTestBase : JvmInspectionTestBase() {
         boolean isInfoEnabled();
         boolean isWarnEnabled();
         void info(String message, Object... params);
+        void info();
         void debug(String message, Object... params);
         void warn(String message, Object... params);
         void error(String message, Object... params);
