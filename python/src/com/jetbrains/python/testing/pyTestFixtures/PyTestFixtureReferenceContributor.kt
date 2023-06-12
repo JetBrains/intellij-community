@@ -37,7 +37,9 @@ class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, priv
     if (myElement is PyStringLiteralExpression) {
       return myElement.replace(PyElementGenerator.getInstance(myElement.project).createStringLiteralFromString(newElementName))
     }
-    return myElement.replace(PyElementGenerator.getInstance(myElement.project).createParameter(newElementName))!!
+    val annotationString = (myElement as? PyNamedParameter)?.annotation?.value?.name
+    return myElement.replace(PyElementGenerator.getInstance(myElement.project)
+                               .createParameter(newElementName, null, annotationString, LanguageLevel.getDefault()))!!
   }
 }
 
@@ -75,7 +77,8 @@ private object PyTestReferenceAsParameterProvider : PyTestReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val namedParam = element as? PyNamedParameter ?: return emptyArray()
     val namedFixtureParameterLink = getFixtureLink(namedParam, TypeEvalContext.codeAnalysis(element.project, element.containingFile)) ?: return emptyArray()
-    return arrayOf(PyTestFixtureReference(namedParam, namedFixtureParameterLink.fixture, namedFixtureParameterLink.importElement))
+    val annotationLength = namedParam.annotation?.textLength ?: 0
+    return arrayOf(PyTestFixtureReference(namedParam, namedFixtureParameterLink.fixture, namedFixtureParameterLink.importElement, TextRange(0, element.textLength - annotationLength)))
   }
 }
 
