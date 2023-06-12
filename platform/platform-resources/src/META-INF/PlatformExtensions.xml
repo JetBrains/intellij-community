@@ -910,7 +910,9 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
 
     <postStartupActivity implementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$EditorHistoryManagerStartUpActivity"/>
 
+<!-- Android Studio: b/285867050
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.WindowsDefenderCheckerActivity" os="windows"/>
+Android Studio: b/285867050 -->
 
     <preloadingActivity implementation="com.intellij.codeInsight.editorActions.TypedHandler$TypedHandlerDelegatePreloader"/>
     <actionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
