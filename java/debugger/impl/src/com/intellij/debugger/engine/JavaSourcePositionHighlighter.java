@@ -21,7 +21,6 @@ import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiLambdaExpression;
 
 /**
@@ -31,10 +30,10 @@ public class JavaSourcePositionHighlighter extends SourcePositionHighlighter imp
   @Override
   public TextRange getHighlightRange(SourcePosition sourcePosition) {
     // Highlight only return keyword in case of conditional return breakpoint.
-    if (sourcePosition.getElementAt() instanceof PsiKeyword retKeyword &&
-        retKeyword.getText().equals(PsiKeyword.RETURN) &&
-        retKeyword == JavaLineBreakpointType.findSingleConditionalReturn(sourcePosition)) {
-      return retKeyword.getTextRange();
+    PsiElement element = sourcePosition.getElementAt();
+    if (JavaLineBreakpointType.isReturnKeyword(element) &&
+        element == JavaLineBreakpointType.findSingleConditionalReturn(sourcePosition)) {
+      return element.getTextRange();
     }
 
     // Highlight only lambda body in case of lambda breakpoint.

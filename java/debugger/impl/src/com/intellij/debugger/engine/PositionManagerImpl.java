@@ -181,24 +181,32 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       }
     }
 
-    // Adjust position if we've stopped on conditional return.
-    if (myDebugProcess.getVirtualMachineProxy().canGetBytecodes()) {
-      PsiElement ret = JavaLineBreakpointType.findSingleConditionalReturn(sourcePosition);
+    SourcePosition condRetPos = adjustPositionForConditionalReturn(myDebugProcess, location, psiFile, lineNumber);
+    if (condRetPos != null) {
+      sourcePosition = condRetPos;
+    }
+
+    return new JavaSourcePosition(sourcePosition, location.declaringType(), method, lambdaOrdinal);
+  }
+
+  @Nullable
+  public static SourcePosition adjustPositionForConditionalReturn(DebugProcess debugProcess, Location location, PsiFile file, int lineNumber) {
+    if (debugProcess.getVirtualMachineProxy().canGetBytecodes()) {
+      PsiElement ret = JavaLineBreakpointType.findSingleConditionalReturn(file, lineNumber);
       if (ret != null) {
-        byte[] bytecodes = method.bytecodes();
+        byte[] bytecodes = DebuggerUtilsEx.getMethod(location).bytecodes();
         int bytecodeOffs = Math.toIntExact(location.codeIndex());
         // Implicit return instruction at the end of bytecode should not be treated as conditional return.
         // (Note that we also relay on the fact that all return instructions have no operands.)
         if (0 <= bytecodeOffs && bytecodeOffs < bytecodes.length - 1) {
           int opcode = bytecodes[bytecodeOffs] & 0xFF;
           if (Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
-            sourcePosition = SourcePosition.createFromOffset(sourcePosition.getFile(), ret.getTextOffset());
+            return SourcePosition.createFromOffset(file, ret.getTextOffset());
           }
         }
       }
     }
-
-    return new JavaSourcePosition(sourcePosition, location.declaringType(), method, lambdaOrdinal);
+    return null;
   }
 
   public static class JavaSourcePosition extends RemappedSourcePosition {
