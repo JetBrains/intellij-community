@@ -37,7 +37,7 @@ object VFSHealthCheckerConstants {
                                                                   1.hours.inWholeMilliseconds.toInt())
 
   @JvmStatic
-  val LOG : Logger = FSRecords.LOG
+  val LOG: Logger = FSRecords.LOG
 }
 
 
@@ -62,6 +62,9 @@ class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
           }
         }
       }
+    }
+    else {
+      LOG.info("VFS health-check disabled")
     }
   }
 
@@ -151,7 +154,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val allRoots = IntOpenHashSet(impl.listRoots())
     return report.apply {
       val invalidFlagsMask = PersistentFS.Flags.getAllValidFlags().inv()
-      for (fileId in FSRecords.MIN_REGULAR_FILE_ID .. maxAllocatedID) {
+      for (fileId in FSRecords.MIN_REGULAR_FILE_ID..maxAllocatedID) {
         try {
           val nameId = fileRecords.getNameId(fileId)
           val parentId = fileRecords.getParent(fileId)
@@ -198,7 +201,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             }
             try {
               //just ensure storage has the record 
-              contentsStorage.readStream(contentId).use { _ ->  }
+              contentsStorage.readStream(contentId).use { _ -> }
             }
             catch (e: IOException) {
               unresolvableContentIds++
