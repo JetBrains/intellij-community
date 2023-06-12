@@ -498,18 +498,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
     long deadline = System.currentTimeMillis() + millis;
     try {
-      Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        try {
-          return myPassExecutorService.waitFor(millis);
-        }
-        catch (Throwable e) {
-          throw new RuntimeException(e);
-        }
-      });
+      Future<?> passesFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> myPassExecutorService.waitFor(System.currentTimeMillis() - deadline));
       do {
         assertOnModification.set(true);
         try {
-          future.get(50, TimeUnit.MILLISECONDS);
+          passesFuture.get(50, TimeUnit.MILLISECONDS);
         }
         catch (TimeoutException ignored) {
         }
@@ -517,6 +510,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           assertOnModification.set(false); //do not assert during dispatchAllEvents() because that's where all quick fixes happen
         }
       } while (runWhile.compute() && System.currentTimeMillis() < deadline);
+      // it will wait for the async spawned processes
+      Future<?> externalPassFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        ExternalAnnotatorManager.getInstance().waitForAllExecuted(deadline-System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+        return null;
+      });
+      externalPassFuture.get(1_000+deadline-System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     }
     catch (InterruptedException ignored) {
     }

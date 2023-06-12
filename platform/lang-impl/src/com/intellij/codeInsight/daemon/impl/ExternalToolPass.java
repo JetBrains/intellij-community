@@ -147,7 +147,9 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
       @Override
       public void setRejected() {
         super.setRejected();
-        doFinish(convertToHighlights());
+        if (!myProject.isDisposed()) { // Project close in EDT might call MergeUpdateQueue.dispose which calls setRejected in EDT
+          doFinish(convertToHighlights());
+        }
       }
 
       @Override
@@ -175,6 +177,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
 
   @Override
   public @NotNull List<HighlightInfo> getInfos() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
       ExternalAnnotatorManager.getInstance().waitForAllExecuted(1, TimeUnit.MINUTES);
     }
