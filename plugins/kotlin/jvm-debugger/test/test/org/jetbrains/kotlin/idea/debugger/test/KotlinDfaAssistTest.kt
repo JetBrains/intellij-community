@@ -118,6 +118,19 @@ class KotlinDfaAssistTest : DfaAssistTest() {
                     test(5)
                 }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
     }
+  
+    fun testUnreachableTailContract() {
+        doTest("""fun test(x: Int) {
+                        <caret>check(x <= 0/*FALSE*/) { "" }
+                        /*unreachable_start*/println()
+                        println()
+                        println()
+                        println()/*unreachable_end*/
+                    }
+                    fun main() {
+                        test(5)
+                    }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
+    }
 
     fun testUnreachableTailInLambda() {
         doTest("""fun test(x: Int) {

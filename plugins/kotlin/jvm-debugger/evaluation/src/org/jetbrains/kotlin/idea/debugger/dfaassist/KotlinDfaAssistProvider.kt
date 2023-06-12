@@ -136,12 +136,12 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
             val dfType = state.getDfType(value)
             var psi = when (anchor) {
                 is KotlinAnchor.KotlinExpressionAnchor -> {
-                    if (shouldTrackExpressionValue(anchor.expression) &&
-                        !KotlinConstantConditionsInspection.shouldSuppress(dfType, anchor.expression) &&
-                        dfType.tryNegate()
-                            ?.let { negated -> KotlinConstantConditionsInspection.shouldSuppress(negated, anchor.expression) } == false
-                    ) anchor.expression
-                    else return
+                    if (!shouldTrackExpressionValue(anchor.expression)) return
+                    if (KotlinConstantConditionsInspection.shouldSuppress(dfType, anchor.expression) && 
+                        dfType.tryNegate()?.let { negated -> KotlinConstantConditionsInspection.shouldSuppress(negated, anchor.expression) } != false) {
+                        return
+                    }
+                    anchor.expression
                 }
 
                 is KotlinAnchor.KotlinWhenConditionAnchor -> anchor.condition
