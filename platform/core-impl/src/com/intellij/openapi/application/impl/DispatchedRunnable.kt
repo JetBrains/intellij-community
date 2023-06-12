@@ -49,7 +49,9 @@ internal class DispatchedRunnable(job: Job, runnable: Runnable) : ContextAwareRu
     else {
       // Reschedule the original runnable ignoring the modality state
       // to give the cancelled coroutine a chance to clean its resources and complete.
-      ApplicationManager.getApplication().invokeLater(ContextAwareRunnable(runnable::run), ModalityState.any(), Conditions.alwaysFalse<Nothing?>())
+      ApplicationManager.getApplication().invokeLater(
+        ContextAwareRunnable(runnable::run), ModalityState.any(), Conditions.alwaysFalse<Nothing?>()
+      )
     }
   }
 }
