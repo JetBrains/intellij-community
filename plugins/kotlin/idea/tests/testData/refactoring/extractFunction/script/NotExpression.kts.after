@@ -1,0 +1,5 @@
+__dummyTestFun__()
+
+fun __dummyTestFun__() {
+    val y = 2 + 3
+}
