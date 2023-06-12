@@ -18,9 +18,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -339,38 +341,45 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     // display all import activities using the same build progress
     MavenSyncConsole.startTransaction(myProject)
     try {
+      var readingResult: MavenProjectsTreeUpdateResult? = null
       withBackgroundProgress(myProject, MavenProjectBundle.message("maven.reading"), false) {
         runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
           withRawProgressReporter {
             coroutineToIndicator {
-              readMavenProjects(spec, filesToUpdate, filesToDelete)
+              readingResult = readMavenProjects(spec, filesToUpdate, filesToDelete)
             }
           }
         }
       }
+      if (spec.isForceResolve) {
+        val console = syncConsole
+        console.startImport(myProgressListener, spec)
+        val activity = MavenImportStats.startImportActivity(myProject)
+        fireImportAndResolveScheduled(spec)
+
+        val projectsToResolve = collectProjectsToResolve(readingResult!!)
+
+        resolveAndImport(projectsToResolve)
+
+        activity.finished()
+        MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
+      }
+    }
+    catch (e: Throwable) {
+      logImportErrorIfNotControlFlow(e)
     }
     finally {
-      if (spec.isForceResolve) {
-        resolveAndImportMavenProjects(spec)
-      }
-      else {
-        MavenSyncConsole.finishTransaction(myProject)
-      }
+      MavenSyncConsole.finishTransaction(myProject)
     }
   }
 
   private fun readMavenProjects(spec: MavenImportSpec,
                                 filesToUpdate: MutableList<VirtualFile>,
-                                filesToDelete: MutableList<VirtualFile>) {
-    try {
-      val indicator = ProgressManager.getGlobalProgressIndicator()
-      projectsTree.delete(filesToDelete, generalSettings, indicator)
-      projectsTree.update(filesToUpdate, spec.isForceReading, generalSettings, indicator)
-      //generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
-    }
-    catch (e: Throwable) {
-      logImportErrorIfNotControlFlow(e)
-    }
+                                filesToDelete: MutableList<VirtualFile>): MavenProjectsTreeUpdateResult {
+    val indicator = ProgressManager.getGlobalProgressIndicator()
+    val deleted = projectsTree.delete(filesToDelete, generalSettings, indicator)
+    val updated = projectsTree.update(filesToUpdate, spec.isForceReading, generalSettings, indicator)
+    return deleted + updated
   }
 
   override fun updateAllMavenProjectsSync(spec: MavenImportSpec) {
@@ -409,36 +418,81 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     // display all import activities using the same build progress
     MavenSyncConsole.startTransaction(myProject)
     try {
+      var readingResult: MavenProjectsTreeUpdateResult? = null
       withBackgroundProgress(myProject, MavenProjectBundle.message("maven.reading"), false) {
         runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
           withRawProgressReporter {
             coroutineToIndicator {
-              readAllMavenProjects(spec)
+              readingResult = readAllMavenProjects(spec)
             }
           }
         }
       }
-    }
-    finally {
       if (spec.isForceResolve) {
-        resolveAndImportMavenProjects(spec)
-      }
-      else {
-        MavenSyncConsole.finishTransaction(myProject)
-      }
-    }
-  }
+        val console = syncConsole
+        console.startImport(myProgressListener, spec)
+        val activity = MavenImportStats.startImportActivity(myProject)
+        fireImportAndResolveScheduled(spec)
 
-  private fun readAllMavenProjects(spec: MavenImportSpec) {
-    try {
-      val indicator = ProgressManager.getGlobalProgressIndicator()
-      checkOrInstallMavenWrapper(project)
-      projectsTree.updateAll(spec.isForceReading, generalSettings, indicator)
-      //generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
+        val projectsToResolve = collectProjectsToResolve(readingResult!!)
+
+        resolveAndImport(projectsToResolve)
+
+        activity.finished()
+        MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
+      }
     }
     catch (e: Throwable) {
       logImportErrorIfNotControlFlow(e)
     }
+    finally {
+      MavenSyncConsole.finishTransaction(myProject)
+    }
+  }
+
+  private fun readAllMavenProjects(spec: MavenImportSpec): MavenProjectsTreeUpdateResult {
+    val indicator = ProgressManager.getGlobalProgressIndicator()
+    checkOrInstallMavenWrapper(project)
+    return projectsTree.updateAll(spec.isForceReading, generalSettings, indicator)
+  }
+
+  private fun collectProjectsToResolve(readingResult: MavenProjectsTreeUpdateResult): Collection<MavenProject> {
+    val updated = readingResult.updated
+    val deleted = readingResult.deleted
+
+    val updatedProjects = updated.map { it.key }
+
+    // TODO: toImport is not needed
+    // import only updated projects and dependents of them (we need to update faced-deps, packaging etc);
+    val toImport = updated.toMutableMap()
+
+    for (eachDependent in projectsTree.getDependentProjects(updatedProjects)) {
+      toImport[eachDependent] = MavenProjectChanges.DEPENDENCIES
+    }
+
+    // resolve updated, theirs dependents, and dependents of deleted
+    val toResolve: MutableSet<MavenProject> = HashSet(updatedProjects)
+    toResolve.addAll(projectsTree.getDependentProjects(ContainerUtil.concat(updatedProjects, deleted)))
+
+    // do not try to resolve projects with syntactic errors
+    val it = toResolve.iterator()
+    while (it.hasNext()) {
+      val each = it.next()
+      if (each.hasReadingProblems()) {
+        syncConsole.notifyReadingProblems(each.file)
+        it.remove()
+      }
+    }
+
+    if (toImport.isEmpty() && !deleted.isEmpty()) {
+      val project = ObjectUtils.chooseNotNull(toResolve.firstOrNull(), nonIgnoredProjects.firstOrNull())
+      if (project != null) {
+        toImport[project] = MavenProjectChanges.ALL
+        toResolve.add(project)
+      }
+    }
+
+    return toResolve
   }
 
   private fun logImportErrorIfNotControlFlow(e: Throwable) {

@@ -32,7 +32,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
@@ -436,7 +435,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
         unscheduleAllTasks(deleted);
 
-        List<MavenProject> updatedProjects = MavenUtil.collectFirsts(updated);
+/*        List<MavenProject> updatedProjects = MavenUtil.collectFirsts(updated);
 
         // import only updated projects and dependents of them (we need to update faced-deps, packaging etc);
         List<Pair<MavenProject, MavenProjectChanges>> toImport = new ArrayList<>(updated);
@@ -469,7 +468,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
         }
 
         //scheduleForNextImport(toImport);
-        myProjectsToResolve.addAll(toResolve);
+        myProjectsToResolve.addAll(toResolve);*/
       }
     }, this);
   }

@@ -15,7 +15,6 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder;
 import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder;
 import org.junit.Assume;
@@ -70,7 +69,7 @@ public class MavenModuleBuilderSameFolderAsParentTest extends MavenMultiVersionI
       return;
     }
 
-    myProjectsManager.resolveAndImportMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
+    myProjectsManager.updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
   }
 
   @Test
