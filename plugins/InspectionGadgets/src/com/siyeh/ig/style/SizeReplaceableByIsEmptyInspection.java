@@ -122,7 +122,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
       if (module == null) return false;
       LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
       LanguageLevel lastIncompatibleLanguageLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(method, languageLevel);
-      return lastIncompatibleLanguageLevel == null || languageLevel.isAtLeast(lastIncompatibleLanguageLevel);
+      return lastIncompatibleLanguageLevel == null || lastIncompatibleLanguageLevel.isLessThan(languageLevel);
     }
 
     @Override
