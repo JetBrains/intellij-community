@@ -130,6 +130,11 @@ public class DarculaButtonPainter implements Border, UIResource {
     if (isGotItButton(c)) {
       return JBInsets.emptyInsets().asUIResource();
     }
+    Insets customInsets = getCustomButtonInsets(c);
+    if (customInsets != null) {
+      return customInsets;
+    }
+
     return isSmallVariant(c) ? JBInsets.create(1, 2).asUIResource() : new JBInsets(3).asUIResource();
   }
 

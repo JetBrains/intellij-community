@@ -19,6 +19,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -86,6 +87,15 @@ public class DarculaButtonUI extends BasicButtonUI {
 
   public static boolean isContrastGotIt(Component c) {
     return c instanceof AbstractButton button && button.getClientProperty("gotItButton.contrast") == Boolean.TRUE;
+  }
+
+  public static @Nullable Insets getCustomButtonInsets(Component c) {
+    if (!(c instanceof AbstractButton b)) return null;
+
+    Object maybeInsets = b.getClientProperty("customButtonInsets");
+    if (!(maybeInsets instanceof Insets)) return null;
+
+    return ((Insets)maybeInsets);
   }
 
   @Override
