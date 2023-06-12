@@ -14,9 +14,13 @@ class KotlinMavenImportListener(private val project: Project) : MavenImportListe
     override fun importFinished(importedProjects: Collection<MavenProject>, newModules: List<Module>) {
         runInEdt {
             runWriteAction {
-                KotlinCommonCompilerArgumentsHolder.getInstance(project).updateLanguageAndApi(project)
+                if (!project.isDisposed) {
+                    KotlinCommonCompilerArgumentsHolder.getInstance(project).updateLanguageAndApi(project)
+                }
             }
-            showNewKotlinCompilerAvailableNotificationIfNeeded(project)
+            if (!project.isDisposed) {
+                showNewKotlinCompilerAvailableNotificationIfNeeded(project)
+            }
         }
     }
 }
