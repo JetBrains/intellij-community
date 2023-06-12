@@ -200,7 +200,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(composite -> {
     if (isShowing()) repaint();
   });
-  private boolean myHovered = false;
   @NotNull private final EventDispatcher<EditorGutterListener> myEditorGutterListeners = EventDispatcher.create(EditorGutterListener.class);
   private int myHoveredFreeMarkersLine = -1;
   @Nullable private GutterIconRenderer myCurrentHoveringGutterRenderer;
@@ -344,17 +343,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   public void reinitSettings(boolean updateGutterSize) {
-    updateFoldingOutlineVisibility();
     updateSize(false, updateGutterSize);
     repaint();
-  }
-
-  private void updateFoldingOutlineVisibility() {
-    myAlphaContext.setVisible(
-      !ExperimentalUI.isNewUI() ||
-      myHovered ||
-      !EditorSettingsExternalizable.getInstance().isFoldingOutlineShownOnlyOnHover()
-    );
   }
 
   @Override
@@ -2801,8 +2791,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     @Override
     protected void hoverChanged(@NotNull Component component, boolean hovered) {
       if (component instanceof EditorGutterComponentImpl gutter && ExperimentalUI.isNewUI()) {
-        gutter.myHovered = hovered;
-        gutter.updateFoldingOutlineVisibility();
+        gutter.myAlphaContext.setVisible(hovered);
       }
     }
   };
