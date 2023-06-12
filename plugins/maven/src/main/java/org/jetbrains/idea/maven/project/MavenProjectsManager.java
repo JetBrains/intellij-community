@@ -779,8 +779,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @ApiStatus.Internal
-  public AsyncPromise<Void> forceUpdateProjects() {
-    return (AsyncPromise<Void>)doScheduleUpdateProjects(List.of(), MavenImportSpec.EXPLICIT_IMPORT);
+  public void forceUpdateProjects() {
+    doScheduleUpdateProjects(List.of(), MavenImportSpec.EXPLICIT_IMPORT);
   }
 
   public AsyncPromise<Void> forceUpdateProjects(@NotNull Collection<MavenProject> projects) {
