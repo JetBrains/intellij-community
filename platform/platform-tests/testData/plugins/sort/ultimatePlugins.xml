@@ -915,12 +915,6 @@
     <depends>-com-intellij-javaee-</depends>
     <depends>com.intellij.modules.ultimate</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.clouds.cloudFoundry/META-INF/plugin.xml">
-    <id>-CloudFoundry-</id>
-    <name>Cloud Foundry</name>
-    <depends>-com-intellij-javaee-</depends>
-    <depends>-com-intellij-spring-</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.spring.batch/META-INF/plugin.xml">
     <id>-com-intellij-spring-batch-</id>
     <name>Spring Batch</name>
