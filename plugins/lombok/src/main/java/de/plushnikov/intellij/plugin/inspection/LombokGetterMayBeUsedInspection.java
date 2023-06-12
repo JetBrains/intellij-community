@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -192,9 +189,13 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
     ) {
       if (myHolder != null) {
         final LocalQuickFix fix = new LombokGetterMayBeUsedFix(Objects.requireNonNull(psiClass.getName()));
+        final PsiIdentifier psiClassNameIdentifier = psiClass.getNameIdentifier();
         myHolder.registerProblem(psiClass,
                                  LombokBundle.message("inspection.lombok.getter.may.be.used.display.class.message",
-                                                      psiClass.getName()), fix);
+                                                      psiClass.getName()),
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                 psiClassNameIdentifier != null ? psiClassNameIdentifier.getTextRangeInParent() : psiClass.getTextRange(),
+                                 fix);
       } else if (lombokGetterMayBeUsedFix != null) {
         lombokGetterMayBeUsedFix.effectivelyDoFix(psiClass, fieldsAndMethods, annotatedFields);
       }

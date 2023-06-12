@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-<warning descr="Class 'InstanceAndStaticFields' may use Lombok @Getter">public class InstanceAndStaticFields {
+public class <warning descr="Class 'InstanceAndStaticFields' may use Lombok @Getter">InstanceAndStaticFields</warning> {
   private static int staticField;
   private int instanceField;
 
@@ -11,4 +11,4 @@
   public int getInstanceField() {
     return instanceField;
   }
-}</warning>
+}
