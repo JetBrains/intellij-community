@@ -187,8 +187,10 @@ open class IdeRootPane internal constructor(frame: JFrame,
     glassPaneInitialized = true
 
     if (hideNativeLinuxTitle) {
-      WindowResizeListenerEx(glassPane, frame, JBUI.insets(4), null)
-        .install(parentDisposable)
+      WindowResizeListenerEx(glassPane, frame, JBUI.insets(4), null).apply {
+        install(parentDisposable)
+        setLeftMouseButtonOnly(true)
+      }
     }
 
     if (frame is IdeFrameImpl) {
