@@ -7,11 +7,13 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusVi
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.ui.ScrollPaneFactory
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRemoveReviewerAction
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
 import javax.swing.JComponent
+import javax.swing.JScrollPane
 
 internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
   private const val STATUSES_GAP = 10
@@ -22,7 +24,7 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
     reviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
-    return VerticalListPanel(STATUSES_GAP).apply {
+    val statuses = VerticalListPanel(STATUSES_GAP).apply {
       add(CodeReviewDetailsStatusComponentFactory.createCiComponent(scope, statusVm))
       add(CodeReviewDetailsStatusComponentFactory.createConflictsComponent(scope, statusVm.hasConflicts))
       add(CodeReviewDetailsStatusComponentFactory.createNeedReviewerComponent(scope, reviewFlowVm.reviewerReviews))
@@ -35,6 +37,12 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
         avatarKeyProvider = { reviewer -> reviewer },
         iconProvider = { iconKey, iconSize -> avatarIconsProvider.getIcon(iconKey, iconSize) }
       ))
+    }
+
+    return ScrollPaneFactory.createScrollPane(statuses, true).apply {
+      isOpaque = false
+      horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+      viewport.isOpaque = false
     }
   }
 }
