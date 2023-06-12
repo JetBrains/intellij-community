@@ -9,6 +9,7 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
+import com.intellij.idea.AppMode
 import com.intellij.internal.DebugAttachDetector
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
@@ -55,12 +56,12 @@ internal class IdeaFreezeReporter : PerformanceListener {
         }
       })
 
-      if (DEBUG || !PluginManagerCore.isRunningFromSources()) {
+      if (DEBUG || (!PluginManagerCore.isRunningFromSources() && !AppMode.isDevServer())) {
         reportUnfinishedFreezes()
       }
     }
 
-    if (!DEBUG && PluginManagerCore.isRunningFromSources() || !isEnabled(app)) {
+    if (!DEBUG && (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer()) || !isEnabled(app)) {
       throw ExtensionNotApplicableException.create()
     }
   }
