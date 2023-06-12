@@ -116,7 +116,8 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
       spec.withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
 
-      spec.withArtifact("maven-event-listener", "")
+      spec.withModule("intellij.maven.server.eventListener", relativeJarPath = "maven-event-listener.jar")
+
       spec.doNotCopyModuleLibrariesAutomatically(listOf(
         "intellij.maven.artifactResolver.common",
         "intellij.maven.artifactResolver.m3",
