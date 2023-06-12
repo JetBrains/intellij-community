@@ -33,6 +33,7 @@ import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.importing.MavenImportStats
+import org.jetbrains.idea.maven.importing.MavenImportStats.ImportingTask
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
@@ -427,18 +428,18 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   private suspend fun resolveAndImportMavenProjectsActivity(spec: MavenImportSpec,
-                                                            readingResult: MavenProjectsTreeUpdateResult?): List<Module> {
+                                                            readingResult: MavenProjectsTreeUpdateResult): List<Module> {
     if (spec.isForceResolve) {
       val console = syncConsole
       console.startImport(myProgressListener, spec)
-      val activity = MavenImportStats.startImportActivity(myProject)
+
       fireImportAndResolveScheduled(spec)
+      val projectsToResolve = collectProjectsToResolve(readingResult)
 
-      val projectsToResolve = collectProjectsToResolve(readingResult!!)
+      val result = runImportActivity(project, MavenUtil.SYSTEM_ID, ImportingTask::class.java) {
+        resolveAndImport(projectsToResolve)
+      }
 
-      val result = resolveAndImport(projectsToResolve)
-
-      activity.finished()
       MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
 
       return result
