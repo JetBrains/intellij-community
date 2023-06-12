@@ -179,12 +179,13 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     }
     PsiUtilCore.ensureValid(baseElement);
     PsiFile containingFile = baseElement.getContainingFile();
-    //sometimes decompiled files don't have documents, because these documents are associated with its binary files
-    if (PsiDocumentManager.getInstance(project).getDocument(containingFile) == null) {
-      containingFile = containingFile.getOriginalFile();
-    }
-    Editor editor = UtilKt.mockEditor(containingFile);
-    GotoData source = createDataForSource(Objects.requireNonNull(editor, "No document for " + containingFile), baseElement.getTextOffset(), baseElement);
+    //for compiled files a decompiled copy is analysed in the editor (see TextEditorBackgroundHighlighter.getPasses)
+    //but it's a non-physical copy with disabled events (see ClsFileImpl.getDecompiledPsiFile)
+    //which in turn means that no document can be found for such file - it's required to restore original file
+    //other non-physical copies should not be opened in the editor
+    PsiFile originalFile = containingFile.getOriginalFile();
+    Editor editor = UtilKt.mockEditor(originalFile);
+    GotoData source = createDataForSource(Objects.requireNonNull(editor, "No document for " + containingFile + "; original: " + originalFile), baseElement.getTextOffset(), baseElement);
     show(project, editor, containingFile, source, popup -> popup.show(new RelativePoint(e)));
   }
 
