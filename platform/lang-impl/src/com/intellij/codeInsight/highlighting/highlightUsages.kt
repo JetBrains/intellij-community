@@ -3,10 +3,14 @@
 
 package com.intellij.codeInsight.highlighting
 
+import com.intellij.find.FindBundle
 import com.intellij.find.FindManager
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.impl.FindManagerImpl
-import com.intellij.find.usages.api.*
+import com.intellij.find.usages.api.PsiUsage
+import com.intellij.find.usages.api.Usage
+import com.intellij.find.usages.api.UsageAccess
+import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildQuery
 import com.intellij.find.usages.impl.symbolSearchTarget
@@ -15,6 +19,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.model.psi.impl.targetSymbols
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -41,7 +46,9 @@ internal fun highlightUsages(project: Project, editor: Editor, file: PsiFile): B
 
 private fun highlightSymbolUsages(project: Project, editor: Editor, file: PsiFile, symbol: Symbol, clearHighlights: Boolean) {
   val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
-  val (readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges) = getUsageRanges(file, symbol) ?: return
+  val (readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges) = ActionUtil.underModalProgress(
+    project, FindBundle.message("progress.title.finding.usages")
+  ) { getUsageRanges(file, symbol) } ?: return
   HighlightUsagesHandler.highlightUsages(
     project, hostEditor,
     readRanges + readDeclarationRanges,
