@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
@@ -125,7 +125,7 @@ public final class XBreakpointUtil {
    * - if folded, checks if line breakpoints could be toggled inside folded text
    */
   @NotNull
-  public static Promise<XLineBreakpoint> toggleLineBreakpoint(@NotNull Project project,
+  public static Promise<@Nullable XLineBreakpoint> toggleLineBreakpoint(@NotNull Project project,
                                                               @NotNull XSourcePosition position,
                                                               @Nullable Editor editor,
                                                               boolean temporary,
