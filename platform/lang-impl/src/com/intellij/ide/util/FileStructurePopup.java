@@ -94,6 +94,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 
 /**
@@ -1141,20 +1142,23 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
 final class FileStructurePopupTimeTracker extends CounterUsagesCollector {
   private final static EventLogGroup GROUP = new EventLogGroup("file.structure.popup", 1);
-  private final static EventId1<Long> LIFE = GROUP.registerEvent("popup.disposed", new LongEventField("time"));
-  private final static EventId1<Long> SHOW = GROUP.registerEvent("data.shown", new LongEventField("time"));
-  private final static EventId1<Long> REBUILD = GROUP.registerEvent("data.filled", new LongEventField("time"));
+  private final static EventId1<Long> LIFE = GROUP.registerEvent("popup.disposed", EventFields.DurationMs);
+  private final static EventId1<Long> SHOW = GROUP.registerEvent("data.shown", EventFields.DurationMs);
+  private final static EventId1<Long> REBUILD = GROUP.registerEvent("data.filled", EventFields.DurationMs);
 
-  static void logRebuildTime(long elapsedTime) {
-    REBUILD.log(elapsedTime);
+  static void logRebuildTime(long elapsedTimeNanos) {
+    long elapsedTimesMs = TimeUnit.NANOSECONDS.toMillis(elapsedTimeNanos);
+    REBUILD.log(elapsedTimesMs);
   }
 
-  static void logShowTime(long elapsedTime) {
-    SHOW.log(elapsedTime);
+  static void logShowTime(long elapsedTimeNanos) {
+    long elapsedTimesMs = TimeUnit.NANOSECONDS.toMillis(elapsedTimeNanos);
+    SHOW.log(elapsedTimesMs);
   }
 
-  static void logPopupLifeTime(long elapsedTime) {
-    LIFE.log(elapsedTime);
+  static void logPopupLifeTime(long elapsedTimeNanos) {
+    long elapsedTimesMs = TimeUnit.NANOSECONDS.toMillis(elapsedTimeNanos);
+    LIFE.log(elapsedTimesMs);
   }
 
   @Override
