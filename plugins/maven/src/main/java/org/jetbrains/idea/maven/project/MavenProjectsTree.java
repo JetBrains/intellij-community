@@ -449,34 +449,34 @@ public final class MavenProjectsTree {
   }
 
   @ApiStatus.Internal
-  public void updateAll(boolean force, MavenGeneralSettings generalSettings, ProgressIndicator process) {
+  public MavenProjectsTreeUpdateResult updateAll(boolean force, MavenGeneralSettings generalSettings, ProgressIndicator process) {
     List<VirtualFile> managedFiles = getExistingManagedFiles();
     MavenExplicitProfiles explicitProfiles = getExplicitProfiles();
 
     MavenProjectReader projectReader = new MavenProjectReader(myProject);
-    update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, process);
+    var updated = update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, process);
 
     Collection<VirtualFile> obsoleteFiles = ContainerUtil.subtract(getRootProjectsFiles(), managedFiles);
-    delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, process);
+    var deleted = delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, process);
+
+    return updated.plus(deleted);
   }
 
   @ApiStatus.Internal
-  public void update(Collection<VirtualFile> files,
-                     boolean force,
-                     MavenGeneralSettings generalSettings,
-                     ProgressIndicator process) {
-    update(files, false, force, getExplicitProfiles(), new MavenProjectReader(myProject), generalSettings, process);
+  public MavenProjectsTreeUpdateResult update(Collection<VirtualFile> files,
+                                              boolean force,
+                                              MavenGeneralSettings generalSettings,
+                                              ProgressIndicator process) {
+    return update(files, false, force, getExplicitProfiles(), new MavenProjectReader(myProject), generalSettings, process);
   }
 
-  private void update(final Collection<VirtualFile> files,
-                      final boolean updateModules,
-                      final boolean forceRead,
-                      final MavenExplicitProfiles explicitProfiles,
-                      final MavenProjectReader projectReader,
-                      final MavenGeneralSettings generalSettings,
-                      final ProgressIndicator process) {
-    if (files.isEmpty()) return;
-
+  private MavenProjectsTreeUpdateResult update(Collection<VirtualFile> files,
+                                               boolean updateModules,
+                                               boolean forceRead,
+                                               MavenExplicitProfiles explicitProfiles,
+                                               MavenProjectReader projectReader,
+                                               MavenGeneralSettings generalSettings,
+                                               ProgressIndicator process) {
     UpdateContext updateContext = new UpdateContext();
 
     var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process, updateModules);
@@ -511,6 +511,8 @@ public final class MavenProjectsTree {
 
     updateExplicitProfiles();
     updateContext.fireUpdatedIfNecessary();
+
+    return updateContext.toUpdateResult();
   }
 
   private record UpdateSpec(VirtualFile mavenProjectFile, boolean forceRead) {
@@ -780,25 +782,21 @@ public final class MavenProjectsTree {
   }
 
   @ApiStatus.Internal
-  public void delete(List<VirtualFile> files,
-                     MavenGeneralSettings generalSettings,
-                     ProgressIndicator process) {
-    delete(new MavenProjectReader(myProject), files, getExplicitProfiles(), generalSettings, process);
+  public MavenProjectsTreeUpdateResult delete(List<VirtualFile> files, MavenGeneralSettings generalSettings, ProgressIndicator process) {
+    return delete(new MavenProjectReader(myProject), files, getExplicitProfiles(), generalSettings, process);
   }
 
-  private void delete(MavenProjectReader projectReader,
-                      Collection<VirtualFile> files,
-                      MavenExplicitProfiles explicitProfiles,
-                      MavenGeneralSettings generalSettings,
-                      ProgressIndicator process) {
-    if (files.isEmpty()) return;
-
+  private MavenProjectsTreeUpdateResult delete(MavenProjectReader projectReader,
+                                               Collection<VirtualFile> files,
+                                               MavenExplicitProfiles explicitProfiles,
+                                               MavenGeneralSettings generalSettings,
+                                               ProgressIndicator process) {
     UpdateContext updateContext = new UpdateContext();
 
     Set<MavenProject> inheritorsToUpdate = new HashSet<>();
     for (VirtualFile each : files) {
       MavenProject mavenProject = findProject(each);
-      if (mavenProject == null) return;
+      if (mavenProject == null) continue;
 
       inheritorsToUpdate.addAll(findInheritors(mavenProject));
       doDelete(findAggregator(mavenProject), mavenProject, updateContext);
@@ -819,6 +817,8 @@ public final class MavenProjectsTree {
     }
     updateExplicitProfiles();
     updateContext.fireUpdatedIfNecessary();
+
+    return updateContext.toUpdateResult();
   }
 
   private void doDelete(MavenProject aggregator, MavenProject project, UpdateContext updateContext) {
@@ -1312,6 +1312,10 @@ public final class MavenProjectsTree {
     public void deleted(MavenProject project) {
       updatedProjectsWithChanges.remove(project);
       deletedProjects.add(project);
+    }
+
+    public MavenProjectsTreeUpdateResult toUpdateResult() {
+      return new MavenProjectsTreeUpdateResult(mapToListWithPairs(), new ArrayList<>(deletedProjects));
     }
 
     public void fireUpdatedIfNecessary() {
