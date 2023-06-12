@@ -164,6 +164,13 @@ public interface JBPopup extends Disposable, LightweightWindow {
 
   void setCaption(@NotNull @NlsContexts.PopupTitle String title);
 
+  void setCaptionIcon(@Nullable Icon icon);
+
+  /**
+   * Icon horizontal position relative to the title (left or right)
+   */
+  void setCaptionIconPosition(boolean left);
+
   boolean isPersistent();
 
   boolean isModalContext();
