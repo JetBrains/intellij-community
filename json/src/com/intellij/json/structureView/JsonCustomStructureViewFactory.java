@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.structureView;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
  * the behaviour is undefined and can be changed by `order` option in plugin.xml.
  * Therefore, there is no guarantee that the expected builder will be returned every time.
  */
-@ApiStatus.Internal
 public interface JsonCustomStructureViewFactory {
   ExtensionPointName<JsonCustomStructureViewFactory> EP_NAME = ExtensionPointName.create("com.intellij.json.customStructureViewFactory");
 
