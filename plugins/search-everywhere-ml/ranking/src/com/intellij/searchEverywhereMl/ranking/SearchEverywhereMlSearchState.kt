@@ -26,9 +26,7 @@ internal class SearchEverywhereMlSearchState(
                                                                                            searchScope, isSearchEverywhere)
   private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
 
-  private val model: SearchEverywhereRankingModel by lazy {
-    SearchEverywhereRankingModel(modelProvider.getModel(tabId))
-  }
+  private val model: SearchEverywhereRankingModel by lazy { modelProvider.getModel(tabId) }
   fun getElementFeatures(elementId: Int?,
                          element: Any,
                          contributor: SearchEverywhereContributor<*>,
@@ -93,7 +91,7 @@ internal class SearchEverywhereMlSearchState(
       else -> throw IllegalArgumentException("Unsupported contributorId: $contributorId")
     }
 
-    return SearchEverywhereRankingModel(modelProvider.getModel(tabId))
+    return modelProvider.getModel(tabId)
   }
 
   fun getMLWeight(context: SearchEverywhereMLContextInfo,

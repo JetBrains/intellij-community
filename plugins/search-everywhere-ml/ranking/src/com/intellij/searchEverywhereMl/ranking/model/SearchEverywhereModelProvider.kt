@@ -2,15 +2,14 @@ package com.intellij.searchEverywhereMl.ranking.model
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.internal.ml.DecisionFunction
 
 class SearchEverywhereModelProvider {
-  private val cache: Cache<String, DecisionFunction> = Caffeine.newBuilder().maximumSize(4).build()
+  private val cache: Cache<String, SearchEverywhereRankingModel> = Caffeine.newBuilder().maximumSize(4).build()
 
-  fun getModel(tabId: String): DecisionFunction {
+  internal fun getModel(tabId: String): SearchEverywhereRankingModel {
     return cache.get(tabId) {
       val loader = SearchEverywhereMLRankingModelLoader.getForTab(tabId)
-      return@get loader.loadModel()
+      return@get SearchEverywhereRankingModel(loader.loadModel())
     }
   }
 }
