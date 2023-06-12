@@ -486,10 +486,6 @@ class CombinedDiffViewer(
   internal fun contentChanged() {
     combinedEditorSettingsAction.installGutterPopup()
     combinedEditorSettingsAction.applyDefaults()
-    editors.forEach { editor ->
-      //editor.settings.additionalLinesCount = 5
-      //(editor as? EditorEx)?.setVerticalScrollbarVisible(false)
-    }
   }
 
   private val foldingModels: List<FoldingModelSupport>
