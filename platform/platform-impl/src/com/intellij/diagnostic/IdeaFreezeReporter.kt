@@ -107,6 +107,11 @@ internal class IdeaFreezeReporter : PerformanceListener {
           super.stop()
           EP_NAME.forEachExtensionSafe(FreezeProfiler::stop)
         }
+
+        override suspend fun stopDumpingThreads() {
+          super.stopDumpingThreads()
+          EP_NAME.forEachExtensionSafe(FreezeProfiler::stop)
+        }
       }
       EP_NAME.forEachExtensionSafe { it.start(reportDir) }
     }
