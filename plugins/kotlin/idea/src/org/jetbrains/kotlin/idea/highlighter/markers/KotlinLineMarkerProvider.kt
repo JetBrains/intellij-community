@@ -194,8 +194,6 @@ private fun isImplementsAndNotOverrides(
 ): Boolean = descriptor.modality != Modality.ABSTRACT && overriddenMembers.all { it.modality == Modality.ABSTRACT }
 
 private fun collectSuperDeclarationMarkers(declaration: KtDeclaration, result: LineMarkerInfos) {
-    if (!(KotlinLineMarkerOptions.implementingOption.isEnabled || KotlinLineMarkerOptions.overridingOption.isEnabled)) return
-
     assert(declaration is KtNamedFunction || declaration is KtProperty || declaration is KtParameter)
     declaration as KtNamedDeclaration // implied by assert
 
@@ -212,6 +210,8 @@ private fun collectSuperDeclarationMarkers(declaration: KtDeclaration, result: L
     // clearing the whole BindingTrace.
 
     val gutter = if (implements) KotlinLineMarkerOptions.implementingOption else KotlinLineMarkerOptions.overridingOption
+    if (!gutter.isEnabled) return
+
     val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
         anchor,
         anchor.textRange,
