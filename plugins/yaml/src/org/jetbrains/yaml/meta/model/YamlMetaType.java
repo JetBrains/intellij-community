@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,12 +28,17 @@ import java.util.stream.Collectors;
 public abstract class YamlMetaType {
   @NotNull
   private final String myTypeName;
-  @NotNull
+  @Nullable
   private String myDisplayName;
+
+  protected YamlMetaType(@NonNls @NotNull String typeName, @NonNls @NotNull String displayName) {
+    myTypeName = typeName;
+    myDisplayName = displayName;
+  }
 
   protected YamlMetaType(@NonNls @NotNull String typeName) {
     myTypeName = typeName;
-    myDisplayName = typeName;
+    myDisplayName = null;
   }
 
   @NotNull
@@ -44,7 +50,7 @@ public abstract class YamlMetaType {
   @NotNull
   @Contract(pure = true)
   public String getDisplayName() {
-    return myDisplayName;
+    return myDisplayName == null ? myTypeName : myDisplayName;
   }
 
   @NotNull
@@ -53,7 +59,17 @@ public abstract class YamlMetaType {
     return AllIcons.Json.Object;
   }
 
-  public void setDisplayName(@NonNls @NotNull final String displayName) {
+  /**
+   * @deprecated initialise the {@code displayName} via constructor instead.
+   */
+  @Deprecated(forRemoval = true)
+  public void setDisplayName(@NonNls @NotNull String displayName) {
+    if (myDisplayName != null) {
+      Logger.getInstance(YamlMetaType.class)
+        .error("reinitialising 'myDisplayName' with value '" + displayName + "', previous value: '" + myDisplayName + "'. " +
+               "Please avoid calling the `setDisplayName` method out of initialisation step, or better switch to constructor " +
+               "'YamlMetaType(String typeName, String displayName)' for initialisation");
+    }
     myDisplayName = displayName;
   }
 
