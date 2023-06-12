@@ -379,7 +379,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    */
   protected @Nullable Function<TargetEnvironment, String> getPythonExecutionWorkingDir(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
     // the following working directory is located on the local machine
-    String workingDir = myConfig.getWorkingDirectory();
+    String workingDir = myConfig.getWorkingDirectorySafe();
     if (!StringUtil.isEmptyOrSpaces(workingDir)) {
       return getTargetPath(targetEnvironmentRequest, Path.of(workingDir));
     }
