@@ -4,6 +4,7 @@ package de.plushnikov.intellij.plugin.inspection;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -17,7 +18,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -56,7 +60,8 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
         if (annotation != null) {
           if (!annotation.getAttributes().isEmpty()) {
             isGetterAtClassLevel = false;
-          } else {
+          }
+          else {
             annotatedFields.add(field);
           }
           break;
@@ -73,9 +78,10 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
         }
       }
       List<Pair<PsiField, PsiMethod>> allCandidates = new ArrayList<>(staticCandidates);
-      if (isGetterAtClassLevel && (!instanceCandidates.isEmpty() || !annotatedFields.isEmpty()) ) {
+      if (isGetterAtClassLevel && (!instanceCandidates.isEmpty() || !annotatedFields.isEmpty())) {
         warnOrFix(psiClass, instanceCandidates, annotatedFields);
-      } else {
+      }
+      else {
         allCandidates.addAll(instanceCandidates);
       }
       for (Pair<PsiField, PsiMethod> candidate : allCandidates) {
@@ -114,17 +120,18 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
           || !method.isWritable()) {
         return false;
       }
-      final boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
+
       final String methodName = method.getName();
       final boolean isBooleanType = PsiTypes.booleanType().equals(returnType);
-      if ((isBooleanType ? !methodName.startsWith("is") : !methodName.startsWith("get"))
-          || methodName.length() == 3
-          || Character.isDigit(methodName.charAt(3))) {
+      if (isBooleanType ? !methodName.startsWith("is") : !methodName.startsWith("get")) {
         return false;
       }
-      final String fieldName = isBooleanType
-                               ? methodName.substring(2, 3).toLowerCase(Locale.ROOT) + methodName.substring(3)
-                                 : methodName.substring(3, 4).toLowerCase(Locale.ROOT) + methodName.substring(4);
+
+      final String fieldName = StringUtil.getPropertyName(methodName);
+      if (StringUtil.isEmpty(fieldName)) {
+        return false;
+      }
+
       if (method.getBody() == null) {
         return false;
       }
@@ -149,20 +156,19 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
       if (qualifier != null) {
         if (thisExpression == null) {
           return false;
-        } else if (thisExpression.getQualifier() != null) {
+        }
+        else if (thisExpression.getQualifier() != null) {
           if (!thisExpression.getQualifier().isReferenceTo(psiClass)) {
             return false;
           }
         }
       }
       final @Nullable String identifier = fieldRef.getReferenceName();
-      if (identifier == null) {
+      if (!fieldName.equals(identifier) && !StringUtil.capitalize(fieldName).equals(identifier)) {
         return false;
       }
-      if (!identifier.equals(fieldName)
-          && !identifier.equals(fieldName.substring(0, 1).toUpperCase(Locale.ROOT) + fieldName.substring(1))) {
-        return false;
-      }
+
+      final boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
       final PsiField field = psiClass.findFieldByName(identifier, false);
       if (field == null
           || !field.isWritable()
@@ -172,7 +178,8 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
       }
       if (isMethodStatic) {
         staticCandidates.add(Pair.pair(field, method));
-      } else {
+      }
+      else {
         instanceCandidates.add(Pair.pair(field, method));
       }
       return true;
@@ -192,7 +199,8 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  psiClassNameIdentifier != null ? psiClassNameIdentifier.getTextRangeInParent() : psiClass.getTextRange(),
                                  fix);
-      } else if (myApplyFix) {
+      }
+      else if (myApplyFix) {
         LombokGetterMayBeUsedFix.effectivelyDoFix(psiClass, fieldsAndMethods, annotatedFields);
       }
     }
@@ -202,8 +210,9 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
         final LocalQuickFix fix = new LombokGetterMayBeUsedFix(field.getName());
         myHolder.registerProblem(method,
                                  LombokBundle.message("inspection.lombok.getter.may.be.used.display.field.message",
-                                                                 field.getName()), fix);
-      } else if (myApplyFix) {
+                                                      field.getName()), fix);
+      }
+      else if (myApplyFix) {
         LombokGetterMayBeUsedFix.effectivelyDoFix(field, method);
       }
     }
@@ -235,7 +244,8 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiMethod) {
         new LombokGetterMayBeUsedVisitor(null, true).visitMethodForFix((PsiMethod)element);
-      } else if (element instanceof PsiClass) {
+      }
+      else if (element instanceof PsiClass) {
         new LombokGetterMayBeUsedVisitor(null, true).visitClass((PsiClass)element);
       }
     }
@@ -247,7 +257,7 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
       }
       Project project = field.getProject();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiAnnotation annotation = factory.createAnnotationFromText("@"+LombokClassNames.GETTER, field);
+      final PsiAnnotation annotation = factory.createAnnotationFromText("@" + LombokClassNames.GETTER, field);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotation);
       modifierList.addAfter(annotation, null);
       removeMethodAndMoveJavaDoc(field, method);
@@ -262,7 +272,7 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
         removeMethodAndMoveJavaDoc(field, method);
       }
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiAnnotation newAnnotation = factory.createAnnotationFromText("@"+LombokClassNames.GETTER, aClass);
+      final PsiAnnotation newAnnotation = factory.createAnnotationFromText("@" + LombokClassNames.GETTER, aClass);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(newAnnotation);
       final PsiModifierList modifierList = aClass.getModifierList();
       if (modifierList == null) {
@@ -295,14 +305,16 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
         if (fieldJavaDoc == null) {
           if (javaDocGetterText.isEmpty()) {
             fieldJavaDoc = factory.createDocCommentFromText("/**\n*/");
-          } else {
+          }
+          else {
             fieldJavaDoc = factory.createDocCommentFromText("/**\n* -- GETTER --\n* " + javaDocGetterText + "\n*/");
           }
           for (PsiDocTag returnTag : returnTags) {
             fieldJavaDoc.add(returnTag);
           }
           field.getParent().addBefore(fieldJavaDoc, field);
-        } else {
+        }
+        else {
           @NotNull PsiElement @NotNull [] fieldJavaDocChildren = Arrays.stream(fieldJavaDoc.getChildren())
             .filter(e -> e instanceof PsiDocToken)
             .toArray(PsiElement[]::new);
