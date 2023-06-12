@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -100,54 +101,51 @@ final class LineMarkersUtil {
     LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer<?>)info.createGutterRenderer();
 
     RangeHighlighterEx highlighter = toReuse == null ? null : toReuse.pickupHighlighterFromGarbageBin(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX);
-    boolean newHighlighter = false;
     if (highlighter == null) {
-      newHighlighter = true;
       highlighter = markupModel.addRangeHighlighterAndChangeAttributes(
         null, info.startOffset, info.endOffset,
         HighlighterLayer.ADDITIONAL_SYNTAX, HighlighterTargetArea.LINES_IN_RANGE, false,
-        markerEx -> {
-          markerEx.setGutterIconRenderer(newRenderer);
-          markerEx.setLineSeparatorColor(info.separatorColor);
-          markerEx.setLineSeparatorPlacement(info.separatorPlacement);
-
-          markerEx.putUserData(LINE_MARKER_INFO, info);
-        });
+        changeAttributes(info, true, newRenderer, true, true));
 
       MarkupEditorFilter editorFilter = info.getEditorFilter();
       if (editorFilter != MarkupEditorFilter.EMPTY) {
         highlighter.setEditorFilter(editorFilter);
       }
     }
-
-    if (!newHighlighter) {
-      highlighter.putUserData(LINE_MARKER_INFO, info);
-
+    else {
       LineMarkerInfo.LineMarkerGutterIconRenderer<?> oldRenderer = highlighter.getGutterIconRenderer() instanceof LineMarkerInfo.LineMarkerGutterIconRenderer ? (LineMarkerInfo.LineMarkerGutterIconRenderer<?>)highlighter.getGutterIconRenderer() : null;
       boolean rendererChanged = newRenderer == null || !newRenderer.equals(oldRenderer);
       boolean lineSeparatorColorChanged = !Comparing.equal(highlighter.getLineSeparatorColor(), info.separatorColor);
       boolean lineSeparatorPlacementChanged = !Comparing.equal(highlighter.getLineSeparatorPlacement(), info.separatorPlacement);
 
       if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged) {
-        markupModel.changeAttributesInBatch(highlighter, markerEx -> {
-          if (rendererChanged) {
-            markerEx.setGutterIconRenderer(newRenderer);
-          }
-          if (lineSeparatorColorChanged) {
-            markerEx.setLineSeparatorColor(info.separatorColor);
-          }
-          if (lineSeparatorPlacementChanged) {
-            markerEx.setLineSeparatorPlacement(info.separatorPlacement);
-          }
-        });
+        markupModel.changeAttributesInBatch(highlighter, changeAttributes(info, rendererChanged, newRenderer, lineSeparatorColorChanged, lineSeparatorPlacementChanged));
       }
     }
+    highlighter.putUserData(LINE_MARKER_INFO, info);
     info.highlighter = highlighter;
   }
 
-  static void addLineMarkerToEditorIncrementally(@NotNull Project project,
-                                                 @NotNull Document document,
-                                                 @NotNull LineMarkerInfo<?> marker) {
+  @NotNull
+  private static Consumer<RangeHighlighterEx> changeAttributes(@NotNull LineMarkerInfo<?> info,
+                                                               boolean rendererChanged,
+                                                               LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer,
+                                                               boolean lineSeparatorColorChanged,
+                                                               boolean lineSeparatorPlacementChanged) {
+    return markerEx -> {
+      if (rendererChanged) {
+        markerEx.setGutterIconRenderer(newRenderer);
+      }
+      if (lineSeparatorColorChanged) {
+        markerEx.setLineSeparatorColor(info.separatorColor);
+      }
+      if (lineSeparatorPlacementChanged) {
+        markerEx.setLineSeparatorPlacement(info.separatorPlacement);
+      }
+    };
+  }
+
+  static void addLineMarkerToEditorIncrementally(@NotNull Project project, @NotNull Document document, @NotNull LineMarkerInfo<?> marker) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
