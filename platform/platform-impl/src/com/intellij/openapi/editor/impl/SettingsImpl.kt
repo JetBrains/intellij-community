@@ -850,17 +850,19 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     }
 
     fun setValue(overwrittenValue: T?) {
-      val oldGetValueResult = this.overwrittenValue ?: cachedValue ?: defaultValue
+      val oldGetValueResult: T
+      val newGetValueResult: T
 
       synchronized(VALUE_LOCK) {
         if (this.overwrittenValue == overwrittenValue) {
           return
         }
+        oldGetValueResult = this.overwrittenValue ?: cachedValue ?: defaultValue
         this.overwrittenValue = overwrittenValue
+        newGetValueResult = this.overwrittenValue ?: cachedValue ?: defaultValue
       }
       fireEditorRefresh()
 
-      val newGetValueResult = this.overwrittenValue ?: cachedValue ?: defaultValue
       if (newGetValueResult != oldGetValueResult) {
         fireValueChanged(newGetValueResult)
       }
