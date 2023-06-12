@@ -20,7 +20,7 @@ The plugin supports Kotlin 1.8 and lower.
 
   <!--suppress PluginXmlValidity -->
   <change-notes><![CDATA[
-    <h3>1.9.0-Beta</h3>
+    <h3>1.9.0-RC</h3>
     <ul>
       <li>Language: stable `rangeUntil` operator, stable data objects feature, stable `Enum.entries` replacement for `Enum.values()`, stable `@Volatile` annotation</li>
       <li>K2: basic support for Kotlin/Native and multiplatform projects, support for Kotlin/JS since 1.8.20</li>
