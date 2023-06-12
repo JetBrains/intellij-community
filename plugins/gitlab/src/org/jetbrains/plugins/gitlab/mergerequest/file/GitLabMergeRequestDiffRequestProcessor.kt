@@ -56,7 +56,7 @@ fun createMergeRequestDiffRequestProcessor(project: Project,
           processor.putContextUserData(GitLabMergeRequestDiffReviewViewModel.KEY, vm)
 
           launchNow {
-            diffBridge.displayedChanges.mapToDiffChain(project, vm, mr.changes).collectLatest {
+            diffBridge.displayedChanges.mapToDiffChain(project, mr.changes).collectLatest {
               processor.chain = it
             }
           }
@@ -84,7 +84,6 @@ fun createMergeRequestDiffRequestProcessor(project: Project,
 
 private fun Flow<ChangesSelection>.mapToDiffChain(
   project: Project,
-  reviewVm: GitLabMergeRequestDiffReviewViewModel,
   changesFlow: Flow<GitLabMergeRequestChanges>
 ): Flow<DiffRequestChain?> =
   combineTransformLatest(this, changesFlow) { selection, changes ->
@@ -106,7 +105,7 @@ private fun Flow<ChangesSelection>.mapToDiffChain(
 
 
     val producers = selection.toProducersSelection { change, location ->
-      val changeDataKeys = createData(reviewVm, changesBundle, change, location)
+      val changeDataKeys = createData(changesBundle, change, location)
       ChangeDiffRequestProducer.create(project, change, changeDataKeys)
     }
 
@@ -122,7 +121,6 @@ private suspend fun loadRevisionsAndParseChanges(changes: GitLabMergeRequestChan
   }
 
 private fun createData(
-  reviewVm: GitLabMergeRequestDiffReviewViewModel,
   parsedChanges: GitBranchComparisonResult,
   change: Change,
   location: DiffLineLocation?
@@ -130,11 +128,6 @@ private fun createData(
   val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
 
   VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
-  val dataProvider = GenericDataProvider()
-  requestDataKeys[DiffUserDataKeys.DATA_PROVIDER] = dataProvider
-  dataProvider.putData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY, reviewVm)
-  requestDataKeys[DiffUserDataKeys.CONTEXT_ACTIONS] =
-    listOf(ActionManager.getInstance().getAction("GitLab.MergeRequest.Review.Submit"))
 
   val diffComputer = parsedChanges.patchesByChange[change]?.getDiffComputer()
   if (diffComputer != null) {
