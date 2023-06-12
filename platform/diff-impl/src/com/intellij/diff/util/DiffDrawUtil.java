@@ -25,6 +25,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -370,6 +371,15 @@ public final class DiffDrawUtil {
   }
 
   @NotNull
+  public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type,
+                                                         @NotNull PaintMode editorMode, @NotNull PaintMode gutterMode) {
+    return new LineHighlighterBuilder(editor, startLine, endLine, type)
+      .withEditorMode(editorMode)
+      .withGutterMode(gutterMode)
+      .done();
+  }
+
+  @NotNull
   public static List<RangeHighlighter> createInlineHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
     return new InlineHighlighterBuilder(editor, start, end, type).done();
   }
@@ -464,6 +474,9 @@ public final class DiffDrawUtil {
 
     private int layerPriority = 0; // higher number wins
 
+    private @Nullable PaintMode fixedEditorMode;
+    private @Nullable PaintMode fixedGutterMode;
+
     public LineHighlighterBuilder(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type) {
       this.editor = editor;
       this.type = type;
@@ -526,6 +539,18 @@ public final class DiffDrawUtil {
       return this;
     }
 
+    @NotNull
+    public LineHighlighterBuilder withEditorMode(@NotNull PaintMode mode) {
+      this.fixedEditorMode = mode;
+      return this;
+    }
+
+    @NotNull
+    public LineHighlighterBuilder withGutterMode(@NotNull PaintMode mode) {
+      this.fixedGutterMode = mode;
+      return this;
+    }
+
     /**
      * @see #setupLayeredRendering
      */
@@ -554,6 +579,12 @@ public final class DiffDrawUtil {
         editorMode = PaintMode.RESOLVED;
         gutterMode = PaintMode.RESOLVED;
       }
+      if (fixedEditorMode != null) {
+        editorMode = fixedEditorMode;
+      }
+      if (fixedGutterMode != null) {
+        gutterMode = fixedGutterMode;
+      }
 
       boolean isEmptyRange = startLine == endLine;
       boolean isFirstLine = startLine == 0;
@@ -564,7 +595,7 @@ public final class DiffDrawUtil {
       int end = offsets.getEndOffset();
 
       TextAttributes attributes = isEmptyRange ? null : getTextAttributes(type, editor, editorMode.background);
-      TextAttributes stripeAttributes = hideStripeMarkers || resolved || excludedInEditor
+      TextAttributes stripeAttributes = hideStripeMarkers || editorMode.background == BackgroundType.NONE
                                         ? null : getStripeTextAttributes(type, editor);
       boolean dottedLine = editorMode.border == BorderType.DOTTED;
 
@@ -723,11 +754,12 @@ public final class DiffDrawUtil {
     }
   }
 
-  static class PaintMode {
+  @ApiStatus.Internal
+  public static class PaintMode {
     @NotNull public final BackgroundType background;
     @NotNull public final BorderType border;
 
-    PaintMode(@NotNull BackgroundType background, @NotNull BorderType border) {
+    public PaintMode(@NotNull BackgroundType background, @NotNull BorderType border) {
       this.background = background;
       this.border = border;
     }
@@ -754,11 +786,13 @@ public final class DiffDrawUtil {
     public static final PaintMode EXCLUDED_GUTTER = new PaintMode(BackgroundType.IGNORED, BorderType.LINE);
   }
 
-  enum BackgroundType {
+  @ApiStatus.Internal
+  public enum BackgroundType {
     NONE, DEFAULT, IGNORED
   }
 
-  enum BorderType {
+  @ApiStatus.Internal
+  public enum BorderType {
     NONE, LINE, DOTTED
   }
 
