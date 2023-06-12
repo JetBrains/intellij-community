@@ -16,8 +16,8 @@ import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.idea.MainFunctionDetector
-import org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldPropertyDescriptor
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldPropertyDescriptor
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
@@ -220,30 +220,30 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
                 ClassToLoad(it.internalClassName, it.relativePath, it.asByteArray())
             }
     }
+}
 
-    private fun getMethodSignature(
-        fragmentClass: ClassToLoad,
-    ): CompiledCodeFragmentData.MethodSignature {
-        val parameters: MutableList<Type> = mutableListOf()
-        var returnType: Type? = null
+fun getMethodSignature(
+    fragmentClass: ClassToLoad,
+): CompiledCodeFragmentData.MethodSignature {
+    val parameters: MutableList<Type> = mutableListOf()
+    var returnType: Type? = null
 
-        ClassReader(fragmentClass.bytes).accept(object : ClassVisitor(Opcodes.ASM7) {
-            override fun visitMethod(
-                access: Int,
-                name: String?,
-                descriptor: String?,
-                signature: String?,
-                exceptions: Array<out String>?
-            ): MethodVisitor? {
-                if (name != null && isEvaluationEntryPoint(name)) {
-                    Type.getArgumentTypes(descriptor).forEach { parameters.add(it) }
-                    returnType = Type.getReturnType(descriptor)
-                }
-                return null
+    ClassReader(fragmentClass.bytes).accept(object : ClassVisitor(Opcodes.ASM7) {
+        override fun visitMethod(
+            access: Int,
+            name: String?,
+            descriptor: String?,
+            signature: String?,
+            exceptions: Array<out String>?
+        ): MethodVisitor? {
+            if (name != null && isEvaluationEntryPoint(name)) {
+                Type.getArgumentTypes(descriptor).forEach { parameters.add(it) }
+                returnType = Type.getReturnType(descriptor)
             }
-        }, SKIP_CODE)
+            return null
+        }
+    }, SKIP_CODE)
 
-        return CompiledCodeFragmentData.MethodSignature(parameters, returnType!!)
-    }
+    return CompiledCodeFragmentData.MethodSignature(parameters, returnType!!)
 }
 

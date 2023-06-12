@@ -29,20 +29,27 @@ import org.jetbrains.eval4j.jdi.JDIEval
 import org.jetbrains.eval4j.jdi.asJdiValue
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.eval4j.jdi.makeInitialFrame
+import org.jetbrains.kotlin.analysis.low.level.api.fir.compiler.LLCompilerFacade
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
+import org.jetbrains.kotlin.codegen.ClassBuilderFactories
+import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
+import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.caching.ConcurrentFactoryCache
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariableByName
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
+import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
+import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTION_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.*
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilingEvaluator.loadClassesSafely
@@ -176,6 +183,35 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     }
 
     private fun compileCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
+        return if (isK2Plugin()) compiledCodeFragmentDataK2(context) else compiledCodeFragmentDataK1(context)
+    }
+
+    private fun compiledCodeFragmentDataK2(context: ExecutionContext): CompiledCodeFragmentData = runReadAction {
+        val languageVersionSettings = codeFragment.languageVersionSettings
+        val compilerConfiguration = CompilerConfiguration().also {
+            it.put(LLCompilerFacade.CODE_FRAGMENT_CLASS_NAME, GENERATED_CLASS_NAME)
+            it.put(LLCompilerFacade.CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
+        }
+        val builderFactory = ClassBuilderFactories.BINARIES
+        val result = LLCompilerFacade.compile(codeFragment, compilerConfiguration, languageVersionSettings, builderFactory)
+
+        val llCompilationResult = result.getOrNull() ?: error("Implement error processing")
+
+        val classes: List<ClassToLoad> = llCompilationResult.outputFiles.filterCodeFragmentClassFiles()
+            .map {
+                ClassToLoad(it.internalClassName, it.relativePath, it.asByteArray())
+            }
+
+        val fragmentClass = classes.single { it.className == GENERATED_CLASS_NAME }
+        val methodSignature = getMethodSignature(fragmentClass)
+
+        // TODO: need to fill this info (ignoring Smart#targetDescriptor ???)
+        val parameterInfo = CodeFragmentParameterInfo(listOf(), setOf())
+        val x = CodeFragmentCompiler.CompilationResult(classes, parameterInfo, mapOf(), methodSignature)
+        createCompiledDataDescriptor(x)
+    }
+
+    private fun compiledCodeFragmentDataK1(context: ExecutionContext): CompiledCodeFragmentData {
         val debugProcess = context.debugProcess
         var analysisResult = analyze(codeFragment, debugProcess)
         val codeFragmentWasEdited = KotlinCodeFragmentEditor(codeFragment)

@@ -17,7 +17,6 @@
   <!-- Evaluation -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <debugger.codeFragmentFactory implementation="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentFactory"/>
 
     <debugger.dfaAssistProvider
             language="kotlin"

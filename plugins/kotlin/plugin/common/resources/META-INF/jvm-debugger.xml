@@ -26,6 +26,8 @@
 
     <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
 
+    <debugger.codeFragmentFactory implementation="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentFactory"/>
+
     <applicationService
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState"/>
 
