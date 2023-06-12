@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -447,14 +446,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
     val updatedProjects = updated.map { it.key }
 
-    // TODO: toImport is not needed
-    // import only updated projects and dependents of them (we need to update faced-deps, packaging etc);
-    val toImport = updated.toMutableMap()
-
-    for (eachDependent in projectsTree.getDependentProjects(updatedProjects)) {
-      toImport[eachDependent] = MavenProjectChanges.DEPENDENCIES
-    }
-
     // resolve updated, theirs dependents, and dependents of deleted
     val toResolve: MutableSet<MavenProject> = HashSet(updatedProjects)
     toResolve.addAll(projectsTree.getDependentProjects(ContainerUtil.concat(updatedProjects, deleted)))
@@ -469,10 +460,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
     }
 
-    if (toImport.isEmpty() && !deleted.isEmpty()) {
-      val project = ObjectUtils.chooseNotNull(toResolve.firstOrNull(), nonIgnoredProjects.firstOrNull())
+    if (toResolve.isEmpty() && !deleted.isEmpty()) {
+      val project = nonIgnoredProjects.firstOrNull()
       if (project != null) {
-        toImport[project] = MavenProjectChanges.ALL
         toResolve.add(project)
       }
     }
