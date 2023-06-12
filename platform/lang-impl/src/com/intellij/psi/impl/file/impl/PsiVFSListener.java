@@ -51,7 +51,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class PsiVFSListener implements BulkFileListener {
   private static final Logger LOG = Logger.getInstance(PsiVFSListener.class);
 
