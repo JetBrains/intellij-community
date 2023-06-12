@@ -6,18 +6,18 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.Conditions
 import kotlinx.coroutines.CompletionHandler
+import kotlinx.coroutines.DisposableHandle
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import java.util.concurrent.atomic.AtomicReference
 
+@OptIn(InternalCoroutinesApi::class)
 internal class DispatchedRunnable(job: Job, runnable: Runnable) : ContextAwareRunnable, CompletionHandler {
 
   private val runnableRef: AtomicReference<Runnable> = AtomicReference(runnable)
 
-  init {
-    @OptIn(InternalCoroutinesApi::class)
-    job.invokeOnCompletion(onCancelling = true, handler = this)
-  }
+  @Volatile
+  private var _completionHandle: DisposableHandle? = job.invokeOnCompletion(onCancelling = true, handler = this)
 
   override fun run() {
     // Clear the reference to avoid scheduling the runnable again when cancelled.
@@ -27,6 +27,8 @@ internal class DispatchedRunnable(job: Job, runnable: Runnable) : ContextAwareRu
       // This code path means that the coroutine was cancelled externally after being scheduled.
     }
     else {
+      checkNotNull(_completionHandle).dispose()
+      _completionHandle = null
       runnable.run()
     }
   }

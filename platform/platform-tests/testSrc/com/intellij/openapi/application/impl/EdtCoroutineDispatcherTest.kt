@@ -80,4 +80,20 @@ class EdtCoroutineDispatcherTest {
       LeakHunter.checkLeak(root, leak.javaClass)
     }
   }
+
+  @Test
+  fun `dispatched runnable does not leak through uncompleted coroutine`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val job = launch {
+        // this part is wrapped into DispatchedRunnable
+        awaitCancellation()
+        // this part is also wrapped into DispatchedRunnable
+      }
+      yield() // checkLeak should be executed after the coroutine suspends in awaitCancellation
+      @Suppress("INVISIBLE_REFERENCE")
+      val leakClass = DispatchedRunnable::class.java
+      LeakHunter.checkLeak(job, leakClass)
+      job.cancel()
+    }
+  }
 }
