@@ -98,7 +98,7 @@ public abstract class YamlMetaType {
 
     // TODO a case for sequence
 
-    if(value instanceof YAMLMapping mapping) {
+    if (value instanceof YAMLMapping mapping) {
 
       Collection<YAMLKeyValue> keyValues = mapping.getKeyValues();
 
@@ -115,11 +115,12 @@ public abstract class YamlMetaType {
       for (YAMLKeyValue keyValue : keyValues) {
         String featureName = keyValue.getKeyText().trim();
 
-        if(featureName.isEmpty())
+        if (featureName.isEmpty()) {
           continue;
+        }
 
         Field feature = findFeatureByName(featureName);
-        if(feature == null) {
+        if (feature == null) {
           String msg = YAMLBundle.message("YamlUnknownKeysInspectionBase.unknown.key", keyValue.getKeyText());
           final PsiElement key = keyValue.getKey();
           assert key != null;
@@ -138,18 +139,21 @@ public abstract class YamlMetaType {
         }
 
         final Field.Relation relation;
-        if(subValue instanceof YAMLScalar) {
+        if (subValue instanceof YAMLScalar) {
           relation = Field.Relation.SCALAR_VALUE;
-        } else if (subValue instanceof YAMLSequence) {
+        }
+        else if (subValue instanceof YAMLSequence) {
           relation = Field.Relation.SEQUENCE_ITEM;
-        } else {
+        }
+        else {
           relation = Field.Relation.OBJECT_CONTENTS;
         }
 
         YamlMetaType subType = feature.getType(relation);
 
-        if(!(subValue instanceof YAMLSequence))
+        if (!(subValue instanceof YAMLSequence)) {
           subType.validateDeep(subValue, problemsHolder);
+        }
         else {
           List<YAMLSequenceItem> sequenceItems = ((YAMLSequence)subValue).getItems();
           for (YAMLSequenceItem item : sequenceItems) {
