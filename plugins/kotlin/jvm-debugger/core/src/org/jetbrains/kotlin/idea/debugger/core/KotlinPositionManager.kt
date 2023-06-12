@@ -9,6 +9,7 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerUtils.isSynthetic
+import com.intellij.debugger.engine.PositionManagerImpl
 import com.intellij.debugger.engine.PositionManagerWithMultipleStackFrames
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
@@ -149,6 +150,10 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             throw NoDataException.INSTANCE
         }
 
+        PositionManagerImpl.adjustPositionForConditionalReturn(debugProcess, location, psiFile, sourceLineNumber)?.let {
+            return it
+        }
+
         val sourcePosition = createSourcePosition(location, psiFile, sourceLineNumber)
             ?: SourcePosition.createFromLine(psiFile, sourceLineNumber)
 
@@ -177,7 +182,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 		if (!location.hasVisibleInlineLambdasOnLines(lines)) {
 			return KotlinSourcePositionWithEntireLineHighlighted(sourcePosition)
 		}
-		return sourcePosition
+
+        return sourcePosition
     }
 
     private fun createSourcePosition(location: Location, file: KtFile, sourceLineNumber: Int): SourcePosition? {
