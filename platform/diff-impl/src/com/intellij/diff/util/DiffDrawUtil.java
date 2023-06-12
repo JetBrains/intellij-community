@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -34,6 +33,7 @@ import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Path2D;
 import java.util.List;
 import java.util.*;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
@@ -245,10 +245,6 @@ public final class DiffDrawUtil {
     }
   }
 
-  public static int yToLine(@NotNull Editor editor, int y) {
-    return editor.xyToLogicalPosition(new Point(0, y)).line;
-  }
-
   @NotNull
   public static MarkerRange getGutterMarkerPaintRange(@NotNull Editor editor, int startLine, int endLine) {
     int y1;
@@ -395,11 +391,16 @@ public final class DiffDrawUtil {
   }
 
   @NotNull
+  public static List<RangeHighlighter> createLineSeparatorHighlighter(@NotNull Editor editor, int offset1, int offset2) {
+    return createLineSeparatorHighlighter(editor, offset1, offset2, () -> true);
+  }
+
+  @NotNull
   public static List<RangeHighlighter> createLineSeparatorHighlighter(@NotNull Editor editor,
                                                                       int offset1,
                                                                       int offset2,
-                                                                      @NotNull BooleanGetter condition) {
-    return createLineSeparatorHighlighter(editor, offset1, offset2, new SimpleSeparatorPresentation(condition));
+                                                                      @NotNull BooleanSupplier visibilityCondition) {
+    return createLineSeparatorHighlighter(editor, offset1, offset2, new SimpleSeparatorPresentation(visibilityCondition));
   }
 
   @NotNull
@@ -786,15 +787,15 @@ public final class DiffDrawUtil {
   }
 
   private static class SimpleSeparatorPresentation implements SeparatorPresentation {
-    private final @NotNull BooleanGetter myCondition;
+    private final @NotNull BooleanSupplier myVisibilityCondition;
 
-    SimpleSeparatorPresentation(@NotNull BooleanGetter condition) {
-      myCondition = condition;
+    SimpleSeparatorPresentation(@NotNull BooleanSupplier visibilityCondition) {
+      myVisibilityCondition = visibilityCondition;
     }
 
     @Override
     public boolean isVisible() {
-      return myCondition.get();
+      return myVisibilityCondition.getAsBoolean();
     }
 
     @Override
