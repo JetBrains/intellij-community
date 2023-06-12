@@ -878,13 +878,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }));
   }
 
-/*  private void scheduleForNextImport(Collection<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
-    for (Pair<MavenProject, MavenProjectChanges> each : projectsWithChanges) {
-      myProjectsToImport.compute(each.first, (__, previousChanges) ->
-        previousChanges == null ? each.second : MavenProjectChangesBuilder.merged(each.second, previousChanges)
-      );
-    }
-  }*/
+  protected abstract void importMavenProjectsSync();
 
   @TestOnly
   public boolean hasScheduledImportsInTests() {
@@ -942,12 +936,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   /**
-   * @deprecated Use {@link #importMavenProjectsSync()}}
+   * @deprecated Use {@link #updateAllMavenProjectsSync(MavenImportSpec)}}
    */
   @Deprecated
   // used in third-party plugins
   public List<Module> importProjects() {
-    return importMavenProjectsSync();
+    return updateAllMavenProjectsSync(MavenImportSpec.IMPLICIT_IMPORT);
   }
 
   @ApiStatus.Internal
