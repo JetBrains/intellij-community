@@ -1,8 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.searchEverywhereMl.ranking
-
-import com.github.benmanes.caffeine.cache.Cache
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
@@ -32,9 +29,6 @@ internal class SearchEverywhereMlSearchState(
   private val model: SearchEverywhereRankingModel by lazy {
     SearchEverywhereRankingModel(modelProvider.getModel(tabId))
   }
-
-  private val modelsCache : Cache<String, SearchEverywhereRankingModel> = Caffeine.newBuilder().maximumSize(4).build()
-
   fun getElementFeatures(elementId: Int?,
                          element: Any,
                          contributor: SearchEverywhereContributor<*>,
@@ -99,9 +93,7 @@ internal class SearchEverywhereMlSearchState(
       else -> throw IllegalArgumentException("Unsupported contributorId: $contributorId")
     }
 
-    return modelsCache.get(tabId) {
-      SearchEverywhereRankingModel(modelProvider.getModel(tabId))
-    }
+    return SearchEverywhereRankingModel(modelProvider.getModel(tabId))
   }
 
   fun getMLWeight(context: SearchEverywhereMLContextInfo,
