@@ -469,7 +469,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
         }
 
         //scheduleForNextImport(toImport);
-        scheduleForNextResolve(toResolve);
+        myProjectsToResolve.addAll(toResolve);
       }
     }, this);
   }
@@ -928,10 +928,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       );
     }
   }*/
-
-  private void scheduleForNextResolve(Collection<MavenProject> projects) {
-    myProjectsToResolve.addAll(projects);
-  }
 
   @TestOnly
   public boolean hasScheduledImportsInTests() {

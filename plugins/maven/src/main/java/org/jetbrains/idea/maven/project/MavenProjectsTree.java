@@ -1307,13 +1307,13 @@ public final class MavenProjectsTree {
       if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) {
         return;
       }
-      List<MavenProject> mavenProjects = deletedProjects.isEmpty()
-                                         ? Collections.emptyList()
-                                         : new ArrayList<>(deletedProjects);
+      List<MavenProject> deleted = deletedProjects.isEmpty()
+                                   ? Collections.emptyList()
+                                   : new ArrayList<>(deletedProjects);
       List<Pair<MavenProject, MavenProjectChanges>> updated = updatedProjectsWithChanges.isEmpty()
                                                               ? Collections.emptyList()
                                                               : mapToListWithPairs();
-      fireProjectsUpdated(updated, mavenProjects);
+      fireProjectsUpdated(updated, deleted);
     }
 
     private @NotNull List<Pair<MavenProject, MavenProjectChanges>> mapToListWithPairs() {
