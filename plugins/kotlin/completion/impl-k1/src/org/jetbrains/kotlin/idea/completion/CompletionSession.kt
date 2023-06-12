@@ -10,6 +10,7 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.completion.impl.RealPrefixMatchingWeigher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.search.GlobalSearchScope
@@ -303,7 +304,11 @@ abstract class CompletionSession(
         // we insert one more RealPrefixMatchingWeigher because one inserted in default sorter is placed in a bad position (after "stats")
         sorter = sorter.weighAfter("lift.shorter", RealPrefixMatchingWeigher())
 
-        sorter = sorter.weighAfter("kotlin.proximity", ByNameAlphabeticalWeigher, PreferLessParametersWeigher)
+        if (Registry.`is`("kotlin.auto.completion.prefer.vararg.to.noargs")) {
+            sorter = sorter.weighAfter("kotlin.proximity", ByNameAlphabeticalWeigher, ParametersWeigher)
+        } else {
+            sorter = sorter.weighAfter("kotlin.proximity", ByNameAlphabeticalWeigher, PreferLessParametersWeigher)
+        }
 
         sorter = sorter.weighBefore("prefix", K1SoftDeprecationWeigher)
 

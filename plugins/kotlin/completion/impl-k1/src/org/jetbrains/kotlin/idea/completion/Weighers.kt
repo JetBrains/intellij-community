@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.toFuzzyType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils.isEnumClass
+import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.findOriginalTopMostOverriddenDescriptors
@@ -404,6 +405,22 @@ object ByNameAlphabeticalWeigher : LookupElementWeigher("kotlin.byNameAlphabetic
     override fun weigh(element: LookupElement): String? {
         val lookupObject = element.`object` as? DeclarationLookupObject ?: return null
         return lookupObject.name?.asString()
+    }
+}
+
+object ParametersWeigher : LookupElementWeigher("kotlin.preferVarargOrLessParameters") {
+    override fun weigh(element: LookupElement): Int? {
+        val lookupObject = element.`object` as? DescriptorBasedDeclarationLookupObject ?: return null
+        val function = lookupObject.descriptor as? FunctionDescriptor ?: return null
+        val valueParameters = function.valueParameters
+        val size = valueParameters.size
+        if (size == 1) {
+            val valueParameter = valueParameters.first()
+            if (valueParameter.isVararg) {
+                return -1
+            }
+        }
+        return size
     }
 }
 

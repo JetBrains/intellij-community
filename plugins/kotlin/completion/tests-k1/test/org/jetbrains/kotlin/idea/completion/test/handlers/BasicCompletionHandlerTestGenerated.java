@@ -1373,6 +1373,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         public void testTypeParameter() throws Exception {
             runTest("../testData/handlers/basic/TypeParameter.kt");
         }
+
+        @TestMetadata("VarargBeforeNoArg.kt")
+        public void testVarargBeforeNoArg() throws Exception {
+            runTest("../testData/handlers/basic/VarargBeforeNoArg.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

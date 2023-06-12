@@ -201,6 +201,11 @@
             description="Disables auto-completion inside expressions"
             defaultValue="false"
             restartRequired="false"/>
+    <registryKey
+            key="kotlin.auto.completion.prefer.vararg.to.noargs"
+            description="For functions show vararg variant before no argruments variant"
+            defaultValue="true"
+            restartRequired="false"/>
 
     <registryKey key="kotlin.create.sealed.templates.enabled"
                  defaultValue="false"

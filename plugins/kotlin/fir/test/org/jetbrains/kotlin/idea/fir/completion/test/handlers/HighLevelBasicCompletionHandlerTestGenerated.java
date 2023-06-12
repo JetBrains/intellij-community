@@ -1375,6 +1375,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             public void testTypeParameter() throws Exception {
                 runTest("../completion/testData/handlers/basic/TypeParameter.kt");
             }
+
+            @TestMetadata("VarargBeforeNoArg.kt")
+            public void testVarargBeforeNoArg() throws Exception {
+                runTest("../completion/testData/handlers/basic/VarargBeforeNoArg.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
