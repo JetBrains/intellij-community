@@ -32,6 +32,5 @@
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
     <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="kotlin.base.util" />
-    <orderEntry type="library" name="kotlinc.high-level-api-impl-base" level="project" />
   </component>
 </module>

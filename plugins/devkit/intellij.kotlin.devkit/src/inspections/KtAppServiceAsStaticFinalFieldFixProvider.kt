@@ -7,9 +7,9 @@ import com.intellij.openapi.application.CachedSingletonsRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiEditorUtil
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldFixProvider
 import org.jetbrains.idea.devkit.inspections.quickfix.WrapInSupplierQuickFix
-import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
