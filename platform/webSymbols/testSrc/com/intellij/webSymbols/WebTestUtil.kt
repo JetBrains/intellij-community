@@ -197,7 +197,7 @@ fun PsiFile.findOffsetBySignature(signature: String): Int {
   var str = signature
   val caretSignature = "<caret>"
   val caretOffset = str.indexOf(caretSignature)
-  assert(caretOffset >= 0)
+  assert(caretOffset >= 0) { "Caret offset is required" }
   str = str.substring(0, caretOffset) + str.substring(caretOffset + caretSignature.length)
   val pos = text.indexOf(str)
   assertTrue("Failed to locate '$str' in: \n $text", pos >= 0)
