@@ -385,7 +385,7 @@ public abstract class AbstractValueHint {
     return myCurrentHint != null && myCurrentHint.isInsideHint(new RelativePoint(editor.getContentComponent(), point));
   }
 
-  private void showPopup(Function<Point, JBPopup> popupPresenter) {
+  private void showPopup(Function<Point, @Nullable JBPopup> popupPresenter) {
     EDT.assertIsEdt();
     myInsideShow = true;
     try {
@@ -403,35 +403,38 @@ public abstract class AbstractValueHint {
       Point point = myEditor.visualPositionToXY(myEditor.xyToVisualPosition(myPoint));
       point.translate(0, myEditor.getLineHeight());
 
-      myCurrentPopup = popupPresenter.apply(point);
-      myEditor.getScrollingModel().addVisibleAreaListener(e -> {
-        if (!Objects.equals(e.getOldRectangle(), e.getNewRectangle())) {
-          hideCurrentHint();
-        }
-      }, myCurrentPopup);
-      myEditor.getCaretModel().addCaretListener(new CaretListener() {
-        @Override
-        public void caretPositionChanged(@NotNull CaretEvent event) {
-          hideCurrentHint();
-        }
+      JBPopup popup = popupPresenter.apply(point);
+      if (popup != null) {
+        myCurrentPopup = popup;
+        myEditor.getScrollingModel().addVisibleAreaListener(e -> {
+          if (!Objects.equals(e.getOldRectangle(), e.getNewRectangle())) {
+            hideCurrentHint();
+          }
+        }, popup);
+        myEditor.getCaretModel().addCaretListener(new CaretListener() {
+          @Override
+          public void caretPositionChanged(@NotNull CaretEvent event) {
+            hideCurrentHint();
+          }
 
-        @Override
-        public void caretAdded(@NotNull CaretEvent event) {
-          hideCurrentHint();
-        }
+          @Override
+          public void caretAdded(@NotNull CaretEvent event) {
+            hideCurrentHint();
+          }
 
-        @Override
-        public void caretRemoved(@NotNull CaretEvent event) {
-          hideCurrentHint();
-        }
-      }, myCurrentPopup);
-      myCurrentPopup.addListener(new JBPopupListener() {
-        @Override
-        public void onClosed(@NotNull LightweightWindowEvent event) {
-          invokeHideRunnableIfNeeded();
-          onHintHidden();
-        }
-      });
+          @Override
+          public void caretRemoved(@NotNull CaretEvent event) {
+            hideCurrentHint();
+          }
+        }, popup);
+        popup.addListener(new JBPopupListener() {
+          @Override
+          public void onClosed(@NotNull LightweightWindowEvent event) {
+            invokeHideRunnableIfNeeded();
+            onHintHidden();
+          }
+        });
+      }
     }
     finally {
       myInsideShow = false;

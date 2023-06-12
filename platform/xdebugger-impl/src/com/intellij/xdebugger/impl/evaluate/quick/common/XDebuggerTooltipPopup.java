@@ -36,6 +36,7 @@ class XDebuggerTooltipPopup {
     myPoint = point;
   }
 
+  @Nullable
   JBPopup show(JComponent component, @Nullable EditorMouseEvent editorMouseEvent) {
     BorderLayoutPanel content = JBUI.Panels.simplePanel();
     Color bgColor = HintUtil.getInformationColor();
