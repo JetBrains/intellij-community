@@ -123,6 +123,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider,
                               projectsToImport: Map<MavenProject, MavenProjectChanges>,
                               importModuleGroupsRequired: Boolean): MavenProjectsManagerImporter {
+    if (projectsToImport.any { it.key == null }) {
+      throw IllegalArgumentException("Null key in projectsToImport")
+    }
     return MavenProjectsManagerImporter(
       modelsProvider,
       projectsToImport,
