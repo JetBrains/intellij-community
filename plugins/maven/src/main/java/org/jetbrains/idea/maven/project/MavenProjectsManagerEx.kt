@@ -335,19 +335,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
           }
         }
       }
-      if (spec.isForceResolve) {
-        val console = syncConsole
-        console.startImport(myProgressListener, spec)
-        val activity = MavenImportStats.startImportActivity(myProject)
-        fireImportAndResolveScheduled(spec)
-
-        val projectsToResolve = collectProjectsToResolve(readingResult!!)
-
-        resolveAndImport(projectsToResolve)
-
-        activity.finished()
-        MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
-      }
+      resolveAndImportMavenProjects(spec, readingResult)
     }
     catch (e: Throwable) {
       logImportErrorIfNotControlFlow(e)
@@ -412,19 +400,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
           }
         }
       }
-      if (spec.isForceResolve) {
-        val console = syncConsole
-        console.startImport(myProgressListener, spec)
-        val activity = MavenImportStats.startImportActivity(myProject)
-        fireImportAndResolveScheduled(spec)
-
-        val projectsToResolve = collectProjectsToResolve(readingResult!!)
-
-        resolveAndImport(projectsToResolve)
-
-        activity.finished()
-        MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
-      }
+      resolveAndImportMavenProjects(spec, readingResult)
     }
     catch (e: Throwable) {
       logImportErrorIfNotControlFlow(e)
@@ -438,6 +414,23 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     val indicator = ProgressManager.getGlobalProgressIndicator()
     checkOrInstallMavenWrapper(project)
     return projectsTree.updateAll(spec.isForceReading, generalSettings, indicator)
+  }
+
+  private suspend fun resolveAndImportMavenProjects(spec: MavenImportSpec,
+                                                    readingResult: MavenProjectsTreeUpdateResult?) {
+    if (spec.isForceResolve) {
+      val console = syncConsole
+      console.startImport(myProgressListener, spec)
+      val activity = MavenImportStats.startImportActivity(myProject)
+      fireImportAndResolveScheduled(spec)
+
+      val projectsToResolve = collectProjectsToResolve(readingResult!!)
+
+      resolveAndImport(projectsToResolve)
+
+      activity.finished()
+      MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
+    }
   }
 
   private fun collectProjectsToResolve(readingResult: MavenProjectsTreeUpdateResult): Collection<MavenProject> {
