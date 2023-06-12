@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.index.*
 import com.intellij.vcs.log.impl.HashImpl
@@ -74,6 +75,27 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     val actualMetadata = IndexedDetails(dataGetter, storage, getCommitIndex(commitHash), 0L)
 
     TestCase.assertEquals(expectedMetadata.presentation(), actualMetadata.presentation())
+  }
+
+  fun `test forward index with batch api`() {
+    val file = "file.txt"
+    tac(file)
+    for (i in 0 until 5) {
+      repo.appendAndCommit(file, "new content ${i}\n")
+    }
+
+    val commits = indexAll()
+
+    val collector = CollectConsumer<VcsCommitMetadata>()
+    logProvider.readMetadata(repo.root, commits.map { getCommitHash(it) }, collector)
+    val expectedPresentation = collector.result.joinToString("\n\n") { it.presentation() }
+
+    val actualMetadata = IndexedDetails.createMetadata(commits.toSet(), dataGetter, storage,
+                                                       project.getService(VcsLogObjectsFactory::class.java))
+    val actualPresentation = commits.map { actualMetadata[it] }.joinToString("\n\n") { it?.presentation() ?: "NOT LOADED" }
+
+
+    TestCase.assertEquals(expectedPresentation, actualPresentation)
   }
 
   fun `test text filter`() {
@@ -267,6 +289,10 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
 
   private fun getCommitIndex(hash: String): Int {
     return storage.getCommitIndex(HashImpl.build(hash), repo.root)
+  }
+
+  private fun getCommitHash(commit: Int): String {
+    return storage.getCommitId(commit)!!.hash.asString()
   }
 
   private fun indexAll(): Set<Int> {
