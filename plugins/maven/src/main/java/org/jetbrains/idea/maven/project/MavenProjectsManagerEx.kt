@@ -383,7 +383,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       // TODO: use indicator
       projectsTree.delete(filesToDelete, generalSettings, mavenProgressIndicator)
       projectsTree.update(filesToUpdate, spec.isForceReading, generalSettings, mavenProgressIndicator)
-      generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
+      //generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
     }
     catch (e: Throwable) {
       logImportErrorIfNotControlFlow(e)
@@ -455,7 +455,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       checkOrInstallMavenWrapper(project)
       // TODO: use indicator
       projectsTree.updateAll(spec.isForceReading, generalSettings, mavenProgressIndicator)
-      generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
+      //generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
     }
     catch (e: Throwable) {
       logImportErrorIfNotControlFlow(e)
