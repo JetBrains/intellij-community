@@ -1140,10 +1140,10 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 }
 
 final class FileStructurePopupTimeTracker extends CounterUsagesCollector {
-  private final static EventLogGroup GROUP = new EventLogGroup("com.intellij.ide.util.file-structure-popup", 1);
-  private final static EventId1<Long> LIFE = GROUP.registerEvent("popup_life", new LongEventField("time"));
-  private final static EventId1<Long> SHOW = GROUP.registerEvent("show_data", new LongEventField("time"));
-  private final static EventId1<Long> REBUILD = GROUP.registerEvent("fill_data", new LongEventField("time"));
+  private final static EventLogGroup GROUP = new EventLogGroup("file.structure.popup", 1);
+  private final static EventId1<Long> LIFE = GROUP.registerEvent("popup.disposed", new LongEventField("time"));
+  private final static EventId1<Long> SHOW = GROUP.registerEvent("data.shown", new LongEventField("time"));
+  private final static EventId1<Long> REBUILD = GROUP.registerEvent("data.filled", new LongEventField("time"));
 
   static void logRebuildTime(long elapsedTime) {
     REBUILD.log(elapsedTime);
