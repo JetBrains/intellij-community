@@ -55,8 +55,6 @@ interface MavenAsyncProjectsManager {
                                   filesToDelete: MutableList<VirtualFile>): List<Module>
 
   @TestOnly
-  suspend fun importMavenProjects(): List<Module>
-  @TestOnly
   suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module>
 
   @ApiStatus.Internal
@@ -81,12 +79,6 @@ interface MavenAsyncProjectsManager {
 
 open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(project) {
   // region import maven projects
-  override suspend fun importMavenProjects(): List<Module> {
-    val createdModules = doImportMavenProjects(false)
-    fireProjectImportCompleted()
-    return createdModules
-  }
-
   override suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
     val createdModules = doImportMavenProjects(projectsToImport, false)
     fireProjectImportCompleted()

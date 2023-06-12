@@ -19,7 +19,7 @@ fun resolveFoldersAndImport(project: Project, mavenProjects: Collection<MavenPro
 
 fun importMavenProjectsSync(mavenProjectsManager: MavenProjectsManager) {
   runBlocking {
-    mavenProjectsManager.importMavenProjects()
+    mavenProjectsManager.importMavenProjects(emptyMap())
   }
 }
 
