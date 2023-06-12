@@ -12,6 +12,11 @@ import com.intellij.util.messages.Topic
  *
  * Use this shortcut method only if you need to subscribe to the one topic, otherwise you should reuse message bus connection.
  */
+@Deprecated(
+  "Register a lazy listener, " +
+  "or, if not possible, use `com.intellij.util.messages.MessageBus.connect(com.intellij.openapi.Disposable)` and " +
+  "`com.intellij.util.messages.SimpleMessageBusConnection.subscribe` explicitly."
+)
 fun <L : Any> Topic<L>.subscribe(disposable: Disposable?, handler: L) {
   val messageBus = ApplicationManager.getApplication().messageBus
   (if (disposable == null) messageBus.connect() else messageBus.connect(disposable)).subscribe(this, handler)
