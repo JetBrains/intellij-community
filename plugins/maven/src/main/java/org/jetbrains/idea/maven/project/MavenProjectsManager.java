@@ -90,7 +90,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenProjectsManagerWatcher myWatcher;
 
   protected MavenMergingUpdateQueue myImportingQueue;
-  protected final ConcurrentHashMap<@NotNull MavenProject, @NotNull MavenProjectChanges> myProjectsToImport = new ConcurrentHashMap<>();
   protected final Set<MavenProject> myProjectsToResolve = ConcurrentHashMap.newKeySet();
 
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
@@ -912,26 +911,23 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
 
-  // TODO merge [result] promises (now, promise will be lost after merge of import requests)
-  protected Promise<List<Module>> scheduleImportChangedProjects() {
-    final AsyncPromise<List<Module>> result = new AsyncPromise<>();
+  private void scheduleImportChangedProjects() {
     runWhenFullyOpen(() -> myImportingQueue.queue(new Update(this) {
       @Override
       public void run() {
-        result.setResult(importMavenProjectsSync());
+        importMavenProjectsSync();
         fireProjectImportCompleted();
       }
     }));
-    return result;
   }
 
-  private void scheduleForNextImport(Collection<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
+/*  private void scheduleForNextImport(Collection<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges) {
     for (Pair<MavenProject, MavenProjectChanges> each : projectsWithChanges) {
       myProjectsToImport.compute(each.first, (__, previousChanges) ->
         previousChanges == null ? each.second : MavenProjectChangesBuilder.merged(each.second, previousChanges)
       );
     }
-  }
+  }*/
 
   private void scheduleForNextResolve(Collection<MavenProject> projects) {
     myProjectsToResolve.addAll(projects);
@@ -972,7 +968,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void unscheduleAllTasks(List<MavenProject> projects) {
     for (MavenProject project : projects) {
-      myProjectsToImport.remove(project);
       myProjectsToResolve.remove(project);
     }
   }

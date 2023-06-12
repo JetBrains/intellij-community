@@ -38,7 +38,6 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.performInBackground
-import java.util.*
 import java.util.function.Supplier
 
 @ApiStatus.Experimental
@@ -89,7 +88,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   override fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module> {
-    return prepareImporter(modelsProvider, false).importMavenProjectsBlocking()
+    return prepareImporter(modelsProvider, emptyMap(), false).importMavenProjectsBlocking()
   }
 
   override fun importMavenProjectsSync(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
@@ -116,20 +115,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   private suspend fun doImportMavenProjects(importModuleGroupsRequired: Boolean): List<Module> {
     val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
-    return prepareImporter(modelsProvider, importModuleGroupsRequired).importMavenProjects()
-  }
-
-  private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider,
-                              importModuleGroupsRequired: Boolean): MavenProjectsManagerImporter {
-    val projectsToImport = Collections.unmodifiableMap(LinkedHashMap(myProjectsToImport))
-    projectsToImport.forEach { (key: MavenProject, value: MavenProjectChanges) ->
-      myProjectsToImport.remove(key, value)
-    }
-    return prepareImporter(
-      modelsProvider,
-      projectsToImport,
-      importModuleGroupsRequired
-    )
+    return prepareImporter(modelsProvider, emptyMap(), importModuleGroupsRequired).importMavenProjects()
   }
 
   private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider,
@@ -316,7 +302,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                       importingSettings.isDownloadSourcesAutomatically,
                       importingSettings.isDownloadDocsAutomatically)
 
-    return importMavenProjects(projectsToImport + myProjectsToImport)
+    return importMavenProjects(projectsToImport)
   }
 
 
