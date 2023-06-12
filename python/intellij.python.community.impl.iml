@@ -121,6 +121,5 @@
     <orderEntry type="module" module-name="intellij.python.community.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.python.psi" />
-    <orderEntry type="module" module-name="intellij.qt.common" />
   </component>
 </module>
