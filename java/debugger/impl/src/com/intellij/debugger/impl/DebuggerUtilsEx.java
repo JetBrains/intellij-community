@@ -638,6 +638,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  public static int getCodeIndex(Location location) {
+    try {
+      return Math.toIntExact(location.codeIndex());
+    }
+    catch (InternalError | IllegalArgumentException e) {
+      return -1;
+    }
+  }
+
   public static String getSourceName(Location location, Function<? super Throwable, String> defaultName) {
     try {
       return location.sourceName();
