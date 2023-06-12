@@ -439,6 +439,7 @@ public final class MavenProjectsTree {
     return result;
   }
 
+  @ApiStatus.Internal
   public void updateAll(boolean force, MavenGeneralSettings generalSettings, MavenProgressIndicator process) {
     List<VirtualFile> managedFiles = getExistingManagedFiles();
     MavenExplicitProfiles explicitProfiles = getExplicitProfiles();
@@ -450,6 +451,7 @@ public final class MavenProjectsTree {
     delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, process);
   }
 
+  @ApiStatus.Internal
   public void update(Collection<VirtualFile> files,
                      boolean force,
                      MavenGeneralSettings generalSettings,
@@ -766,6 +768,7 @@ public final class MavenProjectsTree {
     return false;
   }
 
+  @ApiStatus.Internal
   public void delete(List<VirtualFile> files,
                      MavenGeneralSettings generalSettings,
                      MavenProgressIndicator process) {
