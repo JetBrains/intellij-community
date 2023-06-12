@@ -39,6 +39,8 @@ internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewMod
   val reviewRequestState: Flow<ReviewRequestState>
   val isMergeable: Flow<Boolean>
   val isApproved: StateFlow<Boolean>
+  val shouldBeRebased: Flow<Boolean>
+
   val reviewState: Flow<ReviewState>
 
   val userCanApprove: Flow<Boolean>
@@ -56,6 +58,8 @@ internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewMod
   fun merge()
 
   fun squashAndMerge()
+
+  fun rebase()
 
   fun approve()
 
@@ -107,6 +111,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   override val isApproved: StateFlow<Boolean> = approvedBy
     .map { it.isNotEmpty() }
     .stateIn(scope, SharingStarted.Lazily, false)
+  override val shouldBeRebased: Flow<Boolean> = mergeRequest.shouldBeRebased
 
   override val reviewState: Flow<ReviewState> = isApproved.map { isApproved ->
     // TODO: add ReviewState.WAIT_FOR_UPDATES state
@@ -184,6 +189,10 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
     if (commitMessage == null) return@runAction
     mergeRequest.squashAndMerge(commitMessage)
+  }
+
+  override fun rebase() = runAction {
+    mergeRequest.rebase()
   }
 
   override fun approve() = runAction {
