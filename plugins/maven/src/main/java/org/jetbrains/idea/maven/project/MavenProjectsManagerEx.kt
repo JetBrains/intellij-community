@@ -158,7 +158,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
     @RequiresEdt
     fun importMavenProjectsEdt(): List<Module> {
-      val importResult = this.doImport()
+      val importResult = doImport()
       getVirtualFileManager().syncRefresh()
       performPostImportTasks(importResult.postTasks)
       return importResult.createdModules
@@ -322,27 +322,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private suspend fun doUpdateMavenProjects(spec: MavenImportSpec,
                                            filesToUpdate: MutableList<VirtualFile>,
                                            filesToDelete: MutableList<VirtualFile>) {
-    // display all import activities using the same build progress
-    MavenSyncConsole.startTransaction(myProject)
-    try {
-      var readingResult: MavenProjectsTreeUpdateResult? = null
-      withBackgroundProgress(myProject, MavenProjectBundle.message("maven.reading"), false) {
-        runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
-          withRawProgressReporter {
-            coroutineToIndicator {
-              readingResult = readMavenProjects(spec, filesToUpdate, filesToDelete)
-            }
-          }
-        }
-      }
-      resolveAndImportMavenProjects(spec, readingResult)
-    }
-    catch (e: Throwable) {
-      logImportErrorIfNotControlFlow(e)
-    }
-    finally {
-      MavenSyncConsole.finishTransaction(myProject)
-    }
+    doUpdateAllMavenProjects(spec) { readMavenProjects(spec, filesToUpdate, filesToDelete) }
   }
 
   private fun readMavenProjects(spec: MavenImportSpec,
@@ -387,20 +367,15 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   private suspend fun doUpdateAllMavenProjects(spec: MavenImportSpec) {
+    doUpdateAllMavenProjects(spec) { readAllMavenProjects(spec) }
+  }
+
+  private suspend fun doUpdateAllMavenProjects(spec: MavenImportSpec, read: () -> MavenProjectsTreeUpdateResult) {
     // display all import activities using the same build progress
     MavenSyncConsole.startTransaction(myProject)
     try {
-      var readingResult: MavenProjectsTreeUpdateResult? = null
-      withBackgroundProgress(myProject, MavenProjectBundle.message("maven.reading"), false) {
-        runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
-          withRawProgressReporter {
-            coroutineToIndicator {
-              readingResult = readAllMavenProjects(spec)
-            }
-          }
-        }
-      }
-      resolveAndImportMavenProjects(spec, readingResult)
+      val readingResult = readMavenProjectsActivity { read() }
+      resolveAndImportMavenProjectsActivity(spec, readingResult)
     }
     catch (e: Throwable) {
       logImportErrorIfNotControlFlow(e)
@@ -410,14 +385,26 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
   }
 
+  private suspend fun readMavenProjectsActivity(read: () -> MavenProjectsTreeUpdateResult): MavenProjectsTreeUpdateResult {
+    return withBackgroundProgress(myProject, MavenProjectBundle.message("maven.reading"), false) {
+      runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
+        withRawProgressReporter {
+          coroutineToIndicator {
+            read()
+          }
+        }
+      }
+    }
+  }
+
   private fun readAllMavenProjects(spec: MavenImportSpec): MavenProjectsTreeUpdateResult {
     val indicator = ProgressManager.getGlobalProgressIndicator()
     checkOrInstallMavenWrapper(project)
     return projectsTree.updateAll(spec.isForceReading, generalSettings, indicator)
   }
 
-  private suspend fun resolveAndImportMavenProjects(spec: MavenImportSpec,
-                                                    readingResult: MavenProjectsTreeUpdateResult?) {
+  private suspend fun resolveAndImportMavenProjectsActivity(spec: MavenImportSpec,
+                                                            readingResult: MavenProjectsTreeUpdateResult?) {
     if (spec.isForceResolve) {
       val console = syncConsole
       console.startImport(myProgressListener, spec)
