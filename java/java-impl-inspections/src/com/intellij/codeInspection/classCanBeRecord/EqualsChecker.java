@@ -6,6 +6,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.OrderedBinaryExpression;
@@ -164,12 +165,19 @@ final class EqualsChecker {
       return false;
     }
     if (ExpressionUtils.getVariableFromNullComparison(disjunction.getLOperand(), true) != parameter) return false;
-    if (!(disjunction.getROperand() instanceof PsiBinaryExpression rightBinOp)) return false;
-    if (!rightBinOp.getOperationTokenType().equals(JavaTokenType.NE)) return false;
-    PsiExpression left = rightBinOp.getLOperand();
-    PsiExpression right = rightBinOp.getROperand();
-    return isObjectGetClass(left, parameter) && isThisClass(right) ||
-           isObjectGetClass(right, parameter) && isThisClass(left);
+    PsiExpression rOperand = disjunction.getROperand();
+    if (rOperand instanceof PsiBinaryExpression rightBinOp) {
+      if (!rightBinOp.getOperationTokenType().equals(JavaTokenType.NE)) return false;
+      PsiExpression left = rightBinOp.getLOperand();
+      PsiExpression right = rightBinOp.getROperand();
+      return isObjectGetClass(left, parameter) && isThisClass(right) ||
+             isObjectGetClass(right, parameter) && isThisClass(left);
+    }
+    if (BoolUtils.getNegated(rOperand) instanceof PsiInstanceOfExpression instanceOfExpression) {
+      return ExpressionUtils.isReferenceTo(instanceOfExpression.getOperand(), parameter) &&
+             isCurrentType(instanceOfExpression.getCheckType());
+    }
+    return false;
   }
 
   /**
@@ -183,11 +191,16 @@ final class EqualsChecker {
       return qualifier == null || qualifier instanceof PsiThisExpression thisExpression && thisExpression.getQualifier() == null;
     }
     if (expression instanceof PsiClassObjectAccessExpression classExpression) {
-      PsiType type = classExpression.getOperand().getType();
-      PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-      return containingClass != null && containingClass.isEquivalentTo(PsiUtil.resolveClassInClassTypeOnly(type));
+      return isCurrentType(classExpression.getOperand());
     }
     return false;
+  }
+
+  private static boolean isCurrentType(PsiTypeElement operand) {
+    if (operand == null) return false;
+    PsiType type = operand.getType();
+    PsiClass containingClass = PsiTreeUtil.getParentOfType(operand, PsiClass.class);
+    return containingClass != null && containingClass.isEquivalentTo(PsiUtil.resolveClassInClassTypeOnly(type));
   }
 
   private static boolean isObjectGetClass(PsiExpression expression, PsiParameter parameter) {
