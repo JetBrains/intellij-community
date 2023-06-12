@@ -43,8 +43,7 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
         val file = element.containingFile
         if (file !is KtFile) return false
         val classNames = ClassNameCalculator.getClassNames(file)
-        val psiClassName = element.parentsWithSelf.firstNotNullOfOrNull { e -> classNames[e] }
-        return psiClassName == jdiClassName
+        return element.parentsWithSelf.any { e -> classNames[e] == jdiClassName }
     }
 
     override fun getAnchor(element: PsiElement): KtExpression? {
@@ -205,7 +204,7 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
                     val prevExpression = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element) as? KtExpression
                     if (prevExpression != null && unreachableElements.contains(prevExpression)) null
                     else {
-                        val lastExpression = PsiTreeUtil.skipWhitespacesAndCommentsBackward(parent.rBrace) as? KtExpression
+                        val lastExpression = parent.statements.last()
                         if (lastExpression == null || prevExpression == null) null
                         else {
                             if (prevExpression is KtLoopExpression && PsiTreeUtil.isAncestor(prevExpression, startAnchor, false)) {
