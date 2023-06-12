@@ -65,7 +65,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -89,7 +88,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenProjectsManagerWatcher myWatcher;
 
   protected MavenMergingUpdateQueue myImportingQueue;
-  protected final Set<MavenProject> myProjectsToResolve = ConcurrentHashMap.newKeySet();
 
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
     EventDispatcher.create(MavenProjectsTree.Listener.class);
@@ -429,46 +427,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
                                               @NotNull List<MavenProject> unignored,
                                               boolean fromImport) {
         if (!fromImport) scheduleImportChangedProjects();
-      }
-
-      @Override
-      public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
-        unscheduleAllTasks(deleted);
-
-/*        List<MavenProject> updatedProjects = MavenUtil.collectFirsts(updated);
-
-        // import only updated projects and dependents of them (we need to update faced-deps, packaging etc);
-        List<Pair<MavenProject, MavenProjectChanges>> toImport = new ArrayList<>(updated);
-
-        for (MavenProject eachDependent : myProjectsTree.getDependentProjects(updatedProjects)) {
-          toImport.add(Pair.create(eachDependent, MavenProjectChanges.DEPENDENCIES));
-        }
-
-        // resolve updated, theirs dependents, and dependents of deleted
-        Set<MavenProject> toResolve = new HashSet<>(updatedProjects);
-        toResolve.addAll(myProjectsTree.getDependentProjects(ContainerUtil.concat(updatedProjects, deleted)));
-
-        // do not try to resolve projects with syntactic errors
-        Iterator<MavenProject> it = toResolve.iterator();
-        while (it.hasNext()) {
-          MavenProject each = it.next();
-          if (each.hasReadingProblems()) {
-            getSyncConsole().notifyReadingProblems(each.getFile());
-            it.remove();
-          }
-        }
-
-        if (toImport.isEmpty() && !deleted.isEmpty()) {
-          MavenProject project = ObjectUtils.chooseNotNull(ContainerUtil.getFirstItem(toResolve),
-                                                           ContainerUtil.getFirstItem(getNonIgnoredProjects()));
-          if (project != null) {
-            toImport.add(Pair.create(project, MavenProjectChanges.ALL));
-            toResolve.add(project);
-          }
-        }
-
-        //scheduleForNextImport(toImport);
-        myProjectsToResolve.addAll(toResolve);*/
       }
     }, this);
   }
@@ -876,13 +834,13 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   /**
    * Returned {@link Promise} instance isn't guarantied to be marked as rejected in all cases where importing wasn't performed (e.g.
    * if project is closed)
-   * @deprecated  Use {@link #resolveAndImportMavenProjectsSync(MavenImportSpec)}}
+   * @deprecated  Use {@link #resolveAndImportMavenProjectsSync()}}
    */
   // used in third-party plugins
   @Deprecated
   public Promise<List<Module>> scheduleImportAndResolve() {
     var promise = new AsyncPromise<List<Module>>();
-    var modules = resolveAndImportMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
+    var modules = resolveAndImportMavenProjectsSync();
     promise.setResult(modules);
     return promise;
   }
@@ -959,12 +917,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       runnable.run();
     });
     MavenUtil.runWhenInitialized(myProject, wrapper.get());
-  }
-
-  private void unscheduleAllTasks(List<MavenProject> projects) {
-    for (MavenProject project : projects) {
-      myProjectsToResolve.remove(project);
-    }
   }
 
   public void waitForReadingCompletion() {

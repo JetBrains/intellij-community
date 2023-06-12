@@ -54,7 +54,7 @@ interface MavenAsyncProjectsManager {
                                   filesToDelete: MutableList<VirtualFile>)
   suspend fun importMavenProjects(): List<Module>
   suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module>
-  fun resolveAndImportMavenProjectsSync(spec: MavenImportSpec): List<Module>
+  fun resolveAndImportMavenProjectsSync(): List<Module>
   suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
   fun importMavenProjectsSync(): List<Module>
   fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module>
@@ -101,8 +101,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     return prepareImporter(modelsProvider, projectsToImport, false).importMavenProjectsBlocking()
   }
 
-  override fun resolveAndImportMavenProjectsSync(spec: MavenImportSpec): List<Module> {
-    return runBlockingMaybeCancellable { resolveAndImportMavenProjects(spec) }
+  override fun resolveAndImportMavenProjectsSync(): List<Module> {
+    return runBlockingMaybeCancellable { resolveAndImport(emptyList()) }
   }
 
   override suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module> {
@@ -250,24 +250,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private suspend fun importAllProjects() {
     val projectsToImport = projectsTree.projects.associateBy({ it }, { MavenProjectChanges.ALL })
     importMavenProjects(projectsToImport)
-  }
-
-  private suspend fun resolveAndImportMavenProjects(spec: MavenImportSpec): List<Module> {
-    val console = syncConsole
-    console.startImport(myProgressListener, spec)
-    val activity = MavenImportStats.startImportActivity(myProject)
-    fireImportAndResolveScheduled(spec)
-
-    val projectsToResolve = LinkedHashSet(myProjectsToResolve)
-    myProjectsToResolve.removeAll(projectsToResolve)
-
-    val createdModules = resolveAndImport(projectsToResolve)
-
-    activity.finished()
-    MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
-    MavenSyncConsole.finishTransaction(myProject)
-
-    return createdModules
   }
 
   private suspend fun resolveAndImport(projectsToResolve: Collection<MavenProject>): List<Module> {

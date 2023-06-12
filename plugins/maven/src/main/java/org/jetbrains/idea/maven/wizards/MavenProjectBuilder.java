@@ -240,7 +240,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
         (!MavenUtil.isMavenUnitTestModeEnabled() ||
          Registry.is("ide.force.maven.import", false)) // workaround for inspection integration test
     ) {
-      return manager.resolveAndImportMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
+      return manager.resolveAndImportMavenProjectsSync();
     }
 
     var projectsToImport = new HashMap<MavenProject, MavenProjectChanges>();
