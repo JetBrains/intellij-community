@@ -30,7 +30,7 @@ class GitLogIndexTest : GitSingleRepoTest() {
   private lateinit var disposable: Disposable
   private lateinit var index: VcsLogPersistentIndex
   private val dataGetter: IndexDataGetter
-    get() = index.dataGetter!!
+    get() = index.dataGetter
   private val storage: VcsLogStorage
     get() = dataGetter.logStorage
 
