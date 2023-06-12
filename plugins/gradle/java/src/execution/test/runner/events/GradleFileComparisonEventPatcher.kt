@@ -104,7 +104,7 @@ internal class GradleFileComparisonEventPatcher {
   }
 
   private fun createFailure(tapiFailure: Failure, xmlFailure: Failure): Failure {
-    if (tapiFailure is TestAssertionFailure && xmlFailure is TestAssertionFailure) {
+    if (tapiFailure is TestFailure && xmlFailure is TestAssertionFailure) {
       return TestAssertionFailure(
         tapiFailure.exceptionName,
         tapiFailure.message,
