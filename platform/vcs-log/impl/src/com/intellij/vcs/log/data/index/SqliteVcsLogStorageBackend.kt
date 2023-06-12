@@ -255,7 +255,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   }
 
   override fun getParents(commitIds: Collection<Int>): Map<Int, List<Hash>> {
-    val result = hashMapOf<Int, MutableList<Hash>>()
+    val result = commitIds.associateWith { mutableListOf<Hash>() }
     val paramBinder = ObjectBinder(paramCount = 0)
     val inClause = commitIds.toInClause()
     val sql = "select p.rowid, c.hash from commit_hashes c inner join parent p on p.parent = c.rowid where p.commitId in $inClause"
@@ -264,8 +264,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
       val rs = statement.executeQuery()
       while (rs.next()) {
         val commitId = rs.getInt(0)
-        val hashes = result.getOrPut(commitId) { mutableListOf() }
-        hashes.add(rs.getString(1)!!.let(HashImpl::build))
+        result[commitId]?.add(rs.getString(1)!!.let(HashImpl::build))
       }
     }
 
