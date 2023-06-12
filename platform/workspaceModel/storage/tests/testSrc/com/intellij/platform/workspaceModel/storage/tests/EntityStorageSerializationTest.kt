@@ -115,18 +115,17 @@ class EntityStorageSerializationTest {
 
   @Test
   fun `serialize empty lists`() {
-    //val virtualFileManager = VirtualFileUrlManagerImpl()
-    //val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
-    //
-    //val builder = createEmptyBuilder()
-    //
-    //// Do not replace ArrayList() with emptyList(). This must be a new object for this test
-    //builder addEntity LibraryEntity("myName", LibraryTableId.ProjectLibraryTableId, ArrayList(), MySource)
-    //
-    //withTempFile { file ->
-    //  serializer.serializeCache(file, builder.toSnapshot())
-    //}
-    TODO()
+    val virtualFileManager = VirtualFileUrlManagerImpl()
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
+
+    val builder = createEmptyBuilder()
+
+    // Do not replace ArrayList() with emptyList(). This must be a new object for this test
+    builder addEntity CollectionFieldEntity(emptySet(), ArrayList(), MySource)
+
+    withTempFile { file ->
+      serializer.serializeCache(file, builder.toSnapshot())
+    }
   }
 
   @Test

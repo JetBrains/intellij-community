@@ -1741,33 +1741,32 @@ class ReplaceBySourceTest {
     assertEquals("one", children[0].childProperty)
     assertEquals("two", children[1].childProperty)
   }
-  //
-  //@RepeatedTest(10)
-  //fun `test rbs to itself with multiple parents and same children`() {
-  //  val virtualFileManager = VirtualFileUrlManagerImpl()
-  //  val root11 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
-  //  val root12 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
-  //
-  //  builder add ModuleEntity("MyModule", emptyList(), MySource) {
-  //    this.contentRoots = listOf(root11, root12)
-  //  }
-  //  builder add ProjectModelTestEntity("", Descriptor(""), MySource) {
-  //    this.contentRoot = root11
-  //  }
-  //
-  //  val root21 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
-  //  val root22 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
-  //  replacement add ModuleEntity("MyModule", emptyList(), MySource) {
-  //    this.contentRoots = listOf(root21, root22)
-  //  }
-  //  replacement add ProjectModelTestEntity("", Descriptor(""), MySource) {
-  //    this.contentRoot = root21
-  //  }
-  //
-  //  rbsAllSources()
-  //
-  //  builder.assertConsistency()
-  //}
+
+  @RepeatedTest(10)
+  fun `test rbs to itself with multiple parents and same children`() {
+    val root11 = ContentRootTestEntity(MySource)
+    val root12 = ContentRootTestEntity(MySource)
+
+    builder add ModuleTestEntity("MyModule", MySource) {
+      this.contentRoots = listOf(root11, root12)
+    }
+    builder add ProjectModelTestEntity("", Descriptor(""), MySource) {
+      this.contentRoot = root11
+    }
+
+    val root21 = ContentRootTestEntity(MySource)
+    val root22 = ContentRootTestEntity(MySource)
+    replacement add ModuleTestEntity("MyModule", MySource) {
+      this.contentRoots = listOf(root21, root22)
+    }
+    replacement add ProjectModelTestEntity("", Descriptor(""), MySource) {
+      this.contentRoot = root21
+    }
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+  }
 
   @RepeatedTest(10)
   fun `test replaceBySource with two equal entities referring to each other`() {
