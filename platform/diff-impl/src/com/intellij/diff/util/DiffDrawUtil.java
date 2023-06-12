@@ -814,6 +814,7 @@ public final class DiffDrawUtil {
     }
   }
 
+  @ApiStatus.Internal
   public static class DiffLayeredRendererMarker implements CustomHighlighterRenderer {
     @Override
     public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
@@ -847,7 +848,8 @@ public final class DiffDrawUtil {
     }
   }
 
-  private static class DiffTextAttributes extends TextAttributes {
+  @ApiStatus.Internal
+  public static class DiffTextAttributes extends TextAttributes {
     private final @NotNull BackgroundType myBackground;
     private final @NotNull TextDiffType myType;
     private final @Nullable Editor myEditor;
@@ -861,6 +863,10 @@ public final class DiffDrawUtil {
     @Override
     public Color getBackgroundColor() {
       return myBackground == BackgroundType.IGNORED ? myType.getIgnoredColor(myEditor) : myType.getColor(myEditor);
+    }
+
+    public @NotNull TextDiffType getType() {
+      return myType;
     }
   }
 

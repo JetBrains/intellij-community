@@ -43,6 +43,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +82,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   private final FilterComponent myFilter = new MyFilterComponent();
   private final MyDiffRequestProcessor myDiffRequestProcessor;
 
-  private final JPanel myRootPanel;
+  private final MainPanel myRootPanel;
   private final JPanel myFilterPanel;
   private final JPanel myToolbarPanel;
 
@@ -243,18 +244,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       }
     });
 
-    myRootPanel = new JPanel(new BorderLayout()) {
-      private boolean myFirstUpdate = true;
-
-      @Override
-      protected void paintChildren(Graphics g) {
-        super.paintChildren(g);
-        if (myFirstUpdate) {
-          myFirstUpdate = false;
-          myModel.reloadModel(false);
-        }
-      }
-    };
+    myRootPanel = new MainPanel();
     myRootPanel.add(loadingPanel, BorderLayout.CENTER);
 
     myModel.addModelListener(new DirDiffModelListener() {
@@ -656,6 +646,24 @@ public class DirDiffPanel implements Disposable, DataProvider {
     @Override
     protected JComponent getPopupLocationComponent() {
       return UIUtil.findComponentOfType(super.getPopupLocationComponent(), JTextComponent.class);
+    }
+  }
+
+  @ApiStatus.Internal
+  public class MainPanel extends JPanel {
+    private boolean myFirstUpdate = true;
+
+    MainPanel() {
+      super(new BorderLayout());
+    }
+
+    @Override
+    protected void paintChildren(Graphics g) {
+      super.paintChildren(g);
+      if (myFirstUpdate) {
+        myFirstUpdate = false;
+        myModel.reloadModel(false);
+      }
     }
   }
 }

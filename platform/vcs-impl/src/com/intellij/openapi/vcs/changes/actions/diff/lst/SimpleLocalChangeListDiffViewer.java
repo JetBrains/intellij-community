@@ -260,7 +260,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     });
   }
 
-  private static class MySimpleDiffChange extends SimpleDiffChange {
+  public static class MySimpleDiffChange extends SimpleDiffChange {
     private final @NotNull @NonNls String myChangelistId;
     private final boolean myIsPartiallyExcluded;
     private final @NotNull RangeExclusionState myExclusionState;

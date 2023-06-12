@@ -6,20 +6,22 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
 
-internal class DiffLineMarkerRenderer(
+@ApiStatus.Internal
+class DiffLineMarkerRenderer internal constructor(
   private val highlighter: RangeHighlighter,
-  private val diffType: TextDiffType,
-  private val editorMode: PaintMode,
-  private val gutterMode: PaintMode,
-  private val hideWithoutLineNumbers: Boolean,
-  private val isEmptyRange: Boolean,
-  private val isFirstLine: Boolean,
-  private val isLastLine: Boolean,
-  private val alignedSides: Boolean
+  val diffType: TextDiffType,
+  val editorMode: PaintMode,
+  val gutterMode: PaintMode,
+  val hideWithoutLineNumbers: Boolean,
+  val isEmptyRange: Boolean,
+  val isFirstLine: Boolean,
+  val isLastLine: Boolean,
+  val alignedSides: Boolean
 ) : LineMarkerRendererEx {
 
   override fun paint(editor: Editor, g: Graphics, range: Rectangle) {

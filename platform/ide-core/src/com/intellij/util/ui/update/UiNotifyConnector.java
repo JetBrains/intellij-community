@@ -2,13 +2,13 @@
 package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.ContextAwareRunnable;
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -245,5 +245,19 @@ public class UiNotifyConnector implements Disposable, HierarchyListener {
     if (parent != null) {
       Disposer.register(parent, connector);
     }
+  }
+
+  @ApiStatus.Experimental
+  public static void forceNotifyIsShown(@NotNull Component c) {
+    UIUtil.uiTraverser(c).forEach(child -> {
+      if (UIUtil.isShowing(child, false)) {
+        for (HierarchyListener listener : child.getHierarchyListeners()) {
+          if (listener instanceof UiNotifyConnector notifyConnector &&
+              !notifyConnector.isDisposed()) {
+            notifyConnector.showNotify();
+          }
+        }
+      }
+    });
   }
 }
