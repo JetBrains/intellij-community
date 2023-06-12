@@ -257,7 +257,7 @@ public final class DebuggerUIUtil {
                                                   @Nullable final Point point,
                                                   final JComponent component,
                                                   final boolean showAllOptions,
-                                                  final XBreakpoint breakpoint) {
+                                                  @NotNull final XBreakpoint breakpoint) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     final XLightBreakpointPropertiesPanel propertiesPanel =
       new XLightBreakpointPropertiesPanel(project, breakpointManager, (XBreakpointBase)breakpoint,
