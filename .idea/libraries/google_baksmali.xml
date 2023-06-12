@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="google-baksmali" type="repository">
+    <properties maven-id="com.android.tools.smali:smali-baksmali:3.0.0">
+      <exclude>
+        <dependency maven-id="org.smali:dexlib2"/>
+        <dependency maven-id="com.google.code.findbugs:jsr305"/>
+        <dependency maven-id="com.google.guava:guava"/>
+        <dependency maven-id="com.beust:jcommander"/>
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/smali/smali-baksmali/3.0.0/smali-baksmali-3.0.0.jar!/"/>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/smali/smali-util/3.0.0/smali-util-3.0.0.jar!/"/>
+    </CLASSES>
+    <JAVADOC/>
+    <SOURCES/>
+  </library>
+</component>

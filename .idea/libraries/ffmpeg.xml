@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="ffmpeg">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../../google/as/src/prebuilts/tools/common/m2/repository/org/bytedeco/ffmpeg/5.1.2-1.5.8/ffmpeg-5.1.2-1.5.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../google/as/src/prebuilts/tools/common/m2/repository/org/bytedeco/javacpp/1.5.8/javacpp-1.5.8.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="http://bytedeco.org/javacpp-presets/ffmpeg/apidocs" />
+      <root url="http://bytedeco.org/javacpp/apidocs" />
+    </JAVADOC>
+    <SOURCES />
+  </library>
+</component>
