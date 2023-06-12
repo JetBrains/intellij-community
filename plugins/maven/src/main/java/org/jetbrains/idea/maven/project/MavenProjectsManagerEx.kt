@@ -339,12 +339,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     // display all import activities using the same build progress
     MavenSyncConsole.startTransaction(myProject)
     try {
-      val mavenProgressIndicator = MavenProgressIndicator(project, Supplier { syncConsole })
       withBackgroundProgress(myProject, MavenProjectBundle.message("maven.reading"), false) {
         runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
           withRawProgressReporter {
             coroutineToIndicator {
-              readMavenProjects(spec, filesToUpdate, filesToDelete, mavenProgressIndicator)
+              readMavenProjects(spec, filesToUpdate, filesToDelete)
             }
           }
         }
@@ -362,13 +361,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   private fun readMavenProjects(spec: MavenImportSpec,
                                 filesToUpdate: MutableList<VirtualFile>,
-                                filesToDelete: MutableList<VirtualFile>,
-                                mavenProgressIndicator: MavenProgressIndicator) {
+                                filesToDelete: MutableList<VirtualFile>) {
     try {
       val indicator = ProgressManager.getGlobalProgressIndicator()
-      // TODO: use indicator
-      projectsTree.delete(filesToDelete, generalSettings, mavenProgressIndicator)
-      projectsTree.update(filesToUpdate, spec.isForceReading, generalSettings, mavenProgressIndicator)
+      projectsTree.delete(filesToDelete, generalSettings, indicator)
+      projectsTree.update(filesToUpdate, spec.isForceReading, generalSettings, indicator)
       //generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
     }
     catch (e: Throwable) {
@@ -385,8 +382,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         MavenLog.LOG.warn("Updating maven projects under write action. " +
                           "This should only happen in test mode. " +
                           "Resolution and import will be skipped.")
-        val mavenProgressIndicator = MavenProgressIndicator(project, Supplier { syncConsole })
-        readAllMavenProjects(spec, mavenProgressIndicator)
+        readAllMavenProjects(spec)
       }
       else {
         withModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
@@ -413,12 +409,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     // display all import activities using the same build progress
     MavenSyncConsole.startTransaction(myProject)
     try {
-      val mavenProgressIndicator = MavenProgressIndicator(project, Supplier { syncConsole })
       withBackgroundProgress(myProject, MavenProjectBundle.message("maven.reading"), false) {
         runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
           withRawProgressReporter {
             coroutineToIndicator {
-              readAllMavenProjects(spec, mavenProgressIndicator)
+              readAllMavenProjects(spec)
             }
           }
         }
@@ -434,13 +429,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
   }
 
-  private fun readAllMavenProjects(spec: MavenImportSpec,
-                                   mavenProgressIndicator: MavenProgressIndicator) {
+  private fun readAllMavenProjects(spec: MavenImportSpec) {
     try {
       val indicator = ProgressManager.getGlobalProgressIndicator()
       checkOrInstallMavenWrapper(project)
-      // TODO: use indicator
-      projectsTree.updateAll(spec.isForceReading, generalSettings, mavenProgressIndicator)
+      projectsTree.updateAll(spec.isForceReading, generalSettings, indicator)
       //generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
     }
     catch (e: Throwable) {

@@ -339,7 +339,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   private void readMavenProjectTree(MavenProgressIndicator process) {
     MavenProjectsTree tree = new MavenProjectsTree(getProjectOrDefault());
     tree.addManagedFilesWithProfiles(getParameters().myFiles, MavenExplicitProfiles.NONE);
-    tree.updateAll(false, getGeneralSettings(), process);
+    tree.updateAll(false, getGeneralSettings(), process.getIndicator());
 
     getParameters().myMavenProjectTree = tree;
     getParameters().mySelectedProjects = tree.getRootProjects();

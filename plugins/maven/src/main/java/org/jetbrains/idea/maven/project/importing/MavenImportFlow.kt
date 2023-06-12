@@ -133,7 +133,7 @@ class MavenImportFlow {
       projectsTree.ignoredFilesPatterns = ignorePatterns
     }
 
-    projectsTree.updateAll(true, context.generalSettings, indicator)
+    projectsTree.updateAll(true, context.generalSettings, indicator.indicator)
     Disposer.dispose(d)
     val workingDir = getWorkingBaseDir(context)
     val wrapperData = MavenWrapperSupport.getWrapperDistributionUrl(workingDir)?.let { WrapperData(it, workingDir!!) }
@@ -146,7 +146,7 @@ class MavenImportFlow {
                                                                         projectsTree: MavenProjectsTree,
                                                                         indicator: MavenProgressIndicator) {
     context.generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
-    projectsTree.updateAll(true, context.generalSettings, indicator)
+    projectsTree.updateAll(true, context.generalSettings, indicator.indicator)
   }
 
   fun setupMavenWrapper(readContext: MavenReadContext): MavenReadContext {

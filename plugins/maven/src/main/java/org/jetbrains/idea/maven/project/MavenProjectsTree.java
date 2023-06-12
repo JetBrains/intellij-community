@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
@@ -439,8 +440,16 @@ public final class MavenProjectsTree {
     return result;
   }
 
-  @ApiStatus.Internal
+  /**
+   * @deprecated use {@link MavenProjectsManager#updateAllMavenProjectsSync(MavenImportSpec)} instead
+   */
+  @Deprecated
   public void updateAll(boolean force, MavenGeneralSettings generalSettings, MavenProgressIndicator process) {
+    updateAll(force, generalSettings, process.getIndicator());
+  }
+
+  @ApiStatus.Internal
+  public void updateAll(boolean force, MavenGeneralSettings generalSettings, ProgressIndicator process) {
     List<VirtualFile> managedFiles = getExistingManagedFiles();
     MavenExplicitProfiles explicitProfiles = getExplicitProfiles();
 
@@ -455,7 +464,7 @@ public final class MavenProjectsTree {
   public void update(Collection<VirtualFile> files,
                      boolean force,
                      MavenGeneralSettings generalSettings,
-                     MavenProgressIndicator process) {
+                     ProgressIndicator process) {
     update(files, false, force, getExplicitProfiles(), new MavenProjectReader(myProject), generalSettings, process);
   }
 
@@ -465,7 +474,7 @@ public final class MavenProjectsTree {
                       final MavenExplicitProfiles explicitProfiles,
                       final MavenProjectReader projectReader,
                       final MavenGeneralSettings generalSettings,
-                      final MavenProgressIndicator process) {
+                      final ProgressIndicator process) {
     if (files.isEmpty()) return;
 
     UpdateContext updateContext = new UpdateContext();
@@ -513,7 +522,7 @@ public final class MavenProjectsTree {
     private final UpdateContext updateContext;
     private final MavenProjectReader reader;
     private final MavenGeneralSettings generalSettings;
-    private final MavenProgressIndicator process;
+    private final ProgressIndicator process;
     private final ConcurrentHashMap<VirtualFile, Boolean> updated = new ConcurrentHashMap<>();
     private final boolean updateModules;
 
@@ -522,7 +531,7 @@ public final class MavenProjectsTree {
                              UpdateContext context,
                              MavenProjectReader reader,
                              MavenGeneralSettings settings,
-                             MavenProgressIndicator process,
+                             ProgressIndicator process,
                              boolean updateModules) {
       this.tree = tree;
       explicitProfiles = profiles;
@@ -550,8 +559,10 @@ public final class MavenProjectsTree {
         MavenLog.LOG.debug("Has already been updated (%s): %s; forceRead: %s".formatted(previousUpdate, mavenProjectFile, forceRead));
         return false;
       }
-      process.setText(MavenProjectBundle.message("maven.reading.pom", projectPath));
-      process.setText2("");
+      if (null != process) {
+        process.setText(MavenProjectBundle.message("maven.reading.pom", projectPath));
+        process.setText2("");
+      }
       return true;
     }
 
@@ -771,7 +782,7 @@ public final class MavenProjectsTree {
   @ApiStatus.Internal
   public void delete(List<VirtualFile> files,
                      MavenGeneralSettings generalSettings,
-                     MavenProgressIndicator process) {
+                     ProgressIndicator process) {
     delete(new MavenProjectReader(myProject), files, getExplicitProfiles(), generalSettings, process);
   }
 
@@ -779,7 +790,7 @@ public final class MavenProjectsTree {
                       Collection<VirtualFile> files,
                       MavenExplicitProfiles explicitProfiles,
                       MavenGeneralSettings generalSettings,
-                      MavenProgressIndicator process) {
+                      ProgressIndicator process) {
     if (files.isEmpty()) return;
 
     UpdateContext updateContext = new UpdateContext();
