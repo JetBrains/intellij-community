@@ -8,7 +8,6 @@ import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
 import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
 import com.intellij.platform.workspaceModel.storage.impl.EntityLink
 import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
@@ -34,7 +33,7 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
                                                                                     ProjectModelTestEntity::class.java,
                                                                                     ConnectionId.ConnectionType.ONE_TO_MANY, true)
     internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectModelTestEntity::class.java,
-                                                                               ContentRootEntity::class.java,
+                                                                               ContentRootTestEntity::class.java,
                                                                                ConnectionId.ConnectionType.ONE_TO_ONE, true)
 
     val connections = listOf<ConnectionId>(
@@ -57,7 +56,7 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
   override val childrenEntities: List<ProjectModelTestEntity>
     get() = snapshot.extractOneToManyChildren<ProjectModelTestEntity>(CHILDRENENTITIES_CONNECTION_ID, this)!!.toList()
 
-  override val contentRoot: ContentRootEntity?
+  override val contentRoot: ContentRootTestEntity?
     get() = snapshot.extractOneToOneChild(CONTENTROOT_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
@@ -245,15 +244,15 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
         changedProperty.add("childrenEntities")
       }
 
-    override var contentRoot: ContentRootEntity?
+    override var contentRoot: ContentRootTestEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           _diff.extractOneToOneChild(CONTENTROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                     CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity
+                                                                                                     CONTENTROOT_CONNECTION_ID)] as? ContentRootTestEntity
         }
         else {
-          this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity
+          this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ContentRootTestEntity
         }
       }
       set(value) {

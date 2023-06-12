@@ -5,7 +5,6 @@ import com.intellij.platform.workspaceModel.storage.EntitySource
 import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
 import com.intellij.platform.workspaceModel.storage.ObjBuilder
 import com.intellij.platform.workspaceModel.storage.Type
 import com.intellij.platform.workspaceModel.storage.annotations.Child
@@ -19,7 +18,7 @@ interface ProjectModelTestEntity : WorkspaceEntity {
   val childrenEntities: List<@Child ProjectModelTestEntity>
 
   @Child
-  val contentRoot: ContentRootEntity?
+  val contentRoot: ContentRootTestEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -29,7 +28,7 @@ interface ProjectModelTestEntity : WorkspaceEntity {
     override var descriptor: Descriptor
     override var parentEntity: ProjectModelTestEntity?
     override var childrenEntities: List<ProjectModelTestEntity>
-    override var contentRoot: ContentRootEntity?
+    override var contentRoot: ContentRootTestEntity?
   }
 
   companion object : Type<ProjectModelTestEntity, Builder>() {
@@ -56,11 +55,11 @@ fun MutableEntityStorage.modifyEntity(entity: ProjectModelTestEntity,
                                       modification: ProjectModelTestEntity.Builder.() -> Unit) = modifyEntity(
   ProjectModelTestEntity.Builder::class.java, entity, modification)
 
-var ContentRootEntity.Builder.projectModelTestEntity: ProjectModelTestEntity?
+var ContentRootTestEntity.Builder.projectModelTestEntity: ProjectModelTestEntity?
   by WorkspaceEntity.extension()
 //endregion
 
-private val ContentRootEntity.projectModelTestEntity: ProjectModelTestEntity? by WorkspaceEntity.extension()
+private val ContentRootTestEntity.projectModelTestEntity: ProjectModelTestEntity? by WorkspaceEntity.extension()
 
 
 open class Descriptor(val data: String) {

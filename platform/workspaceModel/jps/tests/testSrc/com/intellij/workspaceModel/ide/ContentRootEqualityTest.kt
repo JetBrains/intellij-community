@@ -1,10 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.workspaceModel.storage.tests
+package com.intellij.workspaceModel.ide
 
+import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
+import com.intellij.platform.workspaceModel.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity
+import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspaceModel.storage.testEntities.entities.AnotherSource
+import com.intellij.platform.workspaceModel.storage.testEntities.entities.MySource
 import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Before
 import org.junit.Test
+import kotlin.test.assertEquals
 
 class ContentRootEqualityTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
@@ -16,8 +24,7 @@ class ContentRootEqualityTest {
 
   @Test
   fun `rbs with events`() {
-    /*
-    val builder1 = createEmptyBuilder()
+    val builder1 = MutableEntityStorage.create()
     builder1.addEntity(ModuleEntity("MyName", emptyList(), MySource) {
       contentRoots = listOf(
         ContentRootEntity(virtualFileManager.fromUrl("/123"), emptyList(), MySource) {
@@ -28,7 +35,7 @@ class ContentRootEqualityTest {
       )
     })
 
-    val builder2 = createEmptyBuilder()
+    val builder2 = MutableEntityStorage.create()
     builder2.addEntity(ModuleEntity("MyName", emptyList(), MySource) {
       contentRoots = listOf(
         ContentRootEntity(virtualFileManager.fromUrl("/123"), emptyList(), MySource) {
@@ -36,12 +43,9 @@ class ContentRootEqualityTest {
         },
       )
     })
-    builder1.changeLog.clear()
 
     builder1.replaceBySource({ it is MySource }, builder2)
 
     assertEquals("Type", builder1.entities(ModuleEntity::class.java).single().contentRoots.single().sourceRoots.single().rootType)
-    */
-    TODO()
   }
 }
