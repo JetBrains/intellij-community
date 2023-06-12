@@ -28,6 +28,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.jetbrains.WindowDecorations
@@ -234,6 +235,7 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
 
     if (action is ComboBoxAction) {
       findComboButton(component)?.apply {
+        margin = JBInsets.emptyInsets()
         setUI(MainToolbarComboBoxButtonUI())
         addPropertyChangeListener("UI") { event -> if (event.newValue !is MainToolbarComboBoxButtonUI) setUI(MainToolbarComboBoxButtonUI())}
       }
