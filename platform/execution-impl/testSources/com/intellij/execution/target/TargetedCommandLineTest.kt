@@ -9,6 +9,7 @@ import com.intellij.testFramework.LoggedErrorProcessor
 import org.assertj.core.api.Assertions
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.rejectedPromise
+import org.jetbrains.concurrency.resolvedPromise
 import org.junit.jupiter.api.Test
 import java.util.*
 import javax.naming.NoPermissionException
@@ -24,6 +25,19 @@ class TargetedCommandLineTest {
 
     Assertions.assertThat(cmd.collectCommandsSynchronously())
       .isEqualTo(listOf("program.exe", "argument"))
+  }
+
+  @Test
+  fun `collectCommandsSynchronously with completed promises and null argument`() = disableTestLoggerFailures {
+    val cmdLine = TargetedCommandLineBuilder(LocalTargetEnvironmentRequest())
+    cmdLine.exePath = TargetValue.fixed("program.exe")
+    cmdLine.addParameter(TargetValue.fixed("argument1"))
+    cmdLine.addParameter(TargetValue.create("oops", resolvedPromise(null)))
+    cmdLine.addParameter(TargetValue.fixed("argument3"))
+    val cmd = cmdLine.build()
+
+    Assertions.assertThat(cmd.collectCommandsSynchronously())
+      .isEqualTo(listOf("program.exe", "argument1", "argument3"))
   }
 
   @Test
@@ -98,6 +112,19 @@ class TargetedCommandLineTest {
 
     Assertions.assertThat(cmd.collectCommands().blockingGet(0))
       .isEqualTo(listOf("program.exe", "argument"))
+  }
+
+  @Test
+  fun `collectCommands with completed promises and null argument responds on blockingGet immediately`() {
+    val cmdLine = TargetedCommandLineBuilder(LocalTargetEnvironmentRequest())
+    cmdLine.exePath = TargetValue.fixed("program.exe")
+    cmdLine.addParameter(TargetValue.fixed("argument1"))
+    cmdLine.addParameter(TargetValue.create("oops", resolvedPromise(null)))
+    cmdLine.addParameter(TargetValue.fixed("argument3"))
+    val cmd = cmdLine.build()
+
+    Assertions.assertThat(cmd.collectCommands().blockingGet(0))
+      .isEqualTo(listOf("program.exe", "argument1", "argument3"))
   }
 
   @Test
