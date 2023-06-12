@@ -11,6 +11,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestApprovalRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestRebaseDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
@@ -75,6 +76,20 @@ suspend fun GitLabApi.Rest.mergeRequestUnApprove(
   val request = request(uri).POST(HttpRequest.BodyPublishers.noBody()).build()
   return withErrorStats(project.serverPath, GitLabApiRequestName.REST_UNAPPROVE_MERGE_REQUEST) {
     loadJsonValue(request)
+  }
+}
+
+suspend fun GitLabApi.Rest.mergeRequestRebase(
+  project: GitLabProjectCoordinates,
+  mergeRequestId: GitLabMergeRequestId
+): HttpResponse<out GitLabMergeRequestRebaseDTO> {
+  val uri = project.restApiUri
+    .resolveRelative("merge_requests")
+    .resolveRelative(mergeRequestId.iid)
+    .resolveRelative("rebase")
+  val request = request(uri).PUT(HttpRequest.BodyPublishers.noBody()).build()
+  return withErrorStats(project.serverPath, GitLabApiRequestName.REST_REBASE_MERGE_REQUEST) {
+    loadJsonValue<GitLabMergeRequestRebaseDTO>(request)
   }
 }
 

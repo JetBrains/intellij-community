@@ -46,7 +46,7 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
       postReviewAction = GitLabMergeRequestPostReviewAction(scope, reviewFlowVm),
       mergeReviewAction = GitLabMergeRequestMergeAction(scope, reviewFlowVm),
       mergeSquashReviewAction = GitLabMergeRequestSquashAndMergeAction(scope, reviewFlowVm),
-      rebaseReviewAction = GitLabMergeRequestRebaseAction()
+      rebaseReviewAction = GitLabMergeRequestRebaseAction(scope, reviewFlowVm)
     )
     val moreActionsGroup = DefaultActionGroup(GitLabBundle.message("merge.request.details.action.review.more.text"), true)
 
