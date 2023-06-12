@@ -21,6 +21,7 @@ import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.impl.VcsRefImpl
+import com.intellij.vcs.log.util.PersistentUtil
 import com.intellij.vcs.log.util.StorageId
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
@@ -138,19 +139,19 @@ private const val RENAME_SQL = "insert into rename(parent, child, rename) values
 private const val RENAME_DELETE_SQL = "delete from rename where parent = ? and child = ?"
 
 internal class SqliteVcsLogStorageBackend(project: Project,
-                                          logId: String,
-                                          roots: Set<VirtualFile>,
                                           private val logProviders: Map<VirtualFile, VcsLogProvider>,
                                           private val errorHandler: VcsLogErrorHandler,
                                           disposable: Disposable) :
   VcsLogStorageBackend, VcsLogStorage {
 
-  private val connectionManager = ProjectLevelConnectionManager(project, logId).also { Disposer.register(disposable, it) }
+  private val connectionManager = ProjectLevelConnectionManager(project, PersistentUtil.calcLogId(project, logProviders)).also {
+    Disposer.register(disposable, it)
+  }
   override val storageId get() = connectionManager.storageId
 
   private val userRegistry = project.service<VcsUserRegistry>()
 
-  private val sortedRoots = roots.sortedWith(Comparator.comparing(VirtualFile::getPath))
+  private val sortedRoots = logProviders.keys.sortedWith(Comparator.comparing(VirtualFile::getPath))
 
   private val rootsToPosition = Object2IntOpenHashMap<VirtualFile>()
     .apply {
