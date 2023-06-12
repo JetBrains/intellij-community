@@ -8,7 +8,12 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
 import org.jetbrains.ide.ToolboxSettingsActionRegistry
 
+const val IDE_UPDATE = "ide.update"
+const val IDE_RESTART = "ide.restart"
+
 class IdeUpdateStep: SmartUpdateStep {
+  override val id = IDE_UPDATE
+
   override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
     val updateAction = getUpdateAction()
     if (updateAction != null && e != null) {
@@ -17,8 +22,6 @@ class IdeUpdateStep: SmartUpdateStep {
     }
     else onSuccess()
   }
-
-  override fun isRequested(options: SmartUpdate.Options) = options.updateIde
 
   override fun isAvailable(): Boolean {
     return getUpdateAction() != null
@@ -35,6 +38,8 @@ class IdeUpdateStep: SmartUpdateStep {
 private fun getUpdateAction() = service<ToolboxSettingsActionRegistry>().getActions().find { it.isIdeUpdate }
 
 class IdeRestartStep: SmartUpdateStep {
+  override val id = IDE_RESTART
+
   override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
     val updateAction = getUpdateAction()
     if (updateAction != null && e != null && updateAction.isRestartRequired) {
@@ -45,5 +50,4 @@ class IdeRestartStep: SmartUpdateStep {
     else onSuccess()
   }
 
-  override fun isRequested(options: SmartUpdate.Options): Boolean = options.restartIde
 }

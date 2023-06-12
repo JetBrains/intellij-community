@@ -22,8 +22,8 @@ class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
     lateinit var updateCheckBox: JBCheckBox
     return panel {
       row {
-        updateCheckBox = checkBox(SmartUpdateBundle.message("checkbox.update.ide")).bindSelected({ ideUpdateAvailable && options.updateIde },
-                                                              { if (ideUpdateAvailable) options.updateIde = it }).component
+        updateCheckBox = checkBox(SmartUpdateBundle.message("checkbox.update.ide")).bindSelected({ ideUpdateAvailable && options.value(IDE_UPDATE) },
+                                                                                                 { if (ideUpdateAvailable) options.property(IDE_UPDATE).set(it) }).component
         updateCheckBox.isEnabled = ideUpdateAvailable
       }
       indent {
@@ -32,16 +32,16 @@ class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
         }
         row {
           val restartCheckBox = checkBox(SmartUpdateBundle.message("checkbox.switch.to.updated.ide.restart.required")).bindSelected(
-            { ideUpdateAvailable && options.updateIde && options.restartIde },
-            { if (ideUpdateAvailable && options.updateIde) options.restartIde = it }).component
+            { ideUpdateAvailable && options.value(IDE_UPDATE) && options.value(IDE_RESTART) },
+            { if (ideUpdateAvailable && options.value(IDE_UPDATE)) options.property(IDE_RESTART).set(it) }).component
           updateCheckBox.addActionListener { restartCheckBox.isEnabled = updateCheckBox.isSelected }
         }
       }.enabledIf(updateCheckBox.selected)
       row {
-        checkBox(SmartUpdateBundle.message("checkbox.update.project")).bindSelected(options::updateProject)
+        checkBox(SmartUpdateBundle.message("checkbox.update.project")).bindSelected(options.property(VCS_UPDATE))
       }
       row {
-        checkBox(SmartUpdateBundle.message("checkbox.build.project")).bindSelected(options::buildProject)
+        checkBox(SmartUpdateBundle.message("checkbox.build.project")).bindSelected(options.property(BUILD_PROJECT))
       }
     }
   }
