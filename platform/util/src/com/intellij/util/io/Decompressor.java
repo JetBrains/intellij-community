@@ -286,7 +286,7 @@ public abstract class Decompressor {
     return this;
   }
 
-  public Decompressor externalSymlinkPolicy(EscapingSymlinkPolicy policy) {
+  public Decompressor escapingSymlinkPolicy(EscapingSymlinkPolicy policy) {
     myEscapingSymlinkPolicy = policy;
     return this;
   }
