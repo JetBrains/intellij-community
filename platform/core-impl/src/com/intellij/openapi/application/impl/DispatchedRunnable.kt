@@ -5,32 +5,25 @@ import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.Conditions
+import kotlinx.coroutines.CompletionHandler
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import java.util.concurrent.atomic.AtomicReference
 
-internal class DispatchedRunnable(job: Job, runnable: Runnable) : ContextAwareRunnable {
+internal class DispatchedRunnable(job: Job, runnable: Runnable) : ContextAwareRunnable, CompletionHandler {
 
   private val runnableRef: AtomicReference<Runnable> = AtomicReference(runnable)
 
   init {
     @OptIn(InternalCoroutinesApi::class)
-    job.invokeOnCompletion(onCancelling = true) { cause ->
-      if (cause != null) {
-        handleCancellation()
-      }
-      else {
-        // Sanity check: completed means the `run` was executed => the reference must be cleared.
-        check(runnableRef.get() == null)
-      }
-    }
+    job.invokeOnCompletion(onCancelling = true, handler = this)
   }
 
   override fun run() {
     // Clear the reference to avoid scheduling the runnable again when cancelled.
     val runnable = runnableRef.getAndSet(null)
     if (runnable == null) {
-      // Cleared in `handleCancellation`.
+      // Cleared in `invoke`.
       // This code path means that the coroutine was cancelled externally after being scheduled.
     }
     else {
@@ -38,7 +31,12 @@ internal class DispatchedRunnable(job: Job, runnable: Runnable) : ContextAwareRu
     }
   }
 
-  private fun handleCancellation() {
+  override fun invoke(cause: Throwable?) {
+    if (cause == null) {
+      // Sanity check: completed means the `run` was executed => the reference must be cleared.
+      check(runnableRef.get() == null)
+      return
+    }
     // Clear the reference so this runnable does nothing in `run`.
     val runnable = runnableRef.getAndSet(null)
     if (runnable == null) {
