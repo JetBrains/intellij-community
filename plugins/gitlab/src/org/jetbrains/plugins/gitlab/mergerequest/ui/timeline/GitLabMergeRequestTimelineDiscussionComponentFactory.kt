@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
 import org.jetbrains.plugins.gitlab.ui.comment.*
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory.createEditActionsConfig
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -121,8 +122,9 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       }
 
     val textContentPanel = EditableComponentFactory.create(cs, textPanel, actionAndEditVmsFlow) { editCs, (actionsVm, editVm) ->
-      GitLabNoteEditorComponentFactory.create(project, editCs, editVm,
-                                              GitLabNoteComponentFactory.createEditActionsConfig(actionsVm, editVm))
+      val editor = GitLabNoteEditorComponentFactory.create(project, editCs, editVm, createEditActionsConfig(actionsVm, editVm))
+      editVm.requestFocus()
+      editor
     }.let {
       wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
     }
