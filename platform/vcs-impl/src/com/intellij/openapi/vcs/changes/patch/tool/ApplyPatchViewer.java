@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -293,7 +292,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
     for (IntListIterator iterator = builder.getSeparatorLines().iterator(); iterator.hasNext(); ) {
       int offset = patchDocument.getLineStartOffset(iterator.nextInt());
-      DiffDrawUtil.createLineSeparatorHighlighter(myPatchEditor, offset, offset, BooleanGetter.TRUE);
+      DiffDrawUtil.createLineSeparatorHighlighter(myPatchEditor, offset, offset);
     }
 
     List<PatchChangeBuilder.Hunk> hunks = builder.getHunks();
