@@ -18,13 +18,7 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.test.*
 import junit.framework.TestCase
 
-class GitLogIndexTest : GitSingleRepoTest() {
-  //companion object {
-  //  init {
-  //    System.setProperty("vcs.log.sqlite", "true")
-  //  }
-  //}
-
+abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
   private val defaultUser = VcsUserImpl(USER_NAME, USER_EMAIL)
 
   private lateinit var disposable: Disposable
@@ -40,7 +34,7 @@ class GitLogIndexTest : GitSingleRepoTest() {
     disposable = Disposer.newDisposable()
     Disposer.register(testRootDisposable, disposable)
 
-    index = setUpIndex(myProject, repo.root, logProvider, disposable)
+    index = setUpIndex(myProject, repo.root, logProvider, useSqlite, disposable)
   }
 
   override fun tearDown() {
@@ -297,3 +291,6 @@ class GitLogIndexTest : GitSingleRepoTest() {
            "$subject\n$fullMessage"
   }
 }
+
+class GitLogPhmIndexTest : GitLogIndexTest(useSqlite = false)
+class GitLogSqliteIndexTest : GitLogIndexTest(useSqlite = true)

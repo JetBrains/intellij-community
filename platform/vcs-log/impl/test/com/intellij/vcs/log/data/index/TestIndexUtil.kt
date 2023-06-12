@@ -21,11 +21,15 @@ fun VcsLogPersistentIndex.index(root: VirtualFile, commits: Set<Int>) {
   doIndex(true)
 }
 
-fun setUpIndex(project: Project, root: VirtualFile, logProvider: VcsLogProvider, disposable: Disposable): VcsLogPersistentIndex {
+fun setUpIndex(project: Project, root: VirtualFile, logProvider: VcsLogProvider, useSqlite: Boolean, disposable: Disposable): VcsLogPersistentIndex {
   val providersMap = mapOf(root to logProvider)
   val errorConsumer = FailingErrorHandler()
 
-  val storage = VcsLogStorageImpl(project, providersMap, errorConsumer, disposable)
+  val storage = if (useSqlite) {
+    SqliteVcsLogStorageBackend(project, providersMap, errorConsumer, disposable)
+  } else {
+    VcsLogStorageImpl(project, providersMap, errorConsumer, disposable)
+  }
   return VcsLogPersistentIndex.create(project, storage, providersMap, VcsLogProgress(disposable), errorConsumer, disposable)!!
 }
 
