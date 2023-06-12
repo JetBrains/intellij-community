@@ -495,7 +495,7 @@ public final class MavenProjectsTree {
           var mavenProject = findProject(moduleFile);
           if (null != mavenProject) {
             if (reconnect(aggregator, mavenProject)) {
-              updateContext.update(mavenProject, MavenProjectChanges.NONE);
+              updateContext.updated(mavenProject, MavenProjectChanges.NONE);
             }
           }
         }
@@ -592,7 +592,7 @@ public final class MavenProjectsTree {
 
         var forcedChanges = forceRead ? MavenProjectChanges.ALL : MavenProjectChanges.NONE;
         var changes = MavenProjectChangesBuilder.merged(forcedChanges, readChanges);
-        updateContext.update(mavenProject, changes);
+        updateContext.updated(mavenProject, changes);
       }
 
       return readPom;
@@ -604,7 +604,7 @@ public final class MavenProjectsTree {
         VirtualFile moduleFile = module.getFile();
         if (tree.isManagedFile(moduleFile)) {
           if (tree.reconnectRoot(module)) {
-            updateContext.update(module, MavenProjectChanges.NONE);
+            updateContext.updated(module, MavenProjectChanges.NONE);
           }
         }
         else {
@@ -619,7 +619,7 @@ public final class MavenProjectsTree {
         MavenProject module = tree.findProject(file);
         if (null != module) {
           if (tree.reconnect(mavenProject, module)) {
-            updateContext.update(module, MavenProjectChanges.NONE);
+            updateContext.updated(module, MavenProjectChanges.NONE);
           }
         }
       }
@@ -814,7 +814,7 @@ public final class MavenProjectsTree {
 
     for (MavenProject mavenProject : inheritorsToUpdate) {
       if (reconnectRoot(mavenProject)) {
-        updateContext.update(mavenProject, MavenProjectChanges.NONE);
+        updateContext.updated(mavenProject, MavenProjectChanges.NONE);
       }
     }
     updateExplicitProfiles();
@@ -825,7 +825,7 @@ public final class MavenProjectsTree {
     for (MavenProject each : getModules(project)) {
       if (isManagedFile(each.getPath())) {
         if (reconnectRoot(each)) {
-          updateContext.update(each, MavenProjectChanges.NONE);
+          updateContext.updated(each, MavenProjectChanges.NONE);
         }
       }
       else {
@@ -1302,7 +1302,7 @@ public final class MavenProjectsTree {
     private final Map<MavenProject, MavenProjectChanges> updatedProjectsWithChanges = new ConcurrentHashMap<>();
     private final Set<MavenProject> deletedProjects = ConcurrentHashMap.newKeySet();
 
-    public void update(MavenProject project, @NotNull MavenProjectChanges changes) {
+    public void updated(MavenProject project, @NotNull MavenProjectChanges changes) {
       deletedProjects.remove(project);
       updatedProjectsWithChanges.compute(project, (__, previousChanges) ->
         previousChanges == null ? changes : MavenProjectChangesBuilder.merged(changes, previousChanges)
@@ -1318,12 +1318,8 @@ public final class MavenProjectsTree {
       if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) {
         return;
       }
-      List<MavenProject> deleted = deletedProjects.isEmpty()
-                                   ? Collections.emptyList()
-                                   : new ArrayList<>(deletedProjects);
-      List<Pair<MavenProject, MavenProjectChanges>> updated = updatedProjectsWithChanges.isEmpty()
-                                                              ? Collections.emptyList()
-                                                              : mapToListWithPairs();
+      List<Pair<MavenProject, MavenProjectChanges>> updated = mapToListWithPairs();
+      List<MavenProject> deleted = new ArrayList<>(deletedProjects);
       fireProjectsUpdated(updated, deleted);
     }
 
