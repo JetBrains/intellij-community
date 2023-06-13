@@ -199,8 +199,9 @@ object VfsModificationContract {
       assert(relevantOperations.toList().all { it.isAttributeOperation })
     }
 
-    class AttributeOverwriteData(val attributeIdFilter: Int?, val data: PayloadRef?) {
-      fun affectsAttribute(attrId: Int) = attributeIdFilter == null || attributeIdFilter == attrId
+    class AttributeOverwriteData(val enumeratedAttributeFilter: EnumeratedFileAttribute?, val data: PayloadRef?) {
+      fun affectsAttribute(enumeratedAttr: EnumeratedFileAttribute) =
+        enumeratedAttributeFilter == null || enumeratedAttributeFilter == enumeratedAttr
     }
 
     override val modifier get() = attributeDataModifier
@@ -217,7 +218,7 @@ object VfsModificationContract {
   ) { overwriteAttributeData ->
     when (this) {
       is AttributesOperation.DeleteAttributes -> overwriteAttributeData(AttributeOverwriteData(null, null))
-      is AttributesOperation.WriteAttribute -> overwriteAttributeData(AttributeOverwriteData(attributeIdEnumerated, attrDataPayloadRef))
+      is AttributesOperation.WriteAttribute -> overwriteAttributeData(AttributeOverwriteData(enumeratedAttribute, attrDataPayloadRef))
       else -> throw AssertionError("operation $this does not modify attribute's data")
     }
   }

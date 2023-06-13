@@ -14,6 +14,14 @@ interface VfsLogContext {
   fun enqueueOperationWrite(tag: VfsOperationTag, compute: VfsLogContext.() -> VfsOperation<*>): Unit =
     operationLogStorage.enqueueOperationWrite(coroutineScope, tag) { compute() }
 
-  fun enumerateAttribute(attribute: FileAttribute): Int = stringEnumerator.enumerate(attribute.id)
-  fun deenumerateAttribute(attributeIdEnumerated: Int): String? = stringEnumerator.valueOf(attributeIdEnumerated)
+  fun enumerateAttribute(attribute: FileAttribute): EnumeratedFileAttribute =
+    EnumeratedFileAttribute(stringEnumerator.enumerate(attribute.id), attribute.version, attribute.isFixedSize)
+
+  fun deenumerateAttribute(enumeratedAttr: EnumeratedFileAttribute): FileAttribute? {
+    return FileAttribute.instantiateForRecovery(
+      stringEnumerator.valueOf(enumeratedAttr.enumeratedId) ?: return null,
+      enumeratedAttr.version,
+      enumeratedAttr.fixedSize
+    ) // attribute.shouldEnumerate is not used yet
+  }
 }

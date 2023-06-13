@@ -73,7 +73,7 @@ class SinglePassVfsTimeMachine(
             val ifRelevantAndModifies = VfsModificationContract.attributeData.isRelevantAndModifies
             op.ifRelevantAndModifies {
               val file = snapshot.getFileById(op.fileId!!)
-              if (it.attributeIdFilter == null) {
+              if (it.enumeratedAttributeFilter == null) {
                 assert(it.data == null) // deletion
                 if (!file.attributesFinished) {
                   file.attributeDataMap.fillIn(file.formingAttributesDataMap.toImmutableMap().let(State::Ready))
@@ -82,7 +82,7 @@ class SinglePassVfsTimeMachine(
                 }
               }
               else if (!file.attributesFinished) {
-                file.formingAttributesDataMap.putIfAbsent(it.attributeIdFilter, it.data!!) // write must have data
+                file.formingAttributesDataMap.putIfAbsent(it.enumeratedAttributeFilter, it.data!!) // write must have data
               }
             }
           }
@@ -195,13 +195,13 @@ class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
       if (it == 0) null else getFileById(it)
     }
 
-    override val attributeDataMap = FillInProperty<Map<Int, PayloadRef>> {
+    override val attributeDataMap = FillInProperty<Map<EnumeratedFileAttribute, PayloadRef>> {
       formingAttributesDataMap.toImmutableMap().let(State::Ready) // there may be no DELETE ATTRS operation
         .also { formingAttributesDataMap.clear() }
     }
 
     internal var attributesFinished = false // DELETE ATTRS operation met
-    internal val formingAttributesDataMap = mutableMapOf<Int, PayloadRef>()
+    internal val formingAttributesDataMap = mutableMapOf<EnumeratedFileAttribute, PayloadRef>()
 
     override val recordAllocationExists = FillInProperty<Boolean> { false.let(State::Ready) }
 

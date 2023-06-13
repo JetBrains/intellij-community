@@ -287,23 +287,22 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
   }
 
   sealed class AttributesOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>) : VfsOperation<T>(tag, result) {
-    // TODO: maybe attribute version should also saved
-    class WriteAttribute(val fileId: Int, val attributeIdEnumerated: Int, val attrDataPayloadRef: PayloadRef, result: OperationResult<Unit>)
+    class WriteAttribute(val fileId: Int, val enumeratedAttribute: EnumeratedFileAttribute, val attrDataPayloadRef: PayloadRef, result: OperationResult<Unit>)
       : AttributesOperation<Unit>(VfsOperationTag.ATTR_WRITE_ATTR, result) {
       internal companion object : Serializer<WriteAttribute> {
-        override val valueSizeBytes: Int = Int.SIZE_BYTES * 2 + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
+        override val valueSizeBytes: Int = Int.SIZE_BYTES + EnumeratedFileAttribute.SIZE_BYTES + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): WriteAttribute =
           DataInputStream(this).run {
             val fileId = readInt()
-            val attrIdEnumerated = readInt()
+            val attrIdEnumerated = readLong().toULong()
             val payloadRef = readPayloadRef()
             val result = readResult<Unit>(enumerator)
-            return WriteAttribute(fileId, attrIdEnumerated, payloadRef, result)
+            return WriteAttribute(fileId, EnumeratedFileAttribute(attrIdEnumerated), payloadRef, result)
           }
 
         override fun OutputStream.serialize(operation: WriteAttribute, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.fileId)
-          writeInt(operation.attributeIdEnumerated)
+          writeLong(operation.enumeratedAttribute.compressedInfo.toLong())
           writePayloadRef(operation.attrDataPayloadRef)
           writeResult(operation.result, enumerator)
         }

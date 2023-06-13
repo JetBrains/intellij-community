@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,6 +117,12 @@ public class FileAttribute {
 
   public static void resetRegisteredIds() {
     ourRegisteredIds.clear();
+  }
+
+  @ApiStatus.Internal
+  public static FileAttribute instantiateForRecovery(@NonNls @NotNull String id, int version, boolean fixedSize) {
+    // shouldEnumerate is not used yet
+    return new FileAttribute(version, fixedSize, id, false); // do not register the instance
   }
 
   @Override
