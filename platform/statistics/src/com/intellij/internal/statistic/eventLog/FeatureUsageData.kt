@@ -41,7 +41,7 @@ private val LOG = logger<FeatureUsageData>()
  * </p>
  */
 @ApiStatus.Internal
-class FeatureUsageData(private val recorderId: String) {
+class FeatureUsageData(val recorderId: String) {
   constructor() : this("FUS")
 
   private var data: MutableMap<String, Any> = HashMap()
@@ -339,7 +339,7 @@ class FeatureUsageData(private val recorderId: String) {
   }
 
   fun copy(): FeatureUsageData {
-    val result = FeatureUsageData()
+    val result = FeatureUsageData(recorderId)
     for ((key, value) in data) {
       result.data[key] = value
     }

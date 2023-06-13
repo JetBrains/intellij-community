@@ -3,6 +3,7 @@ package com.intellij.searchEverywhereMl.ranking
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereActionFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereCommonFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereContributorFeaturesProvider.Companion.CONTRIBUTOR_INFO_ID
@@ -142,12 +143,12 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
                                SearchEverywhereMLStatisticsCollector.CONTRIBUTOR_DATA_KEY)
 
     UsefulTestCase.assertOrderedEquals(events?.map {
-      it.buildObjectData(allowedFields.toTypedArray())["id"]
+      it.buildObjectData(MLSE_RECORDER_ID, allowedFields.toTypedArray())["id"]
     } ?: emptyList(), ids)
 
     UsefulTestCase.assertOrderedEquals(
       events?.map {
-        it.buildObjectData(allowedFields.toTypedArray())
+        it.buildObjectData(MLSE_RECORDER_ID, allowedFields.toTypedArray())
       }
         ?.filter { it.size > 1 }
         ?.map { it["id"] }
@@ -164,7 +165,7 @@ class SearchEverywhereMlFeaturesCacheTest : HeavyPlatformTestCase() {
                                SearchEverywhereMLStatisticsCollector.ID_KEY)
 
     val mappedEvents = events.map {
-      it.buildObjectData(allowedFields.toTypedArray())
+      it.buildObjectData(MLSE_RECORDER_ID, allowedFields.toTypedArray())
     }
 
     commonFeatures?.zip(mappedEvents)?.forEach { (elementsFeatures, mappedElementEvents) ->
