@@ -33,10 +33,10 @@ public class EditRunConfigurationsAction extends DumbAwareAction {
         protected RunnerAndConfigurationSettings getInitialSelectedConfiguration() {
           return configurationSettings;
         }
-      }).show();
+      }, e.getDataContext()).show();
     }
     else {
-      new EditConfigurationsDialog(project).show();
+      new EditConfigurationsDialog(project, e.getDataContext()).show();
     }
   }
 

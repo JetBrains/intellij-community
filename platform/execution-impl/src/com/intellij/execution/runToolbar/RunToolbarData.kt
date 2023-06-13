@@ -156,7 +156,7 @@ internal fun ExecutionEnvironment.getRunToolbarProcess(): RunToolbarProcess? {
 
 internal fun DataContext.editConfiguration() {
   getData(CommonDataKeys.PROJECT)?.let {
-    EditConfigurationsDialog(it, createRunConfigurationConfigurable(it, this)).show()
+    EditConfigurationsDialog(it, createRunConfigurationConfigurable(it, this), this).show()
   }
 }
 
