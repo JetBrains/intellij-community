@@ -349,7 +349,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       get() = variableHeight?.getY(row) ?: (row * rowHeight)
 
     val height: Int
-      get() = defaultRowHeight + heightDelta
+      get() = if (rowHeight > 0) rowHeight else defaultRowHeight + heightDelta
 
     var children: MutableList<Node>? = null
       private set
@@ -639,10 +639,6 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
   }
 
   private inner class VariableHeightSupport {
-
-    init {
-      updateSums()
-    }
 
     fun updateSums() {
       for (node in rows) {
