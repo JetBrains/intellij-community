@@ -1452,7 +1452,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                    " path='" + path + "'; fs=" + fs + "; rootUrl='" + rootUrl + "'", e);
       }
       incStructuralModificationCount();
-      mark = writeAttributesToRecord(rootId, 0, rootName, fs.isCaseSensitive(), attributes, false) != -1;
+      mark = writeAttributesToRecord(rootId, FSRecords.NULL_FILE_ID, rootName, fs.isCaseSensitive(), attributes, false) != -1;
 
       myRoots.put(rootUrl, newRoot);
       myIdToDirCache.cacheDir(newRoot);
@@ -1651,6 +1651,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   public static void moveChildrenRecords(int fromParentId, int toParentId) {
     if (fromParentId == -1) return;
+    if (fromParentId == FSRecords.NULL_FILE_ID){
+      throw new AssertionError("Move(" + fromParentId + " -> " + toParentId + "): can't move root to become non-root");
+    }
 
     for (ChildInfo childToMove : FSRecords.list(fromParentId).children) {
       FSRecords.setParent(childToMove.getId(), toParentId);

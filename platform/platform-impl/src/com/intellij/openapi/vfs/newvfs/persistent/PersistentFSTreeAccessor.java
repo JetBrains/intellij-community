@@ -198,7 +198,7 @@ class PersistentFSTreeAccessor {
         if (input != null) {
           final int count = DataInputOutputUtil.readINT(input);
           if (count < 0) {
-            throw new IOException("ROOT.CHILDREN attribute is corrupted: roots count(=" + count + ") must be >=0");
+            throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: roots count(=" + count + ") must be >=0");
           }
           names = ArrayUtil.newIntArray(count);
           ids = ArrayUtil.newIntArray(count);
