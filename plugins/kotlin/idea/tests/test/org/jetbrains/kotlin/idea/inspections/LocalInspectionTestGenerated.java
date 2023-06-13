@@ -9011,6 +9011,34 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     @TestMetadata("testData/inspectionsLocal/redundantIf")
     public abstract static class RedundantIf extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/redundantIf/comment")
+        public static class Comment extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("tailComment.kt")
+            public void testTailComment() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/comment/tailComment.kt");
+            }
+
+            @TestMetadata("tailComment2.kt")
+            public void testTailComment2() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/comment/tailComment2.kt");
+            }
+
+            @TestMetadata("tailComment3.kt")
+            public void testTailComment3() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/comment/tailComment3.kt");
+            }
+
+            @TestMetadata("tailComment4.kt")
+            public void testTailComment4() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/comment/tailComment4.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantIf/floatingPoint")
         public static class FloatingPoint extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {

@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.psi.psiUtil.siblings
 
 /**
  * A parent class for K1 and K2 RedundantIfInspection.
@@ -66,8 +67,14 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
 
             val hasConditionWithFloatingPointType = expression.hasConditionWithFloatingPointType()
 
+            val bothBranchesHaveTailComments = when {
+              returnAfterIf != null -> expression.hasTailComments() && returnAfterIf.hasTailComments()
+              expression.`else` != null -> expression.then?.parent?.hasTailComments() == true && expression.hasTailComments()
+              else -> false
+            }
+
             val highlightType =
-                if ((ignoreChainedIf && isChainedIf) || hasConditionWithFloatingPointType) INFORMATION
+                if ((ignoreChainedIf && isChainedIf) || hasConditionWithFloatingPointType || bothBranchesHaveTailComments) INFORMATION
                 else GENERIC_ERROR_OR_WARNING
 
             holder.registerProblemWithoutOfflineInformation(
@@ -100,6 +107,9 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                 operation == KtTokens.LT || operation == KtTokens.LTEQ || operation == KtTokens.GT || operation == KtTokens.GTEQ
             }
     }
+
+    private fun PsiElement.hasTailComments(): Boolean =
+        siblings(withItself = false).takeWhile { it is PsiWhiteSpace || it is PsiComment }.any { it is PsiComment }
 
     private sealed class BranchType {
         object Simple : BranchType()
