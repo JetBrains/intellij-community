@@ -512,6 +512,7 @@ public final class XFramesView extends XDebugView {
     private String myErrorMessage;
     private int myNextFrameIndex;
     private volatile boolean myRunning;
+    private long myStartTimeMs;
     private boolean myAllFramesLoaded;
     private final XDebugSession mySession;
     private Object myToSelect;
@@ -557,6 +558,7 @@ public final class XFramesView extends XDebugView {
           if (myVisibleRect != null) {
             myFramesList.scrollRectToVisible(myVisibleRect);
           }
+          XDebuggerActionsCollector.logFramesUpdated(System.currentTimeMillis() - myStartTimeMs, myStackFrames);
           myRunning = false;
           myListenersEnabled = true;
         }
@@ -607,6 +609,7 @@ public final class XFramesView extends XDebugView {
 
     public void dispose() {
       myRunning = false;
+      myStartTimeMs = 0;
       myExecutionStack = null;
     }
 
@@ -615,6 +618,7 @@ public final class XFramesView extends XDebugView {
         return false;
       }
       myRunning = true;
+      myStartTimeMs = System.currentTimeMillis();
       myExecutionStack.computeStackFrames(myNextFrameIndex, this);
       return true;
     }
