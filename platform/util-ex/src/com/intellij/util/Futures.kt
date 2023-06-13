@@ -9,12 +9,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.*
+import java.util.concurrent.CancellationException
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
-import java.util.function.BiFunction
-import java.util.function.Consumer
 import java.util.function.Function
 
 
@@ -85,23 +85,6 @@ object Futures {
   /**
    * If the given future failed with exception, and it wasn't a cancellation, logs the exception to the IDEA logger.
    *
-   * @param transformException One may want to wrap the actual exception with
-   * [com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments] to additionally provide some diagnostic info
-   */
-  inline fun <T> CompletableFuture<T>.logIfFailed(
-    loggingClass: Class<*>,
-    crossinline transformException: (Throwable) -> Throwable = { it }
-  ): CompletableFuture<T> {
-    return whenComplete { _, cause ->
-      if (cause != null && !isCancellation(cause)) {
-        Logger.getInstance(loggingClass).error(transformException(cause))
-      }
-    }
-  }
-
-  /**
-   * Java-specific overload for [logIfFailed]
-   *
    * ```java
    *   futuresChain
    *     .whenComplete(Futures.logIfFailed(SomeClass.class))
@@ -112,6 +95,8 @@ object Futures {
    *     .whenComplete(Futures.logIfFailed(SomeClass.class,
    *                                       it -> addAttachments(it))
    * ```
+   * @param transformException One may want to wrap the actual exception with
+   * [com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments] to additionally provide some diagnostic info
    */
   @JvmStatic
   @JvmOverloads
@@ -266,56 +251,6 @@ object Futures {
   @JvmOverloads
   fun runWriteActionAsync(modalityState: ModalityState? = null, action: Runnable): CompletableFuture<Void> {
     return CompletableFuture.runAsync(action, inWriteAction(modalityState))
-  }
-
-  @JvmStatic
-  inline fun <T> runInBackgroundAsync(crossinline action: () -> T): CompletableFuture<T> {
-    return CompletableFuture.supplyAsync({ action() }, AppExecutorUtil.getAppExecutorService())
-  }
-
-  @JvmStatic
-  fun runInBackgroundAsync(action: Runnable): CompletableFuture<Void> {
-    return CompletableFuture.runAsync(action, AppExecutorUtil.getAppExecutorService())
-  }
-
-  //endregion
-  /* ------------------------------------------------------------------------------------------- */
-
-
-  /* ------------------------------------------------------------------------------------------- */
-  //region Kotlin extension which for the Readability God Sake place executor param at the first and lambda at the last place
-
-  inline fun <T, U> CompletableFuture<T>.thenApplyAsync(executor: Executor, crossinline fn: (T) -> U): CompletableFuture<U> {
-    return thenApplyAsync(Function { fn(it) }, executor)
-  }
-
-  inline fun <T> CompletableFuture<T>.thenAcceptAsync(executor: Executor, crossinline action: (T) -> Unit): CompletableFuture<Void> {
-    return thenAcceptAsync(Consumer { action(it) }, executor)
-  }
-
-  inline fun <T> CompletableFuture<T>.thenRunAsync(executor: Executor, crossinline action: () -> Unit): CompletableFuture<Void> {
-    return thenRunAsync(Runnable { action() }, executor)
-  }
-
-  inline fun <T, U> CompletableFuture<T>.thenComposeAsync(
-    executor: Executor,
-    crossinline fn: (T) -> CompletionStage<U>
-  ): CompletableFuture<U> {
-    return thenComposeAsync(Function { fn(it) }, executor)
-  }
-
-  inline fun <T> CompletableFuture<T>.whenCompleteAsync(
-    executor: Executor,
-    crossinline action: (T?, Throwable?) -> Unit
-  ): CompletableFuture<T> {
-    return whenCompleteAsync(BiConsumer { a, b -> action(a, b) }, executor)
-  }
-
-  inline fun <T, U> CompletableFuture<T>.handleAsync(
-    executor: Executor,
-    crossinline fn: (T?, Throwable?) -> U,
-  ): CompletableFuture<U> {
-    return handleAsync(BiFunction { a, b -> fn(a, b) }, executor)
   }
 
   //endregion
