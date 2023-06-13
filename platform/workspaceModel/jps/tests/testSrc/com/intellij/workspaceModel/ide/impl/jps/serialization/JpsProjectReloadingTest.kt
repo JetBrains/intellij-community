@@ -8,12 +8,12 @@ import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsConfigurat
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.platform.workspaceModel.jps.UnloadedModulesNameHolder
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import com.intellij.platform.workspaceModel.jps.entities.projectLibraries
 import com.intellij.platform.workspaceModel.jps.entities.sourceRoots
-import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach

@@ -45,7 +45,7 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import com.intellij.platform.workspaceModel.storage.EntityStorage;
+import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;

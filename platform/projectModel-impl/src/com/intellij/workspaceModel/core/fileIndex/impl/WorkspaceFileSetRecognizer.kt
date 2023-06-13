@@ -9,8 +9,8 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry
-import com.intellij.platform.workspaceModel.storage.EntityReference
-import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspaceModel.jps.entities.LibraryId
 import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity
 import org.jetbrains.jps.model.JpsElement

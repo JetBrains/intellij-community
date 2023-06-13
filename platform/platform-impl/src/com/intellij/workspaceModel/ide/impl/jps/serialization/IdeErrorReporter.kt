@@ -13,7 +13,7 @@ import com.intellij.platform.workspaceModel.jps.serialization.impl.ErrorReporter
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.platform.workspaceModel.jps.entities.ModuleId
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.Nls
 
 internal class IdeErrorReporter(private val project: Project) : ErrorReporter {

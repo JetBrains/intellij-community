@@ -9,8 +9,8 @@ import com.intellij.openapi.vfs.VirtualFilePrefixTreeFactory
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.virtualFile
-import com.intellij.platform.workspaceModel.storage.EntityStorageSnapshot
-import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicInteger

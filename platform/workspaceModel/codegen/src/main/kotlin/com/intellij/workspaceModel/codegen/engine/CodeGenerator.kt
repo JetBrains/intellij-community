@@ -2,8 +2,8 @@
 package com.intellij.workspaceModel.codegen.engine
 
 import com.intellij.workspaceModel.codegen.deft.meta.*
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 
 val SKIPPED_TYPES: Set<String> = setOfNotNull(WorkspaceEntity::class.simpleName,
                                               WorkspaceEntity.Builder::class.simpleName,

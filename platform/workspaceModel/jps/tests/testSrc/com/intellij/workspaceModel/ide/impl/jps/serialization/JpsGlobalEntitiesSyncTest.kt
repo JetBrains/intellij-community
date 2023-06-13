@@ -23,7 +23,7 @@ import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
 import com.intellij.platform.workspaceModel.jps.entities.LibraryRoot
 import com.intellij.platform.workspaceModel.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test

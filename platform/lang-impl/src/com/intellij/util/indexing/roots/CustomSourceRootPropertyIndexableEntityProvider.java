@@ -3,7 +3,7 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspaceModel.jps.entities.CustomSourceRootPropertiesEntity;
 import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity;
 import org.jetbrains.annotations.NotNull;

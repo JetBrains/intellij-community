@@ -20,7 +20,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
-import com.intellij.platform.workspaceModel.storage.*
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
 import com.intellij.platform.workspaceModel.jps.entities.LibraryId
 import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId

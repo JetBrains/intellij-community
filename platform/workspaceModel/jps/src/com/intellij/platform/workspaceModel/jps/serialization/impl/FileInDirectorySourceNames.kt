@@ -3,9 +3,9 @@ package com.intellij.platform.workspaceModel.jps.serialization.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspaceModel.jps.*
-import com.intellij.platform.workspaceModel.storage.EntitySource
-import com.intellij.platform.workspaceModel.storage.EntityStorage
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.java.workspaceModel.entities.ArtifactEntity
 import com.intellij.platform.workspaceModel.jps.entities.FacetEntity
 import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity

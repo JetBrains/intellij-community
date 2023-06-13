@@ -9,8 +9,8 @@ import com.intellij.jarRepository.*
 import com.intellij.jarRepository.RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.workspaceModel.storage.EntityStorage
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
 import com.intellij.platform.workspaceModel.jps.entities.LibraryPropertiesEntity
 import com.intellij.platform.workspaceModel.jps.entities.modifyEntity

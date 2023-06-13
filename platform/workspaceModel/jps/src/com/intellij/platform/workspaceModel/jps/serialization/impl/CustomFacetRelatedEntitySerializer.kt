@@ -2,7 +2,7 @@
 package com.intellij.platform.workspaceModel.jps.serialization.impl
 
 import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
-import com.intellij.platform.workspaceModel.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import com.intellij.platform.workspaceModel.jps.entities.ModuleSettingsBase
 import org.jdom.Element
@@ -35,7 +35,7 @@ interface CustomFacetRelatedEntitySerializer<T: ModuleSettingsBase> {
 
   /**
    * Facet type [com.intellij.facet.FacetType.getStringId] this extension point can serialization/deserialization.
-   * The result of deserialization, entities of the type declared at [rootEntityType] in the [com.intellij.platform.workspaceModel.storage.EntityStorage]
+   * The result of deserialization, entities of the type declared at [rootEntityType] in the [com.intellij.platform.workspace.storage.EntityStorage]
    */
   val supportedFacetType: String
 
@@ -44,7 +44,7 @@ interface CustomFacetRelatedEntitySerializer<T: ModuleSettingsBase> {
    * an intermediate representation to avoid core communication with tags directly.
    * @param moduleEntity module to which these settings belong
    * @param facetState intermediate representation of facet related data read out from external sources
-   * @param evaluateEntitySource function which should be invoked to get [com.intellij.platform.workspaceModel.storage.EntitySource]
+   * @param evaluateEntitySource function which should be invoked to get [com.intellij.platform.workspace.storage.EntitySource]
    * for your entities and externalSystemId which should be stored somewhere in your entities
    */
   fun loadEntitiesFromFacetState(moduleEntity: ModuleEntity, facetState: FacetState, evaluateEntitySource: (FacetState) -> EntitySource)

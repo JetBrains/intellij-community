@@ -13,7 +13,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.platform.workspaceModel.jps.entities.ModuleId
 import com.intellij.platform.workspaceModel.jps.entities.TestModulePropertiesEntity
 import com.intellij.platform.workspaceModel.jps.entities.modifyEntity
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test

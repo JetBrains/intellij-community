@@ -4,8 +4,8 @@ package com.intellij.workspaceModel.codegen.impl.writer
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 
 val ObjClass<*>.isStandardInterface: Boolean
   get() = name in setOf(WorkspaceEntity::class.java.simpleName, WorkspaceEntityWithSymbolicId::class.java.simpleName)

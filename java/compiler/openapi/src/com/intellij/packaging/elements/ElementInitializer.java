@@ -2,7 +2,7 @@
 package com.intellij.packaging.elements;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.workspaceModel.storage.EntityStorage;
+import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.java.workspaceModel.entities.CompositePackagingElementEntity;
 import com.intellij.java.workspaceModel.entities.PackagingElementEntity;
 import org.jetbrains.annotations.NotNull;

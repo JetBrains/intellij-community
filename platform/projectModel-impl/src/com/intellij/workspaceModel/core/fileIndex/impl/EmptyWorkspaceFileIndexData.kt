@@ -6,10 +6,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.EmptyQuery
 import com.intellij.util.Query
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
-import com.intellij.platform.workspaceModel.storage.EntityReference
-import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 internal class EmptyWorkspaceFileIndexData private constructor(private val debugName: String): WorkspaceFileIndexData {
   companion object {

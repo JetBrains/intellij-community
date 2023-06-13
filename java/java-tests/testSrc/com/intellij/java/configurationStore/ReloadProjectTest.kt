@@ -23,7 +23,7 @@ import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
-import com.intellij.platform.workspaceModel.storage.DummyParentEntitySource
+import com.intellij.platform.workspace.storage.DummyParentEntitySource
 import com.intellij.platform.workspaceModel.jps.entities.ExternalSystemModuleOptionsEntity
 import com.intellij.platform.workspaceModel.jps.entities.ModuleCustomImlDataEntity
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity

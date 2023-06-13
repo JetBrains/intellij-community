@@ -2,13 +2,13 @@
 package com.intellij.platform.workspaceModel.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspaceModel.storage.EntitySource
-import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntityWithSymbolicId
-import com.intellij.platform.workspaceModel.storage.ObjBuilder
-import com.intellij.platform.workspaceModel.storage.Type
-import com.intellij.platform.workspaceModel.storage.annotations.Abstract
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.ObjBuilder
+import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.annotations.Abstract
 
 @Abstract
 interface ModuleSettingsBase : WorkspaceEntityWithSymbolicId {

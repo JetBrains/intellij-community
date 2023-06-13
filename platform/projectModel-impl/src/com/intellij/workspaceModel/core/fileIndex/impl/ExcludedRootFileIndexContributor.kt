@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
-import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspaceModel.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspaceModel.jps.entities.library
 
