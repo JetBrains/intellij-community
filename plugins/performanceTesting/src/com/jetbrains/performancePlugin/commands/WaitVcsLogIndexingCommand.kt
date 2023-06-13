@@ -1,5 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
@@ -21,6 +22,7 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
   companion object {
     const val NAME = "waitVcsLogIndexing"
     const val PREFIX = CMD_PREFIX + NAME
+    private val LOG = Logger.getInstance(WaitVcsLogIndexingCommand::class.java)
   }
 
   private val executor: ScheduledExecutorService = AppExecutorUtil.getAppScheduledExecutorService()
@@ -32,7 +34,10 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
 
     if (vcsIndex.needIndexing()) {
       val isIndexingCompleted = CompletableDeferred<Boolean>()
-      vcsIndex.addListener { _ -> isIndexingCompleted.complete(true) }
+      vcsIndex.addListener { _ ->
+        LOG.info("$NAME command was completed due to indexing was finished after listener invocation")
+        isIndexingCompleted.complete(true)
+      }
       val indexPauseTask = buildIndexPauseTask(vcsIndex, isIndexingCompleted)
       try {
         val args = extractCommandArgument(PREFIX)
@@ -50,9 +55,12 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
       }
       finally {
         indexPauseTask.cancel(false)
+        vcsIndex.indexingRoots.forEach { LOG.info("${it.name} indexing root") }
       }
     }
-
+    else {
+      throw RuntimeException("Git-log indexing wasn't scheduled for project")
+    }
   }
 
   /**
@@ -64,6 +72,7 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
       {
         if (vscIndex.isIndexingPaused()) {
           isIndexingCompleted.complete(true)
+          LOG.info("$NAME command was completed due to indexing process was paused")
           return@scheduleWithFixedDelay
         }
       }, 0, 10, TimeUnit.SECONDS)
