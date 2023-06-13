@@ -483,6 +483,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
+  override fun updateContentUi() {
+    contentUi?.update()
+  }
+
   fun fireActivated(source: ToolWindowEventSource) {
     toolWindowManager.activated(this, source)
   }
