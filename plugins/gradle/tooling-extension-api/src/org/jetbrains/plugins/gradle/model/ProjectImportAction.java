@@ -1,31 +1,26 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
-import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.gradle.toolingExtension.modelAction.DefaultBuild;
+import com.intellij.gradle.toolingExtension.modelAction.DefaultBuildController;
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchAction;
 import com.intellij.util.ReflectionUtilRt;
-import org.gradle.api.Action;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
-import org.gradle.tooling.UnknownModelException;
-import org.gradle.tooling.UnsupportedVersionException;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.adapter.TargetTypeProvider;
-import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
-import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier;
-import org.gradle.tooling.model.*;
+import org.gradle.tooling.model.BuildIdentifier;
+import org.gradle.tooling.model.BuildModel;
+import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.build.JavaEnvironment;
-import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.IdeaProject;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.BuildModelConsumer;
-import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.ProjectModelConsumer;
-import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
+import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalJavaEnvironment;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
@@ -41,12 +36,11 @@ import java.util.function.Consumer;
  * @author Vladislav.Soroka
  */
 public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
-  private static final ModelConverter NOOP_CONVERTER = new NoopConverter();
-  public static final String IDEA_MODELS_PARALLEL_FETCH = "idea.models.parallel.fetch";
 
   private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new LinkedHashSet<>();
   private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new LinkedHashSet<>();
   private final Set<Class<?>> myTargetTypes = new LinkedHashSet<>();
+
   private final boolean myIsPreviewMode;
   private final boolean myIsCompositeBuildsSupported;
   private boolean myUseProjectsLoadedPhase;
@@ -98,14 +92,24 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     myUseProjectsLoadedPhase = false;
   }
 
+  @ApiStatus.Internal
+  public void setParallelModelsFetch(boolean parallelModelsFetch) {
+    myParallelModelsFetch = parallelModelsFetch;
+  }
+
   @NotNull
   protected ModelConverter getToolingModelConverter(@NotNull BuildController controller) {
-    return NOOP_CONVERTER;
+    return ModelConverter.NOP;
   }
 
   @Override
-  public @Nullable AllModels execute(final BuildController controller) {
-    ExecutorService converterExecutor = Executors.newSingleThreadExecutor(new SimpleThreadFactory());
+  public @Nullable AllModels execute(@NotNull BuildController controller) {
+    ExecutorService converterExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
+      @Override
+      public Thread newThread(@NotNull Runnable runnable) {
+        return new Thread(runnable, "idea-tooling-model-converter");
+      }
+    });
     try {
       return doExecute(controller, converterExecutor);
     }
@@ -124,15 +128,13 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     @NotNull BuildController controller,
     @NotNull ExecutorService converterExecutor
   ) {
-    if (System.getProperties().containsKey(IDEA_MODELS_PARALLEL_FETCH)) {
-      myParallelModelsFetch = Boolean.getBoolean(IDEA_MODELS_PARALLEL_FETCH);
-    }
     configureAdditionalTypes(controller);
-    final boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
+
+    boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
     if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
       long startTime = System.currentTimeMillis();
       myGradleBuild = controller.getBuildModel();
-      Build mainBuild = convert(myGradleBuild);
+      Build mainBuild = DefaultBuild.convertGradleBuild(myGradleBuild);
       AllModels allModels = new AllModels(mainBuild);
       allModels.logPerformance("Get model GradleBuild", System.currentTimeMillis() - startTime);
       long startTimeBuildEnv = System.currentTimeMillis();
@@ -147,53 +149,20 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     assert myGradleBuild != null;
     assert myModelConverter != null;
 
-    //We only need these later, but need to fetch them before fetching other models because of https://github.com/gradle/gradle/issues/20008
-    final Set<GradleBuild> nestedBuilds = getNestedBuilds(myGradleBuild, controller);
+    Set<ProjectImportModelProvider> modelProviders = getModelProviders(isProjectsLoadedAction);
+    GradleModelFetchAction modelFetchAction = new GradleModelFetchAction(
+      myAllModels,
+      modelProviders,
+      myModelConverter,
+      converterExecutor,
+      myIsPreviewMode,
+      myIsCompositeBuildsSupported,
+      isProjectsLoadedAction,
+      myParallelModelsFetch
+    );
+    modelFetchAction.execute(new DefaultBuildController(controller, myGradleBuild));
 
-    final MyBuildController wrappedController = new MyBuildController(controller, myGradleBuild);
-    addProjectModels(wrappedController, myAllModels, converterExecutor, myModelConverter, myGradleBuild, isProjectsLoadedAction);
-    addBuildModels(wrappedController, myAllModels, converterExecutor, myModelConverter, myGradleBuild, isProjectsLoadedAction);
-
-    for (GradleBuild includedBuild : nestedBuilds) {
-      if (!isProjectsLoadedAction) {
-        myAllModels.getIncludedBuilds().add(convert(includedBuild));
-      }
-      addProjectModels(wrappedController, myAllModels, converterExecutor, myModelConverter, includedBuild, isProjectsLoadedAction);
-      addBuildModels(wrappedController, myAllModels, converterExecutor, myModelConverter, includedBuild, isProjectsLoadedAction);
-    }
-    setupIncludedBuildsHierarchy(myAllModels.getIncludedBuilds(), nestedBuilds);
-    if (isProjectsLoadedAction) {
-      wrappedController.getModel(TurnOffDefaultTasks.class);
-    }
     return isProjectsLoadedAction && !myAllModels.hasModels() ? null : myAllModels;
-  }
-
-  private static void setupIncludedBuildsHierarchy(List<Build> builds, Set<GradleBuild> gradleBuilds) {
-    Set<Build> updatedBuilds = new HashSet<>();
-    Map<File, Build> rootDirsToBuilds = new HashMap<>();
-    for (Build build : builds) {
-      rootDirsToBuilds.put(build.getBuildIdentifier().getRootDir(), build);
-    }
-
-    for (GradleBuild gradleBuild : gradleBuilds) {
-      Build build = rootDirsToBuilds.get(gradleBuild.getBuildIdentifier().getRootDir());
-      if (build == null) {
-        continue;
-      }
-
-      for (GradleBuild includedGradleBuild : gradleBuild.getIncludedBuilds()) {
-        Build buildToUpdate = rootDirsToBuilds.get(includedGradleBuild.getBuildIdentifier().getRootDir());
-        if (buildToUpdate instanceof DefaultBuild && updatedBuilds.add(buildToUpdate)) {
-          ((DefaultBuild)buildToUpdate).setParentBuildIdentifier(
-            new DefaultBuildIdentifier(gradleBuild.getBuildIdentifier().getRootDir()));
-        }
-      }
-    }
-  }
-
-  @ApiStatus.Internal
-  public void setParallelModelsFetch(boolean parallelModelsFetch) {
-    myParallelModelsFetch = parallelModelsFetch;
   }
 
   @Contract("null -> null")
@@ -223,94 +192,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
              buildEnvironment.getGradle().getGradleVersion());
   }
 
-  private Set<GradleBuild> getNestedBuilds(@NotNull GradleBuild rootBuild, BuildController controller) {
-    BuildEnvironment environment = controller.getModel(BuildEnvironment.class);
-    GradleVersion envGradleVersion = null;
-    if (environment != null) {
-      // call to GradleVersion.current() will load version class from client classloader and return TAPI version number
-      envGradleVersion = GradleVersion.version(environment.getGradle().getGradleVersion());
-    }
-    if (!myIsCompositeBuildsSupported) {
-      return Collections.emptySet();
-    }
-    Set<String> processedBuildsPaths = new HashSet<>();
-    Set<GradleBuild> nestedBuilds = new LinkedHashSet<>();
-    String rootBuildPath = rootBuild.getBuildIdentifier().getRootDir().getPath();
-    processedBuildsPaths.add(rootBuildPath);
-    Queue<GradleBuild> queue = new ArrayDeque<>(getEditableBuilds(rootBuild, envGradleVersion));
-    while (!queue.isEmpty()) {
-      GradleBuild includedBuild = queue.remove();
-      String includedBuildPath = includedBuild.getBuildIdentifier().getRootDir().getPath();
-      if (processedBuildsPaths.add(includedBuildPath)) {
-        nestedBuilds.add(includedBuild);
-        queue.addAll(getEditableBuilds(includedBuild, envGradleVersion));
-      }
-    }
-    return nestedBuilds;
-  }
-
-  /**
-   * Get nested builds to be imported by IDEA
-   * @param rootBuild parent build
-   * @return builds to be imported by IDEA. Before Gradle 8.0 - included builds, 8.0 and later - included and buildSrc builds
-   */
-  private static DomainObjectSet<? extends GradleBuild> getEditableBuilds(
-    @NotNull GradleBuild rootBuild,
-    @Nullable GradleVersion version
-  ) {
-    if (version != null && version.compareTo(GradleVersion.version("8.0")) >= 0) {
-      DomainObjectSet<? extends GradleBuild> builds = rootBuild.getEditableBuilds();
-      if (builds.isEmpty()) {
-        return rootBuild.getIncludedBuilds();
-      } else {
-        return builds;
-      }
-    } else {
-      return rootBuild.getIncludedBuilds();
-    }
-  }
-
-  private void addProjectModels(
-    @NotNull BuildController controller,
-    @NotNull final AllModels allModels,
-    @NotNull final ExecutorService converterExecutor,
-    @NotNull final ModelConverter modelConverter,
-    @NotNull final GradleBuild build,
-    final boolean isProjectsLoadedAction
-  ) {
-    // Prepare nested build actions.
-    List<BuildAction<?>> buildActions = new ArrayList<>();
-    for (final BasicGradleProject gradleProject : build.getProjects()) {
-      buildActions.add(
-        new BuildAction<Object>() {
-          @Override
-          public Object execute(BuildController controller) {
-            addProjectModels(controller, allModels, converterExecutor, modelConverter, gradleProject, isProjectsLoadedAction);
-            return null;
-          }
-        }
-      );
-    }
-
-    if (myParallelModelsFetch) {
-      controller.run(buildActions);
-    }
-    else {
-      for (BuildAction<?> buildAction : buildActions) {
-        buildAction.execute(controller);
-      }
-    }
-  }
-
-  @NotNull
-  private static Build convert(@NotNull GradleBuild build) {
-    DefaultBuild rootProject = new DefaultBuild(build.getRootProject().getName(), build.getBuildIdentifier().getRootDir());
-    for (BasicGradleProject project : build.getProjects()) {
-      rootProject.addProject(project.getName(), project.getProjectIdentifier());
-    }
-    return rootProject;
-  }
-
   private void configureAdditionalTypes(BuildController controller) {
     if (myTargetTypes.isEmpty()) return;
     try {
@@ -332,103 +213,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
   }
 
-  /**
-   * Gets project level models for a given {@code project} and returns a collection of actions,
-   * which when executed add these models to {@code allModels}.
-   *
-   * <p>The actions returned by this method are supposed to be executed on a single thread.
-   */
-  private void addProjectModels(
-    @NotNull BuildController controller,
-    @NotNull final AllModels allModels,
-    @NotNull final ExecutorService converterExecutor,
-    @NotNull final ModelConverter modelConverter,
-    @NotNull final BasicGradleProject project,
-    boolean isProjectsLoadedAction
-  ) {
-    try {
-      Set<ProjectImportModelProvider> modelProviders = getModelProviders(isProjectsLoadedAction);
-      for (ProjectImportModelProvider extension : modelProviders) {
-        final Set<String> obtainedModels = new HashSet<>();
-        long startTime = System.currentTimeMillis();
-        ProjectModelConsumer modelConsumer = new ProjectModelConsumer() {
-          @Override
-          public void consume(final @NotNull Object object, final @NotNull Class clazz) {
-            obtainedModels.add(clazz.getName());
-            Runnable convert = () -> {
-              Object o = modelConverter.convert(object);
-              allModels.addModel(o, clazz, project);
-            };
-            converterExecutor.execute(convert);
-          }
-        };
-        extension.populateProjectModels(controller, project, modelConsumer);
-        allModels.logPerformance(
-          "Ran extension " + extension.getClass().getName() +
-          " for project " + project.getProjectIdentifier().getProjectPath() +
-          " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
-          System.currentTimeMillis() - startTime);
-      }
-    }
-    catch (Exception e) {
-      // do not fail project import in a preview mode
-      if (!myIsPreviewMode) {
-        throw new ExternalSystemException(e);
-      }
-    }
-  }
-
-  private void addBuildModels(
-    @NotNull BuildController controller,
-    @NotNull final AllModels allModels,
-    @NotNull final ExecutorService converterExecutor,
-    @NotNull final ModelConverter modelConverter,
-    @NotNull final GradleBuild buildModel,
-    boolean isProjectsLoadedAction
-  ) {
-    try {
-      Set<ProjectImportModelProvider> modelProviders = getModelProviders(isProjectsLoadedAction);
-      for (ProjectImportModelProvider extension : modelProviders) {
-        final Set<String> obtainedModels = new HashSet<>();
-        long startTime = System.currentTimeMillis();
-        BuildModelConsumer modelConsumer = new BuildModelConsumer() {
-          @Override
-          public void consumeProjectModel(@NotNull final ProjectModel projectModel, @NotNull final Object object, @NotNull final Class clazz) {
-            obtainedModels.add(clazz.getName());
-            Runnable convert = () -> {
-              Object converted = modelConverter.convert(object);
-              allModels.addModel(converted, clazz, projectModel);
-            };
-            converterExecutor.execute(convert);
-          }
-
-          @Override
-          public void consume(@NotNull final BuildModel buildModel, @NotNull final Object object, @NotNull final Class clazz) {
-            obtainedModels.add(clazz.getName());
-            Runnable convert = () -> {
-              Object converted = modelConverter.convert(object);
-              allModels.addModel(converted, clazz, buildModel);
-            };
-            converterExecutor.execute(convert);
-          }
-        };
-        extension.populateBuildModels(controller, buildModel, modelConsumer);
-        allModels.logPerformance(
-          "Ran extension " +
-          extension.getClass().getName() +
-          " for build " + buildModel.getBuildIdentifier().getRootDir().getPath() +
-          " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
-          System.currentTimeMillis() - startTime);
-      }
-    }
-    catch (Exception e) {
-      // do not fail project import in a preview mode
-      if (!myIsPreviewMode) {
-        throw new ExternalSystemException(e);
-      }
-    }
-  }
-
   private Set<ProjectImportModelProvider> getModelProviders(boolean isProjectsLoadedAction) {
     Set<ProjectImportModelProvider> modelProviders = new LinkedHashSet<>();
     if (!myUseProjectsLoadedPhase) {
@@ -439,24 +223,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       modelProviders = isProjectsLoadedAction ? myProjectsLoadedModelProviders : myBuildFinishedModelProviders;
     }
     return modelProviders;
-  }
-
-  @NotNull
-  private static String joinClassNamesToString(@NotNull Set<String> names) {
-    StringBuilder sb = new StringBuilder();
-    for (Iterator<String> it = names.iterator(); it.hasNext(); ) {
-      sb.append(it.next());
-      if (it.hasNext()) {
-        sb.append(", ");
-      }
-    }
-
-    return sb.toString();
-  }
-
-  @ApiStatus.Experimental
-  public interface ModelConverter extends Serializable {
-    Object convert(Object object);
   }
 
   // Note: This class is NOT thread safe and it is supposed to be used from a single thread.
@@ -553,193 +319,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       String currentKey = super.getBuildKeyPrefix(buildIdentifier);
       String originalKey = myBuildsKeyPrefixesMapping == null ? null : myBuildsKeyPrefixesMapping.get(currentKey);
       return originalKey == null ? currentKey : originalKey;
-    }
-  }
-
-  private final static class DefaultBuild implements Build, Serializable {
-    private final String myName;
-    private final DefaultBuildIdentifier myBuildIdentifier;
-    private final Collection<Project> myProjects = new ArrayList<>(0);
-
-    private DefaultBuildIdentifier myParentBuildIdentifier = null;
-
-    private DefaultBuild(String name, File rootDir) {
-      myName = name;
-      myBuildIdentifier = new DefaultBuildIdentifier(rootDir);
-    }
-
-    @Override
-    public String getName() {
-      return myName;
-    }
-
-    @Override
-    public BuildIdentifier getBuildIdentifier() {
-      return myBuildIdentifier;
-    }
-
-    @Override
-    public Collection<Project> getProjects() {
-      return myProjects;
-    }
-
-    @Override
-    public BuildIdentifier getParentBuildIdentifier() {
-      return myParentBuildIdentifier;
-    }
-
-    private void setParentBuildIdentifier(DefaultBuildIdentifier parentBuildIdentifier) {
-      myParentBuildIdentifier = parentBuildIdentifier;
-    }
-
-    private void addProject(String name, final ProjectIdentifier projectIdentifier) {
-      final String projectPath = projectIdentifier.getProjectPath();
-      File rootDir = myBuildIdentifier.getRootDir();
-      assert rootDir.getPath().equals(projectIdentifier.getBuildIdentifier().getRootDir().getPath());
-      myProjects.add(new DefaultProjectModel(name, rootDir, projectPath));
-    }
-
-    private final static class DefaultProjectModel implements Project, Serializable {
-      private final String myName;
-      private final DefaultProjectIdentifier myProjectIdentifier;
-
-      private DefaultProjectModel(@NotNull String name, @NotNull File rootDir, @NotNull String projectPath) {
-        myName = name;
-        myProjectIdentifier = new DefaultProjectIdentifier(rootDir, projectPath);
-      }
-
-      @Override
-      public String getName() {
-        return myName;
-      }
-
-      @Override
-      public ProjectIdentifier getProjectIdentifier() {
-        return myProjectIdentifier;
-      }
-
-      @Override
-      public String toString() {
-        return "ProjectModel{" +
-               "name='" + myName + '\'' +
-               ", id=" + myProjectIdentifier +
-               '}';
-      }
-    }
-  }
-
-  private final static class MyBuildController implements BuildController {
-    private final BuildController myDelegate;
-    private final GradleBuild myMainGradleBuild;
-    private final Model myMyMainGradleBuildRootProject;
-
-    private MyBuildController(@NotNull BuildController buildController, @NotNull GradleBuild mainGradleBuild) {
-      myDelegate = buildController;
-      myMainGradleBuild = mainGradleBuild;
-      myMyMainGradleBuildRootProject = myMainGradleBuild.getRootProject();
-    }
-
-    @Override
-    public <T> T getModel(Class<T> aClass) throws UnknownModelException {
-      if (aClass == GradleBuild.class) {
-        //noinspection unchecked
-        return (T)myMainGradleBuild;
-      }
-      return myDelegate.getModel(myMyMainGradleBuildRootProject, aClass);
-    }
-
-    @Override
-    public <T> T findModel(Class<T> aClass) {
-      if (aClass == GradleBuild.class) {
-        //noinspection unchecked
-        return (T)myMainGradleBuild;
-      }
-      return myDelegate.findModel(myMyMainGradleBuildRootProject, aClass);
-    }
-
-    @Override
-    public GradleBuild getBuildModel() {
-      return myMainGradleBuild;
-    }
-
-    @Override
-    public <T> T getModel(Model model, Class<T> aClass) throws UnknownModelException {
-      if (isMainBuild(model)) {
-        return getModel(aClass);
-      }
-      else {
-        return myDelegate.getModel(model, aClass);
-      }
-    }
-
-    @Override
-    public <T> T findModel(Model model, Class<T> aClass) {
-      if (isMainBuild(model)) {
-        return findModel(aClass);
-      }
-      else {
-        return myDelegate.findModel(model, aClass);
-      }
-    }
-
-    @Override
-    public <T, P> T getModel(Class<T> aClass, Class<P> aClass1, Action<? super P> action)
-      throws UnsupportedVersionException {
-      return myDelegate.getModel(myMyMainGradleBuildRootProject, aClass, aClass1, action);
-    }
-
-    @Override
-    public <T, P> T findModel(Class<T> aClass, Class<P> aClass1, Action<? super P> action) {
-      return myDelegate.findModel(myMyMainGradleBuildRootProject, aClass, aClass1, action);
-    }
-
-    @Override
-    public <T, P> T getModel(Model model, Class<T> aClass, Class<P> aClass1, Action<? super P> action)
-      throws UnsupportedVersionException {
-      if (isMainBuild(model)) {
-        return getModel(aClass, aClass1, action);
-      }
-      else {
-        return myDelegate.getModel(model, aClass, aClass1, action);
-      }
-    }
-
-    @Override
-    public <T, P> T findModel(Model model, Class<T> aClass, Class<P> aClass1, Action<? super P> action) {
-      if (isMainBuild(model)) {
-        return findModel(aClass, aClass1, action);
-      }
-      else {
-        return myDelegate.findModel(model, aClass, aClass1, action);
-      }
-    }
-
-    @Override
-    public <T> List<T> run(Collection<? extends BuildAction<? extends T>> collection) {
-      return myDelegate.run(collection);
-    }
-
-    @Override
-    public boolean getCanQueryProjectModelInParallel(Class<?> aClass) {
-      return myDelegate.getCanQueryProjectModelInParallel(aClass);
-    }
-
-    private boolean isMainBuild(Model model) {
-      return model == null || model == myMainGradleBuild;
-    }
-  }
-
-  private static class NoopConverter implements ModelConverter {
-    @Override
-    public Object convert(Object object) {
-      return object;
-    }
-  }
-
-  private static final class SimpleThreadFactory implements ThreadFactory {
-    @Override
-    public Thread newThread(@NotNull Runnable runnable) {
-      return new Thread(runnable, "idea-tooling-model-converter");
     }
   }
 }
