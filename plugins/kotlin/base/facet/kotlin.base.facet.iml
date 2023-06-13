@@ -27,6 +27,6 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.java.impl" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
   </component>
 </module>

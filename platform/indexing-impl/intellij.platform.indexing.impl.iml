@@ -22,6 +22,6 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
   </component>
 </module>
