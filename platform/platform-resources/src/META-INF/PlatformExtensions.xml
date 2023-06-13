@@ -1504,6 +1504,10 @@
                  description="Turn on the highlighting passes preload experiment"/>
 
     <actionConfigurationCustomizer implementation="com.intellij.openapi.project.impl.SeparateProcessActionsCustomizer" />
+
+    <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.CustomPluginRepositoriesConfigurationComponent"
+                    configurationSchemaKey="plugins"/>
+    <updateSettingsProvider implementation="com.intellij.openapi.updateSettings.impl.ConfigurationScriptPluginRepositoriesProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

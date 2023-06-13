@@ -1,7 +1,7 @@
 package com.intellij.configurationScript
 
-import com.intellij.configurationScript.providers.PluginsConfiguration
 import com.intellij.configurationScript.schemaGenerators.PluginJsonSchemaGenerator
+import com.intellij.openapi.updateSettings.impl.PluginsConfiguration
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import org.intellij.lang.annotations.Language
