@@ -174,7 +174,7 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
 
     override fun getOrder(): Int {
-      return VcsInitObject.MAPPINGS.order + 10;
+      return VcsInitObject.MAPPINGS.order + 10
     }
   }
 }

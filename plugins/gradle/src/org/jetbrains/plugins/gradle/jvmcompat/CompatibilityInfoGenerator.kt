@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.jvmcompat;
+package org.jetbrains.plugins.gradle.jvmcompat
 
 import com.intellij.ReviseWhenPortedToJDK
 import java.io.BufferedInputStream
@@ -13,7 +13,7 @@ import javax.xml.stream.XMLInputFactory
 fun main(args: Array<String>) {
   assert(args.size == 3) { "Should be 3 files: Path to JSON, path to result file dir, path to ApplicationInfo.xml" }
   val applicationVersion = readAppVersion(Paths.get(args[2]))
-  generateJvmSupportMatrices(Paths.get(args[0]), Paths.get(args[1]), applicationVersion);
+  generateJvmSupportMatrices(Paths.get(args[0]), Paths.get(args[1]), applicationVersion)
 }
 
 fun generateJvmSupportMatrices(json: Path, kt: Path, applicationVersion: String, copyrightComment: String? = null) {
@@ -27,7 +27,7 @@ fun generateJvmSupportMatrices(json: Path, kt: Path, applicationVersion: String,
   }
   val classFileData = ClassFileData(copyrightComment ?: createCopyrightComment(), parsedData)
 
-  val fileData = getGeneratedString(classFileData);
+  val fileData = getGeneratedString(classFileData)
   kt.toFile().writeText(fileData, Charsets.UTF_8)
 }
 
@@ -42,7 +42,7 @@ fun readAppVersion(appInfoPath: Path): String {
   val xmlInputFactory: XMLInputFactory = XMLInputFactory.newInstance()
   BufferedInputStream(FileInputStream(appInfoPath.toFile())).use { bis ->
     val reader = xmlInputFactory.createXMLEventReader(bis)
-    val startDocument = reader.nextEvent();
+    val startDocument = reader.nextEvent()
     assert(startDocument.isStartDocument)
     if (reader.hasNext()) {
       val startElement = reader.nextEvent()

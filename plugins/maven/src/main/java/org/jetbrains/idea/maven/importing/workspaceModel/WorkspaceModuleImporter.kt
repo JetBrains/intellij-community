@@ -226,7 +226,7 @@ internal class WorkspaceModuleImporter(
                                                                                     mavenArtifact.version,
                                                                                     mavenArtifact.packaging,
                                                                                     mavenArtifact.classifier)).state) ?: return
-    libPropertiesElement.name = JpsLibraryTableSerializer.PROPERTIES_TAG;
+    libPropertiesElement.name = JpsLibraryTableSerializer.PROPERTIES_TAG
     val xmlTag = JDOMUtil.writeElement(libPropertiesElement)
     builder addEntity LibraryPropertiesEntity(libraryKind.kindId, libraryEntity.entitySource) {
       library = libraryEntity

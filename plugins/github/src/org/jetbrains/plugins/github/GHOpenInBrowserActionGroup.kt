@@ -51,7 +51,7 @@ open class GHOpenInBrowserActionGroup
     val data = getData(e.dataContext)
     e.presentation.isEnabledAndVisible = !data.isNullOrEmpty()
     e.presentation.isPerformGroup = data?.size == 1
-    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup);
+    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup)
     e.presentation.isPopupGroup = true
     e.presentation.isDisableGroupIfEmpty = false
   }

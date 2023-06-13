@@ -43,13 +43,13 @@ class SpeedSearchAdvertiser : ComponentAdvertiser() {
 
     val label = JLabel(IdeBundle.message("speed.search.got.it.text"))
       .apply {
-        foreground = JBUI.CurrentTheme.Advertiser.foreground();
+        foreground = JBUI.CurrentTheme.Advertiser.foreground()
         font = adFont()
       }
 
     panel.add(label)
     panel.add(actionLink)
-    panel.background  = JBUI.CurrentTheme.Advertiser.background();
+    panel.background  = JBUI.CurrentTheme.Advertiser.background()
 
     addComponentAdvertiser(panel)
 

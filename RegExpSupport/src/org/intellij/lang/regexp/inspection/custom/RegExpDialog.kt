@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.lang.regexp.inspection.custom;
+package org.intellij.lang.regexp.inspection.custom
 
 import com.intellij.find.FindBundle
 import com.intellij.find.FindModel

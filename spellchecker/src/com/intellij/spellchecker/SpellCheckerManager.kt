@@ -461,10 +461,10 @@ private class StreamLoader(private val name: String, private val loaderClass: Cl
       stream.reader().useLines { it.forEach(consumer::accept) }
     }
     catch (exception: ProcessCanceledException) {
-      throw exception;
+      throw exception
     }
     catch (exception: CancellationException) {
-      throw exception;
+      throw exception
     }
     catch (e: Exception) {
       LOG.error(e)

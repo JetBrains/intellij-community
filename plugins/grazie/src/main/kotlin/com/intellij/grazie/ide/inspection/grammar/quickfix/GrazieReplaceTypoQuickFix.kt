@@ -176,7 +176,7 @@ object GrazieReplaceTypoQuickFix {
     if (shreds.isEmpty()) return emptyList()
 
     if (replacement.isEmpty() && removalWouldGlueUnrelatedTokens(localRange, text)) {
-      replacement = " ";
+      replacement = " "
     }
 
     val best = if (isWordMiddle(text, localRange.endOffset)) shreds.last() else shreds.first()

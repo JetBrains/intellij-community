@@ -150,7 +150,7 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
       }
       if (path != null && !path.exists()) {
         thisLogger().warn("Can't find $path")
-        path = null;
+        path = null
       }
       return path?.let { targetPath(it) } ?: if (!workingDir.isNullOrBlank()) constant(workingDir) else null
     }

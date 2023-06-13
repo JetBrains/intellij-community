@@ -32,7 +32,7 @@ internal class CheckVFSHealthAction : AnAction() {
           FSRecords.checkSanity()
         }
         catch (t: Throwable){
-          FSRecords.LOG.warn("VFS health check: old sanity-checking version", t);
+          FSRecords.LOG.warn("VFS health check: old sanity-checking version", t)
         }
       }
     }
