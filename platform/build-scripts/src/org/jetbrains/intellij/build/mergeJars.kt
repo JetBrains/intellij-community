@@ -153,7 +153,8 @@ suspend fun buildJar(targetFile: Path,
                             uniqueNames = uniqueNames,
                             sources = sources,
                             packageIndexBuilder = packageIndexBuilder,
-                            zipCreator = zipCreator)
+                            zipCreator = zipCreator,
+                            compress = compress)
           }
         }
 
@@ -170,7 +171,8 @@ private suspend fun handleZipSource(source: ZipSource,
                                     uniqueNames: MutableMap<String, Path>,
                                     sources: List<Source>,
                                     packageIndexBuilder: PackageIndexBuilder?,
-                                    zipCreator: ZipFileWriter) {
+                                    zipCreator: ZipFileWriter,
+                                    compress: Boolean) {
   val nativeFiles = if (nativeFileHandler == null) {
     null
   }
@@ -206,7 +208,12 @@ private suspend fun handleZipSource(source: ZipSource,
           val data = dataSupplier()
           val file = nativeFileHandler.sign(name, data)
           if (file == null) {
-            zipCreator.uncompressedData(name, dataSupplier())
+            if (compress) {
+              zipCreator.compressedData(name, data)
+            }
+            else {
+              zipCreator.uncompressedData(name, data)
+            }
           }
           else {
             zipCreator.file(name, file)
@@ -217,7 +224,13 @@ private suspend fun handleZipSource(source: ZipSource,
       else {
         packageIndexBuilder?.addFile(name)
 
-        zipCreator.uncompressedData(name, dataSupplier())
+        val data = dataSupplier()
+        if (compress) {
+          zipCreator.compressedData(name, data)
+        }
+        else {
+          zipCreator.uncompressedData(name, data)
+        }
       }
     }
   }
