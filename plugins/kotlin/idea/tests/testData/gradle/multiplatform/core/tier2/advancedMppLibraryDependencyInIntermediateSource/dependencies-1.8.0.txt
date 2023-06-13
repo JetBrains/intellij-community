@@ -55,15 +55,11 @@ project.consumer.jvmAndNativeTest
 
 project.consumer.jvmMain
     producer.commonMain (COMPILE)
-    producer.commonMain (COMPILE)
-    producer.jvmAndNativeMain (COMPILE)
     producer.jvmAndNativeMain (COMPILE)
     producer.jvmMain (COMPILE)
 
 project.consumer.jvmTest
     producer.commonMain (TEST)
-    producer.commonMain (TEST)
-    producer.jvmAndNativeMain (TEST)
     producer.jvmAndNativeMain (TEST)
     producer.jvmMain (TEST)
 

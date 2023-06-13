@@ -58,8 +58,6 @@ project.consumer.jvmMain
     org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
     producer.commonMain (COMPILE)
-    producer.commonMain (COMPILE)
-    producer.jvmAndAndroidMain (COMPILE)
     producer.jvmAndAndroidMain (COMPILE)
     producer.jvmMain (COMPILE)
 
@@ -75,8 +73,6 @@ project.consumer.jvmTest
     org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (TEST)
     org.jetbrains:annotations:13.0 (TEST)
     producer.commonMain (TEST)
-    producer.commonMain (TEST)
-    producer.jvmAndAndroidMain (TEST)
     producer.jvmAndAndroidMain (TEST)
     producer.jvmMain (TEST)
 

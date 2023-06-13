@@ -141,3 +141,4 @@ internal class KotlinSourceSetBuilder(
 
 
 internal const val INTRANSITIVE_METADATA_CONFIGURATION_NAME_ACCESSOR = "getIntransitiveMetadataConfigurationName"
+internal const val NATIVE_TARGET_PLATFORM_TYPE_NAME = "native"
