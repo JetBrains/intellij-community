@@ -42,6 +42,7 @@ import com.jetbrains.infra.pgpVerifier.PgpSignaturesVerifier
 import com.jetbrains.infra.pgpVerifier.PgpSignaturesVerifierLogger
 import com.jetbrains.infra.pgpVerifier.Sha256ChecksumSignatureVerifier
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.reactive.fire
 import com.sun.jna.platform.win32.Kernel32
 import com.sun.jna.platform.win32.WinBase
@@ -759,7 +760,7 @@ object CodeWithMeClientDownloader {
               }
             } else {
               // if process exited abnormally but took longer than 10 seconds, it's likely to be an issue with connection instead of Mac-specific bug
-              if ((System.currentTimeMillis() - lastProcessStartTime) < 10_000 ) {
+              if ((System.currentTimeMillis() - lastProcessStartTime) < 10_000 && lifetime.isAlive) {
                 if (attemptCount > 0) {
                   LOG.info("Previous attempt to start guest process failed, will try again in one second")
                   EdtScheduledExecutorService.getInstance().schedule({ doRunProcess() }, ModalityState.any(), 1, TimeUnit.SECONDS)
