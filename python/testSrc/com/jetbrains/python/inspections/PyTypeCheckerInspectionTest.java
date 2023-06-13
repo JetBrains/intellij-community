@@ -1516,4 +1516,19 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            group: GroupWithOtherKey[str, int] = {"key": <warning descr="Expected type 'str', got 'int' instead">1</warning>, "group": [], "some_other_key": <warning descr="Expected type 'int', got 'str' instead">''</warning>}""")
     );
   }
+
+  // PY-27551
+  public void testDunderInitAnnotatedWithNoReturn() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+                           from typing import NoReturn
+                                                      
+                           class Test:
+                               def __init__(self) -> NoReturn:
+                                   raise Exception()
+                                                      
+                           """)
+    );
+  }
 }

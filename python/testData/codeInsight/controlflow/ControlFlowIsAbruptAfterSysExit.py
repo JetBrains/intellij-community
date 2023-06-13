@@ -1,3 +1,5 @@
+import sys
+
 try:
     n = int(sys.argv[1])
 except ValueError:
