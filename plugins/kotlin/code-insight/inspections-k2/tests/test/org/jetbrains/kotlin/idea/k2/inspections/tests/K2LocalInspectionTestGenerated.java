@@ -2402,6 +2402,54 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantIf")
     public abstract static class RedundantIf extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment")
+        public static class Comment extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("bothBranchesHaveComments.kt")
+            public void testBothBranchesHaveComments() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/bothBranchesHaveComments.kt");
+            }
+
+            @TestMetadata("bothBranchesHaveComments2.kt")
+            public void testBothBranchesHaveComments2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/bothBranchesHaveComments2.kt");
+            }
+
+            @TestMetadata("bothBranchesHaveComments3.kt")
+            public void testBothBranchesHaveComments3() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/bothBranchesHaveComments3.kt");
+            }
+
+            @TestMetadata("bothBranchesHaveComments4.kt")
+            public void testBothBranchesHaveComments4() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/bothBranchesHaveComments4.kt");
+            }
+
+            @TestMetadata("bothBranchesHaveComments5.kt")
+            public void testBothBranchesHaveComments5() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/bothBranchesHaveComments5.kt");
+            }
+
+            @TestMetadata("bothBranchesHaveComments6.kt")
+            public void testBothBranchesHaveComments6() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/bothBranchesHaveComments6.kt");
+            }
+
+            @TestMetadata("onlyElseHasComment.kt")
+            public void testOnlyElseHasComment() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/onlyElseHasComment.kt");
+            }
+
+            @TestMetadata("onlyThenHasComment.kt")
+            public void testOnlyThenHasComment() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/comment/onlyThenHasComment.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantIf/floatingPoint")
         public static class FloatingPoint extends AbstractK2LocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {

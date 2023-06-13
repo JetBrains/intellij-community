@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
@@ -18,9 +19,7 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.psi.psiUtil.*
 
 /**
  * A parent class for K1 and K2 RedundantIfInspection.
@@ -65,9 +64,9 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                     expression.parent.let { it is KtContainerNodeForControlStructureBody && it.expression == expression }
 
             val hasConditionWithFloatingPointType = expression.hasConditionWithFloatingPointType()
-
+            val bothBranchesHaveComments = bothBranchesHaveComments(expression.then, expression.`else`, returnAfterIf)
             val highlightType =
-                if ((ignoreChainedIf && isChainedIf) || hasConditionWithFloatingPointType) INFORMATION
+                if ((isChainedIf && ignoreChainedIf) || hasConditionWithFloatingPointType || bothBranchesHaveComments) INFORMATION
                 else GENERIC_ERROR_OR_WARNING
 
             holder.registerProblemWithoutOfflineInformation(
@@ -99,6 +98,29 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                 val operation = it.operationToken
                 operation == KtTokens.LT || operation == KtTokens.LTEQ || operation == KtTokens.GT || operation == KtTokens.GTEQ
             }
+    }
+
+    private fun bothBranchesHaveComments(
+        thenExpression: KtExpression?,
+        elseExpression: KtExpression?,
+        returnAfterIf: KtExpression?
+    ): Boolean =
+        thenExpression.hasComments() &&
+            (elseExpression.hasComments(thenExpression) || returnAfterIf.hasComments(thenExpression))
+
+    private fun PsiElement?.hasComments(prevExpression: KtExpression? = null): Boolean {
+        fun Sequence<PsiElement>.comments(): Sequence<PsiComment> =
+            takeWhile { it is PsiWhiteSpace || it is PsiComment }.filterIsInstance<PsiComment>()
+
+        if (this == null) return false
+
+        val lineNumber = getLineNumber()
+        val prevExpressionLineNumber = prevExpression?.getLineNumber()
+        val hasPrevComment = prevLeafs.comments().any { it.getLineNumber() != prevExpressionLineNumber }
+        val ifExpressionHasPrevComment = (parent?.parent as? KtIfExpression)?.prevLeafs?.comments()?.any() == true
+        val hasTailComment = nextLeafs.comments().any { it.getLineNumber() == lineNumber }
+
+        return hasPrevComment || ifExpressionHasPrevComment || hasTailComment || anyDescendantOfType<PsiComment>()
     }
 
     private sealed class BranchType {
