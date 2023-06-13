@@ -6,7 +6,6 @@ package com.intellij.openapi.keymap.impl
 import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
@@ -71,7 +70,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     }, settingsCategory = SettingsCategory.KEYMAP)
 
     val defaultKeymapManager = DefaultKeymap.getInstance()
-    val systemDefaultKeymap = WelcomeWizardUtil.getWizardMacKeymap() ?: defaultKeymapManager.defaultKeymapName
+    val systemDefaultKeymap = defaultKeymapManager.defaultKeymapName
     for (keymap in defaultKeymapManager.keymaps) {
       schemeManager.addScheme(keymap)
       if (keymap.name == systemDefaultKeymap) {
