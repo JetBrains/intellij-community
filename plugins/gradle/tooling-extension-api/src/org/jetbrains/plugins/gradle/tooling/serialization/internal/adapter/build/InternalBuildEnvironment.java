@@ -5,6 +5,7 @@ import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.build.GradleEnvironment;
 import org.gradle.tooling.model.build.JavaEnvironment;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalJavaEnvironment;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
@@ -17,16 +18,18 @@ import java.io.Serializable;
 public final class InternalBuildEnvironment implements BuildEnvironment, Serializable {
   private final Supplier<InternalBuildIdentifier> buildIdentifier;
   private final Supplier<File> gradleUserHome;
-  private final String gradleVersion;
+  private final Supplier<String> gradleVersion;
   private final Supplier<InternalJavaEnvironment> java;
 
-  public InternalBuildEnvironment(Supplier<InternalBuildIdentifier> buildIdentifier,
-                                  Supplier<InternalJavaEnvironment> java,
-                                  Supplier<File> gradleUserHome,
-                                  String gradleVersion) {
+  public InternalBuildEnvironment(
+    @NotNull Supplier<InternalBuildIdentifier> buildIdentifier,
+    @NotNull Supplier<File> gradleUserHome,
+    @NotNull Supplier<String> gradleVersion,
+    @NotNull Supplier<InternalJavaEnvironment> java
+  ) {
     this.buildIdentifier = Suppliers.wrap(buildIdentifier);
     this.gradleUserHome = Suppliers.wrap(gradleUserHome);
-    this.gradleVersion = gradleVersion;
+    this.gradleVersion = Suppliers.wrap(gradleVersion);
     this.java = Suppliers.wrap(java);
   }
 
@@ -45,7 +48,7 @@ public final class InternalBuildEnvironment implements BuildEnvironment, Seriali
 
       @Override
       public String getGradleVersion() {
-        return InternalBuildEnvironment.this.gradleVersion;
+        return InternalBuildEnvironment.this.gradleVersion.get();
       }
     };
   }

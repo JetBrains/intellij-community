@@ -13,6 +13,7 @@ import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.tooling.model.build.GradleEnvironment;
 import org.gradle.tooling.model.build.JavaEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.IdeaProject;
@@ -23,10 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalJavaEnvironment;
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.build.InternalBuildEnvironment;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.*;
@@ -166,29 +165,27 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   @Contract("null -> null")
   private static BuildEnvironment convert(final @Nullable BuildEnvironment buildEnvironment) {
-    if (buildEnvironment == null) return null;
-    return buildEnvironment instanceof InternalBuildEnvironment ? buildEnvironment :
-           new InternalBuildEnvironment(
-             new Supplier<InternalBuildIdentifier>() {
-               @Override
-               public InternalBuildIdentifier get() {
-                 return new InternalBuildIdentifier(buildEnvironment.getBuildIdentifier().getRootDir());
-               }
-             },
-             new Supplier<InternalJavaEnvironment>() {
-               @Override
-               public InternalJavaEnvironment get() {
-                 JavaEnvironment java = buildEnvironment.getJava();
-                 return new InternalJavaEnvironment(java.getJavaHome(), java.getJvmArguments());
-               }
-             },
-             new Supplier<File>() {
-               @Override
-               public File get() {
-                 return buildEnvironment.getGradle().getGradleUserHome();
-               }
-             },
-             buildEnvironment.getGradle().getGradleVersion());
+    if (buildEnvironment == null || buildEnvironment instanceof InternalBuildEnvironment) {
+      return buildEnvironment;
+    }
+    return new InternalBuildEnvironment(
+      () -> {
+        BuildIdentifier buildIdentifier = buildEnvironment.getBuildIdentifier();
+        return new InternalBuildIdentifier(buildIdentifier.getRootDir());
+      },
+      () -> {
+        GradleEnvironment gradle = buildEnvironment.getGradle();
+        return gradle.getGradleUserHome();
+      },
+      () -> {
+        GradleEnvironment gradle = buildEnvironment.getGradle();
+        return gradle.getGradleVersion();
+      },
+      () -> {
+        JavaEnvironment java = buildEnvironment.getJava();
+        return new InternalJavaEnvironment(java.getJavaHome(), java.getJvmArguments());
+      }
+    );
   }
 
   private void configureAdditionalTypes(BuildController controller) {
