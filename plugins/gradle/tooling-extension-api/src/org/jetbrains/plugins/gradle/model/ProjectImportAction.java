@@ -224,7 +224,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     return modelProviders;
   }
 
-  // Note: This class is NOT thread safe and it is supposed to be used from a single thread.
+  // Note: This class is NOT thread safe, and it is supposed to be used from a single thread.
   //       Performance logging related methods are thread safe.
   public static final class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
     @NotNull private final List<Build> includedBuilds = new ArrayList<>();
@@ -240,18 +240,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       addModel(ideaProject, IdeaProject.class);
     }
 
-    /**
-     * @deprecated use {@link #getModel(Class)}
-     */
-    @NotNull
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval
-    public IdeaProject getIdeaProject() {
-      IdeaProject ideaProject = getModel(IdeaProject.class);
-      assert ideaProject != null;
-      return ideaProject;
-    }
-
     @NotNull
     public Build getMainBuild() {
       return (Build)getRootModel();
@@ -260,6 +248,11 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     @NotNull
     public List<Build> getIncludedBuilds() {
       return includedBuilds;
+    }
+
+    @ApiStatus.Internal
+    public void addIncludedBuild(@NotNull Build includedBuild) {
+      includedBuilds.add(includedBuild);
     }
 
     @NotNull

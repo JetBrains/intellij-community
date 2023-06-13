@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtil
 import org.gradle.api.artifacts.Dependency
 import org.gradle.internal.impldep.org.apache.commons.lang.math.RandomUtils
 import org.gradle.tooling.model.idea.IdeaModule
+import org.gradle.tooling.model.idea.IdeaProject
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.convertPathsToSystemIndependent
@@ -394,7 +395,8 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
 
 
     private fun findModuleById(ideProject: DataNode<ProjectData>, gradleModule: IdeaModule, moduleId: String): DataNode<ModuleData>? {
-        val isCompositeProject = resolverCtx.models.ideaProject != gradleModule.project
+        val ideaProject = resolverCtx.models.getModel(IdeaProject::class.java)
+        val isCompositeProject = ideaProject != gradleModule.project
         val compositePrefix =
             if (isCompositeProject && moduleId.startsWith(":")) gradleModule.project.name
             else ""

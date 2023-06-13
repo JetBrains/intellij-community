@@ -75,7 +75,7 @@ public class GradleModelFetchAction {
 
     for (GradleBuild includedBuild : nestedBuilds) {
       if (!myIsProjectsLoadedAction) {
-        myAllModels.getIncludedBuilds().add(DefaultBuild.convertGradleBuild(includedBuild));
+        myAllModels.addIncludedBuild(DefaultBuild.convertGradleBuild(includedBuild));
       }
       addProjectModels(controller, includedBuild);
       addBuildModels(controller, includedBuild);
