@@ -184,7 +184,7 @@ public class MavenIndexerCMDState extends CommandLineState {
 
   private static void addIndexerRTLibs(List<File> classpath) {
     List<String> resources = getIndexerRTList();
-    File libDir = new File(new File(PathManager.getPluginTempPath()), "rt-maven-indexer-lib");
+    File libDir = MavenUtil.getPluginSystemDir("rt-maven-indexer-lib").toFile();
     if (!libDir.isDirectory()) {
       if (!libDir.mkdir()) {
         throw new PluginException("Cannot create cache directory for maven", PluginId.getId(MavenUtil.INTELLIJ_PLUGIN_ID));
