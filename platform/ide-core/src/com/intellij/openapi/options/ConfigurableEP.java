@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.xmlb.annotations.*;
@@ -74,21 +75,22 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
 
     ResourceBundle resourceBundle = findBundle();
     if (resourceBundle == null || key == null) {
-      if (key == null) {
-        LOG.warn("Bundle key missed for " + displayName);
+      @NlsSafe String className;
+      if (providerClass == null) {
+        className = instanceClass == null ? implementationClass : instanceClass;
       }
       else {
-        LOG.warn("Bundle missed for " + displayName);
+        className = providerClass;
       }
 
-      if (providerClass == null) {
-        //noinspection HardCodedStringLiteral
-        return instanceClass == null ? implementationClass : instanceClass;
+      if (key == null) {
+        LOG.warn("Bundle key missed for " + className);
       }
       else {
-        //noinspection HardCodedStringLiteral
-        return providerClass;
+        LOG.warn("Bundle missed for " + key);
       }
+
+      return className;
     }
     else {
       return BundleBase.messageOrDefault(resourceBundle, key, null);

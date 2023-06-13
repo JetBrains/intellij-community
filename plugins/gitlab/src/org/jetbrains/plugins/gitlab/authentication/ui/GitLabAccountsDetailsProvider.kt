@@ -18,7 +18,7 @@ internal class GitLabAccountsDetailsProvider(scope: CoroutineScope,
 
   override suspend fun loadDetails(account: GitLabAccount): Result<GitLabUserDTO> {
     val api = apiClientSupplier(account) ?: return Result.Error(GitLabBundle.message("account.token.missing"), true)
-    val details = api.getCurrentUser(account.server) ?: return Result.Error(GitLabBundle.message("account.token.invalid"), true)
+    val details = api.graphQL.getCurrentUser(account.server) ?: return Result.Error(GitLabBundle.message("account.token.invalid"), true)
     return Result.Success(details)
   }
 

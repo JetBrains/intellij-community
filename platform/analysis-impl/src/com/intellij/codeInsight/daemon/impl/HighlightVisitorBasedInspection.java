@@ -7,6 +7,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -109,6 +110,8 @@ public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool 
                                                                         boolean highlightErrorElements,
                                                                         boolean runAnnotators,
                                                                         boolean runVisitors) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return Collections.emptyList();

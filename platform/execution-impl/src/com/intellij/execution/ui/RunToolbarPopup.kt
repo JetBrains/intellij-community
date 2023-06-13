@@ -29,10 +29,12 @@ import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiFile
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.GroupedElementsRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.KeepingPopupOpenAction
@@ -183,6 +185,18 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
 
   private data class DraggedIndex(val from: Int)
 
+  private fun<E> offsetFromElementTopForDnD(list: JList<E>, dropTargetIndex: Int): Int {
+    if (dropTargetIndex == pinnedSize) {
+      return 0
+    }
+    val elementAt = list.model.getElementAt(dropTargetIndex)
+    val c: Component = list.cellRenderer.getListCellRendererComponent(list, elementAt, dropTargetIndex, false, false)
+    return if (c is GroupedElementsRenderer.MyComponent && StringUtil.isNotEmpty(c.separator.caption)) {
+      c.separator.preferredSize.height
+    }
+    else 0
+  }
+
   private inner class MyDnDTarget : DnDTarget {
     override fun update(aEvent: DnDEvent): Boolean {
       val from = (aEvent.attachedObject as? DraggedIndex)?.from
@@ -226,6 +240,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
     override fun startDragging(action: DnDAction, dragOrigin: Point): DnDDragStartBean? {
       val index: Int = list.locationToIndex(dragOrigin)
       if (index < 0) return null
+      list.setOffsetFromElementTopForDnD { offsetFromElementTopForDnD(list, it) }
       return DnDDragStartBean(DraggedIndex(index))
     }
   }

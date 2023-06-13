@@ -2,6 +2,8 @@
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.CancellationManager;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode.DirectNodeType;
@@ -24,10 +26,13 @@ import java.util.Map.Entry;
 
 public class StackVarsProcessor {
   public void simplifyStackVars(RootStatement root, StructMethod mt, StructClass cl) {
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
+
     Set<Integer> setReorderedIfs = new HashSet<>();
     SSAUConstructorSparseEx ssau = null;
 
     while (true) {
+      cancellationManager.checkSavedCancelled();
       boolean found = false;
 
       SSAConstructorSparseEx ssa = new SSAConstructorSparseEx();
@@ -35,6 +40,7 @@ public class StackVarsProcessor {
 
       SimplifyExprentsHelper sehelper = new SimplifyExprentsHelper(ssau == null);
       while (sehelper.simplifyStackVarsStatement(root, setReorderedIfs, ssa, cl)) {
+        cancellationManager.checkSavedCancelled();
         found = true;
       }
 
@@ -44,7 +50,7 @@ public class StackVarsProcessor {
 
       ssau = new SSAUConstructorSparseEx();
       ssau.splitVariables(root, mt);
-
+      cancellationManager.checkSavedCancelled();
       if (iterateStatements(root, ssau)) {
         found = true;
       }
@@ -95,6 +101,8 @@ public class StackVarsProcessor {
   }
 
   private boolean iterateStatements(RootStatement root, SSAUConstructorSparseEx ssa) {
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
+
     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
 
@@ -108,6 +116,7 @@ public class StackVarsProcessor {
     stackMaps.add(new HashMap<>());
 
     while (!stack.isEmpty()) {
+      cancellationManager.checkSavedCancelled();
       DirectNode nd = stack.removeFirst();
       Map<VarVersionPair, Exprent> mapVarValues = stackMaps.removeFirst();
 
@@ -229,9 +238,11 @@ public class StackVarsProcessor {
     Exprent exprent = lstExprents.get(index);
 
     int changed = 0;
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
 
     for (Exprent expr : exprent.getAllExprents()) {
       while (true) {
+        cancellationManager.checkSavedCancelled();
         Object[] arr = iterateChildExprent(expr, exprent, next, mapVarValues, ssau);
         Exprent retexpr = (Exprent)arr[0];
         changed |= (Boolean)arr[1] ? 1 : 0;

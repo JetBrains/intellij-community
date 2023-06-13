@@ -65,6 +65,7 @@ sealed class ClientSessionsManager<T : ClientSession> {
       return getInstance(project).getSessions(kind)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @JvmStatic
     @Deprecated("Use overload accepting ClientKind")
     fun getProjectSessions(project: Project, includeLocal: Boolean): List<ClientProjectSession> {

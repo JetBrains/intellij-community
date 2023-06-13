@@ -2,6 +2,7 @@
 package com.intellij.maven.testFramework.utils
 
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
+import com.intellij.openapi.progress.withModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.runBlocking
@@ -11,14 +12,14 @@ import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 fun resolveFoldersAndImport(project: Project, mavenProjects: Collection<MavenProject>) {
-  runBlocking {
+  withModalProgressBlocking(project, "") {
     MavenFolderResolver(project).resolveFoldersAndImport(mavenProjects)
   }
 }
 
 fun importMavenProjectsSync(mavenProjectsManager: MavenProjectsManager) {
   runBlocking {
-    mavenProjectsManager.importMavenProjects()
+    mavenProjectsManager.importMavenProjects(emptyMap())
   }
 }
 
@@ -46,11 +47,5 @@ fun importMavenProjectsSync(mavenProjectsManager: MavenProjectsManager,
     }
   }
   mavenProjectsManager.importMavenProjectsSync(modelsProvider, toImport)
-}
-
-fun resolveAndImportMavenProjectsSync(mavenProjectsManager: MavenProjectsManager, mavenProjects: Collection<MavenProject>) {
-  runBlocking {
-    mavenProjectsManager.resolveAndImportMavenProjects(mavenProjects)
-  }
 }
 

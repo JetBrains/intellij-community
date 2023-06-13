@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
+import com.intellij.codeInsight.daemon.HighlightingPassesCache
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
@@ -333,6 +334,15 @@ object Switcher : BaseSwitcherAction(null) {
       old?.cancel()
       project.putUserData(SWITCHER_KEY, this)
       myPopup.showCenteredInCurrentWindow(project)
+
+      if (Registry.`is`("highlighting.passes.cache")) {
+        HighlightingPassesCache.getInstance(project).schedule(getNotOpenedRecentFiles())
+      }
+    }
+    private fun getNotOpenedRecentFiles(): List<VirtualFile> {
+      val recentFiles = getInstance(project).fileList
+      val openFiles = FileEditorManager.getInstance(project).openFiles
+      return recentFiles.subtract(openFiles.toSet()).toList()
     }
 
     override fun dispose() {
@@ -754,8 +764,7 @@ object Switcher : BaseSwitcherAction(null) {
       private fun addSmartShortcut(window: SwitcherToolWindow, keymap: MutableMap<String?, SwitcherToolWindow?>): Boolean {
         val title = window.mainText
         if (StringUtil.isEmpty(title)) return false
-        for (i in 0 until title.length) {
-          val c = title[i]
+        for (c in title) {
           if (Character.isUpperCase(c) && addShortcut(keymap, window, c.toString())) {
             return true
           }

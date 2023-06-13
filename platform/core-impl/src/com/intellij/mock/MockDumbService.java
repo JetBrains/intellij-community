@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
@@ -100,11 +100,10 @@ public class MockDumbService extends DumbService {
     activity.run();
   }
 
-  @Nullable
   @Override
-  public Object suspendIndexingAndRun(@NotNull @NlsContexts.ProgressText String activityName,
-                                      @NotNull Function1<? super Continuation<? super Unit>, ?> activity,
-                                      @NotNull Continuation<? super Unit> $completion) {
+  public @Nullable Object suspendIndexingAndRun(@NotNull @NlsContexts.ProgressText String activityName,
+                                                @NotNull Function1<? super Continuation<? super Unit>, ?> activity,
+                                                @NotNull Continuation<? super Unit> $completion) {
     return activity.invoke($completion);
   }
 
@@ -114,12 +113,12 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void smartInvokeLater(@NotNull final Runnable runnable) {
+  public void smartInvokeLater(final @NotNull Runnable runnable) {
     runnable.run();
   }
 
   @Override
-  public void smartInvokeLater(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
+  public void smartInvokeLater(final @NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     runnable.run();
   }
 

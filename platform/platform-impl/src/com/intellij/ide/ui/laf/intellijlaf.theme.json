@@ -567,6 +567,17 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI"
     },
 
+    "Review": {
+      "Branch": {
+        "Background": "grey15",
+        "Background.Hover": "grey14"
+      },
+      "State": {
+        "Background": "grey15",
+        "Foreground": "grey02"
+      }
+    },
+
     "RootPaneUI":{
       "os.windows": "com.intellij.ide.ui.laf.darcula.ui.DarculaRootPaneUI"
     },
@@ -859,6 +870,7 @@
       "hoverBackground": "#edf5fc",
       "hoverInactiveBackground": "grey16",
       "modifiedItemForeground": "#005ad9",
+      "forceFocusedSelectionForeground": true,
       "selectionBorderColor": "#3875d6",
       "textBackground": "contentBackground"
     },

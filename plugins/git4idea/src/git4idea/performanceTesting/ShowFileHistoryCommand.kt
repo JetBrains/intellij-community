@@ -16,7 +16,6 @@ import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.visible.VisiblePack
 import com.jetbrains.performancePlugin.PerformanceTestSpan
-import com.jetbrains.performancePlugin.commands.AddFileCommand
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
@@ -69,7 +68,7 @@ class ShowFileHistoryCommand(text: String, line: Int) : AbstractCommand(text, li
     const val MAIN_SPAN_NAME = "showFileHistory"
     const val FIRST_PACK_SPAN_NAME = "showFirstPack"
     const val PREFIX = "${CMD_PREFIX}showFileHistory"
-    private val LOG = Logger.getInstance(AddFileCommand::class.java)
+    private val LOG = Logger.getInstance(ShowFileHistoryCommand::class.java)
   }
 
 }

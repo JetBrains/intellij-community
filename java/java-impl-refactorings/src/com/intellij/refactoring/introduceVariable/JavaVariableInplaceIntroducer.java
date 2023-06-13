@@ -446,7 +446,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
             PsiDeclarationStatement element = pointer.getElement();
             return element != null && variableType.isValid() ? getAdvertisementText(element, variableType, myHasTypeSuggestion) : null;
           })
-          .finishOnUiThread(ModalityState.NON_MODAL, (@NlsContexts.PopupAdvertisement String text) -> setAdvertisementText(text))
+          .finishOnUiThread(ModalityState.nonModal(), (@NlsContexts.PopupAdvertisement String text) -> setAdvertisementText(text))
           .submit(NonUrgentExecutor.getInstance());
       }
     }

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.nastradamus.NastradamusClient
 import com.intellij.nastradamus.model.*
 import com.intellij.teamcity.TeamCityClient
-import com.intellij.tool.Cache
+import com.intellij.tool.NastradamusCache
 import com.intellij.tool.withErrorThreshold
 import com.intellij.util.io.readText
 import okhttp3.mockwebserver.MockResponse
@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class NastradamusClientTest {
   init {
-    Cache.eraseCache()
+    NastradamusCache.eraseCache()
   }
 
   @JvmField
@@ -54,7 +54,7 @@ class NastradamusClientTest {
   @After
   fun afterEach() {
     tcMockServer.shutdown()
-    Cache.eraseCache()
+    NastradamusCache.eraseCache()
   }
 
   private fun setBuildParams(vararg buildProperties: Pair<String, String>): Path {

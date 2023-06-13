@@ -58,7 +58,7 @@ interface WorkspaceModel {
    * Use [description] to briefly describe what do you update. This message will be logged and can be used for debugging purposes.
    */
   @ApiStatus.Experimental
-  suspend fun updateProjectModelAsync(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
+  suspend fun update(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
   /**
    * Get builder that can be updated in background and applied later and a project model.

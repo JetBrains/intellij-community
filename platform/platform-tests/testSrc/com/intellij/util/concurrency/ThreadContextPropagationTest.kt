@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency
 
 import com.intellij.concurrency.*
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -28,6 +29,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 @TestApplication
@@ -49,14 +51,14 @@ class ThreadContextPropagationTest {
 
   @Test
   fun `executeOnPooledThread(Runnable)`(): Unit = timeoutRunBlocking {
-    doTest {
+    doPropagationTest {
       ApplicationManager.getApplication().executeOnPooledThread(it.runnable())
     }
   }
 
   @Test
   fun `executeOnPooledThread(Callable)`(): Unit = timeoutRunBlocking {
-    doTest {
+    doPropagationTest {
       ApplicationManager.getApplication().executeOnPooledThread(it.callable())
     }
   }
@@ -64,16 +66,16 @@ class ThreadContextPropagationTest {
   @Test
   fun invokeLater(): Unit = timeoutRunBlocking {
     val application = ApplicationManager.getApplication()
-    doTest {
+    doPropagationTest {
       application.invokeLater(it.runnable())
     }
-    doTest {
+    doPropagationTest {
       application.invokeLater(it.runnable(), Conditions.alwaysFalse<Nothing?>())
     }
-    doTest {
+    doPropagationTest {
       application.invokeLater(it.runnable(), ModalityState.any())
     }
-    doTest {
+    doPropagationTest {
       application.invokeLater(it.runnable(), ModalityState.any(), Conditions.alwaysFalse<Nothing?>())
     }
   }
@@ -82,17 +84,26 @@ class ThreadContextPropagationTest {
   fun edtExecutorService(): Unit = timeoutRunBlocking {
     val service = EdtExecutorService.getInstance()
     doExecutorServiceTest(service)
-    doTest {
+    doPropagationTest {
       service.execute(it)
     }
-    doTest {
+    doPropagationTest {
       service.execute(it)
     }
-    doTest {
+    doPropagationTest {
       service.submit(it)
     }
-    doTest {
+    doPropagationTest {
       service.submit(it.callable())
+    }
+  }
+
+  @Test
+  fun edtScheduledExecutorService(): Unit = timeoutRunBlocking {
+    val service = EdtScheduledExecutorService.getInstance()
+    doScheduledExecutorServiceTest(service)
+    doPropagationTest {
+      service.schedule(it.runnable(), ModalityState.any(), 10, TimeUnit.MILLISECONDS)
     }
   }
 
@@ -111,6 +122,10 @@ class ThreadContextPropagationTest {
     doExecutorServiceTest(AppExecutorUtil.createBoundedApplicationPoolExecutor("Bounded", 1))
   }
 
+  @Test
+  fun processIOExecutor(): Unit = timeoutRunBlocking {
+    doExecutorServiceTest(ProcessIOExecutorService.INSTANCE)
+  }
   @Test
   fun boundedScheduledExecutorService(): Unit = timeoutRunBlocking {
     doScheduledExecutorServiceTest(AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled", 1))
@@ -133,32 +148,32 @@ class ThreadContextPropagationTest {
   }
 
   private suspend fun doExecutorServiceTest(service: ExecutorService) {
-    doTest {
+    doPropagationTest {
       service.execute(it.runnable())
     }
-    doTest {
+    doPropagationTest {
       service.submit(it.runnable())
     }
-    doTest {
+    doPropagationTest {
       service.submit(it.callable())
     }
-    doTest {
+    doPropagationTest {
       service.invokeAny(listOf(it.callable()))
     }
-    doTest {
+    doPropagationTest {
       service.invokeAll(listOf(it.callable()))
     }
   }
 
   private suspend fun doScheduledExecutorServiceTest(service: ScheduledExecutorService) {
     doExecutorServiceTest(service)
-    doTest {
+    doPropagationTest {
       service.schedule(it.runnable(), 10, TimeUnit.MILLISECONDS)
     }
-    doTest {
+    doPropagationTest {
       service.schedule(it.callable(), 10, TimeUnit.MILLISECONDS)
     }
-    doTest {
+    doPropagationTest {
       val canStart = Semaphore(1)
       lateinit var future: Future<*>
       val runCounter = AtomicInteger(0)
@@ -206,7 +221,7 @@ class ThreadContextPropagationTest {
         object : Task.Modal(null, "", true) {
           override fun run(indicator: ProgressIndicator) {
             finished.completeWith(runCatching {
-              assertFalse(currentThreadContextModality() == ModalityState.NON_MODAL)
+              assertFalse(currentThreadContextModality() == ModalityState.nonModal())
               assertSame(currentThreadContextModality(), indicator.modalityState)
               assertSame(currentThreadContextModality(), ModalityState.defaultModalityState())
             })

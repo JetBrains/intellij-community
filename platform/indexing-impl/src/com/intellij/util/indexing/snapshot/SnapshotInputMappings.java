@@ -226,6 +226,20 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   }
 
   @Override
+  public boolean isDirty() {
+    if (myContents.isDirty()) {
+      return true;
+    }
+    if (myIndexingTrace != null && myIndexingTrace.isDirty()) {
+      return true;
+    }
+    if (myCompositeHashIdEnumerator != null && myCompositeHashIdEnumerator.isDirty()) {
+      return true;
+    }
+    return false;
+  }
+
+  @Override
   public void clear() throws IOException {
     try {
       if (myCompositeHashIdEnumerator != null) {

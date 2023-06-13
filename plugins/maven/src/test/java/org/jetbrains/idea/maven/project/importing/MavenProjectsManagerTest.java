@@ -29,9 +29,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.FileContentUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectChanges;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider;
 import org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction;
 import org.jetbrains.idea.maven.project.projectRoot.MavenModuleStructureExtension;
@@ -98,7 +101,9 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     WriteCommandAction.writeCommandAction(myProject).run(() -> myProjectPom.delete(this));
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     importProject();
 
     assertEquals(0, getProjectsTree().getRootProjects().size());
@@ -138,7 +143,10 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertEquals(2, getProjectsTree().getRootProjects().size());
 
     runWriteAction(() -> p2.rename(this, "foo.bar"));
-    configConfirmationForYesAnswer();
+
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     scheduleProjectImportAndWaitWithoutCheckFloatingBar();
     assertEquals(1, getProjectsTree().getRootProjects().size());
 
@@ -170,7 +178,10 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertEquals(2, getProjectsTree().getRootProjects().size());
 
     runWriteAction(() -> p2.move(this, newDir));
-    configConfirmationForYesAnswer();
+
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     scheduleProjectImportAndWaitWithoutCheckFloatingBar();
     assertEquals(1, getProjectsTree().getRootProjects().size());
 
@@ -220,7 +231,9 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
       m.move(this, myProjectRoot.createChildDirectory(this, "xxx"));
     });
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     scheduleProjectImportAndWaitWithoutCheckFloatingBar();
     myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
     waitForImportCompletion();
@@ -260,7 +273,9 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void testAddingAndRemovingManagedFiles() {
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
 
     VirtualFile m1 = createModulePom("m1",
                                      """
@@ -315,7 +330,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     assertModules("m1", "m2");
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
 
     myProjectsManager.removeManagedFiles(Collections.singletonList(m2));
     waitForReadingCompletion();
@@ -364,103 +380,6 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     assertEquals(1, getProjectsTree().getRootProjects().size());
     assertEquals(0, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
-  }
-
-  @Test
-  public void testUpdatingProjectsOnSettingsXmlChange() throws Exception {
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <packaging>pom</packaging>
-                       <modules>
-                         <module>m</module>
-                       </modules>
-                       <build>
-                         <sourceDirectory>${prop}</sourceDirectory>
-                       </build>
-                       """);
-
-    createModulePom("m",
-                    """
-                      <groupId>test</groupId>
-                      <artifactId>m</artifactId>
-                      <version>1</version>
-                      <parent>
-                        <groupId>test</groupId>
-                        <artifactId>project</artifactId>
-                        <version>1</version>
-                      </parent>
-                      <build>
-                        <sourceDirectory>${prop}</sourceDirectory>
-                      </build>
-                      """);
-
-    updateSettingsXml("""
-                        <profiles>
-                          <profile>
-                            <id>one</id>
-                            <activation>
-                              <activeByDefault>true</activeByDefault>
-                            </activation>
-                            <properties>
-                              <prop>value1</prop>
-                            </properties>
-                          </profile>
-                        </profiles>
-                        """);
-
-    importProject();
-
-    List<MavenProject> roots = getProjectsTree().getRootProjects();
-
-    MavenProject parentNode = roots.get(0);
-    MavenProject childNode = getProjectsTree().getModules(roots.get(0)).get(0);
-
-    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
-    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
-
-    updateSettingsXml("""
-                        <profiles>
-                          <profile>
-                            <id>one</id>
-                            <activation>
-                              <activeByDefault>true</activeByDefault>
-                            </activation>
-                            <properties>
-                              <prop>value2</prop>
-                            </properties>
-                          </profile>
-                        </profiles>
-                        """);
-    waitForReadingCompletion();
-
-    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value2")));
-    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
-
-    deleteSettingsXml();
-    waitForReadingCompletion();
-
-    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/${prop}")));
-    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}")));
-
-    updateSettingsXml("""
-                        <profiles>
-                          <profile>
-                            <id>one</id>
-                            <activation>
-                              <activeByDefault>true</activeByDefault>
-                            </activation>
-                            <properties>
-                              <prop>value2</prop>
-                            </properties>
-                          </profile>
-                        </profiles>
-                        """);
-    waitForReadingCompletion();
-
-    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value2")));
-    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
   }
 
   @Test
@@ -528,33 +447,6 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
-  }
-
-  @Test
-  public void testUpdatingProjectsOnSettingsXmlCreationAndDeletion() throws Exception {
-    deleteSettingsXml();
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       """);
-
-    importProject();
-    assertUnorderedElementsAreEqual(getProjectsTree().getAvailableProfiles());
-
-    updateSettingsXml("""
-                        <profiles>
-                          <profile>
-                            <id>one</id>
-                          </profile>
-                        </profiles>
-                        """);
-    waitForReadingCompletion();
-    assertUnorderedElementsAreEqual(getProjectsTree().getAvailableProfiles(), "one");
-
-    deleteSettingsXml();
-    waitForReadingCompletion();
-    assertUnorderedElementsAreEqual(getProjectsTree().getAvailableProfiles());
   }
 
   @Test
@@ -730,74 +622,12 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     final VirtualFile dir = myProjectRoot.findChild("dir");
     WriteCommandAction.writeCommandAction(myProject).run(() -> dir.delete(null));
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     scheduleProjectImportAndWait();
 
     assertEquals(1, MavenProjectsManager.getInstance(myProject).getProjects().size());
-  }
-
-  @Test
-  public void testSavingAndLoadingState() {
-    MavenProjectsManagerState state = myProjectsManager.getState();
-    assertTrue(state.originalFiles.isEmpty());
-    assertTrue(MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().enabledProfiles.isEmpty());
-    assertTrue(state.ignoredFiles.isEmpty());
-    assertTrue(state.ignoredPathMasks.isEmpty());
-
-    VirtualFile p1 = createModulePom("project1",
-                                     """
-                                       <groupId>test</groupId>
-                                       <artifactId>project1</artifactId>
-                                       <version>1</version>
-                                       """);
-
-    VirtualFile p2 = createModulePom("project2",
-                                     """
-                                       <groupId>test</groupId>
-                                       <artifactId>project2</artifactId>
-                                       <version>1</version>
-                                       <packaging>pom</packaging>
-                                       <modules>
-                                         <module>../project3</module>
-                                       </modules>
-                                       """);
-
-    VirtualFile p3 = createModulePom("project3",
-                                     """
-                                       <groupId>test</groupId>
-                                       <artifactId>project3</artifactId>
-                                       <version>1</version>
-                                       """);
-
-    importProjects(p1, p2);
-    myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList("one", "two")));
-    setIgnoredFilesPathForNextImport(Arrays.asList(p1.getPath()));
-    setIgnoredPathPatternsForNextImport(Arrays.asList("*.xxx"));
-
-    state = myProjectsManager.getState();
-    assertUnorderedPathsAreEqual(state.originalFiles, Arrays.asList(p1.getPath(), p2.getPath()));
-    assertUnorderedElementsAreEqual(MavenWorkspaceSettingsComponent.getInstance(myProject).getState().enabledProfiles, "one", "two");
-    assertUnorderedPathsAreEqual(state.ignoredFiles, Arrays.asList(p1.getPath()));
-    assertUnorderedElementsAreEqual(state.ignoredPathMasks, "*.xxx");
-
-    MavenProjectsManagerState newState = new MavenProjectsManagerState();
-
-    newState.originalFiles = Arrays.asList(p1.getPath(), p3.getPath());
-    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().setEnabledProfiles(Arrays.asList("three"));
-    newState.ignoredFiles = Collections.singleton(p1.getPath());
-    newState.ignoredPathMasks = Arrays.asList("*.zzz");
-
-    myProjectsManager.loadState(newState);
-
-    assertUnorderedPathsAreEqual(myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths(),
-                                 Arrays.asList(p1.getPath(), p3.getPath()));
-    assertUnorderedElementsAreEqual(myProjectsManager.getExplicitProfiles().getEnabledProfiles(), "three");
-    assertUnorderedPathsAreEqual(myProjectsManager.getIgnoredFilesPaths(), Arrays.asList(p1.getPath()));
-    assertUnorderedElementsAreEqual(myProjectsManager.getIgnoredFilesPatterns(), "*.zzz");
-
-    waitForReadingCompletion();
-    assertUnorderedElementsAreEqual(myProjectsManager.getProjectsTreeForTests().getRootProjectsFiles(),
-                                    p1, p3);
   }
 
   @Test
@@ -824,7 +654,9 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     runWriteAction(() -> m.delete(this));
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     scheduleProjectImportAndWait();
     assertModules("project");
   }
@@ -934,7 +766,9 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     WriteCommandAction.writeCommandAction(myProject).run(() -> m2.delete(this));
 
 
-    configConfirmationForYesAnswer();// should update deps even if module is not removed
+    //configConfirmationForYesAnswer();// should update deps even if module is not removed
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     scheduleProjectImportAndWait();
 
     assertModules("project", "m1");
@@ -1455,7 +1289,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertSize(1, myProjectsManager.getRootProjects());
     assertEmpty(myProjectsManager.getIgnoredFilesPaths());
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
 
     importProject("""
                     <groupId>test</groupId>
@@ -1586,7 +1421,9 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test
   public void shouldUnsetMavenizedIfManagedFilesWasRemoved(){
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
 
     importProject("""
                     <groupId>test</groupId>

@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.builtins.createFunctionType
@@ -51,6 +52,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     )
     fun getBindingContextIfAny(element: KtElement): BindingContext? = getBindingContext(element)
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
     fun getTypeMapper(element: KtElement): KotlinTypeMapper?
 

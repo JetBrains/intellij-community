@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -200,7 +200,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     if (myComponent == null) return;
 
     ModalityState modalityState = ModalityState.stateForComponent(myComponent.myWholePanel);
-    if (modalityState == ModalityState.NON_MODAL) return;
+    if (modalityState == ModalityState.nonModal()) return;
 
     myValidationRequested = true;
     myValidationAlarm.cancelAllRequests();

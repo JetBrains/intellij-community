@@ -24,9 +24,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -369,8 +367,14 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
         if (value != null) {
           if (myPrecalculatedReturnValue != null) {
             if (!state.applyCondition(myPrecalculatedReturnValue.eq(value))) {
-              throw new IllegalStateException("Precalculated value " + myPrecalculatedReturnValue + 
-                                              " mismatches with method handler result " + value);
+              throw new IllegalStateException("Precalculated value " +
+                                              myPrecalculatedReturnValue +
+                                              " mismatches with method handler result " +
+                                              value +
+                                              "; method = " +
+                                              PsiFormatUtil.formatMethod(myTargetMethod, PsiSubstitutor.EMPTY,
+                                                                         PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                                         PsiFormatUtilBase.SHOW_NAME, PsiFormatUtilBase.SHOW_TYPE));
             }
           }
           return myPrecalculatedReturnValue instanceof DfaVariableValue var && !var.isFlushableByCalls()

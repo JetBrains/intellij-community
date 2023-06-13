@@ -2,6 +2,7 @@
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ui.UIExperiment;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.ui.ComponentUtil;
@@ -15,7 +16,7 @@ import javax.swing.*;
 import java.awt.*;
 
 class ServiceViewSingleUi implements ServiceViewUi {
-  private final SimpleToolWindowPanel myMainPanel = new SimpleToolWindowPanel(false);
+  private final SimpleToolWindowPanel myMainPanel = new SimpleToolWindowPanel(isHorizontal());
   private final JPanel myMessagePanel = new JBPanelWithEmptyText().withEmptyText(ExecutionBundle.message("service.view.empty.tab.text"));
 
   ServiceViewSingleUi() {
@@ -37,8 +38,9 @@ class ServiceViewSingleUi implements ServiceViewUi {
 
   @Override
   public void setServiceToolbar(@NotNull ServiceViewActionProvider actionManager) {
-    ActionToolbar toolbar = actionManager.createServiceToolbar(myMainPanel);
-    myMainPanel.setToolbar(actionManager.wrapServiceToolbar(toolbar));
+    boolean horizontal = isHorizontal();
+    ActionToolbar toolbar = actionManager.createServiceToolbar(myMainPanel, horizontal);
+    myMainPanel.setToolbar(actionManager.wrapServiceToolbar(toolbar.getComponent(), horizontal));
   }
 
   @Override
@@ -53,6 +55,7 @@ class ServiceViewSingleUi implements ServiceViewUi {
     if (component.getParent() == myMainPanel) return;
 
     myMainPanel.setContent(component);
+    myMainPanel.getToolbar().setVisible(ServiceViewActionProvider.isActionToolBarRequired(component));
   }
 
   @Override
@@ -68,5 +71,9 @@ class ServiceViewSingleUi implements ServiceViewUi {
   public JComponent getDetailsComponent() {
     JComponent content = myMainPanel.getContent();
     return content == myMessagePanel ? null : content;
+  }
+
+  private static boolean isHorizontal() {
+    return UIExperiment.isNewDebuggerUIEnabled();
   }
 }

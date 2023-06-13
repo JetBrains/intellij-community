@@ -131,7 +131,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   /**
    * @deprecated does nothing, use {@link #cancel()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void dispose() {
   }
 }

@@ -133,4 +133,47 @@ class KotlinSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase(
     prepareCheckFramework()
     myFixture.testHighlighting("DropLocality.kt")
   }
+
+  fun `test forEachLoop`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("ForEachLoop.kt")
+  }
+
+  fun `test lambdaWithForEachLoop`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("LambdaWithForEachLoop.kt")
+  }
+
+  fun `test custom through tables`() {
+    inspection.untaintedParameterIndex.apply {
+      this.clear()
+      this.add("1")
+    }
+    inspection.untaintedParameterMethodClass.apply {
+      this.clear()
+      this.add("FromMethod")
+    }
+    inspection.untaintedParameterMethodName.apply {
+      this.clear()
+      this.add("sink")
+    }
+
+    inspection.taintedParameterIndex.apply {
+      this.clear()
+      this.add("0")
+    }
+    inspection.taintedParameterMethodClass.apply {
+      this.clear()
+      this.add("FromMethod")
+    }
+    inspection.taintedParameterMethodName.apply {
+      this.clear()
+      this.add("test")
+    }
+
+    inspection.setTaintedMethod("java.lang.String", "toString")
+    inspection.setUntaintedMethod("java.lang.String", "trim")
+
+    myFixture.testHighlighting("FromMethod.kt")
+  }
 }

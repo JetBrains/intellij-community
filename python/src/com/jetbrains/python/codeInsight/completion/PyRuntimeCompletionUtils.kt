@@ -3,16 +3,13 @@ package com.jetbrains.python.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
-import com.intellij.lang.LanguageNamesValidation
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
@@ -22,9 +19,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueGroupNodeImpl
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.PyXValueGroup
 import com.jetbrains.python.debugger.pydev.ProcessDebugger
@@ -55,7 +50,7 @@ data class PyObjectCandidate(val psiName: PyQualifiedExpressionItem,
 // Temporary priority value to control order in CompletionResultSet (DS-3746)
 private const val RUNTIME_COMPLETION_PRIORITY = 100.0
 
-fun getCompleteAttribute(parameters: CompletionParameters): List<PyObjectCandidate> {
+internal fun getCompleteAttribute(parameters: CompletionParameters): List<PyObjectCandidate> {
 
   val callInnerReferenceExpression = getCallInnerReferenceExpression(parameters)
   val (currentElement, lastDelimiter) = findCompleteAttribute(parameters) ?: return getPossibleObjectsDataFrame(parameters,
@@ -232,13 +227,6 @@ private fun collectParentOfLambdaExpression(element: PyExpression, callInnerRefe
   return null
 }
 
-fun proceedPyValueChildrenNames(childrenNodes: Set<String>, ignoreML: Boolean = false): List<LookupElement> {
-  return childrenNodes.map {
-    val lookupElement = LookupElementBuilder.create(it).withTypeText(PyBundle.message("runtime.completion.type.text"))
-    createPrioritizedLookupElement(lookupElement, ignoreML)
-  }
-}
-
 internal fun createPrioritizedLookupElement(lookupElement: LookupElement, ignoreML: Boolean): LookupElement {
   val prioritizedElement = PrioritizedLookupElement.withPriority(lookupElement, RUNTIME_COMPLETION_PRIORITY)
   if (ignoreML) {
@@ -247,34 +235,12 @@ internal fun createPrioritizedLookupElement(lookupElement: LookupElement, ignore
   return prioritizedElement
 }
 
-fun processDataFrameColumns(dfName: String,
-                            columns: Set<String>,
-                            needValidatorCheck: Boolean,
-                            elementOnPosition: PsiElement,
-                            project: Project,
-                            ignoreML: Boolean): List<LookupElement> {
-  val validator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance())
-  return columns.mapNotNull { column ->
-    when {
-      !needValidatorCheck && elementOnPosition !is PyStringElement -> {
-        "'${StringUtil.escapeStringCharacters(column.length, column, "'", false, StringBuilder())}'"
-      }
-      !needValidatorCheck -> StringUtil.escapeStringCharacters(column.length, column, "'\"", false, StringBuilder())
-      validator.isIdentifier(column, project) -> column
-      else -> null
-    }?.let {
-      val lookupElement = LookupElementBuilder.create(it).withTypeText(PyBundle.message("pandas.completion.type.text", dfName))
-      createPrioritizedLookupElement(lookupElement, ignoreML)
-    }
-  }
-}
-
 private fun LookupElement.asMLIgnorable(): LookupElement {
   return object : LookupElementDecorator<LookupElement>(this), MLRankingIgnorable {}
 }
 
 
-fun computeChildrenIfNeeded(valueNode: XValueContainerNode<*>) {
+internal fun computeChildrenIfNeeded(valueNode: XValueContainerNode<*>) {
   if (!valueNode.isLeaf && valueNode.loadedChildren.isEmpty()) {
     val futureChildrenReady = CompletableFuture<Boolean>()
     val listener = object : XDebuggerTreeListener {
@@ -299,11 +265,11 @@ fun computeChildrenIfNeeded(valueNode: XValueContainerNode<*>) {
   }
 }
 
-fun extractChildByName(childrenNodes: List<TreeNode>, name: String): XValueNodeImpl? {
+private fun extractChildByName(childrenNodes: List<TreeNode>, name: String): XValueNodeImpl? {
   return childrenNodes.firstOrNull { it is XValueNodeImpl && it.name == name } as XValueNodeImpl?
 }
 
-fun getParentNodeByName(children: List<TreeNode>, psiName: String): XValueNodeImpl? {
+internal fun getParentNodeByName(children: List<TreeNode>, psiName: String, completionType: CompletionType): XValueNodeImpl? {
   /**
    * For preventing an extra load of "Special variables".
    * Firstly, looking through loaded variables and if not found - load values inside the group (make a request to jupyter server).
@@ -314,6 +280,7 @@ fun getParentNodeByName(children: List<TreeNode>, psiName: String): XValueNodeIm
       return node
     }
   }
+  if (completionType == CompletionType.BASIC) return null
   val specialVariables = children.filterIsInstance<XValueGroupNodeImpl>()
     .filter { node -> (node.valueContainer as PyXValueGroup).groupType == ProcessDebugger.GROUP_TYPE.SPECIAL }
   specialVariables.forEach { node ->
@@ -325,21 +292,22 @@ fun getParentNodeByName(children: List<TreeNode>, psiName: String): XValueNodeIm
   return null
 }
 
-val typeToDelimiter = mapOf(
+private val typeToDelimiter = mapOf(
   "polars.internals.dataframe.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET),
   "polars.dataframe.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET),
-  "pandas.core.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET, PyTokenTypes.DOT)
+  "pandas.core.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET, PyTokenTypes.DOT),
+  "builtins.dict" to setOf(PyTokenTypes.LBRACKET)
 )
 
-fun checkDelimiterByType(qualifiedType: String?, delimiter: IElementType): Boolean {
+internal fun checkDelimiterByType(qualifiedType: String?, delimiter: IElementType): Boolean {
   qualifiedType ?: return false
   val delimiters = typeToDelimiter[qualifiedType]
-  if (delimiters != null && delimiter !in delimiters) return true
-  return false
+  return delimiters != null && delimiter !in delimiters
 }
 
-fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?,
-                                 listOfCall: List<PyQualifiedExpressionItem>): Pair<XValueNodeImpl, List<PyQualifiedExpressionItem>>? {
+internal fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?,
+                                          listOfCall: List<PyQualifiedExpressionItem>,
+                                          completionType: CompletionType): Pair<XValueNodeImpl, List<PyQualifiedExpressionItem>>? {
   var currentNode = valueNode ?: return null
 
   listOfCall.forEachIndexed { index, call ->
@@ -348,6 +316,7 @@ fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?,
         return Pair(currentNode, listOfCall.subList(index, listOfCall.size))
       }
       else -> {
+        if (completionType == CompletionType.BASIC) return null
         computeChildrenIfNeeded(currentNode)
         currentNode = extractChildByName(currentNode.children, call.pyQualifiedName) ?: return null
       }
@@ -360,7 +329,7 @@ fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?,
   return Pair(currentNode, emptyList())
 }
 
-fun createCustomMatcher(parameters: CompletionParameters, result: CompletionResultSet): CompletionResultSet {
+internal fun createCustomMatcher(parameters: CompletionParameters, result: CompletionResultSet): CompletionResultSet {
   val currentElement = parameters.position
   if (currentElement is PyStringElement) {
     val newPrefix = TextRange.create(currentElement.contentRange.startOffset,

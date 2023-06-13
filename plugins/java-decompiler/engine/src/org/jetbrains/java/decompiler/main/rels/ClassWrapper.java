@@ -2,6 +2,7 @@
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
@@ -43,8 +44,9 @@ public class ClassWrapper {
 
     int maxSec = Integer.parseInt(DecompilerContext.getProperty(IFernflowerPreferences.MAX_PROCESSING_METHOD).toString());
     boolean testMode = DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE);
-
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
     for (StructMethod mt : classStruct.getMethods()) {
+      cancellationManager.checkCanceled();
       DecompilerContext.getLogger().startMethod(mt.getName() + " " + mt.getDescriptor());
 
       MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
@@ -64,7 +66,8 @@ public class ClassWrapper {
             root = MethodProcessorRunnable.codeToJava(classStruct, mt, md, varProc);
           }
           else {
-            MethodProcessorRunnable mtProc = new MethodProcessorRunnable(classStruct, mt, md, varProc, DecompilerContext.getCurrentContext());
+            MethodProcessorRunnable mtProc =
+              new MethodProcessorRunnable(classStruct, mt, md, varProc, DecompilerContext.getCurrentContext());
 
             Thread mtThread = new Thread(mtProc, "Java decompiler");
             long stopAt = System.currentTimeMillis() + maxSec * 1000L;
@@ -74,7 +77,8 @@ public class ClassWrapper {
             while (!mtProc.isFinished()) {
               try {
                 synchronized (mtProc.lock) {
-                  mtProc.lock.wait(200);
+                  cancellationManager.saveCancelled();
+                  mtProc.lock.wait(100);
                 }
               }
               catch (InterruptedException e) {
@@ -109,11 +113,15 @@ public class ClassWrapper {
           }
         }
       }
+      catch (CancellationManager.CanceledException e) {
+        throw e;
+      }
       catch (Throwable t) {
         String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be decompiled.";
         DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, t);
         isError = true;
       }
+      cancellationManager.checkCanceled();
 
       MethodWrapper methodWrapper = new MethodWrapper(root, varProc, mt, counter);
       methodWrapper.decompiledWithErrors = isError;

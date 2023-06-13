@@ -79,37 +79,25 @@ public interface IntentionPreviewInfo {
   };
 
   /**
-   * Diff preview applied to the current file when new text is not actually written.
-   * Could be used as an alternative to {@link #DIFF} when we can generate the target text
-   * without actual PSI changes.
+   * Diff preview for multiple files. UI may show only some of them if there are too many.
    */
-  class Diff implements IntentionPreviewInfo {
-    private final @NotNull String myOrigText;
-    private final @NotNull String myModifiedText;
+  class MultiFileDiff implements IntentionPreviewInfo {
+    private final @NotNull List<@NotNull CustomDiff> myDiffs;
 
-    /**
-     * @param origText old text of the current file
-     * @param modifiedText new text for the current file
-     */
-    public Diff(@NotNull String origText, @NotNull String modifiedText) {
-      myOrigText = origText;
-      myModifiedText = modifiedText;
+    public MultiFileDiff(@NotNull List<@NotNull CustomDiff> diffs) {
+      myDiffs = diffs;
     }
 
     /**
-     * @return new text for the current file
+     * @return list of individual CustomDiff objects to display
      */
-    public @NotNull String modifiedText() {
-      return myModifiedText;
-    }
-
-    public @NotNull String originalText() {
-      return myOrigText;
+    public @NotNull List<@NotNull CustomDiff> getDiffs() {
+      return myDiffs;
     }
   }
   
   /**
-   * Diff preview where original text and new text are explicitly displayed.
+   * Diff preview where original text and new text are explicitly specified.
    * Could be used to generate custom diff previews (e.g. when changes are to be applied to another file).
    * <p>
    * In most of the cases, original text could be empty, so simply the new text will be displayed.
@@ -121,6 +109,7 @@ public interface IntentionPreviewInfo {
     private final @NotNull String myOrigText;
     private final @NotNull String myModifiedText;
     private final @Nullable String myFileName;
+    private final boolean myLineNumbers;
 
     /**
      * Construct a custom diff. Please prefer another constructor and specify a file name if it's applicable.
@@ -140,10 +129,30 @@ public interface IntentionPreviewInfo {
      * @param modifiedText changed file text
      */
     public CustomDiff(@NotNull FileType type, @Nullable String name, @NotNull String origText, @NotNull String modifiedText) {
+      this(type, name, origText, modifiedText, false);
+    }
+
+    /**
+     * @param type         file type, used for highlighting
+     * @param name         file name, can be displayed to user if specified
+     * @param origText     original file text
+     * @param modifiedText changed file text
+     * @param lineNumbers  if true then diff will display line numbers
+     */
+    public CustomDiff(@NotNull FileType type,
+                      @Nullable String name,
+                      @NotNull String origText,
+                      @NotNull String modifiedText,
+                      boolean lineNumbers) {
       myFileType = type;
       myFileName = name;
       myOrigText = origText;
       myModifiedText = modifiedText;
+      myLineNumbers = lineNumbers;
+    }
+
+    public boolean showLineNumbers() {
+      return myLineNumbers;
     }
 
     public @Nullable String fileName() {

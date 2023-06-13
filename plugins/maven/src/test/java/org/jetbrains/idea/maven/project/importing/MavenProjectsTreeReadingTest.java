@@ -453,11 +453,11 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(log().add("updated", "project", "m").add("deleted"), l.log);
     l.log.clear();
 
-    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
+    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator().getIndicator());
     assertEquals(log(), l.log);
     l.log.clear();
 
-    myTree.updateAll(true, getMavenGeneralSettings(), getMavenProgressIndicator());
+    myTree.updateAll(true, getMavenGeneralSettings(), getMavenProgressIndicator().getIndicator());
     assertEquals(log().add("updated", "project", "m").add("deleted"), l.log);
   }
 
@@ -487,11 +487,11 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(log().add("updated", "project", "m").add("deleted"), l.log);
     l.log.clear();
 
-    myTree.update(Collections.singletonList(myProjectPom), false, getMavenGeneralSettings(), getMavenProgressIndicator());
+    myTree.update(Collections.singletonList(myProjectPom), false, getMavenGeneralSettings(), getMavenProgressIndicator().getIndicator());
     assertEquals(log(), l.log);
     l.log.clear();
 
-    myTree.update(Collections.singletonList(myProjectPom), true, getMavenGeneralSettings(), getMavenProgressIndicator());
+    myTree.update(Collections.singletonList(myProjectPom), true, getMavenGeneralSettings(), getMavenProgressIndicator().getIndicator());
     assertEquals(log().add("updated", "project").add("deleted"), l.log);
     l.log.clear();
   }
@@ -800,7 +800,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
         .add("resolved", "parent")
         .add("folders", "parent"),
       listener.log);
-    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
+    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator().getIndicator());
     assertEquals(
       log()
         .add("updated", "parent", "child")
@@ -1807,13 +1807,13 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     myTree.addListener(l, getTestRootDisposable());
 
     myTree.addManagedFilesWithProfiles(Collections.singletonList(myProjectPom), MavenExplicitProfiles.NONE);
-    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
+    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator().getIndicator());
 
     assertEquals(log().add("updated", "parent", "m1", "m2").add("deleted"), l.log);
     l.log.clear();
 
     myTree.removeManagedFiles(Arrays.asList(myProjectPom));
-    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
+    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator().getIndicator());
 
     assertEquals(log().add("updated").add("deleted", "m1", "m2", "parent"), l.log);
   }

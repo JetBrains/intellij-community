@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -32,10 +33,7 @@ import com.intellij.model.psi.PsiSymbolReferenceService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -443,7 +441,7 @@ public final class PlatformTestUtil {
                                    "; alarm passed=" + alarmInvoked1.get() +
                                    "; modality1=" + initialModality +
                                    "; modality2=" + ModalityState.current() +
-                                   "; non-modal=" + (initialModality == ModalityState.NON_MODAL) +
+                                   "; non-modal=" + (initialModality == ModalityState.nonModal()) +
                                    "; invokeLater passed=" + runnableInvoked.get() +
                                    "; pooled alarm passed=" + pooledRunnableInvoked.get() +
                                    "; app.disposed=" + app.isDisposed() +
@@ -484,7 +482,7 @@ public final class PlatformTestUtil {
   public static void dispatchAllEventsInIdeEventQueue() {
     assertEventQueueDispatchThread();
     while (true) {
-      try {
+      try (AccessToken ignored = ThreadContext.resetThreadContext()) {
         if (dispatchNextEventIfAny() == null) break;
       }
       catch (InterruptedException e) {

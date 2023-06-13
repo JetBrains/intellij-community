@@ -47,6 +47,8 @@
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinBuiltInsMetadataIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinShortClassNameFileIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex"/>
 
     <idIndexer filetype="Kotlin" implementationClass="org.jetbrains.kotlin.idea.search.KotlinIdIndexer"/>
     <todoIndexer filetype="Kotlin" implementationClass="org.jetbrains.kotlin.idea.search.KotlinTodoIndexer"/>
@@ -67,6 +69,15 @@
     <registryKey key="kotlin.indices.nested.access.enabled"
                  defaultValue="false"
                  description="Allows nested indices access" />
+    <registryKey key="kotlin.indices.timing.enabled"
+                 defaultValue="true"
+                 description="Allows nested indices access" />
+    <registryKey key="kotlin.indices.timing.threshold.single"
+                 defaultValue="2500"
+                 description="Time threshold in ms to report slow index single get access" />
+    <registryKey key="kotlin.indices.timing.threshold.batch"
+                 defaultValue="5000"
+                 description="Time threshold in ms to report slow index batch (processAll-like) access" />
     <registryKey key="kotlin.indices.short.names.filtering.enabled" defaultValue="true"
                  description="Filter irrelevant Kotlin FQNames by short name index"
                  restartRequired="true"/>

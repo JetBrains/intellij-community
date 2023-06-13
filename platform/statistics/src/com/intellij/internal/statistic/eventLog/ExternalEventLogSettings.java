@@ -25,7 +25,7 @@ public interface ExternalEventLogSettings {
   /**
    * @deprecated Endpoint shouldn't depend on recorder id. Use {@link #getTemplateUrl()}
    */
-  @Deprecated(since = "2022.2")
+  @Deprecated(since = "2022.2", forRemoval = true)
   default @Nullable String getTemplateUrl(@NotNull String recorderId) {
     return null;
   }

@@ -226,5 +226,6 @@
     <orderEntry type="library" scope="RUNTIME" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="javax.activation" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jsoup" level="project" />
+    <orderEntry type="library" name="ASM" level="project" />
   </component>
 </module>

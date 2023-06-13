@@ -16,7 +16,7 @@ repositories {
 
 kotlin {
     jvm {
-        jvmToolchain(11)
+        jvmToolchain(8)
         withJava()
         testRuns.named("test") {
             executionTask.configure {

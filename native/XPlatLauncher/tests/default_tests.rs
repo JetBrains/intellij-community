@@ -309,4 +309,16 @@ mod tests {
         let expected = format!("CWD={}", env::current_dir().unwrap().display());
         assert!(stdout.contains(&expected), "'{}' is not in the output:\n{}", expected, stdout);
     }
+
+    #[test]
+    fn launching_via_external_symlink() {
+        let test = prepare_test_env(LauncherLocation::Standard);
+
+        let ext_link = test.create_launcher_link("launcher_link");
+
+        let run_result = std::process::Command::new(&ext_link)
+            .env(xplat_launcher::DEBUG_MODE_ENV_VAR, "1")
+            .output().expect(&format!("Failed: '{}'", ext_link.display()));
+        assert!(run_result.status.success(), "Failed: '{}':\n{:?}", ext_link.display(), run_result);
+    }
 }

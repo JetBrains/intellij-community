@@ -78,7 +78,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
     val registryManager = RegistryManager.getInstance()
     setRegistryKeyIfNecessary(key = "ide.experimental.ui", value = true, registryManager = registryManager)
-    setRegistryKeyIfNecessary(key = "debugger.new.tool.window.layout", value = true, registryManager = registryManager)
     UISettings.getInstance().hideToolStripes = false
     resetLafSettingsToDefault()
   }
@@ -93,7 +92,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
     val registryManager = RegistryManager.getInstance()
     setRegistryKeyIfNecessary(key = "ide.experimental.ui", value = false, registryManager = registryManager)
-    setRegistryKeyIfNecessary(key = "debugger.new.tool.window.layout", value = false, registryManager = registryManager)
     resetLafSettingsToDefault()
   }
 
@@ -131,7 +129,7 @@ private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
   override fun appClosing() {
     val experimentalUi = (ExperimentalUI.getInstance() as? ExperimentalUIImpl) ?: return
     val newValue = experimentalUi.newValue
-    if (newValue != ExperimentalUI.isNewUI()) {
+    if (newValue != ExperimentalUI.isNewUI() && !ExperimentalUI.isNewUiOverriden()) {
       // if RegistryManager not yet created on appClosing, it means that something fatal is occurred, do not try to use it
       val registryManager = ApplicationManager.getApplication().serviceIfCreated<RegistryManager>() ?: return
       registryManager.get("ide.experimental.ui").setValue(newValue)

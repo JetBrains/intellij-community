@@ -7,7 +7,6 @@ import com.intellij.openapi.util.io.FileUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
@@ -69,13 +68,9 @@ fun createWrapperInitScript(
   return createInitScript(WRAPPER_INIT_SCRIPT_NAME, initScript)
 }
 
-fun createTestInitScript(tasks: List<GradleCommandLineTask>): Path {
+fun createTestInitScript(): Path {
   val initScript = joinInitScripts(
-    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
-    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestInit.gradle", mapOf(
-      "TEST_TASKS_WITH_PATTERNS" to tasks.associate { it.name to it.getTestPatterns() }
-        .toGroovyMapLiteral({ toGroovyStringLiteral() }, { toGroovyListLiteral { toGroovyStringLiteral() } })
-    ))
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestInit.gradle")
   )
   return createInitScript(TEST_INIT_SCRIPT_NAME, initScript)
 }

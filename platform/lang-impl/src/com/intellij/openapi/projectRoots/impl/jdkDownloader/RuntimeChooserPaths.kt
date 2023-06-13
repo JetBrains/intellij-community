@@ -4,6 +4,7 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -73,7 +74,7 @@ class RuntimeChooserPaths {
           jdkFileShadow = jdkFile
 
           @NlsSafe val runtimeName = action(indicator, jdkFile)
-          if (runtimeName != null) {
+          if (runtimeName != null && !ApplicationManagerEx.isInIntegrationTest()) {
             RuntimeChooserMessages.showRestartMessage(runtimeName)
           }
         }

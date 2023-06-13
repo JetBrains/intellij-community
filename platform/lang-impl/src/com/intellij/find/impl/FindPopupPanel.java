@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
 import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
+import com.intellij.find.findInProject.FindInProjectState;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -373,7 +374,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     FindSettings findSettings = FindSettings.getInstance();
     myScopeUI.applyTo(findSettings, mySelectedScope);
     myHelper.updateFindSettings();
-    applyTo(FindManager.getInstance(myProject).getFindInProjectModel());
+    FindModel model = FindManager.getInstance(myProject).getFindInProjectModel();
+    applyTo(model);
+    FindInProjectState.getInstance(myProject).save(model);
   }
 
   @NotNull

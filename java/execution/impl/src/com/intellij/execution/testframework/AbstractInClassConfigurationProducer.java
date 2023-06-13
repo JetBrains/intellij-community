@@ -81,7 +81,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
                 setNestedClass(classes.get(0), containerClass);
               }
             })
-            .finishOnUiThread(ModalityState.NON_MODAL, v -> super.runForClasses(classes, method, context, performRunnable))
+            .finishOnUiThread(ModalityState.nonModal(), v -> super.runForClasses(classes, method, context, performRunnable))
             .submit(AppExecutorUtil.getAppExecutorService());
         }
 

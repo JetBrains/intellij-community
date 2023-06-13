@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions;
 
+import com.intellij.execution.ui.RunWidgetManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,7 +29,7 @@ public abstract class XDebuggerActionBase extends AnAction {
     }
 
     boolean enabled = isEnabled(event);
-    if (myHideDisabledInPopup && ActionPlaces.isPopupPlace(event.getPlace())) {
+    if (myHideDisabledInPopup && ActionPlaces.isPopupPlace(event.getPlace()) || RunWidgetManager.shouldHideDisabledDebugActions(event.getPlace())) {
       presentation.setVisible(enabled);
     }
     else {

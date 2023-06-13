@@ -34,9 +34,6 @@ import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.logFreeDiskSpace
 import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.io.zipWithCompression
-import org.jetbrains.intellij.build.tasks.DirSource
-import org.jetbrains.intellij.build.tasks.ZipSource
-import org.jetbrains.intellij.build.tasks.buildJar
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.artifact.JpsArtifactService
@@ -180,7 +177,7 @@ val SUPPORTED_DISTRIBUTIONS: PersistentList<SupportedDistribution> = persistentL
 )
 
 private fun isSourceFile(path: String): Boolean {
-  return path.endsWith(".java") || path.endsWith(".groovy") || path.endsWith(".kt")
+  return path.endsWith(".java") && path != "module-info.java" || path.endsWith(".groovy") || path.endsWith(".kt")
 }
 
 private fun getLocalArtifactRepositoryRoot(global: JpsGlobal): Path {
@@ -990,7 +987,7 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
         ProductInfoLaunchData(
           os = OsFamily.MACOS.osName,
           arch = arch.dirName,
-          launcherPath = "MacOS/$executableName",
+          launcherPath = "bin/${executableName}.sh",
           javaExecutablePath = null,
           vmOptionsFilePath = "bin/mac/${executableName}.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
@@ -1170,7 +1167,6 @@ private fun crossPlatformZip(macX64DistDir: Path,
       }
 
       val commonFilter: (String) -> Boolean = { relPath ->
-        !relPath.startsWith("Info.plist") &&
         !relPath.startsWith("bin/fsnotifier") &&
         !relPath.startsWith("bin/repair") &&
         !relPath.startsWith("bin/restart") &&
@@ -1178,37 +1174,39 @@ private fun crossPlatformZip(macX64DistDir: Path,
         !(relPath.startsWith("bin/") && (relPath.endsWith(".sh") || relPath.endsWith(".vmoptions")) && relPath.count { it == '/' } == 1) &&
         relPath != "bin/idea.properties" &&
         !relPath.startsWith("help/") &&
-        !relPath.startsWith("bin/remote-dev-server")
+        relPath != "license/launcher-third-party-libraries.html" &&
+        !relPath.startsWith("bin/remote-dev-server") &&
+        relPath != "license/remote-dev-server.html"
       }
 
       val zipFileUniqueGuard = HashMap<String, Path>()
 
       out.dir(distAllDir, "", fileFilter = { _, relPath -> relPath != "bin/idea.properties" }, entryCustomizer = entryCustomizer)
 
-      out.dir(macX64DistDir, "", fileFilter = { _, relativePath ->
-        commonFilter.invoke(relativePath) &&
-        filterFileIfAlreadyInZip(relativePath, macX64DistDir.resolve(relativePath), zipFileUniqueGuard)
-      }, entryCustomizer = entryCustomizer)
-
-      out.dir(macArm64DistDir, "", fileFilter = { _, relPath ->
-        commonFilter.invoke(relPath) &&
-        filterFileIfAlreadyInZip(relPath, macArm64DistDir.resolve(relPath), zipFileUniqueGuard)
-      }, entryCustomizer = entryCustomizer)
+      for (macDistDir in arrayOf(macX64DistDir, macArm64DistDir)) {
+        out.dir(macDistDir, "", fileFilter = { _, relPath ->
+          commonFilter.invoke(relPath) &&
+          !relPath.startsWith("MacOS/") &&
+          !relPath.startsWith("Resources/") &&
+          !relPath.startsWith("Info.plist") &&
+          filterFileIfAlreadyInZip(relPath, macArm64DistDir.resolve(relPath), zipFileUniqueGuard)
+        }, entryCustomizer = entryCustomizer)
+      }
 
       out.dir(linuxX64DistDir, "", fileFilter = { _, relPath ->
         commonFilter.invoke(relPath) &&
         filterFileIfAlreadyInZip(relPath, linuxX64DistDir.resolve(relPath), zipFileUniqueGuard)
       }, entryCustomizer = entryCustomizer)
 
-      out.dir(startDir = winX64DistDir, prefix = "", fileFilter = { _, relativePath ->
-        commonFilter.invoke(relativePath) &&
-        !(relativePath.startsWith("bin/${executableName}") && relativePath.endsWith(".exe")) &&
-        filterFileIfAlreadyInZip(relativePath, winX64DistDir.resolve(relativePath), zipFileUniqueGuard)
+      out.dir(startDir = winX64DistDir, prefix = "", fileFilter = { _, relPath ->
+        commonFilter.invoke(relPath) &&
+        !(relPath.startsWith("bin/${executableName}") && relPath.endsWith(".exe")) &&
+        filterFileIfAlreadyInZip(relPath, winX64DistDir.resolve(relPath), zipFileUniqueGuard)
       }, entryCustomizer = entryCustomizer)
 
       for (distFile in distFiles) {
-        // linux and windows: we don't add win and linux specific dist dirs for ARM, so, copy distFiles explicitly
-        // macOS: we don't copy dist files for macOS distribution to avoid extra copy operation
+        // Linux and Windows: we don't add specific dist dirs for ARM, so, copy dist files explicitly
+        // macOS: we don't copy dist files to avoid extra copy operation
         if (zipFileUniqueGuard.putIfAbsent(distFile.relativePath, distFile.file) == null) {
           out.entry(distFile.relativePath, distFile.file)
         }

@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.Icon
 import javax.swing.JTree
+import org.jetbrains.annotations.TestOnly
 
 private val repaintScheduler = DeferredIconRepaintScheduler()
 
@@ -39,14 +40,6 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
     fun <T> withoutReadAction(baseIcon: Icon?, param: T, evaluator: (T) -> Icon?): DeferredIcon {
       return DeferredIconImpl(baseIcon = baseIcon, param = param, needReadAction = false, evaluator = evaluator, listener = null)
-    }
-
-    internal fun equalIcons(icon1: Icon?, icon2: Icon?): Boolean {
-      return if (icon1 is DeferredIconImpl<*> && icon2 is DeferredIconImpl<*>) paramsEqual(icon1, icon2) else icon1 == icon2
-    }
-
-    private fun paramsEqual(icon1: DeferredIconImpl<*>, icon2: DeferredIconImpl<*>): Boolean {
-      return icon1.param == icon2.param && equalIcons(icon1.scaledDelegateIcon, icon2.scaledDelegateIcon)
     }
   }
 
@@ -246,7 +239,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     val shouldRevalidate = Registry.`is`("ide.tree.deferred.icon.invalidates.cache", true) && scaledDelegateIcon.iconWidth != oldWidth
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val repaints = scheduledRepaints
-      if (equalIcons(result, delegateIcon) || repaints == null) {
+      if (result == delegateIcon || repaints == null) {
         return@withContext
       }
 
@@ -275,10 +268,10 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   }
 
   override fun retrieveIcon(): Icon {
-    if (isDone) {
+    if (isDone || EDT.isCurrentThreadEdt()) {
       return scaledDelegateIcon
     }
-    return if (EDT.isCurrentThreadEdt()) scaledDelegateIcon else evaluate()
+    return evaluate()
   }
 
   override fun evaluate(): Icon {
@@ -298,6 +291,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
   private fun adjustResultWithScale(result: Icon) = if (scale != 1f && result is ScalableIcon) result.scale(scale) else result
 
+  @TestOnly
   private fun checkDoesntReferenceThis(icon: Icon?) {
     check(icon !== this) { "Loop in icons delegation" }
     when (icon) {
@@ -324,7 +318,11 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
   override fun getToolTip(composite: Boolean): String? = (scaledDelegateIcon as? IconWithToolTip)?.getToolTip(composite)
 
-  override fun equals(other: Any?): Boolean = other is DeferredIconImpl<*> && paramsEqual(this, other)
+  override fun equals(other: Any?): Boolean = when {
+    this === other -> true
+    other === null -> false
+    else -> scaledDelegateIcon == (other as? DeferredIconImpl<*>)?.scaledDelegateIcon ?: other
+  }
 
   override fun hashCode(): Int = Objects.hash(param, scaledDelegateIcon)
 

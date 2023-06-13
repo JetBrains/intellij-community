@@ -283,6 +283,8 @@ public final class PushController implements Disposable {
   private <R extends Repository, S extends PushSource, T extends PushTarget> void loadCommits(@NotNull final MyRepoModel<R, S, T> model,
                                                                                               @NotNull final RepositoryNode node,
                                                                                               final boolean initial) {
+    if (myDialog.isDisposed()) return;
+
     node.cancelLoading();
     node.setEnabled(true);
 

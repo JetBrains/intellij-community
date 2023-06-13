@@ -105,7 +105,7 @@ public final class BackgroundUpdateHighlightersUtil {
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
 
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
-    HighlightersRecycler infosToRemove = new HighlightersRecycler();
+    HighlightersRecycler toReuse = new HighlightersRecycler();
     ContainerUtil.quickSort(filteredInfos, UpdateHighlightersUtil.BY_START_OFFSET_NO_DUPS);
     Set<HighlightInfo> infoSet = new HashSet<>(filteredInfos);
 
@@ -122,43 +122,48 @@ public final class BackgroundUpdateHighlightersUtil {
                            !priorityRange.containsRange(hiStart, hiEnd) &&
                            (hiEnd != document.getTextLength() || priorityRange.getEndOffset() != document.getTextLength());
         if (toRemove) {
-          infosToRemove.recycleHighlighter(highlighter);
+          toReuse.recycleHighlighter(highlighter);
         }
       }
       return true;
     };
-    DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, priorityRange.getStartOffset(), priorityRange.getEndOffset(), processor);
-
     Long2ObjectMap<RangeMarker> range2markerCache = new Long2ObjectOpenHashMap<>(10);
     boolean[] changed = {false};
     SweepProcessor.Generator<HighlightInfo> generator = proc -> ContainerUtil.process(filteredInfos, proc);
     List<HighlightInfo> fileLevelHighlights = new ArrayList<>();
-    SweepProcessor.sweep(generator, (offset, info, atStart, overlappingIntervals) -> {
-      if (!atStart) return true;
-      if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && !restrictedRange.contains(info)) {
-        return true; // injections are oblivious to restricting range
-      }
 
-      if (info.isFileLevelAnnotation()) {
-        fileLevelHighlights.add(info);
-        changed[0] = true;
-        return true;
-      }
-      if (UpdateHighlightersUtil.isWarningCoveredByError(info, severityRegistrar, overlappingIntervals)) {
-        return true;
-      }
-      if (info.getStartOffset() < priorityRange.getStartOffset() || info.getEndOffset() > priorityRange.getEndOffset()) {
-        EditorColorsScheme colorsScheme = session.getColorsScheme();
-        createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, (MarkupModelEx)markup, infosToRemove,
-                                      range2markerCache, severityRegistrar);
-        changed[0] = true;
-      }
-      return true;
-    });
+    try {
+      DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, priorityRange.getStartOffset(), priorityRange.getEndOffset(), processor);
+      SweepProcessor.sweep(generator, (offset, info, atStart, overlappingIntervals) -> {
+        if (!atStart) return true;
+        if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && !restrictedRange.contains(info)) {
+          return true; // injections are oblivious to restricting range
+        }
 
-    boolean shouldClean = restrictedRange.getStartOffset() == 0 && restrictedRange.getEndOffset() == document.getTextLength();
-    session.updateFileLevelHighlights(fileLevelHighlights, group, shouldClean);
-    changed[0] |= UpdateHighlightersUtil.incinerateObsoleteHighlighters(infosToRemove, session);
+        if (info.isFileLevelAnnotation()) {
+          fileLevelHighlights.add(info);
+          changed[0] = true;
+          return true;
+        }
+        if (UpdateHighlightersUtil.isWarningCoveredByError(info, severityRegistrar, overlappingIntervals)) {
+          return true;
+        }
+        if (info.getStartOffset() < priorityRange.getStartOffset() || info.getEndOffset() > priorityRange.getEndOffset()) {
+          EditorColorsScheme colorsScheme = session.getColorsScheme();
+          createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, (MarkupModelEx)markup, toReuse,
+                                        range2markerCache, severityRegistrar);
+          changed[0] = true;
+        }
+        return true;
+      });
+
+      boolean shouldClean = restrictedRange.getStartOffset() == 0 && restrictedRange.getEndOffset() == document.getTextLength();
+      session.updateFileLevelHighlights(fileLevelHighlights, group, shouldClean);
+      changed[0] |= UpdateHighlightersUtil.incinerateObsoleteHighlighters(toReuse, session);
+    }
+    finally {
+      toReuse.releaseHighlighters();
+    }
     if (changed[0]) {
       UpdateHighlightersUtil.clearWhiteSpaceOptimizationFlag(document);
     }
@@ -174,47 +179,53 @@ public final class BackgroundUpdateHighlightersUtil {
     PsiFile psiFile = session.getPsiFile();
     Project project = session.getProject();
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
-    HighlightersRecycler infosToRemove = new HighlightersRecycler();
+    HighlightersRecycler toReuse = new HighlightersRecycler();
     Document document = session.getDocument();
-    DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
-      if (info.getGroup() == group) {
-        RangeHighlighterEx highlighter = info.getHighlighter();
-        int hiStart = highlighter.getStartOffset();
-        int hiEnd = highlighter.getEndOffset();
-        boolean willBeRemoved = range.containsRange(hiStart, hiEnd)
-                                || hiEnd == document.getTextLength() && range.getEndOffset() == hiEnd;
-        if (willBeRemoved) {
-          infosToRemove.recycleHighlighter(highlighter);
-        }
-      }
-      return true;
-    });
-
-    List<HighlightInfo> filteredInfos = UpdateHighlightersUtil.HighlightInfoPostFilters.applyPostFilter(project, infos);
-    ContainerUtil.quickSort(filteredInfos, UpdateHighlightersUtil.BY_START_OFFSET_NO_DUPS);
     Long2ObjectMap<RangeMarker> range2markerCache = new Long2ObjectOpenHashMap<>(10);
     boolean[] changed = {false};
-    SweepProcessor.Generator<HighlightInfo> generator = processor -> ContainerUtil.process(filteredInfos, processor);
-    List<HighlightInfo> fileLevelHighlights = new ArrayList<>();
-    SweepProcessor.sweep(generator, (__, info, atStart, overlappingIntervals) -> {
-      if (!atStart) {
-        return true;
-      }
-      if (info.isFileLevelAnnotation()) {
-        fileLevelHighlights.add(info);
-        changed[0] = true;
-        return true;
-      }
 
-      if (range.contains(info) && !UpdateHighlightersUtil.isWarningCoveredByError(info, severityRegistrar, overlappingIntervals)) {
-        createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, infosToRemove, range2markerCache, severityRegistrar);
-        changed[0] = true;
-      }
-      return true;
-    });
+    try {
+      DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
+        if (info.getGroup() == group) {
+          RangeHighlighterEx highlighter = info.getHighlighter();
+          int hiStart = highlighter.getStartOffset();
+          int hiEnd = highlighter.getEndOffset();
+          boolean willBeRemoved = range.containsRange(hiStart, hiEnd)
+                                  || hiEnd == document.getTextLength() && range.getEndOffset() == hiEnd;
+          if (willBeRemoved) {
+            toReuse.recycleHighlighter(highlighter);
+          }
+        }
+        return true;
+      });
 
-    session.updateFileLevelHighlights(fileLevelHighlights, group, range.equalsToRange(0, document.getTextLength()));
-    changed[0] |= UpdateHighlightersUtil.incinerateObsoleteHighlighters(infosToRemove, session);
+      List<HighlightInfo> filteredInfos = UpdateHighlightersUtil.HighlightInfoPostFilters.applyPostFilter(project, infos);
+      ContainerUtil.quickSort(filteredInfos, UpdateHighlightersUtil.BY_START_OFFSET_NO_DUPS);
+      SweepProcessor.Generator<HighlightInfo> generator = processor -> ContainerUtil.process(filteredInfos, processor);
+      List<HighlightInfo> fileLevelHighlights = new ArrayList<>();
+      SweepProcessor.sweep(generator, (__, info, atStart, overlappingIntervals) -> {
+        if (!atStart) {
+          return true;
+        }
+        if (info.isFileLevelAnnotation()) {
+          fileLevelHighlights.add(info);
+          changed[0] = true;
+          return true;
+        }
+
+        if (range.contains(info) && !UpdateHighlightersUtil.isWarningCoveredByError(info, severityRegistrar, overlappingIntervals)) {
+          createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, toReuse, range2markerCache, severityRegistrar);
+          changed[0] = true;
+        }
+        return true;
+      });
+
+      session.updateFileLevelHighlights(fileLevelHighlights, group, range.equalsToRange(0, document.getTextLength()));
+      changed[0] |= UpdateHighlightersUtil.incinerateObsoleteHighlighters(toReuse, session);
+    }
+    finally {
+      toReuse.releaseHighlighters();
+    }
 
     if (changed[0]) {
       UpdateHighlightersUtil.clearWhiteSpaceOptimizationFlag(document);
@@ -252,8 +263,8 @@ public final class BackgroundUpdateHighlightersUtil {
       TextAttributesKey textAttributesKey = info.forcedTextAttributesKey == null ? info.type.getAttributesKey() : info.forcedTextAttributesKey;
       finalHighlighter.setTextAttributesKey(textAttributesKey);
 
-      if (infoAttributes != null && !infoAttributes.equals(finalHighlighter.getTextAttributes(colorsScheme)) ||
-              infoAttributes == TextAttributes.ERASE_MARKER) {
+      if (infoAttributes == TextAttributes.ERASE_MARKER ||
+          infoAttributes != null && !infoAttributes.equals(finalHighlighter.getTextAttributes(colorsScheme))) {
         finalHighlighter.setTextAttributes(infoAttributes);
       }
 
@@ -298,6 +309,7 @@ public final class BackgroundUpdateHighlightersUtil {
         LOG.error("Expected to set " + infoAttributes + " but actual attributes are: "+actualAttributes+
                   "; colorsScheme: '" + (colorsScheme == null ? "[global]" : colorsScheme.getName()) + "'" +
                   "; highlighter:" + highlighter +" ("+highlighter.getClass()+")" +
+                  "; markup: "+markup+" ("+markup.getClass()+")"+
                   "; attributes after the second .setAttributes(): "+afterSet);
       }
     }

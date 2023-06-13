@@ -139,7 +139,9 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      presentation.setEnabledAndVisible(myManager.getContentCount() > 1 && myManager.canCloseAllContents());
+      Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+      boolean notForTheOnlyContent = myManager.getContentCount() > 1 || !(component instanceof ContentTabLabel);
+      presentation.setEnabledAndVisible(notForTheOnlyContent && myManager.canCloseAllContents());
     }
 
     @Override

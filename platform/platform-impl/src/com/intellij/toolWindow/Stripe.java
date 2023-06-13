@@ -272,15 +272,15 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
     }
   }
 
-  private @NlsSafe @Nullable String getAccessibleStripeName() {
-    if (getButtons().isEmpty()) return null;
+  private @NlsSafe String getAccessibleStripeName() {
+    if (getButtons().isEmpty()) return "";
 
     return switch (this.anchor) {
       case SwingConstants.TOP -> UIBundle.message("stripe.top.accessible.group.name");
       case SwingConstants.BOTTOM -> UIBundle.message("stripe.bottom.accessible.group.name");
       case SwingConstants.LEFT -> UIBundle.message("stripe.left.accessible.group.name");
       case SwingConstants.RIGHT -> UIBundle.message("stripe.right.accessible.group.name");
-      default -> null;
+      default -> "";
     };
   }
 }

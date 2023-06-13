@@ -101,6 +101,7 @@ class MacDistributionBuilder(override val context: BuildContext,
                  context = context)
 
     generateBuildTxt(context, macDistDir.resolve("Resources"))
+
     // if copyDistFiles false, it means that we will copy dist files directly without stage dir
     if (copyDistFiles) {
       copyDistFiles(context = context, newDir = macDistDir, os = OsFamily.MACOS, arch = arch)
@@ -204,18 +205,26 @@ class MacDistributionBuilder(override val context: BuildContext,
     }
   }
 
-  private fun layoutMacApp(ideaPropertiesFile: Path,
-                           platformProperties: List<String>,
-                           docTypes: String?,
-                           macDistDir: Path,
-                           arch: JvmArchitecture,
-                           context: BuildContext) {
+  private suspend fun layoutMacApp(ideaPropertiesFile: Path,
+                                   platformProperties: List<String>,
+                                   docTypes: String?,
+                                   macDistDir: Path,
+                                   arch: JvmArchitecture,
+                                   context: BuildContext) {
     val macCustomizer = customizer
     copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"), macDistDir.resolve("bin"), customizer.binFilesFilter)
     copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
 
     val executable = context.productProperties.baseFileName
-    Files.move(macDistDir.resolve("MacOS/executable"), macDistDir.resolve("MacOS/$executable"))
+    if (macCustomizer.useXPlatLauncher) {
+      Files.delete(macDistDir.resolve("MacOS/executable"))
+      val (execPath, licensePath) = NativeLauncherDownloader.downloadLauncher(context, OsFamily.MACOS, arch)
+      copyFile(execPath, macDistDir.resolve("MacOS/${executable}"))
+      copyFile(licensePath, macDistDir.resolve("license/launcher-third-party-libraries.html"))
+    }
+    else {
+      Files.move(macDistDir.resolve("MacOS/executable"), macDistDir.resolve("MacOS/${executable}"))
+    }
 
     //noinspection SpellCheckingInspection
     val icnsPath = Path.of((if (context.applicationInfo.isEAP) customizer.icnsPathForEAP else null) ?: customizer.icnsPath)
@@ -265,21 +274,25 @@ class MacDistributionBuilder(override val context: BuildContext,
     }
     else {
       """
-      <key>CFBundleURLTypes</key>
-      <array>
-        <dict>
-          <key>CFBundleTypeRole</key>
-          <string>Editor</string>
-          <key>CFBundleURLName</key>
-          <string>Stacktrace</string>
-          <key>CFBundleURLSchemes</key>
-          <array>
-            ${urlSchemes.joinToString(separator = "\n") { "          <string>${it}</string>" }}
-          </array>
-        </dict>
-      </array>
-    """
+    <key>CFBundleURLTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleURLName</key>
+        <string>Stacktrace</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          ${urlSchemes.joinToString(separator = "\n          ") { "<string>${it}</string>" }}
+        </array>
+      </dict>
+    </array>"""
     }
+
+    val architectures = (if (!customizer.useXPlatLauncher) listOf("arm64", "x86_64") else when (arch) {
+      JvmArchitecture.x64 -> listOf("x86_64")
+      JvmArchitecture.aarch64 -> listOf("arm64")
+    }).joinToString(separator = "\n      ") { "<string>${it}</string>" }
 
     val todayYear = LocalDate.now().year.toString()
     //noinspection SpellCheckingInspection
@@ -304,9 +317,7 @@ class MacDistributionBuilder(override val context: BuildContext,
         Pair("class_path", classPath),
         Pair("main_class_name", context.ideMainClassName.replace('.', '/')),
         Pair("url_schemes", urlSchemesString),
-        Pair("architectures", "<key>LSArchitecturePriority</key>\n    <array>\n" +
-                              macCustomizer.architectures.joinToString(separator = "\n") { "      <string>$it</string>\n" } +
-                              "    </array>"),
+        Pair("architectures", architectures),
         Pair("min_osx", macCustomizer.minOSXVersion),
       )
     )
@@ -373,7 +384,8 @@ class MacDistributionBuilder(override val context: BuildContext,
 
   private suspend fun buildForArch(arch: JvmArchitecture,
                                    macZip: Path,
-                                   macZipWithoutRuntime: Path?, notarize: Boolean,
+                                   macZipWithoutRuntime: Path?,
+                                   notarize: Boolean,
                                    customizer: MacDistributionCustomizer,
                                    context: BuildContext) {
     val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"

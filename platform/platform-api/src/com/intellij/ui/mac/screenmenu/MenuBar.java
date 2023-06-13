@@ -37,7 +37,7 @@ public final class MenuBar extends Menu {
 
   @Override
   synchronized void refillImpl(boolean onAppKit) {
-    if (myCachedPeers != null) {
+    if (myCachedPeers != null && myFrame.isActive()) {
       ourLastMenubarPeers = myCachedPeers;
       nativeRefill(0, myCachedPeers, onAppKit);
     }

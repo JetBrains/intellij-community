@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -89,8 +89,7 @@ public final class FileManagerImpl implements FileManager {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public ConcurrentMap<VirtualFile, FileViewProvider> getVFileToViewProviderMap() {
+  public @NotNull ConcurrentMap<VirtualFile, FileViewProvider> getVFileToViewProviderMap() {
     ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
     if (map == null) {
       map = ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, ContainerUtil.createConcurrentWeakValueMap());
@@ -98,8 +97,7 @@ public final class FileManagerImpl implements FileManager {
     return map;
   }
 
-  @NotNull
-  private ConcurrentMap<VirtualFile, PsiDirectory> getVFileToPsiDirMap() {
+  private @NotNull ConcurrentMap<VirtualFile, PsiDirectory> getVFileToPsiDirMap() {
     ConcurrentMap<VirtualFile, PsiDirectory> map = myVFileToPsiDirMap.get();
     if (map == null) {
       map = ConcurrencyUtil.cacheOrGet(myVFileToPsiDirMap, ContainerUtil.createConcurrentSoftValueMap());
@@ -177,8 +175,7 @@ public final class FileManagerImpl implements FileManager {
   }
 
   @Override
-  @NotNull
-  public FileViewProvider findViewProvider(@NotNull VirtualFile vFile) {
+  public @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile vFile) {
     assert !vFile.isDirectory();
     FileViewProvider viewProvider = findCachedViewProvider(vFile);
     if (viewProvider != null) return viewProvider;
@@ -230,8 +227,7 @@ public final class FileManagerImpl implements FileManager {
     return viewProvider;
   }
 
-  @Nullable
-  private FileViewProvider getRawCachedViewProvider(@NotNull VirtualFile vFile) {
+  private @Nullable FileViewProvider getRawCachedViewProvider(@NotNull VirtualFile vFile) {
     ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
     FileViewProvider viewProvider = map == null ? null : map.get(vFile);
     return viewProvider == null ? vFile.getUserData(myPsiHardRefKey) : viewProvider;
@@ -259,8 +255,7 @@ public final class FileManagerImpl implements FileManager {
   }
 
   @Override
-  @NotNull
-  public FileViewProvider createFileViewProvider(@NotNull VirtualFile vFile, boolean eventSystemEnabled) {
+  public @NotNull FileViewProvider createFileViewProvider(@NotNull VirtualFile vFile, boolean eventSystemEnabled) {
     FileType fileType = vFile.getFileType();
     Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), vFile, fileType);
     FileViewProviderFactory factory = language == null
@@ -349,9 +344,8 @@ public final class FileManagerImpl implements FileManager {
   }
 
   @Override
-  @Nullable
   @RequiresReadLock
-  public PsiFile findFile(@NotNull VirtualFile vFile) {
+  public @Nullable PsiFile findFile(@NotNull VirtualFile vFile) {
     if (vFile.isDirectory()) return null;
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -366,8 +360,7 @@ public final class FileManagerImpl implements FileManager {
   }
 
   @Override
-  @Nullable
-  public PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
+  public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
       throw new InvalidVirtualFileAccessException(vFile);
@@ -384,8 +377,7 @@ public final class FileManagerImpl implements FileManager {
   }
 
   @Override
-  @Nullable
-  public PsiDirectory findDirectory(@NotNull VirtualFile vFile) {
+  public @Nullable PsiDirectory findDirectory(@NotNull VirtualFile vFile) {
     Project project = myManager.getProject();
     if (project.isDisposed()) {
       LOG.error("Access to psi files should not be performed after project disposal: " + project);
@@ -405,8 +397,7 @@ public final class FileManagerImpl implements FileManager {
     return findDirectoryImpl(vFile, getVFileToPsiDirMap());
   }
 
-  @Nullable
-  private PsiDirectory findDirectoryImpl(@NotNull VirtualFile vFile, @NotNull ConcurrentMap<VirtualFile, PsiDirectory> psiDirMap) {
+  private @Nullable PsiDirectory findDirectoryImpl(@NotNull VirtualFile vFile, @NotNull ConcurrentMap<VirtualFile, PsiDirectory> psiDirMap) {
     PsiDirectory psiDir = psiDirMap.get(vFile);
     if (psiDir != null) return psiDir;
 
@@ -470,9 +461,8 @@ public final class FileManagerImpl implements FileManager {
     return viewProvider == null ? null : ((AbstractFileViewProvider)viewProvider).getCachedPsi(viewProvider.getBaseLanguage());
   }
 
-  @NotNull
   @Override
-  public List<PsiFile> getAllCachedFiles() {
+  public @NotNull List<PsiFile> getAllCachedFiles() {
     List<PsiFile> files = new ArrayList<>();
     for (VirtualFile file : new ArrayList<>(getVFileToViewProviderMap().keySet())) {
       FileViewProvider viewProvider = findCachedViewProvider(file);

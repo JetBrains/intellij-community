@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.junit
 import com.intellij.execution.junit.JUnit4Framework
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.lang.Language
-import com.intellij.lang.OuterModelsModificationTrackerManager
+import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager

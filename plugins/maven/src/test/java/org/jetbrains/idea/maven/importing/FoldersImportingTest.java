@@ -46,6 +46,13 @@ import java.util.function.Consumer;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myProjectsManager.initForTests();
+    myProjectsManager.listenForExternalChanges();
+  }
+
   @Test
   public void testSimpleProjectStructure() {
     createStdProjectFolders();

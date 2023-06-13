@@ -210,8 +210,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
     };
 
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findUsagesRunnable, RefactoringBundle.message("progress.text"),
-                                                                           true, myProject)) {
+    long findUsagesStart = System.currentTimeMillis();
+    boolean isProgressFinished = ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(findUsagesRunnable, RefactoringBundle.message("progress.text"), true, myProject);
+    long findUsagesDuration = System.currentTimeMillis() - findUsagesStart;
+    RefactoringUsageCollector.USAGES_SEARCHED.log(this.getClass(), !isProgressFinished, findUsagesDuration);
+    if (!isProgressFinished) {
       return;
     }
 
@@ -244,6 +248,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         RefactoringUiService.getInstance().setStatusBarInfo(myProject, RefactoringBundle.message("readonly.occurences.found"));
       }
     }
+    long executeStart = System.currentTimeMillis();
     if (isPreview) {
       for (UsageInfo usage : usages) {
         LOG.assertTrue(usage != null, getClass());
@@ -253,6 +258,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     else {
       execute(usages);
     }
+    long executeDuration = System.currentTimeMillis() - executeStart;
+    RefactoringUsageCollector.EXECUTED.log(this.getClass(), executeDuration);
   }
 
   @TestOnly

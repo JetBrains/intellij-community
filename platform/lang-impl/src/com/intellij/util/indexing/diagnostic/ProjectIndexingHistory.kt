@@ -18,6 +18,8 @@ typealias BytesNumber = Long
  * Extend this extension point to receive project scanning & indexing statistics
  * (e.g.: indexed file count, indexation speed, etc.) after each **dumb** indexation task was performed.
  */
+@ApiStatus.ScheduledForRemoval
+@Deprecated(message = "Use ProjectIndexingActivityHistoryListener instead")
 interface ProjectIndexingHistoryListener {
   companion object {
     @Topic.AppLevel
@@ -26,6 +28,26 @@ interface ProjectIndexingHistoryListener {
   fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) {}
 
   fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory)
+}
+
+/**
+ * Extend this extension point to receive project scanning & indexing statistics
+ * (e.g.: indexed file count, indexation speed, etc.) after each scanning or **dumb** indexation task was performed.
+ */
+interface ProjectIndexingActivityHistoryListener {
+  companion object {
+    @Topic.AppLevel
+    val TOPIC: Topic<ProjectIndexingActivityHistoryListener> = Topic(ProjectIndexingActivityHistoryListener::class.java,
+                                                                     Topic.BroadcastDirection.NONE)
+  }
+
+  fun onStartedScanning(history: ProjectScanningHistory) {}
+
+  fun onFinishedScanning(history: ProjectScanningHistory) {}
+
+  fun onStartedDumbIndexing(history: ProjectDumbIndexingHistory) {}
+
+  fun onFinishedDumbIndexing(history: ProjectDumbIndexingHistory) {}
 }
 
 @ApiStatus.Obsolete
@@ -49,6 +71,7 @@ interface ProjectIndexingActivityHistory {
 
 interface ProjectScanningHistory : ProjectIndexingActivityHistory {
   override val project: Project
+  val indexingActivitySessionId: Long
   val scanningReason: String?
   val scanningSessionId: Long
   val times: ScanningTimes
@@ -60,7 +83,7 @@ interface ProjectScanningHistory : ProjectIndexingActivityHistory {
 
 interface ProjectDumbIndexingHistory : ProjectIndexingActivityHistory {
   override val project: Project
-  val indexingSessionId: Long
+  val indexingActivitySessionId: Long
   val times: DumbIndexingTimes
   val refreshedScanningStatistics: JsonScanningStatistics?
   val providerStatistics: List<JsonFileProviderIndexStatistics>

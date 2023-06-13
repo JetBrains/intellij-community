@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -10,6 +12,8 @@ import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import kotlin.coroutines.CoroutineContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +61,11 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
   private final AtomicLong mySubmittedTasksCount = new AtomicLong();
 
   /**
+   * A thread context for each task
+   */
+  private final Map<T, CoroutineContext> myThreadContexts = new HashMap<>();
+
+  /**
    * Disposes tasks, cancel underlying progress indicators, clears tasks queue
    */
   public void disposePendingTasks() {
@@ -70,6 +79,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
       myTasksQueue.clear();
       myProgresses.clear();
+      myThreadContexts.clear();
     }
 
     cancelIndicatorSafe(indicatorsQueue);
@@ -112,10 +122,13 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     T newTask = task;
     SubmissionReceipt receipt;
 
+    CoroutineContext currentContext = AppExecutorUtil.propagateContextOrCancellation() ? ThreadContext.currentThreadContext() : null;
+
     synchronized (myLock) {
       for (int i = myTasksQueue.size() - 1; i >= 0; i--) {
         T oldTask = myTasksQueue.get(i);
         ProgressIndicatorBase indicator = myProgresses.get(oldTask);
+        CoroutineContext otherContext = myThreadContexts.get(oldTask);
         //dispose cancelled tasks
         if (indicator == null || indicator.isCanceled()) {
           myTasksQueue.remove(i);
@@ -133,7 +146,17 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
         }
 
         T mergedTask = task.tryMergeWith(oldTask);
-        if (mergedTask == oldTask) {
+        boolean contextsEqual;
+        if (AppExecutorUtil.propagateContextOrCancellation()) {
+          if ((currentContext == null) != (otherContext == null)) {
+            contextsEqual = false;
+          } else {
+            contextsEqual = currentContext == null || ThreadContext.getContextSkeleton(currentContext).equals(ThreadContext.getContextSkeleton(otherContext));
+          }
+        } else {
+          contextsEqual = true;
+        }
+        if (mergedTask == oldTask && contextsEqual) {
           // new task completely absorbed by the old task which means that we don't need to modify the queue
           newTask = null;
           disposeQueue.add(task);
@@ -156,10 +179,12 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
         mySubmittedTasksCount.incrementAndGet();
         ProgressIndicatorBase progress = new ProgressIndicatorBase();
         myProgresses.put(taskToAdd, progress);
+        myThreadContexts.put(taskToAdd, currentContext);
         Disposer.register(taskToAdd, () -> {
           //a removed progress means the task would be ignored on queue processing
           synchronized (myLock) {
             myProgresses.remove(taskToAdd);
+            myThreadContexts.remove(taskToAdd);
           }
           progress.cancel();
         });
@@ -199,8 +224,9 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
             disposeQueue.add(task);
             continue;
           }
+          CoroutineContext context = myThreadContexts.get(task);
 
-          return wrapTask(task, indicator);
+          return wrapTask(task, indicator, context);
         }
       }
     }
@@ -209,8 +235,8 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
   }
 
-  protected MergingTaskQueue.QueuedTask<T> wrapTask(T task, ProgressIndicatorBase indicator) {
-    return new QueuedTask<>(task, indicator);
+  protected MergingTaskQueue.QueuedTask<T> wrapTask(T task, ProgressIndicatorBase indicator, CoroutineContext context) {
+    return new QueuedTask<>(task, indicator, context);
   }
 
   public boolean isEmpty() {
@@ -258,10 +284,12 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
   public static class QueuedTask<T extends MergeableQueueTask<T>> implements AutoCloseable {
     private final T myTask;
     private final ProgressIndicatorEx myIndicator;
+    private final @Nullable CoroutineContext myContext;
 
-    QueuedTask(@NotNull T task, @NotNull ProgressIndicatorEx progress) {
+    QueuedTask(@NotNull T task, @NotNull ProgressIndicatorEx progress, @Nullable CoroutineContext context) {
       myTask = task;
       myIndicator = progress;
+      myContext = context;
     }
 
     @Override
@@ -291,7 +319,13 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       }
 
       beforeTask();
-      myTask.perform(customIndicator);
+      if (AppExecutorUtil.propagateContextOrCancellation() && myContext != null) {
+        try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
+          myTask.perform(customIndicator);
+        }
+      } else {
+        myTask.perform(customIndicator);
+      }
     }
 
     String getInfoString() {

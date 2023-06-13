@@ -7,18 +7,17 @@ import com.intellij.platform.diagnostic.telemetry.impl.use
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
+import com.intellij.util.lang.ImmutableZipFile
 import com.jetbrains.util.filetype.FileType
 import com.jetbrains.util.filetype.FileTypeDetector.DetectFileType
 import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.JetBrainsClientModuleFilter
-import org.jetbrains.intellij.build.SignNativeFileMode
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
@@ -27,7 +26,6 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.copyZipRaw
 import org.jetbrains.intellij.build.io.transformZipUsingTempFile
-import org.jetbrains.intellij.build.tasks.*
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -47,6 +45,7 @@ import java.util.function.IntConsumer
 import kotlin.io.path.invariantSeparatorsPathString
 
 private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
+private val isUnpackedDist = System.getProperty("idea.dev.build.unpacked").toBoolean()
 
 internal val BuildContext.searchableOptionDir: Path
   get() = paths.tempDir.resolve("searchableOptionsResult")
@@ -137,10 +136,10 @@ class JarPackager private constructor(private val outputDir: Path, private val c
 
       // must be concurrent - buildJars executed in parallel
       val moduleNameToSize = ConcurrentHashMap<String, Int>()
-      packager.packModules(includedModules = includedModules,
-                           moduleNameToSize = moduleNameToSize,
-                           moduleOutputPatcher = moduleOutputPatcher,
-                           layout = layout)
+      val unpackedModules = packager.packModules(includedModules = includedModules,
+                                                 moduleNameToSize = moduleNameToSize,
+                                                 moduleOutputPatcher = moduleOutputPatcher,
+                                                 layout = layout)
 
       for (item in (layout?.includedModuleLibraries ?: emptyList())) {
         val library = context.findRequiredModule(item.moduleName).libraryCollection.libraries
@@ -222,42 +221,64 @@ class JarPackager private constructor(private val outputDir: Path, private val c
         // sort because projectStructureMapping is a concurrent collection
         // call invariantSeparatorsPathString because the result of Path ordering is platform-dependent
         list +
-        packager.libraryEntries.sortedWith(compareBy({ it.path.invariantSeparatorsPathString }, { it.type }, { it.libraryFile?.invariantSeparatorsPathString }))
+        unpackedModules.sortedWith(compareBy({ it.moduleName }, { it.path.invariantSeparatorsPathString })) +
+        packager.libraryEntries.sortedWith(compareBy({ it.path.invariantSeparatorsPathString },
+                                                     { it.type },
+                                                     { it.libraryFile?.invariantSeparatorsPathString }))
       }
     }
   }
 
-  private fun packModules(includedModules: Collection<ModuleItem>,
-                          moduleNameToSize: ConcurrentHashMap<String, Int>,
-                          moduleOutputPatcher: ModuleOutputPatcher,
-                          layout: BaseLayout?) {
+  private suspend fun packModules(includedModules: Collection<ModuleItem>,
+                                  moduleNameToSize: ConcurrentHashMap<String, Int>,
+                                  moduleOutputPatcher: ModuleOutputPatcher,
+                                  layout: BaseLayout?): List<ModuleOutputEntry> {
+    val unpackedModules = mutableListOf<ModuleOutputEntry>()
     for (item in includedModules) {
+      val moduleName = item.moduleName
+      val patchedDirs = moduleOutputPatcher.getPatchedDir(moduleName)
+      val patchedContent = moduleOutputPatcher.getPatchedContent(moduleName)
+
+      val searchableOptionsModuleDir = context.searchableOptionDir.resolve(moduleName).takeIf {
+        withContext(Dispatchers.IO) {
+          Files.exists(it)
+        }
+      }
+
+      val moduleOutputDir = context.getModuleOutputDir(context.findRequiredModule(moduleName))
+      val extraExcludes = layout?.moduleExcludes?.get(moduleName) ?: emptyList()
+
+      val packToDir = isUnpackedDist && layout is PlatformLayout && patchedContent.isEmpty() && extraExcludes.isEmpty()
+
       val descriptor = jarDescriptors.computeIfAbsent(outputDir.resolve(item.relativeOutputFile)) { jarFile ->
-        createJarDescriptor(outputDir = outputDir,
-                            targetFile = jarFile,
-                            context = context)
+        createJarDescriptor(outputDir = outputDir, targetFile = jarFile, context = context)
       }
       descriptor.includedModules = descriptor.includedModules.add(item)
 
-      val sourceList = descriptor.sources
-      val moduleName = item.moduleName
-      val extraExcludes = layout?.moduleExcludes?.get(moduleName) ?: emptyList()
+      val sourceList: MutableList<Source>
+      if (packToDir) {
+        sourceList = mutableListOf()
+        // suppress assert
+        moduleNameToSize.putIfAbsent(moduleName, 0)
+      }
+      else {
+        sourceList = descriptor.sources
+      }
 
       val sizeConsumer = IntConsumer {
         moduleNameToSize.merge(moduleName, it) { oldValue, value -> oldValue + value }
       }
 
-      for (entry in moduleOutputPatcher.getPatchedContent(moduleName)) {
+      for (entry in patchedContent) {
         sourceList.add(InMemoryContentSource(entry.key, entry.value, sizeConsumer))
       }
 
       // must be before module output to override
-      for (moduleOutputPatch in moduleOutputPatcher.getPatchedDir(moduleName)) {
+      for (moduleOutputPatch in patchedDirs) {
         sourceList.add(DirSource(dir = moduleOutputPatch, sizeConsumer = sizeConsumer))
       }
 
-      val searchableOptionsModuleDir = context.searchableOptionDir.resolve(moduleName)
-      if (Files.exists(searchableOptionsModuleDir)) {
+      if (searchableOptionsModuleDir != null) {
         sourceList.add(DirSource(dir = searchableOptionsModuleDir, sizeConsumer = sizeConsumer))
       }
 
@@ -268,20 +289,27 @@ class JarPackager private constructor(private val outputDir: Path, private val c
         val fileSystem = FileSystems.getDefault()
         commonModuleExcludes + extraExcludes.map { fileSystem.getPathMatcher("glob:$it") }
       }
-      sourceList.add(DirSource(dir = context.getModuleOutputDir(context.findRequiredModule(moduleName)),
+      sourceList.add(DirSource(dir = moduleOutputDir,
                                excludes = excludes,
                                sizeConsumer = sizeConsumer))
 
       if (layout != null) {
         packModuleLibs(item = item, layout = layout, copiedFiles = copiedFiles, sources = descriptor.sources)
       }
+
+      if (packToDir) {
+        for (source in sourceList) {
+          unpackedModules.add(ModuleOutputEntry(moduleName = moduleName, path = (source as DirSource).dir, size = 0))
+        }
+      }
     }
+    return unpackedModules
   }
 
-  private fun packModuleLibs(item: ModuleItem,
-                             layout: BaseLayout,
-                             copiedFiles: MutableMap<Path, CopiedFor>,
-                             sources: MutableList<Source>) {
+  private suspend fun packModuleLibs(item: ModuleItem,
+                                     layout: BaseLayout,
+                                     copiedFiles: MutableMap<Path, CopiedFor>,
+                                     sources: MutableList<Source>) {
     if (item.relativeOutputFile.contains('/')) {
       return
     }
@@ -314,7 +342,7 @@ class JarPackager private constructor(private val outputDir: Path, private val c
       for (i in (files.size - 1) downTo 0) {
         val file = files.get(i)
         val fileName = file.fileName.toString()
-        if (fileName.endsWith("-rt.jar") || fileName.contains("-agent")) {
+        if (item.relativeOutputFile.contains('/') || isSeparateJar(fileName, file)) {
           files.removeAt(i)
           addLibrary(library, outputDir.resolve(removeVersionFromJar(fileName)), listOf(file))
         }
@@ -322,11 +350,31 @@ class JarPackager private constructor(private val outputDir: Path, private val c
 
       for (file in files) {
         sources.add(ZipSource(file) { size ->
-          libraryEntries.add(ModuleLibraryFileEntry(path = targetFile, moduleName = moduleName, 
-                                                    libraryName = LibraryLicensesListGenerator.getLibraryName(library), libraryFile = file, size = size))
+          libraryEntries.add(ModuleLibraryFileEntry(path = targetFile,
+                                                    moduleName = moduleName,
+                                                    libraryName = LibraryLicensesListGenerator.getLibraryName(library),
+                                                    libraryFile = file,
+                                                    size = size))
         })
       }
     }
+  }
+
+  private suspend fun isSeparateJar(fileName: String, file: Path): Boolean {
+    if (fileName.endsWith("-rt.jar") || fileName.contains("-agent")) {
+      return true
+    }
+
+    val result = withContext(Dispatchers.IO) {
+      ImmutableZipFile.load(file).use {
+        @Suppress("SpellCheckingInspection")
+        it.getResource("META-INF/sisu/javax.inject.Named") != null
+      }
+    }
+    if (result) {
+      Span.current().addEvent("$fileName contains file that prevent merging")
+    }
+    return result
   }
 
   private fun alreadyHasLibrary(layout: BaseLayout, libraryName: String): Boolean {
@@ -488,7 +536,7 @@ private fun getLibraryFiles(library: JpsLibrary,
   for (file in files) {
     val alreadyCopiedFor = copiedFiles.putIfAbsent(file, CopiedFor(library, targetFile))
     if (alreadyCopiedFor != null) {
-      // check name - we allow having same named module level library name
+      // check name - we allow having the same named module level library name
       if (isModuleLevel && alreadyCopiedFor.library.name == libName) {
         continue
       }

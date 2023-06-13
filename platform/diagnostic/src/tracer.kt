@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 
 package com.intellij.diagnostic
@@ -58,7 +58,6 @@ private val noActivity: Activity = object : Activity {
   override fun setDescription(description: String): Unit = error("must not be invoked")
   override fun endAndStart(name: String): Activity = error("must not be invoked")
   override fun startChild(name: String): Activity = error("must not be invoked")
-  override fun updateThreadName(): Unit = error("must not be invoked")
 }
 
 private object CoroutineTimeMeasurerKey : CoroutineContext.Key<CoroutineTimeMeasurer>

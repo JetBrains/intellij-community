@@ -44,7 +44,7 @@ public final class PlaybackRunnerExtended extends PlaybackRunner {
     if (project != null && !project.isDefault()) {
       Disposer.register(project, () -> {
         if (project == myProject) {
-          Disposer.dispose(myOnStop);
+          Disposer.dispose(onStop);
         }
       });
     }

@@ -35,6 +35,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeReq
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -47,6 +48,7 @@ internal class GitLabReviewTabComponentFactory(
     cs: CoroutineScope,
     projectContext: GitLabProjectUIContext
   ): ReviewListTabComponentDescriptor {
+    GitLabStatistics.logMrListOpened()
     return GitLabReviewListTabComponentDescriptor(project, cs, toolwindowViewModel.accountManager, projectContext)
   }
 
@@ -55,12 +57,14 @@ internal class GitLabReviewTabComponentFactory(
                                   reviewTabType: GitLabReviewTab): JComponent {
     return when (reviewTabType) {
       is GitLabReviewTab.ReviewSelected -> {
+        GitLabStatistics.logMrDetailsOpened()
         createReviewDetailsComponent(cs, projectContext, reviewTabType.reviewId)
       }
     }
   }
 
   override fun createEmptyTabContent(cs: CoroutineScope): JComponent {
+    GitLabStatistics.logMrTwLoginOpened()
     return createSelectorsComponent(cs)
   }
 
@@ -171,13 +175,13 @@ internal class GitLabReviewTabComponentFactory(
         val account = req.account
         if (account == null) {
           val (newAccount, token) = GitLabLoginUtil.logInViaToken(project, selectors, req.repo.repository.serverPath) { server, name ->
-            req.accounts.none { it.server == server || it.name == name }
+            GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
           } ?: return@collect
           req.login(newAccount, token)
         }
         else {
           val token = GitLabLoginUtil.updateToken(project, selectors, account) { server, name ->
-            req.accounts.none { it.server == server || it.name == name }
+            GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
           } ?: return@collect
           req.login(account, token)
         }

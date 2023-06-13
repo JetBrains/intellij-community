@@ -925,6 +925,7 @@ private class NotificationComponent(val project: Project,
           }
         }
       }
+      title.verticalTextPosition = SwingConstants.TOP
 
       try {
         title.setCopyable(true)

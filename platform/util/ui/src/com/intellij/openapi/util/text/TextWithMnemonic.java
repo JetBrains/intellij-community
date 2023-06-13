@@ -63,7 +63,7 @@ public final class TextWithMnemonic {
    * @return a mnemonic character (upper-cased) if mnemonic is set; 0 otherwise
    * @deprecated use {@link #getMnemonicChar} or {@link #getMnemonicCode} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public int getMnemonic() {
     char ch = getMnemonicChar();
     return ch == KeyEvent.CHAR_UNDEFINED ? 0 : Character.toUpperCase(ch);
@@ -122,7 +122,7 @@ public final class TextWithMnemonic {
    * @return a TextWithMnemonic object with a mnemonic set at given index
    * @deprecated use {@link #withMnemonicIndex} or {@link #fromPlainTextWithIndex(String, int)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TextWithMnemonic setMnemonicAt(int index) {
     if (index < 0 || index >= text.length() + mnemonicSuffix.length()) {
       throw new IndexOutOfBoundsException(String.valueOf(index));

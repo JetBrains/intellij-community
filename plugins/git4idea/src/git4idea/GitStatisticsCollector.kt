@@ -32,7 +32,6 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
 import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -77,7 +76,6 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
         LOCAL_BRANCHES with branches.localBranches.size,
         REMOTE_BRANCHES with branches.remoteBranches.size,
         REMOTES with repository.remotes.size,
-        WORKING_COPY_SIZE with repository.workingCopySize(),
         IS_WORKTREE_USED with repository.isWorkTreeUsed(),
         FS_MONITOR with repository.detectFsMonitor(),
       )
@@ -145,7 +143,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("git.configuration", 11)
+    private val GROUP = EventLogGroup("git.configuration", 12)
 
     private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
     private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
@@ -172,7 +170,6 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     private val LOCAL_BRANCHES = EventFields.RoundedInt("local_branches")
     private val REMOTE_BRANCHES = EventFields.RoundedInt("remote_branches")
     private val REMOTES = EventFields.RoundedInt("remotes")
-    private val WORKING_COPY_SIZE = EventFields.RoundedLong("working_copy_size")
     private val IS_WORKTREE_USED = EventFields.Boolean("is_worktree_used")
     private val FS_MONITOR = EventFields.Enum<FsMonitor>("fs_monitor")
     private val remoteTypes = setOf("github", "gitlab", "bitbucket",
@@ -186,7 +183,6 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
                                                        LOCAL_BRANCHES,
                                                        REMOTE_BRANCHES,
                                                        REMOTES,
-                                                       WORKING_COPY_SIZE,
                                                        IS_WORKTREE_USED,
                                                        FS_MONITOR,
                                                        *remoteTypesEventIds.toTypedArray()
@@ -213,45 +209,6 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       return null
     }
   }
-}
-
-private const val MAX_SIZE: Long = 4L * 1024 * 1024 * 1024 // 4 GB
-private const val MAX_TIME: Long = 5 * 1000 * 60 // 5 min
-
-private fun Sequence<Long>.sumWithLimits(): Long {
-  var sum = 0L
-  val startTime = System.currentTimeMillis()
-  for (element in this) {
-    if (System.currentTimeMillis() - startTime > MAX_TIME)
-      return -1
-    sum += element
-    if (sum >= MAX_SIZE) return MAX_SIZE
-  }
-  return sum
-}
-
-/**
- * Calculates size of work tree in given [GitRepository]
- *
- * @return size in bytes or -1 if some IO error occurs
- */
-private fun GitRepository.workingCopySize(): Long = try {
-  val root = this.root.toNioPath().toFile()
-  root.walk()
-    .onEnter { it.name != GitUtil.DOT_GIT && !isInnerRepo(root, it) }
-    .filter { it.isFile }
-    .map { it.length() }
-    .sumWithLimits() // don't calculate working copy size over 4 gb to reduce CPU usage
-}
-catch (e: Exception) {
-  // if something goes wrong with file system operations
-  -1
-}
-
-private fun isInnerRepo(root: File, dir: File): Boolean {
-  if (root == dir) return false
-
-  return Path.of(dir.toString(), GitUtil.DOT_GIT).exists()
 }
 
 /**

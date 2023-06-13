@@ -42,6 +42,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
@@ -125,7 +126,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
           CoroutineScopeKt.namedChildScope(GlobalScope.INSTANCE, ApplicationImpl.class.getName(), EmptyCoroutineContext.INSTANCE, true),
           true);
 
-    myLock = lockHolder.getLock$intellij_platform_ide_impl();
+    myLock = lockHolder.lock;
 
     registerFakeServices(this);
 
@@ -149,7 +150,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
                          @NotNull RwLockHolder lockHolder) {
     super(null, coroutineScope, true);
 
-    myLock = lockHolder.getLock$intellij_platform_ide_impl();
+    myLock = lockHolder.lock;
 
     registerFakeServices(this);
 
@@ -361,11 +362,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       runnable = captured.getFirst();
       expired = captured.getSecond();
     }
-    invokeLaterRaw(runnable, state, expired);
-  }
-
-  @Override
-  public void invokeLaterRaw(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, state);
     // Don't need to enable implicit read, as Write Intent lock includes Explicit Read
     LaterInvocator.invokeLater(state, expired, wrapWithRunIntendedWriteAction(r));
@@ -376,12 +372,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     //noinspection deprecation
     myDispatcher.getMulticaster().applicationExiting();
 
-    ShutDownTracker.getInstance().ensureStopperThreadsFinished();
-
     super.dispose();
     // Remove IW lock from EDT as EDT might be re-created, which might lead to deadlock if anybody uses this disposed app
     if (!StartupUtil.isImplicitReadOnEDTDisabled() || isUnitTestMode()) {
-      invokeLater(() -> releaseWriteIntentLock(), ModalityState.NON_MODAL);
+      invokeLater(() -> releaseWriteIntentLock(), ModalityState.nonModal());
     }
 
     // FileBasedIndexImpl can schedule some more activities to execute, so, shutdown executor only after service disposing
@@ -476,7 +470,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
 
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, modalityState);
-    LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(r));
+    LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(AppScheduledExecutorService.capturePropagationAndCancellationContext(r)));
   }
 
   private @NotNull Runnable wrapWithRunIntendedWriteAction(@NotNull Runnable runnable) {
@@ -522,7 +516,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public @NotNull ModalityState getNoneModalityState() {
-    return ModalityState.NON_MODAL;
+    return ModalityState.nonModal();
   }
 
   @Override
@@ -594,7 +588,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   private void exit(int flags, boolean restart, String @NotNull [] beforeRestart, int exitCode) {
     if (!BitUtil.isSet(flags, FORCE_EXIT) &&
-        (myExitInProgress || (!BitUtil.isSet(flags, EXIT_CONFIRMED) && getDefaultModalityState() != ModalityState.NON_MODAL))) {
+        (myExitInProgress || (!BitUtil.isSet(flags, EXIT_CONFIRMED) && getDefaultModalityState() != ModalityState.nonModal()))) {
       return;
     }
 
@@ -603,7 +597,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       doExit(flags, restart, beforeRestart, exitCode);
     }
     else {
-      invokeLater(() -> doExit(flags, restart, beforeRestart, exitCode), ModalityState.NON_MODAL);
+      invokeLater(() -> doExit(flags, restart, beforeRestart, exitCode), ModalityState.nonModal());
     }
   }
 

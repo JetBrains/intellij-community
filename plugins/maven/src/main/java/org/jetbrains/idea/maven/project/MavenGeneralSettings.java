@@ -15,6 +15,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.config.MavenConfig;
 import org.jetbrains.idea.maven.config.MavenConfigParser;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
@@ -79,6 +80,10 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void changed() {
+    changed(true);
+  }
+
+  public void changed(boolean fireUpdate) {
     if (myBulkUpdateLevel > 0) return;
 
     myEffectiveLocalRepositoryCache = null;
@@ -86,7 +91,9 @@ public class MavenGeneralSettings implements Cloneable {
     myEffectiveLocalHomeCache = null;
     myEffectiveSuperPomCache = null;
     mavenConfigCache = null;
-    fireChanged();
+    if (fireUpdate) {
+      fireChanged();
+    }
   }
 
   @Property
@@ -122,7 +129,7 @@ public class MavenGeneralSettings implements Cloneable {
    */
   @Transient
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public MavenExecutionOptions.LoggingLevel getLoggingLevel() {
     return getOutputLevel();
   }
@@ -158,6 +165,15 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void setMavenHome(@NotNull final String mavenHome) {
+    setMavenHome(mavenHome, true);
+  }
+
+  @TestOnly
+  public void setMavenHomeNoFire(@NotNull final String mavenHome) {
+    setMavenHome(mavenHome, false);
+  }
+
+  private void setMavenHome(@NotNull final String mavenHome, boolean fireChanged) {
     final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(mavenHome);
     final File bundledMavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(MavenServerManager.BUNDLED_MAVEN_3);
 
@@ -168,7 +184,9 @@ public class MavenGeneralSettings implements Cloneable {
     if (!Objects.equals(this.mavenHome, mavenHomeToSet)) {
       this.mavenHome = mavenHomeToSet;
       myDefaultPluginsCache = null;
-      changed();
+      if (fireChanged) {
+        changed();
+      }
     }
   }
 
@@ -506,7 +524,7 @@ public class MavenGeneralSettings implements Cloneable {
     threads = threadsConfig;
 
     if (needUpdate) {
-      changed();
+      changed(false);
     }
     mavenConfigCache = config;
   }
@@ -519,7 +537,12 @@ public class MavenGeneralSettings implements Cloneable {
     MavenProjectsManager instance = myProject != null ? MavenProjectsManager.getInstance(myProject) : null;
     if (instance == null) return null;
 
-    updateFromMavenConfig(MavenUtil.collectFiles(instance.getRootProjects()));
+    var files = MavenUtil.collectFiles(instance.getRootProjects());
+    if (files.isEmpty()) {
+      files = instance.getProjectsTree().getExistingManagedFiles();
+    }
+
+    updateFromMavenConfig(files);
     return mavenConfigCache;
   }
 

@@ -16,14 +16,13 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.maven.testFramework.utils.MavenImportingTestCaseKt;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Arrays;
 
 public class DependenciesManagementTest extends MavenMultiVersionImportingTestCase {
+
   @Test
   public void testImportingDependencies() throws Exception {
     if (!hasMavenInstallation()) return;
@@ -126,68 +125,10 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
     importProjectsWithErrors(bom, project);
     assertModules("bom", "project");
 
-    // reset embedders and try to resolve project from scratch in specific order - imported one goes first
-    // to make maven cache it. we have to ensure that dependent project will be resolved correctly after that
+    // reset embedders and try to update projects from scratch
     myProjectsManager.getEmbeddersManager().releaseForcefullyInTests();
-    MavenImportingTestCaseKt.resolveAndImportMavenProjectsSync(myProjectsManager, Arrays.asList(myProjectsManager.findProject(bom),
-                                                                                                myProjectsManager.findProject(project)));
-    myProjectsManager.waitForReadingCompletion();
 
-    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
-  }
-
-  @Test
-  public void testCheckThatOrderDoesntMatterForMaven() throws Exception {
-    // this is a check that in general importing a dependent project after its dependency (parent in this case) works fine.
-    // see previous test for more information
-
-    setRepositoryPath(new File(myDir, "/repo").getPath());
-    updateSettingsXml("<localRepository>\n" + getRepositoryPath() + "</localRepository>");
-
-    VirtualFile parent = createModulePom("parent",
-                                         """
-                                           <groupId>test</groupId>
-                                           <artifactId>parent</artifactId>
-                                           <packaging>pom</packaging>
-                                           <version>1</version>
-                                           <dependencyManagement>
-                                             <dependencies>
-                                               <dependency>
-                                                 <groupId>junit</groupId>
-                                                 <artifactId>junit</artifactId>
-                                                 <version>4.0</version>
-                                               </dependency>
-                                             </dependencies>
-                                           </dependencyManagement>
-                                           """);
-
-    VirtualFile project = createModulePom("project",
-                                          """
-                                            <groupId>test</groupId>
-                                            <artifactId>project</artifactId>
-                                            <version>1</version>
-                                            <parent>
-                                              <groupId>test</groupId>
-                                              <artifactId>parent</artifactId>
-                                              <version>1</version>
-                                            </parent>
-                                            <dependencies>
-                                              <dependency>
-                                                <groupId>junit</groupId>
-                                                <artifactId>junit</artifactId>
-                                              </dependency>
-                                            </dependencies>
-                                            """);
-    importProjects(parent, project);
-    assertModules("parent", "project");
-
-    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
-
-    myProjectsManager.getEmbeddersManager().reset();
-    MavenImportingTestCaseKt.resolveAndImportMavenProjectsSync(myProjectsManager, Arrays.asList(myProjectsManager.findProject(parent),
-                                                                                                myProjectsManager.findProject(project)));
-
-    myProjectsManager.waitForReadingCompletion();
+    updateAllProjects();
 
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }

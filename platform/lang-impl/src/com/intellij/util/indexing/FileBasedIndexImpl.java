@@ -126,7 +126,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private static final boolean USE_GENTLE_FLUSHER = SystemProperties.getBooleanProperty("indexes.flushing.use-gentle-flusher", true);
   /** How often, on average, flush each index to the disk */
-  private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(5);
+  private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(FlushingDaemon.FLUSHING_PERIOD_IN_SECONDS);
 
 
   private volatile RegisteredIndexes myRegisteredIndexes;
@@ -340,7 +340,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   void setUpShutDownTask() {
     myShutDownTask = new MyShutDownTask();
-    ShutDownTracker.getInstance().registerShutdownTask(myShutDownTask);
+    ShutDownTracker.getInstance().registerCacheShutdownTask(myShutDownTask);
   }
 
   @ApiStatus.Internal
@@ -2299,6 +2299,21 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         SnapshotHashEnumeratorService.getInstance().flush();
       }
       return overallResult;
+    }
+
+    @Override
+    public boolean hasSomethingToFlush() {
+      if (IndexingStamp.isDirty()) return true;
+
+      IndexConfiguration indexes = getState();
+      for (ID<?, ?> indexId : indexes.getIndexIDs()) {
+        UpdatableIndex<?, ?, FileContent, ?> index = indexes.getIndex(indexId);
+        if (index != null && index.isDirty()) {
+          return true;
+        }
+      }
+
+      return SnapshotHashEnumeratorService.getInstance().isDirty();
     }
 
     @Override

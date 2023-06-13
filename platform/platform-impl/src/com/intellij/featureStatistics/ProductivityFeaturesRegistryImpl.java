@@ -146,10 +146,9 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   }
 
   private void addFeature(@NotNull FeatureDescriptor descriptor) {
-    // Allow to override features for now, but maybe it should be restricted
     final FeatureDescriptor existingDescriptor = myFeatures.get(descriptor.getId());
     if (existingDescriptor != null) {
-      LOG.warn("Feature with id '" + descriptor.getId() + "' is overridden by: " + descriptor);
+      LOG.info("Feature with id '" + descriptor.getId() + "' is overridden by: " + descriptor);
       descriptor.copyStatistics(existingDescriptor);
     }
     myFeatures.put(descriptor.getId(), descriptor);

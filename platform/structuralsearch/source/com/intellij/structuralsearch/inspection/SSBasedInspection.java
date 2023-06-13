@@ -206,7 +206,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       else {
         HighlightDisplayKey.register(shortName, () -> name, suppressId, SHORT_NAME);
       }
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.nonModal());
   }
 
   private static boolean isMetaDataChanged(@NotNull Configuration configuration, @NotNull HighlightDisplayKey key) {

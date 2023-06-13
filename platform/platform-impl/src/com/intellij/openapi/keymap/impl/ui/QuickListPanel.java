@@ -115,7 +115,7 @@ class QuickListPanel {
       return;
     }
 
-    myName.setText(item.getName());
+    myName.setText(item.getDisplayName());
     myName.setEnabled(QuickListsManager.getInstance().getSchemeManager().isMetadataEditable(item));
     myDescription.setText(item.getDescription());
 

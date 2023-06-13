@@ -1,7 +1,8 @@
 package com.intellij.searchEverywhereMl.ranking.features
 
 import com.intellij.ide.actions.GotoFileItemProvider
-import com.intellij.ide.bookmarks.BookmarkManager
+import com.intellij.ide.bookmark.BookmarksManager
+import com.intellij.ide.bookmark.providers.LineBookmarkProvider
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_DATA_KEY
@@ -37,9 +38,10 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
   fun testIsInFavorites() {
     val addFileToBookmarks = { file: PsiFileSystemItem ->
-      BookmarkManager.getInstance(project).also {
-        it.addFileBookmark(file.virtualFile, "xxx")
-      }
+      val manager = BookmarksManager.getInstance(project)
+      val bookmark = LineBookmarkProvider.find(project)?.createBookmark(file.virtualFile)
+      if (manager != null && bookmark != null)
+        manager.add(bookmark, com.intellij.ide.bookmark.BookmarkType.DEFAULT)
     }
 
     checkThatFeature(IS_BOOKMARK_DATA_KEY)

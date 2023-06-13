@@ -106,8 +106,8 @@ public final class FSRecords {
     }
   }
 
-  @NotNull
-  private static FSRecordsImpl implOrFail() {
+
+  static @NotNull FSRecordsImpl implOrFail() {
     FSRecordsImpl _impl = impl;
     if (_impl == null || _impl.isDisposed()) {
       throw alreadyDisposed();
@@ -534,14 +534,14 @@ public final class FSRecords {
   }
 
   static @NotNull DataOutputStream writeContent(int fileId,
-                                                boolean readOnly) {
-    return implOrFail().writeContent(fileId, readOnly);
+                                                boolean fixedSize) {
+    return implOrFail().writeContent(fileId, fixedSize);
   }
 
   static void writeContent(int fileId,
                            @NotNull ByteArraySequence bytes,
-                           boolean readOnly) {
-    implOrFail().writeContent(fileId, bytes, readOnly);
+                           boolean fixedSize) {
+    implOrFail().writeContent(fileId, bytes, fixedSize);
   }
 
   static int storeUnlinkedContent(byte[] bytes) {

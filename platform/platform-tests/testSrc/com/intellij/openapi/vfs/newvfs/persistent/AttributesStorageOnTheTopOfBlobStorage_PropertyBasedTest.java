@@ -132,7 +132,7 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
         while (true) {
           final int fileId = env.generateValue(Generator.integers(0, Integer.MAX_VALUE),
                                                "Generated fileId: %s");
-          final int attributeId = env.generateValue(Generator.integers(0, AttributesStorageOverBlobStorage.MAX_ATTRIBUTE_ID),
+          final int attributeId = env.generateValue(Generator.integers(0, AbstractAttributesStorage.MAX_ATTRIBUTE_ID),
                                                     "Generated attributeId: %s");
           //RC: we can create >1 AttributeRecords with the same fileId/attributeId, which leads to
           // property failure (i.e. one of the record found not exist because another one was

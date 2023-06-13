@@ -11,7 +11,8 @@ data class UntaintedConfiguration(val taintedAnnotations: List<String?>,
                                   val processOuterMethodAsQualifierAndArguments: Boolean,
                                   val processInnerMethodAsQualifierAndArguments: Boolean,
                                   val skipClasses: List<String?>,
-                                  val parameterOfPrivateMethodIsUntainted: Boolean) {
+                                  val parameterOfPrivateMethodIsUntainted: Boolean,
+                                  val privateOrFinalFieldSafe: Boolean = false) {
   fun copy(): UntaintedConfiguration {
     return UntaintedConfiguration(taintedAnnotations = ArrayList(taintedAnnotations),
                                   unTaintedAnnotations = ArrayList(unTaintedAnnotations),
@@ -23,6 +24,7 @@ data class UntaintedConfiguration(val taintedAnnotations: List<String?>,
                                   processOuterMethodAsQualifierAndArguments = processOuterMethodAsQualifierAndArguments,
                                   processInnerMethodAsQualifierAndArguments = processInnerMethodAsQualifierAndArguments,
                                   skipClasses = ArrayList(skipClasses),
-                                  parameterOfPrivateMethodIsUntainted = parameterOfPrivateMethodIsUntainted)
+                                  parameterOfPrivateMethodIsUntainted = parameterOfPrivateMethodIsUntainted,
+                                  privateOrFinalFieldSafe = privateOrFinalFieldSafe)
   }
 }

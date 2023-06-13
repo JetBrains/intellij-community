@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diagnostic.Activity;
@@ -278,7 +278,7 @@ public class ShelvedChangesViewManager implements Disposable {
         ApplicationManager.getApplication().invokeLater(() -> {
           myPostUpdateEdtActivity.forEach(Runnable::run);
           myPostUpdateEdtActivity.clear();
-        }, ModalityState.NON_MODAL, myProject.getDisposed());
+        }, ModalityState.nonModal(), myProject.getDisposed());
       });
     });
   }
@@ -313,7 +313,7 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   private void activateAndUpdate(@NotNull Runnable postUpdateRunnable) {
-    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, myProject.getDisposed(), () -> {
+    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), myProject.getDisposed(), () -> {
       activateContent();
       myUpdateQueue.cancelAllUpdates();
       myPostUpdateEdtActivity.add(postUpdateRunnable);

@@ -8,7 +8,7 @@ import com.intellij.ui.awt.RelativePoint
 import java.awt.Point
 import javax.swing.JComponent
 
-fun JBPopup.showAbove(component: JComponent) = VcsUIUtil.showPopupAbove(this, component)
+fun JBPopup.showAbove(component: JComponent): Unit = VcsUIUtil.showPopupAbove(this, component)
 
 object VcsUIUtil {
   fun showPopupAbove(popup: JBPopup, component: JComponent) {

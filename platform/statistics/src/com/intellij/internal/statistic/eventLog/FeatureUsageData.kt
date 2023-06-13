@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.codeWithMe.ClientId
@@ -198,8 +198,21 @@ class FeatureUsageData(private val recorderId: String) {
     return this
   }
 
+  // Added for java compatibility
   fun addAnonymizedValue(@NonNls key: String, @NonNls value: String?): FeatureUsageData {
-    data[key] = value?.let { EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(value) } ?: "undefined"
+    addAnonymizedValue(key, value, false)
+    return this
+  }
+
+  fun addAnonymizedValue(@NonNls key: String, @NonNls value: String?, short: Boolean = false): FeatureUsageData {
+    data[key] = value?.let { EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(value, short) } ?: "undefined"
+    return this
+  }
+
+  fun addDatedShortAnonymizedValue(@NonNls key: String, timestamp: Long, @NonNls value: String?): FeatureUsageData {
+    data[key] =
+      "${StatisticsUtil.getTimestampDateInUTC(timestamp)}-" +
+      (value?.let { EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(value, true) } ?: "undefined")
     return this
   }
 
@@ -339,9 +352,7 @@ class FeatureUsageData(private val recorderId: String) {
 
     other as FeatureUsageData
 
-    if (data != other.data) return false
-
-    return true
+    return data == other.data
   }
 
   override fun hashCode(): Int {

@@ -30,32 +30,32 @@ public class MavenProjectChanges {
   /**
    * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean packaging;
   /**
    * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean output;
   /**
    * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean sources;
   /**
    * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean dependencies;
   /**
    * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean plugins;
   /**
    * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean properties;
 
   public boolean hasPackagingChanges() {

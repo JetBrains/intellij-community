@@ -38,6 +38,12 @@ impl<'a> TestEnvironment<'a> {
         link
     }
 
+    pub fn create_launcher_link(&self, link_name: &str) -> PathBuf {
+        let link = self.project_dir.join(link_name);
+        symlink(&self.launcher_path, &link).unwrap();
+        link
+    }
+
     pub fn create_temp_dir(&self, relative_path: &str) -> PathBuf {
         let temp_dir = self.test_root_dir.path().join(relative_path);
         fs::create_dir_all(&temp_dir).expect(&format!("Cannot create: {:?}", temp_dir));
@@ -160,10 +166,11 @@ fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation, with_jbr: bool
     let shared_env = unsafe { SHARED.as_ref() }.expect("Shared test environment should have already been initialized");
 
     let temp_dir = Builder::new().prefix("xplat_launcher_test_").tempdir().context("Failed to create temp directory")?;
+    let temp_path = temp_dir.path().canonicalize()?.strip_ns_prefix()?;
 
-    let (dist_root, launcher_path) = layout_launcher(launcher_location, with_jbr, temp_dir.path(), shared_env)?;
+    let (dist_root, launcher_path) = layout_launcher(launcher_location, with_jbr, &temp_path, shared_env)?;
 
-    let project_dir = temp_dir.path().join("_project");
+    let project_dir = temp_path.join("_project");
     fs::create_dir_all(&project_dir)?;
 
     Ok(TestEnvironment { dist_root, project_dir, launcher_path, shared_env, test_root_dir: temp_dir, to_delete: Vec::new() })
@@ -209,23 +216,25 @@ fn layout_launcher(
     shared_env: &TestEnvironmentShared
 ) -> Result<(PathBuf, PathBuf)> {
     // .
-    // ├── bin/
-    // │   └── xplat-launcher | remote-dev-server
-    // │   └── xplat64.vmoptions
-    // │   └── idea.properties
-    // ├── lib/
-    // │   └── app.jar
-    // │   └── boot-linux.jar
-    // ├── jbr/
-    // └── product-info.json
+    // └── XPlatLauncher
+    //     ├── bin/
+    //     │   └── xplat-launcher | remote-dev-server
+    //     │   └── xplat64.vmoptions
+    //     │   └── idea.properties
+    //     ├── lib/
+    //     │   └── app.jar
+    //     │   └── boot-linux.jar
+    //     ├── jbr/
+    //     └── product-info.json
 
     let launcher_rel_path = match launcher_location {
         LauncherLocation::Standard => "bin/xplat-launcher",
         LauncherLocation::RemoteDev => "bin/remote-dev-server"
     };
+    let dist_root = target_dir.join("XPlatLauncher");
 
     layout_launcher_impl(
-        target_dir,
+        &dist_root,
         vec![
             "bin/idea.properties",
             "lib/boot-linux.jar"
@@ -240,7 +249,8 @@ fn layout_launcher(
         &shared_env.jbr_root
     )?;
 
-    Ok((target_dir.to_path_buf(), target_dir.join(launcher_rel_path)))
+    let launcher_path = dist_root.join(launcher_rel_path);
+    Ok((dist_root, launcher_path))
 }
 
 #[cfg(target_os = "macos")]
@@ -303,23 +313,25 @@ fn layout_launcher(
     shared_env: &TestEnvironmentShared
 ) -> Result<(PathBuf, PathBuf)> {
     // .
-    // ├── bin/
-    // │   └── xplat-launcher.exe | remote-dev-server.exe
-    // │   └── xplat64.exe.vmoptions
-    // │   └── idea.properties
-    // ├── lib/
-    // │   └── app.jar
-    // │   └── boot-windows.jar
-    // ├── jbr/
-    // └── product-info.json
+    // └── XPlatLauncher
+    //     ├── bin/
+    //     │   └── xplat-launcher.exe | remote-dev-server.exe
+    //     │   └── xplat64.exe.vmoptions
+    //     │   └── idea.properties
+    //     ├── lib/
+    //     │   └── app.jar
+    //     │   └── boot-windows.jar
+    //     ├── jbr/
+    //     └── product-info.json
 
     let launcher_rel_path = match launcher_location {
         LauncherLocation::Standard => "bin\\xplat-launcher.exe",
         LauncherLocation::RemoteDev => "bin\\remote-dev-server.exe"
     };
+    let dist_root = target_dir.join("XPlatLauncher");
 
     layout_launcher_impl(
-        target_dir,
+        &dist_root,
         vec![
             "bin\\idea.properties",
             "lib\\boot-windows.jar"
@@ -334,7 +346,8 @@ fn layout_launcher(
         &shared_env.jbr_root
     )?;
 
-    Ok((target_dir.to_path_buf(), target_dir.join(launcher_rel_path)))
+    let launcher_path = dist_root.join(launcher_rel_path);
+    Ok((dist_root, launcher_path))
 }
 
 fn layout_launcher_impl(
@@ -373,25 +386,11 @@ fn symlink(original: &Path, link: &Path) -> Result<()> {
 
 #[cfg(target_os = "windows")]
 fn symlink(original: &Path, link: &Path) -> Result<()> {
-    std::os::windows::fs::symlink_dir(original, link)
+    if original.is_dir() { std::os::windows::fs::symlink_dir(original, link) }
+    else { std::os::windows::fs::symlink_file(original, link) }
         .with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
 
     Ok(())
-}
-
-#[cfg(target_os = "linux")]
-pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home.join("bin/java")
-}
-
-#[cfg(target_os = "windows")]
-pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home.join("bin\\java.exe")
-}
-
-#[cfg(target_os = "macos")]
-pub fn get_bin_java_path(java_home: &Path) -> PathBuf {
-    java_home.join("Contents/Home/bin/java")
 }
 
 fn get_custom_config_dir() -> PathBuf {

@@ -41,6 +41,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -274,6 +275,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link #setComposite(EditorComposite, boolean)}",
               ReplaceWith("setComposite(editor, FileEditorOpenOptions().withRequestFocus(focusEditor))",
                           "com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions"))

@@ -26,7 +26,7 @@
     <listener class="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowModuleAttachListener"
               topic="com.intellij.platform.ModuleAttachListener"/>
     <listener class="com.jetbrains.python.packaging.PyDependencyCollectorListener"
-              topic="com.jetbrains.python.packaging.PyPackageManager$Listener"/>
+              topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -46,8 +46,6 @@
               extensions="pyi"
               implementationClass="com.jetbrains.python.pyi.PyiFileType"
               fieldName="INSTANCE"/>
-    <fileType name="Qt UI file" extensions="ui" implementationClass="com.jetbrains.pyqt.QtUIFileType" fieldName="INSTANCE"/>
-    <fileType name="XML" language="XML" extensions="qrc"/>
     <editorHighlighterProvider filetype="Python" implementationClass="com.jetbrains.python.PyEditorHighlighterProvider"/>
     <lang.syntaxHighlighterFactory language="Python" implementationClass="com.jetbrains.python.highlighting.PySyntaxHighlighterFactory"/>
     <lang.braceMatcher language="Python" implementationClass="com.jetbrains.python.PyBraceMatcher"/>
@@ -152,6 +150,7 @@
     <advancedSetting id="python.pytest.swapdiff" default="false" groupKey="group.advanced.settings.python"/>
     <advancedSetting id="python.pytest.show_summary" default="false" groupKey="group.advanced.settings.python"/>
     <advancedSetting id="python.code.vision.usages.limit" default="500" groupKey="group.advanced.settings.python"/>
+    <advancedSetting id="python.debugger.attach.timeout" default="20000" groupKey="group.advanced.settings.python"/>
     <runLineMarkerContributor language="Python"
                               implementationClass="com.jetbrains.python.testing.PyTestLineMarkerContributor"/>
 
@@ -304,10 +303,12 @@
                               language="Python"/>
 
     <applicationConfigurable groupId="tools" instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
-                             id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
+                             id="com.jetbrains.python.documentation.PythonDocumentationConfigurable"
+                             key="external.documentation.python.plugin"/>
     <applicationConfigurable parentId="project.propDebugger"
                              instance="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersConfigurable"
-                             id="debugger.dataViews.python.type.renderers"/>
+                             id="debugger.dataViews.python.type.renderers"
+                             key="configurable.PyUserTypeRenderersConfigurable.display.name"/>
     <projectConfigurable groupId="tools" instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          id="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"
                          bundle="messages.PyBundle"
@@ -411,9 +412,9 @@
 
     <!-- Run Anything -->
     <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
-                                   implementation="com.jetbrains.python.run.runAnything.PyRunAnythingProvider"/>
-    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
                                    implementation="com.jetbrains.python.run.runAnything.PyConsoleRunAnythingProvider"/>
+    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyRunAnythingFileProvider"/>
+    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyRunAnythingPipProvider"/>
     <runAnything.commandCustomizer implementation="com.jetbrains.python.run.runAnything.PyRunAnythingCommandCustomizer"/>
 
     <!-- Statistics -->
@@ -423,6 +424,7 @@
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.PySdkToInstallCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.namespacePackages.PyNamespacePackagesStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.codeInsight.codeVision.PyCodeVisionUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.runAnything.PyRunAnythingCollector"/>
 
     <!-- Code-insight IDE bridge -->
     <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService"
@@ -656,12 +658,10 @@
 
     <!-- Console -->
     <visitorFilter language="Python" implementationClass="com.jetbrains.python.console.ConsoleVisitorFilter"/>
+    <inspectionExtension implementation="com.jetbrains.python.console.PyDebuggerConsoleUnresolvedReferenceSkipper"/>
 
     <!-- Packaging -->
     <keywordArgumentProvider implementation="com.jetbrains.python.packaging.setupPy.SetupKeywordArgumentProvider"/>
-
-    <!-- PyQt -->
-    <typeProvider implementation="com.jetbrains.pyqt.PyQtTypeProvider"/>
 
     <!-- PyFunctionTypeAnnotation and PyTypeHint -->
     <visitorFilter language="PyFunctionTypeComment"
@@ -760,10 +760,6 @@
     <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction"
             icon="AllIcons.Nodes.Package">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
-    </action>
-
-    <action id="CompuleQrc" class="com.jetbrains.pyqt.CompileQrcAction">
-      <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </action>
 
     <action id="CleanPyc" class="com.jetbrains.python.actions.CleanPycAction">

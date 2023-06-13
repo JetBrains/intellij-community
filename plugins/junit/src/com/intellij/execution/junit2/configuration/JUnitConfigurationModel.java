@@ -251,6 +251,7 @@ public class JUnitConfigurationModel {
       case RepeatCount.ONCE -> "junit.configuration.repeat.mode.once";
       case RepeatCount.N -> "junit.configuration.repeat.mode.n.times";
       case RepeatCount.UNTIL_FAILURE -> "junit.configuration.repeat.mode.until.failure";
+      case RepeatCount.UNTIL_SUCCESS -> "junit.configuration.repeat.mode.until.success";
       case RepeatCount.UNLIMITED -> "junit.configuration.repeat.mode.until.stopped";
       default -> throw new IllegalArgumentException(value);
     });

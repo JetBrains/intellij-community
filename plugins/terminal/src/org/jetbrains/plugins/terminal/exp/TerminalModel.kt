@@ -13,6 +13,7 @@ import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.*
 import com.jediterm.terminal.model.JediTerminal.ResizeHandler
 import java.awt.Dimension
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 
 class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: StyleState) {
@@ -139,8 +140,16 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
   }
 
   fun getAllText(updatedCursorX: Int = cursorX, updatedCursorY: Int = cursorY): String {
+    return getLinesText(-historyLinesCount, screenLinesCount, updatedCursorX, updatedCursorY)
+  }
+
+  fun getScreenText(): String {
+    return getLinesText(0, screenLinesCount, cursorX, cursorY)
+  }
+
+  private fun getLinesText(fromLine: Int, toLine: Int, updatedCursorX: Int, updatedCursorY: Int): String {
     val builder = StringBuilder()
-    for (ind in -historyLinesCount until screenLinesCount) {
+    for (ind in fromLine until toLine) {
       var text = getLine(ind).text
       if (ind == updatedCursorY - 1) {
         text = text.substring(0, min(updatedCursorX, text.length))
@@ -179,6 +188,8 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
   fun clearLines(beginY: Int, endY: Int) {
     textBuffer.clearLines(beginY, endY)
   }
+
+  fun clearHistory() = textBuffer.clearHistory()
 
   fun eraseLine(line: Int, limit: Int) {
     textBuffer.getLine(line).deleteCharacters(limit)
@@ -248,8 +259,8 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
 
   //---------------------LISTENERS----------------------------------------------
 
-  private val terminalListeners: MutableList<TerminalListener> = mutableListOf()
-  private val cursorListeners: MutableList<CursorListener> = mutableListOf()
+  private val terminalListeners: MutableList<TerminalListener> = CopyOnWriteArrayList()
+  private val cursorListeners: MutableList<CursorListener> = CopyOnWriteArrayList()
 
   fun addContentListener(listener: ContentListener, parentDisposable: Disposable? = null) {
     val terminalListener = object : TerminalModelListenerEx {
@@ -269,12 +280,22 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
     }
   }
 
-  fun addTerminalListener(listener: TerminalListener) {
+  fun addTerminalListener(listener: TerminalListener, parentDisposable: Disposable? = null) {
     terminalListeners.add(listener)
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable) {
+        terminalListeners.remove(listener)
+      }
+    }
   }
 
-  fun addCursorListener(listener: CursorListener) {
+  fun addCursorListener(listener: CursorListener, parentDisposable: Disposable? = null) {
     cursorListeners.add(listener)
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable) {
+        cursorListeners.remove(listener)
+      }
+    }
   }
 
   interface ContentListener {

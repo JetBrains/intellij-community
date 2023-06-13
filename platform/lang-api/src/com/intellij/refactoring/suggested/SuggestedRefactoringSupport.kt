@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.hasErrorElementInRange
 import com.intellij.psi.util.parents
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Language extension to implement to support suggested Rename and/or Change Signature refactorings.
@@ -27,6 +28,7 @@ interface SuggestedRefactoringSupport {
    * Note, that if Change Signature is supported then individual parameters must not be considered as declarations
    * for they are part of a bigger declaration.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Use isAnchor instead", replaceWith = ReplaceWith("isAnchor(psiElement)"))
   fun isDeclaration(psiElement: PsiElement): Boolean = throw NotImplementedError("Will be removed")
 

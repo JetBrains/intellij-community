@@ -22,6 +22,7 @@ public class HighlightDisplayKey {
   private final String myName;
   private final String myID;
 
+  @Nullable
   public static HighlightDisplayKey find(@NonNls @NotNull final String name) {
     return ourNameToKeyMap.get(name);
   }
@@ -98,8 +99,9 @@ public class HighlightDisplayKey {
     return key;
   }
 
-  @Nls(capitalization = Sentence)
   @Nullable
+  @Contract("null -> null")
+  @Nls(capitalization = Sentence)
   public static String getDisplayNameByKey(@Nullable HighlightDisplayKey key) {
     if (key == null) {
       return null;

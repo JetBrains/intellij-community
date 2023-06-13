@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.CommonBundle;
@@ -199,7 +199,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
 
     private void addUpdateRequest(final Runnable updateRequest) {
       Window window = getWindow();
-      myUpdateAlarm.addRequest(updateRequest, 500, window == null ? ModalityState.NON_MODAL : ModalityState.stateForComponent(window));
+      myUpdateAlarm.addRequest(updateRequest, 500, window == null ? ModalityState.nonModal() : ModalityState.stateForComponent(window));
     }
 
     @Override

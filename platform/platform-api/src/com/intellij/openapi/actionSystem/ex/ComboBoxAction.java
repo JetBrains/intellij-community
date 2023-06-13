@@ -342,7 +342,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public Font getFont() {
-      if (myFontSet) return super.getFont();
+      if (myFontSet && ExperimentalUI.isNewUI()) return super.getFont();
       return isSmallVariant() ? UIUtil.getToolbarFont() : StartupUiUtil.getLabelFont();
     }
 
@@ -382,7 +382,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setUI(uiClassName == null ?
             BasicButtonUI.createUI(this) :
             UIManager.getUI(this));
-      setMargin(JBUI.insets(0, 8, 0, 5));
     }
 
     @ApiStatus.Experimental

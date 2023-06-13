@@ -8,14 +8,15 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.RunAll;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
+
   @Test
   public void testInheritProjectJdkForModules() {
     importProject("""
@@ -247,7 +249,9 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     assertMavenizedModule("m1");
     assertNotMavenizedModule("userModule");
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1165,23 +1169,6 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
     assertModules("project");
 
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
-  }
-
-  @Test
-  public void testRefreshFSAfterImport() {
-    myProjectRoot.getChildren(); // make sure fs is cached
-    new File(myProjectRoot.getPath(), "foo").mkdirs();
-
-    importProject("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    """);
-    if (isNewImportingProcess) {
-      PlatformTestUtil.waitForPromise(myImportingResult.getVfsRefreshPromise());
-    }
-
-    assertNotNull(myProjectRoot.findChild("foo"));
   }
 
   @Test

@@ -411,6 +411,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
   @TestOnly
   fun waitForAllExecuted(timeout: Long, timeUnit: TimeUnit) {
+    queue.flush()
     queue.waitForAllExecuted(timeout, timeUnit)
   }
 

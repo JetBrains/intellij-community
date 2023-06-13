@@ -70,7 +70,7 @@ class GradleConfiguratorPlatformSpecificTest3 : KotlinGradleImportingTestCase() 
     }
 
     @Test
-    @TargetVersions("5.6+")
+    @TargetVersions("<7.6")
     fun testAddLibraryMultiplatform() = doTestAddLibrary()
 
     @Test

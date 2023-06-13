@@ -8,6 +8,7 @@ import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   private static final Logger LOG = Logger.getInstance(NotificationsConfigurationImpl.class);
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";
   private static final String SYSTEM_NOTIFICATIONS_ATTRIBUTE = "systemNotifications";
+  private static final String NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED_ATTRIBUTE = "notificationAnnouncingCustomized";
 
   private static final Comparator<NotificationSettings> NOTIFICATION_SETTINGS_COMPARATOR =
     (o1, o2) -> o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
@@ -29,6 +31,10 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   public boolean SHOW_BALLOONS = true;
   public boolean SYSTEM_NOTIFICATIONS = true;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private NotificationAnnouncingMode NOTIFICATION_ANNOUNCING_MODE = NotificationAnnouncingMode.HIGH;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private boolean NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED = false;
 
   public static NotificationsConfigurationImpl getInstanceImpl() {
     return (NotificationsConfigurationImpl)getNotificationsConfiguration();
@@ -133,6 +139,17 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   }
 
   @Override
+  public @NotNull NotificationAnnouncingMode getNotificationAnnouncingMode() {
+    return NOTIFICATION_ANNOUNCING_MODE;
+  }
+
+  @Override
+  public void setNotificationAnnouncingMode(@NotNull NotificationAnnouncingMode mode) {
+    NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED = true;
+    NOTIFICATION_ANNOUNCING_MODE = mode;
+  }
+
+  @Override
   public @NotNull NotificationDisplayType getDisplayType(@NotNull String groupId) {
     return getSettings(groupId).getDisplayType();
   }
@@ -181,6 +198,12 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
       element.setAttribute(SYSTEM_NOTIFICATIONS_ATTRIBUTE, "false");
     }
 
+    if (NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED) {
+      element.setAttribute(NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED_ATTRIBUTE, "true");
+    }
+
+    element.setAttribute(NotificationAnnouncingMode.ATTRIBUTE, NOTIFICATION_ANNOUNCING_MODE.getStringValue());
+
     return element;
   }
 
@@ -206,5 +229,25 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
       //noinspection NonPrivateFieldAccessedInSynchronizedContext
       SYSTEM_NOTIFICATIONS = false;
     }
+
+    if ("true".equals(state.getAttributeValue(NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED_ATTRIBUTE))) {
+      NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED = true;
+    }
+
+    NotificationAnnouncingMode announcingMode = NotificationAnnouncingMode.get(state.getAttributeValue(NotificationAnnouncingMode.ATTRIBUTE));
+    if (announcingMode != null && NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED) {
+      NOTIFICATION_ANNOUNCING_MODE = announcingMode;
+    } else initDefaultAnnouncingMode();
+  }
+
+  @Override
+  public void noStateLoaded() {
+    initDefaultAnnouncingMode();
+  }
+
+  private void initDefaultAnnouncingMode() {
+    NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED = false;
+    if (SystemInfo.isWindows) NOTIFICATION_ANNOUNCING_MODE = NotificationAnnouncingMode.NONE;
+    else NOTIFICATION_ANNOUNCING_MODE = NotificationAnnouncingMode.MEDIUM;
   }
 }

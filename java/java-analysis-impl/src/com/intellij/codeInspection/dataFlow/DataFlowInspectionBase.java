@@ -606,10 +606,12 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private void reportAlwaysFailingCalls(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
-    visitor.alwaysFailingCalls().remove(TestUtils::isExceptionExpected).forEach(call -> {
-      String message = getContractMessage(JavaMethodContractUtil.getMethodCallContracts(call));
-      LocalQuickFix causeFix = createExplainFix(call, new TrackingRunner.FailingCallDfaProblemType());
-      reporter.registerProblem(getElementToHighlight(call), message, LocalQuickFix.notNullElements(causeFix));
+    visitor.alwaysFailingCalls().remove(TestUtils::isExceptionExpected).forEach(anchor -> {
+      List<? extends MethodContract> contracts = DataFlowInstructionVisitor.getContracts(anchor);
+      if (contracts == null) return;
+      String message = getContractMessage(contracts);
+      LocalQuickFix causeFix = createExplainFix(anchor, new TrackingRunner.FailingCallDfaProblemType());
+      reporter.registerProblem(getElementToHighlight(anchor), message, LocalQuickFix.notNullElements(causeFix));
     });
   }
 
@@ -620,22 +622,22 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     return JavaAnalysisBundle.message("dataflow.message.contract.fail");
   }
 
-  private static @NotNull PsiElement getElementToHighlight(@NotNull PsiCall call) {
+  private static @NotNull PsiElement getElementToHighlight(@NotNull PsiElement element) {
     PsiJavaCodeReferenceElement ref;
-    if (call instanceof PsiNewExpression) {
-      ref = ((PsiNewExpression)call).getClassReference();
+    if (element instanceof PsiNewExpression newExpression) {
+      ref = newExpression.getClassReference();
     }
-    else if (call instanceof PsiMethodCallExpression) {
-      ref = ((PsiMethodCallExpression)call).getMethodExpression();
+    else if (element instanceof PsiMethodCallExpression callExpression) {
+      ref = callExpression.getMethodExpression();
     }
     else {
-      return call;
+      return element;
     }
     if (ref != null) {
       PsiElement name = ref.getReferenceNameElement();
       return name != null ? name : ref;
     }
-    return call;
+    return element;
   }
 
   private void reportNullableArgumentPassedToNonAnnotatedMethodRef(@NotNull ProblemReporter reporter,

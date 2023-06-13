@@ -209,7 +209,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
         .setSign(false)
 
       userDataProvider()?.let {
-        val personIdent = PersonIdent(it.loginName, it.email)
+        val personIdent = PersonIdent(it.loginName ?: "", it.email ?: "<>")
         commitData.author = personIdent
         commitData.committer = personIdent
       }

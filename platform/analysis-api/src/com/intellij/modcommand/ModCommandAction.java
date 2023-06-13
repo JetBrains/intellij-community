@@ -7,12 +7,14 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -85,17 +87,50 @@ public interface ModCommandAction extends CommonIntentionAction {
    */
   record ActionContext(@NotNull Project project, @NotNull PsiFile file, int offset, @NotNull TextRange selection) {
     /**
+     * @param file file copy
+     * @return new context, which is bound to the file copy, rather than the original file
+     */
+    public @NotNull ActionContext withFile(@NotNull PsiFile file) {
+      return new ActionContext(project, file, offset, selection);
+    }
+
+    /**
+     * @return a context leaf element, if available
+     */
+    public @Nullable PsiElement findLeaf() {
+      return file.findElementAt(offset);
+    }
+
+    /**
      * @param editor editor the action is invoked in
      * @param file file the action is invoked on
      * @return ActionContext
      */
-    public static @NotNull ModCommandAction.ActionContext from(@Nullable Editor editor, @NotNull PsiFile file) {
+    public static @NotNull ActionContext from(@Nullable Editor editor, @NotNull PsiFile file) {
       if (editor == null) {
         return new ActionContext(file.getProject(), file, 0, TextRange.from(0, 0));
       }
       SelectionModel model = editor.getSelectionModel();
       return new ActionContext(file.getProject(), file, editor.getCaretModel().getOffset(),
                                                 TextRange.create(model.getSelectionStart(), model.getSelectionEnd()));
+    }
+
+    /**
+     * @param descriptor problem descriptor to create an ActionContext from
+     * @return ActionContext. The caret position is set to the beginning of highlighting, 
+     * and selection is set to the highlighting range. 
+     */
+    public static @NotNull ActionContext from(@NotNull ProblemDescriptor descriptor) {
+      PsiElement startElement = descriptor.getStartElement();
+      PsiFile file = startElement.getContainingFile();
+      PsiElement psiElement = descriptor.getPsiElement();
+      TextRange range = descriptor.getTextRangeInElement();
+      if (range != null) {
+        range = range.shiftRight(psiElement.getTextRange().getStartOffset());
+      } else {
+        range = psiElement.getTextRange();
+      }
+      return new ActionContext(file.getProject(), file, range.getStartOffset(), range);
     }
   }
 

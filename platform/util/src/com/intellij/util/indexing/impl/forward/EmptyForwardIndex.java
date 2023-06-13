@@ -25,6 +25,11 @@ public class EmptyForwardIndex implements ForwardIndex, MeasurableIndexStore {
   public void force() { }
 
   @Override
+  public boolean isDirty() {
+    return false;
+  }
+
+  @Override
   public int keysCountApproximately() {
     return 0;
   }

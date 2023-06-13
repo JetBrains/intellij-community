@@ -1,7 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.readText
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.LOG
 import org.jetbrains.kotlin.idea.debugger.evaluate.gatherProjectFilesDependedOnByFragment
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -16,7 +21,7 @@ abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
 
     abstract fun getFilesToCompile(resolutionFacade: ResolutionFacade, bindingContext: BindingContext): List<KtFile>
 
-    abstract fun processError(e: CodeFragmentCodegenException)
+    abstract fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext)
     abstract fun getFallbackStrategy(): CodeFragmentCompilingStrategy?
 }
 
@@ -32,7 +37,7 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
         )
     }
 
-    override fun processError(e: CodeFragmentCodegenException) {
+    override fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
         throw e
     }
 
@@ -79,11 +84,46 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         }
     }
 
-    override fun processError(e: CodeFragmentCodegenException) {
+    override fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
+        if (isFallbackDisabled()) {
+            throw e
+        }
         // TODO maybe break down known cases of failures and keep statistics on them?
         //      This way, we will have a complete picture of what exact errors users
         //      come across.
-        LOG.error("Error when compiling code fragment with IR evaluator", e.reason)
+        reportErrorWithAttachments(executionContext, codeFragment, e)
+    }
+
+    private fun reportErrorWithAttachments(
+        executionContext: ExecutionContext,
+        codeFragment: KtCodeFragment,
+        e: CodeFragmentCodegenException
+    ) {
+        val evaluationContext = executionContext.evaluationContext
+        val projectName = evaluationContext.project.name
+        val suspendContext = evaluationContext.suspendContext
+
+        val file = suspendContext.activeExecutionStack?.topFrame?.sourcePosition?.file
+        val fileContents = file?.readText()
+
+        val debuggerContext = """
+            project: $projectName
+            location: ${suspendContext.location} at ${file?.path}
+        """.trimIndent()
+
+        val attachments = buildList {
+            add(Attachment("debugger_context.txt", debuggerContext).apply { isIncluded = true })
+            add(Attachment("code_fragment.txt", codeFragment.text).apply { isIncluded = true })
+            fileContents?.let {
+                add(Attachment("opened_file_contents.txt", it))
+            }
+        }
+
+        LOG.error(basicErrorMessage(), RuntimeExceptionWithAttachments(e.reason, *attachments.toTypedArray()))
+    }
+
+    private fun basicErrorMessage(): String {
+        return "Error when compiling code fragment with IR evaluator. Details in attachments."
     }
 
     override fun getFallbackStrategy(): CodeFragmentCompilingStrategy? {
@@ -91,5 +131,9 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         if (isUnitTestMode()) return null
 
         return OldCodeFragmentCompilingStrategy(codeFragment)
+    }
+
+    private fun isFallbackDisabled(): Boolean {
+        return Registry.`is`("debugger.kotlin.evaluator.disable.fallback.to.old.backend")
     }
 }

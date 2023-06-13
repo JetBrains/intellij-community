@@ -6,10 +6,7 @@ package org.jetbrains.sqlite
  * has access to the pointer while it is run
  */
 internal class SafeStatementPointer(
-  // store a reference to the DB, to lock it before any safe function is called. This avoids
-  // deadlocking by locking the DB. All calls with the raw pointer are synchronized with the DB
-  // anyway, so making a separate lock would be pointless
-  private val db: SqliteDb,
+  private val connection: SqliteConnection,
   @JvmField
   internal val pointer: Long,
 ) {
@@ -17,7 +14,7 @@ internal class SafeStatementPointer(
    * Check whether this pointer has been closed
    */
   @Volatile
-  var isClosed = false
+  var isClosed: Boolean = false
     private set
 
   // to return on subsequent calls to close() after this ptr has been closed
@@ -31,9 +28,9 @@ internal class SafeStatementPointer(
    *
    * @return the return code of the close callback function
    */
-  fun close(): Int = synchronized(db) { internalClose() }
+  fun close(): Int = connection.useDb { db -> internalClose(db) }
 
-  internal fun internalClose(): Int {
+  internal fun internalClose(db: SqliteDb): Int {
     // if this is already closed, return or throw the previous result
     if (isClosed) {
       closeException?.let {
@@ -62,7 +59,7 @@ internal class SafeStatementPointer(
    * @return the return of the passed in function
    */
   inline fun safeRunInt(task: (db: SqliteDb, statementPointer: Long) -> Int): Int {
-    synchronized(db) {
+    connection.useDb { db ->
       ensureOpen()
       return task(db, pointer)
     }
@@ -75,7 +72,7 @@ internal class SafeStatementPointer(
    * @return the return code of the function
    */
   inline fun <T> safeRun(task: (db: SqliteDb, statementPointer: Long) -> T): T {
-    synchronized(db) {
+    connection.useDb { db ->
       ensureOpen()
       return task(db, pointer)
     }

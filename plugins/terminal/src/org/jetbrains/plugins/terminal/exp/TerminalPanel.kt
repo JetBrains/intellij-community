@@ -239,7 +239,7 @@ class TerminalPanel(private val project: Project,
           eventDispatcher.unregister()
         }
         if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
-          invokeLater(ModalityState.NON_MODAL) {
+          invokeLater(ModalityState.nonModal()) {
             FileDocumentManager.getInstance().saveAllDocuments()
           }
         }

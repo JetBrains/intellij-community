@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.fileEditor.impl
@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -123,7 +124,8 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
           val oldEditor = if (oldSelection == null) null else window.manager.getSelectedEditor((oldSelection.getObject() as VirtualFile))
           oldEditor?.deselectNotify()
           val newFile = (newSelection ?: return).getObject() as VirtualFile
-          window.manager.getSelectedEditor(newFile)?.selectNotify()
+          val newEditor = newFile.let { window.manager.getSelectedEditor(newFile) }
+          newEditor?.selectNotify()
           if (GeneralSettings.getInstance().isSyncOnFrameActivation) {
             VfsUtil.markDirtyAndRefresh(true, false, false, newFile)
           }
@@ -133,8 +135,12 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
         if (window.isDisposed) {
           return@setSelectionChangeHandler ActionCallback.DONE
         }
-        IdeDocumentHistory.getInstance(project).onSelectionChanged()
-        doChangeSelection.run()
+        val result = ActionCallback()
+        CommandProcessor.getInstance().executeCommand(project, {
+          (IdeDocumentHistory.getInstance(project) as IdeDocumentHistoryImpl).onSelectionChanged()
+          result.notify(doChangeSelection.run())
+        }, "EditorChange", null)
+        result
       }
     editorTabs.presentation.setRequestFocusOnLastFocusedComponent(true)
     editorTabs.component.addMouseListener(object : MouseAdapter() {

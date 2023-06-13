@@ -223,6 +223,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   public @NotNull List<@NotNull TextEditorHighlightingPass> instantiateMainPasses(@NotNull PsiFile psiFile,
                                                                                   @NotNull Document document,
                                                                                   @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     Set<TextEditorHighlightingPass> ids = new HashSet<>();
     PassConfig[] frozenPassConfigs = freezeRegisteredPassFactories();
     for (int passId = 0; passId < frozenPassConfigs.length; passId++) {

@@ -20,7 +20,7 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test --tests org.example.TestCase")
+      executeTasks(":test --tests org.example.TestCase", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertNode("test1")
@@ -61,7 +61,7 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test --tests org.example.SubTestCase1")
+      executeTasks(":test --tests org.example.SubTestCase1", isRunAsTest = true)
       assertTestTreeView {
         assertNode("SubTestCase1") {
           assertNode("test1")
@@ -75,7 +75,7 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
         }
       }
 
-      executeTasks(":test --tests org.example.SubTestCase2")
+      executeTasks(":test --tests org.example.SubTestCase2", isRunAsTest = true)
       assertTestTreeView {
         assertNode("SubTestCase2") {
           assertNode("test1")

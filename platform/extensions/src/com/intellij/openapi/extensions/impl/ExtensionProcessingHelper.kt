@@ -64,7 +64,7 @@ object ExtensionProcessingHelper {
       catch (e: CancellationException) {
         throw e
       }
-      catch (e: Exception) {
+      catch (e: Throwable) {
         ExtensionPointImpl.LOG.error(e)
       }
     }

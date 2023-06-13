@@ -56,7 +56,7 @@ public class BackgroundTaskQueue {
   }
 
   public void run(@NotNull Task.Backgroundable task) {
-    run(task, ModalityState.NON_MODAL, null);
+    run(task, ModalityState.nonModal(), null);
   }
 
   public void run(@NotNull Task.Backgroundable task,

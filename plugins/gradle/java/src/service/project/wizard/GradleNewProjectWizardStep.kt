@@ -83,7 +83,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   private val updateDefaultProjectSettingsProperty = propertyGraph.lazyProperty { true }
 
   private var distributionType by distributionTypeProperty
-  private var gradleVersion by gradleVersionProperty
+  protected var gradleVersion by gradleVersionProperty
   private var autoSelectGradleVersion by autoSelectGradleVersionProperty
   private var gradleHome by gradleHomeProperty
   private var updateDefaultProjectSettings by updateDefaultProjectSettingsProperty
@@ -224,6 +224,59 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return null
   }
 
+  /**
+   * Is the language of this wizard compatible with the [gradleVersion].
+   */
+  protected open fun validateLanguageCompatibility(gradleVersion: GradleVersion): Boolean {
+    return true
+  }
+
+  /**
+   * Validate that the language is compatible with Gradle and return
+   * an appropriate error message if not.
+   */
+  protected open fun validateLanguageCompatibility(
+    builder: ValidationInfoBuilder,
+    withDialog: Boolean,
+    gradleVersion: GradleVersion
+  ): ValidationInfo? = null
+
+  private fun validateJdkCompatibility(gradleVersion: GradleVersion): Boolean {
+    val javaVersion = getJdkVersion()
+    return javaVersion == null || isSupported(gradleVersion, javaVersion)
+  }
+
+  /**
+   * Validate that the language is compatible with Gradle and return
+   * an appropriate error message if not.
+   */
+  private fun ValidationInfoBuilder.validateJdkCompatibility(
+    withDialog: Boolean,
+    gradleVersion: GradleVersion
+  ): ValidationInfo? {
+    val javaVersion = getJdkVersion()
+    if (javaVersion == null || isSupported(gradleVersion, javaVersion)) return null
+    return validationWithDialog(
+      withDialog = withDialog,
+      message = GradleBundle.message(
+        "gradle.project.settings.distribution.version.unsupported",
+        javaVersion.toFeatureString(),
+        gradleVersion.version
+      ),
+      dialogTitle = GradleBundle.message(
+        "gradle.settings.wizard.unsupported.jdk.title",
+        context.isCreatingNewProjectInt
+      ),
+      dialogMessage = GradleBundle.message(
+        "gradle.settings.wizard.unsupported.jdk.message",
+        suggestOldestCompatibleJavaVersion(gradleVersion),
+        suggestLatestJavaVersion(gradleVersion),
+        javaVersion.toFeatureString(),
+        gradleVersion.version
+      )
+    )
+  }
+
   private fun ValidationInfoBuilder.validateGradleVersion(rawGradleVersion: String, withDialog: Boolean): ValidationInfo? {
     val gradleVersion = try {
       GradleVersion.version(rawGradleVersion)
@@ -231,34 +284,9 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     catch (ex: IllegalArgumentException) {
       return error(ex.localizedMessage)
     }
-    return validateJavaCompatibility(withDialog, gradleVersion)
+    return validateJdkCompatibility(withDialog, gradleVersion)
            ?: validateGradleDslCompatibility(withDialog, gradleVersion)
-  }
-
-  private fun ValidationInfoBuilder.validateJavaCompatibility(withDialog: Boolean, gradleVersion: GradleVersion): ValidationInfo? {
-    val javaVersion = getJdkVersion()
-    if (javaVersion != null && !isSupported(gradleVersion, javaVersion)) {
-      return validationWithDialog(
-        withDialog = withDialog,
-        message = GradleBundle.message(
-          "gradle.project.settings.distribution.version.unsupported",
-          javaVersion.toFeatureString(),
-          gradleVersion.version
-        ),
-        dialogTitle = GradleBundle.message(
-          "gradle.settings.wizard.unsupported.jdk.title",
-          context.isCreatingNewProjectInt
-        ),
-        dialogMessage = GradleBundle.message(
-          "gradle.settings.wizard.unsupported.jdk.message",
-          (gradleVersion),
-          suggestLatestJavaVersion(gradleVersion),
-          javaVersion.toFeatureString(),
-          gradleVersion.version
-        )
-      )
-    }
-    return null
+           ?: validateLanguageCompatibility(this, withDialog, gradleVersion)
   }
 
   private fun ValidationInfoBuilder.validateGradleDslCompatibility(withDialog: Boolean, gradleVersion: GradleVersion): ValidationInfo? {
@@ -284,7 +312,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return null
   }
 
-  private fun ValidationInfoBuilder.validationWithDialog(
+  protected fun ValidationInfoBuilder.validationWithDialog(
     withDialog: Boolean, // dialog shouldn't be shown on text input
     message: @NlsContexts.DialogMessage String,
     dialogTitle: @NlsContexts.DialogTitle String,
@@ -326,6 +354,9 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     val gradleVersion = suggestGradleVersion {
       withProject(context.project)
       withJavaVersionFilter(getJdkVersion())
+      withFilter {
+        validateJdkCompatibility(it) && validateLanguageCompatibility(it)
+      }
       if (autoSelectGradleVersion) {
         dontCheckDefaultProjectSettingsVersion()
       }
@@ -333,11 +364,10 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return gradleVersion.version
   }
 
-  private fun suggestGradleVersions(): List<String> {
-    return when (val javaVersion = getJdkVersion()) {
-      null -> getAllSupportedGradleVersions().map { it.version }
-      else -> getSupportedGradleVersions(javaVersion).map { it.version }
-    }
+  protected open fun suggestGradleVersions(): List<String> {
+    return getAllSupportedGradleVersions().filter {
+      validateJdkCompatibility(it) && validateLanguageCompatibility(it)
+    }.map { it.version }
   }
 
   private fun suggestAutoSelectGradleVersion(): Boolean {

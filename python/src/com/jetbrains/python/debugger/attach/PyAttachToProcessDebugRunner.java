@@ -3,7 +3,6 @@ package com.jetbrains.python.debugger.attach;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -22,12 +21,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.net.ServerSocket;
 
+import static com.intellij.openapi.options.advanced.AdvancedSettings.getInt;
+
 public class PyAttachToProcessDebugRunner extends PyDebugRunner {
   private final Project myProject;
   private final int myPid;
   private final String mySdkPath;
   private final Sdk mySdk;
-  private static final int CONNECTION_TIMEOUT = 20000;
 
 
   public PyAttachToProcessDebugRunner(@NotNull Project project, int pid, @Nullable Sdk sdk) {
@@ -89,7 +89,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
 
               @Override
               public int getConnectTimeout() {
-                return CONNECTION_TIMEOUT;
+                return getInt("python.debugger.attach.timeout");
               }
 
               @Override

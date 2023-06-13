@@ -1155,7 +1155,7 @@ public final class JBUI {
       public static final class Dropdown {
 
         @NotNull public static Insets borderInsets() {
-          return insets("MainToolbar.Dropdown.borderInsets", isNewUI() ? insets(3, 12, 3, 6) : insets(3, 5));
+          return insets("MainToolbar.Dropdown.borderInsets", isNewUI() ? insets(5, 12, 5, 6) : insets(3, 5));
         }
       }
     }
@@ -2007,6 +2007,10 @@ public final class JBUI {
 
         public static @NotNull Color foreground(boolean focused) {
           return focused ? FOREGROUND : Inactive.FOREGROUND;
+        }
+
+        public static boolean forceFocusedSelectionForeground() {
+          return UIManager.getBoolean("Tree.forceFocusedSelectionForeground");
         }
 
         private interface Inactive {

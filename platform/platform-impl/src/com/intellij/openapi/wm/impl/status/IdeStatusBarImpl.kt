@@ -723,7 +723,7 @@ private class WidgetBean(
 
 @RequiresEdt
 internal fun createComponentByWidgetPresentation(presentation: WidgetPresentation, project: Project, scope: CoroutineScope): JComponent {
-  val toolTipTextSupplier = { runBlockingModal(project, title = "") { presentation.getTooltipText() } }
+  val toolTipTextSupplier = { withModalProgressBlocking(project, title = "") { presentation.getTooltipText() } }
   return when (presentation) {
     is TextWidgetPresentation -> {
       val panel = TextPanel(toolTipTextSupplier)
@@ -781,7 +781,7 @@ private fun configurePresentationComponent(presentation: WidgetPresentation, pan
     StatusBarWidgetClickListener(it).installOn(panel, true)
   }
   ClientProperty.put(panel, HelpTooltipManager.SHORTCUT_PROPERTY,
-                     Supplier { runBlockingModal(ModalTaskOwner.component(panel), title = "") { presentation.getShortcutText() } })
+                     Supplier { withModalProgressBlocking(ModalTaskOwner.component(panel), title = "") { presentation.getShortcutText() } })
 }
 
 private fun wrap(widget: StatusBarWidget): JComponent {

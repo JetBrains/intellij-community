@@ -89,8 +89,7 @@ fun KtExpression.readWriteAccess(): ReferenceAccess {
 fun KtElement.canAnalyze(): Boolean {
     if (!isValid) return false
     val containingFile = containingFile as? KtFile ?: return false // EA-114080, EA-113475, EA-134193
-    if (containingFile.doNotAnalyze != null) return false // To prevent exceptions during analysis
-    return true
+    return containingFile.doNotAnalyze == null // To prevent exceptions during analysis
 }
 
 val PsiClass.isEnumEntryLightClass: Boolean

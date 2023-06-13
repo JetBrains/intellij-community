@@ -9,20 +9,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
-import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.ui.ImageUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import java.awt.AWTException
-import java.awt.Rectangle
-import java.awt.Robot
-import java.awt.Toolkit
+import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.IOException
-import java.nio.file.Path
 import javax.imageio.ImageIO
 import kotlin.time.Duration.Companion.seconds
 
@@ -31,12 +26,12 @@ private val LOG: Logger
 
 /**
  * Command takes screenshot.
- * Takes JPG screenshot of current screen to specified file
+ * Takes JPG screenshot of current screen to subfolder
  * (or if empty parameter is specified, the file will be stored under the LOG dir).
  *
  *
- * Syntax: %takeScreenshot <fullPathToFile>
- * Example: %takeScreenshot ./myScreenshot.jpg
+ * Syntax: %takeScreenshot <path_to_subfolder_if_needed>
+ * Example: %takeScreenshot onExit
 </fullPathToFile> */
 class TakeScreenshotCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
@@ -44,9 +39,7 @@ class TakeScreenshotCommand(text: String, line: Int) : PlaybackCommandCoroutineA
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    takeScreenshotOfFrame(extractCommandArgument(PREFIX).ifEmpty {
-      Path.of(PathManager.getLogPath()).resolve("screenshot_before_exit.png").toString()
-    })
+    takeScreenshotOfAllWindows(extractCommandArgument(PREFIX).ifEmpty { "beforeExit" })
   }
 }
 
@@ -75,30 +68,35 @@ fun takeScreenshotWithAwtRobot(fullPathToFile: String) {
   }
 }
 
-internal suspend fun takeScreenshotOfFrame(fileName: String) {
+suspend fun captureComponent(component: Component, file: File) {
+  if(component.width == 0 || component.height == 0) {
+    LOG.info(component.name + " has zero size, skipping")
+    return
+  }
+  val image = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
+  val g: Graphics2D = image.createGraphics()
+  component.paint(g)
+  withContext(Dispatchers.IO) {
+    try {
+      ImageIO.write(image, "png", file)
+    }
+    catch (e: IOException) {
+      LOG.info(e)
+    }
+  }
+  g.dispose()
+}
+
+internal suspend fun takeScreenshotOfAllWindows(childFolder: String? = null) {
   val projects = ProjectManager.getInstance().openProjects
+  val screenshotPath = File(PathManager.getLogPath() + "/screenshots/" + (childFolder ?: "")).apply { mkdirs() }
   for (project in projects) {
     try {
       withTimeout(30.seconds) {
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          val frame = WindowManager.getInstance().getIdeFrame(project)
-          if (frame == null) {
-            LOG.info("Frame was empty when takeScreenshot was called")
-          }
-          else {
-            val component = frame.component
-            val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
-            component.printAll(img.createGraphics())
-            val prefix = if (projects.size == 1) "" else project.name + "_"
-            withContext(Dispatchers.IO) {
-              try {
-                ImageIO.write(img, "png", File(prefix + fileName))
-                LOG.info("Screenshot is saved at: $fileName")
-              }
-              catch (e: IOException) {
-                LOG.info(e)
-              }
-            }
+          val prefix = if (projects.size == 1) "" else "${project.name}_"
+          Window.getWindows().forEach {
+            captureComponent(it, File(screenshotPath, prefix + it.name + ".png"))
           }
         }
       }

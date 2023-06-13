@@ -235,7 +235,7 @@ abstract class ScriptClassRootsUpdater(
                 }
 
             if (updates.hasNewRoots) {
-                runInEdt(ModalityState.NON_MODAL) {
+                runInEdt(ModalityState.nonModal()) {
                     runWriteAction {
                         if (project.isDisposed) return@runWriteAction
                         ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
@@ -283,7 +283,7 @@ abstract class ScriptClassRootsUpdater(
         builderSnapshot.syncScriptEntities(project, filesToAddOrUpdate, filesToRemove) // time-consuming call
         val replacement = builderSnapshot.getStorageReplacement()
 
-        runInEdt(ModalityState.NON_MODAL) {
+        runInEdt(ModalityState.nonModal()) {
             val replaced = runWriteAction {
                 if (project.isDisposed) false
                 else WorkspaceModel.getInstance(project).replaceProjectModel(replacement)

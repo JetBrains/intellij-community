@@ -1,6 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
+import org.jetbrains.java.decompiler.main.CancellationManager;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
@@ -79,6 +81,7 @@ public class DirectGraph {
 
 
   public boolean iterateExprents(ExprentIterator iter) {
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
 
     LinkedList<DirectNode> stack = new LinkedList<>();
     stack.add(first);
@@ -95,6 +98,7 @@ public class DirectGraph {
       setVisited.add(node);
 
       for (int i = 0; i < node.exprents.size(); i++) {
+        cancellationManager.checkSavedCancelled();
         int res = iter.processExprent(node.exprents.get(i));
 
         if (res == 1) {

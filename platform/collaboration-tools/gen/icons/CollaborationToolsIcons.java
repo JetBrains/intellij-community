@@ -25,6 +25,7 @@ public final class CollaborationToolsIcons {
 
   public static final class Review {
     /** 16x16 */ public static final @NotNull Icon Branch = load("icons/review/branch.svg", -364426997, 2);
+    /** 16x16 */ public static final @NotNull Icon BranchCurrent = load("icons/review/branchCurrent.svg", -646572009, 0);
     /** 16x16 */ public static final @NotNull Icon CommentHovered = load("icons/review/commentHovered.svg", 735585407, 0);
     /** 16x16 */ public static final @NotNull Icon CommentReadMany = load("icons/review/commentReadMany.svg", -1735310916, 2);
     /** 16x16 */ public static final @NotNull Icon CommentUnread = load("icons/review/commentUnread.svg", 354289283, 0);

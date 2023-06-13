@@ -29,6 +29,10 @@ public class YamlEnumType extends YamlScalarType {
     super(typeName);
   }
 
+  public YamlEnumType(@NotNull String typeName, @NotNull String displayName) {
+    super(typeName, displayName);
+  }
+
   @NotNull
   public YamlEnumType withLiterals(String... literals) {
     myLiterals = cloneArray(literals);

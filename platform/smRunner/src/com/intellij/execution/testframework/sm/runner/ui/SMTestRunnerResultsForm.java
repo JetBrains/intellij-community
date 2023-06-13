@@ -176,7 +176,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       if (ScrollToTestSourceAction.isScrollEnabled(this)) {
         ReadAction
           .nonBlocking(() -> TestsUIUtil.getOpenFileDescriptor(testProxy, this))
-          .finishOnUiThread(ModalityState.NON_MODAL, descriptor -> {
+          .finishOnUiThread(ModalityState.nonModal(), descriptor -> {
             if (descriptor != null) {
               OpenSourceUtil.navigate(false, descriptor);
             }

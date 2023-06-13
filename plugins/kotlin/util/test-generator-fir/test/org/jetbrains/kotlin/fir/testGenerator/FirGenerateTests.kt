@@ -37,6 +37,8 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.idea.fir.resolve.*
+import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoTypeDeclarationTest
+import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK2Tests()
@@ -107,6 +109,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFirReferenceToCompiledKotlinResolveInJavaTest> {
             model("resolve/referenceInJava/binaryAndSource", pattern = JAVA)
+        }
+
+        testClass<AbstractFirGotoTypeDeclarationTest> {
+            model("navigation/gotoTypeDeclaration", pattern = TEST)
         }
 
         testClass<AbstractHighLevelQuickFixTest> {

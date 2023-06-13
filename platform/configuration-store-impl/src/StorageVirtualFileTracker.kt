@@ -117,13 +117,19 @@ internal class StorageVirtualFileTracker {
 
     return object : AsyncFileListener.ChangeApplier {
       override fun afterVfsChange() {
+        val projectToChanges = HashMap<Project, MutableMap<IComponentStore, Set<StateStorage>>>()
         for ((store, storages) in storageEvents) {
           val project: Project = when (val componentManager = store.storageManager.componentManager) {
             is Project -> componentManager
             is Module -> componentManager.project
             else -> continue
           }
-          StoreReloadManager.getInstance(project).storageFilesChanged(store, storages)
+          val changes = projectToChanges.getOrPut(project) { LinkedHashMap() }
+          changes[store] = storages
+        }
+
+        projectToChanges.forEach { (project, batchStorageEvents) ->
+          StoreReloadManager.getInstance(project).storageFilesBatchProcessing(batchStorageEvents)
         }
       }
     }

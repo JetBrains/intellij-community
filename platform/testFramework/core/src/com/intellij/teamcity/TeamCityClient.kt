@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.TestCaseLoader
 import com.intellij.nastradamus.model.ChangeEntity
-import com.intellij.tool.Cache
 import com.intellij.tool.HttpClient
+import com.intellij.tool.NastradamusCache
 import com.intellij.tool.withErrorThreshold
 import com.intellij.tool.withRetry
 import org.apache.http.HttpRequest
@@ -128,7 +128,7 @@ class TeamCityClient(
   private fun downloadChangesPatch(buildTypeId: String, modificationId: String, isPersonal: Boolean): String {
     val uri = baseUri.resolve("/downloadPatch.html?buildTypeId=${buildTypeId}&modId=${modificationId}&personal=$isPersonal")
 
-    return Cache.get(uri) {
+    return NastradamusCache.get(uri) {
       val outputStream = ByteArrayOutputStream()
 
       if (!HttpClient.download(request = HttpGet(uri).withAuth(), outStream = outputStream, retries = 3)) {
@@ -147,7 +147,7 @@ class TeamCityClient(
   fun getChanges(buildId: String): List<JsonNode> {
     val fullUrl = restUri.resolve("changes?locator=build:(id:$buildId)")
 
-    val rawData = Cache.get(fullUrl) { get(fullUrl).toString() }
+    val rawData = NastradamusCache.get(fullUrl) { get(fullUrl).toString() }
 
     return jacksonMapper.readTree(rawData).fields().asSequence()
       .filter { it.key == "change" }
@@ -183,7 +183,7 @@ class TeamCityClient(
       }
     }
 
-    val rawChange = Cache.get(fullUrl) { get(fullUrl).toString() }
+    val rawChange = NastradamusCache.get(fullUrl) { get(fullUrl).toString() }
     return processData(jacksonMapper.readTree(rawChange))
   }
 
@@ -202,7 +202,7 @@ class TeamCityClient(
                  "includePersonal:true&fields=nextHref," +
                  "testOccurrence(id,name,status,duration,currentlyInvestigated,currentlyMuted,muted,test(id,parsedTestName),newFailure,metadata(count),nextFixed(id),runOrder)")
 
-      val rawData = Cache.get(fullUrl) { get(fullUrl).toString() }
+      val rawData = NastradamusCache.get(fullUrl) { get(fullUrl).toString() }
 
       currentTests = jacksonMapper.readTree(rawData).fields().asSequence()
         .filter { it.key == "testOccurrence" }
@@ -225,7 +225,7 @@ class TeamCityClient(
   private fun getBuildInfo(buildId: String): JsonNode {
     val fullUrl = restUri.resolve("builds/$buildId")
 
-    val rawData = Cache.get(fullUrl) { get(fullUrl).toString() }
+    val rawData = NastradamusCache.get(fullUrl) { get(fullUrl).toString() }
     return jacksonMapper.readTree(rawData)
   }
 

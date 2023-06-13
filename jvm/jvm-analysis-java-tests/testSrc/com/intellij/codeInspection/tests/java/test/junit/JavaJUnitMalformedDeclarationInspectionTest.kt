@@ -291,26 +291,101 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.jupiter.params.provider.NullSource
         void testWithNullSrc(Object o) { }      
       }
+    """.trimIndent()
+    )
+  }
+  fun `test malformed parameterized empty source no highlighting`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class MyTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testString(String input) { }
       
-      class EmptySource {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EmptySource
-        void testFooSet(java.util.Set<String> input) { }
-
-        @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.EmptySource
-        void testFooList(java.util.List<String> input) { }
-
-        @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.EmptySource
-        void testFooMap(java.util.Map<String, String> input) { }
+        void testList(java.util.List<String> input) { }
         
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EmptySource
-        void testFooTestInfo(String input, org.junit.jupiter.api.TestInfo testInfo) { }
+        void testSet(java.util.Set<String> input) { }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testSortedSet(java.util.SortedSet<String> input) { }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testNavigableSet(java.util.NavigableSet<String> input) { }     
+           
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testZeroArgSet(java.util.HashSet<String> input) { }                
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testMap(java.util.Map<String, String> input) { }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testSortedMap(java.util.SortedMap<String, String> input) { }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testNavigableMap(java.util.NavigableMap<String, String> input) { }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testZeroArgMap(java.util.HashMap<String, String> input) { }        
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testWithTestInfo(String input, org.junit.jupiter.api.TestInfo testInfo) { }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testPrimitiveArray(int[] input) { }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testObjectArray(Object[] input) { }     
+
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testMultiDimensionalObjectArray(Object[][] input) { }                    
+      }      
+    """.trimIndent())
+  }
+  fun `test malformed parameterized empty source map with single arg constructor`() {
+    myFixture.addClass("""
+      import java.util.HashMap;
+      
+      public class MyArgMap extends HashMap<String, String> {
+        public MyArgMap(String input) { }
       }
-    """.trimIndent()
-    )
+    """.trimIndent())
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class MyTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        <warning descr="'@EmptySource' cannot provide an argument to method because method has an unsupported parameter of 'MyArgMap' type">@org.junit.jupiter.params.provider.EmptySource</warning>
+        void testArgMap(MyArgMap input) { }
+      }
+    """.trimIndent())
+  }
+  fun `test malformed parameterized empty source collection with single arg constructor`() {
+    myFixture.addClass("""
+      import java.util.HashSet;
+      
+      public class MyArgSet extends HashSet<String, String> {
+        public MyArgSet(String input) { }
+      }
+    """.trimIndent())
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class MyTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        <warning descr="'@EmptySource' cannot provide an argument to method because method has an unsupported parameter of 'MyArgSet' type">@org.junit.jupiter.params.provider.EmptySource</warning>
+        void testArgSet(MyArgSet input) { }
+      }
+    """.trimIndent())
   }
   fun `test malformed parameterized value source wrong type highlighting`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """

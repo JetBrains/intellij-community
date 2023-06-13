@@ -152,7 +152,7 @@ class HeapDumpSnapshotRunnable(
 
     override fun onSuccess() {
       if (analysisOption == AnalysisOption.SCHEDULE_ON_NEXT_START && restart) {
-        ApplicationManager.getApplication().invokeLater(this::confirmRestart, ModalityState.NON_MODAL)
+        ApplicationManager.getApplication().invokeLater(this::confirmRestart, ModalityState.nonModal())
       }
     }
 

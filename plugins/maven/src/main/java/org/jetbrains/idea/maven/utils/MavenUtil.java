@@ -33,7 +33,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -168,15 +167,9 @@ public class MavenUtil {
 
   public static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
     startTestRunnable(r);
-
-    if (isNoBackgroundMode()) {
+    ApplicationManager.getApplication().invokeLater(() -> {
       runAndFinishTestRunnable(r);
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        runAndFinishTestRunnable(r);
-      }, state, p.getDisposed());
-    }
+    }, state, p.getDisposed());
   }
 
 
@@ -231,12 +224,7 @@ public class MavenUtil {
 
   public static void invokeAndWait(final Project p, final ModalityState state, @NotNull Runnable r) {
     startTestRunnable(r);
-    if (isNoBackgroundMode()) {
-      runAndFinishTestRunnable(r);
-    }
-    else {
-      ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(() -> runAndFinishTestRunnable(r), p), state);
-    }
+    ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(() -> runAndFinishTestRunnable(r), p), state);
   }
 
 
@@ -270,11 +258,7 @@ public class MavenUtil {
       return;
     }
 
-    if (isNoBackgroundMode()) {
-      startTestRunnable(runnable);
-      runAndFinishTestRunnable(runnable);
-    }
-    else if (project.isInitialized()) {
+    if (project.isInitialized()) {
       runDumbAware(project, runnable);
     }
     else {
@@ -283,17 +267,7 @@ public class MavenUtil {
     }
   }
 
-  public static boolean isNoBackgroundMode() {
-    if (shouldRunTasksAsynchronouslyInTests() || isLinearImportEnabled()) {
-      return false;
-    }
-    return (ApplicationManager.getApplication().isUnitTestMode()
-            || ApplicationManager.getApplication().isHeadlessEnvironment() &&
-               !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode());
-  }
-
   public static boolean isInModalContext() {
-    if (isNoBackgroundMode()) return false;
     return LaterInvocator.isInModalContext();
   }
 
@@ -597,40 +571,30 @@ public class MavenUtil {
       }
     };
 
-    if (isNoBackgroundMode()) {
-      runnable.run();
-      return new MavenTaskHandler() {
-        @Override
-        public void waitFor() {
+    Future<?> future;
+    future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    MavenTaskHandler handler = new MavenTaskHandler() {
+      @Override
+      public void waitFor() {
+        try {
+          future.get();
         }
-      };
-    }
-    else {
-      Future<?> future;
-      future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
-      MavenTaskHandler handler = new MavenTaskHandler() {
-        @Override
-        public void waitFor() {
-          try {
-            future.get();
-          }
-          catch (InterruptedException | ExecutionException e) {
-            MavenLog.LOG.error(e);
-          }
+        catch (InterruptedException | ExecutionException e) {
+          MavenLog.LOG.error(e);
         }
-      };
-      invokeLater(project, () -> {
-        if (future.isDone()) return;
-        new Task.Backgroundable(project, title, cancellable) {
-          @Override
-          public void run(@NotNull ProgressIndicator i) {
-            indicator.setIndicator(i);
-            handler.waitFor();
-          }
-        }.queue();
-      });
-      return handler;
-    }
+      }
+    };
+    invokeLater(project, () -> {
+      if (future.isDone()) return;
+      new Task.Backgroundable(project, title, cancellable) {
+        @Override
+        public void run(@NotNull ProgressIndicator i) {
+          indicator.setIndicator(i);
+          handler.waitFor();
+        }
+      }.queue();
+    });
+    return handler;
   }
 
   @Nullable

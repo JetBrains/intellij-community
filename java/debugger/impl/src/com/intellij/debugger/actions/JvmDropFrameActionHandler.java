@@ -152,13 +152,14 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
             .show(project);
 
           switch (res) {
-            case Messages.CANCEL:
+            case Messages.CANCEL -> {
               return true;
-            case Messages.NO:
-              break;
-            case Messages.YES: // evaluate finally
+            }
+            case Messages.NO -> {}
+            case Messages.YES -> { // evaluate finally
               evaluateAndAct(project, stackFrame, sb, callback);
               return true;
+            }
           }
         }
       }

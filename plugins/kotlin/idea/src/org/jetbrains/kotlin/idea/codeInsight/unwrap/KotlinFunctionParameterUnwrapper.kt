@@ -154,9 +154,7 @@ class KotlinFunctionParameterUnwrapper(val key: String) : KotlinUnwrapRemoveBase
         if (element is KtLambdaArgument) return false
         if (element !is KtValueArgument) return false
         val argumentList = element.parent as KtValueArgumentList
-        if (argumentList.parent !is KtCallExpression) return false
-
-        return true
+        return argumentList.parent is KtCallExpression
     }
 
     override fun doUnwrap(element: PsiElement?, context: Context?) {

@@ -40,6 +40,6 @@ class FileTypeInputFilterPredicateTest {
   fun testHitFallbackForDirectory() {
     val hint = FileTypeInputFilterPredicate(PlainTextFileType.INSTANCE)
     val someDir = VfsUtil.findFile(tempDir.createDir(), true)!!
-    Assert.assertFalse(hint.whenAllOtherHintsUnsure(IndexedFileImpl(someDir, p.project)))
+    Assert.assertFalse(hint.slowPathIfFileTypeHintUnsure(IndexedFileImpl(someDir, p.project)))
   }
 }

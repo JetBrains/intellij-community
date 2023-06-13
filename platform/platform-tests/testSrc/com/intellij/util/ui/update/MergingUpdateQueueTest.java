@@ -3,6 +3,7 @@ package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Alarm;
@@ -447,5 +448,18 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
     queue.waitForAllExecuted(10, TimeUnit.SECONDS);
     assertEquals(0, latch.getCount());
     assertTrue(secondExecuted.get());
+  }
+
+  public void testMustRejectOnDispose() {
+    MergingUpdateQueue queue = new MergingUpdateQueue(getTestName(false), 1000_000, true, null, getTestRootDisposable(), null, Alarm.ThreadToUse.POOLED_THREAD);
+    Update update = new Update(this) {
+      @Override
+      public void run() {
+      }
+    };
+    queue.queue(update);
+    assertFalse(update.isRejected());
+    Disposer.dispose(queue);
+    assertTrue(update.isRejected());
   }
 }

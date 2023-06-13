@@ -394,7 +394,7 @@
     <localInspection language="UAST"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="false" level="WARNING"
+                     enabledByDefault="false" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IncorrectProcessCanceledExceptionHandlingInspection"
                      key="inspections.incorrect.process.canceled.exception.handling.display.name"/>
 
@@ -524,9 +524,9 @@
     <cancellationCheckInLoopsFixProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaCancellationCheckInLoopsFixProvider"/>
     <visitorProviderForRBCInspection language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProviderForJava"/>
-    <extensionClassShouldNotBePublicProvider language="JAVA"
-      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldNotBePublicProviderForJava"/>
-    <extensionClassShouldBeFinalErrorMessageProvider language="JAVA"
+    <extensionClassShouldNotBePublicProvider language="JVM"
+      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldNotBePublicProviderForJVM"/>
+    <extensionClassShouldBeFinalErrorMessageProvider language="JVM"
       implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalErrorMessageProvider"/>
     <serviceLevelExtractor language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractorForJava"/>

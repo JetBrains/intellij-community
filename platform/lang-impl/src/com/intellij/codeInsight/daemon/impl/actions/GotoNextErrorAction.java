@@ -21,9 +21,8 @@ public class GotoNextErrorAction extends BaseCodeInsightAction implements DumbAw
     return true;
   }
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new GotoNextErrorHandler(true);
   }
 

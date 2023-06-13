@@ -499,62 +499,64 @@ public final class CustomizationUtil {
   @Nullable
   public static PopupHandler installToolbarCustomizationHandler(@NotNull ActionGroup actionGroup,
                                                                 String groupID, JComponent component, String place) {
-    if (groupID != null) {
-      final String groupName = getGroupName(actionGroup, groupID);
-      if (groupName == null) return null;
+    PopupHandler popupHandler = createToolbarCustomizationHandler(actionGroup, groupID, component, place);
+    if (popupHandler != null) component.addMouseListener(popupHandler);
+    return popupHandler;
+  }
 
-      final Ref<Component> popupInvoker = Ref.create();
-      String actionID = "customize.toolbar." + groupID;
-      DefaultActionGroup customizationGroup = new DefaultActionGroup(
-        new MyDumbAction(actionID, IdeBundle.message("action.customizations.customize.action"), event -> {
-          Component src = popupInvoker.get();
-          AnAction targetAction = ObjectUtils.doIfCast(src, ActionButton.class, ActionButton::getAction);
-          DialogWrapper dialogWrapper = createCustomizeGroupDialog(event.getProject(), groupID, groupName, targetAction);
-          dialogWrapper.show();
-        })
-      );
+  @Nullable
+  public static PopupHandler createToolbarCustomizationHandler(@NotNull ActionGroup actionGroup, String groupID, JComponent component, String place) {
+    if (groupID == null) return null;
+    final String groupName = getGroupName(actionGroup, groupID);
+    if (groupName == null) return null;
+
+    final Ref<Component> popupInvoker = Ref.create();
+    String actionID = "customize.toolbar." + groupID;
+    DefaultActionGroup customizationGroup = new DefaultActionGroup(
+      new MyDumbAction(actionID, IdeBundle.message("action.customizations.customize.action"), event -> {
+        Component src = popupInvoker.get();
+        AnAction targetAction = ObjectUtils.doIfCast(src, ActionButton.class, ActionButton::getAction);
+        DialogWrapper dialogWrapper = createCustomizeGroupDialog(event.getProject(), groupID, groupName, targetAction);
+        dialogWrapper.show();
+      })
+    );
 
 
-        AnAction rollbackAction = ActionManager.getInstance().getAction(ToolbarSettings.ROLLBACK_ACTION_ID);
-        if(rollbackAction != null) {
-          customizationGroup.add(rollbackAction);
-        }
-
-      customizationGroup.addSeparator();
-      ActionGroup popupActionsGroup = (ActionGroup)ActionManager.getInstance().getAction("ToolbarPopupActions");
-      customizationGroup.addAll(popupActionsGroup);
-
-      PopupHandler popupHandler = new PopupHandler() {
-        @Override
-        public void invokePopup(Component comp, int x, int y) {
-          if (Boolean.TRUE.equals(ClientProperty.get(comp, DISABLE_CUSTOMIZE_POPUP_KEY))) {
-            return;
-          }
-          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(place, customizationGroup);
-          popupMenu.setTargetComponent(component);
-          JPopupMenu menu = popupMenu.getComponent();
-          menu.addPopupMenuListener(new PopupMenuListenerAdapter() {
-            @Override
-            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-              JBPopupMenu menu = ObjectUtils.tryCast(e.getSource(), JBPopupMenu.class);
-              popupInvoker.set(menu != null ? menu.getInvoker() : null);
-            }
-
-            @Override
-            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-              ApplicationManager.getApplication().invokeLater(() -> {
-                popupInvoker.set(null);
-              });
-            }
-          });
-          menu.show(comp, x, y);
-        }
-      };
-      component.addMouseListener(popupHandler);
-
-      return popupHandler;
+    AnAction rollbackAction = ActionManager.getInstance().getAction(ToolbarSettings.ROLLBACK_ACTION_ID);
+    if(rollbackAction != null) {
+      customizationGroup.add(rollbackAction);
     }
-    return null;
+
+    customizationGroup.addSeparator();
+    ActionGroup popupActionsGroup = (ActionGroup)ActionManager.getInstance().getAction("ToolbarPopupActions");
+    customizationGroup.addAll(popupActionsGroup);
+
+    return new PopupHandler() {
+      @Override
+      public void invokePopup(Component comp, int x, int y) {
+        if (Boolean.TRUE.equals(ClientProperty.get(comp, DISABLE_CUSTOMIZE_POPUP_KEY))) {
+          return;
+        }
+        ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(place, customizationGroup);
+        popupMenu.setTargetComponent(component);
+        JPopupMenu menu = popupMenu.getComponent();
+        menu.addPopupMenuListener(new PopupMenuListenerAdapter() {
+          @Override
+          public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+            JBPopupMenu menu = ObjectUtils.tryCast(e.getSource(), JBPopupMenu.class);
+            popupInvoker.set(menu != null ? menu.getInvoker() : null);
+          }
+
+          @Override
+          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              popupInvoker.set(null);
+            });
+          }
+        });
+        menu.show(comp, x, y);
+      }
+    };
   }
 
   public static @NotNull DialogWrapper createCustomizeGroupDialog(@Nullable Project project, @NotNull String groupID,

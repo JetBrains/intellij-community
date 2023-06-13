@@ -74,9 +74,7 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
 
     val customRoot = sourceRootEntity.customSourceRootProperties
     val otherCustomRoot = other.sourceRootEntity.customSourceRootProperties
-    if (customRoot?.propertiesXmlTag != otherCustomRoot?.propertiesXmlTag) return false
-
-    return true
+    return customRoot?.propertiesXmlTag == otherCustomRoot?.propertiesXmlTag
   }
 
   override fun setPackagePrefix(packagePrefix: String) {

@@ -97,7 +97,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       ApplicationManager.getApplication().invokeLater(() -> {
         String message = RefactoringBundle.message("variable.is.never.used", var.getName());
         CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(var), HelpID.INLINE_VARIABLE);
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
       return;
     }
     Runnable runnable;
@@ -124,7 +124,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       ApplicationManager.getApplication().invokeLater(() -> {
         String message = RefactoringBundle.message("cannot.perform.refactoring");
         CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(pattern), HelpID.INLINE_VARIABLE);
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
       return null;
     }
     List<PsiElement> refsToInlineList = new ArrayList<>(allRefs);

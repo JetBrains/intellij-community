@@ -3,6 +3,7 @@ package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
@@ -59,6 +60,7 @@ class UastAnalysisHandlerExtension : AnalysisHandlerExtension {
 
     fun getLanguageVersionSettings() = languageVersionSettings
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
     fun getTypeMapper(): KotlinTypeMapper? {
         if (typeMapper != null) return typeMapper

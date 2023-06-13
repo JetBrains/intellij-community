@@ -23,6 +23,10 @@ private class ExtensionClassShouldNotBePublicProviderForKotlin : ExtensionClassS
   override fun provideQuickFix(clazz: JvmClass, file: PsiFile): Array<out LocalQuickFix> {
     return arrayOf(ChangeModifierFix(clazz.name!!))
   }
+
+  override fun isApplicableForKotlin(): Boolean {
+    return true
+  }
 }
 
 private class ChangeModifierFix(private val elementName: String) : LocalQuickFix {

@@ -82,7 +82,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     //PersistentFSImpl is an application service, and generally disposed as such, via .dispose().
     // But to be on the safe side -- add a shutdown task also:
-    ShutDownTracker.getInstance().registerShutdownTask(this::disconnect);
+    ShutDownTracker.getInstance().registerCacheShutdownTask(this::disconnect);
     LowMemoryWatcher.register(this::clearIdCache, this);
 
     AsyncEventSupport.startListening();
@@ -305,12 +305,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return FSRecords.readContentById(contentId);
   }
 
-  private static @NotNull DataOutputStream writeContent(@NotNull VirtualFile file, boolean readOnly) {
-    return FSRecords.writeContent(getFileId(file), readOnly);
+  private static @NotNull DataOutputStream writeContent(@NotNull VirtualFile file, boolean contentOfFixedSize) {
+    return FSRecords.writeContent(getFileId(file), contentOfFixedSize);
   }
 
-  private static void writeContent(@NotNull VirtualFile file, @NotNull ByteArraySequence content, boolean readOnly) {
-    FSRecords.writeContent(getFileId(file), content, readOnly);
+  private static void writeContent(@NotNull VirtualFile file, @NotNull ByteArraySequence content, boolean contentOfFixedSize) {
+    FSRecords.writeContent(getFileId(file), content, contentOfFixedSize);
   }
 
   @Override
@@ -626,7 +626,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if ((!fs.isReadOnly() || cacheContent && !app.isInternal() && !app.isUnitTestMode()) && shouldCache(content.length)) {
         myInputLock.writeLock().lock();
         try {
-          writeContent(file, ByteArraySequence.create(content), fs.isReadOnly());
+          writeContent(file, ByteArraySequence.create(content), /*contentOfFixedSize: */ fs.isReadOnly());
           setFlag(file, Flags.MUST_RELOAD_CONTENT, false);
         }
         finally {
@@ -753,7 +753,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     myInputLock.writeLock().lock();
     try {
       if (byteLength == fileLength) {
-        writeContent(file, new ByteArraySequence(bytes, 0, byteLength), readOnly);
+        writeContent(file, new ByteArraySequence(bytes, 0, byteLength), /*contentOfFixedSize: */ readOnly);
         setFlag(file, Flags.MUST_RELOAD_CONTENT, false);
         setFlag(file, Flags.MUST_RELOAD_LENGTH, false);
       }
@@ -799,7 +799,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
         NewVirtualFileSystem fs = getFileSystem(file);
         // `FSRecords.ContentOutputStream` already buffered, no need to wrap in `BufferedStream`
-        try (OutputStream persistenceStream = writeContent(file, fs.isReadOnly())) {
+        try (OutputStream persistenceStream = writeContent(file, /*contentOfFixedSize: */ fs.isReadOnly())) {
           persistenceStream.write(buf, 0, count);
         }
         catch (IOException e) {

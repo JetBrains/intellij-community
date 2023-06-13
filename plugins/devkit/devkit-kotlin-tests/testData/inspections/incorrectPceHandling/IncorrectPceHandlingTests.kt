@@ -1,51 +1,72 @@
+import com.example.SubclassOfProcessCanceledException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 
 private val LOG = Logger.getInstance("any")
 
 class IncorrectPceHandlingTests {
-  fun test1() {
+  fun testPceSwallowed() {
     try {
       // anything
     }
-    catch (<warning descr="'ProcessCanceledException' must be rethrown">e</warning>: ProcessCanceledException) {
+    catch (<error descr="'ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
       // exception swallowed
     }
   }
 
-  fun test2() {
+  fun testPceLogged() {
     try {
       // anything
     }
-    catch (<warning descr="'ProcessCanceledException' must be rethrown">e</warning>: ProcessCanceledException) {
-      LOG.<warning descr="'ProcessCanceledException' must not be logged">info("Error occurred", e)</warning>
+    catch (e: ProcessCanceledException) {
+      LOG.<error descr="'ProcessCanceledException' must not be logged">error(e)</error>
+      throw e
     }
   }
 
-  fun test3() {
+  fun testSwallowedAndLoggedWithMessageOnInfoLevel() {
     try {
       // anything
     }
-    catch (<warning descr="'ProcessCanceledException' must be rethrown">e</warning>: ProcessCanceledException) {
-      LOG.<warning descr="'ProcessCanceledException' must not be logged">info(e)</warning>
+    catch (<error descr="'ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
+      LOG.<error descr="'ProcessCanceledException' must not be logged">info("Error occured", e)</error>
     }
   }
 
-  fun test4() {
+  fun testSwallowedAndLoggedOnInfoLevel() {
     try {
       // anything
     }
-    catch (<warning descr="'ProcessCanceledException' must be rethrown">e</warning>: ProcessCanceledException) {
-      LOG.<warning descr="'ProcessCanceledException' must not be logged">error(e)</warning>
+    catch (<error descr="'ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
+      LOG.<error descr="'ProcessCanceledException' must not be logged">info(e)</error>
     }
   }
 
-  fun test5() {
+  fun testSwallowedAndLoggedOnErrorLevel() {
     try {
       // anything
     }
-    catch (<warning descr="'ProcessCanceledException' must be rethrown">e</warning>: ProcessCanceledException) {
-      LOG.<warning descr="'ProcessCanceledException' must not be logged">error("Error occurred: " + e.message)</warning>
+    catch (<error descr="'ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
+      LOG.<error descr="'ProcessCanceledException' must not be logged">error(e)</error>
     }
   }
+
+  fun testSwallowedAndOnlyExceptionMessageLogged() {
+    try {
+      // anything
+    }
+    catch (<error descr="'ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
+      LOG.<error descr="'ProcessCanceledException' must not be logged">error("Error occurred: " + e.message)</error>
+    }
+  }
+
+  fun testPceInheritorSwallowedAndLogger() {
+    try {
+      // anything
+    }
+    catch (<error descr="'ProcessCanceledException' inheritor must be rethrown">e</error>: SubclassOfProcessCanceledException) {
+      LOG.<error descr="'ProcessCanceledException' inheritor must not be logged">error(e)</error>
+    }
+  }
+
 }

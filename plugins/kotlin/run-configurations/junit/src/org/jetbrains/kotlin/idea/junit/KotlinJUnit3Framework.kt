@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.junit
 import com.intellij.execution.junit.JUnit3Framework
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.lang.Language
-import com.intellij.lang.OuterModelsModificationTrackerManager
+import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement

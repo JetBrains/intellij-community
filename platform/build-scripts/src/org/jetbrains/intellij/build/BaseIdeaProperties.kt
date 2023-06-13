@@ -85,7 +85,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.eclipse",
   "intellij.platform.langInjection",
   "intellij.java.debugger.streams",
-  "intellij.android.smali",
   "intellij.completionMlRanking",
   "intellij.completionMlRankingModels",
   "intellij.statsCollector",
@@ -94,7 +93,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.webp",
   "intellij.grazie",
   "intellij.featuresTrainer",
-  "intellij.lombok",
   "intellij.searchEverywhereMl",
   "intellij.platform.tracing.ide",
   "intellij.toml",
@@ -103,6 +101,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.keymap.visualStudio",
   "intellij.keymap.netbeans",
   "intellij.performanceTesting",
+  "intellij.turboComplete",
 )
 
 val CE_CLASS_VERSIONS: PersistentMap<String, String> = BASE_CLASS_VERSIONS.putAll(persistentHashMapOf(
@@ -147,6 +146,7 @@ abstract class BaseIdeaProperties : ProductProperties() {
         "intellij.platform.testFramework.common",
         "intellij.platform.testFramework.junit5",
         "intellij.platform.testFramework",
+        "intellij.platform.debugger.testFramework",
         "intellij.platform.uast.testFramework",
         "intellij.tools.testsBootstrap",
       )) {

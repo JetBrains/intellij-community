@@ -143,6 +143,8 @@
     <group id="Github.PullRequest.Details.Popup">
       <reference id="Github.PullRequest.Details.Reload"/>
     </group>
+    <action id="Github.PullRequest.Branch.Checkout.Remote"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPRCheckoutRemoteBranchAction"/>
     <action id="Github.PullRequest.Comments.Reload"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadCommentsAction" use-shortcut-of="Refresh"/>
 

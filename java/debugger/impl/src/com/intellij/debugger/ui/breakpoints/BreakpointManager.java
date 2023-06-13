@@ -57,8 +57,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import java.util.HashMap;
@@ -189,15 +189,15 @@ public class BreakpointManager {
   }
 
   @Nullable
-  public LineBreakpoint<?> addLineBreakpoint(Document document, int lineIndex, Consumer<JavaBreakpointProperties<?>> setupAction) {
+  public LineBreakpoint<?> addLineBreakpoint(Document document, int lineIndex, Consumer<JavaLineBreakpointProperties> setupAction) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!LineBreakpoint.canAddLineBreakpoint(myProject, document, lineIndex)) {
       return null;
     }
-    var xLineBreakpoint = addXLineBreakpoint(JavaLineBreakpointType.class, document, lineIndex);
+    var xLineBreakpoint = addXLineBreakpoint(JavaLineBreakpointType.class, document, lineIndex,
+                                             p -> setupAction.accept(((JavaLineBreakpointProperties)p)));
     var breakpoint = getJavaBreakpoint(xLineBreakpoint);
     if (breakpoint instanceof LineBreakpoint<?> lineBreakpoint) {
-      setupAction.accept(lineBreakpoint.getProperties());
       addBreakpoint(breakpoint);
       return lineBreakpoint;
     }
@@ -268,12 +268,19 @@ public class BreakpointManager {
     return null;
   }
 
-  private <B extends XBreakpoint<?>> XLineBreakpoint addXLineBreakpoint(Class<? extends XBreakpointType<B, ?>> typeCls, Document document, final int lineIndex) {
+  private <B extends XBreakpoint<?>> XLineBreakpoint addXLineBreakpoint(Class<? extends XBreakpointType<B, ?>> typeCls, Document document, final int lineIndex, Consumer<XBreakpointProperties> propertiesSetup) {
     final XBreakpointType<B, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    return WriteAction.compute(() -> XDebuggerManager.getInstance(myProject).getBreakpointManager()
-      .addLineBreakpoint((XLineBreakpointType)type, file.getUrl(), lineIndex,
-                         ((XLineBreakpointType<?>)type).createBreakpointProperties(file, lineIndex)));
+    return WriteAction.compute(() -> {
+      var properties = ((XLineBreakpointType<?>)type).createBreakpointProperties(file, lineIndex);
+      propertiesSetup.accept(properties);
+      return XDebuggerManager.getInstance(myProject).getBreakpointManager()
+        .addLineBreakpoint((XLineBreakpointType)type, file.getUrl(), lineIndex, properties);
+    });
+  }
+
+  private <B extends XBreakpoint<?>> XLineBreakpoint addXLineBreakpoint(Class<? extends XBreakpointType<B, ?>> typeCls, Document document, final int lineIndex) {
+    return addXLineBreakpoint(typeCls, document, lineIndex, p -> {});
   }
 
   /**

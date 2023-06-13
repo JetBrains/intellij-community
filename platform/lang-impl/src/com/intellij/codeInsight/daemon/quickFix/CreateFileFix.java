@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -37,7 +37,7 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final boolean myIsDirectory;
   private final String myNewFileName;
   private final String myText;
-  @PropertyKey(resourceBundle = CodeInsightBundle.BUNDLE) @NotNull private final String myKey;
+  private final @PropertyKey(resourceBundle = CodeInsightBundle.BUNDLE) @NotNull String myKey;
   private boolean myIsAvailable;
   private long myIsAvailableTimeStamp;
 
@@ -66,31 +66,27 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     this(isDirectory,newFileName,directory,null, isDirectory ? "create.directory.text":"create.file.text" );
   }
 
-  @Nullable
-  protected String getFileText() {
+  protected @Nullable String getFileText() {
     return myText;
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return CodeInsightBundle.message(myKey, myNewFileName);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return CodeInsightBundle.message("create.file.family");
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
     return null;
   }
 
   @Override
-  public void invoke(@NotNull final Project project,
+  public void invoke(final @NotNull Project project,
                      @NotNull PsiFile file,
                      Editor editor,
                      @NotNull PsiElement startElement,

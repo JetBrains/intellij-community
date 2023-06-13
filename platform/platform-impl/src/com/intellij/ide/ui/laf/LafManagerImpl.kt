@@ -594,6 +594,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private fun doSetLaF(lookAndFeelInfo: LookAndFeelInfo, installEditorScheme: Boolean): Boolean {
     val defaults = UIManager.getDefaults()
     defaults.clear()
+    IdeaLaf.fillFallbackDefaults(defaults)
     defaults.putAll(ourDefaults)
     if (!isFirstSetup) {
       colorPatcherProvider = null

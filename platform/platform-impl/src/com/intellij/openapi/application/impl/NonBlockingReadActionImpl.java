@@ -1,13 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
@@ -39,7 +42,9 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.api.metrics.Meter;
+import kotlin.coroutines.CoroutineContext;
 import kotlin.reflect.KClass;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -238,6 +243,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     @Nullable private Submission<?> myReplacement;
     @Nullable private final ProgressIndicator myProgressIndicator;
     @NotNull private final NonBlockingReadActionImpl<T> builder;
+    @NotNull private final CoroutineContext myContext;
 
     // a sum composed of: 1 for non-done promise, 1 for each currently running thread,
     // so 0 means that the process is marked completed or canceled, and it has no running not-yet-finished threads
@@ -249,6 +255,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     Submission(@NotNull NonBlockingReadActionImpl<T> builder,
                @NotNull Executor backgroundThreadExecutor,
                @Nullable ProgressIndicator outerIndicator) {
+      myContext = ThreadContext.currentThreadContext().minusKey(Job.Key);
       backendExecutor = backgroundThreadExecutor;
       this.builder = builder;
       if (builder.myCoalesceEquality != null) {
@@ -443,12 +450,20 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         acquire();
       }
       try {
-        backendExecutor.execute(ClientId.decorateRunnable(() -> {
+        Runnable r = ClientId.decorateRunnable(() -> {
           if (LOG.isTraceEnabled()) {
             LOG.trace("Running in background " + this);
           }
           try {
-            if (!attemptComputation()) {
+            boolean computationSuccessful;
+            if (AppExecutorUtil.propagateContextOrCancellation()) {
+              try (AccessToken ignored = ThreadContext.installThreadContext(myContext, false)) {
+                computationSuccessful = attemptComputation();
+              }
+            } else {
+              computationSuccessful = attemptComputation();
+            }
+            if (!computationSuccessful) {
               rescheduleLater();
             }
           }
@@ -457,7 +472,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
               release();
             }
           }
-        }));
+        });
+        backendExecutor.execute((ContextAwareRunnable)() -> r.run());
       }
       catch (RejectedExecutionException e) {
         LOG.warn("Rejected: " + this);
@@ -486,7 +502,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           ContextConstraint[] constraints = builder.myConstraints;
           if (shouldFinishOnEdt() || constraints.length != 0) {
             Semaphore semaphore = new Semaphore(1);
-            invokeLater(() -> {
+            invokeLater((ContextAwareRunnable) () -> {
               if (checkObsolete()) {
                 semaphore.up();
               }
@@ -553,7 +569,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
     private void rescheduleLater() {
       if (Promises.isPending(this)) {
-        invokeLater(() -> reschedule());
+        invokeLater((ContextAwareRunnable) () -> reschedule());
       }
     }
 
@@ -624,7 +640,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
       long stamp = AsyncExecutionServiceImpl.getWriteActionCounter();
 
-      ApplicationManager.getApplication().invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater((ContextAwareRunnable) () -> {
         if (stamp != AsyncExecutionServiceImpl.getWriteActionCounter()) {
           reschedule();
           return;
@@ -637,7 +653,13 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         setResult(result);
 
         if (isSucceeded()) { // in case when another thread managed to cancel it just before `setResult`
-          builder.myUiThreadAction.accept(result);
+          if (AppExecutorUtil.propagateContextOrCancellation()) {
+            try (AccessToken ignored = ThreadContext.installThreadContext(myContext, false)) {
+              builder.myUiThreadAction.accept(result);
+            }
+          } else {
+            builder.myUiThreadAction.accept(result);
+          }
         }
       }, builder.myModalityState, __ -> isCancelled());
     }

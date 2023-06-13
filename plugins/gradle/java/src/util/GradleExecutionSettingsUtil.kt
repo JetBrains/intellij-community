@@ -7,10 +7,12 @@ import com.intellij.execution.Location
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPackage
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.*
 
 
 fun createTestWildcardFilter(): String {
@@ -54,7 +56,8 @@ fun createTestFilterFrom(psiClass: PsiClass, methodName: String?): String {
   return createTestFilter(className, methodName, null)
 }
 
-fun createTestFilterFrom(psiClass: PsiClass, psiMethod: PsiMethod): String {
+fun createTestFilterFrom(psiMethod: PsiMethod): String {
+  val psiClass = psiMethod.containingClass!!
   val methodName = psiMethod.name
   return createTestFilterFrom(psiClass, methodName)
 }
@@ -81,10 +84,26 @@ fun createTestFilterFrom(location: Location<*>?, psiClass: PsiClass?, psiMethod:
 }
 
 private fun PsiClass.getRuntimeQualifiedName(): String? {
-  return when (val parent = parent) {
-    is PsiClass -> parent.getRuntimeQualifiedName() + "$" + name
-    else -> qualifiedName
+  val classes = getParents().filterIsInstance<PsiClass>()
+  val joiner = StringJoiner("$")
+  val rootClass = classes.last()
+  val qualifiedName = rootClass.qualifiedName ?: return null
+  joiner.add(qualifiedName)
+  for (innerClass in classes.dropLast(1).asReversed()) {
+    val name = innerClass.name ?: return null
+    joiner.add(name)
   }
+  return joiner.toString()
+}
+
+private fun PsiElement.getParents(): List<PsiElement> {
+  val parents = ArrayList<PsiElement>()
+  var element: PsiElement? = this
+  while (element != null) {
+    parents.add(element)
+    element = element.parent
+  }
+  return parents
 }
 
 private fun PsiClass.isJunit4ParameterizedClass(): Boolean {

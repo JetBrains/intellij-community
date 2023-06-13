@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
-import com.intellij.testFramework.workspaceModel.updateProjectModelAsync
+import com.intellij.testFramework.workspaceModel.update
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
@@ -59,7 +59,7 @@ class CustomContentFileSetTest {
       assertIteratedContent(projectModel.project, mustNotContain = listOf(root, file))
     }
 
-    WorkspaceModel.getInstance(projectModel.project).updateProjectModelAsync {
+    WorkspaceModel.getInstance(projectModel.project).update {
       val url = root.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
       it.addEntity(IndexingTestEntity(listOf(url), emptyList(), NonPersistentEntitySource))
     }
@@ -72,7 +72,7 @@ class CustomContentFileSetTest {
       assertIteratedContent(projectModel.project, mustContain = listOf(root, file))
     }
 
-    WorkspaceModel.getInstance(projectModel.project).updateProjectModelAsync {
+    WorkspaceModel.getInstance(projectModel.project).update {
       it.removeEntity(it.entities(IndexingTestEntity::class.java).single())
     }
 

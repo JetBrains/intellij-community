@@ -42,6 +42,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,11 +57,13 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
+import javax.swing.*;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.intellij.execution.services.ServiceViewContributor.CONTRIBUTOR_EP_NAME;
 
@@ -171,10 +174,10 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
           builder.icon = AllIcons.Toolwindows.ToolWindowServices;
           builder.hideOnEmptyContent = false;
           if (toolWindowId.equals(ToolWindowId.SERVICES)) {
-            builder.stripeTitle = () -> {
+          builder.stripeTitle = () -> {
               @NlsSafe String title = toolWindowId;
               return title;
-            };
+          };
           }
           return Unit.INSTANCE;
         });
@@ -222,7 +225,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         // Hide tool window only if model roots became empty and there were some services shown before update.
         toolWindow.hide();
       }
-    }, ModalityState.NON_MODAL, myProject.getDisposed());
+    }, ModalityState.nonModal(), myProject.getDisposed());
   }
 
   boolean shouldBeAvailable() {
@@ -267,9 +270,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     contentManager.addContent(mainContent);
     mainView.getModel().addModelListener(() -> {
       boolean isEmpty = mainView.getModel().getRoots().isEmpty();
-      AppUIExecutor.onUiThread().expireWith(myProject).submit(() -> {
-        if (contentManager.isDisposed()) return;
-
+      AppUIExecutor.onUiThread().expireWith(contentManager).submit(() -> {
         if (isEmpty) {
           if (contentManager.getIndexOfContent(mainContent) < 0) {
             if (contentManager.getContentCount() == 0) {
@@ -277,7 +278,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
             }
           }
           else if (contentManager.getContentCount() > 1) {
-              contentManager.removeContent(mainContent, false);
+            contentManager.removeContent(mainContent, false);
           }
         }
         else {
@@ -326,7 +327,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
       if (!loadedModels.isEmpty()) {
         ServiceViewModel modelToSelect = toSelect;
-        AppUIExecutor.onUiThread().expireWith(myProject).submit(() -> {
+        AppUIExecutor.onUiThread().expireWith(contentManager).submit(() -> {
           for (Pair<ServiceViewModel, ServiceViewState> pair : loadedModels) {
             extract(contentManager, pair.first, pair.second, false);
           }
@@ -408,7 +409,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   }
 
   private static void selectContent(Content content, boolean focus, Project project) {
-    AppUIExecutor.onUiThread().expireWith(project).submit(() -> {
+    AppUIExecutor.onUiThread().expireWith(content).submit(() -> {
       ContentManager contentManager = content.getManager();
       if (contentManager == null) return;
 
@@ -424,7 +425,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     // Ensure model is updated, then iterate over service views on EDT in order to find view with service and select it.
     myModel.getInvoker().invoke(() -> AppUIUtil.invokeLaterIfProjectAlive(myProject, () ->
       promiseFindView(contributorClass, result,
-                    serviceView -> serviceView.expand(service, contributorClass),
+                      serviceView -> serviceView.expand(service, contributorClass),
                       null)));
     return result;
   }
@@ -525,7 +526,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     viewModel.addModelListener(() -> {
       ServiceViewItem item = viewModel.getService();
       if (item != null && !viewModel.getChildren(item).isEmpty() && contentManager != null) {
-        AppUIExecutor.onUiThread().expireWith(myProject).submit(() -> {
+        AppUIExecutor.onUiThread().expireWith(contentManager).submit(() -> {
           ServiceViewItem viewItem = viewModel.getService();
           if (viewItem == null) return;
 
@@ -1039,7 +1040,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       myContributor = contributor;
       Presentation templatePresentation = getTemplatePresentation();
       templatePresentation.setText(ExecutionBundle.messagePointer("service.view.activate.tool.window.action.name",
-                                                               ServiceViewDragHelper.getDisplayName(contributorPresentation)));
+                                                                  ServiceViewDragHelper.getDisplayName(contributorPresentation)));
       templatePresentation.setIcon(contributorPresentation.getIcon(false));
       templatePresentation.setDescription(ExecutionBundle.messagePointer("service.view.activate.tool.window.action.description"));
     }

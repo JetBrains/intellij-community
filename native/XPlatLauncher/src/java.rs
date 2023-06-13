@@ -158,8 +158,8 @@ fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv
     release_jvm_init_args(jni_options);
 
     if create_jvm_result != jni::sys::JNI_OK {
-        let message = HOOK_MESSAGES.lock().unwrap().as_ref().unwrap().join("\n");
-        bail!("{}", if message.is_empty() { format!("Unknown error (JNI_CreateJavaVM: {})", create_jvm_result) } else { message });
+        let text = HOOK_MESSAGES.lock().unwrap().as_ref().unwrap().join("");
+        bail!("{}", if text.is_empty() { format!("Unknown error (JNI_CreateJavaVM: {})", create_jvm_result) } else { text });
     }
 
     *HOOK_MESSAGES.lock().unwrap() = None;

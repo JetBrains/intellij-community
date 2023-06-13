@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
@@ -18,7 +18,6 @@ import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
@@ -430,14 +429,7 @@ private fun Project.closeProject(save: Boolean = false) {
 }
 
 suspend fun Project.closeProjectAsync(save: Boolean = false) {
-  if (ApplicationManager.getApplication().isDispatchThread) {
-    runBlockingModal(this, "") {
-      ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this@closeProjectAsync, save = save)
-    }
-  }
-  else {
-    ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this, save = save)
-  }
+  ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this, save = save)
 }
 
 suspend fun openProjectAsync(path: Path, vararg activities: ProjectActivity): Project {

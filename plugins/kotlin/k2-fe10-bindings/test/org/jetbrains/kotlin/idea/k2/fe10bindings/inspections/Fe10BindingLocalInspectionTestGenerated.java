@@ -991,6 +991,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("ifElseBranches.kt")
+        public void testIfElseBranches() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/ifElseBranches.kt");
+        }
+
         @TestMetadata("lineBreaksAndComments.kt")
         public void testLineBreaksAndComments() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/lineBreaksAndComments.kt");
@@ -1536,6 +1541,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @TestMetadata("invokingByQualified.kt")
         public void testInvokingByQualified() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/invokingByQualified.kt");
+        }
+
+        @TestMetadata("nullableFunctionType.kt")
+        public void testNullableFunctionType() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/nullableFunctionType.kt");
         }
 
         @TestMetadata("override.kt")

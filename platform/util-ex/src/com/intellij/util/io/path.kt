@@ -25,10 +25,10 @@ fun Path.createDirectories(): Path = NioFiles.createDirectories(this)
  * Opposite to Java, parent directories will be created
  */
 @JvmOverloads
-fun Path.outputStream(append: Boolean = false): OutputStream {
+fun Path.outputStream(append: Boolean = false, vararg options: OpenOption): OutputStream {
   parent?.createDirectories()
   if (append) {
-    return Files.newOutputStream(this, StandardOpenOption.APPEND, StandardOpenOption.CREATE)
+    return Files.newOutputStream(this, StandardOpenOption.APPEND, StandardOpenOption.CREATE, *options)
   }
   return Files.newOutputStream(this)
 }

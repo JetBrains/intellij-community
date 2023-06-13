@@ -118,10 +118,13 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     }
     mySize = size;
 
+    Icon oldIcon = myIcon;
     myIcon = regular;
     myRegular = new CenteredIcon(regular, width, height);
     myHovered = new CenteredIcon(hovered, width, height);
     myInactive = new CenteredIcon(inactive, width, height);
+
+    firePropertyChange(AbstractButton.ICON_CHANGED_PROPERTY, oldIcon, regular);
   }
 
   @Override

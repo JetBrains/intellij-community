@@ -85,6 +85,4 @@ internal class IconDeferrerImpl : IconDeferrer() {
       }
     }
   }
-
-  override fun equalIcons(icon1: Icon?, icon2: Icon?): Boolean = DeferredIconImpl.equalIcons(icon1, icon2)
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.ActivityTracker;
@@ -399,7 +399,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
 
     ComponentRef(@Nullable Component component) {
       ref = component == null ? null : new WeakReference<>(component);
-      modalityState = component == null ? ModalityState.NON_MODAL : ModalityState.stateForComponent(component);
+      modalityState = component == null ? ModalityState.nonModal() : ModalityState.stateForComponent(component);
       modalContext = component == null ? null : Utils.isModalContext(component);
 
       SpeedSearchSupply supply = component instanceof JComponent ? SpeedSearchSupply.getSupply((JComponent)component) : null;

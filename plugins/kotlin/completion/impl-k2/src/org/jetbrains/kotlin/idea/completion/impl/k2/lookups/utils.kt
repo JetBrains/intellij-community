@@ -5,7 +5,11 @@ package org.jetbrains.kotlin.idea.completion.lookups
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.util.elementType
+import com.intellij.psi.util.nextLeaf
+import com.intellij.psi.util.prevLeaf
 import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
@@ -19,13 +23,15 @@ import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TypeTextProvider.getTypeTextForCallable
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TypeTextProvider.getTypeTextForClassifier
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
 
 internal fun KtAnalysisSession.withClassifierSymbolInfo(
     symbol: KtClassifierSymbol,
@@ -78,12 +84,20 @@ private fun KtSuperExpression.setSuperTypeQualifier(
     context: InsertionContext,
     superClassId: ClassId
 ) {
-    superTypeQualifier?.delete()
+    superTypeQualifier?.let { typeReference ->
+        val rangeToRemove = getSuperTypeQualifierRange(typeReference)
+        context.document.deleteString(rangeToRemove.startOffset, rangeToRemove.endOffset)
+    }
     val typeQualifier = "<${superClassId.asFqNameString()}>"
-    context.insertSymbol(typeQualifier, instanceReference.endOffset, moveCaretToEnd = false)
+    context.insertString(typeQualifier, instanceReference.endOffset, moveCaretToEnd = false)
     context.commitDocument()
     shortenReferencesInRange(context.file as KtFile, TextRange(this.endOffset, this.endOffset + typeQualifier.length))
 }
+
+private fun getSuperTypeQualifierRange(typeReference: KtTypeReference): TextRange = TextRange(
+    (typeReference.prevLeaf { it.elementType == KtTokens.LT } ?: typeReference).startOffset,
+    (typeReference.nextLeaf { it.elementType == KtTokens.GT } ?: typeReference).endOffset
+)
 
 /**
  * Checks whether [this] is possibly a subtype of [superType] by replacing all type arguments in [superType] with star projections and

@@ -9,7 +9,6 @@ import com.intellij.psi.PsiDocumentManager
 
 internal class FloatingCodeToolbarEditorCustomizer : TextEditorCustomizer {
   override fun customize(textEditor: TextEditor) {
-    if (!ApplicationManager.getApplication().isInternal) return
     val editor = textEditor.editor
     val project = editor.project ?: return
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return

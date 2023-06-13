@@ -88,6 +88,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   private boolean myCurrentCommandHasChanges;
   private final Set<VirtualFile> myChangedFilesInCurrentCommand = new HashSet<>();
   private boolean myCurrentCommandHasMoves;
+  private boolean myReallyExcludeCurrentCommandFromNavigation;
 
   private final SynchronizedClearableLazy<PersistentHashMap<String, Long>> recentFileTimestampMap;
 
@@ -264,8 +265,16 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public final void onSelectionChanged() {
-    myCurrentCommandIsNavigation = true;
+    if (!myReallyExcludeCurrentCommandFromNavigation) {
+      myCurrentCommandIsNavigation = true;
+    }
     myCurrentCommandHasMoves = true;
+  }
+
+  @Override
+  public void reallyExcludeCurrentCommandAsNavigation() {
+    myReallyExcludeCurrentCommandFromNavigation = true;
+    myCurrentCommandIsNavigation = false;
   }
 
   final void onCommandStarted() {
@@ -273,6 +282,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     myCurrentCommandIsNavigation = false;
     myCurrentCommandHasChanges = false;
     myCurrentCommandHasMoves = false;
+    myReallyExcludeCurrentCommandFromNavigation = false;
     myChangedFilesInCurrentCommand.clear();
   }
 
@@ -330,7 +340,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public final void includeCurrentCommandAsNavigation() {
-    myCurrentCommandIsNavigation = true;
+    if (!myReallyExcludeCurrentCommandFromNavigation) {
+      myCurrentCommandIsNavigation = true;
+    }
   }
 
   @Override

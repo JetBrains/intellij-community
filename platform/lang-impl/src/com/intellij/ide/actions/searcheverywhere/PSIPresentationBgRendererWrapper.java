@@ -33,7 +33,8 @@ import java.util.List;
 import java.util.function.Function;
 
 public final class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
-                                                               AutoCompletionContributor, PossibleSlowContributor {
+                                                               AutoCompletionContributor, PossibleSlowContributor,
+                                                               SearchFieldActionsContributor, SearchEverywhereExtendedInfoProvider {
   private final AbstractGotoSEContributor myDelegate;
 
   public PSIPresentationBgRendererWrapper(AbstractGotoSEContributor delegate) { myDelegate = delegate; }
@@ -203,6 +204,17 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   @Override
   public @Nls @Nullable String getAdvertisement() {
     return myDelegate.getAdvertisement();
+  }
+
+  @Override
+  public @Nullable ExtendedInfo createExtendedInfo() {
+    return myDelegate.createExtendedInfo();
+  }
+
+  @NotNull
+  @Override
+  public List<AnAction> createRightActions(@NotNull String pattern, @NotNull Runnable onChanged) {
+    return myDelegate.createRightActions(pattern, onChanged);
   }
 
   @Override

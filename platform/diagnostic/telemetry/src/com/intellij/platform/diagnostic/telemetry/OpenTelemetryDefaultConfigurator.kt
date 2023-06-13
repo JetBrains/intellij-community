@@ -4,6 +4,7 @@ package com.intellij.platform.diagnostic.telemetry
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedSpansProcessor
+import com.intellij.util.ConcurrencyUtil
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import io.opentelemetry.sdk.metrics.SdkMeterProvider
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 import java.time.Instant
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 @ApiStatus.Internal
@@ -61,9 +63,11 @@ open class OpenTelemetryDefaultConfigurator(protected val mainScope: CoroutineSc
 
   private fun registerMetricsExporter() {
     val registeredMetricsReaders = SdkMeterProvider.builder()
+    // can't reuse standard BoundedScheduledExecutorService because this library uses unsupported `scheduleAtFixedRate`
+    val pool = Executors.newScheduledThreadPool(1, ConcurrencyUtil.newNamedThreadFactory("PeriodicMetricReader"))
     metricsExporters.forEach { entry ->
       entry.metrics.forEach {
-        val metricsReader = PeriodicMetricReader.builder(it).setInterval(entry.duration).build()
+        val metricsReader = PeriodicMetricReader.builder(it).setExecutor(pool).setInterval(entry.duration).build()
         registeredMetricsReaders.registerMetricReader(metricsReader)
       }
     }

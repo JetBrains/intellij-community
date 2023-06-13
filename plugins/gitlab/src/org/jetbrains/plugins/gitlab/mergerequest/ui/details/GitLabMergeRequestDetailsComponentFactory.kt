@@ -14,6 +14,8 @@ import com.intellij.collaboration.ui.util.gap
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.panels.Wrapper
@@ -60,7 +62,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
             val detailsVm = loadingState.detailsVm
             val detailsPanel = createDetailsComponent(project, detailsVm, avatarIconsProvider).apply {
               val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
-              PopupHandler.installPopupMenu(this, actionGroup, "GitLabMergeRequestDetailsPanelPopup")
+              PopupHandler.installPopupMenu(this, actionGroup, ActionPlaces.POPUP)
               DataManager.registerDataProvider(this) { dataId ->
                 when {
                   GitLabMergeRequestsActionKeys.MERGE_REQUEST.`is`(dataId) -> detailsVm.detailsInfoVm.mergeRequest
@@ -85,16 +87,21 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     val cs = this
     val detailsInfoVm = detailsVm.detailsInfoVm
     val detailsReviewFlowVm = detailsVm.detailsReviewFlowVm
+    val branchesVm = detailsVm.branchesVm
     val statusVm = detailsVm.statusVm
     val changesVm = detailsVm.changesVm
-    val repository = detailsVm.repository
 
     val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
       add(CodeReviewDetailsCommitsComponentFactory.create(cs, changesVm) { commit: GitLabCommitDTO? ->
         createCommitsPopupPresenter(commit, changesVm.reviewCommits.value.size)
       })
-      add(GitLabMergeRequestDetailsBranchComponentFactory.create(project, cs, detailsInfoVm, repository))
+      add(CodeReviewDetailsBranchComponentFactory.create(
+        cs, branchesVm,
+        checkoutAction = ActionManager.getInstance().getAction("GitLab.Merge.Request.Branch.Checkout.Remote"),
+        dataContext = SimpleDataContext.builder()
+          .add(GitLabMergeRequestsActionKeys.REVIEW_BRANCH_VM, branchesVm)
+          .build()))
     }
     val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
 

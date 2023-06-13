@@ -63,6 +63,14 @@ class NotebookIntervalPointerConcurrentMap<Value>(messageBus: MessageBus, parent
     return mapReference.get()?.remove(cellPointer)
   }
 
+  /**
+   * It's possible to pass any collection, but implementation has special mode for a case with large Set<NotebookIntervalPointer>
+   * see [java.util.concurrent.ConcurrentHashMap.CollectionView.removeAll]
+   */
+  fun removeAll(cellPointers: Collection<NotebookIntervalPointer>): Boolean {
+    return mapReference.get()?.keys?.removeAll(cellPointers) ?: false
+  }
+
   override fun dispose() {
     mapReference.set(null)
   }

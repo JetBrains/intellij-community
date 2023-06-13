@@ -3,12 +3,9 @@
 
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
-import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeMenuBar
@@ -16,14 +13,12 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.GridLayout
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.IJSwingUtilities
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBUI
 import java.awt.*
-import java.awt.event.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.*
 
 private const val ALPHA = (255 * 0.6).toInt()
@@ -78,7 +73,7 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
     ideMenuHelper.updateUI()
   }
 
-  fun switchState(buttonSize: Dimension, actionToShow: AnAction? = null) {
+  fun switchState(actionToShow: AnAction? = null) {
     if (isShowing() && actionToShow == null) {
       hideExpandedMenuBar()
       return
@@ -90,18 +85,13 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
     expandedMenuBar = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
         row {
-          val closeButton = createMenuButton(CloseExpandedMenuAction()).apply {
-            setMinimumButtonSize(JBDimension(JBUI.unscale(buttonSize.width), JBUI.unscale(buttonSize.height)))
-          }
-          headerColorfulPanel = cell(HeaderColorfulPanel(listOf(closeButton, ideMenu)))
+          headerColorfulPanel = cell(HeaderColorfulPanel(ideMenu))
             .align(AlignY.FILL)
             .component
           cell(shadowComponent).align(Align.FILL)
-        }
+        }.resizableRow()
       }
     }.apply { isOpaque = false }
-
-    ideMenu.updateMenuActions(true)
 
     // menu wasn't a part of component's tree, updateUI is needed
     updateUI()
@@ -168,18 +158,15 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
     }
   }
 
-  private class HeaderColorfulPanel(components: List<JComponent>): JPanel() {
+  private class HeaderColorfulPanel(component: JComponent): JPanel() {
 
     var horizontalOffset = 0
 
     init {
       // Deny background painting by super.paint()
       isOpaque = false
-      layout = GridLayout()
-      val builder = RowsGridBuilder(this)
-      for (component in components) {
-        builder.cell(component, verticalAlign = VerticalAlign.FILL)
-      }
+      layout = BorderLayout()
+      add(component, BorderLayout.CENTER)
     }
 
     override fun paint(g: Graphics?) {
@@ -188,16 +175,9 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
       g.fillRect(0, 0, width, height)
       g.translate(-horizontalOffset, 0)
       val root = SwingUtilities.getRoot(this) as? Window
-      if (root == null) false else ProjectWindowCustomizerService.getInstance().paint(root, this, g)
+      if (root != null) ProjectWindowCustomizerService.getInstance().paint(root, this, g)
       g.translate(horizontalOffset, 0)
       super.paint(g)
-    }
-  }
-
-  private inner class CloseExpandedMenuAction : DumbAwareAction(ExpUiIcons.General.Close) {
-
-    override fun actionPerformed(e: AnActionEvent) {
-      hideExpandedMenuBar()
     }
   }
 

@@ -4,11 +4,13 @@ package com.intellij.ide.util;
 import com.intellij.ide.actions.CreateFileAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
@@ -23,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -33,6 +36,29 @@ import java.util.List;
 
 public final class PackageUtil {
   private static final Logger LOG = Logger.getInstance(PackageUtil.class);
+
+  /**
+   * @param withInnerClasses whether to include inner classes.
+   * @param scope the scope in which directories are searched.
+   * @return all classes that are declared under a {@link PsiPackage}, including classes in sub packages.
+   */
+  @NotNull
+  public static List<PsiClass> getClasses(@NotNull PsiPackage pkg, boolean withInnerClasses, @NotNull GlobalSearchScope scope) {
+    ProgressManager.checkCanceled();
+    return ReadAction.compute(() -> {
+      List<PsiClass> classes = new ArrayList<>();
+      for (PsiClass clazz : pkg.getClasses(scope)) {
+        classes.add(clazz);
+        if (withInnerClasses) {
+          classes.addAll(new SmartList<>(clazz.getAllInnerClasses()));
+        }
+      }
+      for (PsiPackage subPkg : pkg.getSubPackages(scope)) {
+        classes.addAll(getClasses(subPkg, withInnerClasses, scope));
+      }
+      return classes;
+    });
+  }
 
   @Nullable
   public static PsiDirectory findPossiblePackageDirectoryInModule(@NotNull Module module, @NotNull String packageName) {

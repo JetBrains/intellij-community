@@ -3,6 +3,7 @@ import polars as pl
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 
+
 def get_type(table):
     # type: (str) -> str
     return str(type(table))

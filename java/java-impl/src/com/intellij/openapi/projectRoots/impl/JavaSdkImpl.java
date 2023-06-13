@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
@@ -325,7 +325,7 @@ public final class JavaSdkImpl extends JavaSdk {
         SdkModificator modificator = sdk.getSdkModificator();
       return new Pair<>(root, modificator);
     })
-      .finishOnUiThread(ModalityState.NON_MODAL, rootAndModifiactor -> {
+      .finishOnUiThread(ModalityState.nonModal(), rootAndModifiactor -> {
         if (rootAndModifiactor == null) {
           return;
         }

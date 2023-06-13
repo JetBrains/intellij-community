@@ -109,6 +109,7 @@ class CompositeResolverForModuleFactory(
 
             yieldAll(getCommonProvidersIfAny(moduleInfo, moduleContext, moduleDescriptor, container)) // todo: module context
             yieldAll(getJsProvidersIfAny(moduleInfo, moduleContext, moduleDescriptor, container))
+            yieldAll(getWasmProvidersIfAny(moduleInfo, moduleContext, moduleDescriptor, container))
             yieldAll(getJvmProvidersIfAny(container))
             yieldAll(getNativeProvidersIfAny(moduleInfo, container))
             yieldAll(getExtensionsProvidersIfAny(moduleInfo, moduleContext, trace))
@@ -188,7 +189,18 @@ class CompositeResolverForModuleFactory(
     ): List<PackageFragmentProvider> {
         if (moduleInfo !is LibraryModuleInfo || !moduleInfo.platform.isJs()) return emptyList()
 
-        return createPackageFragmentProvider(moduleInfo, container, moduleContext, moduleDescriptor)
+        return createJsPackageFragmentProvider(moduleInfo, container, moduleContext, moduleDescriptor)
+    }
+
+    private fun getWasmProvidersIfAny(
+        moduleInfo: ModuleInfo,
+        moduleContext: ModuleContext,
+        moduleDescriptor: ModuleDescriptorImpl,
+        container: StorageComponentContainer
+    ): List<PackageFragmentProvider> {
+        if (moduleInfo !is LibraryModuleInfo || !moduleInfo.platform.isWasm()) return emptyList()
+
+        return createWasmPackageFragmentProvider(moduleInfo, container, moduleContext, moduleDescriptor)
     }
 
     private fun createContainerForCompositePlatform(

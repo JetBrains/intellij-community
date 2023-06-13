@@ -29,4 +29,4 @@ class UseProjectColorsCheckboxAction : CheckboxAction(IdeBundle.message("checkbo
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
-};
+}

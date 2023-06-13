@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application
 
 import com.intellij.openapi.application.*
@@ -41,7 +41,7 @@ class TransactionTest : LightPlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    assert(LaterInvocator.getCurrentModalityState() == ModalityState.NON_MODAL)
+    assert(LaterInvocator.getCurrentModalityState() == ModalityState.nonModal())
   }
 
   override fun tearDown() {
@@ -203,7 +203,7 @@ class TransactionTest : LightPlatformTestCase() {
                           assertWritingProhibited()
                           app.runWriteAction { log.add("3") }
                         }, ModalityState.any())
-        app.invokeLater({ app.runWriteAction { log.add("5") } }, ModalityState.NON_MODAL)
+        app.invokeLater({ app.runWriteAction { log.add("5") } }, ModalityState.nonModal())
       }.get()
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
       LaterInvocator.leaveModal(innerModal)
@@ -235,7 +235,7 @@ class TransactionTest : LightPlatformTestCase() {
 
       val process = {
         log.add("1")
-        assertThat(progress.modalityState).isNotEqualTo(ModalityState.NON_MODAL)
+        assertThat(progress.modalityState).isNotEqualTo(ModalityState.nonModal())
 
         val writeAction = Runnable {
           makeRootsChange()

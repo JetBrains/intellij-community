@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots
 
 import com.intellij.configurationStore.runInAllowSaveMode
@@ -10,7 +10,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.withModalProgressBlocking
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
@@ -55,14 +55,14 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     ModuleRootModificationUtil.addContentRoot(a, contentRootPath)
     ModuleRootModificationUtil.addDependency(a, b)
     val moduleManager = ModuleManager.getInstance(project)
-    runBlockingModal(project, "") {
+    withModalProgressBlocking(project, "") {
       moduleManager.setUnloadedModules(listOf("a"))
     }
     assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
     assertNull(moduleManager.findModuleByName("a"))
     assertNotNull(moduleManager.findModuleByName("b"))
 
-    runBlockingModal(project, "") {
+    withModalProgressBlocking(project, "") {
       moduleManager.setUnloadedModules(listOf("b"))
     }
     assertEquals("b", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
@@ -88,14 +88,14 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     }
 
     val moduleManager = ModuleManager.getInstance(project)
-    runBlockingModal(project, "") {
+    withModalProgressBlocking(project, "") {
       moduleManager.setUnloadedModules(listOf("a"))
     }
     assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
     assertNull(moduleManager.findModuleByName("a"))
     assertNotNull(moduleManager.findModuleByName("b"))
 
-    runBlockingModal(project, "") {
+    withModalProgressBlocking(project, "") {
       moduleManager.setUnloadedModules(listOf())
     }
 
@@ -111,7 +111,7 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     val a = createModule("a")
     val aImlPath = a.moduleFilePath
     val moduleManager = ModuleManager.getInstance(project)
-    runBlockingModal(project, "") {
+    withModalProgressBlocking(project, "") {
       moduleManager.setUnloadedModules(listOf("a"))
     }
     assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
@@ -128,7 +128,7 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     runInAllowSaveMode { project.save() }
     val imlFile = a.moduleFile!!
     val moduleManager = ModuleManager.getInstance(project)
-    runBlockingModal(project, "") {
+    withModalProgressBlocking(project, "") {
       moduleManager.setUnloadedModules(listOf("a"))
     }
 
@@ -144,7 +144,7 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     createModule("a")
     val b = createModule("b")
     val moduleManager = ModuleManager.getInstance(project)
-    runBlockingModal(project, "") {
+    withModalProgressBlocking(project, "") {
       moduleManager.setUnloadedModules(listOf("a"))
     }
     assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
@@ -163,7 +163,7 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     val root = getVirtualFile(createTempDir("module-lib"))
     ModuleRootModificationUtil.addModuleLibrary(a, "lib", listOf(root.url), emptyList())
     val moduleManager = ModuleManager.getInstance(project)
-    runBlockingModal(project, "") {
+    withModalProgressBlocking(project, "") {
       moduleManager.setUnloadedModules(listOf("a"))
     }
     
@@ -175,7 +175,7 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     val unloadedStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
     assertEquals("lib", unloadedStorage.entities(LibraryEntity::class.java).single().name)
 
-    runBlockingModal(project, "") {
+    withModalProgressBlocking(project, "") {
       moduleManager.setUnloadedModules(listOf())
     }
     assertEmpty(unloadedModuleEntities)

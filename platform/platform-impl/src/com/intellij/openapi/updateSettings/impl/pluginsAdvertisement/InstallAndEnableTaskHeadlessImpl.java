@@ -23,6 +23,6 @@ public class InstallAndEnableTaskHeadlessImpl
     }
     // Avoids creation of DialogWrapper and consequent leaks
     new PluginsAdvertiserDialogPluginInstaller(myProject, myPlugins, myCustomPlugins, super::runOnSuccess)
-      .doInstallPlugins(Predicates.alwaysTrue(), myModalityState != null ? myModalityState : ModalityState.NON_MODAL);
+      .doInstallPlugins(Predicates.alwaysTrue(), myModalityState != null ? myModalityState : ModalityState.nonModal());
   }
 }

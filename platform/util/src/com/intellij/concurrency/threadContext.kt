@@ -159,7 +159,7 @@ fun <T> withThreadLocal(variable: ThreadLocal<T>, update: (value: T) -> T): Acce
   val previousValue = variable.get()
   val newValue = update(previousValue)
   if (newValue === previousValue) {
-    return AccessToken.EMPTY_ACCESS_TOKEN;
+    return AccessToken.EMPTY_ACCESS_TOKEN
   }
   variable.set(newValue)
   return object : AccessToken() {

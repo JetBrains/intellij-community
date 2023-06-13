@@ -56,7 +56,7 @@ class WorkspaceModelAsyncTest {
       assertEquals(moduleName, (entityChange.newEntity as ModuleEntity).name)
     }
 
-    workspaceModel.updateProjectModelAsync("Test add new module asynchronously") {
+    workspaceModel.update("Test add new module asynchronously") {
       it.addModuleEntity(moduleName, emptyList(), object : EntitySource {})
     }
 
@@ -105,7 +105,7 @@ class WorkspaceModelAsyncTest {
     })
 
     val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
-    workspaceModel.updateProjectModelAsync("Test add new module asynchronously") {
+    workspaceModel.update("Test add new module asynchronously") {
       it.addModuleEntity(moduleName, emptyList(), object : EntitySource {})
     }
   }
@@ -153,7 +153,7 @@ class WorkspaceModelAsyncTest {
 
     moduleNames.map { moduleName ->
       launch {
-        workspaceModel.updateProjectModelAsync("Test add new module asynchronously") {
+        workspaceModel.update("Test add new module asynchronously") {
           it.addModuleEntity(moduleName, emptyList(), object : EntitySource {})
         }
       }

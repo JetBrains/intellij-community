@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.callMatcher;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -63,12 +63,51 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
   }
 
   /**
+   * @return a matcher that matches nothing
+   */
+  static CallMatcher none() {
+    return new CallMatcher() {
+      @Override
+      public Stream<String> names() {
+        return Stream.empty();
+      }
+
+      @Override
+      public boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef) {
+        return false;
+      }
+
+      @Override
+      public boolean test(@Nullable PsiMethodCallExpression call) {
+        return false;
+      }
+
+      @Override
+      public boolean methodMatches(@Nullable PsiMethod method) {
+        return false;
+      }
+
+      @Override
+      public boolean uCallMatches(@Nullable UCallExpression call) {
+        return false;
+      }
+
+      @Override
+      public boolean uCallableReferenceMatches(@Nullable UCallableReferenceExpression reference) {
+        return false;
+      }
+    };
+  }
+
+  /**
    * Returns a new matcher which will return true if any of supplied matchers return true
    *
    * @param matchers matchers to delegate to
    * @return a new matcher
    */
   static CallMatcher anyOf(CallMatcher... matchers) {
+    if (matchers.length == 0) return none();
+    if (matchers.length == 1) return matchers[0];
     return new CallMatcher() {
       @Override
       public Stream<String> names() {

@@ -62,7 +62,7 @@ class DummyMavenServerConnector(project: @NotNull Project,
 }
 
 class DummyMavenServer(val project: Project) : MavenServer {
-  private lateinit var watchdog: IdeaWatchdog;
+  private lateinit var watchdog: IdeaWatchdog
   override fun setWatchdog(watchdog: IdeaWatchdog) {
     this.watchdog = watchdog
   }
@@ -119,7 +119,7 @@ class DummyIndexer : MavenServerIndexer {
   override fun processArtifacts(indexId: MavenIndexId, startFrom: Int, token: MavenToken?): List<IndexedMavenId>? = null
 
   override fun addArtifacts(indexId: MavenIndexId, artifactFiles: MutableCollection<File>, token: MavenToken): MutableList<AddArtifactResponse> {
-    val responses = mutableListOf<AddArtifactResponse>();
+    val responses = mutableListOf<AddArtifactResponse>()
     for (artifactFile in artifactFiles) {
       responses.add(AddArtifactResponse(artifactFile, IndexedMavenId(null, null, null, null, null)))
     }

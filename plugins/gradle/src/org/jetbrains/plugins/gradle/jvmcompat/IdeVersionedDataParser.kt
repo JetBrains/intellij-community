@@ -17,7 +17,7 @@ abstract class IdeVersionedDataParser<T : IdeVersionedDataState> {
     }
 
     fun <T> parseVersion(p: String?, transform: (String) -> T): T? {
-      if (p == null || p == "INF") return null;
+      if (p == null || p == "INF") return null
       return transform(p)
     }
 

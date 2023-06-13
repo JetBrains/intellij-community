@@ -115,7 +115,7 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
           })
           .withDocumentsCommitted(myProject)
           .coalesceBy(DfaAssist.this)
-          .finishOnUiThread(ModalityState.NON_MODAL, hints -> DfaAssist.this.displayInlays(hints))
+          .finishOnUiThread(ModalityState.nonModal(), hints -> DfaAssist.this.displayInlays(hints))
           .submit(AppExecutorUtil.getAppExecutorService());
       }
     });

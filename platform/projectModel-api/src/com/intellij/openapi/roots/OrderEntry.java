@@ -49,7 +49,7 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    * If this instance represents dependency on a library or an SDK, use {@link LibraryOrSdkOrderEntry#getRootUrls(OrderRootType)} instead.
    * In other cases, use {@link OrderEnumerator} and specify what files from dependencies of a module you want to get.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   String @NotNull [] getUrls(@NotNull OrderRootType rootType);
 
   /**

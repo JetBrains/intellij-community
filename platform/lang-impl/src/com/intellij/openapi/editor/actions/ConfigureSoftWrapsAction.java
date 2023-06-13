@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +12,7 @@ import static com.intellij.ide.actions.ShowSettingsUtilImpl.showSettingsDialog;
 public class ConfigureSoftWrapsAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    showSettingsDialog(e.getProject(), "preferences.editor", "soft wraps");
+    showSettingsDialog(e.getProject(), "preferences.editor", ApplicationBundle.message("group.soft.wraps"));
   }
 
   @Override

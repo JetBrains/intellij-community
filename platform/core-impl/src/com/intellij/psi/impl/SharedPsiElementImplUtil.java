@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.Language;
@@ -21,8 +21,7 @@ public final class SharedPsiElementImplUtil {
 
   private SharedPsiElementImplUtil() { }
 
-  @Nullable
-  public static PsiReference findReferenceAt(PsiElement thisElement, int offset, @Nullable Language lang) {
+  public static @Nullable PsiReference findReferenceAt(PsiElement thisElement, int offset, @Nullable Language lang) {
     if (thisElement == null) return null;
     PsiElement element = lang != null ? thisElement.getContainingFile().getViewProvider().findElementAt(offset, lang) :
                          thisElement.findElementAt(offset);
@@ -47,8 +46,7 @@ public final class SharedPsiElementImplUtil {
                                  referencesList.get(referencesList.size() - 1).getElement());
   }
 
-  @Nullable
-  public static PsiReference findReferenceAt(PsiElement thisElement, int offset) {
+  public static @Nullable PsiReference findReferenceAt(PsiElement thisElement, int offset) {
     return findReferenceAt(thisElement, offset, null);
   }
 
@@ -78,8 +76,7 @@ public final class SharedPsiElementImplUtil {
     return ref != null ? new PsiReference[]{ref} : PsiReference.EMPTY_ARRAY;
   }
 
-  @Nullable
-  public static PsiElement getNextSibling(PsiElement element) {
+  public static @Nullable PsiElement getNextSibling(PsiElement element) {
     if (element instanceof PsiFile) {
       FileViewProvider viewProvider = ((PsiFile)element).getViewProvider();
       element = viewProvider.getPsi(viewProvider.getBaseLanguage());
@@ -93,8 +90,7 @@ public final class SharedPsiElementImplUtil {
     return 0 <= index && index < children.length - 1 ? children[index + 1] : null;
   }
 
-  @Nullable
-  public static PsiElement getPrevSibling(PsiElement element) {
+  public static @Nullable PsiElement getPrevSibling(PsiElement element) {
     if (element instanceof PsiFile) {
       FileViewProvider viewProvider = ((PsiFile)element).getViewProvider();
       element = viewProvider.getPsi(viewProvider.getBaseLanguage());

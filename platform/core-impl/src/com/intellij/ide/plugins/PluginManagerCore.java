@@ -27,7 +27,6 @@ import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.lang.ZipFilePool;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Deferred;
-import kotlinx.coroutines.GlobalScope;
 import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.*;
 
@@ -447,7 +446,6 @@ public final class PluginManagerCore {
    */
   @ApiStatus.Internal
   public static @NotNull CompletableFuture<List<IdeaPluginDescriptorImpl>> getEnabledPluginRawList() {
-    scheduleDescriptorLoading(GlobalScope.INSTANCE, null);
     return FutureKt.asCompletableFuture(initFuture).thenApply(it -> it.enabledPlugins);
   }
 
@@ -573,8 +571,7 @@ public final class PluginManagerCore {
                                          buildNumber != null ? buildNumber : getBuildNumber()) != null;
   }
 
-  @NotNull
-  public static Optional<IdeaPluginPlatform> getIncompatiblePlatform(@NotNull IdeaPluginDescriptor descriptor) {
+  public static @NotNull Optional<IdeaPluginPlatform> getIncompatiblePlatform(@NotNull IdeaPluginDescriptor descriptor) {
     return descriptor.getDependencies().stream()
       .map(d -> IdeaPluginPlatform.fromModuleId(d.getPluginId()))
       .filter(p -> p != null && !p.isHostPlatform())
@@ -820,7 +817,7 @@ public final class PluginManagerCore {
 
   @ReviseWhenPortedToJDK(value = "10, 11", description = "toUnmodifiableSet, Set.of, String.isBlank")
   @ApiStatus.Internal
-  public synchronized static @NotNull Set<PluginId> readPluginIdsFromFile(@NotNull Path path) throws IOException {
+  public static synchronized @NotNull Set<PluginId> readPluginIdsFromFile(@NotNull Path path) throws IOException {
     try (Stream<String> lines = Files.lines(path)) {
       return lines
         .map(String::trim)
@@ -834,7 +831,7 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  public synchronized static @NotNull Set<PluginId> tryReadPluginIdsFromFile(@NotNull Path path,
+  public static synchronized @NotNull Set<PluginId> tryReadPluginIdsFromFile(@NotNull Path path,
                                                                              @NotNull Logger logger) {
     try {
       return readPluginIdsFromFile(path);
@@ -846,7 +843,7 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  public synchronized static void writePluginIdsToFile(@NotNull Path path,
+  public static synchronized void writePluginIdsToFile(@NotNull Path path,
                                                        @NotNull Set<PluginId> pluginIds,
                                                        OpenOption... openOptions) throws IOException {
     writePluginIdsToFile(path,
@@ -855,7 +852,7 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  public synchronized static boolean tryWritePluginIdsToFile(@NotNull Path path,
+  public static synchronized boolean tryWritePluginIdsToFile(@NotNull Path path,
                                                              @NotNull Set<PluginId> pluginIds,
                                                              @NotNull Logger logger,
                                                              OpenOption... openOptions) {
@@ -871,7 +868,7 @@ public final class PluginManagerCore {
 
   @ReviseWhenPortedToJDK(value = "10", description = "toUnmodifiableList")
   @ApiStatus.Internal
-  public synchronized static void writePluginIdsToFile(@NotNull Path path,
+  public static synchronized void writePluginIdsToFile(@NotNull Path path,
                                                        @NotNull Stream<PluginId> pluginIds,
                                                        OpenOption... openOptions) throws IOException {
     writePluginIdsToFile(path,
@@ -880,7 +877,7 @@ public final class PluginManagerCore {
   }
 
   @VisibleForTesting
-  public synchronized static void writePluginIdsToFile(@NotNull Path path,
+  public static synchronized void writePluginIdsToFile(@NotNull Path path,
                                                        @NotNull Collection<String> pluginIds,
                                                        OpenOption... openOptions) throws IOException {
     NioFiles.createDirectories(path.getParent());

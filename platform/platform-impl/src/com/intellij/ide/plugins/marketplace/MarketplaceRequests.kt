@@ -36,6 +36,7 @@ import org.xml.sax.SAXException
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
 import java.net.URLConnection
 import java.net.UnknownHostException
 import java.nio.file.Files
@@ -291,6 +292,10 @@ class MarketplaceRequests : PluginInfoProvider {
     }
     catch (e: UnknownHostException) {
       LOG.infoOrDebug("Cannot get plugins from Marketplace", e)
+      return emptySet()
+    }
+    catch (es: SocketTimeoutException) {
+      LOG.infoOrDebug("Cannot get plugins from Marketplace", es)
       return emptySet()
     }
   }

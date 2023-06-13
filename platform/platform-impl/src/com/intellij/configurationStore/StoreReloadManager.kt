@@ -30,4 +30,7 @@ interface StoreReloadManager {
   suspend fun reloadChangedStorageFiles()
 
   fun storageFilesChanged(store: IComponentStore, storages: Collection<StateStorage>)
+  
+  @ApiStatus.Internal
+  fun storageFilesBatchProcessing(batchStorageEvents: Map<IComponentStore, Collection<StateStorage>>)
 }

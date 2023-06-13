@@ -281,6 +281,11 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
+    public boolean isDirty() {
+      return false;
+    }
+
+    @Override
     public @NotNull ValueContainer<Value> getData(@NotNull Key key) {
       return SnapshotSingleValueIndexStorage.empty();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util.proximity;
 
 import com.intellij.openapi.util.NotNullLazyKey;
@@ -17,7 +17,7 @@ public class InResolveScopeWeigher extends ProximityWeigher {
 
 
   @Override
-  public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
+  public Comparable weigh(final @NotNull PsiElement element, final @NotNull ProximityLocation location) {
     VirtualFile elementFile = PsiUtilCore.getVirtualFile(element);
     return elementFile != null && PLACE_SCOPE.getValue(location).contains(elementFile);
   }

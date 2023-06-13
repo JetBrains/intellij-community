@@ -3,16 +3,13 @@ package org.jetbrains.plugins.notebooks.visualization
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
-import java.awt.Color
 import java.awt.Graphics
-import java.awt.Rectangle
 import javax.swing.JComponent
 import kotlin.math.max
 import kotlin.math.min
@@ -75,6 +72,9 @@ fun Editor.getCells(lines: IntRange): List<NotebookCellLines.Interval> =
 
 fun Editor.getCellByOrdinal(ordinal: Int): NotebookCellLines.Interval =
   NotebookCellLines.get(this).intervals[ordinal]
+
+fun Editor.getCellByOffset(offset: Int): NotebookCellLines.Interval =
+  getCell(line = document.getLineNumber(offset))
 
 fun NotebookCellLines.getCells(lines: IntRange): Sequence<NotebookCellLines.Interval> =
   intervalsIterator(lines.first).asSequence().takeWhile { it.lines.first <= lines.last }

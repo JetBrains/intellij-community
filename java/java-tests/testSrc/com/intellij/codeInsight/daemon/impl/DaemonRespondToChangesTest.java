@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.options.editor.CodeFoldingConfigurable;
@@ -282,17 +282,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    if (isStressTest()) {
-      // all possible inspections
-      List<InspectionToolWrapper<?, ?>> all = InspectionToolRegistrar.getInstance().createTools();
-      List<LocalInspectionTool> locals = new ArrayList<>();
-      all.stream().filter(tool -> tool instanceof LocalInspectionToolWrapper).forEach(tool -> {
-        LocalInspectionTool e = ((LocalInspectionToolWrapper)tool).getTool();
-        locals.add(e);
-      });
-      return locals.toArray(LocalInspectionTool.EMPTY_ARRAY);
-    }
-    return new LocalInspectionTool[]{
+    return new LocalInspectionTool[] {
       new FieldCanBeLocalInspection(),
       new RequiredAttributesInspectionBase(),
       new CheckDtdReferencesInspection(),
@@ -1869,7 +1859,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         EditorTracker editorTracker = EditorTracker.getInstance(myProject);
         editorTracker.setActiveEditors(Collections.singletonList(editor));
         while (HeavyProcessLatch.INSTANCE.isRunning()) {
-          UIUtil.dispatchAllInvocationEvents();
+          CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
         }
         type("xxx"); // restart daemon
         assertTrue(editorTracker.getActiveEditors().contains(editor));
@@ -1879,7 +1869,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         // wait for the first pass to complete
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning() || !applied.contains(editor)) {
-          UIUtil.dispatchAllInvocationEvents();
+          CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
           if (System.currentTimeMillis() - start > 1000000) {
             fail("Too long waiting for daemon");
           }
@@ -1893,7 +1883,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           })
         );
         while (!HeavyProcessLatch.INSTANCE.isRunning()) {
-          UIUtil.dispatchAllInvocationEvents();
+          CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
         }
         applied.clear();
         collected.clear();
@@ -1904,7 +1894,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         while (System.currentTimeMillis() < start + 5000) {
           assertEmpty(applied);  // it should not restart
           assertEmpty(collected);
-          UIUtil.dispatchAllInvocationEvents();
+          CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
         }
       }
       finally {
@@ -2145,19 +2135,21 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     runWithReparseDelay(0, () -> {
       for (int i = 0; i < 1000; i++) {
         caretRight();
-        UIUtil.dispatchAllInvocationEvents();
+
+        CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
         caretLeft();
         Object updateProgress = new HashMap<>(myDaemonCodeAnalyzer.getUpdateProgress());
         long waitForDaemonStart = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress) && System.currentTimeMillis() < waitForDaemonStart + 5000) { // wait until the daemon started
-          UIUtil.dispatchAllInvocationEvents();
+          CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
         }
         if (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress)) {
           throw new RuntimeException("Daemon failed to start in 5000 ms");
         }
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning() && System.currentTimeMillis() < start + 500) {
-          UIUtil.dispatchAllInvocationEvents(); // wait for a bit more until ShowIntentionsPass.doApplyInformationToEditor() called
+          // wait for a bit more until ShowIntentionsPass.doApplyInformationToEditor() called
+          CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
         }
       }
     });

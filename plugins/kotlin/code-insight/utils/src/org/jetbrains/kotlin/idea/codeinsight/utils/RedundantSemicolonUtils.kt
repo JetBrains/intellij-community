@@ -101,9 +101,7 @@ private fun isRequiredForCompanion(semicolon: PsiElement): Boolean {
 
     val next = semicolon.getNextSiblingIgnoringWhitespaceAndComments() ?: return false
     val firstChildNode = next.firstChild?.node ?: return false
-    if (KtTokens.KEYWORDS.contains(firstChildNode.elementType)) return false
-
-    return true
+    return !KtTokens.KEYWORDS.contains(firstChildNode.elementType)
 }
 
 private val softModifierKeywords: List<String> = KtTokens.SOFT_KEYWORDS.types.mapNotNull { (it as? KtModifierKeywordToken)?.toString() }

@@ -85,7 +85,7 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
   @Override
   public void clearCaches() {
     try {
-      if (myMap.size() == 0) return;
+      if (myMap.isEmpty()) return;
 
       if (IndexDebugProperties.DEBUG) {
         String message = "Dropping caches for " + myIndexId + ", number of items:" + myMap.size();
@@ -114,6 +114,11 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
   @Override
   public void flush() throws IOException {
     myBackendStorage.flush();
+  }
+
+  @Override
+  public boolean isDirty() {
+    return myBackendStorage.isDirty();
   }
 
   @Override

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight.tooling
 
-import com.intellij.lang.OuterModelsModificationTrackerManager
+import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
@@ -71,8 +71,8 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
             TEST_FRAMEWORK_NAME_KEY,
             CachedValuesManager.getManager(declaration.project).createCachedValue {
                 CachedValueProvider.Result.create(
-                    testFramework.name,
-                    OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
+                  testFramework.name,
+                  OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
                 )
             }
         )

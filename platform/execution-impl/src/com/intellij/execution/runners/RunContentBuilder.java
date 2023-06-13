@@ -290,7 +290,6 @@ public final class RunContentBuilder extends RunTab {
       addActionsWithConstraints(afterStopActions.getChildren(null), new Constraints(AFTER, IdeActions.ACTION_STOP_PROGRAM),
                                 actionGroup, moreGroup);
       moreGroup.addSeparator();
-      moreGroup.add(new CreateAction());
 
       if (additionalActions.length > 0) {
         moreGroup.addSeparator();
@@ -298,6 +297,7 @@ public final class RunContentBuilder extends RunTab {
       }
 
       actionGroup.add(moreGroup);
+      moreGroup.add(new CreateAction());
     }
     return actionGroup;
   }

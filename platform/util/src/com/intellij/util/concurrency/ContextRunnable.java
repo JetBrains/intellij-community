@@ -25,6 +25,10 @@ final class ContextRunnable implements Runnable {
     }
   }
 
+  public Runnable getDelegate() {
+    return myRunnable;
+  }
+
   @Override
   public String toString() {
     return myRunnable.toString();

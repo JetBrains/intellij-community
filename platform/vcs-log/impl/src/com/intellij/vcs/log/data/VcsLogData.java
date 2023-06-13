@@ -88,7 +88,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     VcsLogProgress progress = new VcsLogProgress(this);
 
     if (VcsLogCachesInvalidator.getInstance().isValid()) {
-      myStorage = createStorage(logProviders);
+      myStorage = createStorage();
       myIndex = createIndex(logProviders, progress);
     }
     else {
@@ -129,12 +129,10 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     Disposer.register(this, myDisposableFlag);
   }
 
-  private @NotNull VcsLogStorage createStorage(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+  private @NotNull VcsLogStorage createStorage() {
     try {
       if (useSqlite) {
-        Set<VirtualFile> roots = new LinkedHashSet<>(logProviders.keySet());
-        String logId = PersistentUtil.calcLogId(myProject, logProviders);
-        return new SqliteVcsLogStorageBackend(myProject, logId, roots, logProviders, this);
+        return new SqliteVcsLogStorageBackend(myProject, myLogProviders, myErrorHandler, this);
       }
       return new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
     }

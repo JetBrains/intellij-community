@@ -24,6 +24,7 @@ abstract class ToolbarComboWidget: JComponent() {
   var rightIconsGap: Int by Delegates.observable(0, this::fireUpdateEvents)
   var hoverBackground: Color? by Delegates.observable(null, this::fireUpdateEvents)
   var transparentHoverBackground: Color? by Delegates.observable(null, this::fireUpdateEvents)
+  var highlightBackground: Color? by Delegates.observable(null, this::fireUpdateEvents)
   var isExpandable: Boolean by Delegates.observable(true, this::fireUpdateEvents)
 
   init {

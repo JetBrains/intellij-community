@@ -766,7 +766,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
             });
           }
           notification.notify(project);
-        }, ModalityState.NON_MODAL);
+        }, ModalityState.nonModal());
       }
     });
   }

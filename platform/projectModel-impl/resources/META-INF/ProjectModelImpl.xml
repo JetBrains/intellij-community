@@ -70,6 +70,10 @@
 
     <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
+
+    <projectService serviceInterface="com.intellij.openapi.roots.SingleFileSourcesTracker"
+                    serviceImplementation="com.intellij.openapi.roots.DefaultSingleFileSourcesTracker"/>
+
     <moduleService serviceInterface="com.intellij.openapi.roots.ModuleFileIndex"
                    serviceImplementation="com.intellij.openapi.roots.impl.ModuleFileIndexImpl"/>
 
@@ -78,7 +82,7 @@
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.ExcludedRootFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.core.fileIndex.impl.UnloadedContentRootFileIndexContributor"/>
-    <registryKey key="ide.new.project.model.strict.mode.rbs" defaultValue="true" restartRequired="true"
+    <registryKey key="ide.new.project.model.strict.mode.rbs" defaultValue="false" restartRequired="true"
                  description="Enable additional checks after replaceBySource and addDiff"/>
     <registryKey key="ide.workspace.model.assertions.on.update" defaultValue="false" restartRequired="false"
                  description="Enable workspace model consistency checking after every update"/>

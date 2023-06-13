@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.concurrency.captureThreadContext
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
@@ -114,14 +116,14 @@ object UpdateChecker {
   @JvmStatic
   fun updateAndShowResult(): ActionCallback {
     return ActionCallback().also {
-      ProcessIOExecutorService.INSTANCE.execute {
+      ProcessIOExecutorService.INSTANCE.execute(Runnable {
         doUpdateAndShowResult(
           userInitiated = false,
           preferDialog = false,
           showSettingsLink = true,
           callback = it,
         )
-      }
+      })
     }
   }
 

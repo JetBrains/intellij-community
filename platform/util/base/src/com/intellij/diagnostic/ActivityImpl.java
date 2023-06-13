@@ -47,8 +47,7 @@ public final class ActivityImpl implements Activity {
   }
 
   // Not clear - should we always set it on end of activity or not. Method maybe called in a such rare cases.
-  @Override
-  public void updateThreadName() {
+  private void updateThreadName() {
     Thread thread = Thread.currentThread();
     threadId = thread.getId();
     threadName = thread.getName();

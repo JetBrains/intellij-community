@@ -81,7 +81,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     String rcfile = switch (shellName) {
       case BASH_NAME, SH_NAME -> "shell-integrations/bash/bash-integration.bash";
       case ZSH_NAME -> "zsh/.zshenv";
-      case FISH_NAME -> "fish/init.fish";
+      case FISH_NAME -> "shell-integrations/fish/fish-integration.fish";
       default -> null;
     };
     if (rcfile == null && isPowerShell(shellName)) {
@@ -463,6 +463,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         // Multiple `--init-command=COMMANDS` are supported.
         resultCommand.add("--init-command=source " + CommandLineUtil.posixQuote(rcFilePath));
         shellType = ShellType.FISH;
+        withCommandBlocks = true;
       }
       else if (isPowerShell(shellName)) {
         resultCommand.addAll(List.of("-NoExit", "-ExecutionPolicy", "Bypass", "-File", rcFilePath));

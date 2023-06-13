@@ -362,8 +362,8 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   @Override
   public TextRange getHighlightRange(XLineBreakpoint<JavaLineBreakpointProperties> breakpoint) {
     PsiElement highlightedElement = null;
-    Integer ordinal = getLambdaOrdinal(breakpoint);
-    if (ordinal != null) {
+    Integer lambdaOrdinal = getLambdaOrdinal(breakpoint);
+    if (lambdaOrdinal != null) {
       Breakpoint<?> javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint);
       if (javaBreakpoint instanceof LineBreakpoint<?> lineBreakpoint) {
         assert breakpoint.getProperties() != null;
@@ -382,17 +382,25 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
   @Override
   public XSourcePosition getSourcePosition(@NotNull XBreakpoint<JavaLineBreakpointProperties> breakpoint) {
-    Integer ordinal = getLambdaOrdinal(breakpoint);
-    if (ordinal != null && ordinal > -1) {
-      return ReadAction.compute(() -> {
-        SourcePosition linePosition = createLineSourcePosition((XLineBreakpointImpl)breakpoint);
-        if (linePosition != null) {
-          return DebuggerUtilsEx.toXSourcePosition(new PositionManagerImpl.JavaSourcePosition(linePosition, ordinal));
+    JavaLineBreakpointProperties properties = breakpoint.getProperties();
+    if (properties == null) return null;
+
+    boolean condRet = properties.isConditionalReturn();
+    Integer lambdaOrdinal = properties.getLambdaOrdinal();
+    if (!condRet && (lambdaOrdinal == null || lambdaOrdinal == -1)) return null;
+
+    return ReadAction.compute(() -> {
+      SourcePosition linePosition = createLineSourcePosition((XLineBreakpointImpl)breakpoint);
+      if (linePosition != null) {
+        if (condRet) {
+          // Ignore lambda ordinal, return element should be unique on the line.
+          return XSourcePositionImpl.createByElement(findSingleConditionalReturn(linePosition));
+        } else {
+          return DebuggerUtilsEx.toXSourcePosition(new PositionManagerImpl.JavaSourcePosition(linePosition, lambdaOrdinal));
         }
-        return null;
-      });
-    }
-    return null;
+      }
+      return null;
+    });
   }
 
   @Nullable

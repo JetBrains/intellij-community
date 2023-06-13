@@ -257,7 +257,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   /** @deprecated use {@link #onTestFinished(boolean, Description)} or {@link #onTestFinished(boolean, String)} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void onTestFinished(boolean success) {
     onTestFinished(success, "unnamed_test");
   }

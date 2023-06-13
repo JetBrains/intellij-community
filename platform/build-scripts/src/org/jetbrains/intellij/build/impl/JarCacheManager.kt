@@ -9,12 +9,11 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jetbrains.intellij.build.MAVEN_REPO
+import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.dependencies.CacheDirCleanup
-import org.jetbrains.intellij.build.tasks.MAVEN_REPO
-import org.jetbrains.intellij.build.tasks.ZipSource
 import java.math.BigInteger
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
@@ -25,6 +24,8 @@ import java.util.*
 
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".json"
+
+private const val cacheVersion: Byte = 2
 
 internal sealed interface JarCacheManager {
   suspend fun computeIfAbsent(item: JarDescriptor,
@@ -51,6 +52,8 @@ private val json by lazy {
   }
 }
 
+private const val nonMavenLibPathPrefix = "__NOT_MAVEN__/"
+
 internal class LocalDiskJarCacheManager(private val cacheDir: Path) : JarCacheManager {
   init {
     Files.createDirectories(cacheDir)
@@ -68,20 +71,23 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path) : JarCacheMa
         return
       }
       else if (!source.file.startsWith(MAVEN_REPO)) {
-        span.addEvent("library file should be from maven repository", Attributes.of(AttributeKey.stringKey("file"), source.file.toString()))
-        producer()
-        return
+        sourceToRelativePath.put(nonMavenLibPathPrefix + source.file.toString(), source)
       }
-
-      val path = MAVEN_REPO.relativize(source.file).toString()
-      sourceToRelativePath.put(path, source)
+      else {
+        val path = MAVEN_REPO.relativize(source.file).toString()
+        sourceToRelativePath.put(path, source)
+      }
     }
 
     // 224 bit and not 256/512 - use a slightly shorter filename
     // xxh3 is not used as it is not secure and moreover, better to stick to JDK API
     val hash = sha3_224()
-    for (string in sourceToRelativePath.keys) {
+    hash.update(cacheVersion)
+    for ((string, source) in sourceToRelativePath) {
       hash.update(string.encodeToByteArray())
+      if (string.startsWith(nonMavenLibPathPrefix)) {
+        hash.update(Files.readAllBytes(source.file))
+      }
       hash.update('-'.code.toByte())
     }
 
@@ -89,7 +95,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path) : JarCacheMa
     val cacheName = targetFile.fileName.toString().removeSuffix(jarSuffix) +
                     "-" +
                     BigInteger(1, hash.digest()).toString(Character.MAX_RADIX)
-    val cacheFileName = cacheName.take(255 - jarSuffix.length) + jarSuffix
+    val cacheFileName = cacheName.take(255 - jarSuffix.length - 1) + jarSuffix
     val cacheFile = cacheDir.resolve(cacheFileName)
     val cacheMetadataFile = cacheDir.resolve(cacheName.take(255 - metaSuffix.length) + metaSuffix)
     if (checkCache(cacheMetadataFile = cacheMetadataFile,
@@ -108,7 +114,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path) : JarCacheMa
         ),
       )
 
-      // update file modification time to maintain FIFO caches i.e. in persistent cache folder on TeamCity agent and for CacheDirCleanup
+      // update file modification time to maintain FIFO caches i.e., in persistent cache folder on TeamCity agent and for CacheDirCleanup
       Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
       return
     }

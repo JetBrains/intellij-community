@@ -614,7 +614,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
     val actual = logger.testWriter.logged
     assertEquals(expected.size, actual.size)
-    for (i in 0 until expected.size) {
+    for (i in expected.indices) {
       assertEvent(actual[i], expected[i])
     }
   }

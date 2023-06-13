@@ -40,6 +40,7 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
+import com.intellij.ui.content.tabs.TabbedContentAction
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Consumer
 import com.intellij.util.ModalityUiUtil
@@ -567,38 +568,19 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   @JvmOverloads
   fun createPopupGroup(skipHideAction: Boolean = false): ActionGroup {
-    val group = GearActionGroup()
-    if (!skipHideAction) {
-      group.addSeparator()
-      group.add(HideAction())
+    return object : ActionGroupWrapper(GearActionGroup()) {
+      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+        val result = mutableListOf<AnAction>()
+        result.addAll(super.getChildren(e))
+        if (!skipHideAction) {
+          result.add(Separator.getInstance())
+          result.add(HideAction())
+        }
+        result.add(Separator.getInstance())
+        result.add(HelpAction())
+        return result.toTypedArray()
+      }
     }
-    group.addSeparator()
-    group.add(object : ContextHelpAction() {
-      override fun getHelpId(dataContext: DataContext): String? {
-        val content = contentManagerIfCreated?.selectedContent
-        if (content != null) {
-          val helpId = content.helpId
-          if (helpId != null) {
-            return helpId
-          }
-        }
-
-        val id = getHelpId()
-        if (id != null) {
-          return id
-        }
-
-        val context = if (content == null) dataContext else DataManager.getInstance().getDataContext(content.component)
-        return super.getHelpId(context)
-      }
-
-      override fun update(e: AnActionEvent) {
-        super.update(e)
-
-        e.presentation.isEnabledAndVisible = getHelpId(e.dataContext) != null
-      }
-    })
-    return group
   }
 
   override fun getEmptyText(): StatusText = (contentManager.value.component as ComponentWithEmptyText).emptyText
@@ -607,40 +589,70 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     decorator?.background = color
   }
 
-  private inner class GearActionGroup : DefaultActionGroup(), DumbAware {
+  private inner class HelpAction : ContextHelpAction() {
+    override fun getHelpId(dataContext: DataContext): String? {
+      val content = contentManagerIfCreated?.selectedContent
+      if (content != null) {
+        val helpId = content.helpId
+        if (helpId != null) {
+          return helpId
+        }
+      }
+      val id = getHelpId()
+      if (id != null) {
+        return id
+      }
+      val context = if (content == null) dataContext else DataManager.getInstance().getDataContext(content.component)
+      return super.getHelpId(context)
+    }
+
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isEnabledAndVisible = getHelpId(e.dataContext) != null
+    }
+  }
+
+  private inner class GearActionGroup : ActionGroup(), DumbAware {
     init {
       templatePresentation.icon = AllIcons.General.GearPlain
       if (toolWindowManager.isNewUi) {
         templatePresentation.icon = AllIcons.Actions.More
       }
       templatePresentation.text = IdeBundle.message("show.options.menu")
+    }
+
+    override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+      val group = DefaultActionGroup()
       val additionalGearActions = additionalGearActions
       if (additionalGearActions != null) {
         if (additionalGearActions.isPopup && !additionalGearActions.templatePresentation.text.isNullOrEmpty()) {
-          add(additionalGearActions)
+          group.add(additionalGearActions)
         }
         else {
-          addSorted(this, additionalGearActions)
+          addSorted(group, additionalGearActions)
         }
-        addSeparator()
+        group.addSeparator()
       }
-
+      getContentManagerIfCreated()?.let {
+        group.add(TabbedContentAction.CloseAllAction(it))
+      }
       val toggleToolbarGroup = ToggleToolbarAction.createToggleToolbarGroup(toolWindowManager.project, this@ToolWindowImpl)
       if (ToolWindowId.PREVIEW != id) {
         toggleToolbarGroup.addAction(ToggleContentUiTypeAction())
       }
 
-      addAction(toggleToolbarGroup).setAsSecondary(true)
-      add(ActionManager.getInstance().getAction("TW.ViewModeGroup"))
+      group.addAction(toggleToolbarGroup).setAsSecondary(true)
+      group.add(ActionManager.getInstance().getAction("TW.ViewModeGroup"))
       if (toolWindowManager.isNewUi) {
-        add(SquareStripeButton.createMoveGroup())
+        group.add(SquareStripeButton.createMoveGroup())
       }
       else {
-        add(ToolWindowMoveAction.Group())
+        group.add(ToolWindowMoveAction.Group())
       }
-      add(ResizeActionGroup())
-      addSeparator()
-      add(RemoveStripeButtonAction())
+      group.add(ResizeActionGroup())
+      group.addSeparator()
+      group.add(RemoveStripeButtonAction())
+      return group.getChildren(e)
     }
   }
 

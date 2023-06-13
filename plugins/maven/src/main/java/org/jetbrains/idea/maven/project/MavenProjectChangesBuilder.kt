@@ -86,6 +86,10 @@ class MavenProjectChangesBuilder : MavenProjectChanges() {
     setHasPropertyChanges(value)
   }
 
+  override fun toString(): String {
+    return "MavenProjectChangesBuilder(hasPackagingChanges=$hasPackagingChanges, hasOutputChanges=$hasOutputChanges, hasSourceChanges=$hasSourceChanges, hasDependencyChanges=$hasDependencyChanges, hasPluginsChanges=$hasPluginsChanges, hasPropertyChanges=$hasPropertyChanges)"
+  }
+
   companion object {
     @JvmStatic
     fun merged(a: MavenProjectChanges, b: MavenProjectChanges): MavenProjectChangesBuilder {

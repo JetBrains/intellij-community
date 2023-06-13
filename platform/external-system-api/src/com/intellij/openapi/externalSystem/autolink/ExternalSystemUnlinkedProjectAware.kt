@@ -24,7 +24,7 @@ interface ExternalSystemUnlinkedProjectAware {
 
   companion object {
 
-    val EP_NAME = ExtensionPointName.create<ExternalSystemUnlinkedProjectAware>("com.intellij.externalSystemUnlinkedProjectAware")
+    val EP_NAME: ExtensionPointName<ExternalSystemUnlinkedProjectAware> = ExtensionPointName.create<ExternalSystemUnlinkedProjectAware>("com.intellij.externalSystemUnlinkedProjectAware")
 
     @JvmStatic
     fun getInstance(systemId: ProjectSystemId): ExternalSystemUnlinkedProjectAware? {

@@ -39,11 +39,11 @@ class GitLabLazyProject(
   }
 
   private val allLabels = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-    api.loadAllProjectLabels(projectMapping.repository)
+    api.graphQL.loadAllProjectLabels(projectMapping.repository)
   }
 
   private val allMembers = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-    api.getAllProjectMembers(projectMapping.repository)
+    api.graphQL.getAllProjectMembers(projectMapping.repository)
   }
 
   override suspend fun getLabels(): List<GitLabLabelDTO> = allLabels.await()

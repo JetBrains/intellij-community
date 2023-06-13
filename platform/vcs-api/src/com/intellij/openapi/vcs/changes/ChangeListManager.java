@@ -32,7 +32,7 @@ public abstract class ChangeListManager implements ChangeListModification {
    *
    * @deprecated Method does nothing by itself, use {@link VcsDirtyScopeManager} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void scheduleUpdate();
 
   /**

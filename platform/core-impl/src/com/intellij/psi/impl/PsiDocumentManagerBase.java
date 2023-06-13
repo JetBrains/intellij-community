@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.core.CoreBundle;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
@@ -312,11 +313,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @ApiStatus.Internal
   public void addRunOnCommit(@NotNull Document document, @NotNull Runnable action) {
     List<Runnable> actions = myActionsAfterCommit.computeIfAbsent(document, __ -> ContainerUtil.createConcurrentList());
-    actions.add(ClientId.decorateRunnable(action));
+    actions.add(ThreadContext.captureThreadContext(ClientId.decorateRunnable(action)));
   }
 
-  @NotNull
-  private Runnable @NotNull [] getAndClearActionsAfterCommit(@NotNull Document document) {
+  private @NotNull Runnable @NotNull [] getAndClearActionsAfterCommit(@NotNull Document document) {
     List<Runnable> list = myActionsAfterCommit.remove(document);
     return list == null ? ArrayUtil.EMPTY_RUNNABLE_ARRAY : list.toArray(ArrayUtil.EMPTY_RUNNABLE_ARRAY);
   }
@@ -597,9 +597,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       actions = new CompositeRunnable();
       actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, actions);
     }
-    actions.add(ClientId.decorateRunnable(action));
+    actions.add(ThreadContext.captureThreadContext(ClientId.decorateRunnable(action)));
 
-    if (modality != ModalityState.NON_MODAL && TransactionGuard.getInstance().isWriteSafeModality(modality)) {
+    if (modality != ModalityState.nonModal() && TransactionGuard.getInstance().isWriteSafeModality(modality)) {
       // this client obviously expects all documents to be committed ASAP even inside modal dialog
       for (Document document : myUncommittedDocuments) {
         retainProviderAndCommitAsync(document, "re-added because performWhenAllCommitted(" + modality + ") was called", modality);
@@ -667,8 +667,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return;
     }
     Runnable[] list = getAndClearActionsAfterCommit(document);
-    for (Runnable runnable : list) {
-      runnable.run();
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      for (Runnable runnable : list) {
+        runnable.run();
+      }
     }
 
     if (app.isDispatchThread()) {
@@ -687,7 +689,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     List<Pair<Runnable, Throwable>> exceptions = new ArrayList<>();
     try {
       for (Runnable action : actions) {
-        try {
+        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
           action.run();
         }
         catch (ProcessCanceledException e) {
@@ -1176,8 +1178,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return myProject.isDefault();
   }
 
-  @NonNls
-  public String someDocumentDebugInfo(@NotNull Document document) {
+  public @NonNls String someDocumentDebugInfo(@NotNull Document document) {
     FileViewProvider viewProvider = getCachedViewProvider(document);
     return "cachedProvider: " + viewProvider +
            "; isEventSystemEnabled: " + isEventSystemEnabled(document) +

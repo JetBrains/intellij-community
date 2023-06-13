@@ -122,7 +122,7 @@ abstract class PathEditBase(final override val path: ByteArray) : PathEdit
 private fun encodePath(path: String): ByteArray {
   val bytes = Charsets.UTF_8.encode(path).toByteArray()
   if (SystemInfo.isWindows) {
-    for (i in 0 until bytes.size) {
+    for (i in bytes.indices) {
       if (bytes[i].toChar() == '\\') {
         bytes[i] = '/'.toByte()
       }

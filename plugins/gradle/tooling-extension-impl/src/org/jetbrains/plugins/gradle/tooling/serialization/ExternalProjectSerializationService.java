@@ -351,8 +351,8 @@ public final class ExternalProjectSerializationService implements SerializationS
       writeString(writer, "description", task.getDescription());
       writeString(writer, "group", task.getGroup());
       writeString(writer, "type", task.getType());
-      writer.setFieldName("isTest");
-      writer.writeBool(task.isTest());
+      writeBoolean(writer, "isTest", task.isTest());
+      writeBoolean(writer, "isJvmTest", task.isJvmTest());
       writer.stepOut();
     }
     writer.stepOut();
@@ -457,6 +457,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     task.setGroup(readString(reader, "group"));
     task.setType(readString(reader, "type"));
     task.setTest(readBoolean(reader, "isTest"));
+    task.setJvmTest(readBoolean(reader, "isJvmTest"));
     reader.stepOut();
     return task;
   }

@@ -19,7 +19,7 @@ import org.junit.jupiter.api.assertThrows
 import kotlin.coroutines.ContinuationInterceptor
 
 /**
- * @see RunBlockingModalTest
+ * @see WithModalProgressBlockingTest
  */
 class WithModalProgressTest : ModalCoroutineTest() {
 
@@ -43,7 +43,7 @@ class WithModalProgressTest : ModalCoroutineTest() {
         assertTrue(LaterInvocator.isInModalContext())
         val contextModality = coroutineContext.contextModality()
         assertNotEquals(ModalityState.any(), contextModality)
-        assertNotEquals(ModalityState.NON_MODAL, contextModality)
+        assertNotEquals(ModalityState.nonModal(), contextModality)
         assertSame(ModalityState.current(), contextModality)
       }
     }
@@ -61,7 +61,7 @@ class WithModalProgressTest : ModalCoroutineTest() {
           assertTrue(LaterInvocator.isInModalContext())
           val contextModality = coroutineContext.contextModality()
           assertNotEquals(ModalityState.any(), contextModality)
-          assertNotEquals(ModalityState.NON_MODAL, contextModality)
+          assertNotEquals(ModalityState.nonModal(), contextModality)
           assertSame(ModalityState.current(), contextModality)
         }
       }
@@ -71,12 +71,20 @@ class WithModalProgressTest : ModalCoroutineTest() {
 
   @Test
   fun dispatcher(): Unit = timeoutRunBlocking {
+    val dispatcher = coroutineContext[ContinuationInterceptor]
     withModalProgress {
-      assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
+      assertSame(dispatcher, coroutineContext[ContinuationInterceptor])
     }
     withContext(Dispatchers.EDT) {
       withModalProgress {
-        assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
+        assertSame(Dispatchers.EDT, coroutineContext[ContinuationInterceptor])
+      }
+    }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val limited = Dispatchers.Default.limitedParallelism(3)
+    withContext(limited) {
+      withModalProgress {
+        assertSame(limited, coroutineContext[ContinuationInterceptor])
       }
     }
   }
@@ -144,7 +152,7 @@ class WithModalProgressTest : ModalCoroutineTest() {
   @Test
   fun `modal delays non-modal`(): Unit = timeoutRunBlocking {
     val modalCoroutine = launchModalCoroutineAndWait(this)
-    val nonModalCoroutine = launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {}
+    val nonModalCoroutine = launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {}
     processApplicationQueue()
     assertFalse(nonModalCoroutine.isCompleted)
     modalCoroutine.cancel()
@@ -179,7 +187,7 @@ class WithModalProgressTest : ModalCoroutineTest() {
 
   @Test
   fun `non-modal edt coroutine is not resumed while modal is running`(): Unit = timeoutRunBlocking {
-    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+    withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
       val modalCoroutine = launch {
         withModalProgress {
           yield()

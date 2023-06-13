@@ -915,7 +915,7 @@ public final class PluginManagerConfigurable
           String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");
           visiblePlugins.get(Boolean.TRUE)
             .stream()
-            .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getCategory(), defaultCategory)))
+            .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getDisplayCategory(), defaultCategory)))
             .entrySet()
             .stream()
             .map(entry -> new ComparablePluginsGroup(entry.getKey(), entry.getValue()))
@@ -1525,6 +1525,13 @@ public final class PluginManagerConfigurable
     ShowSettingsUtil.getInstance().editConfigurable(project,
                                                     configurable,
                                                     () -> configurable.select(pluginIds));
+  }
+
+  public static void showSuggestedPlugins(@Nullable Project project) {
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
+    ShowSettingsUtil.getInstance().editConfigurable(project,
+                                                    configurable,
+                                                    () -> configurable.openMarketplaceTab("/suggested"));
   }
 
   public static void showPluginConfigurable(@Nullable Component parent,

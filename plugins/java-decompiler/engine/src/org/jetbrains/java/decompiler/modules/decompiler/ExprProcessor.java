@@ -5,6 +5,7 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.Instruction;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -111,6 +112,8 @@ public class ExprProcessor implements CodeConstants {
   }
 
   public void processStatement(RootStatement root, StructClass cl) {
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
+
     FlattenStatementsHelper flattenHelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flattenHelper.buildDirectGraph(root);
 
@@ -145,6 +148,7 @@ public class ExprProcessor implements CodeConstants {
     mapData.put(dgraph.first, map);
 
     while (!stack.isEmpty()) {
+      cancellationManager.checkSavedCancelled();
       DirectNode node = stack.removeFirst();
       LinkedList<String> entryPoints = stackEntryPoint.removeFirst();
 
@@ -165,6 +169,7 @@ public class ExprProcessor implements CodeConstants {
       String currentEntrypoint = entryPoints.isEmpty() ? null : entryPoints.getLast();
 
       for (DirectNode nd : node.successors) {
+        cancellationManager.checkSavedCancelled();
         boolean isSuccessor = true;
 
         if (currentEntrypoint != null && dgraph.mapLongRangeFinallyPaths.containsKey(node.id)) {

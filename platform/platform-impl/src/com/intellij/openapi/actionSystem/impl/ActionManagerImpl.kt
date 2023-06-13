@@ -8,6 +8,7 @@ import com.intellij.BundleBase.message
 import com.intellij.DynamicBundle
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
+import com.intellij.concurrency.installThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.icons.AllIcons
@@ -54,11 +55,14 @@ import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.DefaultBundleService
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.createChildContext
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.xml.dom.XmlElement
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.AWTEvent
@@ -74,6 +78,7 @@ import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.Timer
+import kotlin.coroutines.CoroutineContext
 
 open class ActionManagerImpl protected constructor() : ActionManagerEx(), Disposable {
   private val lock = Any()
@@ -181,8 +186,10 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       timer = MyTimer()
       timer!!.start()
     }
-    timer!!.listeners.add(listener)
+    val wrappedListener = if (AppExecutorUtil.propagateContextOrCancellation()) CapturingListener(listener) else listener
+    timer!!.listeners.add(wrappedListener)
   }
+
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
@@ -1299,6 +1306,25 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         }
       }, ModalityState.defaultModalityState())
   }
+
+
+  private class CapturingListener(private val myTimerListener: TimerListener) : TimerListener by myTimerListener {
+    val myContext: CoroutineContext
+    val myJob: Job?
+
+    init {
+      val (context, job) = createChildContext()
+      myContext = context
+      myJob = job
+    }
+
+    override fun run() {
+      installThreadContext(myContext).use {
+        myTimerListener.run()
+      }
+    }
+  }
+
 
   private inner class MyTimer : Timer(TIMER_DELAY, null), ActionListener {
     @JvmField

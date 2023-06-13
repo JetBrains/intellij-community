@@ -5,16 +5,24 @@ import java.util.ArrayList;
 
 public class SizeReplaceableByIsEmpty {
 
-  boolean foo(String s) {
+  boolean equalsToZero(String s) {
     return <warning descr="'s.length() == 0' can be replaced with 's.isEmpty()'">s.length() == 0</warning>;
+  }
+
+  boolean minusThanOne(String s) {
+    return <warning descr="'s.length() < 1' can be replaced with 's.isEmpty()'">s.length() < 1</warning>;
   }
 
   boolean bas(StringBuilder b) {
     return b.length() == 0;
   }
 
-  boolean bar(Collection c) {
+  boolean collectionEqualsToZero(Collection c) {
     return <warning descr="'c.size() == 0' can be replaced with 'c.isEmpty()'">c.size() == 0</warning>;
+  }
+
+  boolean collectionMinusThanOne(Collection c) {
+    return <warning descr="'c.size() < 1' can be replaced with 'c.isEmpty()'">c.size() < 1</warning>;
   }
 
   boolean parens(Collection c) {

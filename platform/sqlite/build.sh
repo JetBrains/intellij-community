@@ -19,7 +19,7 @@ createSysRoot() {
     imageArch=arm64/v8
   fi
 
-  nerdctl pull buildpack-deps:bionic
+  nerdctl pull --platform linux/$imageArch buildpack-deps:bionic
 
   mkdir -p "$outDir"
   # use old glibc (2.24)

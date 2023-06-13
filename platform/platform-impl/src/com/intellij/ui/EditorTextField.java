@@ -450,11 +450,12 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
     Disposer.register(myDisposable, () -> {
       // remove traces of this editor from UndoManager to avoid leaks
-      if (myDocument != null) {
-        if (getProject() != null) {
-          ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearDocumentReferences(myDocument);
+      Document document = myDocument;
+      if (document != null) {
+        if (project != null && !project.isDisposed()) {
+          ((UndoManagerImpl)UndoManager.getInstance(project)).clearDocumentReferences(document);
         }
-        ((UndoManagerImpl)UndoManager.getGlobalInstance()).clearDocumentReferences(myDocument);
+        ((UndoManagerImpl)UndoManager.getGlobalInstance()).clearDocumentReferences(document);
       }
     });
   }

@@ -8,6 +8,7 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -147,7 +148,9 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
       foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, regionInfos,
                                                                                              UpdateFoldRegionsOperation.ApplyDefaultStateMode.YES,
                                                                                              false, false));
-      initFolding(editor);
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-319892, EA-838676")) {
+        initFolding(editor);
+      }
     };
   }
 

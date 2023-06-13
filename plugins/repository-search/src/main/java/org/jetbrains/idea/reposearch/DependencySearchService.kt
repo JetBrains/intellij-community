@@ -56,19 +56,19 @@ class DependencySearchService(private val project: Project) : Disposable {
     }
 
 
-    val localResultSet: MutableSet<RepositoryArtifactData> = LinkedHashSet()
+    val localResultSet = RepositoryArtifactDataStorage()
     localProviders().forEach { lp -> searchMethod(lp) { localResultSet.add(it) } }
-    localResultSet.forEach(consumer)
+    localResultSet.getAll().forEach(consumer)
 
     val remoteProviders = remoteProviders()
 
     if (parameters.isLocalOnly || remoteProviders.isEmpty()) {
-      thisNewFuture.complete(localResultSet)
+      thisNewFuture.complete(localResultSet.getAll())
       return resolvedPromise(0)
     }
 
     val promises: MutableList<Promise<Void>> = ArrayList(remoteProviders.size)
-    val resultSet = Collections.synchronizedSet(localResultSet)
+    val resultSet = RepositoryArtifactDataStorage()
     for (provider in remoteProviders) {
       val promise = AsyncPromise<Void>()
       promises.add(promise)
@@ -76,11 +76,15 @@ class DependencySearchService(private val project: Project) : Disposable {
       executorService.submit {
         try {
           ProgressManager.getInstance().runProcess({
-                                                     searchMethod(provider) { if (resultSet.add(it)) consumer(it) }
+                                                     searchMethod(provider) {
+                                                       resultSet.add(it)
+                                                       consumer(it)
+                                                     }
                                                      promise.setResult(null)
                                                    }, wrapper)
         }
         catch (e: Exception) {
+          logWarn("Exception getting data from provider $provider", e)
           promise.setError(e)
         }
       }
@@ -88,7 +92,7 @@ class DependencySearchService(private val project: Project) : Disposable {
 
     return promises.all(resultSet, ignoreErrors = true).then {
       if (!resultSet.isEmpty() && existingFuture == null) {
-        thisNewFuture.complete(resultSet)
+        thisNewFuture.complete(resultSet.getAll())
       }
       return@then 1
     }
@@ -124,7 +128,7 @@ class DependencySearchService(private val project: Project) : Disposable {
     }
   }
 
-  fun getGroupIds(pattern: String?): Set<String>{
+  fun getGroupIds(pattern: String?): Set<String> {
     val result = mutableSetOf<String>()
     fulltextSearch(pattern ?: "", SearchParameters(true, true)) {
       if (it is MavenRepositoryArtifactInfo) {
@@ -134,7 +138,7 @@ class DependencySearchService(private val project: Project) : Disposable {
     return result
   }
 
-  fun getArtifactIds(groupId: String): Set<String>{
+  fun getArtifactIds(groupId: String): Set<String> {
     ProgressIndicatorProvider.checkCanceled()
     val result = mutableSetOf<String>()
     fulltextSearch("$groupId:", SearchParameters(true, true)) {
@@ -147,7 +151,7 @@ class DependencySearchService(private val project: Project) : Disposable {
     return result
   }
 
-  fun getVersions(groupId: String, artifactId: String): Set<String>{
+  fun getVersions(groupId: String, artifactId: String): Set<String> {
     ProgressIndicatorProvider.checkCanceled()
     val result = mutableSetOf<String>()
     fulltextSearch("$groupId:$artifactId", SearchParameters(true, true)) {
@@ -200,4 +204,16 @@ class DependencySearchService(private val project: Project) : Disposable {
     cache.clear()
   }
 
+
+  class RepositoryArtifactDataStorage {
+    private val map = HashMap<String, RepositoryArtifactData>();
+
+    @Synchronized
+    fun add(data: RepositoryArtifactData) {
+      map.merge(data.key, data) { old, new -> old.mergeWith(new) }
+    }
+
+    fun getAll() = map.values
+    fun isEmpty() = map.isEmpty()
+  }
 }

@@ -33,7 +33,6 @@ import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
-import org.jetbrains.intellij.build.tasks.*
 import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement
@@ -45,6 +44,7 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
+import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZonedDateTime
@@ -808,6 +808,10 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout,
     return false
   }
 
+  if (bundlingRestrictions.includeInNightlyOnly && !context.options.isNightlyBuild) {
+    return false
+  }
+
   if (bundlingRestrictions == PluginBundlingRestrictions.EPHEMERAL) {
     return if (withEphemeral) osFamily == null && arch == null else false
   }
@@ -1132,7 +1136,7 @@ private fun buildBlockMap(file: Path, json: JSON) {
   val fileParent = file.parent
   val fileName = file.fileName.toString()
   writeNewZip(fileParent.resolve("$fileName.blockmap.zip"), compress = true) {
-    it.compressedData("blockmap.json", bytes)
+    it.compressedData("blockmap.json", ByteBuffer.wrap(bytes))
   }
 
   val hashFile = fileParent.resolve("$fileName.hash.json")

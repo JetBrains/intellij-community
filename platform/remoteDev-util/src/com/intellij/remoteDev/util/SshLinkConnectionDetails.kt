@@ -1,5 +1,6 @@
 package com.intellij.remoteDev.util
 
+import com.intellij.ui.ExperimentalUI
 import org.jetbrains.annotations.ApiStatus
 import kotlin.jvm.Throws
 
@@ -35,15 +36,19 @@ data class SshLinkConnectionDetails(
       UrlParameterKeys.port to port.toString(),
       UrlParameterKeys.user to user,
       UrlParameterKeys.type to CONNECTION_TYPE_SSH,
-      UrlParameterKeys.deploy to false.toString()
+      UrlParameterKeys.deploy to false.toString(),
+      UrlParameterKeys.newUi to ExperimentalUI.isNewUI().toString(),
     )
   }
 }
 
 @Throws(IllegalStateException::class)
 private fun validateSshLinkParams(params: Map<String, String>) {
-  val requiredKeys = arrayOf(UrlParameterKeys.host, UrlParameterKeys.user, UrlParameterKeys.port,
-    UrlParameterKeys.type, UrlParameterKeys.idePath, UrlParameterKeys.projectPath, UrlParameterKeys.deploy)
+  val requiredKeys = arrayOf(
+    UrlParameterKeys.host, UrlParameterKeys.user, UrlParameterKeys.port,
+    UrlParameterKeys.type, UrlParameterKeys.idePath, UrlParameterKeys.projectPath,
+    UrlParameterKeys.deploy
+  )
   for (key in requiredKeys) {
     if (!params.containsKey(key)) error("Invalid ssh link parameters: doesn't contain ${key}")
   }

@@ -784,6 +784,29 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/handlers/basic/superEntry")
+    public static class SuperEntry extends AbstractBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("SuperTypeArg.kt")
+        public void testSuperTypeArg() throws Exception {
+            runTest("../testData/handlers/basic/superEntry/SuperTypeArg.kt");
+        }
+
+        @TestMetadata("SuperTypeArgWithCall.kt")
+        public void testSuperTypeArgWithCall() throws Exception {
+            runTest("../testData/handlers/basic/superEntry/SuperTypeArgWithCall.kt");
+        }
+
+        @TestMetadata("SuperTypeArgWithCall2.kt")
+        public void testSuperTypeArgWithCall2() throws Exception {
+            runTest("../testData/handlers/basic/superEntry/SuperTypeArgWithCall2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/topLevelDeclarations")
     public static class TopLevelDeclarations extends AbstractBasicCompletionHandlerTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -1329,11 +1352,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/SuperMethodWithDifferentParameterNames.kt");
         }
 
-        @TestMetadata("SuperTypeArg.kt")
-        public void testSuperTypeArg() throws Exception {
-            runTest("../testData/handlers/basic/SuperTypeArg.kt");
-        }
-
         @TestMetadata("SyntheticExtension.kt")
         public void testSyntheticExtension() throws Exception {
             runTest("../testData/handlers/basic/SyntheticExtension.kt");
@@ -1372,6 +1390,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("TypeParameter.kt")
         public void testTypeParameter() throws Exception {
             runTest("../testData/handlers/basic/TypeParameter.kt");
+        }
+
+        @TestMetadata("VarargBeforeNoArg.kt")
+        public void testVarargBeforeNoArg() throws Exception {
+            runTest("../testData/handlers/basic/VarargBeforeNoArg.kt");
         }
     }
 

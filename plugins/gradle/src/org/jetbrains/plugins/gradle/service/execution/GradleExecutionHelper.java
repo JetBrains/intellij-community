@@ -357,7 +357,7 @@ public class GradleExecutionHelper {
 
     setupJavaHome(operation, settings);
 
-    setupProgressListeners(operation, id, listener, buildEnvironment);
+    setupProgressListeners(operation, settings, id, listener, buildEnvironment);
 
     setupStandardIO(operation, settings, id, listener);
 
@@ -375,6 +375,7 @@ public class GradleExecutionHelper {
 
   private static void setupProgressListeners(
     @NotNull LongRunningOperation operation,
+    @NotNull GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskId id,
     @NotNull ExternalSystemTaskNotificationListener listener,
     @Nullable BuildEnvironment buildEnvironment
@@ -383,7 +384,7 @@ public class GradleExecutionHelper {
     GradleProgressListener progressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)progressListener);
     operation.addProgressListener(progressListener, OperationType.TASK, OperationType.FILE_DOWNLOAD);
-    if (operation instanceof TestLauncher) {
+    if (settings.isRunAsTest() && settings.isBuiltInTestEventsUsed()) {
       operation.addProgressListener(progressListener, OperationType.TEST, OperationType.TEST_OUTPUT);
     }
   }
@@ -460,7 +461,7 @@ public class GradleExecutionHelper {
       setupTestLauncherArguments(testLauncher, commandLine);
     }
     else if (operation instanceof BuildLauncher buildLauncher) {
-      setupBuildLauncherArguments(buildLauncher, commandLine, settings.isRunAsTest());
+      setupBuildLauncherArguments(buildLauncher, commandLine, settings);
     }
     else {
       operation.withArguments(commandLine.getTokens());
@@ -508,12 +509,12 @@ public class GradleExecutionHelper {
   private static void setupBuildLauncherArguments(
     @NotNull BuildLauncher buildLauncher,
     @NotNull GradleCommandLine commandLine,
-    boolean isRunAsTest
+    @NotNull GradleExecutionSettings settings
   ) {
     buildLauncher.forTasks(ArrayUtil.toStringArray(commandLine.getTasks().getTokens()));
     buildLauncher.withArguments(commandLine.getOptions().getTokens());
-    if (isRunAsTest) {
-      var initScript = GradleInitScriptUtil.createTestInitScript(commandLine.getTasks());
+    if (settings.isTestTaskRerun()) {
+      var initScript = GradleInitScriptUtil.createTestInitScript();
       buildLauncher.addArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString());
     }
   }

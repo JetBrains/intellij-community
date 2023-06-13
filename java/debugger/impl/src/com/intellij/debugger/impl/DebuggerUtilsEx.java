@@ -854,7 +854,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       }
       PsiFile psiFile = getPsiFile(position, project);
       if (psiFile != null) {
-        return SourcePosition.createFromLine(psiFile, position.getLine());
+        return SourcePosition.createFromOffset(psiFile, position.getOffset());
       }
     }
     return null;

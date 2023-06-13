@@ -7,6 +7,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.exists
+import kotlin.io.path.name
 
 internal class DotnetIcon(val file: Path) {
   class Braces(val start: String, val end: String)
@@ -51,11 +52,10 @@ internal class DotnetIcon(val file: Path) {
   fun moveToDir(targetDir: Path) : DotnetIcon {
     if (!Files.exists(file)) error("$file not exist")
     if (file.parent == targetDir) return this
-    val name = "$name$suffix$extension"
-    val target = targetDir.resolve(name)
+    val target = targetDir.resolve(file.name)
     if (!targetDir.exists()) targetDir.createDirectories()
     Files.move(file, target, StandardCopyOption.REPLACE_EXISTING)
-    return DotnetIcon(targetDir)
+    return DotnetIcon(target)
   }
 
   fun delete() {

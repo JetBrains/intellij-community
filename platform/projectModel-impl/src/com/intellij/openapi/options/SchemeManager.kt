@@ -58,7 +58,7 @@ abstract class SchemeManager<T> {
    *
    * Scheme manager processor must be LazySchemeProcessor
    */
-  abstract fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?)
+  abstract fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?): T?
 
   @JvmOverloads
   open fun setSchemes(newSchemes: List<T>, newCurrentScheme: T? = null, removeCondition: Predicate<T>? = null) {

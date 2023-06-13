@@ -2,25 +2,29 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
-import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.*
+import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
+import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.core.moveCaret
+import org.jetbrains.kotlin.idea.inspections.Action.*
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.countUsages
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.previousStatement
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.lexer.KtTokens.ELVIS
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
@@ -31,23 +35,50 @@ class MoveVariableDeclarationIntoWhenInspection : AbstractKotlinInspection(), Cl
             val property = expression.findDeclarationNear() ?: return
             val identifier = property.nameIdentifier ?: return
             val initializer = property.initializer ?: return
-            if (!initializer.isOneLiner()) return
-            if (initializer.anyDescendantOfType<KtExpression> {
-                    it is KtThrowExpression || it is KtReturnExpression || it is KtBreakExpression || it is KtContinueExpression
-                }) return
+            if (initializer.isComplex()) return
 
             val action = property.action(expression)
-            if (action == Action.NOTHING) return
-            if (action == Action.MOVE && !property.isOneLiner()) return
+            if (action == NOTHING) return
+            if (action == MOVE && !property.isOneLiner()) return
 
-            holder.registerProblem(
+            holder.registerProblemWithoutOfflineInformation(
                 property,
-                TextRange.from(identifier.startOffsetInParent, identifier.textLength),
                 action.description,
+                isOnTheFly,
+                highlightType(action, expression, property),
+                TextRange.from(identifier.startOffsetInParent, identifier.textLength),
                 action.createFix(subjectExpression.createSmartPointer())
             )
         })
 }
+
+private fun highlightType(action: Action, whenExpression: KtWhenExpression, property: KtProperty): ProblemHighlightType = when (action) {
+    INLINE -> INFORMATION
+    MOVE -> {
+        val file = whenExpression.containingFile
+        val lineStartOffset = whenExpression.containingKtFile.getLineStartOffset(whenExpression.getLineNumber(), skipWhitespace = false)
+        if (file != null && lineStartOffset != null) {
+            val newWhenLength = (whenExpression.startOffset - lineStartOffset) + "when (".length + property.text.length + ") {".length
+            val rightMargin = CodeStyle.getSettings(file).getRightMargin(file.language)
+            if (newWhenLength > rightMargin) INFORMATION else GENERIC_ERROR_OR_WARNING
+        } else {
+            GENERIC_ERROR_OR_WARNING
+        }
+    }
+
+    NOTHING -> error("Illegal action")
+}
+
+private fun KtExpression.isComplex(): Boolean {
+    if (!isOneLiner()) return true
+    return anyDescendantOfType<KtExpression> {
+        it is KtThrowExpression || it is KtReturnExpression || it is KtBreakExpression || it is KtContinueExpression ||
+        it is KtIfExpression || it is KtWhenExpression || it is KtTryExpression || it is KtLambdaExpression || it.isElvisExpression()
+    }
+}
+
+private fun KtExpression.isElvisExpression(): Boolean =
+  this is KtBinaryExpression && operationToken == ELVIS
 
 private enum class Action {
     NOTHING,
@@ -69,8 +100,8 @@ private enum class Action {
 }
 
 private fun KtProperty.action(element: KtElement): Action = when (val elementUsages = countUsages(element)) {
-    countUsages() -> if (elementUsages == 1) Action.INLINE else Action.MOVE
-    else -> Action.NOTHING
+    countUsages() -> if (elementUsages == 1) INLINE else MOVE
+    else -> NOTHING
 }
 
 private fun KtWhenExpression.findDeclarationNear(): KtProperty? {
@@ -137,7 +168,7 @@ private class VariableDeclarationIntoWhenFix(
         }
 
         val resultElement = subjectExpression.replace(toReplace)
-        property.delete()
+        property.parent.deleteChildRange(property, property.nextSibling as? PsiWhiteSpace ?: property)
 
         val editor = resultElement.findExistingEditor() ?: return
         editor.moveCaret((resultElement as? KtProperty)?.nameIdentifier?.startOffset ?: resultElement.startOffset)

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope;
 
 import com.intellij.openapi.util.Key;
@@ -14,8 +14,7 @@ public abstract class DelegatingScopeProcessor implements PsiScopeProcessor {
     myDelegate = delegate;
   }
 
-  @NotNull
-  protected final PsiScopeProcessor getDelegate() {
+  protected final @NotNull PsiScopeProcessor getDelegate() {
     return myDelegate;
   }
 
@@ -25,8 +24,7 @@ public abstract class DelegatingScopeProcessor implements PsiScopeProcessor {
   }
 
   @Override
-  @Nullable
-  public <T> T getHint(@NotNull Key<T> hintKey) {
+  public @Nullable <T> T getHint(@NotNull Key<T> hintKey) {
     return myDelegate.getHint(hintKey);
   }
 

@@ -6,7 +6,9 @@ import com.intellij.collaboration.api.dto.GraphQLRequestDTO
 import com.intellij.collaboration.api.httpclient.ByteArrayProducingBodyPublisher
 import com.intellij.collaboration.api.httpclient.HttpClientUtil
 import com.intellij.collaboration.api.httpclient.InflatedStreamReadingBodyHandler
+import com.intellij.collaboration.api.json.HttpJsonDeserializationException
 import com.intellij.collaboration.api.json.JsonDataSerializer
+import com.intellij.collaboration.api.logName
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
@@ -15,14 +17,14 @@ import java.net.http.HttpResponse
 
 @ApiStatus.Experimental
 interface GraphQLApiHelper {
-  fun gqlQuery(uri: URI, queryPath: String, variablesObject: Any? = null): HttpRequest
+  fun query(uri: URI, queryPath: String, variablesObject: Any? = null): HttpRequest
 
-  suspend fun <T> loadGQLResponse(request: HttpRequest, clazz: Class<T>, vararg pathFromData: String): HttpResponse<out T?>
+  suspend fun <T> loadResponseByClass(request: HttpRequest, clazz: Class<T>, vararg pathFromData: String): HttpResponse<out T?>
 }
 
 @ApiStatus.Experimental
-suspend inline fun <reified T> GraphQLApiHelper.loadGQLResponse(request: HttpRequest, vararg pathFromData: String): HttpResponse<out T?> =
-  loadGQLResponse(request, T::class.java, *pathFromData)
+suspend inline fun <reified T> GraphQLApiHelper.loadResponse(request: HttpRequest, vararg pathFromData: String): HttpResponse<out T?> =
+  loadResponseByClass(request, T::class.java, *pathFromData)
 
 
 @ApiStatus.Experimental
@@ -38,16 +40,16 @@ private class GraphQLApiHelperImpl(private val logger: Logger,
                                    private val queryLoader: CachingGraphQLQueryLoader,
                                    private val serializer: JsonDataSerializer,
                                    private val deserializer: GraphQLDataDeserializer)
-  : GraphQLApiHelper {
+  : GraphQLApiHelper, HttpApiHelper by httpHelper {
 
-  override fun gqlQuery(uri: URI, queryPath: String, variablesObject: Any?): HttpRequest {
+  override fun query(uri: URI, queryPath: String, variablesObject: Any?): HttpRequest {
     val publisher = ByteArrayProducingBodyPublisher {
-      logger.debug("Request POST $uri")
+      logger.debug("GraphQL request $uri")
       val query = queryLoader.loadQuery(queryPath)
       val request = GraphQLRequestDTO(query, variablesObject)
       val jsonBytes = serializer.toJsonBytes(request)
       if (logger.isTraceEnabled) {
-        logger.trace("Request POST $uri : Request body: " + String(jsonBytes, Charsets.UTF_8))
+        logger.trace("GraphQL request $uri : Request body: " + String(jsonBytes, Charsets.UTF_8))
       }
       jsonBytes
     }
@@ -58,10 +60,15 @@ private class GraphQLApiHelperImpl(private val logger: Logger,
       .build()
   }
 
-  override suspend fun <T> loadGQLResponse(request: HttpRequest, clazz: Class<T>, vararg pathFromData: String): HttpResponse<out T?> {
+  override suspend fun <T> loadResponseByClass(request: HttpRequest, clazz: Class<T>, vararg pathFromData: String): HttpResponse<out T?> {
     val handler = InflatedStreamReadingBodyHandler { responseInfo, stream ->
       HttpClientUtil.readSuccessResponseWithLogging(logger, request, responseInfo, stream) {
-        deserializer.readAndTraverseGQLResponse(it, pathFromData, clazz)
+        try {
+          deserializer.readAndTraverseGQLResponse(it, pathFromData, clazz)
+        }
+        catch (e: Throwable) {
+          throw HttpJsonDeserializationException(request.logName(), e)
+        }
       }
     }
     return httpHelper.sendAndAwaitCancellable(request, handler)

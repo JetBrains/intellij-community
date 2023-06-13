@@ -1115,6 +1115,11 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
             runTest("testData/stepping/custom/breakpointInOneLineLambda.kt");
         }
 
+        @TestMetadata("breakpointOnLambdaEnd.kt")
+        public void testBreakpointOnLambdaEnd() throws Exception {
+            runTest("testData/stepping/custom/breakpointOnLambdaEnd.kt");
+        }
+
         @TestMetadata("breakpointOnWhen.kt")
         public void testBreakpointOnWhen() throws Exception {
             runTest("testData/stepping/custom/breakpointOnWhen.kt");
@@ -1473,6 +1478,11 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
         @TestMetadata("smartStepIntoNullSafeFunctionCalls.kt")
         public void testSmartStepIntoNullSafeFunctionCalls() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoNullSafeFunctionCalls.kt");
+        }
+
+        @TestMetadata("smartStepIntoOnLambdaBreakpoint.kt")
+        public void testSmartStepIntoOnLambdaBreakpoint() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoOnLambdaBreakpoint.kt");
         }
 
         @TestMetadata("smartStepIntoPropertyGetterReference.kt")

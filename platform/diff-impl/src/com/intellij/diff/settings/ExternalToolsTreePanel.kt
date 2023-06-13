@@ -233,7 +233,7 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
                                            index: Int,
                                            selected: Boolean,
                                            hasFocus: Boolean) {
-          append(value.groupName) // NON-NLS
+          append(value.groupName)
         }
       }
     }

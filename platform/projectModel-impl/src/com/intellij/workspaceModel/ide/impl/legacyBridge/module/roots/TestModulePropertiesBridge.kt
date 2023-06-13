@@ -27,7 +27,7 @@ class TestModulePropertiesBridge(private val currentModule: Module): TestModuleP
   }
 
   override fun setProductionModuleName(moduleName: String?) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
     val moduleEntity = getModuleEntity() ?: error("Module entity with name: ${currentModule.name} should be available")
     if (moduleEntity.testProperties?.productionModuleId?.name == moduleName) return
     workspaceModel.updateProjectModel("Linking production module with the test") { builder ->
@@ -42,7 +42,7 @@ class TestModulePropertiesBridge(private val currentModule: Module): TestModuleP
   }
 
   fun setProductionModuleNameToBuilder(moduleName: String?, builder: MutableEntityStorage) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
     val moduleEntity = builder.resolve(ModuleId(currentModule.name)) ?: error("Module entity with name: ${currentModule.name} should be available")
     if (moduleEntity.testProperties?.productionModuleId?.name == moduleName) return
     moduleEntity.testProperties?.let { builder.removeEntity(it) }

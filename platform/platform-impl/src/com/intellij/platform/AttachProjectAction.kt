@@ -11,7 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileChooser.FileChooser
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.withModalProgressBlocking
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isProjectDirectoryExistsUsingIo
@@ -97,7 +97,7 @@ open class AttachProjectAction : AnAction(ActionsBundle.message("action.AttachPr
                                  IdeBundle.message("dialog.title.attach.project.error"))
       }
       else {
-        runBlockingModal(project, ActionsBundle.message("action.AttachProject.text")) {
+        withModalProgressBlocking(project, ActionsBundle.message("action.AttachProject.text")) {
           attachToProjectAsync(projectToClose = project, projectDir = Path.of(FileUtil.toSystemDependentName(baseDir.path)))
         }
       }

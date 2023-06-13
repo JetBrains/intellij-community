@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog.items.tree
 
 import com.intellij.openapi.Disposable
@@ -9,6 +10,7 @@ import com.intellij.ui.tree.BaseTreeModel
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.application
+import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
@@ -38,6 +40,8 @@ internal class AttachToProcessItemsTree(
   dialogState: AttachDialogState,
   private val filters: AttachToProcessElementsFilters) : TreeTable(
   FilteringTreeTableModel(AttachTreeModel(rootNode, columnsLayout))), AttachToProcessItemsListBase {
+
+  private val emptyText = AttachDialogEmptyText(this, filters)
 
   init {
 
@@ -84,6 +88,8 @@ internal class AttachToProcessItemsTree(
 
     application.invokeLater({ focusFirst() }, ModalityState.any())
   }
+
+  override fun getEmptyText(): StatusText = emptyText
 
   override fun getCellRenderer(row: Int, column: Int): TableCellRenderer {
     val attachTreeNode = model.getValueAt<AttachDialogElementNode>(row) ?: return super.getCellRenderer(row, column)

@@ -16,7 +16,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
       writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT5_TEST)
       writeText("src/test/java/org/example/DisplayNameTestCase.java", JAVA_DISPLAY_NAME_JUNIT5_TEST)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertPsiLocation("TestCase")
@@ -87,7 +87,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
       writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT5_TEST)
       writeText("src/test/java/org/example/DisplayNameTestCase.java", JAVA_DISPLAY_NAME_JUNIT5_TEST)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertPsiLocation("TestCase")
@@ -128,7 +128,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
             assertPsiLocation("DisplayNameTestCase", "ugly_test")
           }
           assertNode("parametrized test") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
               assertPsiLocation("DisplayNameTestCase", "parametrized_test")
             }
@@ -140,7 +140,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
             }
           }
           assertNode("pretty parametrized test") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
               assertPsiLocation("DisplayNameTestCase", "ugly_parametrized_test")
             }
@@ -152,7 +152,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
             }
           }
           assertNode("dynamic test") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
               assertPsiLocation("DisplayNameTestCase", "dynamic_test")
             }
@@ -164,7 +164,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
             }
           }
           assertNode("pretty dynamic test") {
-            if (isTestLauncherSupported()) {
+            if (isBuiltInTestEventsUsed()) {
               // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
               assertPsiLocation("DisplayNameTestCase", "ugly_dynamic_test")
             }
@@ -187,7 +187,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
       writeText("src/test/java/org/example/TestCase.java", JAVA_JUNIT4_TEST)
       writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_JUNIT4_TEST)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("TestCase") {
           assertPsiLocation("TestCase")
@@ -221,7 +221,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
       writeText("src/test/java/org/example/TestCase.java", JAVA_TESTNG_TEST)
       writeText("src/test/java/org/example/ParametrizedTestCase.java", JAVA_PARAMETRIZED_TESTNG_TEST)
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestTreeView {
         assertNode("Gradle suite") {
           assertNode("Gradle test") {
@@ -245,34 +245,6 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
               assertNode("parametrized_test[2](3, third)") {
                 assertPsiLocation("ParametrizedTestCase", "parametrized_test", "[2]")
               }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  @ParameterizedTest
-  @TargetVersions("5.6+")
-  @AllGradleVersionsSource
-  fun `test display name and navigation with Groovy and Spock`(gradleVersion: GradleVersion) {
-    testSpockProject(gradleVersion) {
-      writeText("src/test/groovy/org/example/SpockTestCase.groovy", GROOVY_CLASS_WITH_SPOCK_TESTS)
-
-      executeTasks(":test")
-      assertTestTreeView {
-        assertNode("SpockTestCase") {
-          assertPsiLocation("SpockTestCase")
-          assertNode("success test") {
-            assertPsiLocation("SpockTestCase", "success test")
-          }
-          assertNode("failure test") {
-            assertPsiLocation("SpockTestCase", "failure test")
-          }
-          assertNode("length of #name is #length") {
-            assertPsiLocation("SpockTestCase", "length of #name is #length")
-            assertNode("length of Spock is 5") {
-              assertPsiLocation("SpockTestCase", "length of #name is #length")
             }
           }
         }
@@ -450,34 +422,6 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
       |                {3, "third"}
       |        };
       |    }
-      |}
-    """.trimMargin()
-
-    private val GROOVY_CLASS_WITH_SPOCK_TESTS = """
-      |package org.example
-      |
-      |import spock.lang.Specification
-      |
-      |class SpockTestCase extends Specification {
-      |
-      |  def "success test"() {
-      |    expect:
-      |    true
-      |  }
-      |
-      |  def "failure test"() {
-      |    expect:
-      |    false
-      |  }
-      |
-      |  def "length of #name is #length"() {
-      |    expect:
-      |    name.size() != length
-      |
-      |    where:
-      |    name     | length
-      |    "Spock"  | 5
-      |  }
       |}
     """.trimMargin()
   }

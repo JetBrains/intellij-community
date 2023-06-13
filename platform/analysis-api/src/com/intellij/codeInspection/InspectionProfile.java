@@ -31,6 +31,7 @@ public interface InspectionProfile extends Comparable {
    * @return {@link InspectionToolWrapper}
    * @see #getUnwrappedTool(String, PsiElement)
    */
+  @Nullable
   InspectionToolWrapper getInspectionTool(@NotNull String shortName, @Nullable PsiElement element);
 
   @Nullable

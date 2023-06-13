@@ -38,7 +38,6 @@ import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProjectWizard> {
-
   @Override
   public void tearDown() throws Exception {
     try {
@@ -78,7 +77,6 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
   public void testImportProject() throws Exception {
     Path pom = createPom();
     Module module = importProjectFrom(pom.toString(), null, new MavenProjectImportProvider());
-    assertThat(module.getName()).isEqualTo(pom.getParent().toFile().getName());
 
     afterImportFinished(module.getProject(), c -> {
       assertThat(ModuleManager.getInstance(c.getProject()).getModules()).hasOnlyOneElementSatisfying(
@@ -97,7 +95,6 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     createMavenWrapper(pom,
                        "distributionUrl=https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.8.1/apache-maven-3.8.1-bin.zip");
     Module module = importProjectFrom(pom.toString(), null, new MavenProjectImportProvider());
-    assertThat(module.getName()).isEqualTo(pom.getParent().toFile().getName());
 
     afterImportFinished(module.getProject(), c -> {
       assertThat(ModuleManager.getInstance(c.getProject()).getModules()).hasOnlyOneElementSatisfying(
@@ -112,7 +109,6 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     Path pom = createPom();
     createMavenWrapper(pom, "property1=value1");
     Module module = importProjectFrom(pom.toString(), null, new MavenProjectImportProvider());
-    assertThat(module.getName()).isEqualTo(pom.getParent().toFile().getName());
     String mavenHome = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).getSettings().getGeneralSettings().getMavenHome();
     assertEquals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome);
 

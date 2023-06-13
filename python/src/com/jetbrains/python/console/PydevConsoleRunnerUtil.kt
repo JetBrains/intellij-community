@@ -202,7 +202,7 @@ fun addDefaultEnvironments(sdk: Sdk,
  * @param envs    map of envs to add variable
  */
 private fun setCorrectStdOutEncoding(envs: Map<String, String>) {
-  val defaultCharset = PydevConsoleRunnerImpl.CONSOLE_CHARSET;
+  val defaultCharset = PydevConsoleRunnerImpl.CONSOLE_CHARSET
   val encoding = defaultCharset.name()
   PythonEnvUtil.setPythonIOEncoding(PythonEnvUtil.setPythonUnbuffered(envs), encoding)
 }
@@ -214,7 +214,7 @@ private fun setCorrectStdOutEncoding(envs: Map<String, String>) {
  * @param commandLine command line
  */
 fun setCorrectStdOutEncoding(commandLine: GeneralCommandLine) {
-  val defaultCharset = PydevConsoleRunnerImpl.CONSOLE_CHARSET;
+  val defaultCharset = PydevConsoleRunnerImpl.CONSOLE_CHARSET
   commandLine.charset = defaultCharset
   PythonEnvUtil.setPythonIOEncoding(commandLine.environment, defaultCharset.name())
 }

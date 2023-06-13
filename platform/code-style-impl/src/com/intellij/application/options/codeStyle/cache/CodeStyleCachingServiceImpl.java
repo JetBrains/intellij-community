@@ -14,6 +14,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -21,7 +22,7 @@ import java.util.*;
 public final class CodeStyleCachingServiceImpl implements CodeStyleCachingService, Disposable {
   public static final int MAX_CACHE_SIZE = 100;
 
-  private static final Key<CodeStyleCachedValueProvider> PROVIDER_KEY = Key.create("code.style.cached.value.provider");
+  private static final Key<SoftReference<CodeStyleCachedValueProvider>> PROVIDER_KEY = Key.create("code.style.cached.value.provider");
 
   private final Map<String, FileData> myFileDataCache = new HashMap<>();
 
@@ -66,11 +67,12 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
   private @NotNull CodeStyleCachedValueProvider getOrCreateCachedValueProvider(@NotNull VirtualFile virtualFile) {
     synchronized (CACHE_LOCK) {
       FileData fileData = getOrCreateFileData(getFileKey(virtualFile));
-      CodeStyleCachedValueProvider provider = fileData.getUserData(PROVIDER_KEY);
+      SoftReference<CodeStyleCachedValueProvider> providerRef = fileData.getUserData(PROVIDER_KEY);
+      CodeStyleCachedValueProvider provider = providerRef != null ? providerRef.get() : null;
       if (provider == null || provider.isExpired()) {
         FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(virtualFile);
         provider = new CodeStyleCachedValueProvider(Objects.requireNonNull(viewProvider), myProject);
-        fileData.putUserData(PROVIDER_KEY, provider);
+        fileData.putUserData(PROVIDER_KEY, new SoftReference<>(provider));
       }
       return provider;
     }
@@ -79,7 +81,8 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
   private void clearCache() {
     synchronized (CACHE_LOCK) {
       myFileDataCache.values().forEach(fileData -> {
-        CodeStyleCachedValueProvider provider = fileData.getUserData(PROVIDER_KEY);
+        SoftReference<CodeStyleCachedValueProvider> providerRef = fileData.getUserData(PROVIDER_KEY);
+        CodeStyleCachedValueProvider provider = providerRef != null ? providerRef.get() : null;
         if (provider != null) {
           provider.cancelComputation();
         }

@@ -37,7 +37,6 @@ import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.eclipse.aether.util.repository.SimpleResolutionErrorPolicy;
 import org.eclipse.aether.util.version.GenericVersionScheme;
 import org.eclipse.aether.version.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -113,11 +112,6 @@ public final class ArtifactRepositoryManager {
     mySessionFactory = new RepositorySystemSessionFactory(localRepositoryPath, progressConsumer, offline, retry);
   }
 
-  @ApiStatus.Internal
-  public boolean isValidArchive(File archive) {
-    var localRepositoryManager = mySessionFactory.sessionTemplate.getLocalRepositoryManager();
-    return ((StrictLocalRepositoryManager) localRepositoryManager).isValidArchive(archive);
-  }
 
   private static final class RepositorySystemSessionFactory {
     private final RepositorySystemSession sessionTemplate;
@@ -163,7 +157,7 @@ public final class ArtifactRepositoryManager {
         });
       }
       // setup session here
-      session.setLocalRepositoryManager(new StrictLocalRepositoryManager(ourSystem.newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath))));
+      session.setLocalRepositoryManager(ourSystem.newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath)));
       session.setProxySelector(ourProxySelector);
       session.setOffline(offline);
 

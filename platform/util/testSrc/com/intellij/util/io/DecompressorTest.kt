@@ -226,7 +226,8 @@ class DecompressorTest {
     val zip = tempDir.newFile("test.zip")
     ZipArchiveOutputStream(FileOutputStream(zip)).use { writeEntry(it, "rogue", link = "../f") }
 
-    val decompressor = Decompressor.Zip(zip).withZipExtensions().allowEscapingSymlinks(false)
+    val decompressor = Decompressor.Zip(zip).withZipExtensions().escapingSymlinkPolicy(
+      Decompressor.EscapingSymlinkPolicy.DISALLOW)
     val dir = tempDir.newDirectory("unpacked").toPath()
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
@@ -237,7 +238,8 @@ class DecompressorTest {
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "rogue", link = "../f") }
 
-    val decompressor = Decompressor.Tar(tar).allowEscapingSymlinks(false)
+    val decompressor = Decompressor.Tar(tar).escapingSymlinkPolicy(
+      Decompressor.EscapingSymlinkPolicy.DISALLOW)
     val dir = tempDir.newDirectory("unpacked").toPath()
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
@@ -395,7 +397,8 @@ class DecompressorTest {
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "a/b/c/rogue", link = "../f") }
 
-    val decompressor = Decompressor.Tar(tar).allowEscapingSymlinks(false).removePrefixPath("a/b/c")
+    val decompressor = Decompressor.Tar(tar).escapingSymlinkPolicy(
+      Decompressor.EscapingSymlinkPolicy.DISALLOW).removePrefixPath("a/b/c")
     val dir = tempDir.newDirectory("unpacked").toPath()
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
@@ -406,7 +409,8 @@ class DecompressorTest {
     val zip = tempDir.newFile("test.zip")
     ZipArchiveOutputStream(FileOutputStream(zip)).use { writeEntry(it, "a/b/c/rogue", link = "../f") }
 
-    val decompressor = Decompressor.Zip(zip).withZipExtensions().allowEscapingSymlinks(false).removePrefixPath("a/b/c")
+    val decompressor = Decompressor.Zip(zip).withZipExtensions().escapingSymlinkPolicy(
+      Decompressor.EscapingSymlinkPolicy.DISALLOW).removePrefixPath("a/b/c")
     val dir = tempDir.newDirectory("unpacked").toPath()
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
@@ -472,6 +476,21 @@ class DecompressorTest {
       Decompressor.Tar(tar).extract(dir)
       assertThat(dir.resolve("dir/r")).exists()
     }
+  }
+
+  @Test fun absoluteSymlinkToRelativeWithOptionSet() {
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use {
+      writeEntry(it, "symlink", link = "/root")
+    }
+
+    val dir = tempDir.newDirectory("unpacked").toPath()
+    Decompressor.Tar(tar).escapingSymlinkPolicy(
+      Decompressor.EscapingSymlinkPolicy.RELATIVIZE_ABSOLUTE).extract(dir)
+
+    val symlink = dir.resolve("symlink");
+    assertThat(symlink).isSymbolicLink()
+    assertThat(Files.readSymbolicLink(symlink)).isEqualTo(dir.resolve("root"))
   }
 
   //<editor-fold desc="Helpers.">

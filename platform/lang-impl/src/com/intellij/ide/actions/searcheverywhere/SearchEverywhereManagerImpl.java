@@ -355,6 +355,13 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     searchField.setText(next ? myHistoryIterator.next() : myHistoryIterator.prev());
     searchField.selectAll();
   }
+  @NotNull
+  List<String> getHistoryItems() {
+    if (!isShown()) return ContainerUtil.emptyList();
+
+    updateHistoryIterator();
+    return myHistoryIterator.list;
+  }
 
   private void updateHistoryIterator() {
     if (!isShown()) {

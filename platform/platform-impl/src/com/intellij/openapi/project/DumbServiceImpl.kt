@@ -130,7 +130,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     myState = AtomicReference(if (myProject.isDefault) State.SMART else State.DUMB)
 
     // the first dumb mode should end in non-modal context
-    myCancellableLaterEdtInvoker.setDumbStartModality(ModalityState.NON_MODAL)
+    myCancellableLaterEdtInvoker.setDumbStartModality(ModalityState.nonModal())
   }
 
   fun queueStartupActivitiesRequiredForSmartMode() {

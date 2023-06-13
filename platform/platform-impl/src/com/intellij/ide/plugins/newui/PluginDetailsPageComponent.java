@@ -822,7 +822,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
             component.setPluginDescriptor(pluginNode);
           });
         }
-        else if (node.getScreenShots() == null || node.getReviewComments() == null || node.getDependencyNames() == null) {
+        else if (!node.isConverted() &&
+                 (node.getScreenShots() == null || node.getReviewComments() == null || node.getDependencyNames() == null)) {
           syncLoading = false;
           doLoad(component, () -> {
             MarketplaceRequests marketplace = MarketplaceRequests.getInstance();
@@ -1030,6 +1031,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
     if (myMarketplace) {
       showMarketplaceData(myPlugin);
+      updateMarketplaceTabsVisible(myPlugin instanceof PluginNode node && !node.isConverted());
     }
     else {
       PluginNode node = getInstalledPluginMarketplaceNode();

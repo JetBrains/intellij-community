@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -272,7 +272,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         fileEditorManager.addTopComponent(fileEditor, component);
         List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
         if (fileLevelInfos == null) {
-          fileLevelInfos = new ArrayList<>();
+          fileLevelInfos = ContainerUtil.createConcurrentList(); // must be able to iterate in hasFileLevelHighlights() and concurrently modify in addFileLevelHighlight()
           fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos);
         }
         info.addFileLeverComponent(fileEditor, component);
@@ -498,18 +498,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
     long deadline = System.currentTimeMillis() + millis;
     try {
-      Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        try {
-          return myPassExecutorService.waitFor(millis);
-        }
-        catch (Throwable e) {
-          throw new RuntimeException(e);
-        }
-      });
+      Future<?> passesFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> myPassExecutorService.waitFor(System.currentTimeMillis() - deadline));
       do {
         assertOnModification.set(true);
         try {
-          future.get(50, TimeUnit.MILLISECONDS);
+          passesFuture.get(50, TimeUnit.MILLISECONDS);
         }
         catch (TimeoutException ignored) {
         }
@@ -517,6 +510,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           assertOnModification.set(false); //do not assert during dispatchAllEvents() because that's where all quick fixes happen
         }
       } while (runWhile.compute() && System.currentTimeMillis() < deadline);
+      // it will wait for the async spawned processes
+      Future<?> externalPassFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        ExternalAnnotatorManager.getInstance().waitForAllExecuted(deadline-System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+        return null;
+      });
+      externalPassFuture.get(1_000+deadline-System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     }
     catch (InterruptedException ignored) {
     }
@@ -1185,8 +1184,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   @TestOnly
-  @NotNull
-  synchronized Map<FileEditor, DaemonProgressIndicator> getUpdateProgress() {
+  synchronized @NotNull Map<FileEditor, DaemonProgressIndicator> getUpdateProgress() {
     return myUpdateProgress;
   }
 
@@ -1206,12 +1204,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                                        editor -> editor.isDisposed() ? null: textEditorProvider.getTextEditor(editor));
     }
 
-    if (application.getCurrentModalityState() != ModalityState.NON_MODAL) {
+    if (ModalityState.current() != ModalityState.nonModal()) {
       return activeTextEditors;
     }
 
     // tests usually care about just one explicitly configured editor
-    List<FileEditor> tabEditors = application.isUnitTestMode() ? Collections.emptyList() : Arrays.asList(getFileEditorManager().getSelectedEditorWithRemotes());
+    Collection<FileEditor> tabEditors = application.isUnitTestMode() ? Collections.emptyList() : getFileEditorManager().getSelectedEditorWithRemotes();
     return ContainerUtil.filter(ContainerUtil.union(activeTextEditors, tabEditors),
                          fileEditor -> fileEditor.isValid() && fileEditor.getFile() != null && fileEditor.getFile().isValid());
   }

@@ -126,7 +126,6 @@
 + -JSR45Plugin-
 + -com-intellij-jsf-
 + -com-intellij-spring-
-+ -CloudFoundry-
 + -com-intellij-spring-osgi-
 + -com-intellij-spring-security-
 + -com-intellij-thymeleaf-
@@ -144,7 +143,6 @@
 + -com-intellij-jboss-core-
 + -com-intellij-drools-
 + -com-intellij-jboss-arquillian-
-+ -com-intellij-tcserver-
 + -JavaScriptDebugger-
 + -org-jetbrains-plugins-vue-
 + -com-intellij-gwt-

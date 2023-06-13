@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.AllFilesAreUnderContentRootChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.facets.KotlinFacetSettingsChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
-import org.junit.Assume
 import org.junit.Test
 
 @TestMetadata("multiplatform/core/features/compilerArgsImporting")
@@ -27,46 +27,51 @@ class KotlinMppCompilerArgumentsImportingTests : AbstractKotlinMppGradleImportin
         )
         hideLineMarkers = true
         hideResourceRoots = true
-
-        // targetHierarchy used almost in every test here
-        Assume.assumeTrue(kotlinPluginVersion > KotlinToolingVersion("1.8.20-Beta"))
     }
 
+    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
     @Test
     fun testCompilerOptionsInCompilationTask() {
         doTest()
     }
 
+    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
     @Test
     fun testCompilerOptionsInTargetCompilations() {
         doTest()
     }
 
+    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
     @Test
     fun testFreeCompilerArgsInKotlinOptions() {
         doTest()
     }
 
+    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
     @Test
     fun testKotlinOptions() {
         doTest()
     }
 
+    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
     @Test
     fun testLanguageSettings() {
         doTest()
     }
 
+    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
     @Test
     fun testSingleTargetConfiguration() {
         doTest()
     }
 
+    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
     @Test
     fun testKotlinOptionsInAndroid() {
         doTest()
     }
 
+    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
     @Test
     fun testCompilerOptionsInCompilationTaskKJvm() {
         doTest {
@@ -85,11 +90,13 @@ class KotlinMppCompilerArgumentsImportingTests : AbstractKotlinMppGradleImportin
         doTest()
     }
 
+    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
     @Test
     fun testMixedCompilerOptionsKotlinDsl() {
         doTest()
     }
 
+    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+")
     @Test
     fun testMixedCompilerOptionsWithTasks() {
         doTest()

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import org.jetbrains.annotations.NonNls;
@@ -52,6 +52,7 @@ public final class GitCommand {
   public static final GitCommand REVERT = write("revert");
   public static final GitCommand REV_LIST = read("rev-list");
   public static final GitCommand REV_PARSE = read("rev-parse");
+  public static final GitCommand REF_LOG = read("reflog");
   public static final GitCommand RM = write("rm");
   public static final GitCommand SHOW = read("show");
   public static final GitCommand STASH = write("stash");

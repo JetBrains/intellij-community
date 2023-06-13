@@ -38,6 +38,9 @@ internal class K2CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
     override var MOVE_SEARCH_FOR_TEXT: Boolean
             by delegateTo { it::MOVE_SEARCH_FOR_TEXT }
 
+    override var MOVE_SEARCH_REFERENCES: Boolean
+            by delegateTo { it::MOVE_SEARCH_REFERENCES }
+
     override var MOVE_DELETE_EMPTY_SOURCE_FILES: Boolean
             by delegateTo { it::MOVE_DELETE_EMPTY_SOURCE_FILES }
 

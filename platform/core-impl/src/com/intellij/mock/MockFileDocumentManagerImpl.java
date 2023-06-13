@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.editor.Document;
@@ -18,7 +18,7 @@ import java.util.function.Predicate;
 public class MockFileDocumentManagerImpl extends FileDocumentManager {
   private static final Key<VirtualFile> MOCK_VIRTUAL_FILE_KEY = Key.create("MockVirtualFile");
   private final Function<? super CharSequence, ? extends Document> myFactory;
-  @Nullable private final Key<Document> myCachedDocumentKey;
+  private final @Nullable Key<Document> myCachedDocumentKey;
 
   public MockFileDocumentManagerImpl(@Nullable Key<Document> cachedDocumentKey,
                                      @NotNull Function<? super CharSequence, ? extends Document> factory) {
@@ -109,8 +109,7 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
   }
 
   @Override
-  @NotNull
-  public String getLineSeparator(VirtualFile file, Project project) {
+  public @NotNull String getLineSeparator(VirtualFile file, Project project) {
     return "";
   }
 

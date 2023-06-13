@@ -799,7 +799,8 @@ open class JBTabsImpl(private var project: Project?,
 
   override fun showMorePopup(): JBPopup? {
     val rect = lastLayoutPass?.moreRect ?: return null
-    val hiddenInfos = getVisibleInfos().filter { effectiveLayout!!.isTabHidden(it) }
+    val hiddenInfos = getVisibleInfos().filter { effectiveLayout!!.isTabHidden(it) }.takeIf { it.isNotEmpty() }
+                      ?: return null
     if (ExperimentalUI.isNewUI()) {
       return showListPopup(rect = rect, hiddenInfos = hiddenInfos)
     }
@@ -933,7 +934,7 @@ open class JBTabsImpl(private var project: Project?,
           component!!.invalidate()
         }
 
-        override fun setComponentIcon(icon: Icon, disabledIcon: Icon) {
+        override fun setComponentIcon(icon: Icon?, disabledIcon: Icon?) {
           // the icon will be set in customizeComponent
         }
 
@@ -987,15 +988,8 @@ open class JBTabsImpl(private var project: Project?,
               var clickToUnpin = false
               if (tabInfo.isPinned) {
                 if (tabAction != null) {
-                  val component = tabInfo.getComponent()
-                  val wasShowing = UIUtil.isShowing(component)
-                  try {
-                    UIUtil.markAsShowing(component, true)
-                    ActionManager.getInstance().tryToExecute(tabAction, e, tabInfo.getComponent(), tabInfo.getTabActionPlace(), true)
-                  }
-                  finally {
-                    UIUtil.markAsShowing(component, wasShowing)
-                  }
+                  val component = infoToLabel[tabInfo]!!
+                  ActionManager.getInstance().tryToExecute(tabAction, e, component, tabInfo.tabActionPlace, true)
                   clickToUnpin = true
                 }
               }
@@ -1343,7 +1337,7 @@ open class JBTabsImpl(private var project: Project?,
                                                           focusManager.requestFocusInProject(this,
                                                                                              project)
                                                         }
-                                                      }, ModalityState.NON_MODAL)
+                                                      }, ModalityState.nonModal())
       removeDeferred()
     }
   }

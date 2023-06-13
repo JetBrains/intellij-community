@@ -12,7 +12,7 @@ import com.intellij.searchEverywhereMl.common.log.MLSE_RECORDER_ID
 
 class SearchEverywhereTyposLogger : CounterUsagesCollector(), SearchEverywhereItemSelectedListener {
   companion object {
-    private val GROUP = EventLogGroup("typos.log", 1, MLSE_RECORDER_ID)
+    private val GROUP = EventLogGroup("typos.log", 2, MLSE_RECORDER_ID)
 
     private val TAB_ID = EventFields.String("tabId", SE_TABS)
 
@@ -32,7 +32,10 @@ class SearchEverywhereTyposLogger : CounterUsagesCollector(), SearchEverywhereIt
                               selectedItems: List<Any>,
                               elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                               closePopup: Boolean) {
-    val suggestion = elementsProvider.invoke().first().element.takeIfIsInstance<SearchEverywhereSpellCheckResult.Correction>()
+    val suggestion = elementsProvider.invoke()
+      .firstOrNull()
+      ?.element
+      ?.takeIfIsInstance<SearchEverywhereSpellCheckResult.Correction>()
 
     val eventData = computeEventData(suggestion, selectedItems)
     ITEM_SELECTED_EVENT.log(eventData)

@@ -382,7 +382,9 @@ public abstract class XDebuggerEditorBase implements Expandable {
     editorTextField.setFont(editorTextField.getFont().deriveFont((float)getEditor().getColorsScheme().getEditorFontSize()));
 
     JComponent component = expressionEditor.getComponent();
-    component.setPreferredSize(new Dimension(getComponent().getWidth(), 100));
+    // Don't set custom width here to support expand popup in RD/CWM
+    // Component will be stretched with `setStretchToOwnerWidth`
+    component.setPreferredSize(new Dimension(0, 100));
 
     myExpandedPopup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(component, expressionEditor.getPreferredFocusedComponent())
@@ -391,6 +393,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
       .setResizable(true)
       .setRequestFocus(true)
       .setLocateByContent(true)
+      .setStretchToOwnerWidth(true)
       .setCancelOnWindowDeactivation(false)
       .setAdText(getAdText())
       .setKeyboardActions(Collections.singletonList(Pair.create(event -> {

@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.wm.impl
 
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.UISettings
@@ -26,12 +27,14 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarCentralWidgetProvider
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFloatingMenuBarSupported
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MenuFrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationPath
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SelectedEditorFilePath
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ToolbarFrameHeader
+import com.intellij.openapi.wm.impl.headertoolbar.HeaderClickTransparentListener
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
@@ -48,7 +51,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.JBR
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseMotionAdapter
@@ -135,7 +137,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     else {
       if (isDecoratedMenu) {
         @Suppress("DEPRECATION")
-        JBR.getCustomWindowDecoration().setCustomDecorationEnabled(frame, true)
+        CustomHeader.enableCustomHeader(frame)
 
         val selectedEditorFilePath: SelectedEditorFilePath?
         val customFrameTitlePane = if (ExperimentalUI.isNewUI()) {
@@ -185,8 +187,10 @@ open class IdeRootPane internal constructor(frame: JFrame,
     glassPaneInitialized = true
 
     if (hideNativeLinuxTitle) {
-      WindowResizeListenerEx(glassPane, frame, JBUI.insets(4), null)
-        .install(parentDisposable)
+      WindowResizeListenerEx(glassPane, frame, JBUI.insets(4), null).apply {
+        install(parentDisposable)
+        setLeftMouseButtonOnly(true)
+      }
     }
 
     if (frame is IdeFrameImpl) {
@@ -232,7 +236,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
       val rootPane = JRootPane()
       if (isDecoratedMenu && !isFloatingMenuBarSupported) {
         @Suppress("DEPRECATION")
-        JBR.getCustomWindowDecoration().setCustomDecorationEnabled(frame, true)
+        CustomHeader.enableCustomHeader(frame)
       }
       frame.doSetRootPane(rootPane)
       if (SystemInfoRt.isMac) {
@@ -270,7 +274,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
         // We need to turn IdeRootPane into an accessible group in order to make notifications announcing working
         accessibleContext = object : AccessibleJRootPane() {
           override fun getAccessibleRole(): AccessibleRole {
-            return AccessibleRole.GROUP_BOX
+            return AccessibilityUtils.GROUPED_ELEMENTS
           }
 
           override fun getAccessibleName(): String {
@@ -460,6 +464,20 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
 
     (helper as? DecoratedHelper)?.selectedEditorFilePath?.project = project
+  }
+
+
+  fun makeComponentToBeMouseTransparentInTitleBar(component: JComponent) {
+    if (hideNativeLinuxTitle) {
+      val windowMoveListener = WindowMoveListener(this)
+      windowMoveListener.installTo(component)
+      return
+    }
+    val customTitleBar = ((helper as? DecoratedHelper)?.customFrameTitlePane as? CustomHeader)?.customTitleBar ?: return
+
+    val listener = HeaderClickTransparentListener(customTitleBar)
+    component.addMouseListener(listener)
+    component.addMouseMotionListener(listener)
   }
 
   @RequiresEdt

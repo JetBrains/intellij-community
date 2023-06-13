@@ -98,6 +98,12 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     List<Runnable> delayedTasks = new ArrayList<>();
     List<FilePropertyPusher<?>> filePushers = getFilePushers();
 
+    // this is useful for debugging. Especially in integration tests: it is often clear why large file sets have changed
+    // (e.g. imported modules or jdk), but it is often unclear why small file sets change and what these files are.
+    if (LOG.isDebugEnabled() && events.size() < 20) {
+      for (VFileEvent event : events) LOG.debug("File changed: " + event.getPath() + ".\nevent:" + event);
+    }
+
     for (VFileEvent event : events) {
       if (event instanceof VFileCreateEvent) {
         boolean isDirectory = ((VFileCreateEvent)event).isDirectory();

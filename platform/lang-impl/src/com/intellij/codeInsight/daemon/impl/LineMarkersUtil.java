@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -55,36 +55,41 @@ final class LineMarkersUtil {
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     HighlightersRecycler toReuse = new HighlightersRecycler();
     synchronized (LOCK) {
-      processLineMarkers(project, document, bounds, group, info -> {
-        RangeHighlighterEx highlighter = (RangeHighlighterEx)info.highlighter;
-        if (highlighter != null) {
-          toReuse.recycleHighlighter(highlighter);
-        }
-        return true;
-      });
+      try {
+        processLineMarkers(project, document, bounds, group, info -> {
+          RangeHighlighterEx highlighter = (RangeHighlighterEx)info.highlighter;
+          if (highlighter != null) {
+            toReuse.recycleHighlighter(highlighter);
+          }
+          return true;
+        });
 
-      if (LOG.isDebugEnabled()) {
-        List<LineMarkerInfo<?>> oldMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project);
-        LOG.debug("LineMarkersUtil.setLineMarkersToEditor(markers: " + newMarkers + ", group: " + group +
-                  "); oldMarkers: " + oldMarkers + "; reused: " + toReuse.forAllInGarbageBin().size());
+        if (LOG.isDebugEnabled()) {
+          List<LineMarkerInfo<?>> oldMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project);
+          LOG.debug("LineMarkersUtil.setLineMarkersToEditor(markers: " + newMarkers + ", group: " + group +
+                    "); oldMarkers: " + oldMarkers + "; reused: " + toReuse.forAllInGarbageBin().size());
+        }
+
+        for (LineMarkerInfo<?> info : newMarkers) {
+          PsiElement element = info.getElement();
+          if (element == null) {
+            continue;
+          }
+
+          TextRange textRange = element.getTextRange();
+          if (textRange == null) continue;
+          TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, textRange);
+          if (bounds.contains(elementRange)) {
+            createOrReuseLineMarker(info, markupModel, toReuse);
+          }
+        }
+
+        for (RangeHighlighter highlighter : toReuse.forAllInGarbageBin()) {
+          highlighter.dispose();
+        }
       }
-
-      for (LineMarkerInfo<?> info : newMarkers) {
-        PsiElement element = info.getElement();
-        if (element == null) {
-          continue;
-        }
-
-        TextRange textRange = element.getTextRange();
-        if (textRange == null) continue;
-        TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, textRange);
-        if (bounds.contains(elementRange)) {
-          createOrReuseLineMarker(info, markupModel, toReuse);
-        }
-      }
-
-      for (RangeHighlighter highlighter : toReuse.forAllInGarbageBin()) {
-        highlighter.dispose();
+      finally {
+        toReuse.releaseHighlighters();
       }
     }
   }
@@ -161,8 +166,7 @@ final class LineMarkersUtil {
     }
   }
 
-  @Nullable
-  static LineMarkerInfo<?> getLineMarkerInfo(@NotNull RangeHighlighter highlighter) {
+  static @Nullable LineMarkerInfo<?> getLineMarkerInfo(@NotNull RangeHighlighter highlighter) {
     return highlighter.getUserData(LINE_MARKER_INFO);
   }
 

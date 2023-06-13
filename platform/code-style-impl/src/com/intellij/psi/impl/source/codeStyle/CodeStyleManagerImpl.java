@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.CodeStyleBundle;
@@ -536,7 +536,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
           commandRunnable.run();
         }
         else {
-          ApplicationManager.getApplication().invokeLater(commandRunnable, ModalityState.NON_MODAL, file.getProject().getDisposed());
+          ApplicationManager.getApplication().invokeLater(commandRunnable, ModalityState.nonModal(), file.getProject().getDisposed());
         }
       }
     );

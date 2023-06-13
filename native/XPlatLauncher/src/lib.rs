@@ -341,8 +341,10 @@ impl PathExt for Path {
     #[cfg(target_os = "windows")]
     fn strip_ns_prefix(&self) -> Result<PathBuf> {
         let path_str = self.to_string_checked()?;
-        Ok(if path_str.starts_with("\\\\?\\") {
-            // Windows namespace prefixes are misunderstood both by JVM and classloaders
+        // Windows namespace prefixes are misunderstood both by JVM and classloaders
+        Ok(if path_str.starts_with("\\\\?\\UNC\\") {
+            PathBuf::from("\\\\".to_string() + &path_str[8..])
+        } else if path_str.starts_with("\\\\?\\") {
             PathBuf::from(&path_str[4..])
         } else {
             self.to_path_buf()

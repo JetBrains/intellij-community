@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.idea.AppMode;
@@ -22,7 +22,7 @@ public class EAPUsageCollector extends ApplicationUsagesCollector implements All
   private static final EventId1<BuildType> BUILD = GROUP.registerEvent("build", EventFields.Enum("value", BuildType.class));
   private static final EnumEventField<LicenceType> LICENSE_VALUE = EventFields.Enum("value", LicenceType.class);
   private static final StringEventField METADATA = EventFields.StringValidatedByRegexp("metadata", "license_metadata");
-  private static final PrimitiveEventField<String> LOGIN_HASH = new AnonymizedEventField("login_hash");
+  private static final EventField<String> LOGIN_HASH = EventFields.AnonymizedField("login_hash");
   private static final BooleanEventField IS_JB_TEAM = EventFields.Boolean("is_jb_team");
   private static final VarargEventId LICENSING = GROUP.registerVarargEvent("licencing", LICENSE_VALUE, METADATA, LOGIN_HASH, IS_JB_TEAM);
 

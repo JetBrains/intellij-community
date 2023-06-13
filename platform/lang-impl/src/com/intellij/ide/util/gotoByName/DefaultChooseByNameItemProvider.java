@@ -222,7 +222,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return new FindSymbolParameters(pattern, getNamePattern(base, pattern), searchScope, idFilter);
   }
 
-  private static boolean processByNames(@NotNull ChooseByNameViewModel base,
+  protected static boolean processByNames(@NotNull ChooseByNameViewModel base,
                                         boolean everywhere,
                                         @NotNull ProgressIndicator indicator,
                                         @Nullable PsiElement context,
@@ -418,7 +418,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   }
 
   @NotNull
-  private static MinusculeMatcher buildPatternMatcher(@NotNull String pattern, boolean preferStartMatches) {
+  protected static MinusculeMatcher buildPatternMatcher(@NotNull String pattern, boolean preferStartMatches) {
     NameUtil.MatcherBuilder builder = NameUtil.buildMatcher(pattern).withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE);
     if (preferStartMatches) {
       builder = builder.preferringStartMatches();

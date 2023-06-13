@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
@@ -43,6 +44,8 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   private boolean myBusy;
 
   private int myDropTargetIndex = -1;
+  private @NotNull Function<? super Integer, Integer> offsetFromElementTopForDnD = dropTargetIndex -> 0;
+
 
   public JBList() {
     init();
@@ -178,6 +181,10 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     }
   }
 
+  public void setOffsetFromElementTopForDnD(@NotNull Function<? super Integer, Integer> offsetFromElementTopForDnD) {
+    this.offsetFromElementTopForDnD = offsetFromElementTopForDnD;
+  }
+
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
@@ -193,7 +200,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     }
     else {
       rc = getCellBounds(myDropTargetIndex, myDropTargetIndex);
-      dropLineY = rc.y;
+      dropLineY = rc.y + offsetFromElementTopForDnD.fun(myDropTargetIndex);
     }
     Graphics2D g2d = (Graphics2D) g;
     g2d.setColor(PlatformColors.BLUE);

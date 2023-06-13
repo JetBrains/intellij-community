@@ -71,7 +71,7 @@ abstract class BuildSystemPlugin(context: Context) : Plugin(context) {
 
         val buildFiles by listProperty<BuildFileIR>()
 
-        val pluginRepositoreis by listProperty<Repository>()
+        val pluginRepositories by listProperty<Repository>()
 
         val takeRepositoriesFromDependencies by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             runBefore(createModules)
@@ -131,12 +131,12 @@ abstract class BuildSystemPlugin(context: Context) : Plugin(context) {
     override val properties: List<Property<*>> = listOf(
         buildSystemData,
         buildFiles,
-        pluginRepositoreis
+        pluginRepositories
     )
 }
 
 fun Reader.getPluginRepositoriesWithDefaultOnes(): List<Repository> {
-    val allRepositories = BuildSystemPlugin.pluginRepositoreis.propertyValue + buildSystemType.getDefaultPluginRepositories()
+    val allRepositories = BuildSystemPlugin.pluginRepositories.propertyValue + buildSystemType.getDefaultPluginRepositories()
     return allRepositories.filterOutOnlyDefaultPluginRepositories(buildSystemType)
 }
 

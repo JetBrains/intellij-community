@@ -8,4 +8,8 @@ class LightServiceMustNotBeOpenErrorMessageProvider : ErrorMessageProvider {
   override fun provideErrorMessage(): String {
     return DevKitKotlinBundle.message("inspection.light.service.must.not.be.open.message")
   }
+
+  override fun isApplicableForKotlin(): Boolean {
+    return true
+  }
 }

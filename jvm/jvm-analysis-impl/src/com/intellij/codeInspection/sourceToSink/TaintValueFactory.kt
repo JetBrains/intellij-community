@@ -8,6 +8,7 @@ import com.intellij.codeInspection.restriction.AnnotationContext
 import com.intellij.codeInspection.restriction.RestrictionInfo.RestrictionInfoKind
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.impl.PsiImplUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtil
 import com.siyeh.ig.psiutils.MethodMatcher
@@ -26,7 +27,11 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
   init {
     myTaintedAnnotations.addAll(myConfiguration.taintedAnnotations.filterNotNull())
     myUnTaintedAnnotations.addAll(myConfiguration.unTaintedAnnotations.filterNotNull())
-    customFactories.add(fromMethod(myConfiguration))
+
+    customFactories.add(fromMethodResult(methodNames = myConfiguration.methodNames,
+                                         methodClass = myConfiguration.methodClass,
+                                         targetValue = TaintValue.UNTAINTED))
+
     customFactories.add(fromField(myConfiguration))
   }
 
@@ -44,12 +49,16 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
     return if (annotationOwner !is PsiModifierListOwner) TaintValue.UNKNOWN else of(annotationOwner as PsiModifierListOwner)
   }
 
-  private fun fromModifierListOwner(modifierListOwner: PsiModifierListOwner): TaintValue {
+  private fun fromModifierListOwner(modifierListOwner: PsiModifierListOwner, allowSecond: Boolean): TaintValue {
     val annotationContext = AnnotationContext.fromModifierListOwner(modifierListOwner)
-    return fromAnnotationContext(annotationContext)
+    return fromAnnotationContextInner(annotationContext, allowSecond)
   }
 
   fun fromAnnotationContext(context: AnnotationContext): TaintValue {
+    return fromAnnotationContextInner(context, true)
+  }
+
+  private fun fromAnnotationContextInner(context: AnnotationContext, allowSecond: Boolean): TaintValue {
     val type = context.type
     var info = fromAnnotationOwner(type)
     if (info !== TaintValue.UNKNOWN) return info
@@ -75,10 +84,13 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
       }
     }
     if (info.kind != RestrictionInfoKind.KNOWN) {
-      info = context.secondaryItems().asSequence()
-               .flatMap { listOf(fromElement(it), fromAnnotationOwner(it.modifierList)) }
-               .filter { it != null && it !== TaintValue.UNKNOWN }
-               .firstOrNull() ?: info
+      info = tryFromCustom(owner) ?: info
+      if (allowSecond) {
+        info = context.secondaryItems().asSequence()
+                 .flatMap { listOf(fromElementInner(it, false), fromAnnotationOwner(it.modifierList)) }
+                 .filter { it != null && it !== TaintValue.UNKNOWN }
+                 .firstOrNull() ?: info
+      }
     }
     if (info == TaintValue.UNKNOWN) {
       val obj: Any = if (owner is PsiParameter) owner.declarationScope else owner
@@ -176,14 +188,16 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
   }
 
   fun fromElement(target: PsiElement?): TaintValue? {
+    return fromElementInner(target, true)
+  }
+  private fun fromElementInner(target: PsiElement?, allowSecond: Boolean): TaintValue? {
     if (target == null) return null
     val type = PsiUtil.getTypeByPsiElement(target) ?: return null
     if (target is PsiClass) return null
     var taintValue = tryFromCustom(target)
     if (taintValue != null) return taintValue
-    if (myTaintedAnnotations.isEmpty() && myUnTaintedAnnotations.isEmpty()) return TaintValue.UNKNOWN
     if (target is PsiModifierListOwner) {
-      taintValue = fromModifierListOwner(target)
+      taintValue = fromModifierListOwner(target, allowSecond)
       if (taintValue === TaintValue.UNKNOWN) taintValue = of(target)
       if (taintValue !== TaintValue.UNKNOWN) return taintValue
     }
@@ -239,9 +253,46 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
       }
     }
 
-    private fun fromMethod(context: UntaintedConfiguration): (PsiElement) -> TaintValue? {
-      val methodNames: List<String?> = context.methodNames
-      val methodClass: List<String?> = context.methodClass
+    fun fromParameters(methodNames: List<String?>,
+                               methodClass: List<String?>,
+                               methodParameterIndex: List<Int?>,
+                               targetValue: TaintValue): (PsiElement) -> TaintValue? {
+      val matchers: MutableList<MethodMatcher> = mutableListOf()
+      val allMatcher = MethodMatcher()
+      for (i in methodNames.indices) {
+        if (i >= methodClass.size || i >= methodParameterIndex.size) {
+          break
+        }
+        val cl = methodClass[i]
+        val name = methodNames[i]
+        if (cl == null || name == null) continue
+        allMatcher.add(cl, name)
+
+        matchers.add(MethodMatcher().also { it.add(cl, name) })
+      }
+      return fun(it: PsiElement): TaintValue? {
+        if (it is PsiParameter && it.parent is PsiParameterList &&
+            allMatcher.matches(it.parent.parent as? PsiMethod)) {
+          val parameterIndex = PsiImplUtil.getParameterIndex(it, it.parent as PsiParameterList)
+          for ((index, methodMatcher) in matchers.withIndex()) {
+            if (methodParameterIndex.size > index &&
+                methodParameterIndex[index] != null &&
+                methodParameterIndex[index] == parameterIndex &&
+                methodMatcher.matches(it.parent.parent as? PsiMethod)) {
+              return targetValue
+            }
+          }
+          return null
+        }
+        else {
+          return null
+        }
+      }
+    }
+
+    fun fromMethodResult(methodNames: List<String?>,
+                                 methodClass: List<String?>,
+                                 targetValue: TaintValue): (PsiElement) -> TaintValue? {
       val matcher = MethodMatcher()
       for (i in methodNames.indices) {
         if (i >= methodClass.size) {
@@ -254,7 +305,7 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
       }
       return {
         if (it is PsiMethod && matcher.matches(it)) {
-          TaintValue.UNTAINTED
+          targetValue
         }
         else {
           null

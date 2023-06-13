@@ -14,6 +14,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
@@ -37,6 +38,11 @@ sealed interface PluginAdvertiserService {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): PluginAdvertiserService = project.service()
+
+    internal fun isCommunityIde(): Boolean {
+      val thisProductCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
+      return getSuggestedCommercialIdeCode(thisProductCode) != null
+    }
 
     fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
       return when (activeProductCode) {
@@ -142,7 +148,6 @@ open class PluginAdvertiserServiceImpl(
           bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
           suggestionPlugins = suggestToInstall,
           disabledDescriptors = disabledDescriptors,
-          customPlugins = customPlugins,
           featuresMap = featuresMap,
           allUnknownFeatures = unknownFeatures,
           dependencies = PluginFeatureCacheService.getInstance().dependencies,
@@ -218,6 +223,15 @@ open class PluginAdvertiserServiceImpl(
       .filter { pluginManagerFilters.allowInstallingPlugin(it) }
       .toList())
 
+    for (compatibleUpdate in MarketplaceRequests.getLastCompatiblePluginUpdate(result.map { it.pluginId }.toSet())) {
+      val node = result.find { it.pluginId.idString == compatibleUpdate.pluginId }
+      if (node is PluginNode) {
+        node.externalPluginId = compatibleUpdate.externalPluginId
+        node.externalUpdateId = compatibleUpdate.externalUpdateId
+        node.description = null
+      }
+    }
+
     val localPluginIdMap = PluginManagerCore.buildPluginIdMap()
 
     if (result.size < plugins.size) {
@@ -268,6 +282,7 @@ open class PluginAdvertiserServiceImpl(
     node.vendor = descriptor.vendor
     node.organization = descriptor.organization
     node.dependencies = descriptor.dependencies
+    node.isConverted = true
 
     return node
   }
@@ -300,7 +315,6 @@ open class PluginAdvertiserServiceImpl(
     bundledPlugins: List<String>,
     suggestionPlugins: List<PluginDownloader>,
     disabledDescriptors: List<IdeaPluginDescriptorImpl>,
-    customPlugins: List<PluginNode>,
     featuresMap: MultiMap<PluginId, UnknownFeature>,
     allUnknownFeatures: Collection<UnknownFeature>,
     dependencies: PluginFeatureMap?,
@@ -310,7 +324,8 @@ open class PluginAdvertiserServiceImpl(
       val action = if (disabledDescriptors.isEmpty()) {
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
           FUSEventSource.NOTIFICATION.logConfigurePlugins(project)
-          PluginsAdvertiserDialog(project, suggestionPlugins, customPlugins).show()
+
+          PluginManagerConfigurable.showSuggestedPlugins(project)
         }
       }
       else {

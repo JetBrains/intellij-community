@@ -3,7 +3,6 @@
 
 package com.intellij.openapi.project.impl
 
-import com.intellij.concurrency.resetThreadContext
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
@@ -43,11 +42,15 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.ProjectImpl.Companion.PROJECT_PATH
 import com.intellij.openapi.project.impl.ProjectImpl.Companion.preloadServices
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -89,6 +92,7 @@ import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
+import kotlin.system.measureTimeMillis
 
 @Suppress("OVERRIDE_DEPRECATION")
 @Internal
@@ -100,7 +104,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     internal suspend fun dispatchEarlyNotifications() {
       val notificationManager = NotificationsManager.getNotificationsManager() as NotificationsManagerImpl
-      withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+      withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         notificationManager.dispatchEarlyNotifications()
       }
     }
@@ -283,11 +287,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   override suspend fun forceCloseProjectAsync(project: Project, save: Boolean): Boolean {
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
     if (save) {
       // HeadlessSaveAndSyncHandler doesn't save, but if `save` is requested,
       // it means that we must save it in any case (for example, see GradleSourceSetsTest)
-      saveSettings(project, forceSavingAllSettings = true)
+      withContext(Dispatchers.Default) {
+        saveSettings(project, forceSavingAllSettings = true)
+      }
     }
     return withContext(Dispatchers.EDT) {
       if (project.isDisposed) {
@@ -312,6 +317,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   protected open fun closeProject(project: Project, saveProject: Boolean = true, dispose: Boolean = true, checkCanClose: Boolean): Boolean {
+    val projectCloseStartedMs = System.currentTimeMillis()
+
     val app = ApplicationManager.getApplication()
     check(!app.isWriteAccessAllowed) {
       "Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful"
@@ -359,20 +366,26 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
     closePublisher.projectClosingBeforeSave(project)
     publisher.projectClosingBeforeSave(project)
-    if (saveProject) {
-      FileDocumentManager.getInstance().saveAllDocuments()
-      SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project)
+
+    val projectSaveSettingsDurationMs = measureTimeMillis {
+      if (saveProject) {
+        FileDocumentManager.getInstance().saveAllDocuments()
+        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project)
+      }
     }
 
     if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
       return false
     }
 
-    // somebody can start progress here, do not wrap in write action
-    fireProjectClosing(project)
-    if (project is ProjectImpl) {
-      cancelAndJoinBlocking(project)
+    val projectClosingDurationMs = measureTimeMillis {
+      // somebody can start progress here, do not wrap in write action
+      fireProjectClosing(project)
+      if (project is ProjectImpl) {
+        cancelAndJoinBlocking(project)
+      }
     }
+
     app.runWriteAction {
       removeFromOpened(project)
       @Suppress("GrazieInspection")
@@ -388,9 +401,17 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         ZipHandler.clearFileAccessorCache()
       }
       LaterInvocator.purgeExpiredItems()
-      if (dispose) {
-        Disposer.dispose(project)
+
+      val projectDisposeDurationMs = measureTimeMillis {
+        if (dispose) {
+          Disposer.dispose(project)
+        }
       }
+      LifecycleUsageTriggerCollector.onProjectClosedAndDisposed(project,
+                                                                projectCloseStartedMs,
+                                                                projectSaveSettingsDurationMs,
+                                                                projectClosingDurationMs,
+                                                                projectDisposeDurationMs)
     }
     return true
   }
@@ -918,10 +939,21 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   private suspend fun closeAndDisposeKeepingFrame(project: Project): Boolean {
     return withContext(Dispatchers.EDT) {
-      blockingContext {
-        (WindowManager.getInstance() as WindowManagerImpl).withFrameReuseEnabled().use {
-          closeProject(project, checkCanClose = true)
+      try {
+        blockingContext {
+          (WindowManager.getInstance() as WindowManagerImpl).withFrameReuseEnabled().use {
+            closeProject(project, checkCanClose = true)
+          }
         }
+      }
+      catch (ce: CancellationException) {
+        ensureActive()
+        LOG.error(ce) // log manual CEs
+        true
+      }
+      catch (t: Throwable) {
+        LOG.error(t)
+        true
       }
     }
   }
@@ -1016,7 +1048,7 @@ private fun fireProjectClosed(project: Project) {
     LOG.debug("projectClosed")
   }
 
-  LifecycleUsageTriggerCollector.onProjectClosed(project)
+  LifecycleUsageTriggerCollector.onBeforeProjectClosed(project)
   closePublisher.projectClosed(project)
   publisher.projectClosed(project)
   @Suppress("DEPRECATION")
@@ -1163,6 +1195,8 @@ private suspend fun initProject(file: Path,
     coroutineContext.ensureActive()
 
     val registerComponentActivity = createActivity(project) { "project ${StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX}" }
+
+    PROJECT_PATH.set(project, file)
     project.registerComponents()
     registerComponentActivity?.end()
 

@@ -12,7 +12,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.IdeActions.GROUP_MAIN_TOOLBAR_CENTER
 import com.intellij.openapi.actionSystem.IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
-import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -94,10 +93,6 @@ class StripeActionGroup: ActionGroup(), DumbAware {
           window.project.service<ButtonsRepaintService>().unTrackButton(this)
         }
 
-        override fun setLook(look: ActionButtonLook?) {
-          if (look is SquareStripeButtonLook) super.setLook(look)
-        }
-
         override fun getAlignment(anchor: ToolWindowAnchor, splitMode: Boolean): HelpTooltip.Alignment {
           return HelpTooltip.Alignment.BOTTOM
         }
@@ -120,10 +115,6 @@ class StripeActionGroup: ActionGroup(), DumbAware {
       return object : AbstractMoreSquareStripeButton(this) {
         init {
           setLook(SquareStripeButtonLook(this))
-        }
-
-        override fun setLook(look: ActionButtonLook?) {
-          if (look is SquareStripeButtonLook) super.setLook(look)
         }
 
         override val side: ToolWindowAnchor
@@ -181,7 +172,7 @@ class EnableStripeGroup : ToggleAction(), DumbAware {
       UISettings.getInstance().hideToolStripes = enabled
     }
 
-    private fun isSingleStripeEnabled() = customizedGroup?.let { isActionGroupAdded(it, STRIPE_ACTION_GROUP_ID) } == true
+    fun isSingleStripeEnabled() = customizedGroup?.let { isActionGroupAdded(it, STRIPE_ACTION_GROUP_ID) } == true
 
     private fun isActionGroupAdded(groupPath: List<String>, actionId: String): Boolean {
       return getInstance().getActions().find { it.groupPath == groupPath && matchesId(it.component, actionId) } != null

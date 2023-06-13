@@ -69,6 +69,11 @@ public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K,
   }
 
   @Override
+  public boolean isDirty() {
+    return false;
+  }
+
+  @Override
   public int keysCountApproximately() {
     return myMap.size();
   }

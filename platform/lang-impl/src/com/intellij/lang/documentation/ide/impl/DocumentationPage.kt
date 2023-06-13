@@ -39,7 +39,7 @@ internal class DocumentationPage(val request: DocumentationRequest) {
       return
     }
     val uiState = data.anchor?.let(UIState::ScrollToAnchor) ?: UIState.Reset
-    myContentFlow.value = DocumentationPageContent.Content(data.content, data.links, uiState)
+    myContentFlow.value = prepareContent(data.content, data.links, uiState)
     update(data.updates, data.links)
   }
 
@@ -54,8 +54,12 @@ internal class DocumentationPage(val request: DocumentationRequest) {
 
   private suspend fun update(updates: Flow<DocumentationContentData>, links: LinkData) {
     updates.flowOn(Dispatchers.Default).collectLatest {
-      myContentFlow.value = DocumentationPageContent.Content(it, links, uiState = null)
+      myContentFlow.value = prepareContent(it, links, uiState = null)
     }
+  }
+
+  private fun prepareContent(content: DocumentationContentData, links: LinkData, uiState: UIState?): DocumentationPageContent.Content {
+    return DocumentationPageContent.Content(content, links, uiState)
   }
 
   /**

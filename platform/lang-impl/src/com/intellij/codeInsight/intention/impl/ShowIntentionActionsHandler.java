@@ -24,23 +24,17 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.internal.statistic.IntentionsCollector;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.IntentionFUSCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -107,11 +101,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     showIntentionHint(project, editor, file, calcIntentions(project, editor, file), showFeedbackOnEmptyMenu);
     long elapsed = System.currentTimeMillis() - start;
-    reportDelayToFUS(project, elapsed, file.getFileType());
-  }
-
-  private void reportDelayToFUS(@NotNull Project project, long elapsed, @NotNull FileType fileType) {
-    ShowIntentionActionFUSCollector.SHOWN.log(project, new EventPair<>(EventFields.DurationMs, elapsed), new EventPair<>(EventFields.FileType, fileType));
+    IntentionFUSCollector.reportPopupDelay(project, elapsed, file.getFileType());
   }
 
   protected void showIntentionHint(@NotNull Project project,
@@ -266,7 +256,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     Project project = hostFile.getProject();
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
-    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+    try (AccessToken __ = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       ModCommandAction commandAction = ModCommandAction.unwrap(action);
       if (commandAction != null) {
@@ -295,7 +285,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
         if (contextAndCommand == null) return;
         ModCommandAction.ActionContext context = contextAndCommand.context();
         Project project = context.project();
-        IntentionsCollector.record(project, commandAction, context.file().getLanguage());
+        IntentionFUSCollector.record(project, commandAction, context.file().getLanguage());
         CommandProcessor.getInstance().executeCommand(project, () -> {
           contextAndCommand.command().execute(project);
         }, commandName, null);
@@ -341,7 +331,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   private static void invokeIntention(@NotNull IntentionAction action, @Nullable Editor editor, @NotNull PsiFile file) {
-    IntentionsCollector.record(file.getProject(), action, file.getLanguage());
+    IntentionFUSCollector.record(file.getProject(), action, file.getLanguage());
     PsiElement elementToMakeWritable = action.getElementToMakeWritable(file);
     if (elementToMakeWritable != null && !FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable)) {
       return;

@@ -190,11 +190,10 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   String JVM_PARAMETERS_SETUP_KEY = "JVM_PARAMETERS_SETUP";
 
   // flag that shows if tasks will be treated as tests invocation by the IDE (e.g., test events are expected)
-  String TEST_EXECUTION_EXPECTED_KEY = "TEST_EXECUTION_EXPECTED";
+  String IS_RUN_AS_TEST_KEY = "IS_RUN_AS_TEST";
 
-  // flag that shows a Gradle TestLauncher will be used to execute the build.
   // Test events will be produces by TAPI and there is no need for console reporting
-  String TEST_LAUNCHER_WILL_BE_USED_KEY = "TEST_LAUNCHER_WILL_BE_USED";
+  String IS_BUILT_IN_TEST_EVENTS_USED_KEY = "IS_BUILT_IN_TEST_EVENTS_USED";
 
   // port for callbacks which Gradle tasks communicate to IDE
   String DEBUG_DISPATCH_PORT_KEY = "DEBUG_DISPATCH_PORT";

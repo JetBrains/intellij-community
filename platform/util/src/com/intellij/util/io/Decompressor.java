@@ -2,9 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -240,10 +238,37 @@ public abstract class Decompressor {
     }
   }
 
+  /**
+   * Policy for handling symbolic links which point to outside of archive.
+   * <p>Example:</p>
+   * {@code foo -> /opt/foo}
+   * <p>or</p>
+   * {@code foo -> ../foo}
+   */
+  public enum EscapingSymlinkPolicy {
+    /**
+     * Extract as is with no modification or check. Potentially can point to a completely different object
+     * if archive is transferred from some other host.
+     */
+    ALLOW,
+
+    /**
+     * Check during extraction and throw exception. See {@link com.intellij.util.io.Decompressor#verifySymlinkTarget}
+     */
+    DISALLOW,
+
+    /**
+     * <p>Make absolute symbolic links relative from the extraction directory.</p>
+     * For example, when archive contains link to {@code /opt/foo} and archive is extracted to
+     * {@code /foo/bar} then the resulting link will be {@code /foo/bar/opt/foo}
+     */
+    RELATIVIZE_ABSOLUTE
+  }
+
   private @Nullable Predicate<? super Entry> myFilter = null;
   private @Nullable List<String> myPathPrefix = null;
   private boolean myOverwrite = true;
-  private boolean myAllowEscapingSymlinks = true;
+  private EscapingSymlinkPolicy myEscapingSymlinkPolicy = EscapingSymlinkPolicy.ALLOW;
   private BiConsumer<? super Entry, ? super Path> myPostProcessor;
 
   public Decompressor filter(@Nullable Predicate<? super String> filter) {
@@ -261,8 +286,8 @@ public abstract class Decompressor {
     return this;
   }
 
-  public Decompressor allowEscapingSymlinks(boolean allowEscapingSymlinks) {
-    myAllowEscapingSymlinks = allowEscapingSymlinks;
+  public Decompressor escapingSymlinkPolicy(EscapingSymlinkPolicy policy) {
+    myEscapingSymlinkPolicy = policy;
     return this;
   }
 
@@ -338,19 +363,30 @@ public abstract class Decompressor {
               throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
             }
 
-            if (!myAllowEscapingSymlinks) {
-              verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
+            String target = entry.linkTarget;
+
+            switch (myEscapingSymlinkPolicy) {
+              case DISALLOW: {
+                verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
+                break;
+              }
+              case RELATIVIZE_ABSOLUTE: {
+                if (OSAgnosticPathUtil.isAbsolute(target)) {
+                  target = FileUtil.join(outputDir.toString(), entry.linkTarget.substring(1));
+                }
+                break;
+              }
             }
 
             if (myOverwrite || !Files.exists(outputFile, LinkOption.NOFOLLOW_LINKS)) {
               try {
-                Path outputTarget = Paths.get(entry.linkTarget);
+                Path outputTarget = Paths.get(target);
                 NioFiles.createDirectories(outputFile.getParent());
                 Files.deleteIfExists(outputFile);
                 Files.createSymbolicLink(outputFile, outputTarget);
               }
               catch (InvalidPathException e) {
-                throw new IOException("Invalid symlink entry: " + entry.name + " -> " + entry.linkTarget, e);
+                throw new IOException("Invalid symlink entry: " + entry.name + " -> " + target, e);
               }
             }
             break;

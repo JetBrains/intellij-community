@@ -20,16 +20,16 @@ import org.junit.platform.suite.api.Suite
   ExistingThreadContextTest::class,
   IndicatorThreadContextTest::class,
   RunBlockingCancellableTest::class,
-  RunBlockingModalTest::class,
+  WithModalProgressBlockingTest::class,
   WithModalProgressTest::class,
   CoroutineToIndicatorTest::class,
 
   // rw
   CancellableReadActionWithJobTest::class,
   CancellableReadActionWithIndicatorTest::class,
-  Blocking::class,
-  NonBlocking::class,
-  NonBlockingUndispatched::class,
+  BlockingSuspendingReadActionTest::class,
+  NonBlockingSuspendingReadActionTest::class,
+  NonBlockingUndispatchedSuspendingReadActionTest::class,
   SuspendingWriteActionTest::class,
 
   // propagation

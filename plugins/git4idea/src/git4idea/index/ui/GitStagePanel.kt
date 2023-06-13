@@ -415,9 +415,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
         other as GitStageMergeHoverIcon
 
-        if (conflict != other.conflict) return false
-
-        return true
+        return conflict == other.conflict
       }
 
       override fun hashCode(): Int {

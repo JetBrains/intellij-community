@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.testFramework.useProject
 import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.ui.UIBundle
+import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData
 
@@ -33,6 +34,7 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
       assertEquals(setOf("project"), mavenProjectsManager.projects.map { it.mavenId.artifactId }.toSet())
 
       // ignore pom
+      MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
       val modulePomPath = "${project.basePath}/untitled/pom.xml"
       val ignoredPoms = listOf(modulePomPath)
       mavenProjectsManager.ignoredFilesPaths = ignoredPoms

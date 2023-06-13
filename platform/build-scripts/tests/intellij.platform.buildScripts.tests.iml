@@ -24,5 +24,6 @@
     <orderEntry type="library" scope="TEST" name="commons-compress" level="project" />
     <orderEntry type="module" module-name="intellij.idea.community.build" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.zip" scope="TEST" />
   </component>
 </module>

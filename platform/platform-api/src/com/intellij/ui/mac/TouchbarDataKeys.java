@@ -8,7 +8,7 @@ import javax.swing.*;
 public interface TouchbarDataKeys {
 
   /** @deprecated Use com.intellij.ui.mac.touchbar.Touchbar.setActions instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   class DlgButtonDesc {
     private final int myOrderIndex;
     private boolean myIsMainGroup = false;

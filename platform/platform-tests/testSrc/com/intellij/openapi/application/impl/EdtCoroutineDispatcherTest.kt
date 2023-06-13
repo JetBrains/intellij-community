@@ -70,7 +70,7 @@ class EdtCoroutineDispatcherTest {
 
     ApplicationManager.getApplication().withModality {
       @OptIn(DelicateCoroutinesApi::class)
-      val job = GlobalScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+      val job = GlobalScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         fail(leak.toString()) // keep reference to the leak
       }
       assertReferenced(root, leak)
@@ -78,6 +78,22 @@ class EdtCoroutineDispatcherTest {
         job.cancelAndJoin()
       }
       LeakHunter.checkLeak(root, leak.javaClass)
+    }
+  }
+
+  @Test
+  fun `dispatched runnable does not leak through uncompleted coroutine`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val job = launch {
+        // this part is wrapped into DispatchedRunnable
+        awaitCancellation()
+        // this part is also wrapped into DispatchedRunnable
+      }
+      yield() // checkLeak should be executed after the coroutine suspends in awaitCancellation
+      @Suppress("INVISIBLE_REFERENCE")
+      val leakClass = DispatchedRunnable::class.java
+      LeakHunter.checkLeak(job, leakClass)
+      job.cancel()
     }
   }
 }

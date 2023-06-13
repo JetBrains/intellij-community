@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
+import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.CountingThreadFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,11 @@ public final class ProcessIOExecutorService extends ThreadPoolExecutor {
   @TestOnly
   public int getThreadCounter() {
     return ((CountingThreadFactory)getThreadFactory()).getCount();
+  }
+
+  @Override
+  public void execute(@NotNull Runnable command) {
+    super.execute(AppScheduledExecutorService.capturePropagationAndCancellationContext(command));
   }
 
   private static final class MyCountingThreadFactory extends CountingThreadFactory {

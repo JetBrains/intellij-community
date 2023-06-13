@@ -16,7 +16,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.SlowOperations
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
@@ -25,9 +24,7 @@ private const val FOLDING_ELEMENT: @NonNls String = "folding"
 
 open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorProvider {
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    SlowOperations.knownIssue("IDEA-307300, EA-680898").use {
-      return PsiAwareTextEditorImpl(project = project, file = file, provider = this)
-    }
+    return PsiAwareTextEditorImpl(project = project, file = file, provider = this)
   }
 
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {

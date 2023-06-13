@@ -60,6 +60,10 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     myHighlighterTree.dispose();
     myHighlighterTreeForLines.dispose();
   }
+  @Override
+  public String toString() {
+    return "MarkupModel for "+myDocument;
+  }
 
   @Override
   public @NotNull RangeHighlighter addLineHighlighter(int line, int layer, @Nullable TextAttributes textAttributes) {

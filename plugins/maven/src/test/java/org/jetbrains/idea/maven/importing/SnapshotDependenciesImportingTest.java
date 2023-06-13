@@ -190,7 +190,7 @@ public class SnapshotDependenciesImportingTest extends MavenMultiVersionImportin
   }
 
   @Test
-  public void testCorrectlryUpdateRootEntriesWithActualPathForSnapshotDependencies() throws Exception {
+  public void testCorrectlyUpdateRootEntriesWithActualPathForSnapshotDependencies() throws Exception {
     if (!hasMavenInstallation()) return;
 
     deployArtifact("test", "foo", "1-SNAPSHOT",
@@ -276,7 +276,6 @@ public class SnapshotDependenciesImportingTest extends MavenMultiVersionImportin
                      """);
     removeFromLocalRepository("test");
 
-    resolveAndImportAllMavenProjects();
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project",

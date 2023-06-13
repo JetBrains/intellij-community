@@ -150,7 +150,7 @@ public abstract class ActionManager {
   /**
    * @deprecated use {@link #addTimerListener(TimerListener)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void addTimerListener(int unused, @NotNull TimerListener listener) {
     addTimerListener(listener);
   }

@@ -13,10 +13,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.SETab;
+import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent;
+import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImpl;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchPerformanceTracker;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -40,6 +43,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -56,6 +60,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
@@ -95,6 +100,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.toPsi;
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.getReportableContributorID;
 
 /**
@@ -127,6 +133,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private final HintHelper myHintHelper;
   private final SearchEverywhereMlService myMlService;
   private final @Nullable SearchEverywhereSpellingCorrector mySpellingCorrector;
+  private JComponent myExtendedInfoPanel;
+  @Nullable
+  private ExtendedInfoComponent myExtendedInfoComponent;
+
 
   public SearchEverywhereUI(@Nullable Project project, List<SearchEverywhereContributor<?>> contributors) {
     this(project, contributors, s -> null);
@@ -281,6 +291,16 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
   }
 
+  private void updateFooter() {
+    if (mySearchField == null) return;
+
+    myExtendedInfoPanel.removeAll();
+    myExtendedInfoComponent = createExtendedInfoComponent();
+    if (myExtendedInfoComponent != null) {
+      myExtendedInfoPanel.add(myExtendedInfoComponent.component);
+    }
+  }
+
   private void updateSearchFieldAdvertisement() {
     if (mySearchField == null) return;
 
@@ -314,7 +334,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         continue;
       }
 
-      return ((SearchFieldActionsContributor)contributor).createRightActions(() -> {
+      return ((SearchFieldActionsContributor)contributor).createRightActions(getSearchPattern(), () -> {
         scheduleRebuildList(SearchRestartReason.TEXT_SEARCH_OPTION_CHANGED);
       });
     }
@@ -510,7 +530,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     ExtendableTextComponent.Extension leftExt = new ExtendableTextComponent.Extension() {
       @Override
       public Icon getIcon(boolean hovered) {
-        return AllIcons.Actions.Search;
+        return Registry.is("search.everywhere.footer.extended.info") ? AllIcons.Actions.SearchWithHistory : AllIcons.Actions.Search;
       }
 
       @Override
@@ -522,11 +542,74 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       public int getIconGap() {
         return JBUIScale.scale(ExperimentalUI.isNewUI() ? 6 : 10);
       }
+
+      @Override
+      public Runnable getActionOnClick(@NotNull InputEvent inputEvent) {
+        if (!Registry.is("search.everywhere.footer.extended.info")) return null;
+
+        Rectangle bounds = ((TextFieldWithPopupHandlerUI)mySearchField.getUI()).getExtensionIconBounds(this);
+        Point point = bounds.getLocation();
+        point.y += bounds.width + JBUIScale.scale(2);
+        RelativePoint relativePoint = new RelativePoint(mySearchField, point);
+        return () -> showPopup(relativePoint);
+      }
     };
     res.addExtension(leftExt);
     res.putClientProperty(SEARCH_EVERYWHERE_SEARCH_FILED_KEY, true);
     res.setLayout(new BorderLayout());
     return res;
+  }
+
+  private void showPopup(@NotNull RelativePoint relativePoint) {
+    List<String> items = ((SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject)).getHistoryItems();
+    if (items.isEmpty()) return;
+
+    JBPopupFactory.getInstance().createPopupChooserBuilder(items)
+      .setMovable(false)
+      .setRequestFocus(true)
+      .setItemChosenCallback(text -> {
+        mySearchField.setText(text);
+        mySearchField.selectAll();
+      })
+      .createPopup()
+      .show(relativePoint);
+  }
+
+  @Override
+  protected @NotNull JPanel createFooterPanel(@NotNull JPanel panel) {
+    if (!Registry.is("search.everywhere.footer.extended.info")) return super.createFooterPanel(panel);
+
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(
+      SETabSwitcherListener.Companion.getSE_TAB_TOPIC(), new SETabSwitcherListener() {
+        @Override
+        public void tabSwitched(@NotNull SETabSwitcherListener.SETabSwitchedEvent event) {
+          updateFooter();
+        }
+      });
+
+    myExtendedInfoPanel = new JPanel(new BorderLayout());
+    myExtendedInfoComponent = createExtendedInfoComponent();
+    if (myExtendedInfoComponent != null) {
+      myExtendedInfoPanel.add(myExtendedInfoComponent.component);
+    }
+    panel.add(myExtendedInfoPanel, BorderLayout.SOUTH);
+
+    return panel;
+  }
+
+  @Nullable
+  private ExtendedInfoComponent createExtendedInfoComponent() {
+    SETab tab = myHeader.getSelectedTab();
+
+    com.intellij.util.Function<SearchEverywhereContributor<?>, @Nullable ExtendedInfo> extendedInfoFunction =
+      it -> it instanceof SearchEverywhereExtendedInfoProvider
+            ? ((SearchEverywhereExtendedInfoProvider)it).createExtendedInfo()
+            : null;
+
+    boolean isExtendedInfoAvailable = !ContainerUtil.mapNotNull(tab.getContributors(), extendedInfoFunction).isEmpty();
+    return ALL_CONTRIBUTORS_GROUP_ID.equals(tab.getID()) || isExtendedInfoAvailable
+           ? new ExtendedInfoComponent(myProject, new ExtendedInfoImpl(tab.getContributors()))
+           : null;
   }
 
   @Override
@@ -720,6 +803,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
 
       showDescriptionForIndex(myResultsList.getSelectedIndex());
+      if (Registry.is("search.everywhere.footer.extended.info")) {
+        if (selectedValue != null && myExtendedInfoComponent != null) {
+          myExtendedInfoComponent.updateElement(selectedValue);
+        }
+      }
     });
 
     MessageBusConnection busConnection = myProject != null
@@ -1618,8 +1706,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
         @Override
         public String getTooltip() {
-          if (!(action instanceof TextSearchRightActionAction)) return null;
-          return ((TextSearchRightActionAction)action).getTooltipText();
+          return action instanceof TextSearchRightActionAction
+                 ? ((TextSearchRightActionAction)action).getTooltipText()
+                 : action.getTemplatePresentation().getDescription();
         }
 
         @Override

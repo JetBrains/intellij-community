@@ -799,7 +799,6 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowEventLogGroup"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.navigation.actions.GTDUCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.intention.impl.ShowIntentionActionFUSCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.accessibility.AccessibilityUsageTrackerCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector"/>
@@ -908,7 +907,7 @@
 
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.WindowsDefenderCheckerActivity" os="windows"/>
 
-    <preloadingActivity implementation="com.intellij.codeInsight.editorActions.TypedHandler$TypedHandlerDelegatePreloader"/>
+    <applicationInitializedListener implementation="com.intellij.codeInsight.editorActions.TypedHandlerPreloader"/>
     <actionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
 
     <writingAccessProvider implementation="com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider" order="first"/>
@@ -1259,7 +1258,7 @@
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.SuperUserSuffixTitleInfoProvider"/>
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.ConfigFolderTitleInfoProvider"/>
 
-    <preloadingActivity implementation="com.intellij.ide.plugins.DynamicPluginVfsListenerInitializer"/>
+    <applicationInitializedListener implementation="com.intellij.ide.plugins.DynamicPluginVfsListenerInitializer"/>
     <vfs.asyncListener implementation="com.intellij.ide.plugins.DynamicPluginVfsListener"/>
 
     <intentionMenuContributor implementation="com.intellij.refactoring.suggested.SuggestedRefactoringIntentionContributor"/>
@@ -1466,6 +1465,8 @@
 
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.opentelemetry.JVMStatsToOTelReporter"/>
 
+    <applicationInitializedListener implementation="com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckServiceStarter"/>
+
     <backgroundPostStartupActivity implementation="com.intellij.openapi.vfs.newvfs.monitoring.VFSInitializationConditionsToFusReporter"/>
 
     <registryKey key="llm.empty.intention.generation"
@@ -1473,6 +1474,40 @@
                  description="Provides AI generated code for inspections without quick-fixes"/>
 
     <idePerformanceListener implementation="com.intellij.diagnostic.FusFreezeReporter"/>
+
+    <registryKey key="search.everywhere.footer.extended.info"
+                 defaultValue="false"
+                 description="Enabled rendering of a selected element context information in the search everywhere list footer"/>
+
+    <registryKey key="search.everywhere.recents"
+                 defaultValue="false"
+                 description="Enables recent items on search everywhere tabs"/>
+
+    <registryKey key="highlighting.passes.cache"
+                 defaultValue="false"
+                 description="Enables highlighting passes cache"/>
+
+    <registryKey key="highlighting.passes.cache.experiment"
+                 defaultValue="false"
+                 description="Turns on preloading highlighting passes experiment"/>
+
+    <registryKey key="highlighting.passes.cache.file.size.limit"
+                 defaultValue="500"
+                 description="Only the files with line count not bigger that the value are aviable for highlighting passes preloading"/>
+
+    <registryKey key="highlighting.passes.cache.size"
+                 defaultValue="25"
+                 description="Highlighting passes cache size"/>
+
+    <registryKey key="highlighting.passes.cache.experiment.group"
+                 defaultValue="false"
+                 description="Turn on the highlighting passes preload experiment"/>
+
+    <actionConfigurationCustomizer implementation="com.intellij.openapi.project.impl.SeparateProcessActionsCustomizer" />
+
+    <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.CustomPluginRepositoriesConfigurationComponent"
+                    configurationSchemaKey="plugins"/>
+    <updateSettingsProvider implementation="com.intellij.openapi.updateSettings.impl.ConfigurationScriptPluginRepositoriesProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

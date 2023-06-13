@@ -222,7 +222,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         return when {
             testName.endsWith("runtime") -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
             testName.endsWith("stdlib") -> ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
-            else -> KotlinLightProjectDescriptor.INSTANCE
+            else -> getDefaultProjectDescriptor()
         }
     }
 

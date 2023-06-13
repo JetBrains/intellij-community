@@ -240,7 +240,7 @@ class GitStageLineStatusTracker(
 
     val filter = BlockFilter.create(toRevert, Side.RIGHT)
     updateDocument(ThreeSide.RIGHT, GitBundle.message("stage.revert.unstaged.range.command.name")) {
-      unstagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
+      unstagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.asExclusionState(it) }
     }
   }
 
@@ -255,7 +255,7 @@ class GitStageLineStatusTracker(
 
     val filter = BlockFilter.create(toRevert, Side.RIGHT)
     updateDocument(ThreeSide.BASE, GitBundle.message("stage.add.range.command.name")) {
-      unstagedTracker.partiallyApplyBlocks(Side.LEFT) { filter.matches(it) }
+      unstagedTracker.partiallyApplyBlocks(Side.LEFT) { filter.asExclusionState(it) }
     }
   }
 
@@ -270,7 +270,7 @@ class GitStageLineStatusTracker(
 
     val filter = BlockFilter.create(toRevert, Side.LEFT)
     updateDocument(ThreeSide.BASE, GitBundle.message("stage.revert.staged.range.command.name")) {
-      stagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.matches(it) }
+      stagedTracker.partiallyApplyBlocks(Side.RIGHT) { filter.asExclusionState(it) }
     }
   }
 
@@ -279,6 +279,10 @@ class GitStageLineStatusTracker(
     fun matches(block: DocumentTracker.Block): Boolean {
       return matches(block, Side.LEFT, bitSet1) ||
              matches(block, Side.RIGHT, bitSet2)
+    }
+
+    fun asExclusionState(block: DocumentTracker.Block): RangeExclusionState {
+      return if (matches(block)) RangeExclusionState.Included else RangeExclusionState.Excluded
     }
 
     private fun matches(block: DocumentTracker.Block, blockSide: Side, bitSet: BitSet): Boolean {

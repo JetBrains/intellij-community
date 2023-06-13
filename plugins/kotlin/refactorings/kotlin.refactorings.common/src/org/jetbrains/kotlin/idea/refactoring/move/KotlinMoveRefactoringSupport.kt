@@ -3,8 +3,6 @@ package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiReference
-import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.psi.*
 
 interface KotlinMoveRefactoringSupport {
@@ -12,8 +10,6 @@ interface KotlinMoveRefactoringSupport {
         @JvmStatic
         fun getInstance(): KotlinMoveRefactoringSupport = service()
     }
-
-    fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope): Collection<PsiReference>
 
     fun isExtensionRef(expr: KtSimpleNameExpression): Boolean
 

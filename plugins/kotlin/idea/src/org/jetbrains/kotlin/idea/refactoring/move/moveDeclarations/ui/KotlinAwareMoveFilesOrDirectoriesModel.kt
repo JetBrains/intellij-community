@@ -61,7 +61,7 @@ internal class KotlinAwareMoveFilesOrDirectoriesModel(
 
     private fun checkedGetTargetDirectory(): PsiDirectory {
         try {
-            return getOrCreateDirectory(targetDirectoryName, project)
+            return getOrCreateDirectory(project, targetDirectoryName)
         } catch (e: IncorrectOperationException) {
             throw ConfigurationException(KotlinBundle.message("text.cannot.create.target.directory.0", targetDirectoryName))
         }
