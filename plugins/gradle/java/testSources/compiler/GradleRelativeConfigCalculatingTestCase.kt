@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.compiler
 
 import com.intellij.compiler.server.BuildManager
@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
 
@@ -60,8 +61,8 @@ abstract class GradleRelativeConfigCalculatingTestCase : GradleTestCase() {
   private fun Project.getGradleJpsResourceConfigs(type: String): List<Path> {
     val resourceDirectory = getProjectSystemDirectory()
       .getResolvedPath("targets/gradle-resources-$type")
-    val mainDirectory = resourceDirectory.getChildren().single { it.name.startsWith("$name.main") }
-    val testDirectory = resourceDirectory.getChildren().single { it.name.startsWith("$name.test") }
+    val mainDirectory = resourceDirectory.listDirectoryEntries().single { it.name.startsWith("$name.main") }
+    val testDirectory = resourceDirectory.listDirectoryEntries().single { it.name.startsWith("$name.test") }
     val mainConfig = mainDirectory.getResolvedPath("config.dat")
     val testConfig = testDirectory.getResolvedPath("config.dat")
     Assertions.assertTrue(mainConfig.exists(), "File doesn't exists $mainConfig")
