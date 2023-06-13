@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -39,18 +39,15 @@ public class ReplaceVarWithExplicitTypeFix extends LocalQuickFixAndIntentionActi
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     if (startElement instanceof PsiTypeElement) {
-      PsiElement parent = startElement.getParent();
-      if (parent instanceof PsiParameter) {
-        PsiElement declarationScope = ((PsiParameter)parent).getDeclarationScope();
-        if (declarationScope instanceof PsiLambdaExpression) {
-          for (PsiParameter parameter : ((PsiLambdaExpression)declarationScope).getParameterList().getParameters()) {
-            PsiTypeElement typeElement = parameter.getTypeElement();
-            if (typeElement != null) {
-              PsiTypesUtil.replaceWithExplicitType(typeElement);
-            }
+      if (startElement.getParent() instanceof PsiParameter psiParameter &&
+          psiParameter.getDeclarationScope() instanceof PsiLambdaExpression lambda) {
+        for (PsiParameter parameter : lambda.getParameterList().getParameters()) {
+          PsiTypeElement typeElement = parameter.getTypeElement();
+          if (typeElement != null) {
+            PsiTypesUtil.replaceWithExplicitType(typeElement);
           }
-          return;
         }
+        return;
       }
       PsiTypesUtil.replaceWithExplicitType((PsiTypeElement)startElement);
     }
@@ -63,15 +60,15 @@ public class ReplaceVarWithExplicitTypeFix extends LocalQuickFixAndIntentionActi
                              @NotNull PsiElement endElement) {
     if (startElement instanceof PsiTypeElement) {
       PsiElement parent = startElement.getParent();
-      if (parent instanceof PsiParameter ) {
-        PsiElement declarationScope = ((PsiParameter)parent).getDeclarationScope();
-        if (declarationScope instanceof PsiLambdaExpression) {
-          return ContainerUtil.and(((PsiLambdaExpression)declarationScope).getParameterList().getParameters(), 
+      if (parent instanceof PsiParameter psiParameter) {
+        PsiElement declarationScope = psiParameter.getDeclarationScope();
+        if (declarationScope instanceof PsiLambdaExpression lambda) {
+          return ContainerUtil.and(lambda.getParameterList().getParameters(), 
                                    parameter -> VariableTypeCanBeExplicitInspection.getTypeElementToExpand(parameter) != null);
         }
       }
-      if (parent instanceof PsiVariable) {
-        return VariableTypeCanBeExplicitInspection.getTypeElementToExpand((PsiVariable)parent) != null;
+      if (parent instanceof PsiVariable variable) {
+        return VariableTypeCanBeExplicitInspection.getTypeElementToExpand(variable) != null;
       }
     }
     return false;
