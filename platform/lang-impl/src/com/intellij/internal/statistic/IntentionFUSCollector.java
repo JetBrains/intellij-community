@@ -11,6 +11,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
+import com.intellij.internal.statistic.tools.InspectionsUsagesCollector.InspectionToolValidator;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
@@ -27,12 +28,14 @@ import java.util.List;
 public final class IntentionFUSCollector extends CounterUsagesCollector {
   private static final ClassEventField ID_FIELD = EventFields.Class("id");
   private static final IntEventField POSITION_FIELD = EventFields.Int("position");
+  private static final StringEventField INSPECTION_ID_FIELD =
+    EventFields.StringValidatedByCustomRule("inspection_id", InspectionToolValidator.class);
 
   private final static EventLogGroup GROUP = new EventLogGroup("intentions", 61);
   private final static EventId3<Class<?>, PluginInfo, Language> CALLED =
     GROUP.registerEvent("called", ID_FIELD, EventFields.PluginInfo, EventFields.Language);
   private final static VarargEventId SHOWN =
-    GROUP.registerVarargEvent("shown", ID_FIELD, EventFields.PluginInfo, EventFields.Language, POSITION_FIELD);
+    GROUP.registerVarargEvent("shown", ID_FIELD, EventFields.PluginInfo, EventFields.Language, POSITION_FIELD, INSPECTION_ID_FIELD);
   private static final EventId2<Long, FileType> POPUP_DELAY =
     GROUP.registerEvent("popup.delay", EventFields.DurationMs, EventFields.FileType);
 
@@ -64,15 +67,21 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
   }
 
   public static void reportShownIntentions(@NotNull Project project,
-                                           ListPopup popup,
+                                           @NotNull ListPopup popup,
                                            @NotNull Language language) {
     @SuppressWarnings("unchecked") List<IntentionActionWithTextCaching> values = popup.getListStep().getValues();
     for (int i = 0; i < values.size(); i++) {
       IntentionActionWithTextCaching intention = values.get(i);
       final Class<?> clazz = getOriginalHandlerClass(intention.getAction());
       final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(clazz);
-      SHOWN.log(project, ID_FIELD.with(clazz), EventFields.PluginInfo.with(info), EventFields.Language.with(language),
-                POSITION_FIELD.with(i));
+      SHOWN.log(
+        project,
+        EventFields.PluginInfo.with(info),
+        ID_FIELD.with(clazz),
+        EventFields.Language.with(language),
+        POSITION_FIELD.with(i),
+        INSPECTION_ID_FIELD.with(intention.getToolId())
+      );
     }
   }
 

@@ -258,7 +258,7 @@ public final class CachedIntentions {
                                             @Nullable Editor containingEditor) {
     IntentionActionWithTextCaching cachedAction =
       new IntentionActionWithTextCaching(
-        descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(),
+        descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(), descriptor.getToolId(),
         (cached, action) -> {
           if (QuickFixWrapper.unwrap(action) != null) {
             // remove only inspection fixes after invocation,
@@ -273,7 +273,7 @@ public final class CachedIntentions {
       Pair<PsiFile, Editor> availableIn = ShowIntentionActionsHandler
         .chooseBetweenHostAndInjected(myFile, editor, containingFile, (f, e) -> ShowIntentionActionsHandler.availableFor(f, e, option));
       if (availableIn == null) continue;
-      IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option, option.getText(), null, (__1, __2) -> {
+      IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option, option.getText(), null, null, (__1, __2) -> {
       });
       boolean isErrorFix = myErrorFixes.contains(textCaching);
       if (isErrorFix) {
