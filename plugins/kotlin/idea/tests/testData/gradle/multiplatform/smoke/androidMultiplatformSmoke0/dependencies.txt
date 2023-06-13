@@ -143,7 +143,6 @@ project.jvmLibrary.main
 project.jvmLibrary.test
     com.squareup.okio:okio-jvm:3.2.0 (RUNTIME)
     jvmLibrary.main (friend, COMPILE)
-    jvmLibrary.main (friend, RUNTIME)
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.jvmMain (COMPILE)
