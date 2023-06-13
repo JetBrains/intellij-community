@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.JulLogger
 import com.intellij.openapi.diagnostic.Logger
@@ -30,7 +31,8 @@ import kotlin.time.toDuration
 
 object VFSHealthCheckerConstants {
   @JvmStatic
-  val HEALTH_CHECKING_ENABLED = SystemProperties.getBooleanProperty("vfs.health-check.enabled", false)
+  val HEALTH_CHECKING_ENABLED = SystemProperties.getBooleanProperty("vfs.health-check.enabled",
+                                                                    ApplicationManager.getApplication().isEAP)
 
   @JvmStatic
   val HEALTH_CHECKING_PERIOD_MS = SystemProperties.getIntProperty("vfs.health-check.checking-period-ms",
