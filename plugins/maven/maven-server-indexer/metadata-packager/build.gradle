@@ -58,7 +58,7 @@ tasks.register('uberJar', Jar) {
 }
 
 def spaceUsername = project.getProperty('spaceUsername')
-def spacePassword = project.getProperty('spacePassword')
+def spacePassword = project.getProperty('spacePasswordWrite')
 
 publishing {
   publications {

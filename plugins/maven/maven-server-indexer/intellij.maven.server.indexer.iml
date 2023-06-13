@@ -9,7 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.maven.server" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="apache.maven.indexer.core:6.2.2" type="repository">
         <properties maven-id="org.apache.maven.indexer:indexer-core:6.2.2">
           <exclude>
