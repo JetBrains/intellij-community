@@ -378,7 +378,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/swingp/intellij.android.adt.swingp.iml" filepath="$PROJECT_DIR$/android/swingp/intellij.android.adt.swingp.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/adt-testutils/intellij.android.adt.testutils.iml" filepath="$PROJECT_DIR$/android/adt-testutils/intellij.android.adt.testutils.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/adt-ui/intellij.android.adt.ui.iml" filepath="$PROJECT_DIR$/android/adt-ui/intellij.android.adt.ui.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/adt-ui-compose/intellij.android.adt.ui.compose.iml" filepath="$PROJECT_DIR$/android/adt-ui-compose/intellij.android.adt.ui.compose.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/adt-ui-model/intellij.android.adt.ui.model.iml" filepath="$PROJECT_DIR$/android/adt-ui-model/intellij.android.adt.ui.model.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/analytics/intellij.android.analytics.iml" filepath="$PROJECT_DIR$/android/analytics/intellij.android.analytics.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-material/intellij.android.android-material.iml" filepath="$PROJECT_DIR$/android/android-material/intellij.android.android-material.iml" />
