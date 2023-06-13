@@ -357,9 +357,6 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
     if (showButton) {
       val button = JButton(buttonLabel).apply {
-        if (ExperimentalUI.isNewUI()) {
-          font = JBFont.label().asBold()
-        }
         isFocusable = requestFocus
         isOpaque = false
         foreground = JBUI.CurrentTheme.GotItTooltip.buttonForeground()
