@@ -103,7 +103,8 @@ public final class FormatDecode {
     final int result = value & ~allowedFlags;
     if (result != 0) {
       final String flags = flagString(result);
-      throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.flags.not.allowed", flags, specifier, flags.length()));
+      throw new IllegalFormatException(
+        InspectionGadgetsBundle.message("format.string.error.flags.not.allowed", flags, specifier, flags.length()));
     }
   }
 
@@ -184,7 +185,8 @@ public final class FormatDecode {
         final String num = posSpec.substring(0, posSpec.length() - 1);
         pos = Integer.parseInt(num) - 1;
         if (pos < 0) {
-          throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.illegal.position.specifier", posSpec, specifier));
+          throw new IllegalFormatException(
+            InspectionGadgetsBundle.message("format.string.error.illegal.position.specifier", posSpec, specifier));
         }
         previousAllowed = true;
       }
@@ -259,10 +261,12 @@ public final class FormatDecode {
         throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.invalid.precision", specifier));
       }
       if (isAllBitsSet(flagBits, LEADING_SPACE | PLUS)) {
-        throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.illegal.flag.combination", ' ', '+', specifier));
+        throw new IllegalFormatException(
+          InspectionGadgetsBundle.message("format.string.error.illegal.flag.combination", ' ', '+', specifier));
       }
       if (isAllBitsSet(flagBits, LEFT_JUSTIFY | ZERO_PAD)) {
-        throw new IllegalFormatException(InspectionGadgetsBundle.message("format.string.error.illegal.flag.combination", '-', '0', specifier));
+        throw new IllegalFormatException(
+          InspectionGadgetsBundle.message("format.string.error.illegal.flag.combination", '-', '0', specifier));
       }
       if (StringUtil.isEmpty(width)) {
         if (isAllBitsSet(flagBits, LEFT_JUSTIFY)) {
@@ -381,7 +385,7 @@ public final class FormatDecode {
     if (idx < formatArgumentIndex) {
       return false;
     }
-    
+
     Validator validator = validators[idx - formatArgumentIndex];
     PsiTypeElement castType = cast.getCastType();
     return validator.valid(Objects.requireNonNull(castType).getType()) &&
@@ -444,11 +448,11 @@ public final class FormatDecode {
     private boolean isValidTemporalAccessor(String text) {
       return switch (text) {
         case CommonClassNames.JAVA_TIME_LOCAL_DATE_TIME -> dateTimeConversionType == DateTimeConversionType.TIME ||
-                                          dateTimeConversionType == DateTimeConversionType.DATE;
+                                                           dateTimeConversionType == DateTimeConversionType.DATE;
         case CommonClassNames.JAVA_TIME_LOCAL_DATE -> dateTimeConversionType == DateTimeConversionType.DATE;
         case CommonClassNames.JAVA_TIME_LOCAL_TIME -> dateTimeConversionType == DateTimeConversionType.TIME;
         case CommonClassNames.JAVA_TIME_OFFSET_TIME -> dateTimeConversionType == DateTimeConversionType.TIME ||
-                                       dateTimeConversionType == DateTimeConversionType.ZONE;
+                                                       dateTimeConversionType == DateTimeConversionType.ZONE;
         default -> true;
       };
     }
@@ -527,14 +531,23 @@ public final class FormatDecode {
   static class MultiValidator extends Validator {
     private final Set<Validator> validators = new HashSet<>(3);
 
+    @Nullable
+    private String lastFailedSpecifier = null;
+
     MultiValidator(String specifier) {
       super(specifier);
+    }
+
+    @Override
+    public String getSpecifier() {
+      return lastFailedSpecifier == null ? super.getSpecifier() : lastFailedSpecifier;
     }
 
     @Override
     public boolean valid(PsiType type) {
       for (Validator validator : validators) {
         if (!validator.valid(type)) {
+          lastFailedSpecifier = validator.getSpecifier();
           return false;
         }
       }
@@ -610,11 +623,12 @@ public final class FormatDecode {
           return fromPrintFormatAnnotation(expression);
         }
 
-        formatArgumentIndex = IntStream.range(0, arguments.length).filter(i -> ExpressionUtils.hasStringType(arguments[i])).findFirst().orElse(-1);
+        formatArgumentIndex =
+          IntStream.range(0, arguments.length).filter(i -> ExpressionUtils.hasStringType(arguments[i])).findFirst().orElse(-1);
         if (formatArgumentIndex < 0) {
           return null;
         }
-        
+
         formatArgument = arguments[formatArgumentIndex];
         formatArgumentIndex++;
       }
