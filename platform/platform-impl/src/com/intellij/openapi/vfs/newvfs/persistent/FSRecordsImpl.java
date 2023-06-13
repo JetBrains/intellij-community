@@ -927,13 +927,13 @@ public final class FSRecordsImpl {
     return nameId;
   }
 
-  private void fillRecord(int fileId,
-                          long timestamp,
-                          long length,
-                          int flags,
-                          int nameId,
-                          int parentId,
-                          boolean overwriteMissed) throws IOException {
+  void fillRecord(int fileId,
+                  long timestamp,
+                  long length,
+                  int flags,
+                  int nameId,
+                  int parentId,
+                  boolean overwriteMissed) throws IOException {
     checkNotDisposed();
     connection.getRecords().fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
     connection.markDirty();
