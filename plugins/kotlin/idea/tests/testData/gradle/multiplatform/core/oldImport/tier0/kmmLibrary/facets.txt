@@ -30,7 +30,6 @@ project.iosArm64Test
     apiLevel = 1.8
     mppVersion = M3
     dependsOnModuleNames = project:commonTest, project:iosTest
-    additionalVisibleModuleNames = project:commonMain, project:iosArm64Main, project:iosMain
     targetPlatform = Native (ios_arm64)
 
 project.iosMain
@@ -64,7 +63,6 @@ project.iosX64Test
     apiLevel = 1.8
     mppVersion = M3
     dependsOnModuleNames = project:commonTest, project:iosTest
-    additionalVisibleModuleNames = project:commonMain, project:iosMain, project:iosX64Main
     targetPlatform = Native (ios_x64)
 
 project.jvmMain
@@ -81,5 +79,4 @@ project.jvmTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonTest
-    additionalVisibleModuleNames = project:commonMain, project:jvmMain
     targetPlatform = JVM (17)
