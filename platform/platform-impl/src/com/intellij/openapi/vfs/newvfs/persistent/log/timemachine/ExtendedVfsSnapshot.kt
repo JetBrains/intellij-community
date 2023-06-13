@@ -10,6 +10,8 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.Vi
 interface ExtendedVfsSnapshot : VfsSnapshot {
   override fun getFileById(fileId: Int): ExtendedVirtualFileSnapshot
 
+  fun forEachFile(body: (ExtendedVirtualFileSnapshot) -> Unit)
+
   interface ExtendedVirtualFileSnapshot : VirtualFileSnapshot {
     val attributeDataMap: Property<Map<EnumeratedFileAttribute, PayloadRef>>
     val recordAllocationExists: Property<Boolean>

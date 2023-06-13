@@ -1417,6 +1417,7 @@
     <advancedSetting id="show.diff.as.editor.tab" default="true" bundle="messages.DiffBundle" groupKey="advanced.settings.vcs"/>
 
     <recoveryAction implementation="com.intellij.ide.actions.cache.InvalidateCachesAndRestartAction"/>
+    <recoveryAction implementation="com.intellij.ide.actions.cache.RecoverVfsFromLogAction"/>
 
     <applicationService serviceInterface="com.intellij.openapi.application.CoroutineSupport"
                         serviceImplementation="com.intellij.openapi.application.impl.PlatformCoroutineSupport"/>
