@@ -234,6 +234,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     setRenderingHints();
     HOVER_STATE_LISTENER.addTo(this);
     myEditor.getCaretModel().addCaretListener(new LineNumbersRepainter());
+    Disposer.register(editor.getDisposable(), myAlphaContext.getDisposable());
   }
 
   @NotNull
