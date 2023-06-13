@@ -162,7 +162,7 @@ class ModulesToIRsConverter(
             val dependenciesIRs = buildPersistenceList<BuildSystemIR> {
                 +moduleDependencies
                 with(configurator) { +createModuleIRs(writer, data, module) }
-                addIfNotNull(writer.addSdtLibForNonGradleSignleplatformModule(module))
+                addIfNotNull(writer.addSdtLibForNonGradleSinglePlatformModule(module))
             }
 
             val moduleIr = SingleplatformModuleIR(
@@ -320,7 +320,7 @@ class ModulesToIRsConverter(
         }
     }
 
-    private fun Reader.addSdtLibForNonGradleSignleplatformModule(module: Module): KotlinStdlibDependencyIR? {
+    private fun Reader.addSdtLibForNonGradleSinglePlatformModule(module: Module): KotlinStdlibDependencyIR? {
         // for gradle stdlib is added by default KT-38221
         if (buildSystemType.isGradle) return null
         val stdlibType = module.configurator.createStdlibType(data, module) ?: return null
