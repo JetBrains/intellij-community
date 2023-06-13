@@ -397,7 +397,7 @@ internal fun addAdditionalActionsToRunConfigurationOptions(project: Project,
 private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     if (e.inputEvent!!.modifiersEx and InputEvent.SHIFT_DOWN_MASK != 0) {
-      ActionManager.getInstance().getAction("editRunConfigurations").actionPerformed(e)
+      ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS).actionPerformed(e)
       return
     }
     super.actionPerformed(e)
