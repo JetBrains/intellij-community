@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 
 class RefactoringUsageCollector : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("refactoring", 3)
+    private val GROUP = EventLogGroup("refactoring", 4)
 
     @JvmField
     val HANDLER: ClassEventField = EventFields.Class("handler")
