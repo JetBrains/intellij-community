@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsFileContentReader
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 
 interface ProjectStoreWithJpsContentReader : IProjectStore {
   fun createContentReader(): JpsFileContentReaderWithCache

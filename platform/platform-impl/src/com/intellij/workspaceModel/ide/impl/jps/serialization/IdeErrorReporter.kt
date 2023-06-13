@@ -9,10 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.workspaceModel.jps.serialization.impl.ErrorReporter
+import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.platform.workspaceModel.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.Nls
 

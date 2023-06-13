@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
-import com.intellij.java.workspaceModel.entities.LibraryFilesPackagingElementEntity;
+import com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -19,9 +19,9 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.ui.LibraryElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.platform.workspaceModel.jps.entities.LibraryId;
-import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId;
-import com.intellij.platform.workspaceModel.jps.entities.ModuleId;
+import com.intellij.platform.workspace.jps.entities.LibraryId;
+import com.intellij.platform.workspace.jps.entities.LibraryTableId;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.platform.workspace.storage.EntitySource;

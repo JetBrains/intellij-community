@@ -28,11 +28,11 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.workspaceModel.jps.CustomModuleEntitySource
-import com.intellij.platform.workspaceModel.jps.JpsFileDependentEntitySource
-import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
-import com.intellij.platform.workspaceModel.jps.entities.*
-import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
+import com.intellij.platform.workspace.jps.CustomModuleEntitySource
+import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
+import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.precomputeExtensionModel
 import com.intellij.util.graph.*

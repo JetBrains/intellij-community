@@ -12,7 +12,7 @@ import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.java.workspaceModel.entities.ExtractedDirectoryPackagingElementEntity;
+import com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.util.xmlb.annotations.Attribute;

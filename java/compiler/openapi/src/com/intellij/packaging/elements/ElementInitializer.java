@@ -3,8 +3,8 @@ package com.intellij.packaging.elements;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.java.workspaceModel.entities.CompositePackagingElementEntity;
-import com.intellij.java.workspaceModel.entities.PackagingElementEntity;
+import com.intellij.java.workspace.entities.CompositePackagingElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
 import org.jetbrains.annotations.NotNull;
 
 /**

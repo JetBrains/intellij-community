@@ -8,7 +8,7 @@ import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
-import com.intellij.platform.workspaceModel.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 

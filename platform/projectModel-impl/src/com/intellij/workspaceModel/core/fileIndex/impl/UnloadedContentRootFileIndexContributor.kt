@@ -3,8 +3,8 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
-import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 
 class UnloadedContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRootEntity>,
                                                 PlatformInternalWorkspaceFileIndexContributor {

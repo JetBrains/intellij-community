@@ -1,15 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
-import com.intellij.java.workspaceModel.entities.asJavaResourceRoot
-import com.intellij.java.workspaceModel.entities.asJavaSourceRoot
+import com.intellij.java.workspace.entities.asJavaResourceRoot
+import com.intellij.java.workspace.entities.asJavaSourceRoot
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
-import com.intellij.platform.workspaceModel.jps.entities.ExcludeUrlEntity
-import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity
-import com.intellij.platform.workspaceModel.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
 import com.intellij.workspaceModel.ide.getInstance

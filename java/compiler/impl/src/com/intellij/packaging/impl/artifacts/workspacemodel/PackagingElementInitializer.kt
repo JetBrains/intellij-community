@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.packaging.elements.ElementInitializer
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.java.workspaceModel.entities.CompositePackagingElementEntity
-import com.intellij.java.workspaceModel.entities.PackagingElementEntity
+import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.java.workspace.entities.PackagingElementEntity
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnStorage
 
 object PackagingElementInitializer : ElementInitializer {

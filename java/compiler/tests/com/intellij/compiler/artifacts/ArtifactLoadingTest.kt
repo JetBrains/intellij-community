@@ -18,7 +18,7 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.java.workspaceModel.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.ArtifactEntity
 import org.junit.Assert.*
 import org.junit.ClassRule
 import org.junit.Rule

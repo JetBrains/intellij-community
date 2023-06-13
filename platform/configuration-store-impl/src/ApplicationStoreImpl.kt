@@ -16,8 +16,8 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
-import com.intellij.platform.workspaceModel.jps.serialization.impl.ApplicationStoreJpsContentReader
-import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsFileContentReader
+import com.intellij.platform.workspace.jps.serialization.impl.ApplicationStoreJpsContentReader
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import kotlinx.coroutines.coroutineScope

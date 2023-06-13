@@ -20,7 +20,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import kotlin.sequences.SequencesKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;

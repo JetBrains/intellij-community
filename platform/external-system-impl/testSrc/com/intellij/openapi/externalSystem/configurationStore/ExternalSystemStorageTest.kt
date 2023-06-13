@@ -52,8 +52,8 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel.Companion.getInstance
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.platform.workspace.storage.MutableEntityStorage.Companion.from
-import com.intellij.platform.workspaceModel.jps.entities.ExternalSystemModuleOptionsEntity
-import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
