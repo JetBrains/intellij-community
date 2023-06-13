@@ -1104,6 +1104,26 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/ClassNameWithPackageConflict.kt");
             }
 
+            @TestMetadata("ClassParenthesis.kt")
+            public void testClassParenthesis() throws Exception {
+                runTest("../completion/testData/handlers/basic/ClassParenthesis.kt");
+            }
+
+            @TestMetadata("ClassParenthesisInSuper.kt")
+            public void testClassParenthesisInSuper() throws Exception {
+                runTest("../completion/testData/handlers/basic/ClassParenthesisInSuper.kt");
+            }
+
+            @TestMetadata("ClassParenthesisWithGenerics.kt")
+            public void testClassParenthesisWithGenerics() throws Exception {
+                runTest("../completion/testData/handlers/basic/ClassParenthesisWithGenerics.kt");
+            }
+
+            @TestMetadata("ClassParenthesisWithParam.kt")
+            public void testClassParenthesisWithParam() throws Exception {
+                runTest("../completion/testData/handlers/basic/ClassParenthesisWithParam.kt");
+            }
+
             @TestMetadata("ClassWithClassObject.kt")
             public void testClassWithClassObject() throws Exception {
                 runTest("../completion/testData/handlers/basic/ClassWithClassObject.kt");
@@ -1177,6 +1197,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("InterfaceNameBeforeRunBug.kt")
             public void testInterfaceNameBeforeRunBug() throws Exception {
                 runTest("../completion/testData/handlers/basic/InterfaceNameBeforeRunBug.kt");
+            }
+
+            @TestMetadata("InterfaceParenthesis.kt")
+            public void testInterfaceParenthesis() throws Exception {
+                runTest("../completion/testData/handlers/basic/InterfaceParenthesis.kt");
             }
 
             @TestMetadata("JavaClassName.kt")
@@ -1292,6 +1317,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("NonExtensionMember.kt")
             public void testNonExtensionMember() throws Exception {
                 runTest("../completion/testData/handlers/basic/NonExtensionMember.kt");
+            }
+
+            @TestMetadata("ObjectParenthesis.kt")
+            public void testObjectParenthesis() throws Exception {
+                runTest("../completion/testData/handlers/basic/ObjectParenthesis.kt");
             }
 
             @TestMetadata("PreferClassToConstructor.kt")
