@@ -215,7 +215,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
       setCustomTitleBar(customTitleBar)
     }
 
-    border = JBUI.Borders.empty(0, customTitleBar.leftInset.toInt(), 0, customTitleBar.rightInset.toInt())
+    //border = JBUI.Borders.empty(0, customTitleBar.leftInset.toInt(), 0, customTitleBar.rightInset.toInt())
   }
 
   private fun setCustomTitleBar(titleBar: WindowDecorations.CustomTitleBar?) {
@@ -430,7 +430,9 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
       val thickness = calculateWindowBorderThicknessInLogicalPx()
       val top = if (isTopNeeded() && (colorizationAffectsBorders || UIUtil.isUnderIntelliJLaF())) ceil(thickness).toInt() else 0
       val bottom = if (isBottomNeeded()) bottomBorderWidthLogicalPx else 0
-      return Insets(top, 0, bottom, 0)
+      val left = customTitleBar?.leftInset?.toInt() ?: 0
+      val right = customTitleBar?.rightInset?.toInt() ?: 0
+      return Insets(top, left, bottom, right)
     }
 
     override fun isBorderOpaque(): Boolean = true
