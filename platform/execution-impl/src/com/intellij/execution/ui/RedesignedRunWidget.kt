@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -76,7 +75,7 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
 
 private val runToolbarDataKey = Key.create<Boolean>("run-toolbar-data")
 
-private class RedesignedRunToolbarWrapper : DumbAwareAction(), CustomComponentAction {
+private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent): Unit = error("Should not be invoked")
@@ -90,6 +89,7 @@ private class RedesignedRunToolbarWrapper : DumbAwareAction(), CustomComponentAc
   }
 
   override fun update(e: AnActionEvent) {
+    super.update(e)
     e.presentation.putClientProperty(runToolbarDataKey, isSomeRunningNow(e))
   }
 
@@ -119,6 +119,7 @@ private class RedesignedRunToolbarWrapper : DumbAwareAction(), CustomComponentAc
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    super.updateCustomComponent(component, presentation)
     val data = presentation.getClientProperty(runToolbarDataKey) ?: return
     val dataPropertyName = "old-run-toolbar-data"
     val oldData = component.getClientProperty(dataPropertyName) as? Boolean
@@ -262,28 +263,14 @@ private abstract class TogglePopupAction : ToggleAction {
   abstract fun getActionGroup(e: AnActionEvent): ActionGroup?
 }
 
-private class InactiveStopActionPlaceholder : DecorativeElement(), DumbAware, CustomComponentAction {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
+private abstract class WindowHeaderPlaceholder : DecorativeElement(), DumbAware, CustomComponentAction {
   private val NOT_FIRST_UPDATE = Key.create<Boolean>("notFirstUpdate")
   private val PROJECT = Key.create<Project>("justProject")
 
-  override fun update(e: AnActionEvent) {
-    e.presentation.icon = EmptyIcon.ICON_16
-    if (StopAction.getActiveStoppableDescriptors(e.project).isEmpty()) {
-      e.presentation.isEnabled = false
-      e.presentation.isVisible = true
-    }
-    else {
-      e.presentation.isEnabledAndVisible = false
-    }
-    e.presentation.putClientProperty(PROJECT, e.project)
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    val defaultMinimumButtonSize = presentation.getClientProperty(CustomComponentAction.MINIMAL_DEMENTION_SUPPLIER)
-                                   ?: Supplier { ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE }
-    return ActionButton(this, presentation, ActionPlaces.NEW_UI_RUN_TOOLBAR, defaultMinimumButtonSize)
+  override fun update(e: AnActionEvent) {
+    e.presentation.putClientProperty(PROJECT, e.project)
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
@@ -295,6 +282,26 @@ private class InactiveStopActionPlaceholder : DecorativeElement(), DumbAware, Cu
 
     val ideRootPane: IdeRootPane = (WindowManager.getInstance() as WindowManagerImpl).getProjectFrameRootPane(project) ?: return
     ideRootPane.makeComponentToBeMouseTransparentInTitleBar(component)
+  }
+}
+
+private class InactiveStopActionPlaceholder : WindowHeaderPlaceholder() {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.icon = EmptyIcon.ICON_16
+    if (StopAction.getActiveStoppableDescriptors(e.project).isEmpty()) {
+      e.presentation.isEnabled = false
+      e.presentation.isVisible = true
+    }
+    else {
+      e.presentation.isEnabledAndVisible = false
+    }
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    val defaultMinimumButtonSize = presentation.getClientProperty(CustomComponentAction.MINIMAL_DEMENTION_SUPPLIER)
+                                   ?: Supplier { ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE }
+    return ActionButton(this, presentation, ActionPlaces.NEW_UI_RUN_TOOLBAR, defaultMinimumButtonSize)
   }
 }
 
