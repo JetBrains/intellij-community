@@ -589,6 +589,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     MavenImportingTestCaseKt.resolveAndImportMavenProjectsSync(myProjectsManager, myProjectsManager.getProjects());
   }
 
+  protected void updateAllProjects() {
+    myProjectsManager.updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
+  }
+
   protected void waitForReadingCompletion() {
     if (isNewImportingProcess) {
       return;

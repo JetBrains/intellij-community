@@ -49,12 +49,6 @@ fun importMavenProjectsSync(mavenProjectsManager: MavenProjectsManager,
   mavenProjectsManager.importMavenProjectsSync(modelsProvider, toImport)
 }
 
-fun resolveAndImportMavenProjectsSyncEdt(mavenProjectsManager: MavenProjectsManager, mavenProjects: Collection<MavenProject>) {
-  withModalProgressBlocking(mavenProjectsManager.project, "") {
-    mavenProjectsManager.resolveAndImportMavenProjects(mavenProjects)
-  }
-}
-
 fun resolveAndImportMavenProjectsSync(mavenProjectsManager: MavenProjectsManager, mavenProjects: Collection<MavenProject>) {
   runBlocking {
     mavenProjectsManager.resolveAndImportMavenProjects(mavenProjects)
