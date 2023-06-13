@@ -2,8 +2,8 @@
 package com.intellij.platform.workspaceModel.jps.serialization.impl
 
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 
 /**

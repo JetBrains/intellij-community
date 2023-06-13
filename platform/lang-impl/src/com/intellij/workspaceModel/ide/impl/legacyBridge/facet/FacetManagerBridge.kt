@@ -21,7 +21,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializati
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.intellij.workspaceModel.ide.toExternalSource
-import com.intellij.platform.workspaceModel.storage.*
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspaceModel.jps.entities.FacetEntity
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import com.intellij.platform.workspaceModel.jps.entities.ModuleSettingsBase

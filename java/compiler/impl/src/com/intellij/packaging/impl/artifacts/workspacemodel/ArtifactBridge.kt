@@ -15,9 +15,9 @@ import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
-import com.intellij.platform.workspaceModel.storage.*
-import com.intellij.platform.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.*
 import org.jetbrains.annotations.NonNls

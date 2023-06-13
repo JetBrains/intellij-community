@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.workspaceModel.core.fileIndex.*
-import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 

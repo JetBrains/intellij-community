@@ -16,8 +16,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.platform.workspaceModel.jps.UnloadedModulesNameHolder
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.getModuleLevelLibraries
-import com.intellij.platform.workspaceModel.storage.EntityStorage
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.jps.entities.ModuleDependencyItem
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import com.intellij.platform.workspaceModel.jps.entities.ModuleId

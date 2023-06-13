@@ -20,13 +20,13 @@ import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
-import com.intellij.platform.workspaceModel.storage.EntityChange
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.java.workspaceModel.entities.ArtifactEntity
 import com.intellij.java.workspaceModel.entities.ArtifactId
 import com.intellij.java.workspaceModel.entities.CompositePackagingElementEntity
-import com.intellij.platform.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 
 class ArtifactModifiableModelBridge(
   private val project: Project,

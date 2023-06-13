@@ -26,10 +26,10 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.platform.workspaceModel.storage.EntitySource
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.java.workspaceModel.entities.modifyEntity
-import com.intellij.platform.workspaceModel.storage.impl.VersionedEntityStorageImpl
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker

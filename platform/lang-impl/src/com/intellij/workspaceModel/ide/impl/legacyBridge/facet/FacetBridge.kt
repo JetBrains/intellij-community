@@ -4,8 +4,8 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 import com.intellij.facet.Facet
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
-import com.intellij.platform.workspaceModel.storage.EntitySource
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import com.intellij.platform.workspaceModel.jps.entities.ModuleSettingsBase
 import org.jetbrains.annotations.ApiStatus

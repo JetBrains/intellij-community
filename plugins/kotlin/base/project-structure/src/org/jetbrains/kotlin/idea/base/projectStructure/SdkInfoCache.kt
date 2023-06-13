@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo

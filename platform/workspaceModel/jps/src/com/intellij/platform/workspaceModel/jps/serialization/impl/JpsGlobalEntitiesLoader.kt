@@ -4,7 +4,7 @@ package com.intellij.platform.workspaceModel.jps.serialization.impl
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.workspaceModel.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 
 object JpsGlobalEntitiesSerializers {
   const val GLOBAL_LIBRARIES_FILE_NAME: String = "applicationLibraries"

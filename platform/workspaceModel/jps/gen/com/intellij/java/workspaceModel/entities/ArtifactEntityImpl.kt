@@ -2,27 +2,27 @@
 package com.intellij.java.workspaceModel.entities
 
 import com.intellij.java.workspaceModel.entities.*
-import com.intellij.platform.workspaceModel.storage.EntityInformation
-import com.intellij.platform.workspaceModel.storage.EntitySource
-import com.intellij.platform.workspaceModel.storage.EntityStorage
-import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.SymbolicEntityId
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
-import com.intellij.platform.workspaceModel.storage.impl.EntityLink
-import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspaceModel.storage.impl.UsedClassesCollector
-import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspaceModel.storage.impl.extractOneToAbstractOneChild
-import com.intellij.platform.workspaceModel.storage.impl.extractOneToManyChildren
-import com.intellij.platform.workspaceModel.storage.impl.extractOneToOneChild
-import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractOneChildOfParent
-import com.intellij.platform.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
-import com.intellij.platform.workspaceModel.storage.impl.updateOneToOneChildOfParent
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.EntityInformation
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.ConnectionId
+import com.intellij.platform.workspace.storage.impl.EntityLink
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.impl.extractOneToAbstractOneChild
+import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
+import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
+import com.intellij.platform.workspace.storage.impl.updateOneToAbstractOneChildOfParent
+import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)

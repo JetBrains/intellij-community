@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot

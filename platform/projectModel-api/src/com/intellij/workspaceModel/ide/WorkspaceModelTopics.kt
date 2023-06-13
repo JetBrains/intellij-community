@@ -6,7 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
-import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import java.util.*
 
 /**

@@ -46,8 +46,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibr
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
-import com.intellij.platform.workspaceModel.storage.*
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus

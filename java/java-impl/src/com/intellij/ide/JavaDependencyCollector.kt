@@ -14,8 +14,8 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.platform.workspaceModel.storage.EntityChange
-import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties

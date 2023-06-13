@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.workspaceModel.entities
 
-import com.intellij.platform.workspaceModel.storage.*
-import com.intellij.platform.workspaceModel.storage.annotations.Child
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
 interface JavaModuleSettingsEntity: WorkspaceEntity {

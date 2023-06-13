@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.roots.kind.ContentOrigin
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.ModuleContentOrigin
-import com.intellij.platform.workspaceModel.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityReference
 
 interface ModuleAwareContentEntityOrigin : ModuleContentOrigin {
   override val module: Module

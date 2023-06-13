@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
 import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity
 import org.jetbrains.jps.model.JpsElement

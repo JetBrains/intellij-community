@@ -2,16 +2,16 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.platform.workspaceModel.storage.testEntities.entities.SampleEntity2
-import com.intellij.platform.workspaceModel.storage.tests.SerializationRoundTripChecker
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2
+import com.intellij.platform.workspace.storage.tests.SerializationRoundTripChecker
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject
-import com.intellij.platform.workspaceModel.storage.EntitySource
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.impl.EntityStorageSerializerImpl
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule

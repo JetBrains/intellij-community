@@ -9,8 +9,8 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.indexing.EntityIndexingServiceEx
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleRootListenerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
-import com.intellij.platform.workspaceModel.storage.EntityChange
-import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 
 internal object ModuleRootListenerBridgeImpl : ModuleRootListenerBridge {
 

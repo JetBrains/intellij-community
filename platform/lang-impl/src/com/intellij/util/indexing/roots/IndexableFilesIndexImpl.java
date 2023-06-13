@@ -33,7 +33,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
-import com.intellij.platform.workspaceModel.storage.EntityStorage;
+import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;

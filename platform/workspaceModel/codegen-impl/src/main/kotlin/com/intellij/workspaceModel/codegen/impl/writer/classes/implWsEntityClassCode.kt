@@ -5,11 +5,11 @@ import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsEntityFieldCode
 import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionId
 import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionIdCode
-import com.intellij.platform.workspaceModel.storage.CodeGeneratorVersions
-import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
-import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.CodeGeneratorVersions
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.impl.ConnectionId
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 
 fun ObjClass<*>.implWsEntityCode(): String {
   return """

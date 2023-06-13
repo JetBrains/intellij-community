@@ -17,12 +17,12 @@ import com.intellij.workspaceModel.codegen.impl.writer.fqn
 import com.intellij.workspaceModel.codegen.impl.writer.fqn7
 import com.intellij.workspaceModel.codegen.impl.writer.lines
 import com.intellij.workspaceModel.codegen.impl.writer.*
-import com.intellij.platform.workspaceModel.storage.*
-import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.platform.workspaceModel.storage.ObjBuilder
-import com.intellij.platform.workspaceModel.storage.Type
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.ObjBuilder
+import com.intellij.platform.workspace.storage.Type
 
 fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
   checkSuperTypes(this@generateBuilderCode, reporter)

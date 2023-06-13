@@ -5,7 +5,7 @@ import com.intellij.workspaceModel.codegen.impl.writer.getRefType
 import com.intellij.workspaceModel.codegen.impl.writer.javaBuilderName
 import com.intellij.workspaceModel.codegen.impl.writer.fqn
 import com.intellij.workspaceModel.codegen.impl.writer.lines
-import com.intellij.platform.workspaceModel.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Child
 
 val ExtProperty<*, *>.wsCode: String
   get() = lines {

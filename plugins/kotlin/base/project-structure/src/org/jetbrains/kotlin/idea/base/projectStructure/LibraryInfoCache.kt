@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
 import com.intellij.platform.workspaceModel.jps.entities.ModuleDependencyItem
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity

@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.platform.workspaceModel.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.impl.EntityStorageSerializerImpl
-import com.intellij.platform.workspaceModel.storage.impl.MatchedEntitySource
-import com.intellij.platform.workspaceModel.storage.impl.SimpleEntityTypesResolver
-import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
-import com.intellij.platform.workspaceModel.storage.toBuilder
+import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
+import com.intellij.platform.workspace.storage.impl.MatchedEntitySource
+import com.intellij.platform.workspace.storage.impl.SimpleEntityTypesResolver
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.toBuilder
 import java.io.File
 import kotlin.system.exitProcess
 

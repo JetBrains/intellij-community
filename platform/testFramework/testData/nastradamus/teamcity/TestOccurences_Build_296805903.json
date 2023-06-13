@@ -78,7 +78,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000003",
-      "name": "com.intellij.platform.workspaceModel.storage.RiderEntitiesTest.check for update the connection to rider entity via extension property ()",
+      "name": "com.intellij.platform.workspace.storage.RiderEntitiesTest.check for update the connection to rider entity via extension property ()",
       "status": "SUCCESS",
       "duration": 269,
       "runOrder": "4",
@@ -88,7 +88,7 @@
       "test": {
         "id": "-2985866405291160312",
         "parsedTestName": {
-          "testPackage": "com.intellij.platform.workspaceModel.storage",
+          "testPackage": "com.intellij.platform.workspace.storage",
           "testSuite": "",
           "testClass": "RiderEntitiesTest",
           "testShortName": "RiderEntitiesTest.check for update the connection to rider entity via extension property ()",
@@ -103,7 +103,7 @@
     },
     {
       "id": "build:(id:296805903),id:2000000004",
-      "name": "com.intellij.platform.workspaceModel.storage.RiderEntitiesTest.check links survive after replace operation",
+      "name": "com.intellij.platform.workspace.storage.RiderEntitiesTest.check links survive after replace operation",
       "status": "SUCCESS",
       "duration": 59,
       "runOrder": "5",
@@ -113,7 +113,7 @@
       "test": {
         "id": "-6355950872440022970",
         "parsedTestName": {
-          "testPackage": "com.intellij.platform.workspaceModel.storage",
+          "testPackage": "com.intellij.platform.workspace.storage",
           "testSuite": "",
           "testClass": "RiderEntitiesTest",
           "testShortName": "RiderEntitiesTest.check links survive after replace operation",

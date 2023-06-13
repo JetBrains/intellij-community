@@ -8,9 +8,9 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.platform.workspaceModel.storage.EntityChange
-import com.intellij.platform.workspaceModel.storage.EntitySource
-import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.*

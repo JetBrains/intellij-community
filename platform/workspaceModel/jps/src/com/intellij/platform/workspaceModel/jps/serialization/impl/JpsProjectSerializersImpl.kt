@@ -15,10 +15,10 @@ import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.platform.workspaceModel.jps.UnloadedModulesNameHolder
 import com.intellij.platform.workspaceModel.jps.entities.*
-import com.intellij.platform.workspaceModel.storage.*
-import com.intellij.platform.workspaceModel.storage.impl.reportErrorAndAttachStorage
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.reportErrorAndAttachStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import kotlinx.coroutines.async

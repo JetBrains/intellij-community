@@ -2,7 +2,7 @@
 package com.intellij.platform.workspaceModel.jps.serialization.impl
 
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
-import com.intellij.platform.workspaceModel.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.java.workspaceModel.entities.JavaModuleSettingsEntity
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.*

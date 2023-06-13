@@ -18,7 +18,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.orNull
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.platform.workspaceModel.storage.EntityChange
+import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspaceModel.jps.entities.FacetEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

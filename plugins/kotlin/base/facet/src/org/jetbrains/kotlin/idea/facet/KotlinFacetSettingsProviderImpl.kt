@@ -9,7 +9,7 @@ import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.platform.workspaceModel.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspaceModel.jps.entities.FacetEntity
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import org.jetbrains.kotlin.config.KotlinFacetSettings

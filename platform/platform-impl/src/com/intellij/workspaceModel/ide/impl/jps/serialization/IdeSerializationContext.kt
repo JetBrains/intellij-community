@@ -9,7 +9,7 @@ import com.intellij.platform.workspaceModel.jps.serialization.SerializationConte
 import com.intellij.platform.workspaceModel.jps.serialization.impl.*
 import com.intellij.workspaceModel.ide.EntitiesOrphanage
 import com.intellij.platform.workspaceModel.jps.entities.ModuleSettingsBase
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 
 abstract class BaseIdeSerializationContext : SerializationContext {
   override val isJavaPluginPresent: Boolean

@@ -2,20 +2,20 @@
 package com.intellij.java.workspaceModel.entities
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspaceModel.storage.*
-import com.intellij.platform.workspaceModel.storage.EntitySource
-import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
-import com.intellij.platform.workspaceModel.storage.ObjBuilder
-import com.intellij.platform.workspaceModel.storage.Type
-import com.intellij.platform.workspaceModel.storage.annotations.Abstract
-import com.intellij.platform.workspaceModel.storage.annotations.Child
+import com.intellij.platform.workspace.storage.ObjBuilder
+import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.annotations.Abstract
+import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspaceModel.jps.entities.LibraryId
 import com.intellij.platform.workspaceModel.jps.entities.ModuleId
-import com.intellij.platform.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 
 data class ArtifactId(val name: @NlsSafe String) : SymbolicEntityId<ArtifactEntity> {
   override val presentableName: String

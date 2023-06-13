@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.platform.workspaceModel.storage.EntitySource;
+import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity;
 import com.intellij.platform.workspaceModel.jps.entities.ModuleId;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;

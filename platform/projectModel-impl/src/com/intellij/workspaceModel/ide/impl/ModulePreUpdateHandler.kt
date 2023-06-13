@@ -2,9 +2,9 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.workspaceModel.ide.WorkspaceModelPreUpdateHandler
-import com.intellij.platform.workspaceModel.storage.EntityChange
-import com.intellij.platform.workspaceModel.storage.EntityStorage
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
 import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity

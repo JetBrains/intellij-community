@@ -24,7 +24,7 @@ import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.workspaceModel
-import com.intellij.platform.workspaceModel.storage.*
+import com.intellij.platform.workspace.storage.*
 import com.intellij.java.workspaceModel.entities.ArtifactEntity
 import com.intellij.java.workspaceModel.entities.ArtifactId
 import com.intellij.java.workspaceModel.entities.CustomPackagingElementEntity

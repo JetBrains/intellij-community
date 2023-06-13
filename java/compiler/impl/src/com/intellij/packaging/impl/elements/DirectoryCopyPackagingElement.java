@@ -5,12 +5,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packaging.impl.ui.DirectoryCopyPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.platform.workspaceModel.storage.EntitySource;
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.java.workspaceModel.entities.DirectoryCopyPackagingElementEntity;
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl;
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.workspaceModel.ide.VirtualFileUrls;
 import org.jetbrains.annotations.NotNull;
 

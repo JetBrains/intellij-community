@@ -9,9 +9,9 @@ import com.intellij.testFramework.TestApplicationManager
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
-import com.intellij.platform.workspaceModel.storage.EntityStorage
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Paths

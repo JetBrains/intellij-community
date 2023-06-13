@@ -9,8 +9,8 @@ import com.intellij.workspaceModel.ide.java.languageLevel
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
-import com.intellij.platform.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.java.workspaceModel.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspaceModel.entities.javaSettings
 import com.intellij.java.workspaceModel.entities.modifyEntity

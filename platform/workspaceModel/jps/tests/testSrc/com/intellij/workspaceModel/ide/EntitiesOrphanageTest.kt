@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.platform.workspaceModel.jps.OrphanageWorkerEntitySource
-import com.intellij.platform.workspaceModel.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
@@ -13,7 +13,7 @@ import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
 import com.intellij.platform.workspaceModel.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
 import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

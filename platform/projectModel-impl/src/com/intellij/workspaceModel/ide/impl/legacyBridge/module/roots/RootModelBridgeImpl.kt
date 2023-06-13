@@ -17,8 +17,8 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
-import com.intellij.platform.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
 import com.intellij.platform.workspaceModel.jps.entities.ModuleDependencyItem
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity

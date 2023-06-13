@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.codegen.deft.meta
 
 import com.intellij.workspaceModel.codegen.deft.annotations.Name
-import com.intellij.platform.workspaceModel.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Child
 
 interface ObjModule : Obj {
   @Name
@@ -18,10 +18,10 @@ interface ObjModule : Obj {
   val extensions: List<@Child ExtProperty<*, *>>
 
   /**
-   * Example: `com.intellij.platform.workspaceModel.storage.obj.intellijWs`
+   * Example: `com.intellij.platform.workspace.storage.obj.intellijWs`
    * will be parsed as:
-   * - `com.intellij.platform.workspaceModel.storage.obj.intellijWs` package
-   * - `com.intellij.platform.workspaceModel.storage.obj.intellijWs.IntellijWs` object name
+   * - `com.intellij.platform.workspace.storage.obj.intellijWs` package
+   * - `com.intellij.platform.workspace.storage.obj.intellijWs.IntellijWs` object name
    **/
   @JvmInline
   value class Id(private val notation: String) {
@@ -37,9 +37,9 @@ interface ObjModule : Obj {
 
     fun check() {
       check(objName.first().isUpperCase()) {
-        "`$notation` should be an id notation like `com.intellij.platform.workspaceModel.storage.obj.IntellijWs`.\n" +
+        "`$notation` should be an id notation like `com.intellij.platform.workspace.storage.obj.IntellijWs`.\n" +
         "Will be parsed as:\n" +
-        "- `com.intellij.platform.workspaceModel.storage.obj.intellijWs` package\n" +
+        "- `com.intellij.platform.workspace.storage.obj.intellijWs` package\n" +
         "- `IntellijWs` object name"
       }
     }

@@ -4,24 +4,24 @@ package com.intellij.java.workspaceModel.entities
 import com.intellij.platform.workspaceModel.jps.entities.LibraryId
 import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId
 import com.intellij.platform.workspaceModel.jps.entities.ModuleId
-import com.intellij.platform.workspaceModel.storage.EntityInformation
-import com.intellij.platform.workspaceModel.storage.EntitySource
-import com.intellij.platform.workspaceModel.storage.EntityStorage
-import com.intellij.platform.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspaceModel.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.storage.SymbolicEntityId
-import com.intellij.platform.workspaceModel.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.storage.impl.ConnectionId
-import com.intellij.platform.workspaceModel.storage.impl.EntityLink
-import com.intellij.platform.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspaceModel.storage.impl.SoftLinkable
-import com.intellij.platform.workspaceModel.storage.impl.UsedClassesCollector
-import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.platform.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspaceModel.storage.impl.extractOneToAbstractManyParent
-import com.intellij.platform.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
-import com.intellij.platform.workspaceModel.storage.impl.updateOneToAbstractManyParentOfChild
+import com.intellij.platform.workspace.storage.EntityInformation
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.ConnectionId
+import com.intellij.platform.workspace.storage.impl.EntityLink
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.SoftLinkable
+import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.impl.extractOneToAbstractManyParent
+import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
+import com.intellij.platform.workspace.storage.impl.updateOneToAbstractManyParentOfChild
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)

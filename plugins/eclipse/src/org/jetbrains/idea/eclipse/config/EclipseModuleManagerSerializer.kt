@@ -6,8 +6,8 @@ import com.intellij.platform.workspaceModel.jps.serialization.impl.ErrorReporter
 import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsFileContentReader
 import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsFileContentWriter
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.platform.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.*
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer

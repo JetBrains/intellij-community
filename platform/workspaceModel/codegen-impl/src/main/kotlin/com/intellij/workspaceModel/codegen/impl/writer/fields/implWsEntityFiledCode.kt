@@ -11,8 +11,8 @@ import com.intellij.workspaceModel.codegen.impl.writer.toQualifiedName
 import com.intellij.workspaceModel.codegen.impl.writer.hasSetter
 import com.intellij.workspaceModel.codegen.impl.writer.isOverride
 import com.intellij.workspaceModel.codegen.impl.writer.javaName
-import com.intellij.platform.workspaceModel.storage.EntityStorage
-import com.intellij.platform.workspaceModel.storage.impl.*
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.impl.*
 
 val ObjProperty<*, *>.implWsEntityFieldCode: String
   get() = buildString {

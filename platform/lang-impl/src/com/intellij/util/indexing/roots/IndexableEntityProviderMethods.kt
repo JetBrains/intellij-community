@@ -16,8 +16,8 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.virtualFile
-import com.intellij.platform.workspaceModel.storage.EntityReference
-import com.intellij.platform.workspaceModel.storage.EntityStorage
+import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
 import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
 import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
