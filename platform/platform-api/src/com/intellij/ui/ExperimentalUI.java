@@ -47,6 +47,8 @@ public abstract class ExperimentalUI {
   private static final String FIRST_PROMOTION_DATE_PROPERTY = "experimental.ui.first.promotion.localdate";
 
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
+  @Nullable
+  private static volatile Boolean newUiOneSessionOverrideForThinClient = null;
   private IconPathPatcher iconPathPatcher;
 
   public static ExperimentalUI getInstance() {
@@ -57,7 +59,18 @@ public abstract class ExperimentalUI {
   public static boolean isNewUI() {
     // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
     // Please apply any modifications here and there synchronously. Or solve the dependency problem :)
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY);
+    Boolean override = newUiOneSessionOverrideForThinClient;
+    return override == null
+           ? EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY)
+           : override;
+  }
+
+  protected static boolean isNewUiOverriden() {
+    return newUiOneSessionOverrideForThinClient != null;
+  }
+
+  public static void overrideNewUiForOneSessionForThinClient(boolean newUi) {
+    newUiOneSessionOverrideForThinClient = newUi;
   }
 
   public static void setNewUI(boolean newUI) {
