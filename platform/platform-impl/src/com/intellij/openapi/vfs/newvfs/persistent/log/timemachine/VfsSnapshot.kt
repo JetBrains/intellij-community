@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.bind
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.mapCases
@@ -155,13 +154,6 @@ interface VfsSnapshot {
             is NotAvailable -> other()
             null -> other()
           }
-
-          sealed class GenericNotAvailableException(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
-          open class NotEnoughInformationCause(message: String, cause: NotEnoughInformationCause? = null) : GenericNotAvailableException(message, cause) {
-            override fun toString(): String = localizedMessage
-          }
-          object UnspecifiedNotAvailableException : NotEnoughInformationCause("property value is not available") // TODO delete and fix usages
-          open class VfsRecoveryException(message: String? = null, cause: Throwable? = null) : GenericNotAvailableException(message, cause)
         }
       }
     }

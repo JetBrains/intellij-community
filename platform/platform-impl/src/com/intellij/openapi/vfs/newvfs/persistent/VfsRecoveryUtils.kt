@@ -12,12 +12,12 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogContext
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.ExtendedVfsSnapshot.ExtendedVirtualFileSnapshot
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.NotEnoughInformationCause
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SinglePassVfsTimeMachine
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsRecoveryException
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Companion.notDeleted
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.*
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.VfsRecoveryException
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.mapCases
 import com.intellij.util.io.DataOutputStream

@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperat
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.AttributeDataRule.AttributeOverwriteData
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.VfsRecoveryException
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
 
 object VfsModificationContract {
