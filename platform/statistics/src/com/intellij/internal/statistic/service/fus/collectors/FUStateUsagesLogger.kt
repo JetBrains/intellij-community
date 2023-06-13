@@ -17,7 +17,6 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
@@ -25,7 +24,6 @@ import com.intellij.openapi.project.waitForSmartMode
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.concurrency.asDeferred
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -88,7 +86,7 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
           return
         }
 
-        val data = FeatureUsageData().addProject(project)
+        val data = FeatureUsageData(recorder).addProject(project)
         @Suppress("UnstableApiUsage")
         logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_FAILED, data.build(), true).asDeferred().join()
       }
@@ -106,7 +104,7 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
 
       coroutineScope {
         if (!metrics.isEmpty()) {
-          val groupData = addProject(project)
+          val groupData = addProject(project, group.recorder)
           for (metric in metrics) {
             val data = mergeWithEventData(groupData, metric.data)
             val eventData = data?.build() ?: emptyMap()
@@ -118,19 +116,20 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
 
         launch {
           blockingContext {
-            logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, FeatureUsageData().addProject(project).build(), true).join()
+            logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, FeatureUsageData(group.recorder).addProject(project).build(), true).join()
           }
         }
       }
     }
 
-    private fun addProject(project: Project?): FeatureUsageData? = if (project == null) null else FeatureUsageData().addProject(project)
+    private fun addProject(project: Project?, recorder: String): FeatureUsageData? =
+      if (project == null) null else FeatureUsageData(recorder).addProject(project)
 
     fun mergeWithEventData(groupData: FeatureUsageData?, data: FeatureUsageData?): FeatureUsageData? {
       if (data == null) {
         return groupData
       }
-      val newData = groupData?.copy() ?: FeatureUsageData()
+      val newData = groupData?.copy() ?: FeatureUsageData(recorderId = data.recorderId)
       newData.merge(data, "event_")
       return newData
     }

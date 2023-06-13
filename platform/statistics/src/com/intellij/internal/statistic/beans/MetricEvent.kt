@@ -18,8 +18,8 @@ import java.util.*
  * [com.intellij.internal.statistic.eventLog.events.VarargEventId.metric]
  */
 @ApiStatus.Internal
-class MetricEvent @JvmOverloads constructor(@NonNls val eventId: String, data: FeatureUsageData? = null) {
-  val data: FeatureUsageData = data ?: FeatureUsageData()
+class MetricEvent @JvmOverloads constructor(@NonNls val eventId: String, data: FeatureUsageData? = null, recorderId: String = "FUS") {
+  val data: FeatureUsageData = data ?: FeatureUsageData(recorderId)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

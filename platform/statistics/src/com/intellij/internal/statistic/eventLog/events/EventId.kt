@@ -23,11 +23,11 @@ class EventId(
   }
 
   fun log(project: Project?) {
-    getLogger().logAsync(group, eventId, FeatureUsageData().addProject(project).build(), false)
+    getLogger().logAsync(group, eventId, FeatureUsageData(group.recorder).addProject(project).build(), false)
   }
 
   fun metric(): MetricEvent {
-    return MetricEvent(eventId, null)
+    return MetricEvent(eventId, null, group.recorder)
   }
 
   override fun getFields(): List<EventField<*>> = emptyList()
@@ -48,11 +48,11 @@ class EventId1<in T>(
   }
 
   fun metric(value1: T): MetricEvent {
-    return MetricEvent(eventId, buildUsageData(value1))
+    return MetricEvent(eventId, buildUsageData(value1), group.recorder)
   }
 
   private fun buildUsageData(value1: T): FeatureUsageData {
-    val data = FeatureUsageData()
+    val data = FeatureUsageData(group.recorder)
     field1.addData(data, value1)
     return data
   }
@@ -76,11 +76,11 @@ class EventId2<in T1, in T2>(
   }
 
   fun metric(value1: T1, value2: T2): MetricEvent {
-    return MetricEvent(eventId, buildUsageData(value1, value2))
+    return MetricEvent(eventId, buildUsageData(value1, value2), group.recorder)
   }
 
   private fun buildUsageData(value1: T1, value2: T2): FeatureUsageData {
-    val data = FeatureUsageData()
+    val data = FeatureUsageData(group.recorder)
     field1.addData(data, value1)
     field2.addData(data, value2)
     return data
@@ -106,11 +106,11 @@ class EventId3<in T1, in T2, in T3>(
   }
 
   fun metric(value1: T1, value2: T2, value3: T3): MetricEvent {
-    return MetricEvent(eventId, buildUsageData(value1, value2, value3))
+    return MetricEvent(eventId, buildUsageData(value1, value2, value3), group.recorder)
   }
 
   private fun buildUsageData(value1: T1, value2: T2, value3: T3): FeatureUsageData {
-    val data = FeatureUsageData()
+    val data = FeatureUsageData(group.recorder)
     field1.addData(data, value1)
     field2.addData(data, value2)
     field3.addData(data, value3)
@@ -177,11 +177,11 @@ class VarargEventId internal constructor(
   }
 
   fun metric(pairs: List<EventPair<*>>): MetricEvent {
-    return MetricEvent(eventId, buildUsageData(pairs))
+    return MetricEvent(eventId, buildUsageData(pairs), group.recorder)
   }
 
   private fun buildUsageData(pairs: List<EventPair<*>>): FeatureUsageData {
-    val data = FeatureUsageData()
+    val data = FeatureUsageData(group.recorder)
     for (pair in pairs) {
       if (pair.field !in fields) throw IllegalArgumentException("Field ${pair.field.name} not in fields for event ID $eventId")
       @Suppress("UNCHECKED_CAST")
