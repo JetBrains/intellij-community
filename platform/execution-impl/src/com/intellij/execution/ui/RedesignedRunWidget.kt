@@ -16,6 +16,8 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -24,6 +26,7 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeRootPane
@@ -32,10 +35,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHea
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.lightThemeDarkHeaderDisableFilter
 import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.ui.BadgeRectProvider
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.LayeredIcon
-import com.intellij.ui.RetrievableIcon
+import com.intellij.ui.*
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.TextHoledIcon
 import com.intellij.ui.icons.TextIcon
@@ -50,6 +50,35 @@ import javax.swing.JComponent
 import javax.swing.SwingConstants
 
 const val CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH = 32
+
+@Service(Service.Level.PROJECT)
+class RunWidgetManager(private val project: Project)  {
+  companion object {
+
+    fun getInstance(project: Project): RunWidgetManager = project.service()
+
+    @JvmStatic
+    val isResumeActive: Boolean
+      get() = ExperimentalUI.isNewUI() && RegistryManager.getInstance().`is`("ide.experimental.ui.show.resume")
+
+    @JvmStatic
+    fun shouldHideDisabledDebugActions(place: String): Boolean {
+      return isResumeActive && ActionPlaces.isNewUiToolbarPlace(place)
+    }
+  }
+
+  fun isResumeAvailable(): Boolean {
+    return isResumeActive && RunManagerEx.getInstanceEx(project).selectedConfiguration?.let { conf ->
+        isProcessStarted(conf, ToolWindowId.DEBUG)
+      } ?: false
+  }
+
+  private fun isProcessStarted(configuration: RunnerAndConfigurationSettings, executorId: String): Boolean {
+    val executionManager = ExecutionManagerImpl.getInstance(project)
+    val executor = executionManager.getRunningDescriptors { configuration === it }.flatMap { executionManager.getExecutors(it) }.firstOrNull()
+    return executor?.id == executorId
+  }
+}
 
 private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean): ActionToolbar {
   val toolbarId = "RunToolbarMainActionGroup"
@@ -137,7 +166,15 @@ class RunToolbarTopLevelExecutorActionGroup : ActionGroup() {
   override fun isPopup() = false
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    val topLevelRunActions = listOf(IdeActions.ACTION_DEFAULT_RUNNER, IdeActions.ACTION_DEFAULT_DEBUGGER).mapNotNull {
+    val selectedInDebug = e?.project?.let { project ->
+      RunWidgetManager.getInstance(project).isResumeAvailable()
+    } ?: false
+    val list = if(selectedInDebug)
+      listOf(IdeActions.ACTION_DEFAULT_DEBUGGER)
+    else
+      listOf(IdeActions.ACTION_DEFAULT_RUNNER, IdeActions.ACTION_DEFAULT_DEBUGGER)
+
+    val topLevelRunActions = list.mapNotNull {
       ActionManager.getInstance().getAction(it)
     }
     return topLevelRunActions.toTypedArray()
@@ -322,10 +359,15 @@ internal val excludeRunAndDebug: (Executor) -> Boolean = {
   // Cannot use DefaultDebugExecutor.EXECUTOR_ID because of module dependencies
   it.id != ToolWindowId.RUN && it.id != ToolWindowId.DEBUG
 }
+internal val excludeDebug: (Executor) -> Boolean = {
+  // Cannot use DefaultDebugExecutor.EXECUTOR_ID because of module dependencies
+  it.id != ToolWindowId.DEBUG
+}
 
 private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): DefaultActionGroup {
   if (runConfiguration != null) {
-    return RunConfigurationsComboBoxAction.SelectConfigAction(runConfiguration, project, excludeRunAndDebug)
+    val exclude = if(RunWidgetManager.getInstance(project).isResumeAvailable()) excludeDebug else excludeRunAndDebug
+    return RunConfigurationsComboBoxAction.SelectConfigAction(runConfiguration, project, exclude)
   }
   if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
     return RunConfigurationsComboBoxAction.RunCurrentFileAction(excludeRunAndDebug)
