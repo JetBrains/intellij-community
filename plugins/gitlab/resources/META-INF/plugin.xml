@@ -75,6 +75,9 @@
       implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
 
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.gitlab.ui.action.GitLabAnnotationGutterActionProvider"/>
+
+    <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
+      implementation="org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneDialogExtension"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">

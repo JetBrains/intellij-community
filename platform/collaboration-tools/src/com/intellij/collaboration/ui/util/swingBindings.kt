@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -225,6 +226,14 @@ fun ProgressStripe.bindProgressIn(scope: CoroutineScope, loadingFlow: Flow<Boole
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     loadingFlow.collect {
       if (it) startLoadingImmediately() else stopLoading()
+    }
+  }
+}
+
+fun <T> JBList<T>.bindBusyIn(scope: CoroutineScope, busyFlow: Flow<Boolean>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    busyFlow.collect { isBusy ->
+      setPaintBusy(isBusy)
     }
   }
 }

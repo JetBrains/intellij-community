@@ -1,5 +1,5 @@
 query {
   currentUser {
-    ...user
+    ...userDetailed
   }
 }

@@ -2,11 +2,9 @@
 package org.jetbrains.plugins.gitlab.api.dto
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
-import org.jetbrains.annotations.Nls
 
-@GraphQLFragment("/graphql/fragment/project.graphql")
-data class GitLabProjectDTO(
-  val name: @Nls String,
-  val httpUrlToRepo: String,
-  val webUrl: String
+@GraphQLFragment("/graphql/fragment/projectMember.graphql")
+data class ProjectMemberDTO(
+  val createdBy: GitLabUserDTO,
+  val project: GitLabProjectDTO
 )

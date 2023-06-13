@@ -5,9 +5,8 @@ import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.*
-import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDetailedDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserRestDTO
-import org.jetbrains.plugins.gitlab.api.gitLabQuery
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.awt.Image
 import java.net.http.HttpResponse
@@ -20,10 +19,10 @@ suspend fun GitLabApi.Rest.getCurrentUser(server: GitLabServerPath): HttpRespons
   }
 }
 
-suspend fun GitLabApi.GraphQL.getCurrentUser(server: GitLabServerPath): GitLabUserDTO? {
+suspend fun GitLabApi.GraphQL.getCurrentUser(server: GitLabServerPath): GitLabUserDetailedDTO? {
   val request = gitLabQuery(server, GitLabGQLQuery.GET_CURRENT_USER)
   return withErrorStats(server, GitLabGQLQuery.GET_CURRENT_USER) {
-    loadResponse<GitLabUserDTO>(request, "currentUser").body()
+    loadResponse<GitLabUserDetailedDTO>(request, "currentUser").body()
   }
 }
 
