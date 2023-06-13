@@ -191,6 +191,7 @@ public final class ServiceViewUIUtils {
 
           ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(content.getPlace(), actionGroup, true);
           toolbar.setTargetComponent(content.getActionsContextComponent());
+          toolbarWrapper.removeAll();
           toolbarWrapper.add(wrapServicesAligned(toolbar), BorderLayout.CENTER);
 
           toolbarWrapper.revalidate();
