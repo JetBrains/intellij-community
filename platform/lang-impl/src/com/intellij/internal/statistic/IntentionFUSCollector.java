@@ -9,9 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventId2;
-import com.intellij.internal.statistic.eventLog.events.EventId3;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -27,12 +25,16 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public final class IntentionFUSCollector extends CounterUsagesCollector {
-  private final static EventLogGroup GROUP = new EventLogGroup("intentions", 60);
+  private static final ClassEventField ID_FIELD = EventFields.Class("id");
+  private static final IntEventField POSITION_FIELD = EventFields.Int("position");
+
+  private final static EventLogGroup GROUP = new EventLogGroup("intentions", 61);
   private final static EventId3<Class<?>, PluginInfo, Language> CALLED =
-    GROUP.registerEvent("called", EventFields.Class("id"), EventFields.PluginInfo, EventFields.Language);
-  private final static EventId3<Class<?>, PluginInfo, Language> SHOWN =
-    GROUP.registerEvent("shown", EventFields.Class("id"), EventFields.PluginInfo, EventFields.Language);
-  private static final EventId2<Long, FileType> POPUP_DELAY = GROUP.registerEvent("popup.delay", EventFields.DurationMs, EventFields.FileType);
+    GROUP.registerEvent("called", ID_FIELD, EventFields.PluginInfo, EventFields.Language);
+  private final static VarargEventId SHOWN =
+    GROUP.registerVarargEvent("shown", ID_FIELD, EventFields.PluginInfo, EventFields.Language, POSITION_FIELD);
+  private static final EventId2<Long, FileType> POPUP_DELAY =
+    GROUP.registerEvent("popup.delay", EventFields.DurationMs, EventFields.FileType);
 
   @Override
   public EventLogGroup getGroup() {
@@ -40,19 +42,10 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
   }
 
   public static void record(@NotNull Project project, @NotNull CommonIntentionAction action, @NotNull Language language) {
-    recordIntentionEvent(project, action, language, CALLED);
-  }
-
-  private static void recordIntentionEvent(@NotNull Project project,
-                                           @NotNull CommonIntentionAction action,
-                                           @NotNull Language language,
-                                           EventId3<Class<?>, PluginInfo, Language> eventId) {
     final Class<?> clazz = getOriginalHandlerClass(action);
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(clazz);
-    eventId.log(project, clazz, info, language);
-    if (eventId == CALLED) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsedByIntention(clazz);
-    }
+    CALLED.log(project, clazz, info, language);
+    FeatureUsageTracker.getInstance().triggerFeatureUsedByIntention(clazz);
   }
 
   @NotNull
@@ -74,8 +67,12 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
                                            ListPopup popup,
                                            @NotNull Language language) {
     @SuppressWarnings("unchecked") List<IntentionActionWithTextCaching> values = popup.getListStep().getValues();
-    for (IntentionActionWithTextCaching value : values) {
-      recordIntentionEvent(project, value.getAction(), language, SHOWN);
+    for (int i = 0; i < values.size(); i++) {
+      IntentionActionWithTextCaching intention = values.get(i);
+      final Class<?> clazz = getOriginalHandlerClass(intention.getAction());
+      final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(clazz);
+      SHOWN.log(project, ID_FIELD.with(clazz), EventFields.PluginInfo.with(info), EventFields.Language.with(language),
+                POSITION_FIELD.with(i));
     }
   }
 
