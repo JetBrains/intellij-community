@@ -10,9 +10,9 @@ kotlin {
     js(IR)
     jvm()
     linuxX64()
-    macosX64() // TODO: switch later when M1 agents arrive
+    macosArm64()
     iosArm64()
-    iosX64() // TODO: switch later when M1 agents arrive
+    iosSimulatorArm64()
 
     sourceSets {
         listOf("Main", "Test").forEach { classifier ->
@@ -38,7 +38,7 @@ kotlin {
                 dependsOn(native)
             }
 
-            val macosX64 = getByName("macosX64$classifier") {
+            val macosX64 = getByName("macosArm64$classifier") {
                 dependsOn(apple)
             }
 
@@ -46,7 +46,7 @@ kotlin {
                 dependsOn(apple)
             }
 
-            val iosX64 = getByName("iosX64$classifier") {
+            val iosX64 = getByName("iosSimulatorArm64$classifier") {
                 dependsOn(apple)
             }
         }
