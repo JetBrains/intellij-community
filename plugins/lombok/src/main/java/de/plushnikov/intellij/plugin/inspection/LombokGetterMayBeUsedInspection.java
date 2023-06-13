@@ -26,20 +26,16 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
   @NotNull
   @Override
   protected PsiElementVisitor createVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new LombokGetterMayBeUsedVisitor(holder, null);
+    return new LombokGetterMayBeUsedVisitor(holder, false);
   }
 
   private static class LombokGetterMayBeUsedVisitor extends JavaElementVisitor {
     private final @Nullable ProblemsHolder myHolder;
+    private final boolean myApplyFix;
 
-    private final @Nullable LombokGetterMayBeUsedInspection.LombokGetterMayBeUsedFix lombokGetterMayBeUsedFix;
-
-    private LombokGetterMayBeUsedVisitor(
-      @Nullable ProblemsHolder holder,
-      @Nullable LombokGetterMayBeUsedInspection.LombokGetterMayBeUsedFix lombokGetterMayBeUsedFix
-    ) {
+    private LombokGetterMayBeUsedVisitor(@Nullable ProblemsHolder holder, boolean applyFix) {
       this.myHolder = holder;
-      this.lombokGetterMayBeUsedFix = lombokGetterMayBeUsedFix;
+      myApplyFix = applyFix;
     }
 
     @Override
@@ -196,8 +192,8 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  psiClassNameIdentifier != null ? psiClassNameIdentifier.getTextRangeInParent() : psiClass.getTextRange(),
                                  fix);
-      } else if (lombokGetterMayBeUsedFix != null) {
-        lombokGetterMayBeUsedFix.effectivelyDoFix(psiClass, fieldsAndMethods, annotatedFields);
+      } else if (myApplyFix) {
+        LombokGetterMayBeUsedFix.effectivelyDoFix(psiClass, fieldsAndMethods, annotatedFields);
       }
     }
 
@@ -207,15 +203,14 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
         myHolder.registerProblem(method,
                                  LombokBundle.message("inspection.lombok.getter.may.be.used.display.field.message",
                                                                  field.getName()), fix);
-      } else if (lombokGetterMayBeUsedFix != null) {
-        lombokGetterMayBeUsedFix.effectivelyDoFix(field, method);
+      } else if (myApplyFix) {
+        LombokGetterMayBeUsedFix.effectivelyDoFix(field, method);
       }
     }
   }
 
   private static class LombokGetterMayBeUsedFix implements LocalQuickFix {
     private final @NotNull String myText;
-    private Project project;
 
     private LombokGetterMayBeUsedFix(@NotNull String text) {
       myText = text;
@@ -237,20 +232,20 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      this.project = project;
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiMethod) {
-        new LombokGetterMayBeUsedVisitor(null, this).visitMethodForFix((PsiMethod)element);
+        new LombokGetterMayBeUsedVisitor(null, true).visitMethodForFix((PsiMethod)element);
       } else if (element instanceof PsiClass) {
-        new LombokGetterMayBeUsedVisitor(null, this).visitClass((PsiClass)element);
+        new LombokGetterMayBeUsedVisitor(null, true).visitClass((PsiClass)element);
       }
     }
 
-    private void effectivelyDoFix(@NotNull PsiField field, @NotNull PsiMethod method) {
+    private static void effectivelyDoFix(@NotNull PsiField field, @NotNull PsiMethod method) {
       final PsiModifierList modifierList = field.getModifierList();
       if (modifierList == null) {
         return;
       }
+      Project project = field.getProject();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiAnnotation annotation = factory.createAnnotationFromText("@"+LombokClassNames.GETTER, field);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotation);
@@ -258,8 +253,9 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
       removeMethodAndMoveJavaDoc(field, method);
     }
 
-    public void effectivelyDoFix(@NotNull PsiClass aClass, @NotNull List<Pair<PsiField, PsiMethod>> fieldsAndMethods,
-                                 @NotNull List<PsiField> annotatedFields) {
+    public static void effectivelyDoFix(@NotNull PsiClass aClass, @NotNull List<Pair<PsiField, PsiMethod>> fieldsAndMethods,
+                                        @NotNull List<PsiField> annotatedFields) {
+      Project project = aClass.getProject();
       for (Pair<PsiField, PsiMethod> fieldAndMethod : fieldsAndMethods) {
         PsiField field = fieldAndMethod.getFirst();
         PsiMethod method = fieldAndMethod.getSecond();
@@ -281,8 +277,8 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
       }
     }
 
-    private void removeMethodAndMoveJavaDoc(@NotNull PsiField field, @NotNull PsiMethod method) {
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    private static void removeMethodAndMoveJavaDoc(@NotNull PsiField field, @NotNull PsiMethod method) {
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(field.getProject());
       CommentTracker tracker = new CommentTracker();
       PsiDocComment methodJavaDoc = method.getDocComment();
       if (methodJavaDoc != null) {
