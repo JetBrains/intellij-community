@@ -224,7 +224,7 @@ public interface EditorSettings {
   @ApiStatus.Experimental
   void addEditorSettingsListener(@NotNull EditorSettingsListener listener, @NotNull Disposable parentDisposable);
 
-  public enum LineNumerationType {
+  enum LineNumerationType {
     ABSOLUTE,
     RELATIVE,
     HYBRID,

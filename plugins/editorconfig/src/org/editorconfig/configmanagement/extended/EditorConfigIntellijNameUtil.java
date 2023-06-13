@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -24,28 +23,15 @@ public final class EditorConfigIntellijNameUtil {
     if (isIgnored(propertyName)) {
       return Collections.emptyList();
     }
-    switch (IntellijPropertyKindMap.getPropertyKind(propertyName)) {
-      case EDITOR_CONFIG_STANDARD:
-        return Collections.singletonList(propertyName);
-      case UNSUPPORTED:
-        break;
-      case LANGUAGE:
-        if (mapper instanceof LanguageCodeStylePropertyMapper) {
-          return Collections.singletonList(getLanguageProperty(mapper, propertyName));
-        }
-        break;
-      case COMMON:
-        List<String> names = new ArrayList<>();
-        names.add(GENERIC_OPTION_KEY_PREFIX + propertyName);
-        names.add(getLanguageProperty(mapper, propertyName));
-        return names;
-      case GENERIC:
-        return Collections.singletonList(IDE_PREFIX + propertyName);
-      case JB_STANDARD:
-        // Not supported;
-        break;
-    }
-    return Collections.emptyList();
+    return switch (IntellijPropertyKindMap.getPropertyKind(propertyName)) {
+      case EDITOR_CONFIG_STANDARD -> List.of(propertyName);
+      case LANGUAGE -> mapper instanceof LanguageCodeStylePropertyMapper
+            ? List.of(getLanguageProperty(mapper, propertyName))
+            : List.of();
+      case COMMON -> List.of(GENERIC_OPTION_KEY_PREFIX + propertyName, getLanguageProperty(mapper, propertyName));
+      case GENERIC -> List.of(IDE_PREFIX + propertyName);
+      case UNSUPPORTED, JB_STANDARD -> List.of(); // Not supported;
+    };
   }
 
   @NotNull

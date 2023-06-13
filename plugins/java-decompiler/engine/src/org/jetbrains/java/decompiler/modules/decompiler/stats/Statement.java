@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.annotations.NotNull;
@@ -346,7 +344,7 @@ public abstract class Statement implements IMatchable {
     }
 
     switch (type) {
-      case BASIC_BLOCK:
+      case BASIC_BLOCK -> {
         BasicBlockStatement bblock = (BasicBlockStatement)this;
         InstructionSequence seq = bblock.getBlock().getSeq();
 
@@ -359,24 +357,20 @@ public abstract class Statement implements IMatchable {
           }
           isMonitorEnter = (seq.getLastInstr().opcode == CodeConstants.opc_monitorenter);
         }
-        break;
-      case SEQUENCE:
-      case IF:
+      }
+      case SEQUENCE, IF -> {
         containsMonitorExit = false;
         for (Statement st : stats) {
           containsMonitorExit |= st.isContainsMonitorExit();
         }
-
-        break;
-      case SYNCHRONIZED:
-      case ROOT:
-      case GENERAL:
-        break;
-      default:
+      }
+      case SYNCHRONIZED, ROOT, GENERAL -> { }
+      default -> {
         containsMonitorExit = false;
         for (Statement st : stats) {
           containsMonitorExit |= st.isContainsMonitorExit();
         }
+      }
     }
   }
 

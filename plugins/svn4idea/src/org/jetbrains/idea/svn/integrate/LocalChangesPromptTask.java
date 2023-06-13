@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -82,21 +82,16 @@ public class LocalChangesPromptTask extends BaseMergeTask {
     LocalChangesAction nextAction = !isEmpty(intersection) ? myInteraction.selectLocalChangesAction(mergeAll) : continueMerge;
 
     switch (nextAction) {
-      case continueMerge:
+      case continueMerge -> myCallback.run();
+      case shelve -> myMergeProcess.runInBackground(SvnBundle.message("progress.title.shelving.local.changes.before.merge"), indicator -> {
+        shelveChanges(intersection);
         myCallback.run();
-        break;
-      case shelve:
-        myMergeProcess.runInBackground(SvnBundle.message("progress.title.shelving.local.changes.before.merge"), indicator -> {
-          shelveChanges(intersection);
-          myCallback.run();
-        });
-        break;
-      case inspect:
+      });
+      case inspect -> {
         List<FilePath> intersectedPaths = sorted(getPaths(intersection.getAllChanges()), FilePathByPathComparator.getInstance());
         myInteraction.showIntersectedLocalPaths(intersectedPaths);
-        break;
-      case cancel:
-        break;
+      }
+      case cancel -> { }
     }
   }
 

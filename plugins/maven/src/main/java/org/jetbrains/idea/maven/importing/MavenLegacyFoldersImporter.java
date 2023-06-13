@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
@@ -485,15 +485,9 @@ class MavenLegacyFoldersImporter {
 
   private void configGeneratedSourceFolder(@NotNull File targetDir, final JavaSourceRootType rootType) {
     switch (myImportingSettings.getGeneratedSourcesFolder()) {
-      case GENERATED_SOURCE_FOLDER:
-        myModel.addGeneratedJavaSourceFolder(targetDir.getPath(), rootType);
-        break;
-
-      case SUBFOLDER:
-        addAllSubDirsAsGeneratedSources(targetDir, rootType);
-        break;
-
-      case AUTODETECT:
+      case GENERATED_SOURCE_FOLDER -> myModel.addGeneratedJavaSourceFolder(targetDir.getPath(), rootType);
+      case SUBFOLDER -> addAllSubDirsAsGeneratedSources(targetDir, rootType);
+      case AUTODETECT -> {
         Collection<JavaModuleSourceRoot> sourceRoots = JavaSourceRootDetectionUtil.suggestRoots(targetDir);
 
         for (JavaModuleSourceRoot root : sourceRoots) {
@@ -506,10 +500,10 @@ class MavenLegacyFoldersImporter {
         }
 
         addAllSubDirsAsGeneratedSources(targetDir, rootType);
-        break;
-
-      case IGNORE:
-        break; // Ignore.
+      }
+      case IGNORE -> {
+        // Ignore.
+      }
     }
   }
 

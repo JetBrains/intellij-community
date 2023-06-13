@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.application.ModalityState;
@@ -227,14 +227,9 @@ public final class AuthenticationService {
     List<String> result = new ArrayList<>();
 
     switch (myConfiguration.getSslProtocols()) {
-      case sslv3:
-        result.add(SSL_V3_PROTOCOL);
-        break;
-      case tlsv1:
-        result.add(TLS_V1_PROTOCOL);
-        break;
-      case all:
-        break;
+      case sslv3 -> result.add(SSL_V3_PROTOCOL);
+      case tlsv1 -> result.add(TLS_V1_PROTOCOL);
+      case all -> {}
     }
 
     return result;
