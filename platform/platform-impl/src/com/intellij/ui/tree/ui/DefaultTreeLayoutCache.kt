@@ -3,6 +3,7 @@ package com.intellij.ui.tree.ui
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.tree.CachingTreePath
+import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
 import java.awt.Rectangle
 import java.util.*
@@ -708,7 +709,9 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     if (!LOG.isDebugEnabled) {
       return
     }
-    InvariantChecker(location.format(*args)).checkInvariants()
+    SlowOperations.startSection(SlowOperations.GENERIC).use { // Only for debugging, so slow ops are fine here.
+      InvariantChecker(location.format(*args)).checkInvariants()
+    }
   }
 
   private inner class InvariantChecker(private val location: String) {
