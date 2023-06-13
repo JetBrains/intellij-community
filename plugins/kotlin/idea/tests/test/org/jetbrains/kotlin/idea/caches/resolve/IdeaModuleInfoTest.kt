@@ -1449,9 +1449,11 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         resolutionAnchorCacheService.setAnchors(anchorMapping)
 
         project.withLibraryToSourceAnalysis {
-            with(resolutionAnchorCacheService.getDependencyResolutionAnchors(lib1Info)) {
-                assertEquals(1, this.size)
-                assertEquals(anchorModuleInfo, this.first())
+            for (lib in listOf(lib1Info, lib2Info, lib3Info)) {
+                with(resolutionAnchorCacheService.getDependencyResolutionAnchors(lib)) {
+                    assertEquals(lib.toString(), 1, this.size)
+                    assertEquals(lib.toString(), anchorModuleInfo, this.first())
+                }
             }
         }
     }
