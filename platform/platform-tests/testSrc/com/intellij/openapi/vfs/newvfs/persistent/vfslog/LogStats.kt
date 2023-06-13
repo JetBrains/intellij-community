@@ -18,6 +18,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import kotlinx.coroutines.runBlocking
+import java.io.Closeable
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -78,8 +79,8 @@ private fun calcStats(log: VfsLog): Stats {
               stats.tagsCount.compute(it.operation.tag, ::incStat)
               when (val op = it.operation) {
                 is VfsOperation.AttributesOperation.WriteAttribute -> {
-                  val attributeId = deenumerateAttribute(op.attributeIdEnumerated)
-                  if (attributeId == null) stats.nullEnumeratedString.incrementAndGet()
+                  val attr = deenumerateAttribute(op.enumeratedAttribute)
+                  if (attr == null) stats.nullEnumeratedString.incrementAndGet()
                   //else {
                   //  attrCount[attributeId] = attrCount.getOrDefault(attributeId, 0) + 1
                   //}
@@ -371,8 +372,10 @@ fun main(args: Array<String>) {
   //val names = PersistentStringEnumerator(logPath.parent / "names.dat", true)::valueOf
   val attributeEnumerator = SimpleStringPersistentEnumerator(logPath.parent / "attributes_enums.dat")
 
-  vfsRecoveryDraft(log, attributeEnumerator, fsRecordsOracle)
-
-  fsRecordsOracle.disposeConnection()
-  AppExecutorUtil.shutdownApplicationScheduledExecutorService()
+  Closeable {
+    fsRecordsOracle.disposeConnection()
+    AppExecutorUtil.shutdownApplicationScheduledExecutorService()
+  }.use {
+    vfsRecoveryDraft(log, attributeEnumerator, fsRecordsOracle)
+  }
 }

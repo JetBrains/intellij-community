@@ -141,13 +141,13 @@ object VfsChronicle {
    */
   inline fun lookupAttributeData(iterator: OperationLogStorage.Iterator,
                                  fileId: Int,
-                                 enumeratedAttrId: Int,
+                                 enumeratedAttribute: EnumeratedFileAttribute,
                                  direction: TraverseDirection = TraverseDirection.REWIND,
                                  crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<PayloadRef?> =
     traverseOperationsLogForVfsModificationLookup(
       iterator, direction,
       VfsModificationContract.attributeData.relevantOperations,
-      VfsModificationContract.attributeData.forFileId(fileId).andIf { it.affectsAttribute(enumeratedAttrId) }.map { it.data },
+      VfsModificationContract.attributeData.forFileId(fileId).andIf { it.affectsAttribute(enumeratedAttribute) }.map { it.data },
       stopIf
     )
 
