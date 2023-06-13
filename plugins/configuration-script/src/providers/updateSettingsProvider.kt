@@ -5,10 +5,9 @@ import com.intellij.configurationScript.readIntoObject
 import com.intellij.configurationScript.schemaGenerators.PluginJsonSchemaGenerator
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.processOpenedProjects
+import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider
 import com.intellij.openapi.util.NotNullLazyKey
-import com.intellij.util.SmartList
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.xmlb.annotations.XCollection
 
@@ -24,13 +23,9 @@ private val dataKey = NotNullLazyKey.createLazyKey<SynchronizedClearableLazy<Plu
 
 private class MyUpdateSettingsProvider : UpdateSettingsProvider {
   override fun getPluginRepositories(): List<String> {
-    val result = SmartList<String>()
-    processOpenedProjects { project ->
-      dataKey.getValue(project).value?.repositories?.let {
-        result.addAll(it)
-      }
-    }
-    return result
+    return getOpenedProjects().flatMap { project ->
+      dataKey.getValue(project).value?.repositories ?: emptyList()
+    }.toList()
   }
 }
 

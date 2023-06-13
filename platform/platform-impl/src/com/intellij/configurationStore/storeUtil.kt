@@ -21,7 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.withModalProgressBlocking
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.processOpenedProjects
+import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -218,7 +218,7 @@ suspend fun saveProjectsAndApp(forceSavingAllSettings: Boolean, onlyProject: Pro
   val start = System.currentTimeMillis()
   saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = forceSavingAllSettings)
   if (onlyProject == null) {
-    processOpenedProjects { project ->
+    for (project in getOpenedProjects()) {
       saveSettings(project, forceSavingAllSettings = forceSavingAllSettings)
     }
   }
