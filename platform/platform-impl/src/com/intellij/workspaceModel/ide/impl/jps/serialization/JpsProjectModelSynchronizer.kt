@@ -29,8 +29,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.workspaceModel.jps.*
-import com.intellij.platform.workspaceModel.jps.serialization.impl.*
+import com.intellij.platform.workspace.jps.*
+import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.project.stateStore
 import com.intellij.util.PlatformUtils.isIntelliJ
 import com.intellij.util.PlatformUtils.isRider
@@ -38,14 +38,14 @@ import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
-import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsProjectEntitiesLoader.createProjectSerializers
+import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader.createProjectSerializers
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.platform.workspace.storage.DummyParentEntitySource
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.TestOnly

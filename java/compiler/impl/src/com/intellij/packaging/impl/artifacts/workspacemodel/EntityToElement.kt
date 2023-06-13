@@ -2,7 +2,7 @@
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
 import com.intellij.configurationStore.deserializeInto
-import com.intellij.java.workspaceModel.entities.*
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.module.ModulePointerManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
@@ -12,7 +12,7 @@ import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.impl.artifacts.UnknownPackagingElementTypeException
 import com.intellij.packaging.impl.elements.*
-import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.workspaceModel

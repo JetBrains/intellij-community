@@ -4,8 +4,8 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity;
-import com.intellij.platform.workspaceModel.jps.entities.ModuleGroupPathEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

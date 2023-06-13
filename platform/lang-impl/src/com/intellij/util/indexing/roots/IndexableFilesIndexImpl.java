@@ -34,7 +34,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtil
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
 import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;

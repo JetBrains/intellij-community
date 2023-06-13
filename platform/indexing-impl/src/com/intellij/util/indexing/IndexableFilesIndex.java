@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;

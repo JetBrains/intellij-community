@@ -14,7 +14,7 @@ import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModelCacheVersion
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter

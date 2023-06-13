@@ -7,7 +7,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath;
+import com.intellij.platform.workspace.jps.serialization.impl.ModulePath;
 import com.intellij.testFramework.Parameterized;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestFrameworkUtil;

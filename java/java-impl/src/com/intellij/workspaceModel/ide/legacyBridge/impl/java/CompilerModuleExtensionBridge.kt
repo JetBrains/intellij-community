@@ -15,8 +15,8 @@ import com.intellij.workspaceModel.ide.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
-import com.intellij.java.workspaceModel.entities.JavaModuleSettingsEntity
-import com.intellij.java.workspaceModel.entities.javaSettings
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 

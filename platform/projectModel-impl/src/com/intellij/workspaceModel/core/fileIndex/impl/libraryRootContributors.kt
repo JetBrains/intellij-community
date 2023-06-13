@@ -14,11 +14,11 @@ import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
-import com.intellij.platform.workspaceModel.jps.entities.LibraryId
-import com.intellij.platform.workspaceModel.jps.entities.LibraryRoot.InclusionOptions.*
-import com.intellij.platform.workspaceModel.jps.entities.LibraryRootTypeId
-import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryRoot.InclusionOptions.*
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEntity>, PlatformInternalWorkspaceFileIndexContributor {

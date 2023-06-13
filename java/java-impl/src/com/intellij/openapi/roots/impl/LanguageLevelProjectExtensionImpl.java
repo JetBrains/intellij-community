@@ -15,7 +15,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.platform.workspace.storage.EntityChange;
 import com.intellij.platform.workspace.storage.VersionedStorageChange;
-import com.intellij.java.workspaceModel.entities.JavaModuleSettingsEntity;
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

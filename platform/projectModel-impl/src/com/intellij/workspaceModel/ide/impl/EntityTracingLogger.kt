@@ -5,10 +5,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspaceModel.jps.entities.FacetEntity
-import com.intellij.platform.workspaceModel.jps.entities.FacetId
-import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
-import com.intellij.platform.workspaceModel.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.jps.entities.FacetId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

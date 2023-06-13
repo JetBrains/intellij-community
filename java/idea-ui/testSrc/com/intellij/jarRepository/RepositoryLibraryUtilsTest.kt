@@ -19,7 +19,7 @@ import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.runBlocking

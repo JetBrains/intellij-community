@@ -5,13 +5,13 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import com.intellij.platform.workspaceModel.jps.*
-import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
+import com.intellij.platform.workspace.jps.*
+import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.*
-import com.intellij.platform.workspaceModel.jps.serialization.impl.JpsGlobalEntitiesSerializers
+import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
-import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 

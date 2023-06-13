@@ -2,10 +2,10 @@
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.configurationStore.serialize
-import com.intellij.java.workspaceModel.entities.ArtifactEntity
-import com.intellij.java.workspaceModel.entities.ArtifactPropertiesEntity
-import com.intellij.java.workspaceModel.entities.CompositePackagingElementEntity
-import com.intellij.java.workspaceModel.entities.modifyEntity
+import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.ArtifactPropertiesEntity
+import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.java.workspace.entities.modifyEntity
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil

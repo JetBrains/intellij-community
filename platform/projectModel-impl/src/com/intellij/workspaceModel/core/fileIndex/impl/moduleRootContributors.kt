@@ -1,14 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
-import com.intellij.java.workspaceModel.entities.JavaResourceRootPropertiesEntity
-import com.intellij.java.workspaceModel.entities.JavaSourceRootPropertiesEntity
-import com.intellij.java.workspaceModel.entities.asJavaResourceRoot
-import com.intellij.java.workspaceModel.entities.asJavaSourceRoot
+import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.asJavaResourceRoot
+import com.intellij.java.workspace.entities.asJavaSourceRoot
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
-import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry
@@ -84,7 +84,7 @@ interface ModuleOrLibrarySourceRootData: WorkspaceFileSetData
 /**
  * Marks files sets which correspond to JVM packages. This interface will be removed from the platform when we get rid of Java-specific
  * methods like [com.intellij.openapi.roots.ProjectFileIndex.getPackageNameByDirectory] in the platform API, so plugins must use
- * [com.intellij.java.workspaceModel.fileIndex.JvmPackageRootData] instead. 
+ * [com.intellij.java.workspace.fileIndex.JvmPackageRootData] instead. 
  */
 @ApiStatus.Internal
 interface JvmPackageRootDataInternal: WorkspaceFileSetData {

@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider;
-import com.intellij.platform.workspaceModel.jps.entities.*;
+import com.intellij.platform.workspace.jps.entities.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription;

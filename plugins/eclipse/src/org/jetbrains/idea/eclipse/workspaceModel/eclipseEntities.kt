@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
-import com.intellij.platform.workspaceModel.jps.JpsFileDependentEntitySource
-import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
-import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
-import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
-import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.ObjBuilder

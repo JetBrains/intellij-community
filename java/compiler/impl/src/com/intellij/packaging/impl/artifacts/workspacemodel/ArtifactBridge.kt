@@ -2,7 +2,7 @@
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
 import com.intellij.configurationStore.deserializeInto
-import com.intellij.java.workspaceModel.entities.*
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil
@@ -14,7 +14,7 @@ import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
-import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager

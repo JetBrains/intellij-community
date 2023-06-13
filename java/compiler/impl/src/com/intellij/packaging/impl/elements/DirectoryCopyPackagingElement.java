@@ -8,7 +8,7 @@ import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.java.workspaceModel.entities.DirectoryCopyPackagingElementEntity;
+import com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.workspaceModel.ide.VirtualFileUrls;

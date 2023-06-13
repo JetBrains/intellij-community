@@ -13,9 +13,9 @@ import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
-import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
-import com.intellij.platform.workspaceModel.jps.entities.*
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel

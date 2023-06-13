@@ -5,8 +5,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.workspaceModel.jps.OrphanageWorkerEntitySource
-import com.intellij.platform.workspaceModel.jps.entities.*
+import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.EntitiesOrphanage
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener

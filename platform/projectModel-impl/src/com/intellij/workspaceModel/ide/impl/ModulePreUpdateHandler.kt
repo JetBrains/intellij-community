@@ -5,10 +5,10 @@ import com.intellij.workspaceModel.ide.WorkspaceModelPreUpdateHandler
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspaceModel.jps.entities.LibraryEntity
-import com.intellij.platform.workspaceModel.jps.entities.LibraryTableId
-import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity
-import com.intellij.platform.workspaceModel.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
 
 class ModulePreUpdateHandler : WorkspaceModelPreUpdateHandler {
   override fun update(before: EntityStorage, builder: MutableEntityStorage): Boolean {

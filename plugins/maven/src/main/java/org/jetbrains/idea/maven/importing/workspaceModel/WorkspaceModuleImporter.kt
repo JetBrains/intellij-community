@@ -5,7 +5,7 @@ import com.intellij.configurationStore.serialize
 import com.intellij.externalSystem.ImportedLibraryProperties
 import com.intellij.externalSystem.ImportedLibraryType
 import com.intellij.java.library.MavenCoordinates
-import com.intellij.java.workspaceModel.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.project.Project
@@ -15,9 +15,9 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.workspaceModel.jps.entities.*
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.util.containers.addIfNotNull
-import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
+import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.EntitySource

@@ -5,9 +5,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.platform.workspaceModel.jps.entities.LibraryId;
-import com.intellij.platform.workspaceModel.jps.entities.ModuleDependencyItem;
-import com.intellij.platform.workspaceModel.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.LibraryId;
+import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

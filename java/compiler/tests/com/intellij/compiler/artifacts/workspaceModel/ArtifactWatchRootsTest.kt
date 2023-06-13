@@ -2,9 +2,9 @@
 package com.intellij.compiler.artifacts.workspaceModel
 
 import com.intellij.compiler.artifacts.ArtifactsTestCase
-import com.intellij.java.workspaceModel.entities.ArtifactEntity
-import com.intellij.java.workspaceModel.entities.ArtifactRootElementEntity
-import com.intellij.java.workspaceModel.entities.FileCopyPackagingElementEntity
+import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.ArtifactRootElementEntity
+import com.intellij.java.workspace.entities.FileCopyPackagingElementEntity
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem

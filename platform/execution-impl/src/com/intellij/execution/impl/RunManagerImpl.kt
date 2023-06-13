@@ -57,8 +57,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
-import com.intellij.platform.workspaceModel.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting

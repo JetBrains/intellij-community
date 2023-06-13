@@ -11,7 +11,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.platform.workspace.storage.EntityStorageSnapshot
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspaceModel.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicInteger
 

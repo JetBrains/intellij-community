@@ -14,8 +14,8 @@ import com.intellij.packaging.ui.PackagingElementPresentation
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspaceModel.jps.entities.ModuleId
-import com.intellij.java.workspaceModel.entities.ModuleSourcePackagingElementEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 

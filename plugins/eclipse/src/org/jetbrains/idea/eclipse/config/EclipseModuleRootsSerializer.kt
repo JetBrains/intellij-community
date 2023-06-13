@@ -4,9 +4,9 @@ package org.jetbrains.idea.eclipse.config
 import com.intellij.configurationStore.StorageManagerFileWriteRequestor
 import com.intellij.configurationStore.getOrCreateVirtualFile
 import com.intellij.configurationStore.runAsWriteActionIfNeeded
-import com.intellij.java.workspaceModel.entities.JavaModuleSettingsEntity
-import com.intellij.java.workspaceModel.entities.JavaSourceRootPropertiesEntity
-import com.intellij.java.workspaceModel.entities.javaSettings
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleTypeManager
@@ -16,9 +16,9 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
-import com.intellij.platform.workspaceModel.jps.entities.*
-import com.intellij.platform.workspaceModel.jps.serialization.impl.*
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.util.Function
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.toPath
