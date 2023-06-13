@@ -288,7 +288,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
 
       tree.requestFocusInWindow()
-      val settings = getSelectedConfiguration()
+      val settings = getInitialSelectedConfiguration()
       if (settings != null) {
         if (selectConfiguration(settings.configuration)) {
           return@invokeLater
@@ -301,7 +301,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }, ModalityState.stateForComponent(wholePanel!!))
   }
 
-  protected open fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
+  protected open fun getInitialSelectedConfiguration(): RunnerAndConfigurationSettings? {
     return runManager.selectedConfiguration
   }
 

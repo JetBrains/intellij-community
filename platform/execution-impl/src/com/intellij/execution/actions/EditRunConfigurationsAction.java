@@ -30,7 +30,7 @@ public class EditRunConfigurationsAction extends DumbAwareAction {
     if (configurationSettings != null) {
       new EditConfigurationsDialog(project, new ProjectRunConfigurationConfigurable(project, null) {
         @Override
-        protected RunnerAndConfigurationSettings getSelectedConfiguration() {
+        protected RunnerAndConfigurationSettings getInitialSelectedConfiguration() {
           return configurationSettings;
         }
       }).show();
