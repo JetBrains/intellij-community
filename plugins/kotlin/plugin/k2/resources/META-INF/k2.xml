@@ -20,6 +20,7 @@
   <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="searching-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="statistics.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="codeInsights.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="lowLevelApiFir.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="light-classes.xml" xpointer="xpointer(/idea-plugin/*)"/>
