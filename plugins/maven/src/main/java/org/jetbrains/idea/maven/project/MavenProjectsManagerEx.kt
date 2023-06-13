@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.project
 import com.intellij.build.SyncViewManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
@@ -72,7 +72,6 @@ interface MavenAsyncProjectsManager {
 }
 
 open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(project) {
-  // region import maven projects
   override suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
     val createdModules = doImportMavenProjects(projectsToImport, false)
     fireProjectImportCompleted()
@@ -99,11 +98,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                             importModuleGroupsRequired: Boolean): List<Module> {
     val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
     return prepareImporter(modelsProvider, projectsToImport, importModuleGroupsRequired).importMavenProjects()
-  }
-
-  private suspend fun doImportMavenProjects(importModuleGroupsRequired: Boolean): List<Module> {
-    val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
-    return prepareImporter(modelsProvider, emptyMap(), importModuleGroupsRequired).importMavenProjects()
   }
 
   private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider,
@@ -204,7 +198,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
     }
   }
-  //endregion
 
   override fun listenForSettingsChanges() {
     importingSettings.addListener(object : MavenImportingSettings.Listener {
@@ -228,9 +221,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     })
   }
 
-
   private suspend fun importSettings(importModuleGroupsRequired: Boolean) {
-    doImportMavenProjects(importModuleGroupsRequired)
+    doImportMavenProjects(emptyMap(), importModuleGroupsRequired)
   }
 
   private suspend fun importAllProjects() {
@@ -455,12 +447,12 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     return toResolve
   }
 
-  private fun logImportErrorIfNotControlFlow(e: Throwable) {
+  private suspend fun logImportErrorIfNotControlFlow(e: Throwable) {
     if (e is ControlFlowException) {
       ExceptionUtil.rethrowAllAsUnchecked(e)
     }
-    runReadAction {
-      if (myProject.isDisposed) return@runReadAction
+    readAction {
+      if (myProject.isDisposed) return@readAction
       getInstance(myProject).showServerException(e)
       if (ExceptionUtil.causedBy(e, BuildIssueException::class.java)) {
         MavenLog.LOG.info(e)
