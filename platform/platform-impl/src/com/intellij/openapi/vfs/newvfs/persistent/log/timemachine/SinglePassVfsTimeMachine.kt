@@ -169,7 +169,7 @@ class FillInVfsSnapshot(point: OperationLogStorage.Iterator,
   internal fun getContentRestorationSequenceBuilderFor(contentRecordId: Int) =
     contentRestorationSequenceMap.getOrPut(contentRecordId) { VfsChronicle.ContentRestorationSequenceBuilder() }
 
-  fun forEachFile(body: (FillInVirtualFileSnapshot) -> Unit) {
+  override fun forEachFile(body: (ExtendedVirtualFileSnapshot) -> Unit) {
     filler?.finish() // we must know all file ids that exist in vfs before working with them
     fileCache.forEach { (_, vfile) ->
       body(vfile)

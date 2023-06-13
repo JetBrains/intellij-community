@@ -42,7 +42,7 @@ class VfsLog(
     }
   }
 
-  private inner class ContextImpl: VfsLogContext {
+  private inner class ContextImpl : VfsLogContext {
     @OptIn(ExperimentalCoroutinesApi::class)
     override val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(WORKER_THREADS_COUNT))
 
@@ -66,7 +66,8 @@ class VfsLog(
       flush()
       if (operationLogStorage.persistentSize() != operationLogStorage.emergingSize()) {
         // If it happens, then there are active writers at disposal (VFS is still working and interceptors enqueue operations)
-        LOG.error("after cancellation: persistentSize=${operationLogStorage.persistentSize()}, emergingSize=${operationLogStorage.emergingSize()}")
+        LOG.error("after cancellation: " +
+                  "persistentSize=${operationLogStorage.persistentSize()}, emergingSize=${operationLogStorage.emergingSize()}")
       }
       operationLogStorage.dispose()
       payloadStorage.dispose()
@@ -107,7 +108,10 @@ class VfsLog(
     }
   }
 
-  val connectionInterceptors : List<ConnectionInterceptor> = if (readOnly) { emptyList() } else {
+  val connectionInterceptors: List<ConnectionInterceptor> = if (readOnly) {
+    emptyList()
+  }
+  else {
     listOf(
       ContentsLogInterceptor(context),
       AttributesLogInterceptor(context),
@@ -117,8 +121,15 @@ class VfsLog(
 
   val vFileEventApplicationListener: VFileEventApplicationListener = if (readOnly) {
     object : VFileEventApplicationListener {} // no op
-  } else {
+  }
+  else {
     VFileEventApplicationLogListener(context)
+  }
+
+  fun awaitPendingWrites() {
+    while (_context.operationLogStorage.size() < _context.operationLogStorage.emergingSize()) {
+      Thread.sleep(1)
+    }
   }
 
   companion object {
