@@ -1,6 +1,4 @@
-<component xmlns="http://jetbrains.org/intellij/schema/application-info"
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
+<component xmlns="http://jetbrains.org/intellij/schema/application-info">
   <version codename="Community Edition" major="10" minor="0" eap="true"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
