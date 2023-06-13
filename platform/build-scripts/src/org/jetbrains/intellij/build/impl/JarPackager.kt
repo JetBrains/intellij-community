@@ -248,7 +248,7 @@ class JarPackager private constructor(private val outputDir: Path, private val c
       val moduleOutputDir = context.getModuleOutputDir(context.findRequiredModule(moduleName))
       val extraExcludes = layout?.moduleExcludes?.get(moduleName) ?: emptyList()
 
-      val packToDir = isUnpackedDist && layout is PlatformLayout && patchedDirs.isEmpty() && extraExcludes.isEmpty()
+      val packToDir = isUnpackedDist && layout is PlatformLayout && patchedContent.isEmpty() && extraExcludes.isEmpty()
 
       val descriptor = jarDescriptors.computeIfAbsent(outputDir.resolve(item.relativeOutputFile)) { jarFile ->
         createJarDescriptor(outputDir = outputDir, targetFile = jarFile, context = context)
