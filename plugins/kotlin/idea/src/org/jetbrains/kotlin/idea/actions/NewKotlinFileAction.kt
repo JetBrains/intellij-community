@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
 import org.jetbrains.kotlin.psi.KtClass
@@ -61,6 +62,7 @@ internal class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
     }
 
     override fun buildDialog(project: Project, directory: PsiDirectory, builder: CreateFileFromTemplateDialog.Builder) {
+        KotlinJ2KOnboardingFUSCollector.logKtFileDialogOpened(project)
         val sealedTemplatesEnabled = RegistryManager.getInstance().`is`("kotlin.create.sealed.templates.enabled")
 
         builder.setTitle(KotlinBundle.message("action.new.file.dialog.title"))
@@ -278,6 +280,7 @@ private val FILE_SEPARATORS: CharArray = charArrayOf('/', '\\')
 private val FQNAME_SEPARATORS: CharArray = charArrayOf('/', '\\', '.')
 
 internal fun createFileFromTemplateWithStat(name: String, template: FileTemplate, dir: PsiDirectory): PsiFile? {
+    KotlinJ2KOnboardingFUSCollector.logFirstKtFileCreated(dir.project) // implementation checks if it is actually the first
     KotlinCreateFileFUSCollector.logFileTemplate(template.name)
     return createKotlinFileFromTemplate(name, template, dir)
 }

@@ -15,18 +15,21 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup;
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout;
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtilsKt;
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator;
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle;
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription;
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,6 +65,8 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
             @NotNull String minimumVersion
     ) {
         super(project);
+
+        KotlinJ2KOnboardingFUSCollector.Companion.logShowConfigureKtWindow(project);
 
         setTitle(KotlinProjectConfigurationBundle.message("configure.kotlin.title", configurator.getPresentableText()));
 
