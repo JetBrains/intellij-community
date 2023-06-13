@@ -124,9 +124,8 @@ class InternalDecoratorImpl internal constructor(
     private val HOVER_STATE_LISTENER: HoverStateListener = object : HoverStateListener() {
       override fun hoverChanged(component: Component, hovered: Boolean) {
         if (component is InternalDecoratorImpl) {
-          val decorator = component
-          decorator.isWindowHovered = hovered
-          decorator.updateActiveAndHoverState()
+          component.isWindowHovered = hovered
+          component.updateActiveAndHoverState()
         }
       }
     }
