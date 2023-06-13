@@ -8,7 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage.testEntities" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="Guava" level="project" />
@@ -17,5 +17,5 @@
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="library" name="Kryo5" level="project" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.platform.workspaceModel.storage" />
+  <component name="TestModuleProperties" production-module="intellij.platform.workspace.storage" />
 </module>

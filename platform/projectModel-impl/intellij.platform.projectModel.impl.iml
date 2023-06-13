@@ -17,7 +17,7 @@
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" exported="" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" exported="" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
