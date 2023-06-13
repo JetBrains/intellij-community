@@ -240,6 +240,7 @@ class KotlinFunctionCallInstruction(
     private fun popArguments(stateBefore: DfaMemoryState, interpreter: DataFlowInterpreter): DfaCallArguments {
         val args = mutableListOf<DfaValue>()
         repeat(argCount) { args += stateBefore.pop() }
+        args.reverse()
         val qualifier: DfaValue = if (qualifierOnStack) stateBefore.pop() else interpreter.factory.unknown
         return DfaCallArguments(qualifier, args.toTypedArray(), MutationSignature.unknown())
     }
