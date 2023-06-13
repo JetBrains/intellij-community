@@ -8,7 +8,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.PrefillNamedParametersUtils
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.PrefillNamedParametersUtils.prefillName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
@@ -28,31 +29,16 @@ internal class PrefillNamedMandatoryParametersIntention :
     }
 
     override fun apply(element: KtValueArgumentList, context: Context, project: Project, editor: Editor?) {
-        val psiFactory = KtPsiFactory(element)
-        for (name in context.mandatoryParametersList) {
-            val argumentExpression = psiFactory.createArgument(psiFactory.createExpression("TODO()"), name)
-            val comma = psiFactory.createComma()
-            val line = psiFactory.createNewLine()
-            element.addBefore(argumentExpression, element.lastChild)
-            element.addBefore(comma, element.lastChild)
-            element.addBefore(line, element.lastChild)
-        }
+        prefillName(element, context.mandatoryParametersList)
     }
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtValueArgumentList): Context {
-        val parent = element.parent as KtCallElement
-        val resolvedReference = parent.calleeExpression?.mainReference?.resolve() ?: return Context(emptyList())
-        val paramsChildren = if (resolvedReference is KtFunction) {
-            resolvedReference.valueParameters
-        } else {
-            return Context(emptyList())
-        }
+        val parameters = PrefillNamedParametersUtils.findParameters(element)
         val mandatoryParametersList = mutableListOf<Name>()
-        for (param in paramsChildren)  {
-            val ktParam = (param as KtParameter)
-            if (!ktParam.hasDefaultValue()) {
-                val parameterName = ktParam.nameAsName ?: return Context(emptyList())
+        for (param in parameters)  {
+            if (!param.hasDefaultValue()) {
+                val parameterName = param.nameAsName ?: return Context(emptyList())
                 mandatoryParametersList.add(parameterName)
             }
         }

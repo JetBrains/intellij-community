@@ -1,0 +1,7 @@
+fun foo(): Test = <spot>Test()</spot>
+
+data class Test(
+    val a: String,
+    val b: Int,
+    val c: String = "foo"
+)
