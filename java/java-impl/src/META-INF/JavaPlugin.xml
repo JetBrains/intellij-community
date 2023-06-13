@@ -249,6 +249,7 @@
     <extensionPoint qualifiedName="com.intellij.debugger.nodeNameAdjuster"
                     interface="com.intellij.debugger.ui.tree.NodeDescriptorNameAdjuster" dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.debugger.nameMapper" interface="com.intellij.debugger.NameMapper" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.compiler.inspectionValidator"
                     interface="com.intellij.openapi.compiler.util.InspectionValidator"

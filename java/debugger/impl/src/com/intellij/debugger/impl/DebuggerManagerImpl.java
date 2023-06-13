@@ -140,6 +140,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       busConnection.subscribe(DebuggerManagerListener.TOPIC, myDispatcher.getMulticaster());
     }
     myBreakpointManager.addListeners(busConnection);
+    myNameMappers.addAll(NameMapper.EP_NAME.getExtensionList());
   }
 
   @Nullable

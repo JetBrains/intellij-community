@@ -15,8 +15,10 @@
  */
 package com.intellij.debugger;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Compilers of some java-based languages (like Scala) produce classes with names different from those declared in sources.
@@ -27,9 +29,22 @@ import org.jetbrains.annotations.NotNull;
  * PsiClass.getQualifiedName() will be used as a qualified name of the compiled class
  */
 public interface NameMapper {
+  ExtensionPointName<NameMapper> EP_NAME = ExtensionPointName.create("com.intellij.debugger.nameMapper");
+
   /**
    * @param aClass a top-level class
-   * @return a qualified name of the corresponding compiled class or null if default machanism of getting qualified names must be used
+   * @return a qualified name of the corresponding compiled class or null if default mechanism of getting qualified names must be used
    */
+  @Nullable
+
   String getQualifiedName(@NotNull PsiClass aClass);
+
+  /**
+   * @param aClass a top-level class
+   * @return an alternative JVM name of the corresponding compiled class or null if default mechanism of getting JVM names must be used
+   */
+  @Nullable
+  default String getAlternativeJvmName(@NotNull PsiClass aClass) {
+    return null;
+  }
 }

@@ -20,8 +20,16 @@ public abstract class DebuggerManager {
 
   public abstract boolean isDebuggerManagerThread();
 
+  /**
+   * @deprecated Use {@link NameMapper#EP_NAME}
+   */
+  @Deprecated
   public abstract void addClassNameMapper(NameMapper mapper);
 
+  /**
+   * @deprecated Use {@link NameMapper#EP_NAME}
+   */
+  @Deprecated
   public abstract void removeClassNameMapper(NameMapper mapper);
 
   public abstract String getVMClassQualifiedName(PsiClass aClass);

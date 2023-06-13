@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.MultiRequestPositionManager;
-import com.intellij.debugger.NoDataException;
-import com.intellij.debugger.PositionManager;
-import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.AlternativeJreClassFinder;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
@@ -40,14 +37,17 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class PositionManagerImpl implements PositionManager, MultiRequestPositionManager {
   private static final Logger LOG = Logger.getInstance(PositionManagerImpl.class);
 
   private final DebugProcessImpl myDebugProcess;
+  private final List<NameMapper> myNameMappers;
 
   public PositionManagerImpl(DebugProcessImpl debugProcess) {
     myDebugProcess = debugProcess;
+    myNameMappers = NameMapper.EP_NAME.getExtensionList();
   }
 
   public DebugProcess getDebugProcess() {
@@ -79,8 +79,11 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       List<ClassPrepareRequest> res = new ArrayList<>();
       for (PsiClass psiClass : getLineClasses(position.getFile(), position.getLine())) {
         ClassPrepareRequestor prepareRequestor = requestor;
-        String classPattern = JVMNameUtil.getNonAnonymousClassName(psiClass);
-        if (classPattern == null) {
+        List<String> classPatterns = new ArrayList<>();
+        String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
+        if (className != null) {
+          classPatterns.add(className);
+        } else {
           final PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
           if (parent == null) {
             continue;
@@ -89,7 +92,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           if (parentQName == null) {
             continue;
           }
-          classPattern = parentQName + "*";
+          classPatterns.add(parentQName + "*");
           prepareRequestor = new ClassPrepareRequestor() {
             @Override
             public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
@@ -99,9 +102,12 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
             }
           };
         }
-        ClassPrepareRequest request = myDebugProcess.getRequestsManager().createClassPrepareRequest(prepareRequestor, classPattern);
-        if (request != null) {
-          res.add(request);
+        classPatterns.addAll(StreamEx.of(myNameMappers).map(mapper -> mapper.getAlternativeJvmName(psiClass)).nonNull().toList());
+        for (String classPattern : classPatterns) {
+          ClassPrepareRequest request = myDebugProcess.getRequestsManager().createClassPrepareRequest(prepareRequestor, classPattern);
+          if (request != null) {
+            res.add(request);
+          }
         }
       }
       return res;
@@ -452,13 +458,15 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       return StreamEx.empty();
     }
 
+    VirtualMachineProxyImpl vm = myDebugProcess.getVirtualMachineProxy();
     if (!isLocalOrAnonymous) {
-      return StreamEx.of(myDebugProcess.getVirtualMachineProxy().classesByName(className));
+      Stream<String> extraNames = myNameMappers.stream().map(mapper -> mapper.getAlternativeJvmName(psiClass)).filter(Objects::nonNull);
+      return StreamEx.of(className).append(extraNames).flatMap(name -> vm.classesByName(name).stream());
     }
 
     final int depth = requiredDepth;
     // the name is a parent class for a local or anonymous class
-    return StreamEx.of(myDebugProcess.getVirtualMachineProxy().classesByName(className))
+    return StreamEx.of(vm.classesByName(className))
       .map(outer -> findNested(outer, 0, psiClass, depth, position))
       .nonNull();
   }
