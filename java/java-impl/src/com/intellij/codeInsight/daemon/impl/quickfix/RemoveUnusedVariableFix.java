@@ -80,9 +80,10 @@ public class RemoveUnusedVariableFix implements IntentionAction {
   }
 
   private void removeVariableAndReferencingStatements(Editor editor) {
-    record Context(RemoveMode deleteMode, List<PsiElement> references) {}
+    record Context(List<PsiElement> sideEffects, List<PsiElement> references, boolean canCopeWithSideEffects) {}
 
     ReadAction.nonBlocking(() -> {
+      if (!myVariable.isValid()) return null;
       final List<PsiElement> references = collectReferences(myVariable);
       final List<PsiElement> sideEffects = new ArrayList<>();
       boolean canCopeWithSideEffects = true;
@@ -93,19 +94,19 @@ public class RemoveUnusedVariableFix implements IntentionAction {
         canCopeWithSideEffects &= result;
       }
 
-      final RemoveMode deleteMode = showSideEffectsWarning(sideEffects, myVariable, editor, canCopeWithSideEffects);
-      return new Context(deleteMode, references);
+      return new Context(sideEffects, references, canCopeWithSideEffects);
     }).finishOnUiThread(ModalityState.nonModal(), context -> {
-        WriteCommandAction.writeCommandAction(myVariable.getProject()).run(() -> {
-          try {
-            RemoveUnusedVariableUtil.deleteReferences(myVariable, context.references, context.deleteMode);
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        });
-      })
-      .submit(AppExecutorUtil.getAppExecutorService());
+      if (context == null) return;
+      final RemoveMode deleteMode = showSideEffectsWarning(context.sideEffects, myVariable, editor, context.canCopeWithSideEffects);
+      WriteCommandAction.writeCommandAction(myVariable.getProject()).run(() -> {
+        try {
+          RemoveUnusedVariableUtil.deleteReferences(myVariable, context.references, deleteMode);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      });
+    }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private static List<PsiElement> collectReferences(@NotNull PsiVariable variable) {
