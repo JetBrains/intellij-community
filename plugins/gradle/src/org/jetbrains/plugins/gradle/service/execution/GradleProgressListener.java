@@ -4,23 +4,14 @@ package org.jetbrains.plugins.gradle.service.execution;
 import com.intellij.build.FileNavigatable;
 import com.intellij.build.FilePosition;
 import com.intellij.build.events.MessageEvent;
-import com.intellij.build.events.ProgressBuildEvent;
 import com.intellij.build.events.impl.MessageEventImpl;
 import com.intellij.build.events.impl.ProgressBuildEventImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.model.task.event.*;
-import com.intellij.openapi.externalSystem.service.internal.ExternalSystemTaskProgressIndicatorUpdater;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,12 +27,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.Message;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.util.text.StringUtil.formatDuration;
 import static com.intellij.openapi.util.text.StringUtil.formatFileSize;
@@ -83,7 +71,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     myTaskId = taskId;
     myGradleVersion = extractGradleVersion(settings);
     myOperationId = taskId.hashCode() + ":" + FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir);
-    myDownloadProgressListener = new GradleDownloadProgressListener(taskId);
+    myDownloadProgressListener = GradleDownloadProgressListener.newListener(taskId);
   }
 
   @Override
