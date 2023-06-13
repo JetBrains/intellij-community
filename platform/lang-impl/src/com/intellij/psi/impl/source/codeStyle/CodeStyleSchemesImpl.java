@@ -31,7 +31,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
                                                        @NotNull String name,
                                                        @NotNull Function1<? super String, String> attributeProvider,
                                                        boolean isBundled) {
-        return new CodeStyleSchemeImpl(attributeProvider.invoke("name"), attributeProvider.invoke("parent"), dataHolder);
+        return new CodeStyleSchemeImpl(attributeProvider.invoke("name"), dataHolder);
       }
     }, null, null, SettingsCategory.CODE);
 
