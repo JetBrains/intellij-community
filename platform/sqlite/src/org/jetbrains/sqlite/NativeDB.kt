@@ -20,6 +20,10 @@ package org.jetbrains.sqlite
 import java.io.IOException
 import java.nio.ByteBuffer
 
+private const val DEFAULT_BACKUP_BUSY_SLEEP_TIME_MILLIS = 100
+private const val DEFAULT_BACKUP_NUM_BUSY_BEFORE_FAIL = 3
+private const val DEFAULT_PAGES_PER_BACKUP_STEP = 100
+
 /** This class provides a thin JNI layer over the SQLite3 C API.  */
 internal class NativeDB : SqliteDb() {
   // SQLite connection handle.
@@ -31,6 +35,27 @@ internal class NativeDB : SqliteDb() {
   private val updateListener: Long = 0
   @Suppress("unused")
   private val commitListener: Long = 0
+
+  companion object {
+    /**
+     * Throws an IOException. Called from native code
+     */
+    @Suppress("unused", "SpellCheckingInspection")
+    @JvmStatic
+    fun throwex(msg: String?) {
+      throw IOException(msg)
+    }
+
+    // called from native code (only to convert exception text on calling function)
+    @JvmStatic
+    fun stringToUtf8ByteArray(str: String): ByteArray = str.encodeToByteArray()
+
+    fun utf8ByteBufferToString(buffer: ByteBuffer): String {
+      val bytes = ByteArray(buffer.remaining())
+      buffer.get(bytes)
+      return bytes.decodeToString()
+    }
+  }
 
   @Synchronized
   override fun open(file: String, openFlags: Int): Int {
@@ -62,11 +87,6 @@ internal class NativeDB : SqliteDb() {
 
   @Synchronized
   external override fun busy_handler(busyHandler: BusyHandler?)
-
-  @Synchronized
-  override fun prepare(sql: ByteArray): SafeStatementPointer {
-    return SafeStatementPointer(db = this, pointer = prepare_utf8(sql))
-  }
 
   // byte[] instead of string is actually more performant
   @Synchronized
@@ -149,7 +169,7 @@ internal class NativeDB : SqliteDb() {
   external override fun bind_double(stmt: Long, oneBasedColumnIndex: Int, v: Double): Int
 
   @Synchronized
-  override fun bind_text(stmt: Long, oneBasedColumnIndex: Int, v: String?): Int {
+  override fun bind_text(stmt: Long, oneBasedColumnIndex: Int, v: String): Int {
     return bind_text_utf8(stmt, oneBasedColumnIndex, stringToUtf8ByteArray(v))
   }
 
@@ -158,99 +178,6 @@ internal class NativeDB : SqliteDb() {
 
   @Synchronized
   external override fun bind_blob(stmt: Long, oneBasedColumnIndex: Int, v: ByteArray?): Int
-
-  @Synchronized
-  external override fun result_null(context: Long)
-
-  @Synchronized
-  override fun result_text(context: Long, `val`: String?) {
-    result_text_utf8(context, stringToUtf8ByteArray(`val`))
-  }
-
-  @Synchronized
-  external fun result_text_utf8(context: Long, valUtf8: ByteArray?)
-
-  @Synchronized
-  external override fun result_blob(context: Long, `val`: ByteArray?)
-
-  @Synchronized
-  external override fun result_double(context: Long, `val`: Double)
-
-  @Synchronized
-  external override fun result_long(context: Long, `val`: Long)
-
-  @Synchronized
-  external override fun result_int(context: Long, `val`: Int)
-
-  @Synchronized
-  override fun result_error(context: Long, err: String?) {
-    result_error_utf8(context, stringToUtf8ByteArray(err))
-  }
-
-  @Synchronized
-  external fun result_error_utf8(context: Long, errUtf8: ByteArray?)
-
-  @Synchronized
-  override fun value_text(f: Function, arg: Int): String {
-    return utf8ByteBufferToString(value_text_utf8(f, arg))
-  }
-
-  @Synchronized
-  external fun value_text_utf8(f: Function?, argUtf8: Int): ByteBuffer
-
-  /** @see SqliteDb.value_blob
-   */
-  @Synchronized
-  external override fun value_blob(f: Function?, arg: Int): ByteArray?
-
-  @Synchronized
-  external override fun value_double(f: Function?, arg: Int): Double
-
-  @Synchronized
-  external override fun value_long(f: Function?, arg: Int): Long
-
-  @Synchronized
-  external override fun value_int(f: Function?, arg: Int): Int
-
-  @Synchronized
-  external override fun value_type(f: Function, arg: Int): Int
-
-  /** @see SqliteDb.create_function
-   */
-  @Synchronized
-  override fun create_function(name: String, function: Function, nArgs: Int, flags: Int): Int {
-    return create_function_utf8(nameUtf8 = nameToUtf8ByteArray(nameType = "function", name = name),
-                                func = function,
-                                nArgs = nArgs,
-                                flags = flags)
-  }
-
-  @Synchronized
-  external fun create_function_utf8(nameUtf8: ByteArray, func: Function, nArgs: Int, flags: Int): Int
-
-  @Synchronized
-  override fun destroy_function(name: String): Int {
-    return destroy_function_utf8(nameToUtf8ByteArray("function", name))
-  }
-
-  @Synchronized
-  external fun destroy_function_utf8(nameUtf8: ByteArray?): Int
-
-  @Synchronized
-  override fun create_collation(name: String, collation: Collation): Int {
-    return create_collation_utf8(nameToUtf8ByteArray("collation", name), collation)
-  }
-
-  @Synchronized
-  external fun create_collation_utf8(nameUtf8: ByteArray, coll: Collation): Int
-
-  @Synchronized
-  override fun destroy_collation(name: String): Int {
-    return destroy_collation_utf8(nameToUtf8ByteArray(nameType = "collation", name = name))
-  }
-
-  @Synchronized
-  external fun destroy_collation_utf8(nameUtf8: ByteArray?): Int
 
   @Synchronized
   external override fun limit(id: Int, value: Int): Int
@@ -297,8 +224,8 @@ internal class NativeDB : SqliteDb() {
   }
 
   @Synchronized
-  override fun restore(dbName: String?,
-                       sourceFileName: String?,
+  override fun restore(dbName: String,
+                       sourceFileName: String,
                        observer: ProgressObserver?,
                        sleepTimeMillis: Int,
                        nTimeouts: Int,
@@ -325,37 +252,5 @@ internal class NativeDB : SqliteDb() {
 
   @Synchronized
   external override fun set_update_listener(enabled: Boolean)
-
-  companion object {
-    private const val DEFAULT_BACKUP_BUSY_SLEEP_TIME_MILLIS = 100
-    private const val DEFAULT_BACKUP_NUM_BUSY_BEFORE_FAIL = 3
-    private const val DEFAULT_PAGES_PER_BACKUP_STEP = 100
-
-    private fun nameToUtf8ByteArray(nameType: String, name: String): ByteArray {
-      val nameUtf8 = stringToUtf8ByteArray(name)
-      check(!(name.isEmpty() || nameUtf8.size > 255)) { "invalid $nameType name: '$name'" }
-      return nameUtf8
-    }
-
-    /**
-     * Throws an IOException. Called from native code
-     */
-    @Suppress("unused", "SpellCheckingInspection")
-    @JvmStatic
-    fun throwex(msg: String?) {
-      throw IOException(msg)
-    }
-
-    // called from native code (only to convert exception text on calling function)
-    @JvmStatic
-    fun stringToUtf8ByteArray(str: String?): ByteArray {
-      return str!!.encodeToByteArray()
-    }
-
-    fun utf8ByteBufferToString(buffer: ByteBuffer): String {
-      val bytes = ByteArray(buffer.remaining())
-      buffer.get(bytes)
-      return bytes.decodeToString()
-    }
-  }
 }
+
