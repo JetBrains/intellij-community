@@ -122,6 +122,8 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             importingContext: MultiplatformModelImportingContext,
             compilationReflection: KotlinCompilationReflection,
         ): List<KotlinDependency> = ArrayList<KotlinDependency>().apply {
+            if (compilationReflection.target?.platformType != NATIVE_TARGET_PLATFORM_TYPE_NAME) return@apply
+
             val compilationSourceSets = compilationReflection.sourceSets ?: return@apply
             val isIntransitiveMetadataSupported = compilationSourceSets.all {
                 it[INTRANSITIVE_METADATA_CONFIGURATION_NAME_ACCESSOR] != null

@@ -6,4 +6,10 @@ import java.io.Serializable
 
 interface KotlinTargetJar : Serializable {
     val archiveFile: File?
+    /**
+     * Compilations that are in dependencies of the target's jar task.
+     * Usually it's just the main compilation, but target can potentially be configured to include outputs of multiple compilations.
+     * Note: it's currently impossible (or at least not straightforward) to make such configurations work for non-JVM targets.
+     */
+    val compilations: Collection<KotlinCompilation>
 }

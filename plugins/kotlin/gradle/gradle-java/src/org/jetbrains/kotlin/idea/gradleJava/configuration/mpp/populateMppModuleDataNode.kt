@@ -186,10 +186,11 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
         mppModel.targets.filter { it.jar != null && it.jar!!.archiveFile != null }.forEach { target ->
             val path = ExternalSystemApiUtil.toCanonicalPath(target.jar!!.archiveFile!!.absolutePath)
             val currentModules = userData[path] ?: ArrayList<String>().apply { userData[path] = this }
-            // Test modules should not be added. Otherwise we could get dependnecy of java.mail on jvmTest
-            val allSourceSets = target.compilations.filter { !it.isTestComponent }.flatMap { it.declaredSourceSets }.toSet()
-            val availableViaDependsOn = allSourceSets.flatMap { it.allDependsOnSourceSets }.mapNotNull { mppModel.sourceSetsByName[it] }
-            allSourceSets.union(availableViaDependsOn).forEach { sourceSet ->
+            val declaredSourceSetsOfCompilations = target.jar!!.compilations.flatMap { it.declaredSourceSets }.toSet()
+            val availableViaDependsOn = declaredSourceSetsOfCompilations
+                .flatMap { it.allDependsOnSourceSets }
+                .mapNotNull { mppModel.sourceSetsByName[it] }
+            declaredSourceSetsOfCompilations.union(availableViaDependsOn).forEach { sourceSet ->
                 currentModules.add(KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx))
             }
         }

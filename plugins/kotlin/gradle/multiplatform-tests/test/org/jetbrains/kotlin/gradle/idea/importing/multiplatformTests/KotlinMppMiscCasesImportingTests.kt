@@ -181,4 +181,25 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
             hideLineMarkers = true
         }
     }
+
+    @Test
+    @TestMetadata("projectDependenciesToMppProjectWithAdditionalCompilations")
+    fun `testProjectDependenciesToMppProjectWithAdditionalCompilations - KGP dependency resolution disabled`() {
+        doTest {
+            testClassifier = "old-import"
+            onlyCheckers(OrderEntriesChecker)
+            onlyDependencies(from = ".*client.*", to = ".*libMpp.*")
+            addCustomGradleProperty("kotlin.mpp.import.enableKgpDependencyResolution", "false")
+        }
+    }
+
+    @Test
+    @TestMetadata("projectDependenciesToMppProjectWithAdditionalCompilations")
+    fun `testProjectDependenciesToMppProjectWithAdditionalCompilations - KGP dependency resolution enabled`() {
+        doTest {
+            onlyCheckers(OrderEntriesChecker)
+            onlyDependencies(from = ".*client.*", to = ".*libMpp.*")
+            addCustomGradleProperty("kotlin.mpp.import.enableKgpDependencyResolution", "true")
+        }
+    }
 }

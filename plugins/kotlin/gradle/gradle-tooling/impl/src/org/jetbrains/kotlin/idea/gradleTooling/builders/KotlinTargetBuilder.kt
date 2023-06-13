@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.idea.projectModel.KotlinTestRunTask
+import org.jetbrains.kotlin.tooling.core.closure
 
 object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetReflection, KotlinTarget> {
     override fun buildComponent(origin: KotlinTargetReflection, importingContext: MultiplatformModelImportingContext): KotlinTarget? {
@@ -26,13 +27,16 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
         val disambiguationClassifier = origin.disambiguationClassifier
         val targetPresetName: String? = origin.presetName
 
-        val compilations = origin.compilations?.mapNotNull {
-            KotlinCompilationBuilder(platform, disambiguationClassifier).buildComponent(it, importingContext)
+        val reflectionsByCompilations = origin.compilations?.associate { compilationReflection ->
+            KotlinCompilationBuilder(platform, disambiguationClassifier).buildComponent(
+                compilationReflection,
+                importingContext
+            ) to compilationReflection
         } ?: return null
-        val jar = origin.artifactsTaskName
-            ?.let { importingContext.project.tasks.findByName(it) }
-            ?.let { KotlinTargetJarReflection(it) }
-            ?.let { KotlinTargetJarImpl(it.archiveFile) }
+        val compilations = reflectionsByCompilations.mapNotNull { it.key }
+
+        val testRunTasks = buildTestRunTasks(importingContext.project, origin.gradleTarget)
+
         val nativeMainRunTasks =
             if (platform == KotlinPlatform.NATIVE) origin.nativeMainRunTasks.orEmpty().mapNotNull { nativeMainRunReflection ->
                 val taskName = nativeMainRunReflection.taskName ?: return@mapNotNull null
@@ -43,11 +47,27 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
             }
             else emptyList()
 
+        val artifactTask = origin.artifactsTaskName?.let { importingContext.project.tasks.findByName(it) }
+
+        val jar = artifactTask?.let { KotlinTargetJarReflection(it) }?.let { jarReflection ->
+            val compileKotlinTaskNames = origin.compilations?.map { it.compileKotlinTaskName }?.toSet().orEmpty()
+            val taskDependenciesClosureFromThisProject = artifactTask.closure { task ->
+                // getDependencies may throw in case of project misconfiguration, consider task dependencies empty in this case
+                runCatching { task.taskDependencies.getDependencies(task) }.getOrNull().orEmpty()
+                    .filter { dependencyTask -> dependencyTask.project == artifactTask.project }
+            }
+            val dependencyCompilationTaskNames = taskDependenciesClosureFromThisProject.map(Task::getName)
+                .filter { taskName -> taskName in compileKotlinTaskNames }
+                .toSet()
+            val compilationsOfJarTask = compilations.filter {
+                reflectionsByCompilations[it]?.compileKotlinTaskName.orEmpty() in dependencyCompilationTaskNames
+            }
+            KotlinTargetJarImpl(jarReflection.archiveFile, compilationsOfJarTask)
+        }
+
         val artifacts = origin.konanArtifacts?.mapNotNull {
             KonanArtifactModelBuilder.buildComponent(it, importingContext)
         }.orEmpty()
-
-        val testRunTasks = buildTestRunTasks(importingContext.project, origin.gradleTarget)
 
         val serializedExtras = importingContext.importReflection?.resolveExtrasSerialized(origin.gradleTarget)
 
