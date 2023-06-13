@@ -352,6 +352,14 @@ private class MoreRunToolbarActions : TogglePopupAction(
     addAdditionalActionsToRunConfigurationOptions(project, e, selectedConfiguration, result, true)
     return result
   }
+
+  override fun createPopup(actionGroup: ActionGroup, e: AnActionEvent, disposeCallback: () -> Unit): ListPopup {
+    val selectedConfiguration = e.project?.let { RunManager.getInstanceIfCreated(it) }?.selectedConfiguration
+    val event = e.withDataContext(CustomizedDataContext.create(e.dataContext) { dataId ->
+      if (RUN_CONFIGURATION_KEY.`is`(dataId)) selectedConfiguration else null
+    })
+    return super.createPopup(actionGroup, event, disposeCallback)
+  }
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
 
