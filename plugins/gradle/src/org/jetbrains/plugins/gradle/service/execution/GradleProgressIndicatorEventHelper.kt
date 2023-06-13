@@ -17,12 +17,13 @@ import org.gradle.tooling.events.task.TaskProgressEvent
 import org.gradle.tooling.events.task.TaskStartEvent
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
-import org.jetbrains.plugins.gradle.service.execution.GradleProgressPhase.CONFIGURATION
-import org.jetbrains.plugins.gradle.service.execution.GradleProgressPhase.EXECUTION
+import org.jetbrains.plugins.gradle.service.execution.GradleProgressPhase.*
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 
 object GradleProgressIndicatorEventHelper {
+
+  private const val RUN_MAIN_TASKS = "RUN_MAIN_TASKS"
 
   @JvmStatic
   fun areGradleBuildProgressEventsSupported(effectiveSettings: GradleExecutionSettings): Boolean {
@@ -58,6 +59,11 @@ object GradleProgressIndicatorEventHelper {
     event: ProgressEvent,
     progressState: GradleProgressState
   ): ExternalSystemTaskNotificationEvent? {
+    if (event is BuildPhaseFinishEvent && progressState.currentPhase == EXECUTION_DONE && RUN_MAIN_TASKS == event.descriptor.buildPhase) {
+      return ExternalSystemBuildEvent(taskId,
+        ProgressBuildEventImpl(id, null, event.eventTime, "Done, waiting other processes to finish...", 0, 0, "")
+      )
+    }
     if (!shouldCreateProgressIndicatorEvent(event, progressState)) return null
     val operationName = progressState.operationName() ?: return null
     val total = progressState.totalWorkItems
@@ -150,7 +156,7 @@ object GradleProgressIndicatorEventHelper {
             copy(totalWorkItems = totalWorkItems + additionalItems)
           }
         }
-        "RUN_MAIN_TASKS" == buildPhase && progressState.isConfigurationDone -> {
+        RUN_MAIN_TASKS == buildPhase && progressState.currentPhase == CONFIGURATION_DONE -> {
           // Ignore execution events from nested or buildSrc builds before the configuration is done
           val totalItems = event.descriptor.buildItemsCount.toLong()
           GradleProgressState(EXECUTION, totalItems)
@@ -163,11 +169,17 @@ object GradleProgressIndicatorEventHelper {
         }
         else -> progressState
       }
-    } else if (event is BuildPhaseFinishEvent && "CONFIGURE_ROOT_BUILD" == buildPhase) {
-      // Configure root build finish event is sent after everything else is done configuring
-      progressState.copy(isConfigurationDone = true)
-    } else {
-     progressState
+    }
+    else if (event is BuildPhaseFinishEvent && "CONFIGURE_ROOT_BUILD" == buildPhase) {
+      // CONFIGURE_ROOT_BUILD finish event is sent after everything else is done configuring
+      progressState.copy(currentPhase = CONFIGURATION_DONE)
+    }
+    else if (event is BuildPhaseFinishEvent && RUN_MAIN_TASKS == buildPhase && progressState.currentPhase == EXECUTION) {
+      // RUN_MAIN_TASKS finish event is sent after everything is done executing
+      progressState.copy(currentPhase = EXECUTION_DONE)
+    }
+    else {
+      progressState
     }
   }
 }

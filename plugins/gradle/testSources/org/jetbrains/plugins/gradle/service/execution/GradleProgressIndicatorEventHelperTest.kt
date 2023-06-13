@@ -51,7 +51,7 @@ internal class GradleProgressIndicatorEventHelperTest {
 
     event = buildPhaseFinishEvent("CONFIGURE_ROOT_BUILD")
     state = GradleProgressIndicatorEventHelper.updateGradleProgressState(state, event)
-    assertThat(state).isEqualTo(GradleProgressState(CONFIGURATION, 2, isConfigurationDone = true))
+    assertThat(state).isEqualTo(GradleProgressState(CONFIGURATION_DONE, 2))
 
     // Execution phase
     event = buildPhaseStartEvent("RUN_MAIN_TASKS", 1)
@@ -68,7 +68,7 @@ internal class GradleProgressIndicatorEventHelperTest {
 
     event = buildPhaseFinishEvent("RUN_MAIN_TASKS")
     state = GradleProgressIndicatorEventHelper.updateGradleProgressState(state, event)
-    assertThat(state).isEqualTo(GradleProgressState(EXECUTION, 2))
+    assertThat(state).isEqualTo(GradleProgressState(EXECUTION_DONE, 2))
 
     // Back to configuration phase (case when continuous build)
     event = buildPhaseStartEvent("CONFIGURE_ROOT_BUILD", 1)
@@ -77,7 +77,7 @@ internal class GradleProgressIndicatorEventHelperTest {
   }
 
   @Test
-  fun `test Gradle build phase is not updated on tasks build phase events if configuration is not done`() {
+  fun `test Gradle current phase is not updated on RUN_MAIN_TASKS and RUN_WORK events if in configuration phase`() {
     var state = GradleProgressState(CONFIGURATION, 1)
 
     // Nothing is updated
@@ -92,7 +92,7 @@ internal class GradleProgressIndicatorEventHelperTest {
   }
 
   @Test
-  fun `test Gradle build phase is not updated configure build build phase events if in execution phase`() {
+  fun `test Gradle current phase is not updated on CONFIGURE_BUILD phase event if in execution phase`() {
     var state = GradleProgressState(EXECUTION, 1)
 
     // Nothing is updated
@@ -125,7 +125,7 @@ internal class GradleProgressIndicatorEventHelperTest {
   }
 
   @Test
-  fun `test Gradle progress state is updated when in Configuration phase on Project Configuration Events`() {
+  fun `test Gradle progress state is updated when in configuration phase on ProjectConfigurationProgressEvent Events`() {
     var state = GradleProgressState(CONFIGURATION, 10)
 
     // On project configuration start current progress is incremented and project is added to runningWorkItems
@@ -157,7 +157,7 @@ internal class GradleProgressIndicatorEventHelperTest {
   }
 
   @Test
-  fun `test Gradle progress state is updated in Execution phase on Task Progress Events`() {
+  fun `test Gradle progress state is updated in execution phase on TaskProgressEvent Events`() {
     var state = GradleProgressState(EXECUTION, 10)
 
     // Nothing is changed on project configuration events
@@ -196,7 +196,7 @@ internal class GradleProgressIndicatorEventHelperTest {
 
   @ParameterizedTest
   @MethodSource("progressIndicatorInvalidEventsData")
-  fun `test progress indicator events are not generated for events in incorrent phases`(phase: GradleProgressPhase, event: ProgressEvent) {
+  fun `test progress indicator events are not generated for events in incorrect phases`(phase: GradleProgressPhase, event: ProgressEvent) {
     val state = GradleProgressState(phase, 10, runningWorkItems = linkedSetOf("some item"))
     val taskId = ExternalSystemTaskId.create(GradleConstants.SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, "")
 
@@ -211,6 +211,7 @@ internal class GradleProgressIndicatorEventHelperTest {
       return Stream.of(
         Arguments.of(EXECUTION, taskStartEvent("task")),
         Arguments.of(EXECUTION, taskFinishEvent("task")),
+        Arguments.of(EXECUTION_DONE, buildPhaseFinishEvent("RUN_MAIN_TASKS")),
         Arguments.of(CONFIGURATION, projectConfigurationStartEvent("project")),
         Arguments.of(CONFIGURATION, projectConfigurationFinishEvent("project")),
       )
@@ -232,6 +233,7 @@ internal class GradleProgressIndicatorEventHelperTest {
         Arguments.of(INITIALIZATION, buildPhaseStartEvent("SOME_PHASE", 1)),
         Arguments.of(EXECUTION, buildPhaseStartEvent("SOME_PHASE", 1)),
         Arguments.of(CONFIGURATION, buildPhaseStartEvent("SOME_PHASE", 1)),
+        Arguments.of(EXECUTION_DONE, buildPhaseFinishEvent("SOME_PHASE")),
       )
     }
 

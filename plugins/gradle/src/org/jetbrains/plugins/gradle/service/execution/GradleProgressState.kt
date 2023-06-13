@@ -6,18 +6,15 @@ import org.jetbrains.plugins.gradle.service.execution.GradleProgressPhase.CONFIG
 enum class GradleProgressPhase(private val order: Int) {
   INITIALIZATION(0),
   CONFIGURATION(1),
-  EXECUTION(2);
-
-  fun isAfter(other: GradleProgressPhase): Boolean {
-    return order > other.order
-  }
+  CONFIGURATION_DONE(2),
+  EXECUTION(3),
+  EXECUTION_DONE(4);
 }
 
 data class GradleProgressState(
   val currentPhase: GradleProgressPhase,
   val totalWorkItems: Long,
   val currentProgress: Long = 0,
-  val isConfigurationDone: Boolean = currentPhase.isAfter(CONFIGURATION),
   val runningWorkItems: Set<String> = linkedSetOf(),
 ) {
 
