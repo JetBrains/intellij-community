@@ -15,15 +15,11 @@ my-app.consumer.jvmMain
     lib2.jvmMain (COMPILE)
     lib2.commonMain (COMPILE)
     lib1.jvmMain (COMPILE)
-    lib2.commonMain (COMPILE)
-    lib1.commonMain (COMPILE)
     lib1.commonMain (COMPILE)
 
 my-app.consumer.jvmTest
     lib2.jvmMain (TEST)
     lib2.commonMain (TEST)
-    lib2.commonMain (TEST)
-    lib1.commonMain (TEST)
     lib1.jvmMain (TEST)
     lib1.commonMain (TEST)
 

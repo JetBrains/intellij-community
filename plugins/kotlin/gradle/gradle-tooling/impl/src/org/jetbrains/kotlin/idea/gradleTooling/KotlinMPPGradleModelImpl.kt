@@ -194,7 +194,8 @@ data class KotlinCompilationImpl(
 }
 
 data class KotlinTargetJarImpl(
-    override val archiveFile: File?
+    override val archiveFile: File?,
+    override val compilations: Collection<KotlinCompilation>
 ) : KotlinTargetJar
 
 data class KotlinTargetImpl(
@@ -242,7 +243,15 @@ data class KotlinTargetImpl(
                     cloningCache[initialTestTask] = it
                 }
         },
-        KotlinTargetJarImpl(target.jar?.archiveFile),
+        KotlinTargetJarImpl(
+            target.jar?.archiveFile,
+            target.jar?.compilations?.map { initialCompilation ->
+                (cloningCache[initialCompilation] as? KotlinCompilation)
+                    ?: KotlinCompilationImpl(initialCompilation, cloningCache).also {
+                        cloningCache[initialCompilation] = it
+                    }
+            }.orEmpty(),
+        ),
         target.konanArtifacts.map { KonanArtifactModelImpl(it) }.toList(),
         IdeaKotlinExtras.copy(target.extras)
     )
