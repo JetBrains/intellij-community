@@ -16124,6 +16124,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unnecessaryVariable/delegated.kt");
         }
 
+        @TestMetadata("hasAnnotation.kt")
+        public void testHasAnnotation() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryVariable/hasAnnotation.kt");
+        }
+
         @TestMetadata("ifElse.kt")
         public void testIfElse() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryVariable/ifElse.kt");
