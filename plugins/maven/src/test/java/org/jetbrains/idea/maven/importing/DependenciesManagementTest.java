@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.junit.Test;
 
 import java.io.File;
@@ -129,7 +128,7 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
     // reset embedders and try to update projects from scratch
     myProjectsManager.getEmbeddersManager().releaseForcefullyInTests();
 
-    myProjectsManager.updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
+    updateAllProjects();
 
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }

@@ -27,7 +27,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
@@ -54,11 +53,6 @@ interface MavenAsyncProjectsManager {
                                   filesToUpdate: MutableList<VirtualFile>,
                                   filesToDelete: MutableList<VirtualFile>): List<Module>
 
-  @TestOnly
-  suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module>
-
-  @ApiStatus.Internal
-  fun resolveAndImportMavenProjectsSync(): List<Module>
   @ApiStatus.Internal
   suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
   @ApiStatus.Internal
@@ -99,14 +93,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   override fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider, projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
     return prepareImporter(modelsProvider, projectsToImport, false).importMavenProjectsBlocking()
-  }
-
-  override fun resolveAndImportMavenProjectsSync(): List<Module> {
-    return runBlockingMaybeCancellable { resolveAndImport(emptyList()) }
-  }
-
-  override suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module> {
-    return resolveAndImport(projects)
   }
 
   private suspend fun doImportMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
