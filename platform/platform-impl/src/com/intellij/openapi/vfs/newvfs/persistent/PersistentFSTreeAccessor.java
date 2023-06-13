@@ -326,7 +326,7 @@ class PersistentFSTreeAccessor {
     connection.getAttributeId(CHILDREN_ATTR.getId()); // trigger writing / loading of vfs attribute ids in top level write action
   }
 
-  private static void saveNameIdSequenceWithDeltas(int[] names, int[] ids, DataOutputStream output) throws IOException {
+  static void saveNameIdSequenceWithDeltas(int[] names, int[] ids, DataOutputStream output) throws IOException {
     DataInputOutputUtil.writeINT(output, names.length);
     int prevId = 0;
     int prevNameId = 0;
