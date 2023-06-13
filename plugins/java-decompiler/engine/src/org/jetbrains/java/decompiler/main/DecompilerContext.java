@@ -35,7 +35,7 @@ public class DecompilerContext {
                            StructContext structContext,
                            ClassesProcessor classProcessor,
                            PoolInterceptor interceptor) {
-    this(properties, logger, structContext, classProcessor, interceptor, CancellationManager.DUMMY);
+    this(properties, logger, structContext, classProcessor, interceptor, CancellationManager.getSimpleWithTimeout());
       }
 
   public DecompilerContext(Map<String, Object> properties,
@@ -123,7 +123,11 @@ public class DecompilerContext {
     if (context != null) {
       return context.cancellationManager;
     }
-    return CancellationManager.DUMMY;
+
+    CancellationManager simpleWithTimeout = CancellationManager.getSimpleWithTimeout();
+    int maxSec = Integer.parseInt(getProperty(IFernflowerPreferences.MAX_PROCESSING_METHOD).toString());
+    simpleWithTimeout.setMaxSec(maxSec);
+    return simpleWithTimeout;
   }
 
   public static PoolInterceptor getPoolInterceptor() {

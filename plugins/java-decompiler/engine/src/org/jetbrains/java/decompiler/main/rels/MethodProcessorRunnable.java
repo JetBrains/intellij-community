@@ -69,7 +69,7 @@ public class MethodProcessorRunnable implements Runnable {
 
   public static RootStatement codeToJava(StructClass cl, StructMethod mt, MethodDescriptor md, VarProcessor varProc) throws IOException {
     CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
-    cancellationManager.checkSavedCancelled();
+    cancellationManager.checkCanceled();
     boolean isInitializer = CodeConstants.CLINIT_NAME.equals(mt.getName()); // for now static initializer only
 
     mt.expandData(cl);
@@ -86,7 +86,7 @@ public class MethodProcessorRunnable implements Runnable {
     // Since jsr instruction is forbidden for class files version 51.0 (Java 7) or above
     // call to inlineJsr() is only meaningful for class files prior to the Java 7.
     //
-    cancellationManager.checkSavedCancelled();
+    cancellationManager.checkCanceled();
     if (!cl.isVersion7()) {
       graph.inlineJsr(cl, mt);
     }
@@ -128,29 +128,32 @@ public class MethodProcessorRunnable implements Runnable {
       }
       ExceptionDeobfuscator.insertDummyExceptionHandlerBlocks(graph, mt.getBytecodeVersion());
     }
-    cancellationManager.checkSavedCancelled();
+    cancellationManager.checkCanceled();
     RootStatement root = DomHelper.parseGraph(graph);
 
-    cancellationManager.checkSavedCancelled();
+    cancellationManager.checkCanceled();
 
     FinallyProcessor fProc = new FinallyProcessor(md, varProc);
     while (fProc.iterateGraph(cl, mt, root, graph)) {
-      cancellationManager.checkSavedCancelled();
+      cancellationManager.checkCanceled();
       root = DomHelper.parseGraph(graph);
     }
 
     // remove synchronized exception handler
     // not until now because of comparison between synchronized statements in the finally cycle
     DomHelper.removeSynchronizedHandler(root);
+    cancellationManager.checkCanceled();
 
     //		LabelHelper.lowContinueLabels(root, new HashSet<StatEdge>());
 
     SequenceHelper.condenseSequences(root);
 
     ClearStructHelper.clearStatements(root);
+    cancellationManager.checkCanceled();
 
     ExprProcessor proc = new ExprProcessor(md, varProc);
     proc.processStatement(root, cl);
+    cancellationManager.checkCanceled();
 
     SequenceHelper.condenseSequences(root);
 
@@ -161,6 +164,8 @@ public class MethodProcessorRunnable implements Runnable {
       varProc.setVarVersions(root);
     }
     while (new PPandMMHelper().findPPandMM(root));
+
+    cancellationManager.checkCanceled();
 
     while (true) {
       LabelHelper.cleanUpEdges(root);
@@ -194,6 +199,7 @@ public class MethodProcessorRunnable implements Runnable {
       //  break;
       //}
     }
+    cancellationManager.checkCanceled();
 
     ExitHelper.removeRedundantReturns(root);
 
@@ -201,12 +207,15 @@ public class MethodProcessorRunnable implements Runnable {
 
     varProc.setVarDefinitions(root);
 
+    cancellationManager.checkCanceled();
+
     // must be the last invocation, because it makes the statement structure inconsistent
     // FIXME: new edge type needed
     LabelHelper.replaceContinueWithBreak(root);
 
     PatternHelper.replaceAssignmentsWithPatternVariables(root, cl);
     SwitchHelper.simplifySwitchesOnString(root);
+    cancellationManager.checkCanceled();
 
     mt.releaseResources();
 

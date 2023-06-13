@@ -15,7 +15,7 @@ public class BaseDecompiler {
   private final Fernflower engine;
 
   public BaseDecompiler(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> options, IFernflowerLogger logger) {
-    this(provider, saver, options, logger, CancellationManager.DUMMY);
+    this(provider, saver, options, logger, CancellationManager.getSimpleWithTimeout());
   }
 
   public BaseDecompiler(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> options, IFernflowerLogger logger,

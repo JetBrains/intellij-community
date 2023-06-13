@@ -60,11 +60,13 @@ public abstract class Statement implements IMatchable {
 
   Statement(@NotNull StatementType type) {
     this.type = type;
+    cancellationManager.checkCanceled();
   }
 
   Statement(@NotNull StatementType type, int id) {
     this.type = type;
     this.id = id;
+    cancellationManager.checkCanceled();
   }
 
   // *****************************************************************************
@@ -101,7 +103,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public void collapseNodesToStatement(Statement stat) {
-    cancellationManager.checkSavedCancelled();
+    cancellationManager.checkCanceled();
     Statement head = stat.getFirst();
     Statement post = stat.getPost();
 
@@ -119,7 +121,7 @@ public abstract class Statement implements IMatchable {
 
     // regular head edges
     for (StatEdge prededge : head.getAllPredecessorEdges()) {
-      cancellationManager.checkSavedCancelled();
+      cancellationManager.checkCanceled();
 
       if (prededge.getType() != EdgeType.EXCEPTION &&
           stat.containsStatementStrict(prededge.getSource())) {
@@ -316,7 +318,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public HashSet<Statement> buildContinueSet() {
-    cancellationManager.checkSavedCancelled();
+    cancellationManager.checkCanceled();
     continueSet.clear();
 
     for (Statement st : stats) {
@@ -392,7 +394,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public List<Statement> getPostReversePostOrderList(List<Statement> lstexits) {
-    cancellationManager.checkSavedCancelled();
+    cancellationManager.checkCanceled();
     List<Statement> res = new ArrayList<>();
 
     if (lstexits == null) {
@@ -402,7 +404,7 @@ public abstract class Statement implements IMatchable {
     HashSet<Statement> setVisited = new HashSet<>();
 
     for (Statement exit : lstexits) {
-      cancellationManager.checkSavedCancelled();
+      cancellationManager.checkCanceled();
       addToPostReversePostOrderList(exit, res, setVisited);
     }
 
@@ -459,7 +461,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public void replaceStatement(Statement oldstat, Statement newstat) {
-
+    cancellationManager.checkCanceled();
     for (StatEdge edge : oldstat.getAllPredecessorEdges()) {
       oldstat.removePredecessor(edge);
       edge.getSource().changeEdgeNode(EdgeDirection.FORWARD, edge, newstat);
@@ -628,6 +630,7 @@ public abstract class Statement implements IMatchable {
 
 
   private List<StatEdge> getEdges(EdgeType type, @NotNull EdgeDirection direction) {
+    cancellationManager.checkCanceled();
 
     Map<EdgeType, List<StatEdge>> map = direction == EdgeDirection.BACKWARD ? mapPredEdges : mapSuccEdges;
 
@@ -769,6 +772,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public List<Exprent> getVarDefinitions() {
+    cancellationManager.checkCanceled();
     return varDefinitions;
   }
 

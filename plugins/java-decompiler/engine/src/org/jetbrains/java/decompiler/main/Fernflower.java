@@ -29,7 +29,7 @@ public class Fernflower implements IDecompiledData {
                     IFernflowerLogger logger,
                     CancellationManager cancellationManager) {
     if (cancellationManager == null) {
-      cancellationManager = CancellationManager.DUMMY;
+      cancellationManager = CancellationManager.getSimpleWithTimeout();
     }
     Map<String, Object> properties = new HashMap<>(IFernflowerPreferences.DEFAULTS);
     if (customProperties != null) {
@@ -63,7 +63,7 @@ public class Fernflower implements IDecompiledData {
   }
 
   public Fernflower(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> customProperties, IFernflowerLogger logger) {
-    this(provider, saver, customProperties, logger, CancellationManager.DUMMY);
+    this(provider, saver, customProperties, logger, CancellationManager.getSimpleWithTimeout());
   }
 
   private static IIdentifierRenamer loadHelper(String className, IFernflowerLogger logger) {

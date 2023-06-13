@@ -39,13 +39,18 @@ public class CancellableTest {
       }
 
       @Override
-      public void saveCancelled() {
+      public void setMaxSec(int sec) {
 
       }
 
       @Override
-      public void checkSavedCancelled() {
-        check();
+      public void startMethod() {
+
+      }
+
+      @Override
+      public void finishMethod() {
+
       }
 
       private void check() {

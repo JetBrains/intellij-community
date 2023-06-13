@@ -113,7 +113,7 @@ public class ExprProcessor implements CodeConstants {
 
   public void processStatement(RootStatement root, StructClass cl) {
     CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
-
+    cancellationManager.checkCanceled();
     FlattenStatementsHelper flattenHelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flattenHelper.buildDirectGraph(root);
 
@@ -148,7 +148,7 @@ public class ExprProcessor implements CodeConstants {
     mapData.put(dgraph.first, map);
 
     while (!stack.isEmpty()) {
-      cancellationManager.checkSavedCancelled();
+      cancellationManager.checkCanceled();
       DirectNode node = stack.removeFirst();
       LinkedList<String> entryPoints = stackEntryPoint.removeFirst();
 
@@ -169,7 +169,7 @@ public class ExprProcessor implements CodeConstants {
       String currentEntrypoint = entryPoints.isEmpty() ? null : entryPoints.getLast();
 
       for (DirectNode nd : node.successors) {
-        cancellationManager.checkSavedCancelled();
+        cancellationManager.checkCanceled();
         boolean isSuccessor = true;
 
         if (currentEntrypoint != null && dgraph.mapLongRangeFinallyPaths.containsKey(node.id)) {

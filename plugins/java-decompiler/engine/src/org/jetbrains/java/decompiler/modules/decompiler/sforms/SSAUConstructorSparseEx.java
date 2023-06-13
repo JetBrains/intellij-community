@@ -89,7 +89,7 @@ public class SSAUConstructorSparseEx {
     do {
       //			System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
       ssaStatements(dgraph, updated, false);
-      cancellationManager.checkSavedCancelled();
+      cancellationManager.checkCanceled();
       //			System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
     }
     while (!updated.isEmpty());

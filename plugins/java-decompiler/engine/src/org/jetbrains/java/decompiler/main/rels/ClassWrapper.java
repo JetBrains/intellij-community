@@ -45,6 +45,12 @@ public class ClassWrapper {
     int maxSec = Integer.parseInt(DecompilerContext.getProperty(IFernflowerPreferences.MAX_PROCESSING_METHOD).toString());
     boolean testMode = DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE);
     CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
+    if (testMode) {
+      cancellationManager.setMaxSec(0);
+    }
+    else {
+      cancellationManager.setMaxSec(maxSec);
+    }
     for (StructMethod mt : classStruct.getMethods()) {
       cancellationManager.checkCanceled();
       DecompilerContext.getLogger().startMethod(mt.getName() + " " + mt.getDescriptor());
@@ -66,37 +72,18 @@ public class ClassWrapper {
             root = MethodProcessorRunnable.codeToJava(classStruct, mt, md, varProc);
           }
           else {
-            MethodProcessorRunnable mtProc =
-              new MethodProcessorRunnable(classStruct, mt, md, varProc, DecompilerContext.getCurrentContext());
-
-            Thread mtThread = new Thread(mtProc, "Java decompiler");
-            long stopAt = System.currentTimeMillis() + maxSec * 1000L;
-
-            mtThread.start();
-
-            while (!mtProc.isFinished()) {
-              try {
-                synchronized (mtProc.lock) {
-                  cancellationManager.saveCancelled();
-                  mtProc.lock.wait(100);
-                }
-              }
-              catch (InterruptedException e) {
-                killThread(mtThread);
-                throw e;
-              }
-
-              if (System.currentTimeMillis() >= stopAt) {
-                String message = "Processing time limit exceeded for method " + mt.getName() + ", execution interrupted.";
-                DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.ERROR);
-                killThread(mtThread);
-                isError = true;
-                break;
-              }
-            }
-
-            if (!isError) {
+            DecompilerContext context = DecompilerContext.getCurrentContext();
+            try {
+              cancellationManager.startMethod();
+              MethodProcessorRunnable mtProc =
+                new MethodProcessorRunnable(classStruct, mt, md, varProc, DecompilerContext.getCurrentContext());
+              mtProc.run();
+              cancellationManager.checkCanceled();
               root = mtProc.getResult();
+            }
+            finally {
+              DecompilerContext.setCurrentContext(context);
+              cancellationManager.finishMethod();
             }
           }
         }
@@ -113,6 +100,11 @@ public class ClassWrapper {
           }
         }
       }
+      catch (CancellationManager.TimeExceedException e) {
+        String message = "Processing time limit exceeded for method " + mt.getName() + ", execution interrupted.";
+        DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.ERROR);
+        isError = true;
+      }
       catch (CancellationManager.CanceledException e) {
         throw e;
       }
@@ -121,7 +113,6 @@ public class ClassWrapper {
         DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, t);
         isError = true;
       }
-      cancellationManager.checkCanceled();
 
       MethodWrapper methodWrapper = new MethodWrapper(root, varProc, mt, counter);
       methodWrapper.decompiledWithErrors = isError;
@@ -189,11 +180,6 @@ public class ClassWrapper {
         });
       }
     }
-  }
-
-  @SuppressWarnings("deprecation")
-  private static void killThread(Thread thread) {
-    thread.stop();
   }
 
   public MethodWrapper getMethodWrapper(String name, String descriptor) {

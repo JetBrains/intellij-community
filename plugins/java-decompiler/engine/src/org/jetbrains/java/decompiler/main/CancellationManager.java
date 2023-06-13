@@ -7,16 +7,25 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public interface CancellationManager {
   /**
-   * @throws CanceledException if the process has been canceled.
+   * @throws CanceledException   if the process has been canceled.
+   * @throws TimeExceedException if limit timeout is exceeded.
    */
-  void checkCanceled() throws CanceledException;
+  void checkCanceled() throws CanceledException, TimeExceedException;
 
   /**
-   * Save result of  {@link CancellationManager#checkCanceled} in one thread.
-   * After that this result will be thrown with {@link CancellationManager#checkSavedCancelled} in second thread.
+   * @param sec - limit timeout (seconds)
    */
-  void saveCancelled();
-  void checkSavedCancelled();
+  void setMaxSec(int sec);
+
+  /**
+   * Call to start counting down the timeout
+   */
+  void startMethod();
+
+  /**
+   * Call to reset timer
+   */
+  void finishMethod();
 
   @ApiStatus.Experimental
   class CanceledException extends RuntimeException {
@@ -24,20 +33,44 @@ public interface CancellationManager {
     public CanceledException(@NotNull Throwable cause) {
       super(cause);
     }
-
   }
 
-  CancellationManager DUMMY = new CancellationManager() {
+  @ApiStatus.Experimental
+  class TimeExceedException extends RuntimeException {
+  }
+
+  static CancellationManager getSimpleWithTimeout() {
+    return new SimpleWithTimeoutCancellationManager();
+  }
+
+  class SimpleWithTimeoutCancellationManager implements CancellationManager {
+    private long maxMilis = 0;
+    private long startMilis = 0;
+
     @Override
-    public void checkCanceled() throws CanceledException {
+    public void checkCanceled() throws CanceledException, TimeExceedException {
+      if (maxMilis <= 0 || startMilis <= 0) {
+        return;
+      }
+      long timeMillis = System.currentTimeMillis();
+      if (timeMillis - startMilis > maxMilis) {
+        throw new TimeExceedException();
+      }
     }
 
     @Override
-    public void saveCancelled() {
+    public void setMaxSec(int sec) {
+      maxMilis = sec * 1_000L;
     }
 
     @Override
-    public void checkSavedCancelled() {
+    public void startMethod() {
+      startMilis = System.currentTimeMillis();
     }
-  };
+
+    @Override
+    public void finishMethod() {
+      startMilis = 0;
+    }
+  }
 }

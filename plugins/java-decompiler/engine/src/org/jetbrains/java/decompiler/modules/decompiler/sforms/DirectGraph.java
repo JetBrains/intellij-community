@@ -98,7 +98,7 @@ public class DirectGraph {
       setVisited.add(node);
 
       for (int i = 0; i < node.exprents.size(); i++) {
-        cancellationManager.checkSavedCancelled();
+        cancellationManager.checkCanceled();
         int res = iter.processExprent(node.exprents.get(i));
 
         if (res == 1) {
