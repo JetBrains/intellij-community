@@ -49,7 +49,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
-const val CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH = 25
+const val CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH = 32
 
 private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean): ActionToolbar {
   val toolbarId = "RunToolbarMainActionGroup"
