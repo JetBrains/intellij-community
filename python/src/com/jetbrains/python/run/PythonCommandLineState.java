@@ -513,9 +513,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (sdkPathMappings != null) {
       pathMappingSettings.addAll(sdkPathMappings);
     }
+    final boolean isMostlySilentProcess = false;
     PyTargetPathMapper consolidatedPathMappings = new PyTargetPathMapper(targetEnvironment, pathMappingSettings);
     return PyCustomProcessHandlerProvider.createProcessHandler(process, commandLineString, commandLine.getCharset(),
-                                                               consolidatedPathMappings);
+                                                               consolidatedPathMappings, isMostlySilentProcess, myRunWithPty);
   }
 
   private @Nullable PathMappingSettings getSdkPathMappings() {

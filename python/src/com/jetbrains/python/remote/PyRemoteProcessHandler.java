@@ -4,15 +4,17 @@ package com.jetbrains.python.remote;
 import com.google.common.net.HostAndPort;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.remote.ColoredRemoteProcessHandler;
+import com.intellij.remote.BaseRemoteProcessHandler;
 import com.intellij.remote.RemoteProcess;
 import com.intellij.remote.RemoteSdkCredentials;
 import com.intellij.remote.RemoteSdkException;
 import com.intellij.util.PathMapper;
 import com.intellij.util.PathMappingSettings;
+import com.intellij.util.io.BaseOutputReader;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyPositionConverter;
 import com.jetbrains.python.debugger.remote.vfs.PyRemotePositionConverter;
@@ -25,24 +27,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApiStatus.Internal
-public final class PyRemoteProcessHandler extends ColoredRemoteProcessHandler<RemoteProcess>
-  implements RemoteDebuggableProcessHandler, KillableProcess {
+public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<RemoteProcess>
+  implements RemoteDebuggableProcessHandler, KillableProcess, AnsiEscapeDecoder.ColoredTextAcceptor {
   private static final Logger LOG = Logger.getInstance(PyRemoteProcessHandler.class);
 
+  private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
   public static final String LOG_PY_CHARM_FILE_MAPPING = "LOG: PyCharm: File mapping:";
   @NotNull private final PyRemotePathMapper myPathMapper;
   private final List<PathMappingSettings.PathMapping> myFileMappings = new ArrayList<>();
   @NotNull private final PyRemoteSocketToLocalHostProvider myRemoteSocketProvider;
+  private final boolean myHasPty;
 
   private PyRemoteProcessHandler(@NotNull RemoteProcess process,
                                  @NotNull String commandLine,
                                  @NotNull Charset charset,
                                  @Nullable PyRemotePathMapper pathMapper,
-                                 @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider) {
+                                 @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider,
+                                 boolean hasPty) {
     super(process, commandLine, charset);
     myRemoteSocketProvider = remoteSocketProvider;
 
     myPathMapper = pathMapper != null ? pathMapper : new PyRemotePathMapper();
+    myHasPty = hasPty;
 
     putUserData(PythonRemoteInterpreterManager.PATH_MAPPING_SETTINGS_KEY, pathMapper);
   }
@@ -101,7 +107,17 @@ public final class PyRemoteProcessHandler extends ColoredRemoteProcessHandler<Re
     throws RemoteSdkException {
     return new PyRemoteProcessHandler(remoteProcess,
                                       commandLine.getCommandLineString(fullInterpreterPath), commandLine.getCharset(),
-                                      pathMapper, remoteSocketProvider);
+                                      pathMapper, remoteSocketProvider, false);
+  }
+
+  @NotNull
+  public static PyRemoteProcessHandler createProcessHandler(@NotNull RemoteProcess remoteProcess,
+                                                            @NotNull String commandLine,
+                                                            @NotNull Charset charset,
+                                                            @Nullable PyRemotePathMapper pathMapper,
+                                                            @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider,
+                                                            boolean hasPty) {
+    return new PyRemoteProcessHandler(remoteProcess, commandLine, charset, pathMapper, remoteSocketProvider, hasPty);
   }
 
   @NotNull
@@ -110,11 +126,27 @@ public final class PyRemoteProcessHandler extends ColoredRemoteProcessHandler<Re
                                                             @NotNull Charset charset,
                                                             @Nullable PyRemotePathMapper pathMapper,
                                                             @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider) {
-    return new PyRemoteProcessHandler(remoteProcess, commandLine, charset, pathMapper, remoteSocketProvider);
+    return createProcessHandler(remoteProcess, commandLine, charset, pathMapper, remoteSocketProvider, false);
   }
 
   @Override
-  public void coloredTextAvailable(@NotNull String text, @NotNull Key outputType) {
+  public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
+    if (hasPty()) {
+      boolean foundPyCharmFileMapping = handlePyCharmFileMapping(text);
+      if (!foundPyCharmFileMapping) {
+        super.notifyTextAvailable(text, outputType);
+      }
+    } else {
+      myAnsiEscapeDecoder.escapeText(text, outputType, this);
+    }
+  }
+
+  /**
+   * Processes the PyCharm file mapping provided in the text.
+   *
+   * @return true if the text contains valid PyCharm file mapping, else false.
+   */
+  private boolean handlePyCharmFileMapping(@NotNull String text) {
     if (text.startsWith(LOG_PY_CHARM_FILE_MAPPING)) {
       text = text.substring(LOG_PY_CHARM_FILE_MAPPING.length());
       String[] paths = text.split("\t");
@@ -124,10 +156,29 @@ public final class PyRemoteProcessHandler extends ColoredRemoteProcessHandler<Re
       else {
         LOG.warn("Can't parse remote file mapping " + text);
       }
+      return true;
     }
-    else {
-      super.coloredTextAvailable(text, outputType);
+    return false;
+  }
+
+  @Override
+  public void coloredTextAvailable(@NotNull String text, @NotNull Key outputType) {
+    boolean foundPyCharmFileMapping = handlePyCharmFileMapping(text);
+    if (!foundPyCharmFileMapping) {
+      super.notifyTextAvailable(text, outputType);
     }
+  }
+
+  public boolean hasPty() {
+    return myHasPty;
+  }
+
+  @Override
+  protected BaseOutputReader.@NotNull Options readerOptions() {
+    if (hasPty()) {
+      return BaseOutputReader.Options.forTerminalPtyProcess();
+    }
+    return super.readerOptions();
   }
 
   @Override

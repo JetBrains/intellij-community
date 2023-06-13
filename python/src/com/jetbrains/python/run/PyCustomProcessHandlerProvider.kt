@@ -16,7 +16,8 @@ interface PyCustomProcessHandlerProvider {
   fun tryCreateProcessHandler(process: Process,
                               commandLine: String,
                               charset: Charset,
-                              pathMapper: PyRemotePathMapper): ProcessHandler?
+                              pathMapper: PyRemotePathMapper,
+                              runWithPty: Boolean): ProcessHandler?
 
   companion object {
     @JvmField
@@ -40,8 +41,9 @@ interface PyCustomProcessHandlerProvider {
                              commandLine: String,
                              charset: Charset,
                              pathMapper: PyRemotePathMapper,
-                             isMostlySilentProcess: Boolean = false): ProcessHandler =
-      EP_NAME.computeSafeIfAny { it.tryCreateProcessHandler(process, commandLine, charset, pathMapper) }
+                             isMostlySilentProcess: Boolean = false,
+                             runWithPty: Boolean = false): ProcessHandler =
+      EP_NAME.computeSafeIfAny { it.tryCreateProcessHandler(process, commandLine, charset, pathMapper, runWithPty) }
       ?: ProcessHandlerWithPyPositionConverter(process, commandLine, charset, pathMapper, isMostlySilentProcess)
   }
 }
