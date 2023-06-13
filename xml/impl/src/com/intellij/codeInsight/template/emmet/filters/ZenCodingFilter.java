@@ -47,7 +47,7 @@ public abstract class ZenCodingFilter {
   }
 
   /**
-   * @return true if the filter shouldn't be shown in the emmet-related UI.
+   * @return true if the filter shouldn't be shown in the emmet-related UI. Also, such filters are always enabled by default
    */
   public boolean isSystem() {
     return false;

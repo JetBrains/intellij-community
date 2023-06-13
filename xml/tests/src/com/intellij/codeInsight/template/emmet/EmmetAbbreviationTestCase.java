@@ -7,10 +7,15 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.TestFrameworkUtil;
+import com.intellij.util.TestRuntimeUtil;
+import com.intellij.util.ui.UIUtil;
 
 import static com.intellij.codeInsight.template.emmet.ZenCodingTemplate.doWrap;
 
@@ -27,12 +32,16 @@ public abstract class EmmetAbbreviationTestCase extends LightPlatformCodeInsight
 
   public void expandAndCheck(String sourceData, String expectedData) {
     expand(sourceData, getExtension());
+
     checkResultByText(expectedData);
   }
 
   protected void templateWrap(String selectedText, TemplateImpl template, String expectedResult) {
     configureFromFileText("text." + getExtension(), selectSourceData(selectedText));
     ApplicationManager.getApplication().runWriteAction(() -> TemplateManager.getInstance(getProject()).startTemplate(getEditor(), selectedText, template));
+
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    UIUtil.dispatchAllInvocationEvents();
 
     checkResultByText(expectedResult);
   }
@@ -47,6 +56,9 @@ public abstract class EmmetAbbreviationTestCase extends LightPlatformCodeInsight
     ApplicationManager.getApplication().runWriteAction(() -> {
       TemplateManager.getInstance(getProject()).startTemplate(getEditor(), TemplateSettings.TAB_CHAR);
     });
+
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   public void emmetWrap(String sourceData, String emmetExpression, String expectedData) {
@@ -57,6 +69,9 @@ public abstract class EmmetAbbreviationTestCase extends LightPlatformCodeInsight
     while ((state = TemplateManagerImpl.getTemplateState(getEditor())) != null) {
       state.nextTab();
     }
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    UIUtil.dispatchAllInvocationEvents();
+
     checkResultByText(expectedData);
   }
 
@@ -64,6 +79,10 @@ public abstract class EmmetAbbreviationTestCase extends LightPlatformCodeInsight
     configureFromFileText("test." + getExtension(), sourceData);
     EmmetAbbreviationBalloon.setTestingAbbreviation(emmetExpression, getTestRootDisposable());
     executeAction(IdeActions.ACTION_UPDATE_TAG_WITH_EMMET);
+
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    UIUtil.dispatchAllInvocationEvents();
+
     checkResultByText(expectedData);
   }
 
