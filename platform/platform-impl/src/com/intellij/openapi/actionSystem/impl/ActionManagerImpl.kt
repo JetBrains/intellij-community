@@ -186,7 +186,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       timer = MyTimer()
       timer!!.start()
     }
-    val wrappedListener = if (AppExecutorUtil.propagateContextOrCancellation()) CapturingListener(listener) else listener
+    val wrappedListener = if (AppExecutorUtil.propagateContextOrCancellation() && listener !is CapturingListener) CapturingListener(listener) else listener
     timer!!.listeners.add(wrappedListener)
   }
 
@@ -210,7 +210,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     }
 
     if (LOG.assertTrue(timer != null)) {
-      timer!!.listeners.remove(listener)
+      timer!!.listeners.removeIf { it == listener || (it is CapturingListener && it.myTimerListener == listener)  }
     }
   }
 
@@ -1308,9 +1308,13 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
 
-  private class CapturingListener(private val myTimerListener: TimerListener) : TimerListener by myTimerListener {
-    val myContext: CoroutineContext
-    val myJob: Job?
+  private class CapturingListener(val myTimerListener: TimerListener) : TimerListener by myTimerListener {
+    private val myContext: CoroutineContext
+
+    /**
+     * The job is needed here for future cancellation purposes
+     */
+    private val myJob: Job?
 
     init {
       val (context, job) = createChildContext()
