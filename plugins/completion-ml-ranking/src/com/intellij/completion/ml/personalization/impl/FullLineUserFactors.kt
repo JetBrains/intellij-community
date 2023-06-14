@@ -15,10 +15,10 @@ private const val SHOW_UP = "show_up"
 private const val GLOBAL_ACCEPTANCE_RATE = 0.2
 private const val GLOBAL_ALPHA = 10
 
-val DURATIONS = listOf(1.hours, 1.days, 7.days)
+val DECAY_DURATIONS = listOf(1.hours, 1.days, 7.days)
 
 fun lastTimeName(name: String) = "last_${name}_time"
-fun decayingNumberName(name: String, duration: Duration) = "${name}_number_decayed_by_$duration"
+fun decayingCountName(name: String, decayDuration: Duration) = "${name}_count_decayed_by_$decayDuration"
 
 class FullLineFactorsReader(factor: DailyAggregatedDoubleFactor) : UserFactorReaderBase(factor) {
   fun lastSelectionTimeToday(): Double? = getTodayFactor(lastTimeName(SELECTION))
@@ -27,23 +27,35 @@ class FullLineFactorsReader(factor: DailyAggregatedDoubleFactor) : UserFactorRea
 
   private fun getTodayFactor(name: String) = factor.onDate(DateUtil.today())?.get(name)
 
-  fun smoothedAcceptanceRate(duration: Duration): Double {
-    return globallySmoothedRatio(selectionNumberDecayedBy(duration), showUpNumberDecayedBy(duration))
+  fun smoothedAcceptanceRate(decayDuration: Duration): Double {
+    val timestamp = currentEpochSeconds()
+    return globallySmoothedRatio(selectionCountDecayedBy(decayDuration, timestamp), showUpCountDecayedBy(decayDuration, timestamp))
   }
-  
-  fun selectionNumberDecayedBy(duration: Duration) = factor.aggregateDecayingNumber(SELECTION, duration)
-  fun showUpNumberDecayedBy(duration: Duration) = factor.aggregateDecayingNumber(SHOW_UP, duration)
+
+  fun selectionCountDecayedBy(decayDuration: Duration, timestamp: Double = currentEpochSeconds()) =
+    factor.aggregateDecayingCount(SELECTION, decayDuration, timestamp)
+
+  fun showUpCountDecayedBy(decayDuration: Duration, timestamp: Double = currentEpochSeconds()) =
+    factor.aggregateDecayingCount(SHOW_UP, decayDuration, timestamp)
 }
+
+private fun currentEpochSeconds() = Instant.now().epochSecond.toDouble()
 
 
 class FullLineFactorsUpdater(factor: MutableDoubleFactor) : UserFactorUpdaterBase(factor) {
   fun fireLookupElementSelected() {
-    factor increment SELECTION
+    val timestamp = currentEpochSeconds()
+    for (duration in DECAY_DURATIONS) {
+      factor.increment(SELECTION, duration, timestamp)
+    }
     factor.wasSelected(true)
   }
 
   fun fireLookupElementShowUp() {
-    factor increment SHOW_UP
+    val timestamp = currentEpochSeconds()
+    for (duration in DECAY_DURATIONS) {
+      factor.increment(SHOW_UP, duration, timestamp)
+    }
     factor.wasSelected(false)
   }
 }
@@ -54,14 +66,14 @@ class FullLineSmoothedAcceptanceRate(private val duration: Duration)
   override fun compute(reader: FullLineFactorsReader): String = reader.smoothedAcceptanceRate(duration).toString()
 }
 
-class FullLineSelectionNumberDecayedBy(private val duration: Duration)
-  : UserFactorBase<FullLineFactorsReader>("fullLineSelectionNumberDecayedBy$duration", UserFactorDescriptions.FULL_LINE_FACTORS) {
-  override fun compute(reader: FullLineFactorsReader): String = reader.selectionNumberDecayedBy(duration).toString()
+class FullLineSelectionCountDecayedBy(private val duration: Duration)
+  : UserFactorBase<FullLineFactorsReader>("fullLineSelectionCountDecayedBy$duration", UserFactorDescriptions.FULL_LINE_FACTORS) {
+  override fun compute(reader: FullLineFactorsReader): String = reader.selectionCountDecayedBy(duration).toString()
 }
 
-class FullLineShowUpNumberDecayedBy(private val duration: Duration)
-  : UserFactorBase<FullLineFactorsReader>("fullLineShowUpNumberDecayedBy$duration", UserFactorDescriptions.FULL_LINE_FACTORS) {
-  override fun compute(reader: FullLineFactorsReader): String = reader.showUpNumberDecayedBy(duration).toString()
+class FullLineShowUpCountDecayedBy(private val duration: Duration)
+  : UserFactorBase<FullLineFactorsReader>("fullLineShowUpCountDecayedBy$duration", UserFactorDescriptions.FULL_LINE_FACTORS) {
+  override fun compute(reader: FullLineFactorsReader): String = reader.showUpCountDecayedBy(duration).toString()
 }
 
 class FullLineTimeSinceLastSelection
@@ -80,33 +92,29 @@ class FullLineWasSelected
   override fun compute(reader: FullLineFactorsReader): String? = reader.wasSelected()?.toString()
 }
 
-private fun DailyAggregatedDoubleFactor.aggregateDecayingNumber(name: String, duration: Duration): Double {
+fun DailyAggregatedDoubleFactor.aggregateDecayingCount(name: String, decayDuration: Duration, timestamp: Double): Double {
   var result = 0.0
-  val lastTimeName = lastTimeName(name)
-  val decayingNumberName = decayingNumberName(name, duration)
-  val now = getLastTimeOrNow(lastTimeName)
-  for (onDate in availableDays().mapNotNull(this::onDate)) {
-    val lastTime = onDate[lastTimeName]
-    val dacayingNumber = onDate[decayingNumberName]
-    if (lastTime != null) {
-      result += dacayingNumber.decay(now - lastTime, duration)
-    }
+  for (day in availableDays()) {
+    result += get(name, decayDuration, day, timestamp) ?: 0.0
   }
   return result
 }
 
-private fun DailyAggregatedDoubleFactor.getLastTimeOrNow(name: String) = onDate(DateUtil.today())?.get(name)
-                                                                         ?: Instant.now().epochSecond.toDouble()
+fun DailyAggregatedDoubleFactor.get(name: String, decayDuration: Duration, day: Day, timestamp: Double): Double? {
+  val onDate = onDate(day) ?: return null
+  val lastTimeName = lastTimeName(name)
+  val decayingCountName = decayingCountName(name, decayDuration)
+  val lastTime = onDate[lastTimeName] ?: return null
+  val dacayingCount = onDate[decayingCountName]
+  return dacayingCount.decay(timestamp - lastTime, decayDuration)
+}
 
-private infix fun MutableDoubleFactor.increment(name: String) {
-  val last_time = lastTimeName(name)
+fun MutableDoubleFactor.increment(name: String, decayDuration: Duration, timestamp: Double) {
   updateOnDate(DateUtil.today()) {
-    val now = Instant.now().epochSecond.toDouble()
-    for (duration in DURATIONS) {
-      val decayingNumber = decayingNumberName(name, duration)
-      this[decayingNumber] = this[last_time]?.let { this[decayingNumber].decay(now - it, duration) + 1 } ?: 1.0
-    }
-    this[last_time] = now
+    val lastTimeName = lastTimeName(name)
+    val decayingCountName = decayingCountName(name, decayDuration)
+    this[decayingCountName] = this[lastTimeName]?.let { this[decayingCountName].decay(timestamp - it, decayDuration) + 1 } ?: 1.0
+    this[lastTimeName] = timestamp
   }
 }
 
@@ -116,10 +124,10 @@ private fun MutableDoubleFactor.wasSelected(boolean: Boolean) {
   }
 }
 
-private fun Double?.decay(duration: Double, halfLifeDuration: Duration) =
+private fun Double?.decay(duration: Double, decayDuration: Duration) =
   if (this == null) 0.0
   else if (duration * this == 0.0) this
-  else 0.5.pow(duration / halfLifeDuration.toDouble(DurationUnit.SECONDS)) * this
+  else 0.5.pow(duration / decayDuration.toDouble(DurationUnit.SECONDS)) * this
 
 private fun globallySmoothedRatio(quotient: Double?, divisor: Double?) =
   if (divisor == null) GLOBAL_ACCEPTANCE_RATE
