@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -15,6 +15,8 @@ import com.intellij.debugger.engine.managerThread.DebuggerCommand
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.JvmSteppingCommandProvider
 import com.intellij.debugger.impl.PositionUtil
+import com.intellij.debugger.ui.impl.watch.MethodsTracker
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.jarRepository.JarRepositoryManager
@@ -83,12 +85,11 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     }
 
     private fun SuspendContextImpl.getKotlinStackFrames(): List<KotlinStackFrame> {
-        val proxy = frameProxy ?: return emptyList()
         if (myInProgress) {
-            val positionManager = KotlinPositionManager(debugProcess)
-            return positionManager.createStackFrames(
-                proxy, debugProcess, proxy.location()
-            ).filterIsInstance<KotlinStackFrame>()
+            val proxy = frameProxy ?: return emptyList()
+            return KotlinPositionManager(debugProcess)
+              .createStackFrames(StackFrameDescriptorImpl(proxy, MethodsTracker()))
+              .filterIsInstance<KotlinStackFrame>()
         }
         return emptyList()
     }
