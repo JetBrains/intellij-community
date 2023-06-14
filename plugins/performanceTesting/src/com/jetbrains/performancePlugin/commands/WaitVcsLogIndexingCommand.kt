@@ -54,22 +54,19 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
         }
       }
       finally {
-        //Second waiting check
+        //Second polling check, verifies situation when indexing was paused due to threshold specified in vcs.log.index.limit.minutes was reached
         indexPauseTask.cancel(false)
-        vcsIndex.indexingRoots.forEach { LOG.info("Status of index root ${it.name} indexed = ${vcsIndex.isIndexed(it)}") }
       }
     }
-    else {
-      vcsIndex.indexingRoots.forEach { LOG.info("Status of index root ${it.name} indexed = ${vcsIndex.isIndexed(it)}") }
-      throw RuntimeException("Git-log indexing wasn't scheduled for project")
-    }
+    vcsIndex.indexingRoots.forEach { LOG.info("Status of git root ${it.name}, indexed = ${vcsIndex.isIndexed(it)}") }
   }
 
   /**
    * Polling of the property isIndexingPaused. This task will detect the case when indexing wasn't fully completed
    * due to timeout of 20 minutes was reached
    */
-  private fun scheduleIndexPauseTask(vscIndex: VcsLogModifiableIndex, isIndexingCompleted: CompletableDeferred<Boolean>): ScheduledFuture<*> {
+  private fun scheduleIndexPauseTask(vscIndex: VcsLogModifiableIndex,
+                                     isIndexingCompleted: CompletableDeferred<Boolean>): ScheduledFuture<*> {
     return executor.scheduleWithFixedDelay(
       {
         if (vscIndex.isIndexingPaused()) {
