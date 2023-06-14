@@ -30,6 +30,8 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
@@ -858,8 +860,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   public static @NotNull List<LineMarkerInfo<?>> getLineMarkers(@NotNull Document document, @NotNull Project project) {
     List<LineMarkerInfo<?>> result = new ArrayList<>();
-    LineMarkersUtil.processLineMarkers(project, document, new TextRange(0, document.getTextLength()), -1,
-                                       new CommonProcessors.CollectProcessor<>(result));
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
+    markupModel.processRangeHighlightersOverlappingWith(0, document.getTextLength(),
+      highlighter -> {
+        LineMarkerInfo<?> info = LineMarkersUtil.getLineMarkerInfo(highlighter);
+        if (info != null) {
+          result.add(info);
+        }
+        return true;
+      }
+    );
     return result;
   }
 

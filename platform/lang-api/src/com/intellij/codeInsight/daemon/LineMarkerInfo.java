@@ -37,7 +37,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public final int endOffset;
   public Color separatorColor;
   public SeparatorPlacement separatorPlacement;
-  public RangeHighlighter highlighter;
+  public volatile RangeHighlighter highlighter;
 
   public int updatePass;
   private final Function<? super T, @NlsContexts.Tooltip String> myTooltipProvider;

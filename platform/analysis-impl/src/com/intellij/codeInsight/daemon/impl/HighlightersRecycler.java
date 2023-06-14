@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Key;
@@ -17,6 +18,7 @@ import java.util.Collection;
 // You call recycleHighlighter() to put unused highlighter into the cache
 // and then call pickupHighlighterFromGarbageBin() (if there is a sudden need for fresh highlighter with specified offsets) to remove it from the cache to re-initialize and use.
 final class HighlightersRecycler {
+  private static final Logger LOG = Logger.getInstance(HighlightersRecycler.class);
   private final MultiMap<TextRange, RangeHighlighterEx> incinerator = new MultiMap<>();
   private static final Key<Boolean> BEING_RECYCLED_KEY = Key.create("RECYCLED_KEY"); // set when the highlighter is just recycled, but not yet transferred to EDT to change its attributes. used to prevent double recycling the same RH
 
@@ -24,6 +26,9 @@ final class HighlightersRecycler {
   boolean recycleHighlighter(@NotNull RangeHighlighterEx highlighter) {
     if (highlighter.isValid() && ((UserDataHolderEx)highlighter).replace(BEING_RECYCLED_KEY, null, Boolean.TRUE)) {
       incinerator.putValue(ProperTextRange.create(highlighter), highlighter);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("recycled highlighter " + highlighter + " in " + highlighter.getDocument());
+      }
       return true;
     }
     return false;
@@ -37,6 +42,9 @@ final class HighlightersRecycler {
       if (highlighter.isValid() && highlighter.getLayer() == layer) {
         incinerator.remove(range, highlighter);
         highlighter.putUserData(BEING_RECYCLED_KEY, null);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("reused recycled highlighter " + highlighter + " in " + highlighter.getDocument());
+        }
         return highlighter;
       }
     }
@@ -52,6 +60,9 @@ final class HighlightersRecycler {
   void releaseHighlighters() {
     for (RangeHighlighter highlighter : forAllInGarbageBin()) {
       ((UserDataHolderEx)highlighter).replace(BEING_RECYCLED_KEY, Boolean.TRUE, null);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("released recycled highlighter " + highlighter + " in " + highlighter.getDocument());
+      }
     }
   }
 }
