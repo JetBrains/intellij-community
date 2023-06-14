@@ -131,7 +131,7 @@ public abstract class GentleFlusherBase implements Runnable, Closeable {
   public synchronized void run() {
     try {
       if (betterPostponeFlushNow()) {
-        log.debug("Flush short-circuit -> next turn scheduled early");
+        log.debug("Flush short-circuit -> schedule next turn earlier");
         scheduledFuture = scheduler.schedule(this, quickReCheckingPeriodMs, MILLISECONDS);
         return;
       }

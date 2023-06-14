@@ -15,6 +15,7 @@ import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.DataEnumeratorEx
+import com.intellij.util.io.PowerStatus
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import kotlinx.coroutines.*
 import java.io.IOException
@@ -57,9 +58,15 @@ class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
         while (isActive && !FSRecords.implOrFail().isDisposed) {
           delay(checkingPeriod)
 
-          //TODO RC: use IdleTracker.getInstance() to launch checkup on next _idle_ period?
+          if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) {
+            delay(checkingPeriod) //make it twice rarer
+          }
+          //MAYBE RC: track FSRecords.getLocalModCount() to run the check only if there are enough changes
+          //          since the last check.
+
+          //MAYBE RC: use IdleTracker.getInstance().events to launch checkup on next _idle_ period?
           launch(Dispatchers.IO) {
-            //TODO RC: show a progress bar -- or better not bother user?
+            //MAYBE RC: show a progress bar -- or better not bother user?
             doCheckupAndReportResults()
           }
         }
