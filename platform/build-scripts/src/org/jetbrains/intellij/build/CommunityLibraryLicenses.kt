@@ -46,9 +46,12 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Archive Patcher (generator)", libraryName = "generator"),
     androidDependency(name = "Android Archive Patcher (shared)", libraryName = "shared"),
     androidDependency(name = "Android Baksmali", libraryName = "baksmali"),
+    androidDependency(name = "Android Build Analysis Result Proto", libraryName = "build-analysis-results-proto"),
+    androidDependency(name = "Android Build Analyzer Common", libraryName = "precompiled-build-analyzer-common"),
     androidDependency(name = "Android Builder Model", libraryName = "precompiled-builder-model"),
     androidDependency(name = "Android Chunkio", libraryName = "precompiled-chunkio"),
     androidDependency(name = "Android Common Library", libraryName = "precompiled-common"),
+    androidDependency(name = "Android Compiler Hosted", libraryName = "compiler-hosted", version = LibraryLicense.CUSTOM_REVISION),
     // for android-core-proto module library in intellij.android.core
     androidDependency(name = "Android Core Protos", libraryName = "libandroid-core-proto"),
     androidDependency(name = "Android Data Binding Base Library", libraryName = "precompiled-db-baseLibrary"),
@@ -60,7 +63,7 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Deployer Library", libraryName = "precompiled-deployer"),
     androidDependency(name = "Android Deployer Library (libjava_sites)", libraryName = "libjava_sites"),
     androidDependency(name = "Android Device Provisioner Library", libraryName = "precompiled-device-provisioner"),
-    androidDependency(name = "Android DEX library", libraryName = "dexlib2"),
+    androidDependency(name = "Android DEX library", libraryName = "google-dexlib2"),
     androidDependency(name = "Android draw9patch library", libraryName = "precompiled-draw9patch"),
     androidDependency(name = "Android dvlib library", libraryName = "precompiled-dvlib"),
     androidDependency(name = "Android Dynamic Layout Inspector", libraryName = "precompiled-dynamic-layout-inspector.common"),
@@ -70,6 +73,8 @@ object CommunityLibraryLicenses {
                    url = "https://android.googlesource.com/platform/tools/build/+/master/gradle-model/").apache("https://source.android.com/setup/start/licenses"),
     LibraryLicense(name = "Android Instant Apps SDK API", url = "https://source.android.com/", libraryName = "instantapps-api",
                    version = LibraryLicense.CUSTOM_REVISION).apache("https://source.android.com/setup/start/licenses"),
+    androidDependency(name = "Android JdwpPacket", libraryName = "precompiled-jdwppacket"),
+    androidDependency(name = "Android JdwpTracer", libraryName = "precompiled-jdwptracer"),
     androidDependency(name = "Android Jetifier Core", libraryName = "jetifier-core"),
     LibraryLicense(name = "Android Jimfs library", libraryName = "jimfs", url = "https://github.com/google/jimfs")
       .apache("https://github.com/google/jimfs/blob/master/LICENSE"),
@@ -83,7 +88,9 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Lint Api", libraryName = "precompiled-lint-api"),
     androidDependency(name = "Android Lint Checks", libraryName = "precompiled-lint-checks"),
     androidDependency(name = "Android Lint Checks (proto)", libraryName = "liblint-checks-proto"),
+    androidDependency(name = "Android Lint Cli", libraryName = "precompiled-lint-cli"),
     androidDependency(name = "Android Lint Model", libraryName = "precompiled-lint-model"),
+    androidDependency(name = "Android Lint Test Infrastructure", libraryName = "precompiled-lint-testinfrastructure"),
     androidDependency(name = "Android Manifest Merger", libraryName = "precompiled-manifest-merger"),
     androidDependency(name = "Android Manifest Parser", libraryName = "precompiled-manifest-parser"),
     androidDependency(name = "Android MLKit Common Library", libraryName = "precompiled-mlkit-common"),
@@ -91,6 +98,8 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Perf-Logger Library", libraryName = "precompiled-perf-logger"),
     androidDependency(name = "Android Perflib Library", libraryName = "precompiled-perflib"),
     androidDependency(name = "Android Pixelprobe Library", libraryName = "precompiled-pixelprobe"),
+    androidDependency(name = "Android Process Monitor", libraryName = "precompiled-process-monitor"),
+    androidDependency(name = "Android ProfGen", libraryName = "precompiled-profgen"),
     androidDependency(name = "Android Profiler", libraryName = "studio-grpc"),
     androidDependency(name = "Android Repository", libraryName = "precompiled-repository"),
     androidDependency(name = "Android Resource Repository", libraryName = "precompiled-resource-repository"),
@@ -100,6 +109,7 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Studio Driver (proto)", libraryName = "asdriver_proto"),
     androidDependency(name = "Android Threading Agent Callback", libraryName = "precompiled-threading-agent-callback"),
     androidDependency(name = "Android USB Devices", libraryName = "precompiled-usb-devices"),
+    androidDependency(name = "Android Version", libraryName = "android-libversion"),
     androidDependency(name = "Android Wizard Template", libraryName = "precompiled-wizardTemplate.impl"),
     androidDependency(name = "Android Wizard Template Plugin", libraryName = "precompiled-wizardTemplate.plugin"),
     androidDependency(name = "Android Zipflinger", libraryName = "precompiled-zipflinger"),
@@ -181,6 +191,8 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "ASM (JetBrains's fork)", libraryName = "ASM",
                    url = "https://github.com/JetBrains/intellij-deps-asm")
       .newBsd("https://github.com/JetBrains/intellij-deps-asm/blob/master/LICENSE.txt"),
+    LibraryLicense(name = "ASM Common", libraryName = "asm-commons", url = "https://asm.ow2.io", )
+      .newBsd("https://asm.ow2.io/license.html"),
     LibraryLicense(name = "ASM Tools", libraryName = "asm-tools", url = "https://asm.ow2.io", )
       .newBsd("https://asm.ow2.io/license.html"),
     LibraryLicense(name = "AssertJ fluent assertions", libraryName = "assertJ",
@@ -265,9 +277,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "fastutil", libraryName = "fastutil-min",
                    url = "https://github.com/vigna/fastutil")
       .apache("https://github.com/vigna/fastutil/blob/master/LICENSE-2.0"),
-    //LibraryLicense(name = "ffmpeg", libraryName = "ffmpeg",
-    //               url = "https://github.com/FFmpeg/FFmpeg",
-    //               license = "???", licenseUrl = "???"),
+    LibraryLicense(name = "ffmpeg", libraryName = "ffmpeg",
+                   url = "https://android.googlesource.com/platform/prebuilts/tools/+/1fb7943607fc474b6c96c04dcf4fec24d7752f62/common/m2/repository/org/bytedeco/",
+                   license = "LGPL v2.1+", licenseUrl = "https://android.googlesource.com/platform/prebuilts/tools/+/1fb7943607fc474b6c96c04dcf4fec24d7752f62/common/m2/repository/org/bytedeco/ffmpeg-LICENSE.md"),
     //LibraryLicense(name = "ffmpeg-platform", libraryName = "ffmpeg-platform",
     //               url = "https://github.com/FFmpeg/FFmpeg",
     //               license = "???", licenseUrl = "???"),
@@ -638,8 +650,8 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/morfologik/morfologik-stemming").simplifiedBsd(),
     LibraryLicense(name = "morfologik-stemming", libraryName = "org.carrot2:morfologik-stemming",
                    url = "https://github.com/morfologik/morfologik-stemming").simplifiedBsd(),
-    LibraryLicense(name = "Moshi", libraryName = "moshi", url = "https://github.com/square/moshi")
-      .apache("https://github.com/square/moshi/blob/master/LICENSE.txt"),
+    //LibraryLicense(name = "Moshi", libraryName = "moshi", url = "https://github.com/square/moshi")
+    //  .apache("https://github.com/square/moshi/blob/master/LICENSE.txt"),
 
     LibraryLicense(libraryName = "NanoXML", license = "zlib/libpng",
                    url = "https://mvnrepository.com/artifact/be.cyberelf.nanoxml/nanoxml/2.2.3",
@@ -659,8 +671,8 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Objenesis", libraryName = "Objenesis", url = "https://objenesis.org/").apache(),
     LibraryLicense(name = "OkHttp", libraryName = "okhttp", url = "https://square.github.io/okhttp/")
       .apache("https://square.github.io/okhttp/#license"),
-    LibraryLicense(name = "Okio", libraryName = "okio", url = "https://github.com/square/okio")
-      .apache("https://github.com/square/okio/blob/master/LICENSE.txt"),
+    //LibraryLicense(name = "Okio", libraryName = "okio", url = "https://github.com/square/okio")
+    //  .apache("https://github.com/square/okio/blob/master/LICENSE.txt"),
     LibraryLicense(libraryName = "opentelemetry", url = "https://opentelemetry.io/", licenseUrl = "https://github.com/open-telemetry/opentelemetry-java/blob/main/LICENSE", license = "Apache 2.0"),
     LibraryLicense(libraryName = "opentelemetry-exporter-otlp", url = "https://opentelemetry.io/", licenseUrl = "https://github.com/open-telemetry/opentelemetry-java/blob/main/LICENSE", license = "Apache 2.0"),
     LibraryLicense(libraryName = "opentelemetry-exporter-otlp-common", url = "https://opentelemetry.io/", licenseUrl = "https://github.com/open-telemetry/opentelemetry-java/blob/main/LICENSE", license = "Apache 2.0"),
@@ -970,7 +982,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("workspace-model-codegen"),
   )
 
-  private fun androidDependency(name: String, libraryName: String = name) =
-    LibraryLicense(name = name, libraryName = libraryName,
+  private fun androidDependency(name: String, libraryName: String = name, version: String? = null) =
+    LibraryLicense(name = name, libraryName = libraryName, version = version,
                    url = "https://source.android.com/").apache("https://source.android.com/setup/start/licenses")
 }

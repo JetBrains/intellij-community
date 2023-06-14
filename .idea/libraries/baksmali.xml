@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="google-baksmali" type="repository">
+  <library name="baksmali" type="repository">
     <properties maven-id="com.android.tools.smali:smali-baksmali:3.0.0">
       <exclude>
         <dependency maven-id="org.smali:dexlib2"/>
