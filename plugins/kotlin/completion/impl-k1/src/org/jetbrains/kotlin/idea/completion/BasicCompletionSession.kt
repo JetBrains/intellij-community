@@ -620,6 +620,7 @@ class BasicCompletionSession(
 
             KeywordValues.process(
                 keywordValueConsumer,
+                position,
                 callTypeAndReceiver,
                 bindingContext,
                 resolutionFacade,

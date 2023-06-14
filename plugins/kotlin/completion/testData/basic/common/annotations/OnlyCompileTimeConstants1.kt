@@ -27,6 +27,7 @@ class B
 // ABSENT: do
 // ABSENT: for
 // ABSENT: fun
+// ABSENT: null
 // ABSENT: object
 // ABSENT: "object OnlyCompileTimeConstants1"
 // ABSENT: throw

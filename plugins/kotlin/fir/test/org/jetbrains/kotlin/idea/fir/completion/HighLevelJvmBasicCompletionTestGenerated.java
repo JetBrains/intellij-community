@@ -43,6 +43,21 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/testData/basic/common/annotations/AnnotationTarget.kt");
             }
 
+            @TestMetadata("ArrayOf.kt")
+            public void testArrayOf() throws Exception {
+                runTest("../completion/testData/basic/common/annotations/ArrayOf.kt");
+            }
+
+            @TestMetadata("ArrayOf2.kt")
+            public void testArrayOf2() throws Exception {
+                runTest("../completion/testData/basic/common/annotations/ArrayOf2.kt");
+            }
+
+            @TestMetadata("ClassReference.kt")
+            public void testClassReference() throws Exception {
+                runTest("../completion/testData/basic/common/annotations/ClassReference.kt");
+            }
+
             @TestMetadata("Deprecated.kt")
             public void testDeprecated() throws Exception {
                 runTest("../completion/testData/basic/common/annotations/Deprecated.kt");

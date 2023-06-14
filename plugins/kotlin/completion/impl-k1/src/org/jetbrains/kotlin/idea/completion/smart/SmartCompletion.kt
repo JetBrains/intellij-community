@@ -216,6 +216,7 @@ class SmartCompletion(
             }
             KeywordValues.process(
                 keywordValueConsumer,
+                expression,
                 callTypeAndReceiver,
                 bindingContext,
                 resolutionFacade,
