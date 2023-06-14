@@ -239,9 +239,10 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
       return;
     }
 
-    final var html = ReadAction.compute(() -> {
-      return MarkdownUtil.INSTANCE.generateMarkdownHtml(myFile, myDocument.getText(), myProject);
-    });
+    var html = ReadAction.nonBlocking(() -> {
+        return MarkdownUtil.INSTANCE.generateMarkdownHtml(myFile, myDocument.getText(), myProject);
+      })
+      .executeSynchronously();
 
     // EA-75860: The lines to the top may be processed slowly; Since we're in pooled thread, we can be disposed already.
     if (!myFile.isValid() || isDisposed()) {
@@ -357,7 +358,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
 
   private class MyUpdatePanelOnSettingsChangedListener implements MarkdownSettings.ChangeListener {
     @Override
-    public void beforeSettingsChanged(@NotNull MarkdownSettings settings) {}
+    public void beforeSettingsChanged(@NotNull MarkdownSettings settings) { }
 
     @Override
     public void settingsChanged(@NotNull MarkdownSettings settings) {
