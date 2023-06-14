@@ -1,4 +1,7 @@
-<idea-plugin>
+<idea-plugin package="org.jetbrains.plugins.terminal.cloud">
+  <dependencies>
+    <plugin id="com.intellij.modules.remoteServers"/>
+  </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.remoteServer.impl.runtime.log.CloudTerminalProvider"
                         serviceImplementation="org.jetbrains.plugins.terminal.cloud.CloudTerminalProviderImpl"/>

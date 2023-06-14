@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.vfs;
 
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import icons.TerminalIcons;
+import org.jetbrains.plugins.terminal.TerminalIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
