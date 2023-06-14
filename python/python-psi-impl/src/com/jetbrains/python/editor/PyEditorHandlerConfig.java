@@ -37,8 +37,17 @@ public final class PyEditorHandlerConfig {
     PySubscriptionExpression.class,
     PyGeneratorExpression.class,
     PyGroupPattern.class,
-    PySequencePattern.class,
     PyMappingPattern.class,
     PyPatternArgumentList.class,
+  };
+
+  static final Class[] CLASSES_TO_PARENTHESISE_ON_ENTER = new Class[]{
+    PyBinaryExpression.class,
+    PyCallExpression.class,
+    PyFromImportStatement.class,
+    PyTupleExpression.class,
+    PyWithStatement.class,
+    PySequencePattern.class,
+    PyReferenceExpression.class,
   };
 }

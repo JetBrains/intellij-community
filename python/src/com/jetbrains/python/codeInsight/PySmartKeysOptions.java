@@ -15,10 +15,9 @@ public class PySmartKeysOptions extends ConfigurableBuilder implements Searchabl
     CodeInsightSettings commonSettings = CodeInsightSettings.getInstance();
     checkBox(PyBundle.message("form.edit.smart.indent.pasted.lines"), () -> commonSettings.INDENT_TO_CARET_ON_PASTE,
              v -> commonSettings.INDENT_TO_CARET_ON_PASTE = v);
-
     PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
-    checkBox(PyBundle.message("smartKeys.insert.backslash.in.statement.on.enter"), () -> settings.INSERT_BACKSLASH_ON_WRAP,
-             v -> settings.INSERT_BACKSLASH_ON_WRAP = v);
+    checkBox(PyBundle.message("smartKeys.wrap.in.parentheses.instead.of.backslash"), () -> settings.PARENTHESISE_ON_ENTER,
+             v -> settings.PARENTHESISE_ON_ENTER = v);
     checkBox(PyBundle.message("smartKeys.insert.self.in.method"), () -> settings.INSERT_SELF_FOR_METHODS,
              v -> settings.INSERT_SELF_FOR_METHODS = v);
     checkBox(PyBundle.message("smartKeys.insert.type.placeholder.in.docstring.stub"), () -> settings.INSERT_TYPE_DOCSTUB,
