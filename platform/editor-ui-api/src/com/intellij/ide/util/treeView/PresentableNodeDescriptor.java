@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -16,11 +16,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
-  private final AtomicReference<PresentationData> myTemplatePresentation = new AtomicReference<>();
-  private final AtomicReference<PresentationData> myUpdatedPresentation = new AtomicReference<>();
+  private volatile @Nullable PresentationData myTemplatePresentation = null;
+  private volatile @Nullable PresentationData myUpdatedPresentation = null;
 
   protected PresentableNodeDescriptor(Project project, @Nullable NodeDescriptor parentDescriptor) {
     super(project, parentDescriptor);
@@ -61,7 +60,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     myColor = presentation.getForcedTextForeground();
     boolean updated = !presentation.equals(before);
 
-    var updatedPresentation = myUpdatedPresentation.get();
+    var updatedPresentation = myUpdatedPresentation;
     if (updatedPresentation == null) {
       updatedPresentation = createPresentation();
     } else {
@@ -70,7 +69,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
 
     updatedPresentation.copyFrom(presentation);
 
-    final var templatePresentation = myTemplatePresentation.get();
+    final var templatePresentation = myTemplatePresentation;
     if (templatePresentation != null) {
       updatedPresentation.applyFrom(templatePresentation);
     }
@@ -78,7 +77,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     updated |= updatedPresentation.isChanged();
     updatedPresentation.setChanged(false);
 
-    myUpdatedPresentation.set(updatedPresentation);
+    myUpdatedPresentation = updatedPresentation;
     return updated;
   }
 
@@ -93,7 +92,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
       postprocess(presentation);
     }
 
-    myUpdatedPresentation.set(presentation);
+    myUpdatedPresentation = presentation;
     return presentation;
   }
 
@@ -128,16 +127,16 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
 
   @NotNull
   public final PresentationData getPresentation() {
-    final var updatedPresentation = myUpdatedPresentation.get();
+    final var updatedPresentation = myUpdatedPresentation;
     return updatedPresentation == null ? getTemplatePresentation() : updatedPresentation;
   }
 
   @NotNull
   protected final PresentationData getTemplatePresentation() {
-    var templatePresentation = myTemplatePresentation.get();
+    var templatePresentation = myTemplatePresentation;
     if (templatePresentation == null) {
       templatePresentation = createPresentation();
-      myTemplatePresentation.set(templatePresentation);
+      myTemplatePresentation = templatePresentation;
     }
     return templatePresentation;
   }
