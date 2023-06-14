@@ -49,18 +49,13 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
       return intention;
     }
     LocalQuickFix localFix = (LocalQuickFix) fix;
-    ModCommandAction action = ModCommandService.getInstance().unwrap(localFix);
-    if (action != null) {
-      action = new DescriptorBasedModCommandAction(descriptor, action);
-    } else if (fix instanceof ModCommandQuickFix modCommandFix) {
-      action = new ModCommandQuickFixAction(descriptor, modCommandFix);
-    } else {
-      return new QuickFixWrapper(descriptor, localFix);
+    if (fix instanceof ModCommandQuickFix modCommandFix) {
+      IntentionAction intention = new ModCommandQuickFixAction(descriptor, modCommandFix).asIntention();
+      PsiFile file = descriptor.getPsiElement().getContainingFile();
+      intention.isAvailable(file.getProject(), null, file); // cache presentation in wrapper
+      return intention;
     }
-    IntentionAction intention = action.asIntention();
-    PsiFile file = descriptor.getPsiElement().getContainingFile();
-    intention.isAvailable(file.getProject(), null, file); // cache presentation in wrapper
-    return intention;
+    return new QuickFixWrapper(descriptor, localFix);
   }
 
   /**
@@ -211,51 +206,15 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     return myFix.getRangesToHighlight(file.getProject(), myDescriptor);
   }
 
-  /**
-   * A ModCommandAction wrapper bound to a problem descriptor (externally supplied context is ignored)
-   */
-  private static final class DescriptorBasedModCommandAction implements ModCommandAction {
-    private final @NotNull ActionContext myContext;
-    private final @NotNull ModCommandAction myAction;
-
-    private DescriptorBasedModCommandAction(@NotNull ProblemDescriptor descriptor, @NotNull ModCommandAction action) {
-      myContext = ActionContext.from(descriptor);
-      myAction = action;
-    }
-
-    @Override
-    public @NotNull String getFamilyName() {
-      return myAction.getFamilyName();
-    }
-
-    @Override
-    public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
-      return myAction.getPresentation(myContext);
-    }
-
-    @Override
-    public @NotNull ModCommand perform(@NotNull ActionContext context) {
-      return myAction.perform(myContext);
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
-      return myAction.generatePreview(myContext);
-    }
-
-    @Override
-    public String toString() {
-      return "DescriptorBasedModCommandAction[action=" + myAction + "]";
-    }
-  }
-
   private static final class ModCommandQuickFixAction implements ModCommandAction {
     private final @NotNull ProblemDescriptor myDescriptor;
     private final @NotNull ModCommandQuickFix myFix;
+    private final @Nullable ModCommandAction myUnwrappedAction;
 
     private ModCommandQuickFixAction(@NotNull ProblemDescriptor descriptor, @NotNull ModCommandQuickFix fix) {
       myDescriptor = descriptor;
       myFix = fix;
+      myUnwrappedAction = ModCommandService.getInstance().unwrap(myFix);
     }
 
     @Override
@@ -265,6 +224,9 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
     @Override
     public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+      if (myUnwrappedAction != null) {
+        return myUnwrappedAction.getPresentation(ActionContext.from(myDescriptor));
+      }
       PsiElement psiElement = myDescriptor.getPsiElement();
       if (psiElement == null || !psiElement.isValid()) return null;
       PsiFile containingFile = psiElement.getContainingFile();
