@@ -4,10 +4,9 @@ import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.searchEverywhereMl.ranking.features.FeaturesProviderCache
+import com.intellij.searchEverywhereMl.ranking.features.*
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereContributorFeaturesProvider
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereElementFeaturesProvider
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereStateFeaturesProvider
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereElementFeaturesProvider.Companion.ML_SCORE_KEY
 import com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereModelProvider
 import com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereRankingModel
 
@@ -41,7 +40,7 @@ internal class SearchEverywhereMlSearchState(
       features.addAll(provider.getElementFeatures(element, sessionStartTime, searchQuery, priority, providersCache))
     }
     val mlScore = getElementMLScore(tabId, contributorId, context.features, features, contributorFeatures)
-    SearchEverywhereElementFeaturesProvider.addMlScore(mlScore, features)
+    features.putIfValueNotNull(ML_SCORE_KEY, mlScore)
 
     return SearchEverywhereMLItemInfo(elementId, contributorId, features, contributorFeatures)
   }
