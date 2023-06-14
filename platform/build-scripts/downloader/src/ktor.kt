@@ -194,28 +194,24 @@ fun closeKtorClient() {
 
 private val fileLocks = StripedMutex()
 
-suspend fun downloadAsBytes(url: String): ByteArray {
-  return spanBuilder("download").setAttribute("url", url).useWithScope2 {
+suspend fun downloadAsBytes(url: String): ByteArray =
+  spanBuilder("download").setAttribute("url", url).useWithScope2 {
     withContext(Dispatchers.IO) {
       httpClient.value.get(url).body()
     }
   }
-}
 
-suspend fun downloadAsText(url: String): String {
-  return spanBuilder("download").setAttribute("url", url).useWithScope2 {
+suspend fun downloadAsText(url: String): String =
+  spanBuilder("download").setAttribute("url", url).useWithScope2 {
     withContext(Dispatchers.IO) {
       httpClient.value.get(url).bodyAsText()
     }
   }
-}
 
-fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
-  @Suppress("RAW_RUN_BLOCKING")
-  return runBlocking(Dispatchers.IO) {
+fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot): Path =
+  runBlocking(Dispatchers.IO) {
     downloadFileToCacheLocation(url, communityRoot)
   }
-}
 
 suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
   BuildDependenciesDownloader.cleanUpIfRequired(communityRoot)
