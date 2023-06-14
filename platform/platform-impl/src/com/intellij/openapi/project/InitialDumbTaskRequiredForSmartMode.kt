@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbServiceImpl.Companion.REQUIRED_FOR_SMART
 class InitialDumbTaskRequiredForSmartMode(private val project: Project) : DumbModeTask() {
   override fun performInDumbMode(indicator: ProgressIndicator) {
     val activities = REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY.extensionList
+    val logger = logger<InitialDumbTaskRequiredForSmartMode>()
     for (activity in activities) {
       ProgressManager.checkCanceled()
       logger<InitialDumbTaskRequiredForSmartMode>().assertTrue(indicator == ProgressManager.getGlobalProgressIndicator(),
@@ -17,10 +18,12 @@ class InitialDumbTaskRequiredForSmartMode(private val project: Project) : DumbMo
                                                                "launched activities can only use thread's global indicator.")
       indicator.pushState()
       try {
+        logger.info("Running task required for smart mode: $activity")
         activity.runActivity(project)
       }
       finally {
         indicator.popState()
+        logger.info("Finished task required for smart mode: $activity")
       }
     }
   }

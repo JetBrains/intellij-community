@@ -2,7 +2,6 @@
 package com.intellij.openapi.project
 
 import com.intellij.internal.statistic.StructuredIdeActivity
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -208,7 +207,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
   }
 
   open fun runSingleTask(task: QueuedTask<T>, activity: StructuredIdeActivity?) {
-    if (ApplicationManager.getApplication().isInternal) LOG.info("Running task: " + task.infoString)
+    LOG.info("Running task: " + task.infoString)
     if (activity != null) task.registerStageStarted(activity)
 
     // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks
@@ -218,11 +217,13 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
           task.executeTask()
         }
         catch (ignored: ProcessCanceledException) {
+          LOG.info("Task canceled (PCE): ${task.infoString}")
         }
         catch (unexpected: Throwable) {
           LOG.error("Failed to execute task " + task.infoString + ". " + unexpected.message, unexpected)
         }
       }, task.indicator)
+    LOG.info("Task finished: " + task.infoString)
   }
 
   /**
