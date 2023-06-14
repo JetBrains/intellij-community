@@ -13,6 +13,7 @@ import com.intellij.util.application
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.*
@@ -211,60 +212,57 @@ private suspend fun prepareProcessItemNodes(
 ): List<AttachTreeNodeWrapper> {
   val topLevelNodes = mutableListOf<AttachTreeNodeWrapper>()
 
-  val elements = attachItemsInfo.processItems
-  val pidToElement = elements.map {
-    AttachDialogProcessNode(it, filters, columnsLayout)
-  }.associateBy { it.item.processInfo.pid }
-  val builtNodes = mutableMapOf<Int, AttachTreeNodeWrapper>()
-
-  for (item in pidToElement) {
+  val processItems = attachItemsInfo.processItems.associateBy {
     coroutineContext.ensureActive()
-    val pid = item.key
-    if (builtNodes.containsKey(pid)) {
+    it.processInfo.pid
+  }
+  val builtElements = mutableMapOf<Int, AttachTreeNodeWrapper>()
+
+  for (entry in processItems) {
+    coroutineContext.ensureActive()
+    if (entry.key in builtElements) {
       continue
     }
 
-    val visitedPids = mutableSetOf(pid)
+    val visitedPids = mutableSetOf<Int>()
 
-    val attachTreeProcessNode = item.value
-    val treeElement = AttachTreeNodeWrapper(attachTreeProcessNode, filters, columnsLayout)
+    var lastTreeElement: AttachTreeNodeWrapper? = null
+    var currentItem: AttachDialogProcessItem? = entry.value
 
-    builtNodes[pid] = treeElement
+    while (currentItem != null) {
+      val node = AttachDialogProcessNode(currentItem, filters, columnsLayout)
+      val treeElement = AttachTreeNodeWrapper(node, filters, columnsLayout)
+      if (lastTreeElement != null) {
+        treeElement.addChild(lastTreeElement)
+      }
+      lastTreeElement = treeElement
 
-    var currentElement = attachTreeProcessNode
-    var currentTreeElement = treeElement
-    while (currentElement.item.processInfo.parentPid > 0) {
+      val processInfo = currentItem.processInfo
+      val pid = processInfo.pid
+
+      builtElements[pid] = treeElement
+      visitedPids += pid
+
+      val parentPid = processInfo.parentPid
+      if (parentPid <= 0) {
+        topLevelNodes.add(treeElement)
+        break
+      }
+
+      if (parentPid in visitedPids) {
+        logger.warn("Processes [${visitedPids.joinToString()}] form a cycle!")
+        topLevelNodes.add(treeElement)
+        break
+      }
+
+      val builtTreeElement = builtElements[parentPid]
+      if (builtTreeElement != null) {
+        builtTreeElement.addChild(treeElement)
+        break
+      }
+
       coroutineContext.ensureActive()
-      val parentPid = currentElement.item.processInfo.parentPid
-
-      if (visitedPids.contains(parentPid)) {
-        logger.warn("Processes [${visitedPids.joinToString(", ")}] form a circle!")
-        topLevelNodes.add(currentTreeElement)
-        break
-      }
-
-      val nextElement = builtNodes[parentPid]
-      if (nextElement != null) {
-        nextElement.addChild(currentTreeElement)
-        break
-      }
-
-      val parentElement = pidToElement[parentPid]
-      if (parentElement == null) {
-        topLevelNodes.add(currentTreeElement)
-        break
-      }
-      val parentTreeElement = AttachTreeNodeWrapper(parentElement, filters, columnsLayout)
-      builtNodes[parentPid] = parentTreeElement
-      visitedPids.add(parentPid)
-
-      parentTreeElement.addChild(currentTreeElement)
-      currentElement = parentElement
-      currentTreeElement = parentTreeElement
-    }
-
-    if (currentElement.item.processInfo.parentPid <= 0) {
-      topLevelNodes.add(currentTreeElement)
+      currentItem = processItems[parentPid]
     }
   }
 
