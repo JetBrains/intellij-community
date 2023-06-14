@@ -5,6 +5,7 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
@@ -100,7 +101,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     }
   }
 
-  private fun isEnabled(): Boolean = Registry.`is`("ide.new.tool.window.dnd")
+  private fun isEnabled(): Boolean = AdvancedSettings.getBoolean("ide.tool.window.header.dnd")
 
   override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {
     if (!isEnabled()) return false;
