@@ -18,6 +18,7 @@ import com.intellij.platform.ml.impl.turboComplete.KindCollector
 import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorConsumer
 import com.intellij.psi.PsiComment
 import com.intellij.util.indexing.DumbModeAccessType
+import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.StringTemplateCompletion
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletionSession
 import org.jetbrains.kotlin.idea.completion.stringTemplates.wrapLookupElementForStringTemplateAfterDotCompletion
@@ -45,6 +46,9 @@ class KotlinKindCollector : KindCollector {
   )
 
   override fun shouldBeCalled(parameters: CompletionParameters): Boolean {
+      // executing old completion code in K2 plugin does not make sense
+      if (isK2Plugin()) return false
+
       val position = parameters.position
       val parametersOriginFile = parameters.originalFile
       return position.containingFile is KtFile && parametersOriginFile is KtFile
