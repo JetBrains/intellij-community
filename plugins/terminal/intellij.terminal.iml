@@ -27,5 +27,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.sh" />
+    <orderEntry type="module" module-name="intellij.sh.core" />
   </component>
 </module>

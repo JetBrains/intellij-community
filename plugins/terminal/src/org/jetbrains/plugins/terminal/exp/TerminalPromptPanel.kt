@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.sh.ShLanguage
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
 import com.intellij.util.SystemProperties
@@ -81,7 +82,7 @@ class TerminalPromptPanel(private val project: Project,
   }
 
   private fun createPromptTextField(): LanguageTextField {
-    val textField = object : LanguageTextField(FileTypes.PLAIN_TEXT.language, project, "", false) {
+    val textField = object : LanguageTextField(ShLanguage.INSTANCE, project, "", false) {
       override fun setBackground(bg: Color?) {
         // do nothing to not set background to editor in super method
       }
