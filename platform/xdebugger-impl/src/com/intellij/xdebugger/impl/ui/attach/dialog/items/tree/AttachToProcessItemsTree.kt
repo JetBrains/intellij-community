@@ -202,13 +202,13 @@ private suspend fun prepareTreeElements(
 
     var currentElement = attachTreeProcessNode
     var currentTreeElement = treeElement
-    while (attachTreeProcessNode.item.processInfo.parentPid > 0) {
+    while (currentElement.item.processInfo.parentPid > 0) {
       coroutineContext.ensureActive()
-      val parentPid = attachTreeProcessNode.item.processInfo.parentPid
+      val parentPid = currentElement.item.processInfo.parentPid
 
       if (visitedPids.contains(parentPid)) {
         logger.warn("Processes [${visitedPids.joinToString(", ")}] form a circle!")
-        topLevelNodes.add(treeElement)
+        topLevelNodes.add(currentTreeElement)
         break
       }
 
