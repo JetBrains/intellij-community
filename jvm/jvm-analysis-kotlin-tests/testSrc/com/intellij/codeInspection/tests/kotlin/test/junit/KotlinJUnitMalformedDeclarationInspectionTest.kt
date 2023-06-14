@@ -97,6 +97,28 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       }  
     """.trimIndent())
   }
+  fun `test highlighting executable JUnit 4 because enclosing is abstract`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      abstract class A { 
+        class B { 
+          @org.junit.Test
+          fun testFoo() { }
+        }
+      }  
+    """.trimIndent())
+  }
+  fun `test highlighting non executable JUnit 4 nested class top level abstract`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      abstract class A {
+        class B {
+          class <error descr="Tests in nested class will not be executed">C</error> {
+            @org.junit.Test
+            fun testFoo() { }
+          }
+        }
+      }  
+    """.trimIndent())
+  }
   fun `test quickfix no nested annotation in JUnit 4`() {
     myFixture.testQuickFix(JvmLanguage.KOTLIN, """ 
       class A {
