@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.apiUsage
 
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastVisitorAdapter
 import com.intellij.util.asSafely
@@ -274,12 +272,12 @@ open class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor)
     return false
   }
 
-  private fun isInsideImportStatement(node: UElement): Boolean {
-    val sourcePsi = node.sourcePsi
-    if (sourcePsi != null && sourcePsi.language == JavaLanguage.INSTANCE) {
-      return PsiTreeUtil.getParentOfType(sourcePsi, PsiImportStatementBase::class.java) != null
+  private fun isInsideImportStatement(node: UReferenceExpression): Boolean {
+    var parent = node.uastParent
+    while (parent is UReferenceExpression) {
+      parent = parent.uastParent
     }
-    return sourcePsi.findContaining(UImportStatement::class.java) != null
+    return parent is UImportStatement
   }
 
   private fun maybeProcessImplicitConstructorInvocationAtSubclassDeclaration(sourceNode: UElement, subclassDeclaration: UClass) {
