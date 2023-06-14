@@ -61,7 +61,7 @@ internal fun getLevelType(project: Project, uClass: UClass): LevelType {
   return toLevelType(levels)
 }
 
-internal fun getLevels(attributeValue: JvmAnnotationEnumFieldValue): Collection<Service.Level> {
+fun getLevels(attributeValue: JvmAnnotationEnumFieldValue): Collection<Service.Level> {
   if (attributeValue.containingClassName != Service.Level::class.java.canonicalName) return emptySet()
   val fieldName = attributeValue.fieldName ?: return emptySet()
   val level = toLevel(fieldName) ?: return emptySet()

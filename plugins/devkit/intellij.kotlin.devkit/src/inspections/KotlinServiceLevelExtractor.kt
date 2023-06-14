@@ -3,8 +3,10 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.lang.jvm.annotation.JvmAnnotationArrayValue
 import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue
+import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue
 import com.intellij.openapi.components.Service
 import org.jetbrains.idea.devkit.inspections.ServiceLevelExtractor
+import org.jetbrains.idea.devkit.inspections.getLevels
 import org.jetbrains.idea.devkit.inspections.toLevel
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
@@ -13,11 +15,20 @@ private class ServiceLevelExtractorForKotlin : ServiceLevelExtractor {
   override fun extractLevels(attributeValue: JvmAnnotationArrayValue): Collection<Service.Level> {
     return attributeValue.values
       .asSequence()
-      .filterIsInstance<JvmAnnotationConstantValue>()
-      .map { it.constantValue }
-      .filterIsInstance<Pair<ClassId, Name>>()
-      .filter { (classId, _) -> classId.asFqNameString() == Service.Level::class.java.canonicalName }
-      .mapNotNull { (_, name) -> toLevel(name.toString()) }
+      .flatMap { value ->
+        when (value) {
+          is JvmAnnotationConstantValue -> {
+            val constantValue = value.constantValue as? Pair<ClassId, Name> ?: return@flatMap emptySet()
+            if (constantValue.first.asFqNameString() == Service.Level::class.java.canonicalName) {
+              toLevel(constantValue.second.toString())?.let { return@flatMap setOf(it) }
+            }
+          }
+          is JvmAnnotationEnumFieldValue -> {
+            return@flatMap getLevels(value)
+          }
+        }
+        return@flatMap emptySet()
+      }
       .toList()
   }
 }

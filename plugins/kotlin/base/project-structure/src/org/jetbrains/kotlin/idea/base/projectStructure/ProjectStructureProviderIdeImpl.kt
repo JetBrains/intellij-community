@@ -40,9 +40,9 @@ inline fun <reified T : KtModule> IdeaModuleInfo.toKtModuleOfType(): @kotlin.int
 
 internal class ProjectStructureProviderIdeImpl(private val project: Project) : ProjectStructureProvider() {
     override fun getModule(element: PsiElement, contextualModule: KtModule?): KtModule {
-        val virtualFile = element.containingFile?.virtualFile
-        if (contextualModule is KtSourceModuleByModuleInfoForOutsider && virtualFile != null) {
-            if (virtualFile in contextualModule.contentScope) {
+        if (contextualModule is KtSourceModuleByModuleInfoForOutsider) {
+            val virtualFile = element.containingFile?.virtualFile
+            if (virtualFile != null && virtualFile in contextualModule.contentScope) {
                 return contextualModule
             }
         }
