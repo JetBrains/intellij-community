@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.application.Topics;
@@ -59,21 +59,19 @@ public final class WelcomeScreenComponentFactory {
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
 
     String welcomeScreenLogoUrl = appInfo.getApplicationSvgIconUrl();
-    if (welcomeScreenLogoUrl != null) {
-      Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader());
-      JLabel logo = new JLabel() {
-        @Override
-        public void updateUI() {
-          super.updateUI();
-          float scale = JBUIScale.scale(28f) / icon.getIconWidth();
-          Icon smallLogoIcon = IconUtil.scale(icon, null, scale);
-          setIcon(smallLogoIcon);
-        }
-      };
-      logo.setBorder(JBUI.Borders.empty(29, 0, 27, 0));
-      logo.setHorizontalAlignment(SwingConstants.CENTER);
-      panel.add(logo, BorderLayout.WEST);
-    }
+    Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader());
+    JLabel logo = new JLabel() {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        float scale = JBUIScale.scale(28f) / icon.getIconWidth();
+        Icon smallLogoIcon = IconUtil.scale(icon, null, scale);
+        setIcon(smallLogoIcon);
+      }
+    };
+    logo.setBorder(JBUI.Borders.empty(29, 0, 27, 0));
+    logo.setHorizontalAlignment(SwingConstants.CENTER);
+    panel.add(logo, BorderLayout.WEST);
 
     String applicationName = getAppName();
     JLabel appName = new JLabel(applicationName);
