@@ -80,7 +80,7 @@ public class WindowsDefenderChecker {
            PropertiesComponent.getInstance(project).isTrueValue(IGNORE_STATUS_CHECK);
   }
 
-  final void ignoreStatusCheck(@Nullable Project project, boolean ignore) {
+  public final void ignoreStatusCheck(@Nullable Project project, boolean ignore) {
     var component = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
     if (ignore) {
       component.setValue(IGNORE_STATUS_CHECK, true);
@@ -142,14 +142,14 @@ public class WindowsDefenderChecker {
     }
   }
 
-  final boolean canRunScript() {
+  public final boolean canRunScript() {
     return myHelper.getValue() != null;
   }
 
   private enum AntivirusProduct {DisplayName, ProductState}
   private enum MpComputerStatus {RealTimeProtectionEnabled}
 
-  final @NotNull List<Path> getImportantPaths(@NotNull Project project) {
+  public final @NotNull List<Path> getImportantPaths(@NotNull Project project) {
     var paths = new TreeSet<Path>();
 
     var projectDir = ProjectUtil.guessProjectDir(project);
@@ -166,7 +166,7 @@ public class WindowsDefenderChecker {
     return new ArrayList<>(paths);
   }
 
-  final boolean excludeProjectPaths(@NotNull List<Path> paths) {
+  public final boolean excludeProjectPaths(@NotNull List<Path> paths) {
     try {
       var script = requireNonNull(myHelper.getValue(), "missing/dysfunctional helper");
 
