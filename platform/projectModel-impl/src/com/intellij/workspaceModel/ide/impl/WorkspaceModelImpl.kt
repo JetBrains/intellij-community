@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
-import com.intellij.platform.jps.model.diagnostic.JpsMetrics
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -40,8 +39,6 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
-
-val jpsMetrics: JpsMetrics by lazy { JpsMetrics.getInstance() }
 
 /**
  * Due to the existence of  [updateProjectModelSilent] method that can be executed from any threads in parallel with e.g.
@@ -541,7 +538,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     }
 
     init {
-      setupOpenTelemetryReporting(jpsMetrics.meter)
+      setupOpenTelemetryReporting(workspaceMetrics.meter)
     }
   }
 }
