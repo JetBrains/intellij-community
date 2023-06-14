@@ -6,6 +6,7 @@ import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl

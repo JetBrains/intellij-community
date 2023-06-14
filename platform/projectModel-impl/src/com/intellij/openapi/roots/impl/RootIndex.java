@@ -25,7 +25,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.*;
 import com.intellij.workspaceModel.ide.VirtualFileUrls;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;

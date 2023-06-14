@@ -33,7 +33,7 @@ import com.intellij.testFramework.JUnit38AssumeSupportRunner
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.java.workspace.entities.modifyEntity

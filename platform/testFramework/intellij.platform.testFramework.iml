@@ -72,5 +72,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="okhttp" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
   </component>
 </module>

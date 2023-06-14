@@ -16,7 +16,7 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactBridge
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.packaging.impl.elements.FileOrDirectoryCopyPackagingElement
 import com.intellij.util.PathUtil
-import com.intellij.workspaceModel.ide.WorkspaceModel.Companion.getInstance
+import com.intellij.platform.backend.workspace.WorkspaceModel.Companion.getInstance
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ExternalEntityMapping
