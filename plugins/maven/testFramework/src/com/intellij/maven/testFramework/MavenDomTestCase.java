@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -352,6 +353,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
   }
 
   protected void checkHighlighting(VirtualFile f) {
+    VirtualFileManager.getInstance().syncRefresh();
     configTest(myProjectPom);
     try {
       myFixture.testHighlighting(true, false, true, f);
