@@ -45,10 +45,6 @@ data class CompletionPerformanceParameters(
     }
 
     private fun experimentParameters(parameters: CompletionParameters): CompletionPerformanceParameters {
-      if (!CurrentProjectInfo.getInstance(parameters.position.project).isIdeaProject) {
-        return parametrizeNoPerformance()
-      }
-
       val status = ExperimentStatus.getInstance().forLanguage(parameters.position.language)
       if (!status.inExperiment || status.version !in Experiment.numbers()) {
         return parametrizeNoPerformance()
