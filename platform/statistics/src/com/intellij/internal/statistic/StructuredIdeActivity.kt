@@ -36,7 +36,8 @@ class StructuredIdeActivity internal constructor(private val projectOrNullForApp
   val id: Int = parentActivity?.id ?: counter.incrementAndGet()
 
   private var state = IdeActivityState.NOT_STARTED
-  private var startedTimestamp = 0L
+  var startedTimestamp = 0L
+    private set
 
   private val innerActivities: MutableSet<StructuredIdeActivity> = Collections.synchronizedSet(SmartHashSet())
 
