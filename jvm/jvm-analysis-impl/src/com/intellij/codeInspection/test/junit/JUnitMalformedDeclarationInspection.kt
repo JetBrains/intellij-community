@@ -701,7 +701,7 @@ private class JUnitMalformedSignatureVisitor(
         val constructors = psiClass.constructors.mapNotNull { it.toUElementOfType<UMethod>() }
         val isCollectionOrMap = InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_COLLECTION)
                                 || InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_MAP)
-        if (isCollectionOrMap && constructors.any { it.isNoArg() }) return
+        if (isCollectionOrMap && constructors.any { it.visibility == UastVisibility.PUBLIC && it.isNoArg() }) return
       }
       if (type is PsiArrayType) return
       val message = JvmAnalysisBundle.message(
@@ -1236,11 +1236,12 @@ private class JUnitMalformedSignatureVisitor(
       JAVA_LANG_STRING,
       JAVA_UTIL_LIST,
       JAVA_UTIL_SET,
-      JAVA_UTIL_MAP,
       JAVA_UTIL_SORTED_SET,
       JAVA_UTIL_NAVIGABLE_SET,
       JAVA_UTIL_SORTED_MAP,
-      JAVA_UTIL_NAVIGABLE_MAP
+      JAVA_UTIL_NAVIGABLE_MAP,
+      JAVA_UTIL_MAP,
+      JAVA_UTIL_COLLECTION
     )
 
     val visibilityToModifier = mapOf(
