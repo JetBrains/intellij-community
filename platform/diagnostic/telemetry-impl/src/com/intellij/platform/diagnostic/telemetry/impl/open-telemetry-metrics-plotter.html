@@ -483,6 +483,12 @@ as an example
       const maxNativeBytes = extractTimeSeries("JVM.maxNativeBytes")
       const threadsCount = extractTimeSeries("JVM.threadCount")
 
+      const gcCollections = extractTimeSeries("JVM.GC.collections")
+      const gcTimesMs = extractTimeSeries("JVM.GC.collectionTimesMs")
+
+      const totalCpuTimesMs = extractTimeSeries("JVM.totalCpuTimeMs")
+      const osLoadAverage = extractTimeSeries("OS.loadAverage")
+
       console.log("JVM events: " + usedHeapBytes.length())
 
 
@@ -551,6 +557,44 @@ as an example
         }
       )
 
+      plotTimeSeries(
+        'GC times',
+        'jvmBasics_GC_Times_Chart',
+        [{
+          name: 'GC collections time, ms',
+          color: 'blue',
+          series: gcTimesMs
+        }],
+        /*yaxis:*/ {
+          title: 'ms'
+        }
+      )
+
+      plotTimeSeries(
+        'OS load average',
+        'jvmBasics_OS_LoadAvg_Chart',
+        [{
+          name: 'OS load average, %',
+          color: 'blue',
+          series: osLoadAverage.mulScalar(100)
+        }],
+        /*yaxis:*/ {
+          title: '%'
+        }
+      )
+
+      plotTimeSeries(
+        'JVM CPU Time',
+        'jvmBasics_JVM_CPUTime_Chart',
+        [{
+          name: 'JVM CPU time, ms',
+          color: 'blue',
+          series: totalCpuTimesMs
+        }],
+        /*yaxis:*/ {
+          title: 'ms'
+        }
+      )
     }
 
     function plotFilePageCacheCharts() {
@@ -1223,11 +1267,15 @@ as an example
 <div id="plots">
   <div id="jvmBasics" class="blockOfPlots">
 
-    <div class="caption">JVM: heap, native memory, threads</div>
+    <div class="caption">JVM: heap, native memory, threads, CPU</div>
 
     <div id="jvmBasics_Heap_Chart" class="plot hideable"></div>
     <div id="jvmBasics_OffHeap_Chart" class="plot hideable"></div>
     <div id="jvmBasics_Threads_Chart" class="plot hideable"></div>
+
+    <div id="jvmBasics_GC_Times_Chart" class="plot hideable"></div>
+    <div id="jvmBasics_JVM_CPUTime_Chart" class="plot hideable"></div>
+    <div id="jvmBasics_OS_LoadAvg_Chart" class="plot hideable"></div>
   </div>
 
   <div id="AWT_and_Flush_Queues" class="blockOfPlots">
