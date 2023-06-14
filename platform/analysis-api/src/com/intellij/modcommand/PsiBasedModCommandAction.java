@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,11 +60,15 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
     int offset = context.offset();
     PsiFile file = context.file();
     if (!BaseIntentionAction.canModify(file)) return null;
+    Class<E> cls = Objects.requireNonNull(myClass);
+    if (context.element() != null && context.element().isValid()) {
+      return ObjectUtils.tryCast(context.element(), cls);
+    }
     PsiElement element = file.findElementAt(offset);
-    E target = PsiTreeUtil.getNonStrictParentOfType(element, Objects.requireNonNull(myClass));
+    E target = PsiTreeUtil.getNonStrictParentOfType(element, cls);
     if (target == null && offset > 0) {
       element = file.findElementAt(offset - 1);
-      target = PsiTreeUtil.getNonStrictParentOfType(element, Objects.requireNonNull(myClass));
+      target = PsiTreeUtil.getNonStrictParentOfType(element, cls);
     }
     return target;
   }
