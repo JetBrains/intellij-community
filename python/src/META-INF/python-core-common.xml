@@ -415,6 +415,7 @@
                                    implementation="com.jetbrains.python.run.runAnything.PyConsoleRunAnythingProvider"/>
     <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyRunAnythingFileProvider"/>
     <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyRunAnythingPipProvider"/>
+    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyRunAnythingCondaProvider"/>
     <runAnything.commandCustomizer implementation="com.jetbrains.python.run.runAnything.PyRunAnythingCommandCustomizer"/>
 
     <!-- Statistics -->
