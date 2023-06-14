@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.lookup.WeighingContext
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.proximity.PsiProximityComparator
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -408,27 +409,20 @@ object ByNameAlphabeticalWeigher : LookupElementWeigher("kotlin.byNameAlphabetic
     }
 }
 
-object ParametersWeigher : LookupElementWeigher("kotlin.preferVarargOrLessParameters") {
+object PreferLessParametersWeigher : LookupElementWeigher("kotlin.preferLessParameters") {
     override fun weigh(element: LookupElement): Int? {
         val lookupObject = element.`object` as? DescriptorBasedDeclarationLookupObject ?: return null
         val function = lookupObject.descriptor as? FunctionDescriptor ?: return null
         val valueParameters = function.valueParameters
         val size = valueParameters.size
-        if (size == 1) {
-            val valueParameter = valueParameters.first()
-            if (valueParameter.isVararg) {
-                return -1
-            }
+        return if (
+          valueParameters.singleOrNull()?.isVararg == true &&
+          Registry.`is`("kotlin.auto.completion.prefer.vararg.to.noargs")
+        ) {
+            -1
+        } else {
+            size
         }
-        return size
-    }
-}
-
-object PreferLessParametersWeigher : LookupElementWeigher("kotlin.preferLessParameters") {
-    override fun weigh(element: LookupElement): Int? {
-        val lookupObject = element.`object` as? DescriptorBasedDeclarationLookupObject ?: return null
-        val function = lookupObject.descriptor as? FunctionDescriptor ?: return null
-        return function.valueParameters.size
     }
 }
 
