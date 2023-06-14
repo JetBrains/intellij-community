@@ -8,9 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.intellij.workspaceModel.ide.EntitiesOrphanage
+import com.intellij.platform.backend.workspace.EntitiesOrphanage
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl

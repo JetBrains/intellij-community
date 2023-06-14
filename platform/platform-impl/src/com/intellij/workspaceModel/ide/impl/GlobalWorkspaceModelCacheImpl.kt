@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.workspaceModel.ide.GlobalWorkspaceModelCache
+import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.impl.isConsistent

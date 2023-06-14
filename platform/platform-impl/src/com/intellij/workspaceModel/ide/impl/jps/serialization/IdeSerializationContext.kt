@@ -7,7 +7,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
 import com.intellij.platform.workspace.jps.serialization.impl.*
-import com.intellij.workspaceModel.ide.EntitiesOrphanage
+import com.intellij.platform.backend.workspace.EntitiesOrphanage
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 
