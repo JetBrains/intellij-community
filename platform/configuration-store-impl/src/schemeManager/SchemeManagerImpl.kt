@@ -113,12 +113,6 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
   override fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?): T? {
     try {
-      val existingScheme = schemeListManager.resourcesToBundledSchemes[resourceName]
-      if (existingScheme != null) {
-        applySchemeToRequestor(requestor, existingScheme.name)
-        return existingScheme
-      }
-
       val bytes = loadBytes(pluginDescriptor, requestor, resourceName)
       if (bytes == null) {
         return null
@@ -150,8 +144,12 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
           LOG.warn("Duplicated scheme $schemeKey - old: $oldScheme, new $scheme")
         }
         schemes.add(scheme)
-        schemeListManager.resourcesToBundledSchemes[resourceName] = scheme
-        applySchemeToRequestor(requestor, schemeKey)
+        if (requestor is UITheme) {
+          requestor.editorSchemeName = schemeKey
+        }
+        if (requestor is TempUIThemeBasedLookAndFeelInfo) {
+          requestor.theme.editorSchemeName = schemeKey
+        }
         return scheme
       }
     }
@@ -165,15 +163,6 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
       LOG.error("Cannot read scheme from $resourceName", e)
     }
     return null
-  }
-
-  private fun applySchemeToRequestor(requestor: Any?, schemeKey: String) {
-    if (requestor is UITheme) {
-      requestor.editorSchemeName = schemeKey
-    }
-    if (requestor is TempUIThemeBasedLookAndFeelInfo) {
-      requestor.theme.editorSchemeName = schemeKey
-    }
   }
 
   private fun loadBytes(pluginDescriptor: PluginDescriptor?,

@@ -39,7 +39,6 @@ internal class SchemeListManager<T : Scheme>(private val schemeManager: SchemeMa
   private val schemeListRef: AtomicReference<SchemeCollection<T>> = AtomicReference(newSchemeCollection())
 
   internal val readOnlyExternalizableSchemes = ConcurrentHashMap<String, T>()
-  internal val resourcesToBundledSchemes = ConcurrentHashMap<String, T>()
 
   val schemes: MutableList<T>
     get() = schemeListRef.get().list
