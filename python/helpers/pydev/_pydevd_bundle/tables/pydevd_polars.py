@@ -16,7 +16,8 @@ def get_shape(table):
 
 def get_head(table, max_cols):
     # type: (pl.DataFrame, int) -> str
-    return table.head()._repr_html_()
+    with __create_config():
+        return table.head()._repr_html_()
 
 
 def get_column_types(table):
@@ -30,10 +31,17 @@ def get_column_types(table):
 # used by pydevd, isDisplaySupported equals false
 def get_data(table, max_cols, max_colwidth, start_index=None, end_index=None):
     # type: (pl.DataFrame, int, int, int, int) -> str
-    return table[start_index:end_index]._repr_html_()
+    with __create_config():
+        return table[start_index:end_index]._repr_html_()
 
 
 # used by DSTableCommands isDisplaySupported equals true
 def display_data(table, max_cols, max_colwidth, start, end):
     # type: (pl.DataFrame, int, int, int, int) -> None
-    print(table[start:end]._repr_html_())
+    with __create_config():
+        print(table[start:end]._repr_html_())
+
+
+def __create_config():
+    # type: () -> pl.Config
+    return pl.Config(fmt_str_lengths=1000, set_tbl_cols=-1)
