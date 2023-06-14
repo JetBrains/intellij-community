@@ -16,6 +16,7 @@ import com.intellij.codeInspection.QuickFix;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -44,13 +45,22 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     LOG.assertTrue(fixes != null && fixes.length > fixNumber);
 
     final QuickFix<?> fix = fixes[fixNumber];
-    if (fix instanceof ModCommandQuickFix modCommandFix) {
-      IntentionAction intention = new ModCommandQuickFixAction(descriptor, modCommandFix).asIntention();
-      PsiFile file = descriptor.getPsiElement().getContainingFile();
-      intention.isAvailable(file.getProject(), null, file); // cache presentation in wrapper
+    if (fix instanceof IntentionAction intention) {
       return intention;
     }
-    return fix instanceof IntentionAction ? (IntentionAction)fix : new QuickFixWrapper(descriptor, (LocalQuickFix)fix);
+    LocalQuickFix localFix = (LocalQuickFix) fix;
+    ModCommandAction action = ModCommandService.getInstance().unwrap(localFix);
+    if (action != null) {
+      action = new DescriptorBasedModCommandAction(descriptor, action);
+    } else if (fix instanceof ModCommandQuickFix modCommandFix) {
+      action = new ModCommandQuickFixAction(descriptor, modCommandFix);
+    } else {
+      return new QuickFixWrapper(descriptor, localFix);
+    }
+    IntentionAction intention = action.asIntention();
+    PsiFile file = descriptor.getPsiElement().getContainingFile();
+    intention.isAvailable(file.getProject(), null, file); // cache presentation in wrapper
+    return intention;
   }
 
   /**
@@ -201,7 +211,45 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     return myFix.getRangesToHighlight(file.getProject(), myDescriptor);
   }
 
-  private static class ModCommandQuickFixAction implements ModCommandAction {
+  /**
+   * A ModCommandAction wrapper bound to a problem descriptor (externally supplied context is ignored)
+   */
+  private static final class DescriptorBasedModCommandAction implements ModCommandAction {
+    private final @NotNull ActionContext myContext;
+    private final @NotNull ModCommandAction myAction;
+
+    private DescriptorBasedModCommandAction(@NotNull ProblemDescriptor descriptor, @NotNull ModCommandAction action) {
+      myContext = ActionContext.from(descriptor);
+      myAction = action;
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return myAction.getFamilyName();
+    }
+
+    @Override
+    public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+      return myAction.getPresentation(myContext);
+    }
+
+    @Override
+    public @NotNull ModCommand perform(@NotNull ActionContext context) {
+      return myAction.perform(myContext);
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull ActionContext context) {
+      return myAction.generatePreview(myContext);
+    }
+
+    @Override
+    public String toString() {
+      return "DescriptorBasedModCommandAction[action=" + myAction + "]";
+    }
+  }
+
+  private static final class ModCommandQuickFixAction implements ModCommandAction {
     private final @NotNull ProblemDescriptor myDescriptor;
     private final @NotNull ModCommandQuickFix myFix;
 

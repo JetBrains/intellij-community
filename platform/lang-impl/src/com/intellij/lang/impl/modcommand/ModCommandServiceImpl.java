@@ -3,6 +3,7 @@ package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
@@ -45,6 +46,19 @@ public class ModCommandServiceImpl implements ModCommandService {
   @NotNull
   public IntentionAction wrap(@NotNull ModCommandAction action) {
     return new ModCommandActionWrapper(action);
+  }
+
+  @Override
+  public @NotNull LocalQuickFix wrapToQuickFix(@NotNull ModCommandAction action) {
+    return new ModCommandActionQuickFixWrapper(action);
+  }
+
+  @Override
+  public @Nullable ModCommandAction unwrap(@NotNull LocalQuickFix fix) {
+    if (fix instanceof ModCommandActionQuickFixWrapper wrapper) {
+      return wrapper.getAction();
+    }
+    return null;
   }
 
   @Override
