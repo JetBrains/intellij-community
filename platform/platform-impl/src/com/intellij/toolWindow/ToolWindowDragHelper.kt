@@ -100,7 +100,10 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     }
   }
 
+  private fun isEnabled(): Boolean = Registry.`is`("ide.new.tool.window.dnd")
+
   override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {
+    if (!isEnabled()) return false;
     val point = RelativePoint(dragComponent, dragComponentPoint)
     return getToolWindowAtPoint(point) != null || getComponentFromDragSourcePane(point) is MoreSquareStripeButton
   }
