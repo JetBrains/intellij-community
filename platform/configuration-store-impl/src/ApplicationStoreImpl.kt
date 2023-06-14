@@ -15,7 +15,7 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
+import com.intellij.platform.backend.workspace.JpsGlobalModelSynchronizer
 import com.intellij.platform.workspace.jps.serialization.impl.ApplicationStoreJpsContentReader
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl

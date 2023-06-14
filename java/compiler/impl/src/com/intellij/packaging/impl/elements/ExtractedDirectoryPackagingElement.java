@@ -16,7 +16,7 @@ import com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEn
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.workspaceModel.ide.VirtualFileUrls;
+import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

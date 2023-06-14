@@ -18,7 +18,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializ
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializersImpl
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
-import com.intellij.workspaceModel.ide.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.CodeGeneratorVersions
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity

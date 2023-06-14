@@ -24,7 +24,7 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
-import com.intellij.workspaceModel.ide.BridgeInitializer
+import com.intellij.platform.backend.workspace.BridgeInitializer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

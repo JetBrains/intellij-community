@@ -11,7 +11,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
-import com.intellij.workspaceModel.ide.VirtualFileUrls;
+import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;

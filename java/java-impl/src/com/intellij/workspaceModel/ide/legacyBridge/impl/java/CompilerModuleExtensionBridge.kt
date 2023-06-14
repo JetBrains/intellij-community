@@ -11,8 +11,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
-import com.intellij.workspaceModel.ide.toVirtualFileUrl
-import com.intellij.workspaceModel.ide.virtualFile
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
@@ -77,15 +77,15 @@ class CompilerModuleExtensionBridge(
                        ?: error("Could not find entity for $module, ${module.hashCode()}, diff: ${entityStorage.base}")
     val moduleSource = moduleEntity.entitySource
 
-    val oldJavaSettings = javaSettings ?: diff addEntity JavaModuleSettingsEntity(inheritedCompilerOutput = true,
-                                                                                  excludeOutput = true,
-                                                                                  entitySource = moduleSource
+    val oldJavaSettings = javaSettings ?: (diff addEntity JavaModuleSettingsEntity(inheritedCompilerOutput = true,
+                                                                                   excludeOutput = true,
+                                                                                   entitySource = moduleSource
     ) {
       compilerOutput = null
       compilerOutputForTests = null
       languageLevelId = null
       module = moduleEntity
-    }
+    })
 
     diff.modifyEntity(JavaModuleSettingsEntity.Builder::class.java, oldJavaSettings, updater)
     changed = true

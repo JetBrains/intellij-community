@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.toPath
-import com.intellij.workspaceModel.ide.virtualFile
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRoot
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
