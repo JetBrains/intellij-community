@@ -73,6 +73,7 @@ public class Notification {
   private boolean myImportantSuggestion;
   private String myDoNotAskId;
   private @Nls String myDoNotAskDisplayName;
+  private boolean myIsShowingPopupSuppressed;
   private String myRemindLaterHandlerId;
   private @Nullable String myToolWindowId;
 
@@ -188,6 +189,16 @@ public class Notification {
     manager.setValue("Notification.DoNotAsk-" + myDoNotAskId, true);
     manager.setValue("Notification.DisplayName-DoNotAsk-" + myDoNotAskId, myDoNotAskDisplayName);
     return this;
+  }
+
+  @ApiStatus.Internal
+  public void setSuppressShowingPopup(boolean isShowingPopupSuppressed) {
+    myIsShowingPopupSuppressed = isShowingPopupSuppressed;
+  }
+
+  @ApiStatus.Internal
+  public boolean isShowingPopupSuppressed() {
+    return myIsShowingPopupSuppressed;
   }
 
   @ApiStatus.Internal
