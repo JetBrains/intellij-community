@@ -17,6 +17,9 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import kotlin.Pair;
+import kotlin.coroutines.CoroutineContext;
+import kotlinx.coroutines.CompletableJob;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -205,8 +208,8 @@ public class Alarm implements Disposable {
   }
 
   void _addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
-    Runnable actualRunnable = AppExecutorUtil.propagateContextOrCancellation() ? ThreadContext.captureThreadContext(request) : request;
-    Request requestToSchedule = new Request(actualRunnable, modalityState, delayMillis);
+    Pair<CoroutineContext, CompletableJob> pair = AppExecutorUtil.propagateContextOrCancellation() ? Propagation.createChildContext() : new Pair(null, null);
+    Request requestToSchedule = new Request(request, modalityState, delayMillis, pair.getFirst(), pair.getSecond());
     synchronized (LOCK) {
       checkDisposed();
       if (myActivationComponent == null || isActivationComponentShowing()) {
@@ -327,12 +330,16 @@ public class Alarm implements Disposable {
     private final long myDelayMillis;
     @NotNull
     private final String myClientId;
+    private final @Nullable CoroutineContext myContext;
+    private final @Nullable CompletableJob myJob;
 
     @Async.Schedule
-    private Request(@NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
+    private Request(@NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis, @Nullable CoroutineContext context, @Nullable CompletableJob job) {
       synchronized (LOCK) {
         myTask = task;
 
+        myContext = context;
+        myJob = job;
         myModalityState = modalityState;
         myDelayMillis = delayMillis;
         myClientId = ClientId.getCurrentValue();
@@ -362,7 +369,13 @@ public class Alarm implements Disposable {
       try {
         if (!myDisposed && task != null) {
           try (AccessToken ignored = ClientId.withClientId(myClientId)) {
-            QueueProcessor.runSafely(task);
+            if (myContext != null) {
+              try (AccessToken ignored2 = ThreadContext.installThreadContext(myContext, true)) {
+                QueueProcessor.runSafely(task);
+              }
+            } else {
+              QueueProcessor.runSafely(task);
+            }
           }
         }
       }
