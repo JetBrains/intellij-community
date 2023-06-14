@@ -7,8 +7,6 @@
   <icon ico="idea_CE.ico" svg="/idea-ce.svg" svg-small="/idea-ce_16.svg"/>
   <names product="IDEA" fullname="IntelliJ IDEA"/>
 
-  <welcome-screen logo-url="/Logo_welcomeScreen.png"/>
-
   <plugins url="https://plugins.jetbrains.com/"/>
   <update-urls check="https://www.jetbrains.com/updates/updates.xml"
                patches="https://download.jetbrains.com/idea/"/>

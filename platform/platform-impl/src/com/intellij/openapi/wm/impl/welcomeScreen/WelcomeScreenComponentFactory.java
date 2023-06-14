@@ -119,13 +119,10 @@ public final class WelcomeScreenComponentFactory {
 
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
 
-    String welcomeScreenLogoUrl = appInfo.getWelcomeScreenLogoUrl();
-    if (welcomeScreenLogoUrl != null) {
-      JLabel logo = new JLabel(IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader()));
-      logo.setBorder(JBUI.Borders.empty(30, 0, 10, 0));
-      logo.setHorizontalAlignment(SwingConstants.CENTER);
-      panel.add(logo, BorderLayout.NORTH);
-    }
+    JLabel logo = new JLabel(IconLoader.getIcon(appInfo.getApplicationSvgIconUrl(), WelcomeScreenComponentFactory.class.getClassLoader()));
+    logo.setBorder(JBUI.Borders.empty(30, 0, 10, 0));
+    logo.setHorizontalAlignment(SwingConstants.CENTER);
+    panel.add(logo, BorderLayout.NORTH);
 
     JLabel appName = new JLabel(getAppName());
     appName.setForeground(JBColor.foreground());

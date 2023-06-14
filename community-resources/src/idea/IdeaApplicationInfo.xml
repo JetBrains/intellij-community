@@ -10,8 +10,6 @@
   <essential-plugin>com.intellij.java</essential-plugin>
   <essential-plugin>com.intellij.java.ide</essential-plugin>
 
-  <welcome-screen logo-url="/Logo_welcomeScreen_CE.png"/>
-
   <editor background-url="/idea_logo_welcome.png"/>
 
   <plugins url="https://plugins.jetbrains.com/"

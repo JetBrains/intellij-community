@@ -13,8 +13,6 @@
   <essential-plugin>PythonCore</essential-plugin>
   <essential-plugin>com.jetbrains.pycharm.community.customization</essential-plugin>
 
-  <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png"/>
-
   <plugins url="https://plugins.jetbrains.com/"
            builtin-url="__BUILTIN_PLUGINS_URL__"/>
   <update-urls check="https://www.jetbrains.com/updates/updates.xml"

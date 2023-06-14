@@ -42,6 +42,9 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getToolWindowIconUrl();
 
+  /** @deprecated please use {@link #getApplicationSvgIconUrl()} instead. */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public abstract @Nullable String getWelcomeScreenLogoUrl();
 
   public abstract boolean showLicenseeInfo();

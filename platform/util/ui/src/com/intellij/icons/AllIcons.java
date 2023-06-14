@@ -714,9 +714,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Linux = load("linux/linux.svg", 1537000687, 2);
   }
 
-  /** 80x80 */ public static final @NotNull Icon Logo_welcomeScreen = load("Logo_welcomeScreen.png", 0, 1);
-  /** 80x80 */ public static final @NotNull Icon Logo_welcomeScreen_CE = load("Logo_welcomeScreen_CE.png", 0, 1);
-
   public static final class Mac {
     /** 55x55 */ public static final @NotNull Icon AppIconOk512 = load("mac/appIconOk512.png", 0, 0);
 
