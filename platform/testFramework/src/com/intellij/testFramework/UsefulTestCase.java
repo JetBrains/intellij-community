@@ -707,6 +707,10 @@ public abstract class UsefulTestCase extends TestCase {
     assertDoesntContain("", collection, notExpected);
   }
 
+  public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> notExpected) {
+    assertDoesntContain("", collection, notExpected);
+  }
+
   @SafeVarargs
   public static <T> void assertDoesntContain(@NotNull String message, @NotNull Collection<? extends T> collection, T @NotNull ... notExpected) {
     assertDoesntContain(message, collection, Arrays.asList(notExpected));
