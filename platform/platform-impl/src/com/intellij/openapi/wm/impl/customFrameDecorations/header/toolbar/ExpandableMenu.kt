@@ -117,6 +117,8 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
       }
     }
 
+    menu ?: return
+    
     val subElements = menu.popupMenu.subElements
     if (subElements.isEmpty()) {
       MenuSelectionManager.defaultManager().selectedPath = arrayOf(ideMenu, menu)
