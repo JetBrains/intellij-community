@@ -28,6 +28,7 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -47,22 +48,21 @@ public final class MavenIndex implements MavenSearchIndex {
   private final MavenIndexerWrapper myNexusIndexer;
   private final File myDir;
   /**
-   *  @deprecated not used
+   * @deprecated not used
    */
   @Deprecated(forRemoval = true)
   private final Set<String> myRegisteredRepositoryIds;
 
   private final String myRepositoryPathOrUrl;
   private final Kind myKind;
-
+  private final AtomicBoolean myDataClosed = new AtomicBoolean(false);
+  private final Lock indexUpdateLock = new ReentrantLock();
   private volatile Long myUpdateTimestamp;
   private volatile IndexData myData;
   private volatile String myFailureMessage;
   private volatile boolean isBroken;
   private volatile boolean isClose;
-
   private String myDataDirName;
-  private final Lock indexUpdateLock = new ReentrantLock();
 
   public MavenIndex(MavenIndexerWrapper indexer,
                     MavenIndexUtils.IndexPropertyHolder propertyHolder) throws MavenIndexException {
@@ -257,7 +257,8 @@ public final class MavenIndex implements MavenSearchIndex {
     }
     catch (Exception e) {
       handleUpdateException(e);
-    } finally {
+    }
+    finally {
       indexUpdateLock.unlock();
     }
 
@@ -389,20 +390,12 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   public void closeAndClean() {
-    closeAndClean(myData.groupToArtifactMap);
-    closeAndClean(myData.groupWithArtifactToVersionMap);
-    closeAndClean(myData.archetypeIdToDescriptionMap);
-    close(false);
-  }
-
-  private static <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
-    return map.computeIfAbsent(key, k -> new TreeSet<>());
-  }
-
-  private static <T> void persist(Map<String, T> map, PersistentHashMap<String, T> persistentMap) throws IOException {
-    for (Map.Entry<String, T> each : map.entrySet()) {
-      persistentMap.put(each.getKey(), each.getValue());
-    }
+    if (myDataClosed.compareAndSet(false, true)) {
+      closeAndClean(myData.groupToArtifactMap);
+      closeAndClean(myData.groupWithArtifactToVersionMap);
+      closeAndClean(myData.archetypeIdToDescriptionMap);
+      close(false);
+    } 
   }
 
   public File getDir() {
@@ -417,10 +410,6 @@ public final class MavenIndex implements MavenSearchIndex {
   private File getCurrentDataContextDir() {
     //noinspection TestOnlyProblems
     return new File(getCurrentDataDir(), "context");
-  }
-
-  private static File getDataContextDir(File dataDir) {
-    return new File(dataDir, "context");
   }
 
   @NotNull
@@ -450,7 +439,8 @@ public final class MavenIndex implements MavenSearchIndex {
               addToCache(indexData.groupToArtifactMap, id.groupId, id.artifactId);
               addToCache(indexData.groupWithArtifactToVersionMap, groupWithArtifact, id.version);
               if ("maven-archetype".equals(id.packaging)) {
-                addToCache(indexData.archetypeIdToDescriptionMap, groupWithArtifact, id.version + ":" + StringUtil.notNullize(id.description));
+                addToCache(indexData.archetypeIdToDescriptionMap, groupWithArtifact,
+                           id.version + ":" + StringUtil.notNullize(id.description));
               }
             }
           }
@@ -458,21 +448,11 @@ public final class MavenIndex implements MavenSearchIndex {
           return addArtifactResponses;
         }
         return failedResponses;
-      } finally {
+      }
+      finally {
         indexUpdateLock.unlock();
       }
     }, failedResponses);
-  }
-
-  private static void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
-    if(key == null || value == null || cache == null) return;
-    synchronized (cache) {
-      Set<String> values = cache.get(key);
-      if (values == null) values = new TreeSet<>();
-      if (values.add(value)) {
-        cache.put(key, values);
-      }
-    }
   }
 
   public Collection<String> getGroupIds() {
@@ -603,9 +583,74 @@ public final class MavenIndex implements MavenSearchIndex {
     isBroken = true;
   }
 
+  @NotNull
+  private Collection<String> getGroupIdsRaw() throws IOException {
+    CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<>();
+    myData.groupToArtifactMap.processKeysWithExistingMapping(processor);
+    return processor.getResults();
+  }
+
+  @Override
+  public String toString() {
+    return "MavenIndex{" +
+           "myKind=" + myKind + '\'' +
+           ", myRepositoryPathOrUrl='" + myRepositoryPathOrUrl +
+           ", ids=" + myRegisteredRepositoryIds +
+           '}';
+  }
+
+  private static <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
+    return map.computeIfAbsent(key, k -> new TreeSet<>());
+  }
+
+  private static <T> void persist(Map<String, T> map, PersistentHashMap<String, T> persistentMap) throws IOException {
+    for (Map.Entry<String, T> each : map.entrySet()) {
+      persistentMap.put(each.getKey(), each.getValue());
+    }
+  }
+
+  private static File getDataContextDir(File dataDir) {
+    return new File(dataDir, "context");
+  }
+
+  private static void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
+    if (key == null || value == null || cache == null) return;
+    synchronized (cache) {
+      Set<String> values = cache.get(key);
+      if (values == null) values = new TreeSet<>();
+      if (values.add(value)) {
+        cache.put(key, values);
+      }
+    }
+  }
+
   @FunctionalInterface
   private interface IndexTask<T> {
     T doTask() throws Exception;
+  }
+
+  private static class SetDescriptor implements DataExternalizer<Set<String>> {
+    @Override
+    public void save(@NotNull DataOutput s, Set<String> set) throws IOException {
+      s.writeInt(set.size());
+      for (String each : set) {
+        s.writeUTF(each);
+      }
+    }
+
+    @Override
+    public Set<String> read(@NotNull DataInput s) throws IOException {
+      int count = s.readInt();
+      Set<String> result = new TreeSet<>();
+      try {
+        while (count-- > 0) {
+          result.add(s.readUTF());
+        }
+      }
+      catch (EOFException ignore) {
+      }
+      return result;
+    }
   }
 
   private class IndexData {
@@ -675,43 +720,5 @@ public final class MavenIndex implements MavenSearchIndex {
     Set<MavenArtifactInfo> search(String pattern, int maxResult) throws MavenServerIndexerException {
       return myNexusIndexer.search(mavenIndexId, pattern, maxResult);
     }
-  }
-
-  @NotNull
-  private Collection<String> getGroupIdsRaw() throws IOException {
-    CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<>();
-    myData.groupToArtifactMap.processKeysWithExistingMapping(processor);
-    return processor.getResults();
-  }
-
-  private static class SetDescriptor implements DataExternalizer<Set<String>> {
-    @Override
-    public void save(@NotNull DataOutput s, Set<String> set) throws IOException {
-      s.writeInt(set.size());
-      for (String each : set) {
-        s.writeUTF(each);
-      }
-    }
-
-    @Override
-    public Set<String> read(@NotNull DataInput s) throws IOException {
-      int count = s.readInt();
-      Set<String> result = new TreeSet<>();
-      try {
-        while (count-- > 0) {
-          result.add(s.readUTF());
-        }
-      } catch (EOFException ignore){}
-      return result;
-    }
-  }
-
-  @Override
-  public String toString() {
-    return "MavenIndex{" +
-           "myKind=" + myKind + '\'' +
-           ", myRepositoryPathOrUrl='" + myRepositoryPathOrUrl +
-           ", ids=" + myRegisteredRepositoryIds +
-           '}';
   }
 }
