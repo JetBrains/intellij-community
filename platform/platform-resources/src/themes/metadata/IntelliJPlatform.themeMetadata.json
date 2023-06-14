@@ -1828,6 +1828,10 @@
       "description": "Border color of selected action"
     },
     {
+      "key": "WelcomeScreen.LearnTab.CourseCard.hover",
+      "description": ""
+    },
+    {
       "key": "Window.border",
       "description": "Dialog border. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
     },

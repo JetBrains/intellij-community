@@ -35,6 +35,9 @@ internal class IFTInteractiveCourse : InteractiveCourseFactory {
 
   override fun getInteractiveCourseComponent(): JComponent = IFTInteractiveCoursePanel(isEnabled, disabledText)
 
+  override fun getCourseData(): InteractiveCourseData {
+    return IFTInteractiveCourseData()
+  }
 }
 
 private class IFTInteractiveCoursePanel(isEnabled: Boolean, disabledText: String) : InteractiveCoursePanel(IFTInteractiveCourseData(), isEnabled) {

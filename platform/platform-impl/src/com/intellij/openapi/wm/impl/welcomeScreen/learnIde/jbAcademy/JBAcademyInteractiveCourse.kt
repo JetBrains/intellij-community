@@ -27,6 +27,9 @@ internal class JBAcademyInteractiveCourse : InteractiveCourseFactory {
   override val disabledText: String = ""
 
   override fun getInteractiveCourseComponent(): JComponent = JBAcademyInteractiveCoursePanel(EduToolsInteractiveCourseData())
+  override fun getCourseData(): InteractiveCourseData {
+    return EduToolsInteractiveCourseData()
+  }
 }
 
 private class EduToolsInteractiveCourseData : InteractiveCourseData {
@@ -59,8 +62,6 @@ private class EduToolsInteractiveCourseData : InteractiveCourseData {
     }
   }
 
-  override fun isEduTools(): Boolean {
-    return true
-  }
+  override fun isEduTools(): Boolean = true
 }
 
