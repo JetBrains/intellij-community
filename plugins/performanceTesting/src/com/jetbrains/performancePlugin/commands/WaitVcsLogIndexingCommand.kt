@@ -28,11 +28,13 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
   private val executor: ScheduledExecutorService = AppExecutorUtil.getAppScheduledExecutorService()
 
   override suspend fun doExecute(context: PlaybackContext) {
+    LOG.info("$NAME command started its execution")
     val logManager = getInstance(context.project).logManager ?: return
     val dataManager = logManager.dataManager
     val vcsIndex = dataManager.index as VcsLogModifiableIndex
 
-    if (vcsIndex.needIndexing()) {
+    LOG.info("Need indexing = ${vcsIndex.needIndexing()}, is indexing paused = " + vcsIndex.isIndexingPaused())
+    if (vcsIndex.needIndexing() || !vcsIndex.isIndexingPaused()) {
       val isIndexingCompleted = CompletableDeferred<Boolean>()
       vcsIndex.addListener { _ ->
         LOG.info("$NAME command was completed due to indexing was finished after listener invocation")
