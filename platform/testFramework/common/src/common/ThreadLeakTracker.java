@@ -78,7 +78,7 @@ public final class ThreadLeakTracker {
       ProcessIOExecutorService.POOLED_THREAD_PREFIX,
       "IDEA Test Case Thread",
       "Image Fetcher ",
-      "InnocuousThreadGroup",
+      "InnocuousThread",
       "Java2D Disposer",
       "JNA Cleaner",
       "JobScheduler FJ pool ",
