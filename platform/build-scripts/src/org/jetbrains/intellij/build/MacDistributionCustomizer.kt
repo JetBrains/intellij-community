@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 import java.util.function.Predicate
@@ -148,7 +149,7 @@ abstract class MacDistributionCustomizer {
   }
 
   open fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
-    var executableFilePatterns = persistentListOf(
+    val basePatterns = persistentListOf(
       "bin/*.sh",
       "plugins/**/*.sh",
       "bin/fsnotifier",
@@ -156,12 +157,15 @@ abstract class MacDistributionCustomizer {
       "bin/restarter",
       "MacOS/*"
     )
-    executableFilePatterns.addAll(RepairUtilityBuilder.executableFilesPatterns(context))
-    if (includeRuntime) {
-      executableFilePatterns = executableFilePatterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS, context.productProperties.runtimeDistribution))
-    }
-    return executableFilePatterns
-      .addAll(extraExecutables)
-      .addAll(context.getExtraExecutablePattern(OsFamily.MACOS))
+
+    val rtPatterns =
+      if (includeRuntime) context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS, context.productProperties.runtimeDistribution)
+      else emptyList()
+
+    return basePatterns +
+           rtPatterns +
+           RepairUtilityBuilder.executableFilesPatterns(context) +
+           extraExecutables +
+           context.getExtraExecutablePattern(OsFamily.MACOS)
   }
 }
