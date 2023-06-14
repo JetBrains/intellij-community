@@ -2,8 +2,8 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange

@@ -2,7 +2,7 @@
 package com.intellij.jarRepository
 
 import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.jps.entities.LibraryEntity

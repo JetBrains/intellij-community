@@ -18,7 +18,7 @@ public abstract class ModuleRootEvent extends EventObject {
   public abstract boolean isCausedByFileTypesChange();
 
   /**
-   * If you migrate {@link ModuleRootListener} to {@link com.intellij.workspaceModel.ide.WorkspaceModelChangeListener},
+   * If you migrate {@link ModuleRootListener} to {@link com.intellij.platform.backend.workspace.WorkspaceModelChangeListener},
    * you should still keep {@link ModuleRootListener} implementation in the following cases:
    * <ul>
    * <li> your code needs to know about changes in {@link SyntheticLibrary}, {@link AdditionalLibraryRootsProvider} or {DirectoryIndexExcludePolicy}.</li>
@@ -35,7 +35,7 @@ public abstract class ModuleRootEvent extends EventObject {
    *    if(event.isCausedByWorkspaceModelChangesOnly()) return;
    *  }
    *  </pre>
-   *  This way it will only handle the legacy events, while new more granular Workspace events will be handled by your {@link com.intellij.workspaceModel.ide.WorkspaceModelChangeListener}.
+   *  This way it will only handle the legacy events, while new more granular Workspace events will be handled by your {@link com.intellij.platform.backend.workspace.WorkspaceModelChangeListener}.
    */
   public abstract boolean isCausedByWorkspaceModelChangesOnly();
 

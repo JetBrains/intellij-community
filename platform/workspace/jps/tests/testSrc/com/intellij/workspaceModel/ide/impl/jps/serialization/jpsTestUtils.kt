@@ -29,7 +29,7 @@ import com.intellij.testFramework.replaceService
 import com.intellij.util.LineSeparator
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
-import com.intellij.platform.backend.workspace.JpsGlobalModelSynchronizer
+import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.platform.workspace.storage.*
