@@ -36,7 +36,6 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.storage.bridgeEntities.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import io.opentelemetry.api.metrics.Meter

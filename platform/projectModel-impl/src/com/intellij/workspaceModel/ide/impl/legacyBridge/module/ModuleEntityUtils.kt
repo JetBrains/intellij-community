@@ -14,7 +14,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.bridgeEntities.*
 
 /**
  * @return corresponding [com.intellij.openapi.module.Module] or `null` if this entity isn't added to the project model yet.
