@@ -161,9 +161,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
         layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
       }
       else if (hideNativeLinuxTitle) {
-        if (!frame.isDisplayable) {
-          frame.isUndecorated = true
-        }
         val customFrameTitlePane = ToolbarFrameHeader(frame = frame, root = this)
         helper = DecoratedHelper(
           customFrameTitlePane = customFrameTitlePane,

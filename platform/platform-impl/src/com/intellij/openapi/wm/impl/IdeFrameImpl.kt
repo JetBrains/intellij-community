@@ -108,6 +108,9 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun show() {
+    if (IdeRootPane.hideNativeLinuxTitle && !isUndecorated) {
+      isUndecorated = true
+    }
     @Suppress("DEPRECATION")
     super.show()
     SwingUtilities.invokeLater { focusableWindowState = true }
