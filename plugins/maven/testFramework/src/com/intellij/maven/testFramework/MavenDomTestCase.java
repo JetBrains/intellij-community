@@ -352,13 +352,9 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
   }
 
   protected void checkHighlighting(VirtualFile f) {
-    checkHighlighting(f, true, false, true);
-  }
-
-  protected void checkHighlighting(VirtualFile f, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
     configTest(myProjectPom);
     try {
-      myFixture.testHighlighting(checkWarnings, checkInfos, checkWeakWarnings, f);
+      myFixture.testHighlighting(true, false, true, f);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
