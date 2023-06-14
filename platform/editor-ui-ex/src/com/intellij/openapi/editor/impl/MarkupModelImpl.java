@@ -161,9 +161,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
       highlighter.changeAttributesNoEvents(changeAttributesAction);
     }
     fireAfterAdded(highlighter);
-    if (LOG.isDebugEnabled()) {
-      LOG.info("created " + highlighter + " for "+getDocument());
-    }
     return highlighter;
   }
 
