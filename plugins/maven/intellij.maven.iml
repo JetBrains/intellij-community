@@ -81,6 +81,7 @@
     <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module-library">
       <library name="jetbrains.idea.maven.indexer.api.rt" type="repository">
         <properties maven-id="org.jetbrains.idea.maven:maven-indexer-api-rt:2023.2" />
