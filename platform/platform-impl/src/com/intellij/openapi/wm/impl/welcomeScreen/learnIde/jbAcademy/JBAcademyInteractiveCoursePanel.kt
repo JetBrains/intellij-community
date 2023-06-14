@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.org.PluginManagerFilters
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -17,6 +16,7 @@ import com.intellij.openapi.progress.util.StandardProgressIndicatorBase
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.InteractiveCoursePanel
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.getBrowseCoursesAction
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
@@ -76,8 +76,8 @@ class JBAcademyInteractiveCoursePanel(data: InteractiveCourseData) : Interactive
     override fun actionPerformed(e: ActionEvent?) {
       if (PluginManager.isPluginInstalled(EDU_TOOLS_PLUGIN_ID) && !PluginManagerCore.isDisabled(EDU_TOOLS_PLUGIN_ID)) {
         val event = AnActionEvent.createFromDataContext(ActionPlaces.WELCOME_SCREEN, null, DataContext.EMPTY_CONTEXT)
-        val action = ActionManager.getInstance().getAction("Educational.BrowseCourses")
-        action.actionPerformed(event)
+        val action = getBrowseCoursesAction()
+        action?.actionPerformed(event)
 
         return
       }
