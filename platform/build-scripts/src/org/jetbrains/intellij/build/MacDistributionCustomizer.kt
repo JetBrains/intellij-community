@@ -1,17 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 import java.util.function.Predicate
 
-abstract class MacDistributionCustomizer(
-  /**
-   * Relative paths to files in macOS distribution which should take 'executable' permissions
-   */
-  val extraExecutables: List<String> = emptyList()
-) {
+abstract class MacDistributionCustomizer {
   /**
    * Path to icns file containing product icon bundle for macOS distribution
    * For full description of icns files see <a href="https://en.wikipedia.org/wiki/Apple_Icon_Image_format">Apple Icon Image Format</a>
@@ -22,6 +18,11 @@ abstract class MacDistributionCustomizer(
    * Path to icns file for EAP builds (if `null` [icnsPath] will be used)
    */
   var icnsPathForEAP: String? = null
+
+  /**
+   * Relative paths to files in macOS distribution which should take 'executable' permissions
+   */
+  var extraExecutables: PersistentList<String> = persistentListOf()
 
   /**
    * A unique identifier string that specifies the app type of the bundle. The string should be in reverse DNS format using only the Roman alphabet in upper and lower case (A-Z, a-z), the dot ("."), and the hyphen ("-")
