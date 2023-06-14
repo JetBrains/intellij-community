@@ -26,6 +26,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI.PanelFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -49,6 +50,8 @@ public class IntentionDescriptionPanel {
   private static final @NonNls String BEFORE_TEMPLATE = "before.java.template";
   private static final @NonNls String AFTER_TEMPLATE = "after.java.template";
   private static final float DIVIDER_PROPORTION_DEFAULT = .25f;
+  private final @NotNull JPanel myBeforeWrapperPanel;
+  private final @NotNull JPanel myAfterWrapperPanel;
 
   public IntentionDescriptionPanel() {
     myDescriptionBrowser = new DescriptionEditorPane();
@@ -63,22 +66,22 @@ public class IntentionDescriptionPanel {
       .setDefaultWeightX(1.0);
 
     myBeforePanel = new JPanel();
-    examplePanel.add(PanelFactory.panel(myBeforePanel)
+    myBeforeWrapperPanel = PanelFactory.panel(myBeforePanel)
       .withLabel(CodeInsightBundle.message("border.title.before"))
       .moveLabelOnTop()
       .resizeX(true)
       .resizeY(true)
-      .createPanel(),
-      constraint.nextLine()
-    );
+      .createPanel();
+    examplePanel.add(myBeforeWrapperPanel, constraint.nextLine());
+
     myAfterPanel = new JPanel();
-    examplePanel.add(PanelFactory.panel(myAfterPanel)
-                       .withLabel(CodeInsightBundle.message("border.title.after"))
-                       .moveLabelOnTop()
-                       .resizeX(true)
-                       .resizeY(true)
-                       .createPanel(),
-                     constraint.nextLine()
+    myAfterWrapperPanel = PanelFactory.panel(myAfterPanel)
+      .withLabel(CodeInsightBundle.message("border.title.after"))
+      .moveLabelOnTop()
+      .resizeX(true)
+      .resizeY(true)
+      .createPanel();
+    examplePanel.add(myAfterWrapperPanel, constraint.nextLine()
     );
 
     OnePixelSplitter mySplitter = new OnePixelSplitter(true,
@@ -132,6 +135,8 @@ public class IntentionDescriptionPanel {
 
       DescriptionEditorPaneKt.readHTML(myDescriptionBrowser, description);
 
+      myBeforeWrapperPanel.setVisible(!actionMetaData.isSkipBeforeAfter());
+      myAfterWrapperPanel.setVisible(!actionMetaData.isSkipBeforeAfter());
       showUsages(myBeforePanel, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore());
       showUsages(myAfterPanel, myAfterUsagePanels, actionMetaData.getExampleUsagesAfter());
 
@@ -152,6 +157,8 @@ public class IntentionDescriptionPanel {
       showUsages(myBeforePanel, myBeforeUsagePanels, new TextDescriptor[]{beforeTemplate});
       TextDescriptor afterTemplate =
         new PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.after"), AFTER_TEMPLATE);
+      myBeforeWrapperPanel.setVisible(true);
+      myAfterWrapperPanel.setVisible(true);
       showUsages(myAfterPanel, myAfterUsagePanels, new TextDescriptor[]{afterTemplate});
 
       SwingUtilities.invokeLater(() -> myPanel.revalidate());
