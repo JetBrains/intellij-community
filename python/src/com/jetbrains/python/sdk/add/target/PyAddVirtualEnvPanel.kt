@@ -26,7 +26,7 @@ import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.projectSyncRows
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.extendWithTargetSpecificFields
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.ExistingPySdkComboBoxItem
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
@@ -68,9 +68,9 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
   private var isInheritSitePackages: Boolean = false
 
   /**
-   * Encapsulates the work with the files synchronization options.
+   * Encapsulates the work with the optional target-specific fields, e.g., synchronization options and sudo permission.
    */
-  private var projectSync: ProjectSync? = null
+  private var targetPanelExtension: TargetPanelExtension? = null
 
   private val contentPanel: DialogPanel
 
@@ -136,7 +136,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
           .bindSelected(::isInheritSitePackages)
       }.visibleIf(newEnvironmentModeSelected)
 
-      projectSync = projectSyncRows(project, targetEnvironmentConfiguration)
+      targetPanelExtension = extendWithTargetSpecificFields(project, targetEnvironmentConfiguration)
     }
 
     add(contentPanel, BorderLayout.NORTH)
@@ -183,7 +183,7 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     contentPanel.apply()
 
     // TODO [targets] Refactor this workaround
-    applyOptionalProjectSyncConfiguration(targetEnvironmentConfiguration)
+    applyOptionalTargetSpecificFields(targetEnvironmentConfiguration)
 
     if (isCreateNewVirtualenv) return createNewVirtualenvSdk(targetEnvironmentConfiguration)
 
@@ -271,8 +271,8 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
     }
   }
 
-  private fun applyOptionalProjectSyncConfiguration(targetConfiguration: TargetEnvironmentConfiguration?) {
-    if (targetConfiguration != null) projectSync?.apply(targetConfiguration)
+  private fun applyOptionalTargetSpecificFields(targetConfiguration: TargetEnvironmentConfiguration?) {
+    if (targetConfiguration != null) targetPanelExtension?.apply(targetConfiguration)
   }
 
   companion object {

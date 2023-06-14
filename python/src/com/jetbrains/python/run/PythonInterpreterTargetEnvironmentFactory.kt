@@ -16,7 +16,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
-import com.jetbrains.python.sdk.add.target.ProjectSync
+import com.jetbrains.python.sdk.add.target.TargetPanelExtension
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.targetWithVfs.TargetWithMappedLocalVfs
 import org.jetbrains.annotations.ApiStatus
@@ -47,9 +47,9 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
   fun getDefaultSdkName(project: Project?, data: PyTargetAwareAdditionalData, version: String?): String?
 
   /**
-   * Enables additional UI options and target-specific mechanics for project synchronization.
+   * Enables additional UI options and target-specific mechanics.
    */
-  fun getProjectSync(project: Project?, configuration: TargetEnvironmentConfiguration): ProjectSync?
+  fun getPanelExtension(project: Project?, configuration: TargetEnvironmentConfiguration): TargetPanelExtension?
 
   /**
    * Target provides access to its filesystem using VFS (like WSL)
@@ -113,23 +113,23 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
 
 
     @JvmStatic
-    fun findProjectSync(project: Project?, configuration: TargetEnvironmentConfiguration): ProjectSync? =
-      EP_NAME.extensionList.mapNotNull { it.getProjectSync(project, configuration) }.firstOrNull()
+    fun findPanelExtension(project: Project?, configuration: TargetEnvironmentConfiguration): TargetPanelExtension? =
+      EP_NAME.extensionList.mapNotNull { it.getPanelExtension(project, configuration) }.firstOrNull()
 
     fun by(configuration: TargetEnvironmentConfiguration): PythonInterpreterTargetEnvironmentFactory? =
       EP_NAME.extensionList.find { it.isFor(configuration) }
 
     /**
-     * Looks for [ProjectSync] that corresponds to the provided [configuration], applies its UI to [this] [Panel] via
-     * [ProjectSync.extendDialogPanelWithOptionalFields] and returns [ProjectSync].
+     * Looks for [TargetPanelExtension] with additional rows that corresponds to the provided [configuration],
+     * applies its UI to [this] [Panel] via [TargetPanelExtension.extendDialogPanelWithOptionalFields] and returns [TargetPanelExtension].
      *
      * Does nothing if [project] is `null` or it is the default project.
      */
     @JvmStatic
-    fun Panel.projectSyncRows(project: Project?, configuration: TargetEnvironmentConfiguration?): ProjectSync? =
+    fun Panel.extendWithTargetSpecificFields(project: Project?, configuration: TargetEnvironmentConfiguration?): TargetPanelExtension? =
       if (configuration != null && project != null && !project.isDefault) {
-        findProjectSync(project, configuration)?.also { projectSync ->
-          projectSync.extendDialogPanelWithOptionalFields(this, configuration)
+        findPanelExtension(project, configuration)?.also { panelExtension ->
+          panelExtension.extendDialogPanelWithOptionalFields(this, configuration)
         }
       }
       else null

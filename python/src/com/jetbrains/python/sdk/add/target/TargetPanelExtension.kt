@@ -5,11 +5,11 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.ui.dsl.builder.Panel
 
 /**
- * Allows to extend the target configuration with additional synchronization options.
+ * Allows extending the target configuration with additional options.
  *
  * The class is stateful.
  */
-interface ProjectSync {
+interface TargetPanelExtension {
   fun extendDialogPanelWithOptionalFields(panel: Panel, targetEnvConf: TargetEnvironmentConfiguration)
 
   fun apply(configuration: TargetEnvironmentConfiguration)

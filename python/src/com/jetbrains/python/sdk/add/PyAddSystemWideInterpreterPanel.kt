@@ -28,9 +28,9 @@ import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.projectSyncRows
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.extendWithTargetSpecificFields
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.target.ProjectSync
+import com.jetbrains.python.sdk.add.target.TargetPanelExtension
 import com.jetbrains.python.sdk.add.target.PyAddSdkPanelBase.Companion.createSdkForTarget
 import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkView
 import com.jetbrains.python.sdk.add.target.createDetectedSdk
@@ -56,9 +56,9 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
   private lateinit var contentPanel: DialogPanel
 
   /**
-   * Encapsulates the work with the files synchronization options.
+   * Encapsulates the work with the optional target-specific fields, e.g., synchronization options and sudo permission.
    */
-  private var projectSync: ProjectSync? = null
+  private var targetPanelExtension: TargetPanelExtension? = null
 
   init {
     layout = BorderLayout()
@@ -102,7 +102,7 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
           .comment(PyBundle.message("python.sdk.admin.permissions.needed.consider.creating.venv.content"),
                    maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
       }
-      projectSync = projectSyncRows(project, targetEnvironmentConfiguration)
+      targetPanelExtension = extendWithTargetSpecificFields(project, targetEnvironmentConfiguration)
     }
     add(contentPanel, BorderLayout.NORTH)
   }
@@ -114,7 +114,7 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
   override fun getOrCreateSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? {
     contentPanel.apply()
 
-    applyOptionalProjectSyncConfiguration(targetEnvironmentConfiguration)
+    applyOptionalTargetSpecificFields(targetEnvironmentConfiguration)
 
     if (targetEnvironmentConfiguration == null) {
       // this is the local machine case
@@ -129,8 +129,8 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
     }
   }
 
-  private fun applyOptionalProjectSyncConfiguration(targetConfiguration: TargetEnvironmentConfiguration?) {
-    if (targetConfiguration != null) projectSync?.apply(targetConfiguration)
+  private fun applyOptionalTargetSpecificFields(targetConfiguration: TargetEnvironmentConfiguration?) {
+    if (targetConfiguration != null) targetPanelExtension?.apply(targetConfiguration)
   }
 
   override fun addChangeListener(listener: Runnable) {
