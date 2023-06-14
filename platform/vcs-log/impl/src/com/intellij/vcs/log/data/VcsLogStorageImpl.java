@@ -40,7 +40,6 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   private static final @NotNull @NonNls String HASHES_STORAGE = "hashes";
   private static final @NotNull @NonNls String REFS_STORAGE = "refs";
   private static final @NotNull @NonNls String STORAGE = "storage";
-  public static final @NotNull VcsLogStorage EMPTY = new EmptyLogStorage();
 
   public static final int VERSION = 8;
   public static final int NO_INDEX = -1;
@@ -246,41 +245,6 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       if (val1 == null || val2 == null) return false;
       return val1.getHash().equals(val2.getHash()) &&
              myRootsReversed.getInt(val1.getRoot()) == myRootsReversed.getInt(val2.getRoot());
-    }
-  }
-
-  private static class EmptyLogStorage implements VcsLogStorage {
-    @Override
-    public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
-      return 0;
-    }
-
-    @Override
-    public @NotNull CommitId getCommitId(int commitIndex) {
-      throw new UnsupportedOperationException("Illegal access to empty hash map by index " + commitIndex);
-    }
-
-    @Override
-    public boolean containsCommit(@NotNull CommitId id) {
-      return false;
-    }
-
-    @Override
-    public void iterateCommits(@NotNull Predicate<? super CommitId> consumer) {
-    }
-
-    @Override
-    public int getRefIndex(@NotNull VcsRef ref) {
-      return 0;
-    }
-
-    @Override
-    public @Nullable VcsRef getVcsRef(int refIndex) {
-      throw new UnsupportedOperationException("Illegal access to empty ref map by index " + refIndex);
-    }
-
-    @Override
-    public void flush() {
     }
   }
 

@@ -22,7 +22,7 @@ import java.util.*;
 import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
 
 public class DataPack extends DataPackBase {
-  public static final DataPack EMPTY = new DataPack(RefsModel.createEmptyInstance(VcsLogStorageImpl.EMPTY),
+  public static final DataPack EMPTY = new DataPack(RefsModel.createEmptyInstance(EmptyLogStorage.INSTANCE),
                                                     EmptyPermanentGraph.getInstance(), Collections.emptyMap(), false);
 
   private final @NotNull PermanentGraph<Integer> myPermanentGraph;
@@ -107,7 +107,7 @@ public class DataPack extends DataPackBase {
     private final @NotNull Throwable myError;
 
     public ErrorDataPack(@NotNull Throwable error) {
-      super(RefsModel.createEmptyInstance(VcsLogStorageImpl.EMPTY), EmptyPermanentGraph.getInstance(), Collections.emptyMap(), false);
+      super(RefsModel.createEmptyInstance(EmptyLogStorage.INSTANCE), EmptyPermanentGraph.getInstance(), Collections.emptyMap(), false);
       myError = error;
     }
 
