@@ -49,7 +49,7 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
   /**
    * Enables additional UI options and target-specific mechanics.
    */
-  fun getPanelExtension(project: Project?, configuration: TargetEnvironmentConfiguration): TargetPanelExtension?
+  fun getPanelExtension(project: Project, configuration: TargetEnvironmentConfiguration): TargetPanelExtension?
 
   /**
    * Target provides access to its filesystem using VFS (like WSL)
@@ -113,7 +113,7 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
 
 
     @JvmStatic
-    fun findPanelExtension(project: Project?, configuration: TargetEnvironmentConfiguration): TargetPanelExtension? =
+    fun findPanelExtension(project: Project, configuration: TargetEnvironmentConfiguration): TargetPanelExtension? =
       EP_NAME.extensionList.mapNotNull { it.getPanelExtension(project, configuration) }.firstOrNull()
 
     fun by(configuration: TargetEnvironmentConfiguration): PythonInterpreterTargetEnvironmentFactory? =
