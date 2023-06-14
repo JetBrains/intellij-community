@@ -350,6 +350,11 @@ public abstract class VcsTreeModelData {
 
 
   @Nullable
+  public static Object getData(@Nullable Project project, @NotNull JTree tree, @NotNull String dataId) {
+    return getDataOrSuper(project, tree, dataId, null);
+  }
+
+  @Nullable
   public static Object getDataOrSuper(@Nullable Project project, @NotNull JTree tree, @NotNull String dataId,
                                       @Nullable Object superProviderData) {
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
@@ -400,6 +405,9 @@ public abstract class VcsTreeModelData {
       VirtualFile file = mapObjectToVirtualFile(exactSelection.iterateRawUserObjects()).first();
       if (file == null) return null;
       return new FileSelectInContext(project, file, null);
+    }
+    else if (VcsDataKeys.VIRTUAL_FILES.is(slowId)) {
+      return mapToVirtualFile(treeSelection);
     }
     else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(slowId)) {
       return mapToVirtualFile(treeSelection).toArray(VirtualFile.EMPTY_ARRAY);
@@ -499,7 +507,7 @@ public abstract class VcsTreeModelData {
    * @see ChangesListView#EXACTLY_SELECTED_FILES_DATA_KEY
    */
   @NotNull
-  static JBIterable<VirtualFile> mapToExactVirtualFile(@NotNull VcsTreeModelData data) {
+  public static JBIterable<VirtualFile> mapToExactVirtualFile(@NotNull VcsTreeModelData data) {
     return data.iterateUserObjects()
       .map(object -> {
         if (object instanceof VirtualFile) return (VirtualFile)object;
