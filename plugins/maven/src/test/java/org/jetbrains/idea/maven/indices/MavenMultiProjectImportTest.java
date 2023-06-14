@@ -11,13 +11,14 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.util.io.PathKt;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.wizards.MavenProjectBuilder;
 import org.jetbrains.idea.maven.wizards.MavenProjectImportProvider;
 
@@ -30,6 +31,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class MavenMultiProjectImportTest extends ProjectWizardTestCase<AbstractProjectWizard> {
 
   private Path myDir;
+
+  @Override
+  public void tearDown() throws Exception {
+    new RunAll(
+      () -> {
+        super.tearDown();
+      },
+      () -> MavenServerManager.getInstance().shutdown(true)
+    ).run();
+  }
 
   public void testIndicesForDifferentProjectsShouldBeSameInstance() {
     myDir = getTempDir().newPath("", true);
@@ -59,8 +70,8 @@ public class MavenMultiProjectImportTest extends ProjectWizardTestCase<AbstractP
     MavenIndexHolder secondIndices = MavenIndicesManager.getInstance(project2).getIndex();
     assertThat(firstIndices.getIndices()).hasSize(2);
     assertThat(secondIndices.getIndices()).hasSize(2);
-    //    assertSame(firstIndices.getLocalIndex(), secondIndices.getLocalIndex());
-    //   assertSame(firstIndices.getRemoteIndices().get(0), secondIndices.getRemoteIndices().get(0));
+    assertSame(firstIndices.getLocalIndex(), secondIndices.getLocalIndex());
+    assertSame(firstIndices.getRemoteIndices().get(0), secondIndices.getRemoteIndices().get(0));
   }
 
   private VirtualFile createPomXml(String dir,
