@@ -1639,12 +1639,15 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static @Nullable Component getParent(@NotNull Component component) {
-    Component realParent = component.getParent();
-    if (realParent != null) {
-      return realParent;
-    }
     WeakReference<Component> ref = ClientProperty.get(component, FOSTER_PARENT);
-    return ref != null ? ref.get() : null;
+    if (ref != null) {
+      Component fosterParent = ref.get();
+      if (fosterParent != null) {
+        return fosterParent;
+      }
+    }
+
+    return component.getParent();
   }
 
   /**
