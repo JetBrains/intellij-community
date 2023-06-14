@@ -289,7 +289,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
   }
 
-  private static Set<PsiClass> getLineClasses(final PsiFile file, int lineNumber) {
+  protected static Set<PsiClass> getLineClasses(final PsiFile file, int lineNumber) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     Set<PsiClass> res = new HashSet<>();
