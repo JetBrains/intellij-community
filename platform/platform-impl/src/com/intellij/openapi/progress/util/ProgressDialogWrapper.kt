@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util
 
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IdeModalityType
@@ -97,7 +99,7 @@ internal fun createDialogWrapper(
 
 private fun peerFactory(window: Window, lightPopup: Boolean): Function<DialogWrapper, DialogWrapperPeer> {
   return java.util.function.Function { dialogWrapper ->
-    if (lightPopup) {
+    if (lightPopup && areLightPopupsEnabled()) {
       try {
         GlassPaneDialogWrapperPeer(dialogWrapper, window)
       }
@@ -127,4 +129,9 @@ internal fun setupProgressDialog(dialog: DialogWrapper, writeAction: Boolean) {
     }
   }
   dialog.pack()
+}
+
+internal fun areLightPopupsEnabled(): Boolean {
+  // Remote-dev implementation can only handle 'real' dialogs currently
+  return ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).isEmpty()
 }
