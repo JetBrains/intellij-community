@@ -28,6 +28,8 @@
     <projectService
       serviceInterface="com.intellij.openapi.module.ModuleManager"
       serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge" preload="true"/>
+    <workspace.bridgeInitializer
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridgeInitializer"/>
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher"/>
 
     <initProjectActivity

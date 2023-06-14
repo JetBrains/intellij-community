@@ -32,6 +32,8 @@
     <!-- Global Workspace Model -->
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl"/>
+    <workspace.bridgeInitializer
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeInitializer"/>
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl"/>
     <applicationService serviceImplementation="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel"/>

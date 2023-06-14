@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
@@ -24,8 +25,38 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.workspaceModel.ide.BridgeInitializer
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl.Companion.initializeLibraryBridgesTimeMs
 import io.opentelemetry.api.metrics.Meter
 import java.util.concurrent.atomic.AtomicLong
+
+class GlobalLibraryTableBridgeInitializer : BridgeInitializer {
+  override fun isEnabled(): Boolean = GlobalLibraryTableBridge.isEnabled()
+
+  override fun initializeBridges(project: Project, changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
+    val start = System.currentTimeMillis()
+
+    val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage
+
+    @Suppress("UNCHECKED_CAST")
+    val libraryChanges = (changes[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList()
+    val addChanges = libraryChanges.asSequence().filterGlobalLibraryChanges().filterIsInstance<EntityChange.Added<LibraryEntity>>()
+
+    for (addChange in addChanges) {
+      // Will initialize the bridge if missing
+      builder.mutableLibraryMap.getOrPutDataByEntity(addChange.entity) {
+        LibraryBridgeImpl(
+          libraryTable = GlobalLibraryTableBridge.getInstance(),
+          project = null,
+          initialId = addChange.entity.symbolicId,
+          initialEntityStorage = entityStorage,
+          targetBuilder = builder
+        )
+      }
+    }
+    initializeLibraryBridgesTimeMs.addElapsedTimeMs(start)
+  }
+}
 
 class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   private val dispatcher = EventDispatcher.create(LibraryTable.Listener::class.java)
@@ -255,16 +286,6 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   override fun removeListener(listener: LibraryTable.Listener) = dispatcher.removeListener(listener)
 
   companion object {
-    private fun Sequence<EntityChange<LibraryEntity>>.filterGlobalLibraryChanges(): Sequence<EntityChange<LibraryEntity>> {
-      return filter {
-        when (it) {
-          is EntityChange.Added -> it.entity.tableId is LibraryTableId.GlobalLibraryTableId
-          is EntityChange.Removed -> it.entity.tableId is LibraryTableId.GlobalLibraryTableId
-          is EntityChange.Replaced -> it.oldEntity.tableId is LibraryTableId.GlobalLibraryTableId
-        }
-      }
-    }
-
     private val GLOBAL_LIBRARY_TABLE_PRESENTATION: LibraryTablePresentation = object : LibraryTablePresentation() {
       override fun getDisplayName(plural: Boolean): String {
         return ProjectModelBundle.message("global.library.display.name", if (plural) 2 else 1)
@@ -281,7 +302,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
 
     private val LOG = logger<GlobalLibraryTableBridgeImpl>()
 
-    private val initializeLibraryBridgesTimeMs: AtomicLong = AtomicLong()
+    internal val initializeLibraryBridgesTimeMs: AtomicLong = AtomicLong()
     private val initializeLibraryBridgesAfterLoadingTimeMs: AtomicLong = AtomicLong()
     private val handleBeforeChangeEventsTimeMs: AtomicLong = AtomicLong()
     private val handleChangedEventsTimeMs: AtomicLong = AtomicLong()
@@ -328,6 +349,16 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
 
     init {
       setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
+  }
+}
+
+private fun Sequence<EntityChange<LibraryEntity>>.filterGlobalLibraryChanges(): Sequence<EntityChange<LibraryEntity>> {
+  return filter {
+    when (it) {
+      is EntityChange.Added -> it.entity.tableId is LibraryTableId.GlobalLibraryTableId
+      is EntityChange.Removed -> it.entity.tableId is LibraryTableId.GlobalLibraryTableId
+      is EntityChange.Replaced -> it.oldEntity.tableId is LibraryTableId.GlobalLibraryTableId
     }
   }
 }
