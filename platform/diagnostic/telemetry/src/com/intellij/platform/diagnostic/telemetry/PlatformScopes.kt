@@ -18,6 +18,9 @@ val Storage: Scope = Scope("storage", PlatformMetrics)
 val JPS: Scope = Scope("jps", PlatformMetrics)
 
 @JvmField
+val Workspace: Scope = Scope("workspace", PlatformMetrics)
+
+@JvmField
 val VFS: Scope = Scope("vfs", PlatformMetrics)
 
 @JvmField
