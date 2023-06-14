@@ -49,7 +49,7 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.util.io.*
 import com.intellij.util.ui.UIUtil
-import com.intellij.workspaceModel.ide.WorkspaceModel.Companion.getInstance
+import com.intellij.platform.backend.workspace.WorkspaceModel.Companion.getInstance
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.platform.workspace.storage.MutableEntityStorage.Companion.from
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity

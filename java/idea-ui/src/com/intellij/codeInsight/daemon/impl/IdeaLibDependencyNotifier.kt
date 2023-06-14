@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.toPath
 import com.intellij.platform.workspace.jps.entities.LibraryEntity

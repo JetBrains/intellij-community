@@ -60,7 +60,7 @@ import com.intellij.util.indexing.roots.kind.ContentOrigin;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.util.text.StringSearcher;
 import com.intellij.util.ui.EDT;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.jps.entities.ModuleId;

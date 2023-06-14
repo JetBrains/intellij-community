@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.roots.TestModuleProperties
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.rules.ProjectModelRule

@@ -21,7 +21,7 @@ import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.testFramework.*
 import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.platform.workspace.storage.DummyParentEntitySource
 import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity

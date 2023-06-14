@@ -23,12 +23,12 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import com.intellij.workspaceModel.ide.workspaceModel
 import com.intellij.platform.workspace.storage.*
 import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.java.workspace.entities.ArtifactId
 import com.intellij.java.workspace.entities.CustomPackagingElementEntity
 import com.intellij.java.workspace.entities.modifyEntity
+import com.intellij.platform.backend.workspace.workspaceModel
 
 class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), Disposable {
 
