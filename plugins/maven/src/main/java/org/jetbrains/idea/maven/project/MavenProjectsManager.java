@@ -994,7 +994,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
-  protected void fireImportAndResolveScheduled(MavenImportSpec spec) {
+  protected void fireImportAndResolveScheduled() {
     for (Listener each : myManagerListeners) {
       each.importAndResolveScheduled();
     }

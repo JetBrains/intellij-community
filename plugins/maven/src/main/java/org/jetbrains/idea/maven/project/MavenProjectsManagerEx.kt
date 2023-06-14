@@ -234,7 +234,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     val resolver = MavenProjectResolver.getInstance(project)
 
     val resolutionResult = withBackgroundProgress(myProject, MavenProjectBundle.message("maven.resolving"), true) {
-      runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorResolvingTask::class.java) {
+      runMavenImportActivity(project, MavenProjectsProcessorResolvingTask::class.java) {
         withRawProgressReporter {
           coroutineToIndicator {
             val indicator = ProgressManager.getGlobalProgressIndicator()
@@ -252,7 +252,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
     val pluginResolver = MavenPluginResolver(projectsTree)
     withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
-      runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorPluginsResolvingTask::class.java) {
+      runMavenImportActivity(project, MavenProjectsProcessorPluginsResolvingTask::class.java) {
         withRawProgressReporter {
           coroutineToIndicator {
             for (mavenProjects in resolutionResult.mavenProjectMap) {
@@ -365,6 +365,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   private suspend fun doUpdateMavenProjects(spec: MavenImportSpec, read: () -> MavenProjectsTreeUpdateResult): List<Module> {
     // display all import activities using the same build progress
+    logDebug("Start update ${project.name}, ${spec.isForceReading}, ${spec.isForceResolve}, ${spec.isExplicitImport}")
     MavenSyncConsole.startTransaction(myProject)
     try {
       val readingResult = readMavenProjectsActivity { read() }
@@ -375,13 +376,14 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       return emptyList()
     }
     finally {
+      logDebug("Finish update ${project.name}, ${spec.isForceReading}, ${spec.isForceResolve}, ${spec.isExplicitImport}")
       MavenSyncConsole.finishTransaction(myProject)
     }
   }
 
   private suspend fun readMavenProjectsActivity(read: () -> MavenProjectsTreeUpdateResult): MavenProjectsTreeUpdateResult {
     return withBackgroundProgress(myProject, MavenProjectBundle.message("maven.reading"), false) {
-      runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
+      runMavenImportActivity(project, MavenProjectsProcessorReadingTask::class.java) {
         withRawProgressReporter {
           coroutineToIndicator {
             read()
@@ -403,10 +405,10 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       val console = syncConsole
       console.startImport(myProgressListener, spec)
 
-      fireImportAndResolveScheduled(spec)
+      fireImportAndResolveScheduled()
       val projectsToResolve = collectProjectsToResolve(readingResult)
 
-      val result = runImportActivity(project, MavenUtil.SYSTEM_ID, ImportingTask::class.java) {
+      val result = runMavenImportActivity(project, ImportingTask::class.java) {
         resolveAndImport(projectsToResolve)
       }
 
@@ -528,6 +530,31 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     finally {
       downloadConsole.finishDownload()
     }
+  }
+
+  private suspend fun <T> runMavenImportActivity(project: Project, taskClass: Class<*>, action: suspend () -> T): T {
+    logDebug("Import activity started: ${taskClass.simpleName}")
+    val result = runImportActivity(project, MavenUtil.SYSTEM_ID, taskClass, action)
+    logDebug("Import activity finished: ${taskClass.simpleName}, result: ${resultSummary(result)}")
+    return result
+  }
+
+  private fun logDebug(debugMessage: String) {
+    MavenLog.LOG.debug(debugMessage)
+  }
+
+  private fun resultSummary(result: Any?): String {
+    if (null == result) return "null"
+    if (result is MavenProjectsTreeUpdateResult) {
+      val updated = result.updated.map { it.key }
+      val deleted = result.deleted.map { it }
+      return "updated ${updated}, deleted ${deleted}"
+    }
+    if (result is MavenProjectResolver.MavenProjectResolutionResult) {
+      val mavenProjects = result.mavenProjectMap.flatMap { it.value }.map { it.mavenProject }
+      return "resolved ${mavenProjects}"
+    }
+    return result.toString()
   }
 
   private fun getVirtualFileManager() : VirtualFileManager {
