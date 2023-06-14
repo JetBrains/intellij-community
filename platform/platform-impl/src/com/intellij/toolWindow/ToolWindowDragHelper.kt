@@ -101,10 +101,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     }
   }
 
-  private fun isEnabled(): Boolean = AdvancedSettings.getBoolean("ide.tool.window.header.dnd")
-
   override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {
-    if (!isEnabled()) return false;
     val point = RelativePoint(dragComponent, dragComponentPoint)
     return getToolWindowAtPoint(point) != null || getComponentFromDragSourcePane(point) is MoreSquareStripeButton
   }
@@ -569,6 +566,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     if (clickedComponent != null && isComponentDraggable(clickedComponent)) {
       val decorator = InternalDecoratorImpl.findNearestDecorator(clickedComponent)
       if (decorator != null &&
+          isHeaderDraggingEnabled() &&
           (decorator.toolWindow.anchor != BOTTOM ||
            decorator.locationOnScreen.y < point.screenPoint.y - ToolWindowPane.headerResizeArea))
         return decorator.toolWindow
@@ -580,6 +578,8 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       else -> null
     }
   }
+
+  private fun isHeaderDraggingEnabled(): Boolean = AdvancedSettings.getBoolean("ide.tool.window.header.dnd")
 
   private fun getPaneContentScreenBounds(pane: ToolWindowPane): Rectangle {
     val location = pane.locationOnScreen
