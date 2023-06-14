@@ -783,7 +783,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                          "</profile>");
     checkMergedNoChanges("<profile version=\"1.0\">\n" +
                          "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
-                         "  <inspection_tool class=\"JUnitMalformedDeclaration\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "  <inspection_tool class=\"JUnitMalformedDeclaration\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"false\" />\n" +
                          "</profile>");
   }
 

@@ -94,7 +94,7 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit.assertequals.may.be.assertsame.display.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnitAssertEqualsMayBeAssertSameInspection"/>
-    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnitMalformedDeclaration"
+    <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="JUnitMalformedDeclaration"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit.malformed.declaration.name"

@@ -35,7 +35,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       class A {
         @JvmField
         @org.junit.jupiter.api.extension.RegisterExtension
-        val <warning descr="Field 'myRule5' annotated with '@RegisterExtension' should be of type 'org.junit.jupiter.api.extension.Extension'">myRule5</warning> = Rule5()
+        val <error descr="Field 'myRule5' annotated with '@RegisterExtension' should be of type 'org.junit.jupiter.api.extension.Extension'">myRule5</error> = Rule5()
         class Rule5 { }
       }
     """.trimIndent())
@@ -70,7 +70,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class A {
         @org.junit.jupiter.api.Nested
-        class <warning descr="Tests in nested class will not be executed">B</warning> { }
+        class <error descr="Tests in nested class will not be executed">B</error> { }
       }
     """.trimIndent())
   }
@@ -90,7 +90,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
   fun `test highlighting non executable JUnit 4 nested class`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class A { 
-        class <warning descr="Tests in nested class will not be executed">B</warning> { 
+        class <error descr="Tests in nested class will not be executed">B</error> { 
           @org.junit.Test
           fun testFoo() { }
         }
@@ -121,7 +121,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
   fun `test highlighting no nested annotation in JUnit 5`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class A {
-          class <warning descr="Tests in nested class will not be executed">B</warning> { 
+          class <error descr="Tests in nested class will not be executed">B</error> { 
               @org.junit.jupiter.api.Test
               fun testFoo() { }
           }
@@ -332,7 +332,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       class ValueSourcesTest {
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(booleans = [
-          <warning descr="No implicit conversion found to convert 'boolean' to 'int'">false</warning>
+          <error descr="No implicit conversion found to convert 'boolean' to 'int'">false</error>
         ])
         fun testWithBooleanSource(argument: Int) { }
       }
@@ -343,7 +343,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       enum class TestEnum { FIRST, SECOND, THIRD }
       class ValueSourcesTest {
         @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.EnumSource(<warning descr="No implicit conversion found to convert 'TestEnum' to 'int'">TestEnum::class</warning>)
+        @org.junit.jupiter.params.provider.EnumSource(<error descr="No implicit conversion found to convert 'TestEnum' to 'int'">TestEnum::class</error>)
         fun testWithEnumSource(i: Int) { }
       }
     """.trimIndent())
@@ -352,7 +352,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest {
         @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.<warning descr="Exactly one type of input must be provided">ValueSource</warning>(
+        @org.junit.jupiter.params.provider.<error descr="Exactly one type of input must be provided">ValueSource</error>(
           ints = [1], strings = ["str"]
         )
         fun testWithMultipleValues(i: Int) { }
@@ -363,7 +363,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest { 
         @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.<warning descr="No value source is defined">ValueSource</warning>()
+        @org.junit.jupiter.params.provider.<error descr="No value source is defined">ValueSource</error>()
         fun testWithNoValues(i: Int) { }
       }
     """.trimIndent())
@@ -372,7 +372,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest { 
         @org.junit.jupiter.params.ParameterizedTest
-        <warning descr="'@NullSource' cannot provide an argument to method because method doesn't have parameters">@org.junit.jupiter.params.provider.NullSource</warning>
+        <error descr="'@NullSource' cannot provide an argument to method because method doesn't have parameters">@org.junit.jupiter.params.provider.NullSource</error>
         fun testWithNullSrcNoParam() {}
       }
     """.trimIndent())
@@ -407,7 +407,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       class ValueSourcesTest { 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(strings = ["foo"])
-        fun <warning descr="Multiple parameters are not supported by this source">testWithMultipleParams</warning>(argument: String, i: Int) { }
+        fun <error descr="Multiple parameters are not supported by this source">testWithMultipleParams</error>(argument: String, i: Int) { }
       }
     """.trimIndent())
   }
@@ -417,7 +417,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(ints = [1])
         @org.junit.jupiter.api.Test
-        fun <warning descr="Suspicious combination of '@Test' and '@ParameterizedTest'">testWithTestAnnotation</warning>(i: Int) { }
+        fun <error descr="Suspicious combination of '@Test' and '@ParameterizedTest'">testWithTestAnnotation</error>(i: Int) { }
       }
     """.trimIndent())
   }
@@ -426,7 +426,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       class ValueSourcesTest { 
         @org.junit.jupiter.params.provider.ValueSource(ints = [1])
         @org.junit.jupiter.api.Test
-        fun <warning descr="Suspicious combination of '@ValueSource' and '@Test'">testWithTestAnnotationNoParameterized</warning>(i: Int) { }
+        fun <error descr="Suspicious combination of '@ValueSource' and '@Test'">testWithTestAnnotationNoParameterized</error>(i: Int) { }
       }
     """.trimIndent())
   }
@@ -435,7 +435,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       class ValueSourcesTest {       
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ArgumentsSources()
-        fun <warning descr="No sources are provided, the suite would be empty">emptyArgs</warning>(param: String) { }
+        fun <error descr="No sources are provided, the suite would be empty">emptyArgs</error>(param: String) { }
       }        
     """.trimIndent())
   }
@@ -443,7 +443,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest {       
         @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.MethodSource("<warning descr="Method source 'a' must be static">a</warning>")
+        @org.junit.jupiter.params.provider.MethodSource("<error descr="Method source 'a' must be static">a</error>")
         fun foo(param: String) { }
         
         fun a(): Array<String> { return arrayOf("a", "b") }
@@ -454,7 +454,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest {       
         @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.MethodSource("<warning descr="Method source 'a' should have no parameters">a</warning>")
+        @org.junit.jupiter.params.provider.MethodSource("<error descr="Method source 'a' should have no parameters">a</error>")
         fun foo(param: String) { }
         
         companion object {
@@ -470,7 +470,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       class ValueSourcesTest {       
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.MethodSource(
-          "<warning descr="Method source 'a' must have one of the following return types: 'Stream<?>', 'Iterator<?>', 'Iterable<?>' or 'Object[]'">a</warning>"
+          "<error descr="Method source 'a' must have one of the following return types: 'Stream<?>', 'Iterator<?>', 'Iterable<?>' or 'Object[]'">a</error>"
         )
         fun foo(param: String) { }
         
@@ -485,7 +485,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class ValueSourcesTest {       
         @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.MethodSource("<warning descr="Cannot resolve target method source: 'a'">a</warning>")
+        @org.junit.jupiter.params.provider.MethodSource("<error descr="Cannot resolve target method source: 'a'">a</error>")
         fun foo(param: String) { }
       }        
     """.trimIndent())
@@ -498,7 +498,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EnumSource(
           value = Foo::class, 
-          names = ["<warning descr="Can't resolve 'enum' constant reference.">invalid-value</warning>"], 
+          names = ["<error descr="Can't resolve 'enum' constant reference.">invalid-value</error>"], 
           mode = org.junit.jupiter.params.provider.EnumSource.Mode.INCLUDE
         )
         fun invalid() { }
@@ -506,7 +506,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EnumSource(
           value = Foo::class, 
-          names = ["<warning descr="Can't resolve 'enum' constant reference.">invalid-value</warning>"]
+          names = ["<error descr="Can't resolve 'enum' constant reference.">invalid-value</error>"]
        )
         fun invalidDefault() { }
       }
@@ -637,7 +637,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       class WithRepeatedAndTests {
         @org.junit.jupiter.api.Test
         @org.junit.jupiter.api.RepeatedTest(1)
-        fun <warning descr="Suspicious combination of '@Test' and '@RepeatedTest'">repeatedTestAndTest</warning>() { }
+        fun <error descr="Suspicious combination of '@Test' and '@RepeatedTest'">repeatedTestAndTest</error>() { }
       }
     """.trimIndent())
   }
@@ -648,7 +648,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun beforeEach(repetitionInfo: org.junit.jupiter.api.RepetitionInfo) { }
 
         @org.junit.jupiter.api.Test
-        fun <warning descr="Method 'nonRepeated' annotated with '@Test' should not declare parameter 'repetitionInfo'">nonRepeated</warning>(repetitionInfo: org.junit.jupiter.api.RepetitionInfo) { }
+        fun <error descr="Method 'nonRepeated' annotated with '@Test' should not declare parameter 'repetitionInfo'">nonRepeated</error>(repetitionInfo: org.junit.jupiter.api.RepetitionInfo) { }
       }      
     """.trimIndent() )
   }
@@ -658,7 +658,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         companion object {
           @JvmStatic
           @org.junit.jupiter.api.BeforeAll
-          fun <warning descr="Method 'beforeAllWithRepetitionInfo' annotated with '@BeforeAll' should not declare parameter 'repetitionInfo'">beforeAllWithRepetitionInfo</warning>(repetitionInfo: org.junit.jupiter.api.RepetitionInfo) { }
+          fun <error descr="Method 'beforeAllWithRepetitionInfo' annotated with '@BeforeAll' should not declare parameter 'repetitionInfo'">beforeAllWithRepetitionInfo</error>(repetitionInfo: org.junit.jupiter.api.RepetitionInfo) { }
         }
       }
     """.trimIndent())
@@ -666,10 +666,10 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
   fun `test malformed repeated test with non-positive repetitions`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class WithRepeated {
-        @org.junit.jupiter.api.RepeatedTest(<warning descr="The number of repetitions must be greater than zero">-1</warning>)
+        @org.junit.jupiter.api.RepeatedTest(<error descr="The number of repetitions must be greater than zero">-1</error>)
         fun repeatedTestNegative() { }
 
-        @org.junit.jupiter.api.RepeatedTest(<warning descr="The number of repetitions must be greater than zero">0</warning>)
+        @org.junit.jupiter.api.RepeatedTest(<error descr="The number of repetitions must be greater than zero">0</error>)
         fun repeatedTestBoundaryZero() { }
       }
     """.trimIndent())
@@ -680,7 +680,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
         @org.junit.Before
-        fun <warning descr="Method 'before' annotated with '@Before' should be of type 'void' and not declare parameter 'i'">before</warning>(i: Int): String { return "${'$'}i" }
+        fun <error descr="Method 'before' annotated with '@Before' should be of type 'void' and not declare parameter 'i'">before</error>(i: Int): String { return "${'$'}i" }
       }
     """.trimIndent())
   }
@@ -688,7 +688,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
         @org.junit.jupiter.api.BeforeEach
-        fun <warning descr="Method 'beforeEach' annotated with '@BeforeEach' should be of type 'void' and not declare parameter 'i'">beforeEach</warning>(i: Int): String { return "" }
+        fun <error descr="Method 'beforeEach' annotated with '@BeforeEach' should be of type 'void' and not declare parameter 'i'">beforeEach</error>(i: Int): String { return "" }
       }
     """.trimIndent())
   }
@@ -788,7 +788,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
         @org.junit.BeforeClass
-        fun <warning descr="Method 'beforeClass' annotated with '@BeforeClass' should be static">beforeClass</warning>() { }
+        fun <error descr="Method 'beforeClass' annotated with '@BeforeClass' should be static">beforeClass</error>() { }
       }
     """.trimIndent())
   }
@@ -798,7 +798,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         companion object {
           @JvmStatic
           @org.junit.BeforeClass
-          private fun <warning descr="Method 'beforeClass' annotated with '@BeforeClass' should be public">beforeClass</warning>() { }
+          private fun <error descr="Method 'beforeClass' annotated with '@BeforeClass' should be public">beforeClass</error>() { }
         }
       }
     """.trimIndent())
@@ -809,7 +809,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         companion object {
           @JvmStatic
           @org.junit.BeforeClass
-          fun <warning descr="Method 'beforeClass' annotated with '@BeforeClass' should not declare parameter 'i'">beforeClass</warning>(i: Int) { System.out.println(i) }
+          fun <error descr="Method 'beforeClass' annotated with '@BeforeClass' should not declare parameter 'i'">beforeClass</error>(i: Int) { System.out.println(i) }
         }
       }
     """.trimIndent())
@@ -820,7 +820,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         companion object {
           @JvmStatic
           @org.junit.BeforeClass
-          fun <warning descr="Method 'beforeClass' annotated with '@BeforeClass' should be of type 'void'">beforeClass</warning>(): String { return "" }
+          fun <error descr="Method 'beforeClass' annotated with '@BeforeClass' should be of type 'void'">beforeClass</error>(): String { return "" }
         }
       }
     """.trimIndent())
@@ -829,7 +829,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class MainTest {
         @org.junit.jupiter.api.BeforeAll
-        fun <warning descr="Method 'beforeAll' annotated with '@BeforeAll' should be static">beforeAll</warning>() { }
+        fun <error descr="Method 'beforeAll' annotated with '@BeforeAll' should be static">beforeAll</error>() { }
       }
     """.trimIndent())
   }
@@ -839,7 +839,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         companion object {
           @JvmStatic
           @org.junit.jupiter.api.BeforeAll
-          private fun <warning descr="Method 'beforeAll' annotated with '@BeforeAll' should be public">beforeAll</warning>() { }
+          private fun <error descr="Method 'beforeAll' annotated with '@BeforeAll' should be public">beforeAll</error>() { }
         }
       }
     """.trimIndent())
@@ -850,7 +850,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         companion object {
           @JvmStatic
           @org.junit.jupiter.api.BeforeAll
-          fun <warning descr="Method 'beforeAll' annotated with '@BeforeAll' should not declare parameter 'i'">beforeAll</warning>(i: Int) { System.out.println(i) }
+          fun <error descr="Method 'beforeAll' annotated with '@BeforeAll' should not declare parameter 'i'">beforeAll</error>(i: Int) { System.out.println(i) }
         }
       }
     """.trimIndent())
@@ -861,7 +861,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         companion object {
           @JvmStatic
           @org.junit.jupiter.api.BeforeAll
-          fun <warning descr="Method 'beforeAll' annotated with '@BeforeAll' should be of type 'void'">beforeAll</warning>(): String { return "" }
+          fun <error descr="Method 'beforeAll' annotated with '@BeforeAll' should be of type 'void'">beforeAll</error>(): String { return "" }
         }
       }
     """.trimIndent())
@@ -930,7 +930,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       class Test {
          @JvmField
          @org.junit.experimental.theories.DataPoint
-         val <warning descr="Field 'f1' annotated with '@DataPoint' should be static">f1</warning>: Any? = null
+         val <error descr="Field 'f1' annotated with '@DataPoint' should be static">f1</error>: Any? = null
       }
     """.trimIndent())
   }
@@ -940,7 +940,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         companion object {
           @JvmStatic
           @org.junit.experimental.theories.DataPoint
-          private val <warning descr="Field 'f1' annotated with '@DataPoint' should be public">f1</warning>: Any? = null
+          private val <error descr="Field 'f1' annotated with '@DataPoint' should be public">f1</error>: Any? = null
         }
       }
     """.trimIndent())
@@ -949,7 +949,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Test {
          @org.junit.experimental.theories.DataPoint
-         private val <warning descr="Field 'f1' annotated with '@DataPoint' should be static and public">f1</warning>: Any? = null
+         private val <error descr="Field 'f1' annotated with '@DataPoint' should be static and public">f1</error>: Any? = null
       }
     """.trimIndent())
   }
@@ -957,7 +957,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Test {
          @org.junit.experimental.theories.DataPoint
-         private fun <warning descr="Method 'f1' annotated with '@DataPoint' should be static and public">f1</warning>(): Any? = null
+         private fun <error descr="Method 'f1' annotated with '@DataPoint' should be static and public">f1</error>(): Any? = null
       }
     """.trimIndent())
   }
@@ -965,7 +965,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Test {
          @org.junit.experimental.theories.DataPoints
-         private fun <warning descr="Method 'f1' annotated with '@DataPoints' should be static and public">f1</warning>(): Any? = null
+         private fun <error descr="Method 'f1' annotated with '@DataPoints' should be static and public">f1</error>(): Any? = null
       }
     """.trimIndent())
   }
@@ -1031,7 +1031,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
   fun `test malformed setup highlighting`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class C : junit.framework.TestCase() {
-        private fun <warning descr="Method 'setUp' should be non-private, non-static, have no parameters and of type void">setUp</warning>(i: Int) { System.out.println(i) }
+        private fun <error descr="Method 'setUp' should be non-private, non-static, have no parameters and of type void">setUp</error>(i: Int) { System.out.println(i) }
       }  
     """.trimIndent())
   }
@@ -1057,7 +1057,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
 
       class PrivateRule {
         @org.junit.Rule
-        var <warning descr="Field 'x' annotated with '@Rule' should be public">x</warning> = SomeTestRule()
+        var <error descr="Field 'x' annotated with '@Rule' should be public">x</error> = SomeTestRule()
       }
     """.trimIndent())
   }
@@ -1073,7 +1073,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       
       object ObjRule {
         @org.junit.Rule
-        private var <warning descr="Field 'x' annotated with '@Rule' should be non-static and public">x</warning> = SomeTestRule()
+        private var <error descr="Field 'x' annotated with '@Rule' should be non-static and public">x</error> = SomeTestRule()
       }
 
       class ClazzRule {
@@ -1081,7 +1081,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         fun x() = OtherRule
         
         @org.junit.Rule
-        fun <warning descr="Method 'y' annotated with '@Rule' should be of type 'org.junit.rules.TestRule'">y</warning>() = 0
+        fun <error descr="Method 'y' annotated with '@Rule' should be of type 'org.junit.rules.TestRule'">y</error>() = 0
 
         @org.junit.Rule
         public fun z() = object : org.junit.rules.TestRule {
@@ -1089,7 +1089,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         }
 
         @org.junit.Rule
-        public fun <warning descr="Method 'a' annotated with '@Rule' should be of type 'org.junit.rules.TestRule'">a</warning>() = object { }
+        public fun <error descr="Method 'a' annotated with '@Rule' should be of type 'org.junit.rules.TestRule'">a</error>() = object { }
       }  
     """.trimIndent())
   }
@@ -1101,7 +1101,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       
       class PrivateRule {
         @org.junit.Rule
-        private fun <warning descr="Method 'x' annotated with '@Rule' should be public">x</warning>() = SomeTestRule()
+        private fun <error descr="Method 'x' annotated with '@Rule' should be public">x</error>() = SomeTestRule()
       }
     """.trimIndent())
   }
@@ -1109,7 +1109,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class PrivateRule {
         @org.junit.Rule
-        fun <warning descr="Method 'x' annotated with '@Rule' should be of type 'org.junit.rules.TestRule'">x</warning>() = 0
+        fun <error descr="Method 'x' annotated with '@Rule' should be of type 'org.junit.rules.TestRule'">x</error>() = 0
       }
     """.trimIndent())
   }
@@ -1121,10 +1121,10 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       
       object PrivateClassRule {
         @org.junit.ClassRule
-        private var <warning descr="Field 'x' annotated with '@ClassRule' should be public">x</warning> = SomeTestRule()
+        private var <error descr="Field 'x' annotated with '@ClassRule' should be public">x</error> = SomeTestRule()
       
         @org.junit.ClassRule
-        private var <warning descr="Field 'y' annotated with '@ClassRule' should be public and of type 'org.junit.rules.TestRule'">y</warning> = 0
+        private var <error descr="Field 'y' annotated with '@ClassRule' should be public and of type 'org.junit.rules.TestRule'">y</error> = 0
       }
     """.trimIndent())
   }
@@ -1170,13 +1170,13 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       public class JUnit3TestMethodIsPublicVoidNoArg : junit.framework.TestCase() {
         fun testOne() { }
-        public fun <warning descr="Method 'testTwo' should be public, non-static, have no parameters and of type void">testTwo</warning>(): Int { return 2 }
-        public fun <warning descr="Method 'testFour' should be public, non-static, have no parameters and of type void">testFour</warning>(i: Int) { println(i) }
+        public fun <error descr="Method 'testTwo' should be public, non-static, have no parameters and of type void">testTwo</error>(): Int { return 2 }
+        public fun <error descr="Method 'testFour' should be public, non-static, have no parameters and of type void">testFour</error>(i: Int) { println(i) }
         public fun testFive() { }
         private fun testSix(i: Int) { println(i) } //ignore when method doesn't look like test anymore
         companion object {
           @JvmStatic
-          public fun <warning descr="Method 'testThree' should be public, non-static, have no parameters and of type void">testThree</warning>() { }
+          public fun <error descr="Method 'testThree' should be public, non-static, have no parameters and of type void">testThree</error>() { }
         }
       }
     """.trimIndent())
@@ -1189,13 +1189,13 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       public class JUnit4TestMethodIsPublicVoidNoArg {
         @org.junit.Test fun testOne() { }
-        @org.junit.Test public fun <warning descr="Method 'testTwo' annotated with '@Test' should be of type 'void'">testTwo</warning>(): Int { return 2 }
-        @org.junit.Test public fun <warning descr="Method 'testFour' annotated with '@Test' should not declare parameter 'i'">testFour</warning>(i: Int) { }
+        @org.junit.Test public fun <error descr="Method 'testTwo' annotated with '@Test' should be of type 'void'">testTwo</error>(): Int { return 2 }
+        @org.junit.Test public fun <error descr="Method 'testFour' annotated with '@Test' should not declare parameter 'i'">testFour</error>(i: Int) { }
         @org.junit.Test public fun testFive() { }
         @org.junit.Test public fun testMock(@mockit.Mocked s: String) { }
-        companion <warning descr="Test class 'object' is not constructable because it should have exactly one 'public' no-arg constructor"><warning descr="Tests in nested class will not be executed">object</warning></warning> {
+        companion <error descr="Test class 'object' is not constructable because it should have exactly one 'public' no-arg constructor"><error descr="Tests in nested class will not be executed">object</error></error> {
           @JvmStatic
-          @org.junit.Test public fun <warning descr="Method 'testThree' annotated with '@Test' should be non-static">testThree</warning>() { }
+          @org.junit.Test public fun <error descr="Method 'testThree' annotated with '@Test' should be non-static">testThree</error>() { }
         }
       }
     """.trimIndent())
@@ -1218,7 +1218,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       @org.junit.runner.RunWith(org.junit.runners.JUnit4::class)
       class Foo {
-          @org.junit.Test public fun <warning descr="Method 'testMe' annotated with '@Test' should be of type 'void' and not declare parameter 'i'">testMe</warning>(i: Int): Int { return -1 }
+          @org.junit.Test public fun <error descr="Method 'testMe' annotated with '@Test' should be of type 'void' and not declare parameter 'i'">testMe</error>(i: Int): Int { return -1 }
       }
     """.trimIndent())
   }
@@ -1237,7 +1237,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
   fun `test malformed suite highlighting`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class Junit3Suite : junit.framework.TestCase() {          
-          fun <warning descr="Method 'suite' should be non-private, static and have no parameters">suite</warning>() = junit.framework.TestSuite()
+          fun <error descr="Method 'suite' should be non-private, static and have no parameters">suite</error>() = junit.framework.TestSuite()
       }
     """.trimIndent())
   }
@@ -1260,7 +1260,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
   fun `test malformed suspending test JUnit 3 function`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class JUnit3Test : junit.framework.TestCase() {
-          suspend fun <warning descr="Method 'testFoo' should not be a suspending function">testFoo</warning>() { }
+          suspend fun <error descr="Method 'testFoo' should not be a suspending function">testFoo</error>() { }
       }    
     """.trimIndent())
   }
@@ -1268,7 +1268,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class JUnit4Test {
           @org.junit.Test
-          suspend fun <warning descr="Method 'testFoo' annotated with '@Test' should not be a suspending function">testFoo</warning>() { }
+          suspend fun <error descr="Method 'testFoo' annotated with '@Test' should not be a suspending function">testFoo</error>() { }
       }    
     """.trimIndent())
   }
@@ -1276,7 +1276,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class JUnit5Test {
           @org.junit.jupiter.api.Test
-          suspend fun <warning descr="Method 'testFoo' annotated with '@Test' should not be a suspending function">testFoo</warning>() { }
+          suspend fun <error descr="Method 'testFoo' annotated with '@Test' should not be a suspending function">testFoo</error>() { }
       }    
     """.trimIndent())
   }
@@ -1308,7 +1308,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
 
-      class <warning descr="Test class 'UnconstructableJUnit3TestCase1' is not constructable because it does not have a 'public' no-arg or single 'String' parameter constructor">UnconstructableJUnit3TestCase1</warning> private constructor() : TestCase() {
+      class <error descr="Test class 'UnconstructableJUnit3TestCase1' is not constructable because it does not have a 'public' no-arg or single 'String' parameter constructor">UnconstructableJUnit3TestCase1</error> private constructor() : TestCase() {
       }
     """.trimIndent())
   }
@@ -1316,7 +1316,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
 
-      class <warning descr="Test class 'UnconstructableJUnit3TestCase2' is not constructable because it does not have a 'public' no-arg or single 'String' parameter constructor">UnconstructableJUnit3TestCase2</warning>(val foo: Any) : TestCase() {
+      class <error descr="Test class 'UnconstructableJUnit3TestCase2' is not constructable because it does not have a 'public' no-arg or single 'String' parameter constructor">UnconstructableJUnit3TestCase2</error>(val foo: Any) : TestCase() {
         fun bar() { }
       }
     """.trimIndent())
@@ -1357,7 +1357,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.Test
       
-      class <warning descr="Test class 'UnconstructableJUnit4TestCase1' is not constructable because it should have exactly one 'public' no-arg constructor">UnconstructableJUnit4TestCase1</warning>() {
+      class <error descr="Test class 'UnconstructableJUnit4TestCase1' is not constructable because it should have exactly one 'public' no-arg constructor">UnconstructableJUnit4TestCase1</error>() {
         constructor(args: String) : this() { args.plus("") }
       
         @Test
@@ -1381,7 +1381,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.Test
 
-      private class <warning descr="Test class 'UnconstructableJUnit4TestCase3' is not constructable because it is not 'public'">UnconstructableJUnit4TestCase3</warning>() {
+      private class <error descr="Test class 'UnconstructableJUnit4TestCase3' is not constructable because it is not 'public'">UnconstructableJUnit4TestCase3</error>() {
 
         @Test
         fun testMe() {}
