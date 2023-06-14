@@ -103,6 +103,26 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/annotations/OnlyAnnotations.kt");
             }
 
+            @TestMetadata("OnlyCompileTimeConstants1.kt")
+            public void testOnlyCompileTimeConstants1() throws Exception {
+                runTest("../testData/basic/common/annotations/OnlyCompileTimeConstants1.kt");
+            }
+
+            @TestMetadata("OnlyCompileTimeConstants2.kt")
+            public void testOnlyCompileTimeConstants2() throws Exception {
+                runTest("../testData/basic/common/annotations/OnlyCompileTimeConstants2.kt");
+            }
+
+            @TestMetadata("OnlyCompileTimeConstants3.kt")
+            public void testOnlyCompileTimeConstants3() throws Exception {
+                runTest("../testData/basic/common/annotations/OnlyCompileTimeConstants3.kt");
+            }
+
+            @TestMetadata("OnlyCompileTimeConstants4.kt")
+            public void testOnlyCompileTimeConstants4() throws Exception {
+                runTest("../testData/basic/common/annotations/OnlyCompileTimeConstants4.kt");
+            }
+
             @TestMetadata("ParameterAnnotation1.kt")
             public void testParameterAnnotation1() throws Exception {
                 runTest("../testData/basic/common/annotations/ParameterAnnotation1.kt");

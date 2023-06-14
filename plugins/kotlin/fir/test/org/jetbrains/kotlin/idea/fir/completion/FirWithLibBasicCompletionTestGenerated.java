@@ -38,6 +38,11 @@ public class FirWithLibBasicCompletionTestGenerated extends AbstractFirWithLibBa
         runTest("../completion/testData/basic/withLib/JavaAnnotationWithoutDefaultMethod.kt");
     }
 
+    @TestMetadata("JavaFinalStaticFieldAsAnnotationArgument.kt")
+    public void testJavaFinalStaticFieldAsAnnotationArgument() throws Exception {
+        runTest("../completion/testData/basic/withLib/JavaFinalStaticFieldAsAnnotationArgument.kt");
+    }
+
     @TestMetadata("NamedArgumentsJava.kt")
     public void testNamedArgumentsJava() throws Exception {
         runTest("../completion/testData/basic/withLib/NamedArgumentsJava.kt");

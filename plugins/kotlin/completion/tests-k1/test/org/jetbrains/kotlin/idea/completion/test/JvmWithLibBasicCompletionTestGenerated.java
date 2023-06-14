@@ -38,6 +38,11 @@ public class JvmWithLibBasicCompletionTestGenerated extends AbstractJvmWithLibBa
         runTest("../testData/basic/withLib/JavaAnnotationWithoutDefaultMethod.kt");
     }
 
+    @TestMetadata("JavaFinalStaticFieldAsAnnotationArgument.kt")
+    public void testJavaFinalStaticFieldAsAnnotationArgument() throws Exception {
+        runTest("../testData/basic/withLib/JavaFinalStaticFieldAsAnnotationArgument.kt");
+    }
+
     @TestMetadata("NamedArgumentsJava.kt")
     public void testNamedArgumentsJava() throws Exception {
         runTest("../testData/basic/withLib/NamedArgumentsJava.kt");

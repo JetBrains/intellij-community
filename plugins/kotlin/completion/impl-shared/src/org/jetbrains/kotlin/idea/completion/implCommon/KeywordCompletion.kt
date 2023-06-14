@@ -19,11 +19,11 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget.*
+import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.createKeywordConstructLookupElement
 import org.jetbrains.kotlin.lexer.KtKeywordToken
@@ -67,6 +67,14 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
             INNER_KEYWORD,
             ABSTRACT_KEYWORD
         ).mapTo(HashSet()) { it.value }
+
+        private val KEYWORDS_ALLOWED_INSIDE_ANNOTATION_ENTRY: Set<KtKeywordToken> = setOf(
+            IF_KEYWORD,
+            ELSE_KEYWORD,
+            TRUE_KEYWORD,
+            FALSE_KEYWORD,
+            WHEN_KEYWORD,
+        )
 
         private fun getCompoundKeywords(token: KtKeywordToken, languageVersionSettings: LanguageVersionSettings): Set<KtKeywordToken>? =
             mapOf<KtKeywordToken, Set<KtKeywordToken>>(
@@ -172,6 +180,8 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
         parserFilter: (KtKeywordToken) -> Boolean,
         consumer: (LookupElement) -> Unit
     ) {
+        if (position.isInsideAnnotationEntryArgumentList() && keywordToken !in KEYWORDS_ALLOWED_INSIDE_ANNOTATION_ENTRY) return
+
         var keyword = keywordToken.value
 
         var applicableAsCompound = false
