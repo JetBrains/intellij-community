@@ -16,4 +16,6 @@ interface InteractiveCourseFactory {
 
   val disabledText: String
   fun getInteractiveCourseComponent(): JComponent
+
+  fun getCourseData(): InteractiveCourseData
 }

@@ -9,6 +9,7 @@ import com.intellij.ide.actions.OnlineDocAction
 import com.intellij.ide.actions.WhatsNewAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress.createTitlePanel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
@@ -18,9 +19,7 @@ import javax.swing.*
 import javax.swing.plaf.ComponentUI
 
 class HelpAndResourcesPanel : JPanel() {
-  private val helpAndResourcesHeader: JTextPane = HeightLimitedPane(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text"),
-                                                                    5, LearnIdeContentColorsAndFonts.HeaderColor, true)
-
+  private val helpAndResourcesHeader: JTextPane = createTitlePanel(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text"))
   init {
     layout = BoxLayout(this, BoxLayout.PAGE_AXIS)
     isOpaque = false
