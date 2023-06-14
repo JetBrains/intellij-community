@@ -29,7 +29,7 @@ class KindExecutingCompletionContributor : CompletionContributor() {
     for (generator in KindCollector.forParameters(parameters)) {
       val policyWhileGenerating = executor.createNoneKindPolicy()
       policyController.invokeWithPolicy(policyWhileGenerating) {
-        executor.reportGenerateCompletionKinds(generator, parameters, executor, obeyingResult, policyController)
+        executor.reportGenerateCompletionKinds(generator, parameters, executor, obeyingResult)
       }
       if (obeyingResult.isStopped) break
     }

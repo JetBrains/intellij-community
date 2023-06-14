@@ -31,11 +31,10 @@ class ReportingSuggestionGeneratorExecutor(
   fun reportGenerateCompletionKinds(generator: KindCollector,
                                     parameters: CompletionParameters,
                                     completionKindsConsumer: SuggestionGeneratorConsumer,
-                                    result: CompletionResultSet,
-                                    resultPolicyController: PolicyController) {
+                                    result: CompletionResultSet) {
     listener.onCollectionStarted()
     try {
-      generator.collectKinds(parameters, completionKindsConsumer, result, resultPolicyController)
+      generator.collectKinds(parameters, completionKindsConsumer, result)
     }
     finally {
       listener.onCollectionFinished()

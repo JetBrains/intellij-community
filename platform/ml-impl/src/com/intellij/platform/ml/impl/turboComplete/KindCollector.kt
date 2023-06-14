@@ -3,7 +3,6 @@ package com.intellij.platform.ml.impl.turboComplete
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import com.intellij.openapi.extensions.ExtensionPointName
 /**
  * Collects all [SuggestionGenerator] of the same variety,
@@ -38,8 +37,7 @@ interface KindCollector {
    */
   fun collectKinds(parameters: CompletionParameters,
                    generatorConsumer: SuggestionGeneratorConsumer,
-                   result: CompletionResultSet,
-                   resultPolicyController: PolicyController)
+                   result: CompletionResultSet)
 
   companion object {
     @JvmStatic
