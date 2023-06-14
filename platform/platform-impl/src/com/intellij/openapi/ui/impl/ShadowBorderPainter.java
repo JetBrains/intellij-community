@@ -3,6 +3,7 @@ package com.intellij.openapi.ui.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.Gray;
+import com.intellij.ui.ShadowJava2DPainter;
 import com.intellij.util.ui.ImageUtil;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
 import org.jdesktop.swingx.graphics.ShadowRenderer;
@@ -29,7 +30,19 @@ public final class ShadowBorderPainter {
   private ShadowBorderPainter() {
   }
 
+  private static BufferedImage createJava2dShadow(JComponent component, int width, int height) {
+    BufferedImage image = component.getGraphicsConfiguration().createCompatibleImage(width, height, Transparency.TRANSLUCENT);
+    ShadowJava2DPainter painter = new ShadowJava2DPainter("Ide", Gray.x00.withAlpha(30));
+    Graphics2D g = image.createGraphics();
+    painter.paintShadow(g, 0, 0, width, height);
+    g.dispose();
+    return image;
+  }
+
   public static BufferedImage createShadow(final JComponent c, final int width, final int height, boolean isPopup) {
+    if (ShadowJava2DPainter.Companion.enabled()) {
+      return createJava2dShadow(c, width, height);
+    }
     return ourShadowPainter.createShadow(c, width, height);
   }
 
