@@ -95,8 +95,9 @@ public class MalformedFormatStringInspection extends BaseInspection {
     }
     final PsiType argumentType = (PsiType)infos[2];
     final FormatDecode.Validator validator = (FormatDecode.Validator)infos[3];
+    String specifier = validator.getInvalidSpecifier(argumentType);
     return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.arguments.do.not.match.type",
-                                           argumentType.getPresentableText(), validator.getSpecifier());
+                                           argumentType.getPresentableText(), specifier == null ? validator.getSpecifier() : specifier);
   }
 
   @Override

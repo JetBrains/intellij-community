@@ -532,22 +532,24 @@ public final class FormatDecode {
     private final Set<Validator> validators = new HashSet<>(3);
 
     @Nullable
-    private String lastFailedSpecifier = null;
+    @Override
+    public String getInvalidSpecifier(PsiType type) {
+      for (Validator validator : validators) {
+        if (!validator.valid(type)) {
+          return validator.getInvalidSpecifier(type);
+        }
+      }
+      return null;
+    }
 
     MultiValidator(String specifier) {
       super(specifier);
     }
 
     @Override
-    public String getSpecifier() {
-      return lastFailedSpecifier == null ? super.getSpecifier() : lastFailedSpecifier;
-    }
-
-    @Override
     public boolean valid(PsiType type) {
       for (Validator validator : validators) {
         if (!validator.valid(type)) {
-          lastFailedSpecifier = validator.getSpecifier();
           return false;
         }
       }
@@ -565,6 +567,13 @@ public final class FormatDecode {
 
   public abstract static class Validator {
 
+    @Nullable
+    public String getInvalidSpecifier(PsiType type){
+      if (valid(type)) {
+        return null;
+      }
+      return getSpecifier();
+    }
     private final String mySpecifier;
 
     Validator(String specifier) {
