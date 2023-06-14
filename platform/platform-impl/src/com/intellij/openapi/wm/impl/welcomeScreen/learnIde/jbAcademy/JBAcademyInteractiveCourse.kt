@@ -22,6 +22,10 @@ internal class JBAcademyInteractiveCourse : InteractiveCourseFactory {
             PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell() ||
             PlatformUtils.isGoIde()
 
+  override val isEnabled: Boolean = true
+
+  override val disabledText: String = ""
+
   override fun getInteractiveCourseComponent(): JComponent = JBAcademyInteractiveCoursePanel(EduToolsInteractiveCourseData())
 }
 
