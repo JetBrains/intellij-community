@@ -243,7 +243,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
       if (!warnings.isEmpty()) {
         sb.append("// ").append(warnings);
       }
-      if (sb.length() > 0) sb.append("\n");
+      if (!sb.isEmpty()) sb.append("\n");
       pos = endPos;
       sb.append(str);
     }

@@ -167,7 +167,7 @@ public class StringIndex {
       for (int idx = 0; idx < content.length(); idx++) {
         final char ch = content.charAt(idx);
         if (Character.isWhitespace(ch)) {
-          if (builder.length() > 0) {
+          if (!builder.isEmpty()) {
             _map.put(builder.toString(), inputData.path);
             builder.setLength(0);
           }
@@ -177,7 +177,7 @@ public class StringIndex {
         }
       }
       // emit the last word
-      if (builder.length() > 0) {
+      if (!builder.isEmpty()) {
         _map.put(builder.toString(), inputData.path);
         builder.setLength(0);
       }

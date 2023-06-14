@@ -106,7 +106,7 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         """);
 
     List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Import class");
-    assertTrue(intentions.size() > 0);
+    assertFalse(intentions.isEmpty());
 
     int commentOffset = file.getText().indexOf("//");
     myFixture.getEditor().getCaretModel().moveToOffset(commentOffset);
