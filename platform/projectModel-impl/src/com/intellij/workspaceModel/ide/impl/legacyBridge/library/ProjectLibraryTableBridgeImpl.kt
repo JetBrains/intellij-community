@@ -24,8 +24,33 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.workspaceModel.ide.BridgeInitializer
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
+class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
+  override fun isEnabled(): Boolean = true
+
+  override fun initializeBridges(project: Project, changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
+    @Suppress("UNCHECKED_CAST")
+    val libraryChanges = (changes[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList()
+    val addChanges = libraryChanges.asSequence().filterProjectLibraryChanges().filterIsInstance<EntityChange.Added<LibraryEntity>>()
+
+    for (addChange in addChanges) {
+      // Will initialize the bridge if missing
+      builder.mutableLibraryMap.getOrPutDataByEntity(addChange.entity) {
+        LibraryBridgeImpl(
+          libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project),
+          project = project,
+          initialId = addChange.entity.symbolicId,
+          initialEntityStorage = WorkspaceModel.getInstance(project).entityStorage,
+          targetBuilder = builder
+        )
+      }
+    }
+  }
+}
 
 class ProjectLibraryTableBridgeImpl(
   private val parentProject: Project
@@ -98,25 +123,6 @@ class ProjectLibraryTableBridgeImpl(
         }
       }
     })
-  }
-
-  internal fun initializeLibraryBridges(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
-    @Suppress("UNCHECKED_CAST")
-    val libraryChanges = (changes[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList()
-    val addChanges = libraryChanges.asSequence().filterProjectLibraryChanges().filterIsInstance<EntityChange.Added<LibraryEntity>>()
-
-    for (addChange in addChanges) {
-      // Will initialize the bridge if missing
-      builder.mutableLibraryMap.getOrPutDataByEntity(addChange.entity) {
-        LibraryBridgeImpl(
-          libraryTable = this@ProjectLibraryTableBridgeImpl,
-          project = project,
-          initialId = addChange.entity.symbolicId,
-          initialEntityStorage = entityStorage,
-          targetBuilder = builder
-        )
-      }
-    }
   }
 
   suspend fun loadLibraries(targetBuilder: MutableEntityStorage?) {
@@ -231,15 +237,6 @@ class ProjectLibraryTableBridgeImpl(
   }
 
   companion object {
-    private fun Sequence<EntityChange<LibraryEntity>>.filterProjectLibraryChanges() =
-      filter {
-        when (it) {
-          is EntityChange.Added -> it.entity.tableId is LibraryTableId.ProjectLibraryTableId
-          is EntityChange.Removed -> it.entity.tableId is LibraryTableId.ProjectLibraryTableId
-          is EntityChange.Replaced -> it.oldEntity.tableId is LibraryTableId.ProjectLibraryTableId
-        }
-      }
-
     internal val PROJECT_LIBRARY_TABLE_PRESENTATION = object : LibraryTablePresentation() {
       override fun getDisplayName(plural: Boolean) = ProjectModelBundle.message("project.library.display.name", if (plural) 2 else 1)
 
@@ -261,3 +258,13 @@ class ProjectLibraryTableBridgeImpl(
     private val LOG = logger<ProjectLibraryTableBridgeImpl>()
   }
 }
+private fun Sequence<EntityChange<LibraryEntity>>.filterProjectLibraryChanges(): Sequence<EntityChange<LibraryEntity>> {
+  return filter {
+    when (it) {
+      is EntityChange.Added -> it.entity.tableId is LibraryTableId.ProjectLibraryTableId
+      is EntityChange.Removed -> it.entity.tableId is LibraryTableId.ProjectLibraryTableId
+      is EntityChange.Replaced -> it.oldEntity.tableId is LibraryTableId.ProjectLibraryTableId
+    }
+  }
+}
+

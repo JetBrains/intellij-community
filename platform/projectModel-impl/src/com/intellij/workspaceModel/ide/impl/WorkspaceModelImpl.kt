@@ -21,10 +21,8 @@ import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
@@ -345,16 +343,12 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     if (project.isDisposed) return
 
     initializeBridgesTimeMs.addMeasuredTimeMs {
-      logErrorOnEventHandling {
-        if (!GlobalLibraryTableBridge.isEnabled()) return@logErrorOnEventHandling
-        // To handle changes made directly in project level workspace model
-        (GlobalLibraryTableBridge.getInstance() as GlobalLibraryTableBridgeImpl).initializeLibraryBridges(change, builder)
-      }
-      logErrorOnEventHandling {
-        (project.serviceOrNull<ProjectLibraryTable>() as? ProjectLibraryTableBridgeImpl)?.initializeLibraryBridges(change, builder)
-      }
-      logErrorOnEventHandling {
-        (project.serviceOrNull<ModuleManager>() as? ModuleManagerBridgeImpl)?.initializeBridges(change, builder)
+      BridgeInitializer.EP_NAME.extensionList.forEach { bridgeInitializer ->
+        logErrorOnEventHandling {
+          if (bridgeInitializer.isEnabled()) {
+            bridgeInitializer.initializeBridges(project, change, builder)
+          }
+        }
       }
     }
   }
