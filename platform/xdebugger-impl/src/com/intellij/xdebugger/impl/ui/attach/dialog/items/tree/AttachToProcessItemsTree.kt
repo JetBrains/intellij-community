@@ -155,21 +155,36 @@ internal class AttachTreeModel(private val rootNode: AttachTreeNodeWrapper, priv
 
 }
 
-private suspend fun prepareTreeElements(
+internal suspend fun buildTree(
   attachItemsInfo: AttachItemsInfo,
-  columnsLayout: AttachDialogColumnsLayout,
-  filters: AttachToProcessElementsFilters): List<AttachTreeNodeWrapper> {
+  dialogState: AttachDialogState,
+  columnsLayout: AttachDialogColumnsLayout
+): AttachToProcessItemsListBase {
+  val filters = AttachToProcessElementsFilters(dialogState.selectedDebuggersFilter)
+  val rootNode = AttachTreeNodeWrapper(AttachTreeRootNode(), filters, columnsLayout, -1)
 
-  val elements = attachItemsInfo.processItems
-  val pidToElement = elements.map {
-    AttachDialogProcessNode(it, filters, columnsLayout)
-  }.associateBy { it.item.processInfo.pid }
-  val builtNodes = mutableMapOf<Int, AttachTreeNodeWrapper>()
+  val recentItemNodes = prepareRecentItemNodes(attachItemsInfo, filters, columnsLayout)
+  for (node in recentItemNodes) {
+    rootNode.addChild(node)
+  }
 
+  val processItemNodes = prepareProcessItemNodes(attachItemsInfo, columnsLayout, filters)
+  for (node in processItemNodes) {
+    rootNode.addChild(node)
+  }
+
+  return AttachToProcessItemsTree(rootNode, columnsLayout, dialogState, filters)
+}
+
+private fun prepareRecentItemNodes(
+  attachItemsInfo: AttachItemsInfo,
+  filters: AttachToProcessElementsFilters,
+  columnsLayout: AttachDialogColumnsLayout
+): List<AttachTreeNodeWrapper> {
   val topLevelNodes = mutableListOf<AttachTreeNodeWrapper>()
 
   val recentItems = attachItemsInfo.recentItems
-  if (recentItems.any()) {
+  if (recentItems.isNotEmpty()) {
     val recentItemNodes = recentItems.map { AttachDialogProcessNode(it, filters, columnsLayout) }
     val recentNode = AttachDialogGroupNode(
       XDebuggerBundle.message("xdebugger.attach.dialog.recently.attached.message"),
@@ -185,6 +200,22 @@ private suspend fun prepareTreeElements(
           columnsLayout,
           listOf(recentNode)), filters, columnsLayout))
   }
+
+  return topLevelNodes
+}
+
+private suspend fun prepareProcessItemNodes(
+  attachItemsInfo: AttachItemsInfo,
+  columnsLayout: AttachDialogColumnsLayout,
+  filters: AttachToProcessElementsFilters
+): List<AttachTreeNodeWrapper> {
+  val topLevelNodes = mutableListOf<AttachTreeNodeWrapper>()
+
+  val elements = attachItemsInfo.processItems
+  val pidToElement = elements.map {
+    AttachDialogProcessNode(it, filters, columnsLayout)
+  }.associateBy { it.item.processInfo.pid }
+  val builtNodes = mutableMapOf<Int, AttachTreeNodeWrapper>()
 
   for (item in pidToElement) {
     coroutineContext.ensureActive()
@@ -238,17 +269,6 @@ private suspend fun prepareTreeElements(
   }
 
   return topLevelNodes
-}
-
-internal suspend fun buildTree(
-  attachItemsInfo: AttachItemsInfo,
-  dialogState: AttachDialogState,
-  columnsLayout: AttachDialogColumnsLayout): AttachToProcessItemsListBase {
-  val filters = AttachToProcessElementsFilters(dialogState.selectedDebuggersFilter)
-  val topLevelElements = prepareTreeElements(attachItemsInfo, columnsLayout, filters)
-  val rootNode = AttachTreeNodeWrapper(AttachTreeRootNode(), filters, columnsLayout, -1)
-  topLevelElements.forEach { rootNode.addChild(it) }
-  return AttachToProcessItemsTree(rootNode, columnsLayout, dialogState, filters)
 }
 
 internal fun ListSelectionModel.selectNext() {
