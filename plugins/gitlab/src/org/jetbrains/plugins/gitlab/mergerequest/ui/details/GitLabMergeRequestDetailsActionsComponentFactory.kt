@@ -83,10 +83,7 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     val reRequestReviewButton = CodeReviewDetailsActionsComponentFactory.createReRequestReviewButton(
       cs, reviewState, requestedReviewers, reviewActions.reRequestReviewAction
     )
-    val mergeReviewButton = JBOptionButton(
-      reviewActions.mergeReviewAction,
-      arrayOf(reviewActions.mergeSquashReviewAction, reviewActions.rebaseReviewAction)
-    ).apply {
+    val mergeReviewButton = JBOptionButton(reviewActions.mergeReviewAction, arrayOf(reviewActions.mergeSquashReviewAction)).apply {
       bindVisibilityIn(cs, reviewState.map { it == ReviewState.ACCEPTED })
     }
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
@@ -96,10 +93,12 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
         when (reviewState) {
           ReviewState.NEED_REVIEW, ReviewState.WAIT_FOR_UPDATES -> {
             moreActionsGroup.add(createMergeActionGroup(reviewActions))
+            moreActionsGroup.add(reviewActions.rebaseReviewAction.toAnAction())
             moreActionsGroup.add(reviewActions.closeReviewAction.toAnAction())
           }
           ReviewState.ACCEPTED -> {
             moreActionsGroup.add(reviewActions.requestReviewAction.toAnAction())
+            moreActionsGroup.add(reviewActions.rebaseReviewAction.toAnAction())
             moreActionsGroup.add(reviewActions.closeReviewAction.toAnAction())
           }
         }
@@ -154,7 +153,6 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     return DefaultActionGroup(CollaborationToolsBundle.message("review.details.action.merge.group"), true).apply {
       add(reviewActions.mergeReviewAction.toAnAction())
       add(reviewActions.mergeSquashReviewAction.toAnAction())
-      add(reviewActions.rebaseReviewAction.toAnAction())
     }
   }
 }
