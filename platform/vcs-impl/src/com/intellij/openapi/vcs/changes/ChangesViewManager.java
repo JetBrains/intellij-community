@@ -12,6 +12,7 @@ import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AppUIExecutor;
@@ -834,7 +835,7 @@ public class ChangesViewManager implements ChangesViewEx,
       try {
         myModelUpdateInProgress = true;
         try {
-          myView.updateModel(treeModel);
+          updateModel(myView, treeModel);
         }
         finally {
           myModelUpdateInProgress = false;
@@ -849,6 +850,43 @@ public class ChangesViewManager implements ChangesViewEx,
       finally {
         span.end();
       }
+    }
+
+    private static void updateModel(@NotNull ChangesListView view,
+                                    @NotNull DefaultTreeModel newModel) {
+      TreeState state = TreeState.createOn(view, view.getRoot());
+      state.setScrollToSelection(false);
+      ChangesBrowserNode<?> oldRoot = view.getRoot();
+      view.setModel(newModel);
+      ChangesBrowserNode<?> newRoot = view.getRoot();
+      state.applyTo(view, newRoot);
+
+      initTreeStateIfNeeded(view, oldRoot, newRoot);
+    }
+
+    private static void initTreeStateIfNeeded(@NotNull ChangesListView view,
+                                              @NotNull ChangesBrowserNode<?> oldRoot,
+                                              @NotNull ChangesBrowserNode<?> newRoot) {
+      ChangesBrowserNode<?> defaultListNode = getDefaultChangelistNode(newRoot);
+      if (defaultListNode == null) return;
+
+      if (view.getSelectionCount() == 0) {
+        TreeUtil.selectNode(view, defaultListNode);
+      }
+
+      if (oldRoot.getFileCount() == 0 && TreeUtil.collectExpandedPaths(view).isEmpty()) {
+        view.expandSafe(defaultListNode);
+      }
+    }
+
+    @Nullable
+    private static ChangesBrowserNode<?> getDefaultChangelistNode(@NotNull ChangesBrowserNode<?> root) {
+      return root.iterateNodeChildren()
+        .filter(ChangesBrowserChangeListNode.class)
+        .find(node -> {
+          ChangeList list = node.getUserObject();
+          return list instanceof LocalChangeList && ((LocalChangeList)list).isDefault();
+        });
     }
 
     public void setGrouping(@NotNull String groupingKey) {

@@ -34,8 +34,6 @@ import javax.swing.SwingConstants
 import kotlin.coroutines.coroutineContext
 import kotlin.properties.Delegates.observable
 
-internal fun ChangesBrowserNode<*>.subtreeRootObject(): Any? = (path.getOrNull(1) as? ChangesBrowserNode<*>)?.userObject
-
 class ChangesViewCommitPanel(project: Project, private val changesViewHost: ChangesViewPanel)
   : NonModalCommitPanel(project), ChangesViewCommitWorkflowUi {
 
