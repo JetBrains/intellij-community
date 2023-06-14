@@ -360,12 +360,10 @@ public abstract class AbstractStorage implements IStorage {
       final long address = myRecordsTable.getAddress(record);
       final long dataFileSize = myDataTable.getFileSize();
       assert size >= 0 : "[#" + record + "]: size(=" + size + ") must not be negative";
-      assert capacity >= 0 : "[#" + record + "]: capacity(=" + capacity + ") -- must not be negative";
-      assert size <= capacity : "[#" + record + "]: size(=" + size + ") > capacity(=" + capacity + ")";
+      assert capacity >= 0 : "[#" + record + "]: capacity(=" + capacity + ") -- must NOT be negative";
       assert address >= 0 : "[#" + record + "]: address(=" + address + ") must not be negative";
-      assert address + size < dataFileSize
-        : "[#" + record + "]: address(=" + address + ")+size(=" + size + ") is beyond EOF(=" + dataFileSize + ")";
-      assert address + capacity < dataFileSize
+      assert size <= capacity : "[#" + record + "]: size(=" + size + ") > capacity(=" + capacity + ")";
+      assert address + capacity <= dataFileSize
         : "[#" + record + "]: address(=" + address + ")+capacity(=" + size + ") is beyond EOF(=" + dataFileSize + ")";
     });
   }
