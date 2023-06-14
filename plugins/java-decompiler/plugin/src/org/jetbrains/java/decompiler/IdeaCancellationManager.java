@@ -7,10 +7,14 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.java.decompiler.main.CancellationManager;
 
 @ApiStatus.Experimental
-public class IdeaCancellationManager extends CancellationManager.SimpleWithTimeoutCancellationManager {
+public class IdeaCancellationManager extends CancellationManager.TimeoutCancellationManager {
+
+  public IdeaCancellationManager(int maxMethodTimeoutSec) {
+    super(maxMethodTimeoutSec);
+  }
 
   @Override
-  public void checkCanceled() throws CanceledException, TimeExceedException {
+  public void checkCanceled() throws CanceledException {
     try {
       ProgressManager.checkCanceled();
     }

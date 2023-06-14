@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -42,15 +42,8 @@ public class ClassWrapper {
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_WRAPPER, this);
     DecompilerContext.getLogger().startClass(classStruct.qualifiedName);
 
-    int maxSec = Integer.parseInt(DecompilerContext.getProperty(IFernflowerPreferences.MAX_PROCESSING_METHOD).toString());
     boolean testMode = DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE);
     CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
-    if (testMode) {
-      cancellationManager.setMaxSec(0);
-    }
-    else {
-      cancellationManager.setMaxSec(maxSec);
-    }
     for (StructMethod mt : classStruct.getMethods()) {
       cancellationManager.checkCanceled();
       DecompilerContext.getLogger().startMethod(mt.getName() + " " + mt.getDescriptor());
@@ -68,13 +61,13 @@ public class ClassWrapper {
 
       try {
         if (mt.containsCode()) {
-          if (maxSec == 0 || testMode) {
+          if (testMode) {
             root = MethodProcessorRunnable.codeToJava(classStruct, mt, md, varProc);
           }
           else {
             DecompilerContext context = DecompilerContext.getCurrentContext();
             try {
-              cancellationManager.startMethod();
+              cancellationManager.startMethod(classStruct.qualifiedName, mt.getName());
               MethodProcessorRunnable mtProc =
                 new MethodProcessorRunnable(classStruct, mt, md, varProc, DecompilerContext.getCurrentContext());
               mtProc.run();
@@ -83,7 +76,7 @@ public class ClassWrapper {
             }
             finally {
               DecompilerContext.setCurrentContext(context);
-              cancellationManager.finishMethod();
+              cancellationManager.finishMethod(classStruct.qualifiedName, mt.getName());
             }
           }
         }

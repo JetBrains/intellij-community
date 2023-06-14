@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.extern.*;
 import org.jetbrains.java.decompiler.modules.renamer.ConverterHelper;
@@ -25,12 +26,9 @@ public class Fernflower implements IDecompiledData {
 
   public Fernflower(IBytecodeProvider provider,
                     IResultSaver saver,
-                    Map<String, Object> customProperties,
+                    @Nullable Map<String, Object> customProperties,
                     IFernflowerLogger logger,
-                    CancellationManager cancellationManager) {
-    if (cancellationManager == null) {
-      cancellationManager = CancellationManager.getSimpleWithTimeout();
-    }
+                    @Nullable CancellationManager cancellationManager) {
     Map<String, Object> properties = new HashMap<>(IFernflowerPreferences.DEFAULTS);
     if (customProperties != null) {
       properties.putAll(customProperties);
@@ -63,7 +61,7 @@ public class Fernflower implements IDecompiledData {
   }
 
   public Fernflower(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> customProperties, IFernflowerLogger logger) {
-    this(provider, saver, customProperties, logger, CancellationManager.getSimpleWithTimeout());
+    this(provider, saver, customProperties, logger, null);
   }
 
   private static IIdentifierRenamer loadHelper(String className, IFernflowerLogger logger) {

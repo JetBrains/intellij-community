@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeSourceMapper;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
@@ -19,36 +21,46 @@ public class DecompilerContext {
   public static final String CURRENT_CLASS_NODE = "CURRENT_CLASS_NODE";
   public static final String CURRENT_METHOD_WRAPPER = "CURRENT_METHOD_WRAPPER";
 
+  @NotNull
   private final Map<String, Object> properties;
+  @NotNull
   private final IFernflowerLogger logger;
+  @NotNull
   private final StructContext structContext;
+  @NotNull
   private final ClassesProcessor classProcessor;
+  @Nullable
   private final PoolInterceptor poolInterceptor;
+  @NotNull
   private final CancellationManager cancellationManager;
   private ImportCollector importCollector;
   private VarProcessor varProcessor;
   private CounterContainer counterContainer;
   private BytecodeSourceMapper bytecodeSourceMapper;
 
-  public DecompilerContext(Map<String, Object> properties,
-                           IFernflowerLogger logger,
-                           StructContext structContext,
-                           ClassesProcessor classProcessor,
-                           PoolInterceptor interceptor) {
-    this(properties, logger, structContext, classProcessor, interceptor, CancellationManager.getSimpleWithTimeout());
-      }
+  public DecompilerContext(@NotNull Map<String, Object> properties,
+                           @NotNull IFernflowerLogger logger,
+                           @NotNull StructContext structContext,
+                           @NotNull ClassesProcessor classProcessor,
+                           @Nullable PoolInterceptor interceptor) {
+    this(properties, logger, structContext, classProcessor, interceptor, null);
+  }
 
-  public DecompilerContext(Map<String, Object> properties,
-                           IFernflowerLogger logger,
-                           StructContext structContext,
-                           ClassesProcessor classProcessor,
-                           PoolInterceptor interceptor,
-                           CancellationManager cancellationManager) {
+  public DecompilerContext(@NotNull Map<String, Object> properties,
+                           @NotNull IFernflowerLogger logger,
+                           @NotNull StructContext structContext,
+                           @NotNull ClassesProcessor classProcessor,
+                           @Nullable PoolInterceptor interceptor,
+                           @Nullable CancellationManager cancellationManager) {
     Objects.requireNonNull(properties);
     Objects.requireNonNull(logger);
     Objects.requireNonNull(structContext);
     Objects.requireNonNull(classProcessor);
-    Objects.requireNonNull(cancellationManager);
+    if (cancellationManager == null) {
+      Object object = properties.get(IFernflowerPreferences.MAX_PROCESSING_METHOD);
+      object = object == null ? "0" : object;
+      cancellationManager = CancellationManager.getSimpleWithTimeout(Integer.parseInt(object.toString()));
+    }
 
     this.properties = properties;
     this.logger = logger;
@@ -118,16 +130,9 @@ public class DecompilerContext {
   public static ClassesProcessor getClassProcessor() {
     return getCurrentContext().classProcessor;
   }
-  public static CancellationManager getCancellationManager() {
-    DecompilerContext context = getCurrentContext();
-    if (context != null) {
-      return context.cancellationManager;
-    }
 
-    CancellationManager simpleWithTimeout = CancellationManager.getSimpleWithTimeout();
-    int maxSec = Integer.parseInt(getProperty(IFernflowerPreferences.MAX_PROCESSING_METHOD).toString());
-    simpleWithTimeout.setMaxSec(maxSec);
-    return simpleWithTimeout;
+  public static CancellationManager getCancellationManager() {
+    return getCurrentContext().cancellationManager;
   }
 
   public static PoolInterceptor getPoolInterceptor() {

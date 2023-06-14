@@ -7,25 +7,19 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public interface CancellationManager {
   /**
-   * @throws CanceledException   if the process has been canceled.
-   * @throws TimeExceedException if limit timeout is exceeded.
+   * @throws CanceledException if the process has been canceled.
    */
-  void checkCanceled() throws CanceledException, TimeExceedException;
+  void checkCanceled() throws CanceledException;
 
   /**
-   * @param sec - limit timeout (seconds)
+   * Called every time the body of a new method is started to be decompiled
    */
-  void setMaxSec(int sec);
+  void startMethod(String className, String methodName);
 
   /**
-   * Call to start counting down the timeout
+   * Called every time the method decompilation is finished
    */
-  void startMethod();
-
-  /**
-   * Call to reset timer
-   */
-  void finishMethod();
+  void finishMethod(String className, String methodName);
 
   @ApiStatus.Experimental
   class CanceledException extends RuntimeException {
@@ -33,22 +27,30 @@ public interface CancellationManager {
     public CanceledException(@NotNull Throwable cause) {
       super(cause);
     }
+
+    public CanceledException() {
+      super();
+    }
   }
 
   @ApiStatus.Experimental
-  class TimeExceedException extends RuntimeException {
+  class TimeExceedException extends CanceledException {
   }
 
-  static CancellationManager getSimpleWithTimeout() {
-    return new SimpleWithTimeoutCancellationManager();
+  static CancellationManager getSimpleWithTimeout(int maxMethodTimeoutSec) {
+    return new TimeoutCancellationManager(maxMethodTimeoutSec);
   }
 
-  class SimpleWithTimeoutCancellationManager implements CancellationManager {
-    private long maxMilis = 0;
+  class TimeoutCancellationManager implements CancellationManager {
+    private final long maxMilis;
     private long startMilis = 0;
 
+    protected TimeoutCancellationManager(int maxMethodTimeoutSec) {
+      this.maxMilis = maxMethodTimeoutSec * 1000L;
+    }
+
     @Override
-    public void checkCanceled() throws CanceledException, TimeExceedException {
+    public void checkCanceled() throws CanceledException {
       if (maxMilis <= 0 || startMilis <= 0) {
         return;
       }
@@ -59,17 +61,12 @@ public interface CancellationManager {
     }
 
     @Override
-    public void setMaxSec(int sec) {
-      maxMilis = sec * 1_000L;
-    }
-
-    @Override
-    public void startMethod() {
+    public void startMethod(String className, String methodName) {
       startMilis = System.currentTimeMillis();
     }
 
     @Override
-    public void finishMethod() {
+    public void finishMethod(String className, String methodName) {
       startMilis = 0;
     }
   }

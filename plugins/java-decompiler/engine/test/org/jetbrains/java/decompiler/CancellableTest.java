@@ -39,19 +39,15 @@ public class CancellableTest {
       }
 
       @Override
-      public void setMaxSec(int sec) {
+      public void startMethod(String className, String methodName) {
 
       }
 
       @Override
-      public void startMethod() {
+      public void finishMethod(String className, String methodName) {
 
       }
 
-      @Override
-      public void finishMethod() {
-
-      }
 
       private void check() {
         if (myAtomicInteger.incrementAndGet() > MIN_CALL_NUMBERS) {
