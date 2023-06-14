@@ -38,7 +38,7 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
         LOG.info("$NAME command was completed due to indexing was finished after listener invocation")
         isIndexingCompleted.complete(true)
       }
-      val indexPauseTask = buildIndexPauseTask(vcsIndex, isIndexingCompleted)
+      val indexPauseTask = scheduleIndexPauseTask(vcsIndex, isIndexingCompleted)
       try {
         val args = extractCommandArgument(PREFIX)
         //Will wait infinitely while test execution timeout won't be occurred
@@ -54,11 +54,13 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
         }
       }
       finally {
+        //Second waiting check
         indexPauseTask.cancel(false)
-        vcsIndex.indexingRoots.forEach { LOG.info("${it.name} indexing root") }
+        vcsIndex.indexingRoots.forEach { LOG.info("Status of index root ${it.name} indexed = ${vcsIndex.isIndexed(it)}") }
       }
     }
     else {
+      vcsIndex.indexingRoots.forEach { LOG.info("Status of index root ${it.name} indexed = ${vcsIndex.isIndexed(it)}") }
       throw RuntimeException("Git-log indexing wasn't scheduled for project")
     }
   }
@@ -67,7 +69,7 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
    * Polling of the property isIndexingPaused. This task will detect the case when indexing wasn't fully completed
    * due to timeout of 20 minutes was reached
    */
-  private fun buildIndexPauseTask(vscIndex: VcsLogModifiableIndex, isIndexingCompleted: CompletableDeferred<Boolean>): ScheduledFuture<*> {
+  private fun scheduleIndexPauseTask(vscIndex: VcsLogModifiableIndex, isIndexingCompleted: CompletableDeferred<Boolean>): ScheduledFuture<*> {
     return executor.scheduleWithFixedDelay(
       {
         if (vscIndex.isIndexingPaused()) {
