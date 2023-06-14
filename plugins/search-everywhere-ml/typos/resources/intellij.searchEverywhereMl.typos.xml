@@ -16,7 +16,7 @@
     <searchEverywhereSpellingCorrector
       implementation="com.intellij.searchEverywhereMl.typos.SearchEverywhereSpellingCorrectorFactoryImpl" />
 
-    <advancedSetting default="false" id="searcheverywhere.ml.typos.enable"
+    <advancedSetting default="true" id="searcheverywhere.ml.typos.enable"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
                      bundle="messages.searchEverywhereMlTyposBundle"/>
 
