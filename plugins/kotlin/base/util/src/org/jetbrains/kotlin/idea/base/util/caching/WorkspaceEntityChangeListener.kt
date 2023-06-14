@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.base.util.caching
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.platform.workspace.storage.EntityChange

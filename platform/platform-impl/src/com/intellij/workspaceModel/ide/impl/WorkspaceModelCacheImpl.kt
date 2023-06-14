@@ -9,6 +9,9 @@ import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModelCache
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityStorageSnapshot

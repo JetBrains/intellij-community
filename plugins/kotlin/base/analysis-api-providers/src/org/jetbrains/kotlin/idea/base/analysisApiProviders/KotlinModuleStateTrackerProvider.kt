@@ -24,8 +24,8 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.util.io.URLUtil
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.platform.workspace.storage.EntityChange

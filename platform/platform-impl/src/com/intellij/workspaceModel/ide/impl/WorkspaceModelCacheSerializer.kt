@@ -12,7 +12,7 @@ import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModelCacheVersion
+import com.intellij.platform.backend.workspace.WorkspaceModelCacheVersion
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl

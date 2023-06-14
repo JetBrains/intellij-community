@@ -47,7 +47,7 @@
     <listener class="com.intellij.ide.ProjectLoadedListener"
               topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
     <listener class="com.intellij.ide.LibraryAddedListener"
-              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
+              topic="com.intellij.javaee.weblogic.model.persistence.WorkManager"/>
   </projectListeners>
 
   <extensionPoints>
@@ -2448,7 +2448,7 @@
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.jarRepository.RepositoryLibraryChangeListener"
-              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
     <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileInlaySelectionListenerSettingsListener"
               topic="com.intellij.codeInsight.hints.InlayHintsSettings$SettingsListener"/>
     <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileRefactoringEventListener"

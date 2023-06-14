@@ -244,7 +244,7 @@
               topic="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetectorListener"/>
 
     <listener class="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$ModelChangeListener"
-              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 
   <applicationListeners>

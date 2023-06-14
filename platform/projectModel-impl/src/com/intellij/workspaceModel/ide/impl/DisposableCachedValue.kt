@@ -9,8 +9,8 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage

@@ -6,8 +6,8 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.serviceContainer.AlreadyDisposedException
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.jps.entities.FacetEntity

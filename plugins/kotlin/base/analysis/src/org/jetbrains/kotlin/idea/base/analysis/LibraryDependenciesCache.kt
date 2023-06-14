@@ -22,8 +22,8 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.MultiMap
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange

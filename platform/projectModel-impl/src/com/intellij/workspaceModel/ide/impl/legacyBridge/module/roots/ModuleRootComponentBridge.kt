@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspaceModel.ide.impl.DisposableCachedValue
+import com.intellij.platform.backend.workspace.impl.DisposableCachedValue
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge

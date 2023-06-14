@@ -24,7 +24,7 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.ParsingTestCase;
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

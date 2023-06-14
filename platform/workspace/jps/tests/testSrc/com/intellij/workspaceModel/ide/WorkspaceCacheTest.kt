@@ -9,6 +9,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModelCache
+import com.intellij.platform.backend.workspace.WorkspaceModelCacheVersion
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule

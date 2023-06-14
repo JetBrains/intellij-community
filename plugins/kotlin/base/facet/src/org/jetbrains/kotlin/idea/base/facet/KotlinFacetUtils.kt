@@ -18,8 +18,8 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange

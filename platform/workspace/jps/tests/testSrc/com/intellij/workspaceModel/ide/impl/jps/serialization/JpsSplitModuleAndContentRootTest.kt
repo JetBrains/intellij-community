@@ -18,7 +18,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.ModuleImlFileEntit
 import com.intellij.platform.workspace.jps.serialization.impl.getInternalFileSource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.platform.backend.workspace.EntitiesOrphanage
+import com.intellij.workspaceModel.ide.EntitiesOrphanage
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.MutableEntityStorage
