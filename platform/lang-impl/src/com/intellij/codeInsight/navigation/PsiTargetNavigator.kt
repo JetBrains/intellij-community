@@ -33,6 +33,7 @@ import java.util.function.*
 
 class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
 
+  constructor(elements: List<T>) : this(Supplier { elements })
   constructor(elements: Array<T>) : this(Supplier { elements.toList() })
 
   private var selection: PsiElement? = null
