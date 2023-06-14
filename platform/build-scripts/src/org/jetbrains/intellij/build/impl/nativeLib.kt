@@ -40,7 +40,8 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
     getCommonPath(paths)
   }
 
-  val libName = sourceFile.fileName.toString().substringBefore('-')
+  val libName = getLibNameBySourceFile(sourceFile)
+
   HashMapZipFile.load(sourceFile).use { zipFile ->
     val outDir = context.paths.tempDir.resolve(libName)
     Files.createDirectories(outDir)
@@ -49,7 +50,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
       val fileName = path.substring(path.lastIndexOf('/') + 1)
 
       val os = when {
-        osNameStartsWith(path, "darwin") || osNameStartsWith(path, "mac") -> OsFamily.MACOS
+        osNameStartsWith(path, "darwin") || osNameStartsWith(path, "mac") || osNameStartsWith(path, "macos") -> OsFamily.MACOS
         path.startsWith("win32-") || osNameStartsWith(path, "win") || osNameStartsWith(path, "windows") -> OsFamily.WINDOWS
         path.startsWith("Linux-Android/") || path.startsWith("Linux-Musl/") -> continue
         osNameStartsWith(path, "linux") -> OsFamily.LINUX
@@ -63,10 +64,12 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
       val osAndArch = path.substring(0, path.indexOf('/'))
       val arch: JvmArchitecture? = when {
         osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") -> JvmArchitecture.aarch64
-        path.contains("x86-64") || path.contains("x86_64") -> JvmArchitecture.x64
+        path.contains("x86-64") || path.contains("x86_64") || (!osAndArch.contains('-') && path.count { it == '/' } == 1) -> JvmArchitecture.x64
         // universal library
         os == OsFamily.MACOS && path.count { it == '/' } == 1 -> null
-        else -> continue
+        else -> {
+          continue
+        }
       }
 
       if (arch != null &&
@@ -105,7 +108,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
         }
       }
 
-      val relativePath = "lib/$libName/" + (if (libName == "jna") "${arch!!.dirName}/$fileName" else path)
+      val relativePath = "lib/$libName/" + getRelativePath(libName, arch, fileName, path)
       context.addDistFile(DistFile(file = file, relativePath = relativePath, os = os, arch = arch))
     }
   }
@@ -129,6 +132,21 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
       }
     }
   }
+}
+
+// each library has own implementation of handling path property
+private fun getRelativePath(libName: String, arch: JvmArchitecture?, fileName: String, path: String): String {
+  if (libName == "async-profiler") {
+    return if (arch == null) fileName else "${arch.dirName}/$fileName"
+  }
+  else {
+    return if (libName == "jna") "${arch!!.dirName}/$fileName" else path
+  }
+}
+
+private fun getLibNameBySourceFile(sourceFile: Path): String {
+  val fileName = sourceFile.fileName.toString()
+  return fileName.split('-').takeWhile { !it.contains('.') }.joinToString(separator = "-")
 }
 
 private fun osNameStartsWith(path: String, prefix: String): Boolean {

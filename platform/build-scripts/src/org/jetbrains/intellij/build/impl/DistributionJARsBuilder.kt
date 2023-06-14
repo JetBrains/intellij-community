@@ -168,7 +168,7 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
                                     buildPaths = context.paths)
         val contentJson = context.paths.artifactDir.resolve("content.json")
         Files.newOutputStream(contentJson).use {
-          buildJarContentReport(entries = entries, out = it, buildPaths = context.paths)
+          buildJarContentReport(entries = entries, out = it, buildPaths = context.paths, context = context)
         }
         context.notifyArtifactBuilt(contentMappingJson)
         context.notifyArtifactBuilt(contentJson)

@@ -13,7 +13,7 @@ install-native: archive-native
       -Dpackaging=jar \
       -Dfile=target/sqlite-native.jar
 
-deploy-native: archive-native
+deploy-native: archive-native install-native
 	mvn deploy:deploy-file -DgroupId=org.sqlite \
       -DartifactId=native \
       -Dversion=$(VERSION) \

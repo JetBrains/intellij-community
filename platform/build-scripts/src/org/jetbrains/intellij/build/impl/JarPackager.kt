@@ -78,6 +78,11 @@ private val libsThatUsedInJps = java.util.Set.of(
   "fastutil-min",
 )
 
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+private val presignedLibNames = java.util.Set.of(
+  "pty4j", "jna", "sqlite-native", "async-profiler"
+)
+
 private val notImportantKotlinLibs = persistentSetOf(
   "kotlinx-coroutines-guava",
   "kotlinx-datetime-jvm",
@@ -117,7 +122,7 @@ internal fun getLibraryFileName(library: JpsLibrary): String {
   return PathUtilRt.getFileName(roots.first().url.removeSuffix(URLUtil.JAR_SEPARATOR))
 }
 
-class JarPackager private constructor(private val outputDir: Path, private val context: BuildContext) {
+class JarPackager private constructor(private val outputDir: Path, private val context: BuildContext, private val isRootDir: Boolean) {
   private val jarDescriptors = LinkedHashMap<Path, JarDescriptor>()
   private val libraryEntries = ConcurrentLinkedQueue<LibraryFileEntry>()
   private val libToMetadata = HashMap<JpsLibrary, ProjectLibraryData>()
@@ -132,7 +137,7 @@ class JarPackager private constructor(private val outputDir: Path, private val c
                      moduleOutputPatcher: ModuleOutputPatcher = ModuleOutputPatcher(),
                      dryRun: Boolean = false,
                      context: BuildContext): Collection<DistributionFileEntry> {
-      val packager = JarPackager(outputDir = outputDir, context = context)
+      val packager = JarPackager(outputDir = outputDir, isRootDir = isRootDir, context = context)
 
       // must be concurrent - buildJars executed in parallel
       val moduleNameToSize = ConcurrentHashMap<String, Int>()
@@ -465,8 +470,7 @@ class JarPackager private constructor(private val outputDir: Path, private val c
 
   private fun filesToSourceWithMapping(to: MutableList<Source>, files: List<Path>, library: JpsLibrary, targetFile: Path) {
     val moduleName = (library.createReference().parentReference as? JpsModuleReference)?.moduleName
-    val libraryName = library.name
-    val isPreSignedCandidate = libraryName == "pty4j" || libraryName == "jna" || libraryName == "sqlite-native"
+    val isPreSignedCandidate = isRootDir && presignedLibNames.contains(library.name)
     for (file in files) {
       to.add(ZipSource(file = file, isPreSignedAndExtractedCandidate = isPreSignedCandidate) { size ->
         val libraryEntry = moduleName?.let {
@@ -600,6 +604,7 @@ private suspend fun buildJars(descriptors: Collection<JarDescriptor>,
     }
   }
 
+  @Suppress("GrazieInspection")
   val list = withContext(Dispatchers.IO) {
     descriptors.map { item ->
       async {
