@@ -1279,6 +1279,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/NestedClassNameWithPackageLevelConflict.kt");
             }
 
+            @TestMetadata("NestedClassParenthesis.kt")
+            public void testNestedClassParenthesis() throws Exception {
+                runTest("../completion/testData/handlers/basic/NestedClassParenthesis.kt");
+            }
+
             @TestMetadata("NestedTypeArg.kt")
             public void testNestedTypeArg() throws Exception {
                 runTest("../completion/testData/handlers/basic/NestedTypeArg.kt");
