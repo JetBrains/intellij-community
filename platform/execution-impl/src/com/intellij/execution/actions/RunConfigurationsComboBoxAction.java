@@ -138,7 +138,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         }
       }
       else {
-        name = StringUtil.shortenTextWithEllipsis(settings.getName(), RedesignedRunWidgetKt.CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH, 8, true);
+        name = StringUtil.shortenTextWithEllipsis(
+          settings.getName(),
+          RedesignedRunWidgetKt.CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH,
+          RedesignedRunWidgetKt.CONFIGURATION_NAME_TRIM_SUFFIX_LENGTH,
+          true);
       }
       presentation.setText(name, false);
       if (!ApplicationManager.getApplication().isUnitTestMode()) {

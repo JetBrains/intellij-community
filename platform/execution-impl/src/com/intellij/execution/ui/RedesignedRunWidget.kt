@@ -49,7 +49,8 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
-const val CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH = 32
+const val CONFIGURATION_NAME_TRIM_SUFFIX_LENGTH = 8
+const val CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH = 33 + CONFIGURATION_NAME_TRIM_SUFFIX_LENGTH
 
 @Service(Service.Level.PROJECT)
 class RunWidgetManager(private val project: Project)  {
