@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.MathUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.IndexId;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
