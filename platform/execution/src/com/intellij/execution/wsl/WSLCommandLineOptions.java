@@ -1,8 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -13,8 +14,6 @@ import java.util.List;
 
 public final class WSLCommandLineOptions {
 
-  public static final @NlsSafe String DEFAULT_SHELL = "/bin/sh";
-
   private boolean myLaunchWithWslExe = true;
   private boolean myExecuteCommandInShell = true;
   private boolean myExecuteCommandInInteractiveShell = false;
@@ -24,7 +23,6 @@ public final class WSLCommandLineOptions {
   private boolean myPassEnvVarsUsingInterop = false;
   private final List<String> myInitShellCommands = new ArrayList<>();
   private boolean myExecuteCommandInDefaultShell = false;
-  private @Nls @NotNull String myShellPath = DEFAULT_SHELL;
   private double mySleepTimeoutSec = 0;
 
   public boolean isLaunchWithWslExe() {
@@ -96,15 +94,14 @@ public final class WSLCommandLineOptions {
     return this;
   }
 
-  public @Nls @NotNull String getShellPath() {
-    return myShellPath;
-  }
-
-  public @NotNull WSLCommandLineOptions setShellPath(@Nls @NotNull String shellPath) {
-    if (shellPath.isBlank()) {
-      throw new AssertionError("Wrong shell: " + shellPath);
-    }
-    myShellPath = shellPath;
+  /**
+   * @see WSLDistribution#patchCommandLine(GeneralCommandLine, Project, WSLCommandLineOptions)
+   * @deprecated shell path always defaults to {@linkplain WSLDistribution#getShellPath() user's default login shell}.
+   * This method does nothing and is here only for the sake of backward compatibility.
+   * Do not use this method, as it will be removed in the future releases.
+   */
+  @Deprecated(forRemoval = true)
+  public @NotNull WSLCommandLineOptions setShellPath(@Nls @NotNull String __) {
     return this;
   }
 

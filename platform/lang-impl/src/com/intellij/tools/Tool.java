@@ -435,7 +435,7 @@ public class Tool implements SchemeElement {
     // in windows, and we will fail to start process with it.
     cmd.setWorkDirectory((String)null);
     // run command in interactive shell so that shell rc files are executed and configure proper environment
-    wslOptions.setShellPath(wsl.getShellPath()).setExecuteCommandInInteractiveShell(true);
+    wslOptions.setExecuteCommandInInteractiveShell(true);
     return wsl.patchCommandLine(cmd, project, wslOptions);
   }
 }
