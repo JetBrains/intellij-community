@@ -45,4 +45,10 @@ class GradleSettingsQuickFix(private val myProjectPath: String, private val myRe
         CompletableFuture.completedFuture(null)
     }
   }
+
+  object GradleJvmChangeDetector : BiPredicate<GradleProjectSettings, GradleProjectSettings> {
+    override fun test(t: GradleProjectSettings, u: GradleProjectSettings): Boolean {
+      return t.gradleJvm != u.gradleJvm
+    }
+  }
 }
