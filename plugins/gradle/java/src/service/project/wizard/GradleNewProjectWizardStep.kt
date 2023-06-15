@@ -267,8 +267,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
    */
   protected open fun validateLanguageCompatibility(
     builder: ValidationInfoBuilder,
-    withDialog: Boolean,
-    gradleVersion: GradleVersion
+    gradleVersion: GradleVersion,
+    withDialog: Boolean
   ): ValidationInfo? = null
 
   private fun validateJdkCompatibility(gradleVersion: GradleVersion): Boolean {
@@ -280,10 +280,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
    * Validate that the language is compatible with Gradle and return
    * an appropriate error message if not.
    */
-  private fun ValidationInfoBuilder.validateJdkCompatibility(
-    withDialog: Boolean,
-    gradleVersion: GradleVersion
-  ): ValidationInfo? {
+  private fun ValidationInfoBuilder.validateJdkCompatibility(gradleVersion: GradleVersion, withDialog: Boolean): ValidationInfo? {
     val javaVersion = getJdkVersion()
     if (javaVersion == null || isSupported(gradleVersion, javaVersion)) return null
     return validationWithDialog(
@@ -315,12 +312,12 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       return error(ex.localizedMessage)
     }
     return validateIdeaGradleCompatibility(withDialog, gradleVersion)
-           ?: validateJdkCompatibility(withDialog, gradleVersion)
-           ?: validateGradleDslCompatibility(withDialog, gradleVersion)
-           ?: validateLanguageCompatibility(this, withDialog, gradleVersion)
+           ?: validateJdkCompatibility(gradleVersion, withDialog)
+           ?: validateGradleDslCompatibility(gradleVersion, withDialog)
+           ?: validateLanguageCompatibility(this, gradleVersion, withDialog)
   }
 
-  private fun ValidationInfoBuilder.validateGradleDslCompatibility(withDialog: Boolean, gradleVersion: GradleVersion): ValidationInfo? {
+  private fun ValidationInfoBuilder.validateGradleDslCompatibility(gradleVersion: GradleVersion, withDialog: Boolean): ValidationInfo? {
     val oldestCompatibleGradle = "4.0"
     if (gradleDsl == GradleDsl.KOTLIN && gradleVersion.isGradleOlderThan(oldestCompatibleGradle)) {
       return validationWithDialog(

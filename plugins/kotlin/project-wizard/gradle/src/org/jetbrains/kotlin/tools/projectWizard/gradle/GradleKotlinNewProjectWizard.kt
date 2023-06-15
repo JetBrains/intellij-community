@@ -68,8 +68,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
         override fun validateLanguageCompatibility(
             builder: ValidationInfoBuilder,
-            withDialog: Boolean,
-            gradleVersion: GradleVersion
+            gradleVersion: GradleVersion,
+            withDialog: Boolean
         ): ValidationInfo? {
             if (validateLanguageCompatibility(gradleVersion)) return null
             val kotlinVersion = IdeaKotlinVersionProviderService().getKotlinVersion(ProjectKind.Singleplatform).version.text
