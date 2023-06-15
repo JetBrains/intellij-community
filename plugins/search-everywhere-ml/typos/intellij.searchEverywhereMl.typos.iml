@@ -30,5 +30,6 @@
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.common" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>
