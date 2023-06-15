@@ -59,7 +59,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     isOpaque = true
     if (IdeRootPane.isMenuButtonInToolbar) {
       mainMenuButton = MainMenuButton()
-      expandableMenu = ExpandableMenu(this)
+      expandableMenu = ExpandableMenu(this, disposable)
       mainMenuButton.expandableMenu = expandableMenu
     }
     else {

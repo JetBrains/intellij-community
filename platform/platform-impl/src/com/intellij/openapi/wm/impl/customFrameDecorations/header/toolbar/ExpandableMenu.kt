@@ -4,8 +4,10 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeMenuBar
@@ -20,10 +22,11 @@ import java.awt.event.ComponentEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
+import javax.swing.event.ChangeListener
 
 private const val ALPHA = (255 * 0.6).toInt()
 
-internal class ExpandableMenu(private val headerContent: JComponent) {
+internal class ExpandableMenu(private val headerContent: JComponent, disposable: Disposable) {
 
   val ideMenu: IdeMenuBar = IdeMenuBar.createMenuBar()
   private val ideMenuHelper = IdeMenuHelper(ideMenu, null)
@@ -33,22 +36,24 @@ internal class ExpandableMenu(private val headerContent: JComponent) {
   private val rootPane: JRootPane?
     get() = SwingUtilities.getRootPane(headerContent)
   private var hideMenu = false
+  private val menuSelectionListener = ChangeListener {
+    if (MenuSelectionManager.defaultManager().selectedPath.isNullOrEmpty()) {
+      // After resetting selectedPath another menu can be shown right after that, so don't hide main menu immediately
+      hideMenu = true
+      ApplicationManager.getApplication().invokeLater {
+        if (hideMenu) {
+          hideMenu = false
+          hideExpandedMenuBar()
+        }
+      }
+    } else {
+      hideMenu = false
+    }
+  }
 
   init {
-    MenuSelectionManager.defaultManager().addChangeListener {
-      if (MenuSelectionManager.defaultManager().selectedPath.isNullOrEmpty()) {
-        // After resetting selectedPath another menu can be shown right after that, so don't hide main menu immediately
-        hideMenu = true
-        ApplicationManager.getApplication().invokeLater {
-          if (hideMenu) {
-            hideMenu = false
-            hideExpandedMenuBar()
-          }
-        }
-      } else {
-        hideMenu = false
-      }
-    }
+    MenuSelectionManager.defaultManager().addChangeListener(menuSelectionListener)
+    disposable.whenDisposed { MenuSelectionManager.defaultManager().removeChangeListener(menuSelectionListener) }
 
     ideMenuHelper.installListeners()
 
