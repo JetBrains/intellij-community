@@ -7,6 +7,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logS
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.setupProjectFromBuilder
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -41,6 +42,7 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.util.minimumWidth
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import icons.GradleIcons
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
@@ -226,6 +228,32 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return null
   }
 
+  private fun ValidationInfoBuilder.validateIdeaGradleCompatibility(
+    withDialog: Boolean,
+    gradleVersion: GradleVersion
+  ): ValidationInfo? {
+    val oldestSupportedGradleVersion = getOldestSupportedGradleVersion()
+    if (gradleVersion >= oldestSupportedGradleVersion) {
+      return null
+    }
+    return errorWithDialog(
+      withDialog = withDialog,
+      message = GradleBundle.message(
+        "gradle.settings.wizard.gradle.unsupported.message",
+        ApplicationNamesInfo.getInstance().productName,
+        oldestSupportedGradleVersion.version
+      ),
+      dialogTitle = GradleBundle.message(
+        "gradle.settings.wizard.gradle.unsupported.title"
+      ),
+      dialogMessage = GradleBundle.message(
+        "gradle.settings.wizard.gradle.unsupported.message",
+        ApplicationNamesInfo.getInstance().productName,
+        oldestSupportedGradleVersion.version,
+      )
+    )
+  }
+
   /**
    * Is the language of this wizard compatible with the [gradleVersion].
    */
@@ -286,7 +314,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     catch (ex: IllegalArgumentException) {
       return error(ex.localizedMessage)
     }
-    return validateJdkCompatibility(withDialog, gradleVersion)
+    return validateIdeaGradleCompatibility(withDialog, gradleVersion)
+           ?: validateJdkCompatibility(withDialog, gradleVersion)
            ?: validateGradleDslCompatibility(withDialog, gradleVersion)
            ?: validateLanguageCompatibility(this, withDialog, gradleVersion)
   }
@@ -320,14 +349,29 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     dialogTitle: @NlsContexts.DialogTitle String,
     dialogMessage: @NlsContexts.DialogMessage String
   ): ValidationInfo? {
-    if (!withDialog) {
-      return error(message)
+    if (withDialog) {
+      val isContinue = MessageDialogBuilder.yesNo(dialogTitle, dialogMessage)
+        .icon(UIUtil.getWarningIcon())
+        .ask(component)
+      if (isContinue) {
+        return null
+      }
     }
-    val dialog = MessageDialogBuilder.yesNo(dialogTitle, dialogMessage).asWarning()
-    if (!dialog.ask(component)) {
-      return error(message)
+    return error(message)
+  }
+
+  private fun ValidationInfoBuilder.errorWithDialog(
+    withDialog: Boolean, // dialog shouldn't be shown on text input
+    message: @NlsContexts.DialogMessage String,
+    dialogTitle: @NlsContexts.DialogTitle String,
+    dialogMessage: @NlsContexts.DialogMessage String
+  ): ValidationInfo {
+    if (withDialog) {
+      MessageDialogBuilder.okCancel(dialogTitle, dialogMessage)
+        .icon(UIUtil.getErrorIcon())
+        .ask(component)
     }
-    return null
+    return error(message)
   }
 
   private fun ValidationInfoBuilder.validateGradleHome(withDialog: Boolean): ValidationInfo? {
