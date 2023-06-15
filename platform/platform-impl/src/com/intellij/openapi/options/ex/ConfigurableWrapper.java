@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.diagnostic.PluginException;
@@ -22,13 +22,11 @@ import java.util.*;
 public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchicalConfigurable, ConfigurableMarkerProvider {
   static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
-  @Nullable
-  public static <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep) {
+  public static @Nullable <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep) {
     return wrapConfigurable(ep, false);
   }
 
-  @Nullable
-  public static <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep, boolean settings) {
+  public static @Nullable <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep, boolean settings) {
     if (!ep.canCreateConfigurable()) {
       return null;
     }
@@ -39,8 +37,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     return createConfigurable(ep, LOG.isDebugEnabled());
   }
 
-  @Nullable
-  private static <T extends UnnamedConfigurable> T createConfigurable(@NotNull ConfigurableEP<T> ep, boolean log) {
+  private static @Nullable <T extends UnnamedConfigurable> T createConfigurable(@NotNull ConfigurableEP<T> ep, boolean log) {
     long time = System.currentTimeMillis();
     T configurable = ep.createConfigurable();
     if (configurable instanceof Configurable) {
@@ -87,22 +84,20 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     }
   }
 
-  @Nullable
-  public static <T> T cast(@NotNull Class<T> type, @Nullable UnnamedConfigurable configurable) {
+  public static @Nullable <T> T cast(@NotNull Class<T> type, @Nullable UnnamedConfigurable configurable) {
     if (configurable instanceof ConfigurableWrapper wrapper) {
       if (wrapper.myConfigurable == null) {
         Class<?> configurableType = wrapper.getExtensionPoint().getConfigurableType();
         if (configurableType != null) {
           if (!type.isAssignableFrom(configurableType)) {
-            return null; // do not create configurable that cannot be cast to the specified type
+            // do not create configurable that cannot be cast to the specified type
+            return null;
           }
         }
       }
       configurable = wrapper.getConfigurable();
     }
-    return type.isInstance(configurable)
-           ? type.cast(configurable)
-           : null;
+    return type.isInstance(configurable) ? type.cast(configurable) : null;
   }
 
   private final ConfigurableEP<?> myEp;
@@ -113,11 +108,9 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     myWeight = ep.groupWeight;
   }
 
-  @Nullable
-  private UnnamedConfigurable myConfigurable;
+  private @Nullable UnnamedConfigurable myConfigurable;
 
-  @Nullable
-  public UnnamedConfigurable getRawConfigurable() {
+  public @Nullable UnnamedConfigurable getRawConfigurable() {
     return myConfigurable;
   }
 
@@ -146,9 +139,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     return myWeight;
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     if (myEp.displayName == null && myEp.key == null) {
       boolean loaded = myConfigurable != null;
       Configurable configurable = cast(Configurable.class, this);
@@ -167,21 +159,18 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     return myEp.providerClass;
   }
 
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myEp.getProject();
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     UnnamedConfigurable configurable = getConfigurable();
     return configurable instanceof Configurable ? ((Configurable)configurable).getHelpTopic() : null;
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     UnnamedConfigurable configurable = getConfigurable();
     return configurable == null ? null : configurable.createComponent();
   }
@@ -218,9 +207,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     }
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     if (myEp.id != null) {
       return myEp.id;
     }
@@ -241,8 +229,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
              : myEp.implementationClass;
   }
 
-  @NotNull
-  public ConfigurableEP<?> getExtensionPoint() {
+  public @NotNull ConfigurableEP<?> getExtensionPoint() {
     return myEp;
   }
 
@@ -261,16 +248,14 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     return getDisplayName();
   }
 
-  @Nullable
   @Override
-  public Runnable enableSearch(String option) {
+  public @Nullable Runnable enableSearch(String option) {
     final UnnamedConfigurable configurable = getConfigurable();
     return configurable instanceof SearchableConfigurable ? ((SearchableConfigurable)configurable).enableSearch(option) : null;
   }
 
-  @NotNull
   @Override
-  public Class<?> getOriginalClass() {
+  public @NotNull Class<?> getOriginalClass() {
     final UnnamedConfigurable configurable = getConfigurable();
     return configurable instanceof SearchableConfigurable
            ? ((SearchableConfigurable)configurable).getOriginalClass()
