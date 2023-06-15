@@ -106,7 +106,7 @@ class PlatformTaskSupport : TaskSupport {
     val dispatcher = currentCoroutineContext()[CoroutineDispatcher.Key]
     return withContext(Dispatchers.EDT) {
       val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
-      withModalProgressBlockingInternal(cs = this, dispatcher, descriptor, action)
+      withModalProgressBlockingInternal(dispatcher, descriptor, action)
     }
   }
 
@@ -119,22 +119,21 @@ class PlatformTaskSupport : TaskSupport {
     val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
     val scope = CoroutineScope(ctx + ClientId.coroutineContext())
     try {
-      withModalProgressBlockingInternal(cs = scope, dispatcher = null, descriptor, action)
+      scope.withModalProgressBlockingInternal(dispatcher = null, descriptor, action)
     }
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)
     }
   }
 
-  private fun <T> withModalProgressBlockingInternal(
-    cs: CoroutineScope,
+  private fun <T> CoroutineScope.withModalProgressBlockingInternal(
     dispatcher: CoroutineDispatcher?,
     descriptor: ModalIndicatorDescriptor,
     action: suspend CoroutineScope.() -> T,
   ): T {
-    return inModalContext(JobProviderWithOwnerContext(cs.coroutineContext.job, descriptor.owner)) { newModalityState ->
+    return inModalContext(JobProviderWithOwnerContext(coroutineContext.job, descriptor.owner)) { newModalityState ->
       val deferredDialog = CompletableDeferred<DialogWrapper>()
-      val mainJob = cs.async(Dispatchers.Default + newModalityState.asContextElement()) {
+      val mainJob = async(Dispatchers.Default + newModalityState.asContextElement()) {
         TextDetailsProgressReporter(this@async).use { reporter ->
           progressStarted(descriptor.title, descriptor.cancellation, reporter.progressState)
           val showIndicatorJob = showModalIndicator(descriptor, reporter.progressState, deferredDialog)
