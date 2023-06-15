@@ -620,7 +620,6 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("asm-tools")
       spec.withProjectLibrary("baksmali")
       spec.withProjectLibrary("commons-lang")
-      spec.withProjectLibrary("dexlib2")
       spec.withProjectLibrary("emulator-proto")
       //tools/adt/idea/.idea/libraries:ffmpeg <= FIXME
       //tools/adt/idea/.idea/libraries:firebase_java_proto <= REMOVED
@@ -628,6 +627,7 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("HdrHistogram")
       spec.withProjectLibrary("javax-inject")
       spec.withProjectLibrary("kotlinx-coroutines-guava")
+      spec.withProjectLibrary("kotlin-tooling-core")
       spec.withProjectLibrary("kxml2")
       spec.withProjectLibrary("layoutinspector-skia-proto")
       spec.withProjectLibrary("layoutinspector-view-proto")
