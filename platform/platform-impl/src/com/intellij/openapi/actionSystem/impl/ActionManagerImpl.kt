@@ -63,6 +63,7 @@ import com.intellij.util.xml.dom.XmlElement
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.collections.immutable.persistentHashMapOf
+import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -88,7 +89,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   private var idToAction = persistentHashMapOf<String, AnAction>()
   private val pluginToId = HashMap<PluginId, MutableList<String>>()
   private val idToIndex = Object2IntOpenHashMap<String>()
-  private val prohibitedActionIds = HashSet<String>()
+  @Volatile
+  private var prohibitedActionIds = persistentHashSetOf<String>()
   @Suppress("SSBasedInspection")
   private val actionToId = Object2ObjectOpenHashMap<Any, String>()
   private val idToGroupId = HashMap<String, MutableList<String>>()
@@ -388,11 +390,10 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                                    classLoader: ClassLoader): AnAction? {
     // read ID and register a loaded action
     val id = obtainActionId(element = element, className = className)
-    synchronized(lock) {
-      if (prohibitedActionIds.contains(id)) {
-        return null
-      }
+    if (prohibitedActionIds.contains(id)) {
+      return null
     }
+
     if (element.attributes.get(INTERNAL_ATTR_NAME).toBoolean() && !ApplicationManager.getApplication().isInternal) {
       notRegisteredInternalActionIds.add(id)
       return null
@@ -456,11 +457,11 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                                            id: String,
                                            action: AnAction,
                                            plugin: IdeaPluginDescriptor) {
-    synchronized(lock) {
-      if (prohibitedActionIds.contains(id)) {
-        return
-      }
+    if (prohibitedActionIds.contains(id)) {
+      return
+    }
 
+    synchronized(lock) {
       if (element.attributes.get(OVERRIDES_ATTR_NAME).toBoolean()) {
         if (getActionOrStub(id) == null) {
           LOG.error("$element '$id' doesn't override anything")
@@ -492,10 +493,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                                   keymapManager: KeymapManagerEx,
                                   classLoader: ClassLoader): AnAction? {
     try {
-      synchronized(lock) {
-        if (prohibitedActionIds.contains(id)) {
-          return null
-        }
+      if (prohibitedActionIds.contains(id)) {
+        return null
       }
 
       val group: ActionGroup
@@ -842,10 +841,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       return null
     }
 
-    synchronized(lock) {
-      if (prohibitedActionIds.contains(ref)) {
-        return null
-      }
+    if (prohibitedActionIds.contains(ref)) {
+      return null
     }
 
     val action = getActionImpl(ref, true)
@@ -1068,7 +1065,9 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
    */
   @Internal
   fun prohibitAction(actionId: String) {
-    synchronized(lock) { prohibitedActionIds.add(actionId) }
+    synchronized(lock) {
+      prohibitedActionIds = prohibitedActionIds.add(actionId)
+    }
     val action = getAction(actionId)
     if (action != null) {
       AbbreviationManager.getInstance().removeAllAbbreviations(actionId)
@@ -1078,7 +1077,9 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
 
   @TestOnly
   fun resetProhibitedActions() {
-    synchronized(lock) { prohibitedActionIds.clear() }
+    synchronized(lock) {
+      prohibitedActionIds  = prohibitedActionIds.clear()
+    }
   }
 
   override val registrationOrderComparator: Comparator<String>
@@ -1119,10 +1120,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   private fun replaceAction(actionId: String, newAction: AnAction, pluginId: PluginId?): AnAction? {
-    synchronized(lock) {
-      if (prohibitedActionIds.contains(actionId)) {
-        return null
-      }
+    if (prohibitedActionIds.contains(actionId)) {
+      return null
     }
 
     val oldAction = if (newAction is OverridingAction) getAction(actionId) else getActionOrStub(actionId)
