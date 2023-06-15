@@ -99,3 +99,11 @@ fun KtTypeParameterListOwner.addTypeParameter(typeParameter: KtTypeParameter): K
     } ?: return null
     return (addAfter(list, leftAnchor) as KtTypeParameterList).parameters.first()
 }
+
+fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement {
+    defaultValue?.let { return it.replaced(newDefaultValue) }
+
+    val psiFactory = KtPsiFactory(project)
+    val eq = equalsToken ?: add(psiFactory.createEQ())
+    return addAfter(newDefaultValue, eq) as KtExpression
+}
