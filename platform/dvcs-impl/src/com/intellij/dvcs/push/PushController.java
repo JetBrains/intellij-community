@@ -434,7 +434,7 @@ public final class PushController implements Disposable {
       stepsIndicator.setText(handler.getPresentableName());
       PrePushHandler.Result prePushHandlerResult;
       try {
-        prePushHandlerResult = handler.handle(pushDetails, stepsIndicator);
+        prePushHandlerResult = handler.handle(myProject, pushDetails, stepsIndicator);
       }
       catch (Throwable e) {
         List<String> skippedHandlers = handlers.stream()
