@@ -59,15 +59,8 @@ internal object GitLabMergeRequestTimelineComponentFactory {
              accountVm: GitLabAccountViewModel,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
-    val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
     val timelineWrapper = Wrapper()
-    val timelineComponents = Wrapper()
-    val loadedTimelinePanel = VerticalListPanel(0).apply {
-      add(timelineComponents)
-      bindChildIn(cs, timelineVm.newNoteVm, null) { editVm ->
-        editVm?.let { createNewNoteField(project, avatarIconsProvider, it) }
-      }
-    }
+    val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
 
     cs.launch {
       timelineVm.timelineLoadingFlow.mapScoped { state ->
@@ -83,10 +76,12 @@ internal object GitLabMergeRequestTimelineComponentFactory {
             CollaborationToolsUIUtil.moveToCenter(errorPanel)
           }
           is LoadingState.Result -> {
-            val content = createLoadedTimelineComponent(this, project, avatarIconsProvider, state)
-            timelineComponents.apply {
-              setContent(content)
-              repaint()
+            val content = createLoadedTimelineComponent(project, avatarIconsProvider, state)
+            val loadedTimelinePanel = VerticalListPanel(0).apply {
+              add(content)
+              bindChildIn(cs, timelineVm.newNoteVm) { editVm ->
+                editVm?.let { createNewNoteField(project, avatarIconsProvider, it) }
+              }
             }
             PopupHandler.installPopupMenu(loadedTimelinePanel, actionGroup, ActionPlaces.POPUP)
             DataManager.registerDataProvider(loadedTimelinePanel) { dataId ->
@@ -118,22 +113,22 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     }
   }
 
-  private fun createLoadedTimelineComponent(
-    timelineCs: CoroutineScope,
+  private fun CoroutineScope.createLoadedTimelineComponent(
     project: Project,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
     timelineLoadingResult: LoadingState.Result
   ): JComponent {
+    val cs = this
     val mr = timelineLoadingResult.mr
-    val titleComponent = GitLabMergeRequestTimelineTitleComponent.create(timelineCs, mr).let {
+    val titleComponent = GitLabMergeRequestTimelineTitleComponent.create(cs, mr).let {
       CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
     }.apply {
       border = Borders.empty(CodeReviewTimelineUIUtil.HEADER_VERT_PADDING, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
     }
 
-    val descriptionComponent = GitLabMergeRequestTimelineDescriptionComponent.createComponent(timelineCs, mr, avatarIconsProvider)
+    val descriptionComponent = GitLabMergeRequestTimelineDescriptionComponent.createComponent(cs, mr, avatarIconsProvider)
 
-    val timelineItemsComponent = ComponentListPanelFactory.createVertical(timelineCs, timelineLoadingResult.items,
+    val timelineItemsComponent = ComponentListPanelFactory.createVertical(cs, timelineLoadingResult.items,
                                                                           GitLabMergeRequestTimelineItemViewModel::id) { cs, item ->
       createItemComponent(project, cs, avatarIconsProvider, item)
     }
