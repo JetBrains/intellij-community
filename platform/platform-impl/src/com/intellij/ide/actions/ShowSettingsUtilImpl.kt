@@ -1,289 +1,265 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.actions;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.actions
 
-import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.TabbedConfigurable;
-import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
-import com.intellij.openapi.options.ex.ConfigurableVisitor;
-import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.options.newEditor.SettingsDialogFactory;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.navigation.Place;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.ui.search.SearchUtil
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ConfigurableGroup
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.options.TabbedConfigurable
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
+import com.intellij.openapi.options.ex.ConfigurableVisitor
+import com.intellij.openapi.options.ex.ConfigurableWrapper
+import com.intellij.openapi.options.newEditor.SettingsDialogFactory
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.currentOrDefaultProject
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.navigation.Place
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
+import java.awt.Component
+import java.awt.Composite
+import java.util.*
+import java.util.function.Consumer
+import java.util.function.Predicate
 
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-
-import static com.intellij.openapi.project.ProjectUtil.currentOrDefaultProject;
+private val LOG = logger<ShowSettingsUtilImpl>()
 
 // extended externally
-public class ShowSettingsUtilImpl extends ShowSettingsUtil {
-  private static final Logger LOG = Logger.getInstance(ShowSettingsUtilImpl.class);
+open class ShowSettingsUtilImpl : ShowSettingsUtil() {
+  companion object {
+    @JvmStatic
+    fun getDialog(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?): DialogWrapper {
+      return SettingsDialogFactory.getInstance().create(
+        currentOrDefaultProject(project),
+        filterEmptyGroups(groups),
+        toSelect,
+        null
+      )
+    }
 
-  public static @NotNull DialogWrapper getDialog(@Nullable Project project,
-                                                 @NotNull List<? extends ConfigurableGroup> groups,
-                                                 @Nullable Configurable toSelect) {
-    return SettingsDialogFactory.getInstance().create(
-      currentOrDefaultProject(project),
-      filterEmptyGroups(groups),
-      toSelect,
-      null
-    );
-  }
+    /**
+     * @param project         a project used to load project settings or `null`
+     * @param withIdeSettings specifies whether to load application settings or not
+     * @return an array with the root configurable group
+     */
+    @JvmStatic
+    fun getConfigurableGroups(project: Project?, withIdeSettings: Boolean): Array<ConfigurableGroup> {
+      val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings)
+      return arrayOf(group)
+    }
 
-  /**
-   * @param project         a project used to load project settings or {@code null}
-   * @param withIdeSettings specifies whether to load application settings or not
-   * @return an array with the root configurable group
-   */
-  public static ConfigurableGroup @NotNull [] getConfigurableGroups(@Nullable Project project, boolean withIdeSettings) {
-    ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings);
-    return new ConfigurableGroup[]{group};
-  }
-
-  /**
-   * @param project         a project used to load project settings or {@code null}
-   * @param withIdeSettings specifies whether to load application settings or not
-   * @return all configurables as a plain list except the root configurable group
-   */
-  public static @NotNull List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings, boolean checkNonDefaultProject) {
-    List<Configurable> list = new ArrayList<>();
-
-    for (Configurable configurable : ConfigurableExtensionPointUtil.getConfigurables(
-      withIdeSettings ? project : currentOrDefaultProject(project),
-      withIdeSettings, checkNonDefaultProject
-    )) {
-      list.add(configurable);
-      if (configurable instanceof Configurable.Composite) {
-        collect(list, ((Configurable.Composite)configurable).getConfigurables());
+    /**
+     * @param project         a project used to load project settings or `null`
+     * @param withIdeSettings specifies whether to load application settings or not
+     * @return all configurables as a plain list except the root configurable group
+     */
+    @JvmStatic
+    fun getConfigurables(project: Project?, withIdeSettings: Boolean, checkNonDefaultProject: Boolean): List<Configurable> {
+      val list: MutableList<Configurable> = ArrayList()
+      for (configurable in ConfigurableExtensionPointUtil.getConfigurables(
+        if (withIdeSettings) project else currentOrDefaultProject(project),
+        withIdeSettings, checkNonDefaultProject
+      )) {
+        list.add(configurable)
+        if (configurable is Configurable.Composite) {
+          collect(list, (configurable as Configurable.Composite).configurables)
+        }
       }
+      return list
     }
 
-    return list;
-  }
-
-  private static void collect(@NotNull List<? super Configurable> list, Configurable @NotNull [] configurables) {
-    for (Configurable configurable : configurables) {
-      list.add(configurable);
-      if (configurable instanceof Configurable.Composite) {
-        collect(list, ((Configurable.Composite)configurable).getConfigurables());
+    @JvmStatic
+    fun showSettingsDialog(project: Project?, idToSelect: String?, filter: String?) {
+      var group: ConfigurableGroup? = ConfigurableExtensionPointUtil.getConfigurableGroup(project,  /* withIdeSettings = */true)
+      if (group!!.configurables.size == 0) {
+        group = null
       }
+      val configurableToSelect = if (idToSelect == null) null
+      else ConfigurableVisitor.findById(idToSelect, listOf<ConfigurableGroup?>(group))
+      SettingsDialogFactory.getInstance().create(
+        currentOrDefaultProject(project), listOf<ConfigurableGroup?>(group),
+        configurableToSelect,
+        filter
+      ).show()
+    }
+
+    @JvmStatic
+    fun createDimensionKey(configurable: Configurable): String {
+      return '#'.toString() + configurable.displayName.replace('\n', '_').replace(' ', '_')
     }
   }
 
-  @Override
-  public void showSettingsDialog(@NotNull Project project, ConfigurableGroup @NotNull ... groups) {
-    try {
-      getDialog(project, Arrays.asList(groups), null).show();
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+  override fun showSettingsDialog(project: Project, vararg groups: ConfigurableGroup) {
+    runCatching {
+      getDialog(project, Arrays.asList(*groups), null).show()
+    }.getOrLogException(LOG)
   }
 
-  @Override
-  public <T extends Configurable> void showSettingsDialog(@Nullable Project project, @NotNull Class<T> configurableClass) {
-    showSettingsDialog(project, configurableClass, null);
+  override fun <T : Configurable?> showSettingsDialog(project: Project?, configurableClass: Class<T>) {
+    showSettingsDialog(project, configurableClass, null)
   }
 
-  @Override
-  public <T extends Configurable> void showSettingsDialog(@Nullable Project project,
-                                                          @NotNull Class<T> configurableClass,
-                                                          @Nullable Consumer<? super T> additionalConfiguration) {
-    assert Configurable.class.isAssignableFrom(configurableClass) : "Not a configurable: " + configurableClass.getName();
-    showSettingsDialog(project, it -> ConfigurableWrapper.cast(configurableClass, it) != null, it -> {
+  override fun <T : Configurable?> showSettingsDialog(project: Project?,
+                                                      configurableClass: Class<T>,
+                                                      additionalConfiguration: Consumer<in T>?) {
+    assert(Configurable::class.java.isAssignableFrom(configurableClass)) { "Not a configurable: " + configurableClass.name }
+    showSettingsDialog(project, { it: Configurable? -> ConfigurableWrapper.cast(configurableClass, it) != null }) { it: Configurable ->
       if (additionalConfiguration != null) {
-        T toConfigure = ConfigurableWrapper.cast(configurableClass, it);
-        assert toConfigure != null : "Wrong configurable found: " + it.getClass();
-        additionalConfiguration.accept(toConfigure);
-      }
-    });
-  }
-
-  @Override
-  public void showSettingsDialog(@Nullable Project project,
-                                 @NotNull Predicate<? super Configurable> predicate,
-                                 @Nullable Consumer<? super Configurable> additionalConfiguration) {
-    ConfigurableGroup[] groups = getConfigurableGroups(project, true);
-    Configurable config = new ConfigurableVisitor() {
-      @Override
-      protected boolean accept(@NotNull Configurable configurable) {
-        return predicate.test(configurable);
-      }
-    }.find(groups);
-
-    assert config != null : "Cannot find configurable for specified predicate";
-
-    if (additionalConfiguration != null) {
-      additionalConfiguration.accept(config);
-    }
-
-    getDialog(project, Arrays.asList(groups), config).show();
-  }
-
-  @Override
-  public void showSettingsDialog(@Nullable Project project, @NotNull String nameToSelect) {
-    ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */ true);
-    List<ConfigurableGroup> groups = group.getConfigurables().length == 0 ? Collections.emptyList() : Collections.singletonList(group);
-    getDialog(project, groups, findPreselectedByDisplayName(nameToSelect, groups)).show();
-  }
-
-  @Nullable
-  private static Configurable findPreselectedByDisplayName(@NotNull String preselectedConfigurableDisplayName, @NotNull List<? extends ConfigurableGroup> groups) {
-    for (ConfigurableGroup eachGroup : groups) {
-      for (Configurable configurable : SearchUtil.expandGroup(eachGroup)) {
-        if (preselectedConfigurableDisplayName.equals(configurable.getDisplayName())) {
-          return configurable;
-        }
+        val toConfigure = ConfigurableWrapper.cast(configurableClass, it) ?: error("Wrong configurable found: " + it.javaClass)
+        additionalConfiguration.accept(toConfigure)
       }
     }
-    return null;
   }
 
-  public static void showSettingsDialog(@Nullable Project project, @Nullable String idToSelect, final String filter) {
-    ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */ true);
-    if (group.getConfigurables().length == 0) {
-      group = null;
-    }
-
-    Configurable configurableToSelect = idToSelect == null ? null : ConfigurableVisitor.findById(idToSelect, Collections.singletonList(group));
-    SettingsDialogFactory.getInstance().create(
-      currentOrDefaultProject(project),
-      Collections.singletonList(group),
-      configurableToSelect,
-      filter
-    ).show();
-  }
-
-  @Override
-  public void showSettingsDialog(@NotNull Project project, @Nullable Configurable toSelect) {
-    List<ConfigurableGroup> groups = Collections.singletonList(ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */ true));
-    getDialog(project, groups, toSelect).show();
-  }
-
-  @NotNull
-  private static List<ConfigurableGroup> filterEmptyGroups(@NotNull List<? extends ConfigurableGroup> group) {
-    List<ConfigurableGroup> groups = new ArrayList<>();
-    for (ConfigurableGroup g : group) {
-      if (g.getConfigurables().length > 0) {
-        groups.add(g);
+  override fun showSettingsDialog(project: Project?,
+                                  predicate: Predicate<in Configurable>,
+                                  additionalConfiguration: Consumer<in Configurable>?) {
+    val groups = getConfigurableGroups(project, true)
+    val config = object : ConfigurableVisitor() {
+      override fun accept(configurable: Configurable): Boolean {
+        return predicate.test(configurable)
       }
-    }
-    return groups;
+    }.find(*groups) ?: error("Cannot find configurable for specified predicate")
+    additionalConfiguration?.accept(config)
+    getDialog(project, Arrays.asList(*groups), config).show()
   }
 
-  @Override
-  public boolean editConfigurable(Project project, @NotNull Configurable configurable) {
-    return editConfigurable(project, createDimensionKey(configurable), configurable);
+  override fun showSettingsDialog(project: Project?, nameToSelect: String) {
+    val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project,  /* withIdeSettings = */true)
+    val groups = if (group.configurables.size == 0) emptyList() else listOf(group)
+    getDialog(project, groups, findPreselectedByDisplayName(nameToSelect, groups)).show()
   }
 
-  @Override
-  public boolean editConfigurable(Project project, @NotNull String dimensionServiceKey, @NotNull Configurable configurable) {
-    return editConfigurable(project, dimensionServiceKey, configurable, isWorthToShowApplyButton(configurable));
+  override fun showSettingsDialog(project: Project, toSelect: Configurable?) {
+    val groups = listOf(ConfigurableExtensionPointUtil.getConfigurableGroup(project,  /* withIdeSettings = */true))
+    getDialog(project, groups, toSelect).show()
   }
 
-  private static boolean isWorthToShowApplyButton(@NotNull Configurable configurable) {
-    return configurable instanceof Place.Navigator ||
-           configurable instanceof Composite ||
-           configurable instanceof TabbedConfigurable;
+  override fun editConfigurable(project: Project, configurable: Configurable): Boolean {
+    return editConfigurable(project, createDimensionKey(configurable), configurable)
   }
 
-  @Override
-  public boolean editConfigurable(Project project, @NotNull String dimensionServiceKey, @NotNull Configurable configurable, boolean showApplyButton) {
-    return editConfigurable(null, project, configurable, dimensionServiceKey, null, showApplyButton);
+  override fun editConfigurable(project: Project, dimensionServiceKey: String, configurable: Configurable): Boolean {
+    return editConfigurable(project, dimensionServiceKey, configurable, isWorthToShowApplyButton(configurable))
   }
 
-  @Override
-  public boolean editConfigurable(Project project, @NotNull Configurable configurable, Runnable advancedInitialization) {
-    return editConfigurable(null, project, configurable, createDimensionKey(configurable), advancedInitialization, isWorthToShowApplyButton(configurable));
+  override fun editConfigurable(project: Project,
+                                dimensionServiceKey: String,
+                                configurable: Configurable,
+                                showApplyButton: Boolean): Boolean {
+    return editConfigurable(null, project, configurable, dimensionServiceKey, null, showApplyButton)
   }
 
-  @Override
-  public <T extends Configurable> boolean editConfigurable(Project project, @NotNull T configurable, @NotNull Consumer<? super T> advancedInitialization) {
-    return editConfigurable(null, project, configurable, advancedInitialization, createDimensionKey(configurable), isWorthToShowApplyButton(configurable));
+  override fun editConfigurable(project: Project?, configurable: Configurable, advancedInitialization: Runnable?): Boolean {
+    return editConfigurable(null, project, configurable, createDimensionKey(configurable), advancedInitialization,
+                            isWorthToShowApplyButton(configurable))
   }
 
-  @Override
-  public boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable) {
-    return editConfigurable(parent, configurable, null);
+  override fun <T : Configurable> editConfigurable(project: Project?, configurable: T, advancedInitialization: Consumer<in T?>): Boolean {
+    return editConfigurable(parent = null,
+                            project = project,
+                            configurable = configurable,
+                            advancedInitialization = advancedInitialization,
+                            dimensionKey = createDimensionKey(configurable),
+                            showApplyButton = isWorthToShowApplyButton(configurable))
   }
 
-  @Override
-  public boolean editConfigurable(@Nullable Component parent, @NotNull String displayName) {
-    return editConfigurable(parent, displayName, (Runnable)null);
+  override fun editConfigurable(parent: Component?, configurable: Configurable): Boolean {
+    return editConfigurable(parent, configurable, null)
   }
 
-  @Override
-  public boolean editConfigurable(@Nullable Component parent, @NotNull String displayName, @Nullable Runnable advancedInitialization) {
-    ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(null, /* withIdeSettings = */ true);
-    List<ConfigurableGroup> groups = group.getConfigurables().length == 0 ? Collections.emptyList() : Collections.singletonList(group);
-    Configurable configurable = findPreselectedByDisplayName(displayName, groups);
+  override fun editConfigurable(parent: Component?, displayName: String): Boolean {
+    return editConfigurable(parent, displayName, null as Runnable?)
+  }
+
+  override fun editConfigurable(parent: Component?, displayName: String, advancedInitialization: Runnable?): Boolean {
+    val group = ConfigurableExtensionPointUtil.getConfigurableGroup(null,  /* withIdeSettings = */true)
+    val groups = if (group.configurables.size == 0) emptyList() else listOf(group)
+    val configurable = findPreselectedByDisplayName(displayName, groups)
     if (configurable == null) {
-      LOG.error("Cannot find configurable for name [" + displayName + "]");
-      return false;
+      LOG.error("Cannot find configurable for name [$displayName]")
+      return false
     }
-    return editConfigurable(parent, configurable, advancedInitialization);
+    return editConfigurable(parent, configurable, advancedInitialization)
   }
 
-  @Override
-  public boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable, @Nullable Runnable advancedInitialization) {
-    return editConfigurable(parent, null, configurable, createDimensionKey(configurable), advancedInitialization, isWorthToShowApplyButton(configurable));
+  override fun editConfigurable(parent: Component?, configurable: Configurable, advancedInitialization: Runnable?): Boolean {
+    return editConfigurable(parent, null, configurable, createDimensionKey(configurable), advancedInitialization,
+                            isWorthToShowApplyButton(configurable))
   }
 
-  private static boolean editConfigurable(@Nullable Component parent,
-                                          @Nullable Project project,
-                                          @NotNull Configurable configurable,
-                                          @NotNull String dimensionKey,
-                                          @Nullable Runnable advancedInitialization,
-                                          boolean showApplyButton) {
-    Consumer<Configurable> consumer = advancedInitialization != null ? it -> advancedInitialization.run() : null;
-    return editConfigurable(parent, project, configurable, consumer, dimensionKey, showApplyButton);
+  override fun editConfigurable(parent: Component, dimensionServiceKey: String, configurable: Configurable): Boolean {
+    return editConfigurable(parent, null, configurable, dimensionServiceKey, null, isWorthToShowApplyButton(configurable))
   }
+}
 
-  private static <T extends Configurable> boolean editConfigurable(@Nullable Component parent,
-                                                                   @Nullable Project project,
-                                                                   @NotNull T configurable,
-                                                                   @Nullable final Consumer<? super T> advancedInitialization,
-                                                                   @NotNull String dimensionKey,
-                                                                   boolean showApplyButton) {
-    final DialogWrapper editor;
-    if (parent == null) {
-      editor = SettingsDialogFactory.getInstance().create(project, dimensionKey, configurable, showApplyButton, false);
+private fun collect(list: MutableList<in Configurable>, configurables: Array<Configurable>) {
+  for (configurable in configurables) {
+    list.add(configurable)
+    if (configurable is Configurable.Composite) {
+      collect(list, (configurable as Configurable.Composite).configurables)
     }
-    else {
-      editor = SettingsDialogFactory.getInstance().create(parent, dimensionKey, configurable, showApplyButton, false);
-    }
-    if (advancedInitialization != null) {
-      UiNotifyConnector.Once.installOn(editor.getContentPane(), new Activatable() {
-        @Override
-        public void showNotify() {
-          advancedInitialization.accept(configurable);
-        }
-      });
-    }
-    return editor.showAndGet();
   }
+}
 
-  @NotNull
-  public static String createDimensionKey(@NotNull Configurable configurable) {
-    return '#' + configurable.getDisplayName().replace('\n', '_').replace(' ', '_');
+private fun findPreselectedByDisplayName(preselectedConfigurableDisplayName: String, groups: List<ConfigurableGroup>): Configurable? {
+  for (eachGroup in groups) {
+    for (configurable in SearchUtil.expandGroup(eachGroup)) {
+      if (preselectedConfigurableDisplayName == configurable.displayName) {
+        return configurable
+      }
+    }
   }
+  return null
+}
 
-  @Override
-  public boolean editConfigurable(Component parent, @NotNull String dimensionServiceKey, @NotNull Configurable configurable) {
-    return editConfigurable(parent, null, configurable, dimensionServiceKey, null, isWorthToShowApplyButton(configurable));
+private fun filterEmptyGroups(group: List<ConfigurableGroup>): List<ConfigurableGroup> {
+  val groups: MutableList<ConfigurableGroup> = ArrayList()
+  for (g in group) {
+    if (g.configurables.size > 0) {
+      groups.add(g)
+    }
   }
+  return groups
+}
+
+private fun isWorthToShowApplyButton(configurable: Configurable): Boolean {
+  return configurable is Place.Navigator ||
+         configurable is Composite ||
+         configurable is TabbedConfigurable
+}
+
+private fun editConfigurable(parent: Component?,
+                             project: Project?,
+                             configurable: Configurable,
+                             dimensionKey: String,
+                             advancedInitialization: Runnable?,
+                             showApplyButton: Boolean): Boolean {
+  val consumer = if (advancedInitialization != null) Consumer { it: Configurable? -> advancedInitialization.run() } else null
+  return editConfigurable(parent, project, configurable, consumer, dimensionKey, showApplyButton)
+}
+
+private fun <T : Configurable> editConfigurable(parent: Component?,
+                                                 project: Project?,
+                                                 configurable: T,
+                                                 advancedInitialization: Consumer<in T?>?,
+                                                 dimensionKey: String,
+                                                 showApplyButton: Boolean): Boolean {
+  val editor: DialogWrapper
+  if (parent == null) {
+    editor = SettingsDialogFactory.getInstance().create(project, dimensionKey, configurable, showApplyButton, false)
+  }
+  else {
+    editor = SettingsDialogFactory.getInstance().create(parent, dimensionKey, configurable, showApplyButton, false)
+  }
+  if (advancedInitialization != null) {
+    UiNotifyConnector.Once.installOn(editor.contentPane, object : Activatable {
+      override fun showNotify() {
+        advancedInitialization.accept(configurable)
+      }
+    })
+  }
+  return editor.showAndGet()
 }
