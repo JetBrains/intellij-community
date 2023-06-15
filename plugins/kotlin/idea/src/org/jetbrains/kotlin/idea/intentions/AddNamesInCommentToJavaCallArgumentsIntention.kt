@@ -11,10 +11,16 @@ import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Holder.hasBlockCommentWithName
+import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Holder.resolve
+import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Holder.toParameterNameComment
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassConstructorDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
@@ -25,7 +31,7 @@ class AddNamesInCommentToJavaCallArgumentsIntention : SelfTargetingIntention<KtC
     KotlinBundle.lazyMessage("add.names.in.comment.to.call.arguments")
 ) {
     override fun isApplicableTo(element: KtCallElement, caretOffset: Int): Boolean =
-        resolveValueParameterDescriptors(element, canAddNameComments = true) != null
+        Holder.resolveValueParameterDescriptors(element, canAddNameComments = true) != null
 
     override fun applyTo(element: KtCallElement, editor: Editor?) {
         val resolvedCall = element.resolveToCall() ?: return
@@ -39,7 +45,7 @@ class AddNamesInCommentToJavaCallArgumentsIntention : SelfTargetingIntention<KtC
         }
     }
 
-    companion object {
+    object Holder {
         fun resolveValueParameterDescriptors(
             element: KtCallElement,
             canAddNameComments: Boolean
@@ -71,7 +77,7 @@ class AddNamesInCommentToJavaCallArgumentsIntention : SelfTargetingIntention<KtC
             return canonicalParameterNameComment(parameterName) == parameter.toParameterNameComment()
         }
 
-        private fun KtValueArgument.hasBlockCommentWithName(): Boolean =
+        fun KtValueArgument.hasBlockCommentWithName(): Boolean =
             blockCommentWithName() != null
 
         fun KtValueArgument.blockCommentWithName(): PsiComment? =

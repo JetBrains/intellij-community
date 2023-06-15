@@ -325,7 +325,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         val call = getQualifiedExpressionForSelector() ?: this
         val callParent = call.parent
         if (callParent is KtDeclarationWithBody && call == callParent.bodyExpression) {
-            ConvertToBlockBodyIntention.convert(callParent, true)
+            ConvertToBlockBodyIntention.Holder.convert(callParent, true)
             val firstStatement = callParent.bodyBlockExpression?.statements?.first()
             return (firstStatement as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression
                 ?: firstStatement as? KtCallExpression

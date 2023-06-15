@@ -42,12 +42,12 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
     KtCallableReferenceExpression::class.java, KotlinBundle.lazyMessage("convert.reference.to.lambda")
 ) {
     override fun applyTo(element: KtCallableReferenceExpression, editor: Editor?) {
-        applyTo(element)
+        Holder.applyTo(element)
     }
 
-    override fun isApplicableTo(element: KtCallableReferenceExpression): Boolean = Companion.isApplicableTo(element)
+    override fun isApplicableTo(element: KtCallableReferenceExpression): Boolean = Holder.isApplicableTo(element)
 
-    companion object {
+    object Holder {
         private val SOURCE_RENDERER = IdeDescriptorRenderers.SOURCE_CODE
 
         fun isApplicableTo(
@@ -160,6 +160,7 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
             return callGrandParent.lambdaArguments.lastOrNull()?.getArgumentExpression() ?: lastLambdaExpression
         }
 
-        private fun CallableMemberDescriptor.inCompanion() = containingDeclaration.safeAs<ClassDescriptor>()?.isCompanionObject == true
+        private fun CallableMemberDescriptor.inCompanion(): Boolean =
+            containingDeclaration.safeAs<ClassDescriptor>()?.isCompanionObject == true
     }
 }

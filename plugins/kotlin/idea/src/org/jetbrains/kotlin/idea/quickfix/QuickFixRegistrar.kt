@@ -65,7 +65,7 @@ class QuickFixRegistrar : QuickFixContributor {
         ABSTRACT_PROPERTY_WITH_GETTER.registerFactory(RemoveModifierFixBase.removeAbstractModifier, RemovePartsFromPropertyFix)
         ABSTRACT_PROPERTY_WITH_SETTER.registerFactory(RemoveModifierFixBase.removeAbstractModifier, RemovePartsFromPropertyFix)
 
-        PROPERTY_INITIALIZER_IN_INTERFACE.registerFactory(RemovePartsFromPropertyFix, ConvertPropertyInitializerToGetterIntention)
+        PROPERTY_INITIALIZER_IN_INTERFACE.registerFactory(RemovePartsFromPropertyFix, ConvertPropertyInitializerToGetterIntention.Factory)
 
         MUST_BE_INITIALIZED_OR_BE_ABSTRACT.registerFactory(addAbstractModifierFactory)
         MUST_BE_INITIALIZED_OR_BE_ABSTRACT_WARNING.registerFactory(addAbstractModifierFactory)
@@ -383,7 +383,7 @@ class QuickFixRegistrar : QuickFixContributor {
         RETURN_TYPE_MISMATCH_ON_OVERRIDE.registerFactory(ChangeSuperTypeListEntryTypeArgumentFix)
         PROPERTY_TYPE_MISMATCH_ON_OVERRIDE.registerFactory(ChangeSuperTypeListEntryTypeArgumentFix)
 
-        EXTENSION_FUNCTION_IN_EXTERNAL_DECLARATION.registerFactory(ConvertFunctionTypeReceiverToParameterIntention)
+        EXTENSION_FUNCTION_IN_EXTERNAL_DECLARATION.registerFactory(ConvertFunctionTypeReceiverToParameterIntention.Factory)
         TOO_MANY_ARGUMENTS.registerFactory(ChangeFunctionSignatureFix)
         NO_VALUE_FOR_PARAMETER.registerFactory(ChangeFunctionSignatureFix)
 
@@ -687,7 +687,7 @@ class QuickFixRegistrar : QuickFixContributor {
         TYPE_VARIANCE_CONFLICT.registerFactory(RemoveTypeVarianceFix, AddAnnotationFix.TypeVarianceConflictFactory)
 
         CONST_VAL_NOT_TOP_LEVEL_OR_OBJECT.registerFactory(
-            MoveMemberToCompanionObjectIntention,
+            MoveMemberToCompanionObjectIntention.Factory,
             RemoveModifierFixBase.removeNonRedundantModifier
         )
 

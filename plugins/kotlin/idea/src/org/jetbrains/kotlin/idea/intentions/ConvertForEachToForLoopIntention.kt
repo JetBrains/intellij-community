@@ -22,18 +22,6 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention<KtSimpleNameExpression>(
     KtSimpleNameExpression::class.java, KotlinBundle.lazyMessage("replace.with.a.for.loop")
 ) {
-    companion object {
-        private const val FOR_EACH_NAME = "forEach"
-        private val FOR_EACH_FQ_NAMES: Set<String> by lazy {
-            sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_NAME" }.toSet()
-        }
-
-        private const val FOR_EACH_INDEXED_NAME = "forEachIndexed"
-        private val FOR_EACH_INDEXED_FQ_NAMES: Set<String> by lazy {
-            sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_INDEXED_NAME" }.toSet()
-        }
-    }
-
     override fun isApplicableTo(element: KtSimpleNameExpression): Boolean {
         val referencedName = element.getReferencedName()
         val isForEach = referencedName == FOR_EACH_NAME
@@ -144,4 +132,14 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
             loop
         }
     }
+}
+
+private const val FOR_EACH_NAME = "forEach"
+private val FOR_EACH_FQ_NAMES: Set<String> by lazy {
+    sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_NAME" }.toSet()
+}
+
+private const val FOR_EACH_INDEXED_NAME = "forEachIndexed"
+private val FOR_EACH_INDEXED_FQ_NAMES: Set<String> by lazy {
+    sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_INDEXED_NAME" }.toSet()
 }
