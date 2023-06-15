@@ -211,12 +211,18 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
         return;
       }
       doInit(false);
+      if (!MavenUtil.isLinearImportEnabled()) {
+        myWatcher.scheduleUpdateAll(new MavenImportSpec(false, false, false));
+      }
     });
   }
 
   @TestOnly
   public void initForTests() {
     doInit(false);
+    if (!MavenUtil.isLinearImportEnabled()) {
+      myWatcher.scheduleUpdateAll(new MavenImportSpec(false, false, false));
+    }
   }
 
   private void doInit(final boolean isNew) {
@@ -240,9 +246,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
           MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(null);
           fireActivated();
           listenForExternalChanges();
-        }
-        if (!MavenUtil.isLinearImportEnabled()) {
-          myWatcher.scheduleUpdateAll(new MavenImportSpec(false, isNew, false));
         }
       });
     }
@@ -487,8 +490,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }
     else {
       myProjectsTree.addManagedFilesWithProfiles(files, profiles);
-      myWatcher.scheduleUpdateAll(new MavenImportSpec(false, true, true));
     }
+    myWatcher.scheduleUpdateAll(new MavenImportSpec(false, true, false));
   }
 
   public void addManagedFiles(@NotNull List<VirtualFile> files) {
@@ -747,6 +750,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   public void setProjectsTree(@NotNull MavenProjectsTree newTree) {
     if (!isInitialized()) {
       doInit(true);
+      if (!MavenUtil.isLinearImportEnabled()) {
+        myWatcher.scheduleUpdateAll(new MavenImportSpec(false, true, false));
+      }
     }
     newTree.addListenersFrom(myProjectsTree);
     myProjectsTree = newTree;
