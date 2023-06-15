@@ -88,8 +88,10 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
     boolean wasSorted = prepareDisableSorting();
     try {
       myDragOutSource.getDragOutDelegate().dragOutFinished(event, myDragOutSource);
-    } finally {
+    }
+    finally {
       disableSortingIfNeed(event, wasSorted);
+      myDragOutSource = null;
     }
   }
 
@@ -133,6 +135,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
   @Override
   protected void processDragOutCancel() {
     myDragOutSource.getDragOutDelegate().dragOutCancelled(myDragOutSource);
+    myDragOutSource = null;
   }
 
   @Override
