@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Key;
@@ -302,12 +301,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
             if (receiverClassType.getPyClass() != returnClassType.getPyClass() &&
                 PyTypeChecker.match(returnClassType.toClass(), receiverClassType.toClass(), context)) {
-              return returnClassType.isDefinition() ? receiverClassType.toClass() : receiverClassType.toInstance();
-            }
-
-            if (receiverClassType.getPyClass() == returnClassType.getPyClass() &&
-                returnClassType instanceof PyLiteralStringType &&
-                "str".equals(receiverClassType.getName())) {
               return returnClassType.isDefinition() ? receiverClassType.toClass() : receiverClassType.toInstance();
             }
           }

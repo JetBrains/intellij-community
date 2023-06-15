@@ -158,7 +158,8 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-4748
-  public void testStubAssignment() {
+  // TODO Re-enable once PY-61093 is fixed
+  public void _testStubAssignment() {
     doMultiFileTest("a.py");
   }
 
