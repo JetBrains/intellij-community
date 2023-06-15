@@ -1146,7 +1146,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 }
 
 final class FileStructurePopupTimeTracker extends CounterUsagesCollector {
-  private final static EventLogGroup GROUP = new EventLogGroup("file.structure.popup", 1);
+  private final static EventLogGroup GROUP = new EventLogGroup("file.structure.popup", 2);
   private final static EventId1<Long> LIFE = GROUP.registerEvent("popup.disposed", EventFields.DurationMs);
   private final static EventId1<Long> SHOW = GROUP.registerEvent("data.shown", EventFields.DurationMs);
   private final static EventId1<Long> REBUILD = GROUP.registerEvent("data.filled", EventFields.DurationMs);
