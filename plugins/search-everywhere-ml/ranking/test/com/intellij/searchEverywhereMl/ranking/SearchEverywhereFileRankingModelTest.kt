@@ -5,7 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
-import com.intellij.searchEverywhereMl.common.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 
 internal class SearchEverywhereFileRankingModelTest : SearchEverywhereRankingModelTest() {
   override val tab = SearchEverywhereTabWithMlRanking.FILES

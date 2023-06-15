@@ -1,4 +1,4 @@
-package com.intellij.searchEverywhereMl.common
+package com.intellij.searchEverywhereMl
 
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
