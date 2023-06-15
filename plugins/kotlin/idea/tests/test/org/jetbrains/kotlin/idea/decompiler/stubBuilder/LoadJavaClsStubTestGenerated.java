@@ -2930,6 +2930,11 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
             runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/visibility/PropertyInConstructorExplicitVisibility.kt"));
         }
 
+        @TestMetadata("PublishedApi.kt")
+        public void testPublishedApi() throws Exception {
+            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/visibility/PublishedApi.kt"));
+        }
+
         @TestMetadata("TopLevelVarWithPrivateSetter.kt")
         public void testTopLevelVarWithPrivateSetter() throws Exception {
             runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/visibility/TopLevelVarWithPrivateSetter.kt"));
