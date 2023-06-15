@@ -17,7 +17,7 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.extension
 
-abstract class IssueIDPrePushHandler(private val project: Project) : PrePushHandler {
+abstract class IssueIDPrePushHandler : PrePushHandler {
   abstract val paths: List<String>
   open val pathsToIgnore = listOf("/test/", "/testData/")
   abstract val commitMessageRegex: Regex
@@ -46,18 +46,18 @@ abstract class IssueIDPrePushHandler(private val project: Project) : PrePushHand
     }
   }
 
-  private fun handlerIsApplicable(): Boolean = isAvailable() && PsiUtil.isIdeaProject(project)
+  private fun handlerIsApplicable(project: Project): Boolean = isAvailable() && PsiUtil.isIdeaProject(project)
   override fun getPresentableName(): String = DevKitGitBundle.message("push.commit.handler.name")
 
-  override fun handle(pushDetails: MutableList<PushInfo>, indicator: ProgressIndicator): PrePushHandler.Result {
-    if (!handlerIsApplicable()) return PrePushHandler.Result.OK
+  override fun handle(project: Project, pushDetails: MutableList<PushInfo>, indicator: ProgressIndicator): PrePushHandler.Result {
+    if (!handlerIsApplicable(project)) return PrePushHandler.Result.OK
 
-    return if (pushDetails.any { it.isTargetBranchProtected() && it.hasCommitsToEdit(indicator.modalityState) })
+    return if (pushDetails.any { it.isTargetBranchProtected(project) && it.hasCommitsToEdit(indicator.modalityState) })
       PrePushHandler.Result.ABORT_AND_CLOSE
     else PrePushHandler.Result.OK
   }
 
-  private fun PushInfo.isTargetBranchProtected() = GitSharedSettings.getInstance(project).isBranchProtected(pushSpec.target.presentation)
+  private fun PushInfo.isTargetBranchProtected(project: Project) = GitSharedSettings.getInstance(project).isBranchProtected(pushSpec.target.presentation)
 
   private fun PushInfo.hasCommitsToEdit(modalityState: ModalityState): Boolean {
     val commitsToWarnAbout = commits.asSequence()

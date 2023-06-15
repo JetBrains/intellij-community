@@ -4,7 +4,7 @@ package org.jetbrains.idea.devkit.commit
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 
-class KotlinPluginPrePushHandler(project: Project) : IssueIDPrePushHandler(project) {
+class KotlinPluginPrePushHandler : IssueIDPrePushHandler() {
   override val paths: List<String> = listOf("plugins/kotlin/")
   override val commitMessageRegex = Regex(".*KTIJ-\\d+.*", RegexOption.DOT_MATCHES_ALL /* line breaks matter */)
   override val pathsToIgnore = super.pathsToIgnore.toMutableList()
@@ -15,7 +15,7 @@ class KotlinPluginPrePushHandler(project: Project) : IssueIDPrePushHandler(proje
   override fun getPresentableName(): String = DevKitGitBundle.message("push.commit.handler.name")
 }
 
-class IntelliJPrePushHandler(project: Project) : IssueIDPrePushHandler(project) {
+class IntelliJPrePushHandler : IssueIDPrePushHandler() {
   override val paths = listOf("community", "platform")
   override val commitMessageRegex = Regex(".*\\w{2,}-\\d+.*", RegexOption.DOT_MATCHES_ALL)
   override fun isAvailable() = Registry.`is`("intellij.commit.message.validation.enabled", true)
