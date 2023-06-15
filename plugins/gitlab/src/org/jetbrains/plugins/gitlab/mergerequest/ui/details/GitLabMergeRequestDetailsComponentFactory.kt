@@ -65,6 +65,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
               PopupHandler.installPopupMenu(this, actionGroup, ActionPlaces.POPUP)
               DataManager.registerDataProvider(this) { dataId ->
                 when {
+                  GitLabMergeRequestDetailsViewModel.DATA_KEY.`is`(dataId) -> detailsVm
                   GitLabMergeRequestsActionKeys.MERGE_REQUEST.`is`(dataId) -> detailsVm.detailsInfoVm.mergeRequest
                   GitLabMergeRequestChangesViewModel.DATA_KEY.`is`(dataId) -> detailsVm.changesVm
                   else -> null

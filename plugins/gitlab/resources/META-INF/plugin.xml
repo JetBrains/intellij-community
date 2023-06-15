@@ -97,22 +97,24 @@
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCheckoutRemoteBranchAction"/>
     <action id="GitLab.Merge.Request.Show"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestAction"/>
-    <action id="GitLab.Merge.Request.Open.In.Browser"
-            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabOpenMergeRequestInBrowserAction"/>
+    <action id="GitLab.Merge.Request.Open.Link"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestOpenURLAction"/>
 
     <group id="GitLab.Merge.Request.List.Actions">
       <reference id="GitLab.Merge.Request.Show"/>
-      <reference id="GitLab.Merge.Request.Open.In.Browser"/>
+      <reference id="GitLab.Merge.Request.Open.Link"/>
       <separator/>
       <reference id="GitLab.Merge.Request.List.Refresh"/>
     </group>
 
     <group id="GitLab.Merge.Request.Details.Popup">
       <reference id="GitLab.Merge.Request.Refresh"/>
+      <reference id="GitLab.Merge.Request.Open.Link"/>
     </group>
 
     <group id="GitLab.Merge.Request.Timeline.Popup">
       <reference id="GitLab.Merge.Request.Refresh"/>
+      <reference id="GitLab.Merge.Request.Open.Link"/>
     </group>
 
     <group id="GitLab.Merge.Request.Changes.Popup">
@@ -126,6 +128,8 @@
       <separator/>
       <reference ref="ExpandAll"/>
       <reference ref="CollapseAll"/>
+      <separator/>
+      <reference id="GitLab.Merge.Request.Open.Link"/>
     </group>
 
     <group id="GitLab.Merge.Request.Diff.Discussions.View.Options"
