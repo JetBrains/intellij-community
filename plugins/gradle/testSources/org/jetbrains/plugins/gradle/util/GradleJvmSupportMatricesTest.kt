@@ -102,8 +102,8 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
   }
 
   fun `test suggesting oldest compatible java version for gradle version`() {
-    assertEquals(7, suggestOldestCompatibleJavaVersion("2.0"))
-    assertEquals(7, suggestOldestCompatibleJavaVersion("3.0"))
+    assertEquals(8, suggestOldestCompatibleJavaVersion("2.0"))
+    assertEquals(8, suggestOldestCompatibleJavaVersion("3.0"))
     assertEquals(8, suggestOldestCompatibleJavaVersion("5.0"))
     assertEquals(8, suggestOldestCompatibleJavaVersion("5.1"))
     assertEquals(8, suggestOldestCompatibleJavaVersion("7.1"))
