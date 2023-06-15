@@ -28,7 +28,7 @@ import javax.swing.JPanel
 import kotlin.properties.Delegates
 
 @ApiStatus.Internal
-open class FloatingToolbar(val editor: Editor, private val actionGroupId: String) : Disposable {
+open class FloatingToolbar(val editor: Editor, protected val defaultActionGroupId: String) : Disposable {
   private val mouseListener = MouseListener()
   private val keyboardListener = KeyboardListener()
   private val mouseMotionListener = MouseMotionListener()
@@ -80,10 +80,20 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
     hint = null
   }
 
+  protected open fun createActionGroup(): ActionGroup? {
+    return CustomActionsSchema.getInstance().getCorrectedAction(defaultActionGroupId) as? ActionGroup ?: return null
+  }
+
+
   private fun createActionToolbar(targetComponent: JComponent, onUpdated: (ActionToolbar) -> Unit) {
-    val group = CustomActionsSchema.getInstance().getCorrectedAction(actionGroupId) as? ActionGroup ?: return
+    val group = createActionGroup() ?: return
     val place = ActionPlaces.EDITOR_FLOATING_TOOLBAR
-    val toolbar = ToolbarUtils.createImmediatelyUpdatedToolbar(group, place, targetComponent, horizontal = true, onUpdated)
+    val toolbar = ToolbarUtils.createImmediatelyUpdatedToolbar(group,
+                                                               place,
+                                                               targetComponent,
+                                                               horizontal = true,
+                                                               onUpdated)
+
     buttonSize = toolbar.maxButtonHeight
   }
 

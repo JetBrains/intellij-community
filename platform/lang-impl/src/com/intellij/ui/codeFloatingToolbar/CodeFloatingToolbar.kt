@@ -4,11 +4,16 @@ package com.intellij.ui.codeFloatingToolbar
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.FloatingToolbar
+import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.ui.LightweightHint
 import java.awt.Point
@@ -78,4 +83,28 @@ class CodeFloatingToolbar(editor: Editor): FloatingToolbar(editor, "Floating.Cod
     return lineStart + textIndex
   }
 
+
+  override fun createActionGroup(): ActionGroup? {
+    val contextAwareActionGroupId = getContextAwareGroupId() ?: return super.createActionGroup()
+    val mainActionGroup = CustomActionsSchema.getInstance().getCorrectedAction(contextAwareActionGroupId) as? ActionGroup ?: return super.createActionGroup()
+    val configurationGroup = createConfigureGroup(contextAwareActionGroupId)
+    return DefaultActionGroup(mainActionGroup, configurationGroup)
+  }
+
+  private fun getContextAwareGroupId(): String {
+    val project = editor.project ?: return defaultActionGroupId
+    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+    val elementAtOffset = psiFile?.findElementAt(editor.caretModel.primaryCaret.offset)
+    val targetLanguage = elementAtOffset?.language ?: return defaultActionGroupId
+    return FloatingToolbarCustomizer.findActionGroupFor(targetLanguage) ?: defaultActionGroupId
+  }
+
+  private fun createConfigureGroup(customizableGroupId: String): ActionGroup {
+    val customizeAction = CustomizeCodeFloatingToolbarAction(customizableGroupId)
+    val disableAction = CustomActionsSchema.getInstance().getCorrectedAction("Floating.CodeToolbar.Disable") ?: error("Can't find Floating.CodeToolbar.Disable action")
+    return MoreActionGroup().apply {
+      addAction(customizeAction)
+      addAction(disableAction)
+    }
+  }
 }
