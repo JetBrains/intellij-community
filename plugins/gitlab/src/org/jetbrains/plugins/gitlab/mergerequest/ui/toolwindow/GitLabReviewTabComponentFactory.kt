@@ -88,7 +88,7 @@ internal class GitLabReviewTabComponentFactory(
 
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
       detailsVmFlow.flatMapLatest {
-        it.detailsInfoVm.showTimelineRequests
+        it.showTimelineRequests
       }.collect {
         ctx.filesController.openTimeline(reviewId, true)
       }

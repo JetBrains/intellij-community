@@ -3,11 +3,8 @@ package org.jetbrains.plugins.gitlab.mergerequest.action
 
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.openapi.actionSystem.DataKey
-import git4idea.repo.GitRepository
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesController
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel
 
 internal object GitLabMergeRequestsActionKeys {
@@ -24,16 +21,4 @@ internal object GitLabMergeRequestsActionKeys {
   @JvmStatic
   val REVIEW_BRANCH_VM: DataKey<CodeReviewBranchesViewModel> =
     DataKey.create("org.jetbrains.plugins.gitlab.mergerequests.review.branch.viewmodel")
-
-  @JvmStatic
-  val REVIEW_DETAILS_LOADING_VM: DataKey<GitLabMergeRequestDetailsLoadingViewModel> =
-    DataKey.create("org.jetbrains.plugins.gitlab.mergerequests.review.details.loading.viewmodel")
-
-  @JvmStatic
-  val GIT_REPOSITORY: DataKey<GitRepository> =
-    DataKey.create("org.jetbrains.plugins.gitlab.mergerequests.git.repository")
-
-  @JvmStatic
-  val MERGE_REQUEST: DataKey<GitLabMergeRequest> =
-    DataKey.create("org.jetbrains.plugins.gitlab.mergerequests.review.mergerequest")
 }

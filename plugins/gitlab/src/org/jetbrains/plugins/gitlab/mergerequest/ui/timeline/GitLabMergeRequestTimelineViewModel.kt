@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapCaching
 import com.intellij.collaboration.async.mapFiltered
 import com.intellij.collaboration.async.modelFlow
@@ -11,13 +12,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.DelegatingGitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.forNewNote
 import org.jetbrains.plugins.gitlab.ui.comment.onDoneIn
 
-interface GitLabMergeRequestTimelineViewModel {
-  val mergeRequest: GitLabMergeRequest
+interface GitLabMergeRequestTimelineViewModel : GitLabMergeRequestViewModel {
   val currentUser: GitLabUserDTO
   val timelineItems: Flow<List<GitLabMergeRequestTimelineItemViewModel>>
 
@@ -31,11 +32,17 @@ private val LOG = logger<GitLabMergeRequestTimelineViewModel>()
 class LoadAllGitLabMergeRequestTimelineViewModel(
   parentCs: CoroutineScope,
   override val currentUser: GitLabUserDTO,
-  override val mergeRequest: GitLabMergeRequest
+  private val mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestTimelineViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default)
   private val loadingRequests = MutableSharedFlow<Unit>(1)
+
+  override val number: String = "!${mergeRequest.number}"
+  override val author: GitLabUserDTO = mergeRequest.author
+  override val title: Flow<String> = mergeRequest.title
+  override val descriptionHtml: Flow<String> = mergeRequest.descriptionHtml
+  override val url: String = mergeRequest.url
 
   override val timelineItems: Flow<List<GitLabMergeRequestTimelineItemViewModel>> =
     mergeRequest.createTimelineItemsFlow().mapToVms(mergeRequest).modelFlow(cs, LOG)
@@ -61,6 +68,12 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
 
   private val _diffRequests = MutableSharedFlow<GitLabDiscussionDiffViewModel.FullDiffRequest>()
   val diffRequests: Flow<GitLabDiscussionDiffViewModel.FullDiffRequest> = _diffRequests.asSharedFlow()
+
+  override fun refreshData() {
+    cs.launchNow {
+      mergeRequest.refreshData()
+    }
+  }
 
   /**
    * Load all simple events and discussions and subscribe to user discussions changes

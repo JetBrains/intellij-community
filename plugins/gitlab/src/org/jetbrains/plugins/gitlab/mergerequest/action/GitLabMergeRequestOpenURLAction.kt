@@ -5,22 +5,18 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 
 class GitLabMergeRequestOpenURLAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val selection = e.getData(GitLabMergeRequestsActionKeys.SELECTED)
-    val detailsVm = e.getData(GitLabMergeRequestDetailsViewModel.DATA_KEY)
-
-    e.presentation.isEnabledAndVisible = selection != null || detailsVm != null
+    val ctrl = e.getData(GitLabMergeRequestViewModel.DATA_KEY)
+    e.presentation.isEnabledAndVisible = ctrl != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val selection = e.getData(GitLabMergeRequestsActionKeys.SELECTED)
-    val detailsVm = e.getData(GitLabMergeRequestDetailsViewModel.DATA_KEY)
-    val url = selection?.webUrl ?: detailsVm?.url ?: return
+    val url = e.getRequiredData(GitLabMergeRequestViewModel.DATA_KEY).url
     BrowserUtil.browse(url)
   }
 }

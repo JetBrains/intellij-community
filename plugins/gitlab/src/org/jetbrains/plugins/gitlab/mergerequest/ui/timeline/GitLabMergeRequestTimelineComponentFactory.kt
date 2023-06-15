@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
@@ -52,13 +53,13 @@ internal object GitLabMergeRequestTimelineComponentFactory {
   ): JComponent {
     val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
 
-    val titleComponent = GitLabMergeRequestTimelineTitleComponent.create(cs, timelineVm.mergeRequest).let {
+    val titleComponent = GitLabMergeRequestTimelineTitleComponent.create(cs, timelineVm).let {
       CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
     }.apply {
       border = Borders.empty(CodeReviewTimelineUIUtil.HEADER_VERT_PADDING, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
     }
     val descriptionComponent = GitLabMergeRequestTimelineDescriptionComponent
-      .createComponent(cs, timelineVm.mergeRequest, avatarIconsProvider)
+      .createComponent(cs, timelineVm, avatarIconsProvider)
 
     val content = ComponentListPanelFactory.createVertical(cs, timelineVm.timelineItems, GitLabMergeRequestTimelineItemViewModel::id,
                                                            panelInitializer = {
@@ -82,7 +83,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     PopupHandler.installPopupMenu(timelinePanel, actionGroup, ActionPlaces.POPUP)
     DataManager.registerDataProvider(timelinePanel) { dataId ->
       when {
-        GitLabMergeRequestsActionKeys.MERGE_REQUEST.`is`(dataId) -> timelineVm.mergeRequest
+        GitLabMergeRequestViewModel.DATA_KEY.`is`(dataId) -> timelineVm
         else -> null
       }
     }
