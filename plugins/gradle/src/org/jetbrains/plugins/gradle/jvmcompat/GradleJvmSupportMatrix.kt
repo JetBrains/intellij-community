@@ -35,9 +35,8 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
 
   override fun newState(): GradleCompatibilityState = GradleCompatibilityState()
 
-
   private fun getCompatibilityRanges(data: GradleCompatibilityState): List<Pair<Ranges<JavaVersion>, Ranges<GradleVersion>>> {
-    return data.versionMappings.map { entry ->
+    return data.compatibility.map { entry ->
       val gradleVersionInfo = entry.gradleVersionInfo ?: ""
       val javaVersionInfo = entry.javaVersionInfo ?: ""
       val gradleRange = IdeVersionedDataParser.parseRange(gradleVersionInfo.split(','), GradleVersion::version)

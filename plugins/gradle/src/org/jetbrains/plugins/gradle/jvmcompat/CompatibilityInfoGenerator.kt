@@ -7,7 +7,9 @@ import java.io.FileInputStream
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.MessageFormat
+import java.time.Year
 import javax.xml.stream.XMLInputFactory
+import kotlin.io.path.readText
 
 
 fun main(args: Array<String>) {
@@ -16,27 +18,27 @@ fun main(args: Array<String>) {
   generateJvmSupportMatrices(Paths.get(args[0]), Paths.get(args[1]), applicationVersion)
 }
 
-fun generateJvmSupportMatrices(json: Path, kt: Path, applicationVersion: String, copyrightComment: String? = null) {
+fun createCopyrightComment(): String {
+  val year = Year.now().value
+  return "// Copyright 2000-$year JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license."
+}
 
-  val jsonData = json.toFile().readText(Charsets.UTF_8)
-  val parsedData = GradleCompatibilityDataParser
-    .parseVersionedJson(jsonData, applicationVersion) ?: throw IllegalStateException("Cannot get compatibility data")
+fun generateJvmSupportMatrices(json: Path, kt: Path, applicationVersion: String) {
+  generateJvmSupportMatrices(json, kt, applicationVersion, createCopyrightComment())
+}
 
-  if (copyrightComment != null && copyrightComment.indexOf('\n') != -1) {
+fun generateJvmSupportMatrices(json: Path, kt: Path, applicationVersion: String, copyrightComment: String) {
+  val jsonData = json.readText(Charsets.UTF_8)
+  val parsedData = GradleCompatibilityDataParser.parseVersionedJson(jsonData, applicationVersion)
+                   ?: throw IllegalStateException("Cannot get compatibility data")
+  if ('\n' in copyrightComment) {
     throw IllegalArgumentException("Copyright should be in single line")
   }
-  val classFileData = ClassFileData(copyrightComment ?: createCopyrightComment(), parsedData)
+  val classFileData = ClassFileData(copyrightComment, parsedData)
 
   val fileData = getGeneratedString(classFileData)
   kt.toFile().writeText(fileData, Charsets.UTF_8)
 }
-
-fun createCopyrightComment(): String {
-  return "// Copyright 2000-{Year.now().value} JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license."
-}
-
-internal class ClassFileData(val copyrightComment: String,
-                             val parsedData: GradleCompatibilityState)
 
 fun readAppVersion(appInfoPath: Path): String {
   val xmlInputFactory: XMLInputFactory = XMLInputFactory.newInstance()
@@ -47,10 +49,10 @@ fun readAppVersion(appInfoPath: Path): String {
     if (reader.hasNext()) {
       val startElement = reader.nextEvent()
       if (!startElement.isStartElement || startElement.asStartElement().name.localPart != "component") {
-        throw IllegalArgumentException("What a Terrible Failure! ${appInfoPath.toFile()} is not ApplicationInfo.xml")
+        throw IllegalArgumentException("${appInfoPath.toFile()} is not ApplicationInfo.xml")
       }
     }
-    else throw IllegalArgumentException("What a Terrible Failure! ${appInfoPath.toFile()} is not ApplicationInfo.xml")
+    else throw IllegalArgumentException("${appInfoPath.toFile()} is not ApplicationInfo.xml")
 
 
     var fullVersionFormat: String? = null
@@ -94,50 +96,66 @@ fun readAppVersion(appInfoPath: Path): String {
 
 //copy from ApplicationInfoImpl
 @ReviseWhenPortedToJDK("9")
-private fun requireNonNullElse(s: String?): String? {
+private fun requireNonNullElse(s: String?): String {
   return s ?: "0"
 }
 
+internal class ClassFileData(
+  val copyrightComment: String,
+  val parsedData: GradleCompatibilityState
+)
+
 internal fun getGeneratedString(data: ClassFileData): String {
   return """
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.plugins.gradle.jvmcompat;
-
-import com.intellij.openapi.application.ApplicationInfo
-import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilityState
-
-/**
- * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run "Generate Gradle Compatibility Matrix" configuration instead
- */
- 
-internal val DEFAULT_DATA = GradleCompatibilityState(
-  listOf(
-    ${data.parsedData.versionMappings.printAsListData(4, VersionMapping::toConstructor)}
-  ),
-  listOf(
-   ${data.parsedData.supportedJavaVersions.printAsListData(4)}
-  ),
-  listOf(
-   ${data.parsedData.supportedGradleVersions.printAsListData(4)}
-  )
-);
-""".trimIndent()
+    |${data.copyrightComment}
+    |
+    |package org.jetbrains.plugins.gradle.jvmcompat;
+    |
+    |import com.intellij.openapi.application.ApplicationInfo
+    |import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilityState
+    |
+    |/**
+    | * NOTE THIS FILE IS AUTO-GENERATED
+    | * DO NOT EDIT IT BY HAND, run "Generate Gradle Compatibility Matrix" configuration instead
+    | */
+    |internal val DEFAULT_DATA = GradleCompatibilityState(
+    |  supportedJavaVersions = listOf(
+    ${data.parsedData.supportedJavaVersions.printJavaVersions("|    ")}
+    |  ),
+    |  supportedGradleVersions = listOf(
+    ${data.parsedData.supportedGradleVersions.printGradleVersions("|    ")}
+    |  ),
+    |  compatibility = listOf(
+    ${data.parsedData.compatibility.printCompatibility("|    ")}
+    |  )
+    |);
+  """.trimMargin()
 }
 
-private fun VersionMapping.toConstructor(): String {
-  return "VersionMapping(\"${javaVersionInfo}\", \"${gradleVersionInfo}\")"
+private fun List<VersionMapping>.printCompatibility(indentPrefix: String): String {
+  return joinToString("," + System.lineSeparator()) {
+    buildString {
+      append(indentPrefix)
+      append("VersionMapping(java = \"")
+      append(it.javaVersionInfo)
+      append("\", gradle = \"")
+      append(it.gradleVersionInfo)
+      append("\")")
+    }
+  }
 }
 
-private fun List<String>.printAsListData(indent: Int): String {
-  return this.printAsListData(indent) { "\"$it\"" }
-
+private fun List<String>.printGradleVersions(indentPrefix: String): String {
+  return groupBy { it.split(".").first() }.values
+    .joinToString("," + System.lineSeparator()) { versions ->
+      indentPrefix + versions.joinToString(", ") {
+        "\"$it\""
+      }
+    }
 }
 
-private fun <T> List<T>.printAsListData(indent: Int, transform: (T) -> String): String {
-  return this.joinToString(
-    separator = "," + System.lineSeparator() + " ".repeat(indent),
-    transform = transform
-  )
+private fun List<String>.printJavaVersions(indentPrefix: String): String {
+  return indentPrefix + joinToString(", ") {
+    "\"$it\""
+  }
 }
