@@ -14,6 +14,7 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
@@ -784,24 +785,24 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("after added")));
+        changed(highlighter, "after added");
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("before removed")));
+        changed(highlighter, "before removed");
       }
 
       @Override
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleChanged) {
-        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("changed")));
+        changed(highlighter, "changed");
       }
 
-      private void changed(@NotNull RangeHighlighterEx highlighter, String reason) {
+      private void changed(@NotNull RangeHighlighterEx highlighter, @NotNull String reason) {
         if (highlighter.getTargetArea() != HighlighterTargetArea.LINES_IN_RANGE) return; // not line marker
         List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
         if (ContainerUtil.find(lineMarkers, lm -> lm.highlighter == highlighter) != null) {
-          changed.add(highlighter + ": \n" + reason);
+          changed.add(highlighter + ": \n" + ExceptionUtil.getThrowableText(new Throwable(reason)));
         } // else not line marker
       }
     });
@@ -2203,7 +2204,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertEmpty(visibleHints);
     }
     else {
-      assertFalse(lastHintAfterDeletion.getCachedIntentions().toString(), ContainerUtil.exists(lastHintBeforeDeletion.getCachedIntentions().getErrorFixes(), e -> e.getText().equals("Initialize variable 'var'")));
+      CachedIntentions after = lastHintAfterDeletion.getCachedIntentions();
+      assertFalse(after.toString(), ContainerUtil.exists(after.getErrorFixes(), e -> e.getText().equals("Initialize variable 'var'")));
     }
   }
 
