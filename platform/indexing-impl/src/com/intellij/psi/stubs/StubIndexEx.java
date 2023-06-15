@@ -45,8 +45,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
-import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationFusCollector.TRACE_OF_STUB_ENTRIES_LOOKUP;
-import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationFusCollector.lookupStubEntriesStarted;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.TRACE_OF_STUB_ENTRIES_LOOKUP;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.lookupStubEntriesStarted;
 
 @ApiStatus.Internal
 public abstract class StubIndexEx extends StubIndex {
