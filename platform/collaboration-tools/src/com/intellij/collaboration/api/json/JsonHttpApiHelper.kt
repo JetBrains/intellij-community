@@ -73,11 +73,12 @@ private class JsonHttpApiHelperImpl(
     val bodyHandler = InflatedStreamReadingBodyHandler { responseInfo, stream ->
       readSuccessResponseWithLogging(logger, request, responseInfo, stream) {
         try {
-          deserializer.fromJson(it, clazz) ?: error("Empty response")
+          deserializer.fromJson(it, clazz)
         }
         catch (e: Throwable) {
+          logger.warn("API response deserialization failed", e)
           throw HttpJsonDeserializationException(request.logName(), e)
-        }
+        } ?: error("Empty response")
       }
     }
     return httpHelper.sendAndAwaitCancellable(request, bodyHandler)
@@ -90,6 +91,7 @@ private class JsonHttpApiHelperImpl(
           deserializer.fromJson(it, clazz)
         }
         catch (e: Throwable) {
+          logger.warn("API response deserialization failed", e)
           throw HttpJsonDeserializationException(request.logName(), e)
         }
       }
@@ -102,11 +104,12 @@ private class JsonHttpApiHelperImpl(
       readSuccessResponseWithLogging(logger, request, responseInfo, stream) {
         try {
           @Suppress("UNCHECKED_CAST")
-          (deserializer.fromJson(it, List::class.java, clazz) as? List<T>) ?: error("Empty response")
+          (deserializer.fromJson(it, List::class.java, clazz) as? List<T>)
         }
         catch (e: Throwable) {
+          logger.warn("API response deserialization failed", e)
           throw HttpJsonDeserializationException(request.logName(), e)
-        }
+        } ?: error("Empty response")
       }
     }
     return httpHelper.sendAndAwaitCancellable(request, bodyHandler)
@@ -120,6 +123,7 @@ private class JsonHttpApiHelperImpl(
           deserializer.fromJson(it, List::class.java, clazz) as? List<T>
         }
         catch (e: Throwable) {
+          logger.warn("API response deserialization failed", e)
           throw HttpJsonDeserializationException(request.logName(), e)
         }
       }
