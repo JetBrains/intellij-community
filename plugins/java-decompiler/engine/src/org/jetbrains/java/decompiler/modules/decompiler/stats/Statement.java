@@ -382,6 +382,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public List<Statement> getReversePostOrderList(Statement stat) {
+    cancellationManager.checkCanceled();
     List<Statement> res = new ArrayList<>();
 
     addToReversePostOrderListIterative(stat, res);
@@ -711,6 +712,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public VBStyleCollection<Statement, Integer> getStats() {
+    cancellationManager.checkCanceled();
     return stats;
   }
 

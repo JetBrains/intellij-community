@@ -101,7 +101,7 @@ public class SSAUConstructorSparseEx {
   }
 
   private void ssaStatements(DirectGraph dgraph, HashSet<String> updated, boolean calcLiveVars) {
-
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
     for (DirectNode node : dgraph.nodes) {
 
       updated.remove(node.id);
@@ -113,6 +113,7 @@ public class SSAUConstructorSparseEx {
 
       if (node.exprents != null) {
         for (Exprent expr : node.exprents) {
+          cancellationManager.checkCanceled();
           processExprent(expr, varmaparr, node.statement, calcLiveVars);
         }
       }
