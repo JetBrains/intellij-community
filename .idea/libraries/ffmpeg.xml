@@ -5,10 +5,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.1.2-1.5.8/ffmpeg-5.1.2-1.5.8.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.8/javacpp-1.5.8.jar!/" />
     </CLASSES>
-    <JAVADOC>
-      <root url="http://bytedeco.org/javacpp-presets/ffmpeg/apidocs" />
-      <root url="http://bytedeco.org/javacpp/apidocs" />
-    </JAVADOC>
     <SOURCES />
   </library>
 </component>

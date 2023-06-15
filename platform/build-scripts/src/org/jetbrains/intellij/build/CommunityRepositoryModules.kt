@@ -451,7 +451,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.streaming", "android.jar")
       //tools/adt/idea/gradle-dsl:intellij.android.gradle.dsl <= REMOVED
       //tools/adt/idea/gradle-dsl-kotlin:intellij.android.gradle.dsl.kotlin <= REMOVED
-      spec.withModule("intellij.android.gradle.dsl.toml", "android.jar")
       spec.withModule("intellij.android.lang-databinding", "android.jar")
       spec.withModule("intellij.android.lang", "android.jar")
       spec.withModule("intellij.android.layout-inspector", "android.jar")
