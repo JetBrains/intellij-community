@@ -140,6 +140,11 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
   }
 
   @Override
+  public @Nullable String getDisplayNameFast() {
+    return myEp.displayName == null && myEp.key == null ? null : myEp.getDisplayName();
+  }
+
+  @Override
   public @Nls String getDisplayName() {
     if (myEp.displayName == null && myEp.key == null) {
       boolean loaded = myConfigurable != null;

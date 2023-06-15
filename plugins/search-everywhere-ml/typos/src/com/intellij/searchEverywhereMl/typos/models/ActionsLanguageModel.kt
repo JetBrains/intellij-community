@@ -68,12 +68,11 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
       .mapNotNull { it.templateText }
   }
 
-
   private fun getWordsFromSettings(): Sequence<@NlsContexts.ConfigurableName String> {
-    return ShowSettingsUtilImpl.getConfigurables(null, true, false)
+    return ShowSettingsUtilImpl.getConfigurables(project = null, withIdeSettings = true, checkNonDefaultProject = false)
       .asSequence()
       .filterIsInstance<SearchableConfigurable>()
-      .map { it.displayName }
+      .mapNotNull { it.displayNameFast }
   }
 
   internal interface ActionDictionary : Dictionary, FrequencyMetadata {
