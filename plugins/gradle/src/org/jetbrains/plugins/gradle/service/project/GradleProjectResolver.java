@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.target.TargetBuildLauncher;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
+import org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmIssueChecker;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
@@ -222,6 +223,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
       if (GradleJvmSupportMatrix.getInstance().isUnsupported(gradleVersion)) {
         throw new IllegalStateException("Unsupported Gradle version");
+      }
+      if (!UnsupportedGradleJvmIssueChecker.Util.isSupportedGradleJvm(buildEnvironment)) {
+        throw new IllegalStateException("Unsupported Gradle JVM version");
       }
     }
     final ProjectImportAction projectImportAction =
