@@ -7,9 +7,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.RANKING_EP_NAME
-import com.intellij.searchEverywhereMl.common.SearchEverywhereMlExperiment
-import com.intellij.searchEverywhereMl.common.SearchEverywhereTabWithMlRanking
-import com.intellij.searchEverywhereMl.common.settings.SearchEverywhereMlSettings
+import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
+import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.settings.SearchEverywhereMlSettings
 import com.intellij.ui.components.JBList
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger

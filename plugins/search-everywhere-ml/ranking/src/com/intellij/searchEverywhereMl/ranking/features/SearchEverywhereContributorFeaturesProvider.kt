@@ -5,7 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.searchEverywhereMl.common.SE_TABS
+import com.intellij.searchEverywhereMl.SE_TABS
 import com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereContributorStatistician
 
 internal class SearchEverywhereContributorFeaturesProvider {

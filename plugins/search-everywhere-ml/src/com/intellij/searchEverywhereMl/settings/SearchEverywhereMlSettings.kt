@@ -1,8 +1,8 @@
-package com.intellij.searchEverywhereMl.common.settings
+package com.intellij.searchEverywhereMl.settings
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.searchEverywhereMl.common.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 
 @Service(Service.Level.APP)
 class SearchEverywhereMlSettings {
