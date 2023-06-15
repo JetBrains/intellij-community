@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.extensions.DeclarationAttributeAltererExtension
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.addTypeParameter
 import org.jetbrains.kotlin.idea.base.psi.appendDeclaration
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -568,20 +569,11 @@ fun KtParameter.dropDefaultValue() {
     deleteChildRange(from, to)
 }
 
-fun KtTypeParameterListOwner.addTypeParameter(typeParameter: KtTypeParameter): KtTypeParameter? {
-    typeParameterList?.let { return it.addParameter(typeParameter) }
-
-    val list = KtPsiFactory(project).createTypeParameterList("<X>")
-    list.parameters[0].replace(typeParameter)
-    val leftAnchor = when (this) {
-        is KtClass -> nameIdentifier
-        is KtNamedFunction -> funKeyword
-        is KtProperty -> valOrVarKeyword
-        is KtTypeAlias -> nameIdentifier
-        else -> null
-    } ?: return null
-    return (addAfter(list, leftAnchor) as KtTypeParameterList).parameters.first()
-}
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith("this.addTypeParameter(typeParameter)", "org.jetbrains.kotlin.idea.base.psi.addTypeParameter")
+)
+fun KtTypeParameterListOwner.addTypeParameter(typeParameter: KtTypeParameter) = addTypeParameter(typeParameter)
 
 fun KtNamedFunction.getOrCreateValueParameterList(): KtParameterList {
     valueParameterList?.let { return it }

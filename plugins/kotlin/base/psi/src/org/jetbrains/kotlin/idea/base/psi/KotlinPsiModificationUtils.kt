@@ -84,3 +84,18 @@ inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T)
 
     return newDeclaration as T
 }
+
+fun KtTypeParameterListOwner.addTypeParameter(typeParameter: KtTypeParameter): KtTypeParameter? {
+    typeParameterList?.let { return it.addParameter(typeParameter) }
+
+    val list = KtPsiFactory(project).createTypeParameterList("<X>")
+    list.parameters[0].replace(typeParameter)
+    val leftAnchor = when (this) {
+        is KtClass -> nameIdentifier
+        is KtNamedFunction -> funKeyword
+        is KtProperty -> valOrVarKeyword
+        is KtTypeAlias -> nameIdentifier
+        else -> null
+    } ?: return null
+    return (addAfter(list, leftAnchor) as KtTypeParameterList).parameters.first()
+}
