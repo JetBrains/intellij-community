@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
+package org.jetbrains.kotlin.idea.codeInsight.intentions.shared.utils
 
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
-object PrefillNamedParametersUtils {
-    fun prefillName(element: KtValueArgumentList, mandatoryParametersList: List<Name>) {
-        val psiFactory = KtPsiFactory(element)
+internal object FillInArgumentsUtils {
+    fun fillInArguments(element: KtValueArgumentList, mandatoryParametersList: List<Name>) {
+        val psiFactory = KtPsiFactory(element.project)
         for (name in mandatoryParametersList) {
             val argumentExpression = psiFactory.createArgument(psiFactory.createExpression("TODO()"), name)
             val comma = psiFactory.createComma()

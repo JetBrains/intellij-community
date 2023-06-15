@@ -4174,41 +4174,4 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/retainedParens.kt");
         }
     }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/intentions/prefillNamedMandatoryParameters")
-    public static class PrefillNamedMandatoryParameters extends AbstractK2IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("prefillConstructor.kt")
-        public void testPrefillConstructor() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/prefillNamedMandatoryParameters/prefillConstructor.kt");
-        }
-
-        @TestMetadata("prefillFunction.kt")
-        public void testPrefillFunction() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/prefillNamedMandatoryParameters/prefillFunction.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/intentions/prefillNamedOptionalParameters")
-    public static class PrefillNamedOptionalParameters extends AbstractK2IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("prefillConstructor.kt")
-        public void testPrefillConstructor() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/prefillNamedOptionalParameters/prefillConstructor.kt");
-        }
-
-        @TestMetadata("prefillFunction.kt")
-        public void testPrefillFunction() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/prefillNamedOptionalParameters/prefillFunction.kt");
-        }
-
-    }
 }

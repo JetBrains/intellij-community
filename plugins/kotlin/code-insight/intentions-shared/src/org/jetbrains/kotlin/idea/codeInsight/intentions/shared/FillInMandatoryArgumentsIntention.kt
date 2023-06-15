@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
+package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -8,17 +8,17 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.PrefillNamedParametersUtils
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.PrefillNamedParametersUtils.prefillName
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.utils.FillInArgumentsUtils
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.utils.FillInArgumentsUtils.fillInArguments
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
-internal class PrefillNamedMandatoryParametersIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtValueArgumentList, PrefillNamedMandatoryParametersIntention.Context>(KtValueArgumentList::class) {
+internal class FillInMandatoryArgumentsIntention :
+    AbstractKotlinApplicableIntentionWithContext<KtValueArgumentList, FillInMandatoryArgumentsIntention.Context>(KtValueArgumentList::class) {
 
     class Context(val mandatoryParametersList: List<Name>)
 
-    override fun getFamilyName(): String = KotlinBundle.message("intention.prefill.named.mandatory.parameters")
+    override fun getFamilyName(): String = KotlinBundle.message("intention.fill.in.mandatory.arguments")
 
     override fun getActionName(element: KtValueArgumentList, context: Context): String = familyName
 
@@ -29,12 +29,12 @@ internal class PrefillNamedMandatoryParametersIntention :
     }
 
     override fun apply(element: KtValueArgumentList, context: Context, project: Project, editor: Editor?) {
-        prefillName(element, context.mandatoryParametersList)
+        fillInArguments(element, context.mandatoryParametersList)
     }
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtValueArgumentList): Context {
-        val parameters = PrefillNamedParametersUtils.findParameters(element)
+        val parameters = FillInArgumentsUtils.findParameters(element)
         val mandatoryParametersList = mutableListOf<Name>()
         for (param in parameters)  {
             if (!param.hasDefaultValue()) {
