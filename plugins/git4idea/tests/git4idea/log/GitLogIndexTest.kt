@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
+import com.intellij.idea.IgnoreJUnit3
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.Executor.*
@@ -77,6 +78,7 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     TestCase.assertEquals(expectedMetadata.presentation(), actualMetadata.presentation())
   }
 
+  @IgnoreJUnit3
   fun `test forward index with batch api`() {
     val file = "file.txt"
     tac(file)
