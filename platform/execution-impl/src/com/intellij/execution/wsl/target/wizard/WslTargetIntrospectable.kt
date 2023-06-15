@@ -56,7 +56,6 @@ class WslTargetIntrospectable(val distribution: WSLDistribution, val console: Co
     val executeCommandInShell = cmd != listOf("pwd")
     val options = WSLCommandLineOptions().setExecuteCommandInShell(executeCommandInShell)
     if (executeCommandInShell) {
-      options.shellPath = distribution.shellPath
       options.isExecuteCommandInInteractiveShell = true
       options.isExecuteCommandInLoginShell = true
     }

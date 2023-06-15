@@ -67,6 +67,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   public static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
+  private static final String DEFAULT_SHELL = "/bin/sh";
   static final int DEFAULT_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 20_000);
   private static final String SHELL_PARAMETER = "$SHELL";
   public static final String WSL_EXE = "wsl.exe";
@@ -304,7 +305,7 @@ public class WSLDistribution implements AbstractWslDistribution {
           commandLine.addParameters(SHELL_PARAMETER, "-c", linuxCommandStr);
         }
         else {
-          commandLine.addParameters(EXEC_PARAMETER, options.getShellPath());
+          commandLine.addParameters(EXEC_PARAMETER, getShellPath());
           if (options.isExecuteCommandInInteractiveShell()) {
             commandLine.addParameters("-i");
           }
@@ -694,8 +695,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   public @NonNls @Nullable String getEnvironmentVariable(String name) {
     WSLCommandLineOptions options = new WSLCommandLineOptions()
       .setExecuteCommandInInteractiveShell(true)
-      .setExecuteCommandInLoginShell(true)
-      .setShellPath(getShellPath());
+      .setExecuteCommandInLoginShell(true);
     return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", name), options, DEFAULT_TIMEOUT,
                                                               true);
   }
