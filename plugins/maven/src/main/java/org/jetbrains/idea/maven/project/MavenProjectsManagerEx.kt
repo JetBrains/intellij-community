@@ -35,6 +35,7 @@ import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenImportStats.ImportingTask
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.model.MavenArtifact
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
@@ -69,9 +70,21 @@ interface MavenAsyncProjectsManager {
                             artifacts: Collection<MavenArtifact>?,
                             sources: Boolean,
                             docs: Boolean): MavenArtifactDownloader.DownloadResult
+
+  @ApiStatus.Internal
+  suspend fun addManagedFilesWithProfilesAndUpdate(files: List<VirtualFile>,
+                                                   profiles: MavenExplicitProfiles,
+                                                   previewModuleToDelete: Module?): List<Module>
 }
 
 open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(project) {
+  override suspend fun addManagedFilesWithProfilesAndUpdate(files: List<VirtualFile>,
+                                                    profiles: MavenExplicitProfiles,
+                                                    previewModuleToDelete: Module?): List<Module> {
+    doAddManagedFilesWithProfiles(files, profiles, previewModuleToDelete)
+    return updateAllMavenProjects(MavenImportSpec(false, true, false))
+  }
+
   override suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
     val createdModules = doImportMavenProjects(projectsToImport, false)
     fireProjectImportCompleted()

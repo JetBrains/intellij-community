@@ -6,21 +6,21 @@ import com.intellij.build.BuildViewManager
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.OutputBuildEvent
-import com.intellij.ide.CommandLineInspectionProjectConfigurator
+import com.intellij.ide.CommandLineInspectionProjectAsyncConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
 import com.intellij.ide.environment.EnvironmentService
 import com.intellij.ide.impl.ProjectOpenKeyProvider
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAsyncAware
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.LanguageLevelUtil.getNextLanguageLevel
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -34,6 +34,8 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.pom.java.LanguageLevel.HIGHEST
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.lang.JavaVersion
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProject
@@ -56,7 +58,7 @@ private const val MAVEN_COMMAND_LINE_CONFIGURATOR_EXIT_ON_UNRESOLVED_PLUGINS = "
 private const val MAVEN_LINEAR_IMPORT = "maven.linear.import"
 private val MAVEN_OUTPUT_LOG = Logger.getInstance("MavenOutput")
 
-class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProjectConfigurator {
+class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProjectAsyncConfigurator {
   override fun getName(): String = "maven"
 
   override fun getDescription(): String = MavenProjectBundle.message("maven.commandline.description")
@@ -66,15 +68,14 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     Registry.get(MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY).setValue(false)
   }
 
-  override fun configureProject(project: Project, context: ConfiguratorContext) {
+  override suspend fun configureProjectAsync(project: Project, context: ConfiguratorContext) {
     val basePath = context.projectPath.pathString
     val pomXmlFile = basePath + "/" + MavenConstants.POM_XML
     if (FileUtil.findFirstThatExist(pomXmlFile) == null) return
 
     val service = service<EnvironmentService>()
-    val projectSelectionKey = runBlockingCancellable {
-      service.getEnvironmentValue(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR, "Maven")
-    }
+    val projectSelectionKey = service.getEnvironmentValue(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR, "Maven")
+
     if (projectSelectionKey != "Maven") {
       // something else was selected to open the project
       return
@@ -96,11 +97,11 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     syncViewManager.addListener(progressListener, disposable)
 
     if (!isMavenProjectLinked) {
-      ApplicationManager.getApplication().invokeAndWait {
+      withContext(Dispatchers.EDT) {
         FileDocumentManager.getInstance().saveAllDocuments()
         MavenUtil.setupProjectSdk(project)
       }
-      mavenProjectAware.linkAndLoadProject(project, basePath)
+      (mavenProjectAware as ExternalSystemUnlinkedProjectAsyncAware).linkAndLoadProjectAsync(project, basePath)
     }
     MavenLog.LOG.warn("linked finished for ${project.name}")
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
