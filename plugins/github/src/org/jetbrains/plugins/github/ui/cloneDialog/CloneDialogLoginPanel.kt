@@ -52,10 +52,7 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
 
   private val errorPanel = VerticalListPanel(10)
   private val loginPanel = GithubLoginPanel(GithubApiRequestExecutor.Factory.getInstance()) { name, server ->
-    if (account == null) accountManager.accountsState.value.none {
-      it.name == name && it.server.equals(server, true)
-    }
-    else true
+    if (account == null) accountManager.isAccountUnique(server, name) else true
   }
   private val inlineCancelPanel = simplePanel()
   private val loginButton = JButton(message("button.login.mnemonic"))
