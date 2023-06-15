@@ -21,10 +21,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ListUtil;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +69,7 @@ public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplat
 
     myExpressionTypesListModel = JBList.createDefaultListModel();
     myExpressionTypesList = new JBList<>(myExpressionTypesListModel);
-    myExpressionTypesList.setCellRenderer(SimpleListCellRenderer.create("", PostfixTemplateExpressionCondition::getPresentableName));
+    myExpressionTypesList.setCellRenderer(BuilderKt.simpleListCellRenderer(PostfixTemplateExpressionCondition::getPresentableName));
 
     ToolbarDecorator expressionTypesToolbar = null;
     if (showExpressionTypes) {
