@@ -48,9 +48,7 @@ class MavenOpenProjectProvider : AbstractOpenProjectAsyncProvider() {
 
     if (confirmLinkingUntrustedProject(project, systemId, projectRoot.toNioPath())) {
       val builder = MavenProjectAsyncBuilder()
-      builder.isUpdate = MavenProjectsManager.getInstance(project).isMavenizedProject
-      builder.setFileToImport(projectFile)
-      builder.commit(project, null, ModulesProvider.EMPTY_MODULES_PROVIDER)
+      builder.commit(project, projectFile)
     }
   }
 
