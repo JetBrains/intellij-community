@@ -34,7 +34,7 @@ import static com.intellij.openapi.util.NlsContexts.*;
  * Two lines: title and content line; title and actions; content line and actions; contents on two lines.<br>
  * Three lines: title and content line and actions; contents on two lines and actions; contents on three lines or more; etc.</p>
  *
- * <p><b>Warning:</b> please avoid links in HTML content, use {@link #addAction(AnAction)} instead.</p>
+ * <p><b>Warning:</b> please avoid links in HTML content, use {@link #addAction(AnAction)} and {@link NotificationAction#createSimpleExpiring(String, Runnable)} instead.</p>
  * <p>Use {@link Notifications.Bus} to show notifications.</p>
  *
  * @see NotificationAction
