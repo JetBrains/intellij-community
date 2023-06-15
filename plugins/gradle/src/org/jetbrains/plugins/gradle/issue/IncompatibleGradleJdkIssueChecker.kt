@@ -125,7 +125,7 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
     if (!isAndroidStudio) { // Android Studio doesn't have Gradle JVM setting
       val gradleSettingsFix = GradleSettingsQuickFix(
         issueData.projectPath, true,
-        { oldSettings, currentSettings -> oldSettings.gradleJvm != currentSettings.gradleJvm },
+        GradleSettingsQuickFix.GradleJvmChangeDetector,
         GradleBundle.message("gradle.settings.text.jvm.path")
       )
       quickFixes.add(gradleSettingsFix)
