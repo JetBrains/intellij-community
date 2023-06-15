@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import kotlinx.coroutines.*
 import java.util.concurrent.CancellationException
 
-fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: CoroutineScope, appRegistered: Job) {
+fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: CoroutineScope, appRegistered: Job, initLafJob: Job) {
   val pathMacroJob = launch(CoroutineName("PathMacros preloading")) {
     // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
     app.serviceAsync<PathMacros>()
@@ -83,7 +83,11 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
 
     pathMacroJob.join()
 
-    launch(CoroutineName("UISettings preloading")) { app.serviceAsync<UISettings>() }
+    launch {
+      // https://youtrack.jetbrains.com/issue/IDEA-321138/Large-font-size-in-2023.2
+      initLafJob.join()
+      subtask("UISettings preloading") { app.serviceAsync<UISettings>() }
+    }
     launch(CoroutineName("CustomActionsSchema preloading")) { app.serviceAsync<CustomActionsSchema>() }
     // wants PathMacros
     launch(CoroutineName("GeneralSettings preloading")) { app.serviceAsync<GeneralSettings>() }
