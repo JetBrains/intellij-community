@@ -19,7 +19,7 @@ rootProject.iosArm64CustomNonTest
     src/iosArm64CustomNonTest/kotlin
 
 rootProject.iosArm64CustomTest
-    src/iosArm64CustomTest/kotlin
+    src/iosArm64CustomTest/kotlin (Test)
 
 rootProject.iosArm64Main
     src/iosArm64Main/kotlin

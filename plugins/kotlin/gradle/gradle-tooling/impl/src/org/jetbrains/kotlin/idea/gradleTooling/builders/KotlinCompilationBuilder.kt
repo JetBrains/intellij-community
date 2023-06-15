@@ -51,6 +51,13 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
 
         val serializedExtras = importingContext.importReflection?.resolveExtrasSerialized(origin.gradleCompilation)
 
+        val isTestCompilation = if (importingContext.getProperty(GradleImportProperties.LEGACY_TEST_SOURCE_SET_DETECTION)) {
+            compilationName == KotlinCompilation.TEST_COMPILATION_NAME
+                    || platform == KotlinPlatform.ANDROID && compilationName.contains("Test")
+        } else {
+            associateCompilations.isNotEmpty()
+        }
+
         @Suppress("DEPRECATION_ERROR")
         return KotlinCompilationImpl(
             name = compilationName,
@@ -62,7 +69,8 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             kotlinTaskProperties = kotlinTaskProperties,
             nativeExtensions = nativeExtensions,
             associateCompilations = associateCompilations.toSet(),
-            extras = IdeaKotlinExtras.from(serializedExtras)
+            extras = IdeaKotlinExtras.from(serializedExtras),
+            isTestComponent = isTestCompilation,
         )
     }
 
