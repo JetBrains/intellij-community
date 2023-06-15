@@ -544,10 +544,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       }
 
       @Suppress("NAME_SHADOWING")
-      var id = id
-      if (id == null) {
-        id = "<anonymous-group-${anonymousGroupIdCounter++}>"
-      }
+      val id = id ?: "<anonymous-group-${anonymousGroupIdCounter++}>"
       registerOrReplaceActionInner(element = element, id = id, action = group, plugin = module)
 
       val presentation = group.templatePresentation
@@ -558,7 +555,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         computeActionText(bundle = bundle,
                           id = finalId,
                           elementType = GROUP_ELEMENT_NAME,
-                          textValue = element.attributes[TEXT_ATTR_NAME],
+                          textValue = element.attributes.get(TEXT_ATTR_NAME),
                           classLoader = classLoader)
       }
       // don't override value which was set in API with empty value from xml descriptor
