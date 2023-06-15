@@ -1227,6 +1227,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/JavaClassNameWithKotlinNestedClassConflict.kt");
         }
 
+        @TestMetadata("JavaClassParenthesis.kt")
+        public void testJavaClassParenthesis() throws Exception {
+            runTest("../completion/testData/handlers/basic/JavaClassParenthesis.kt");
+        }
+
         @TestMetadata("JavaSAM.kt")
         public void testJavaSAM() throws Exception {
             runTest("../completion/testData/handlers/basic/JavaSAM.kt");
