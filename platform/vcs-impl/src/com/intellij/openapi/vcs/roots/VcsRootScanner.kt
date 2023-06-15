@@ -7,7 +7,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -36,23 +38,19 @@ private val WAIT_BEFORE_SCAN = TimeUnit.SECONDS.toMillis(1)
 
 @Service(Service.Level.PROJECT)
 class VcsRootScanner(private val project: Project) : Disposable {
-  private val rootProblemNotifier: VcsRootProblemNotifier
-  private val alarm: Alarm
+  private val rootProblemNotifier = VcsRootProblemNotifier.createInstance(project)
+  private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
 
   init {
-    rootProblemNotifier = VcsRootProblemNotifier.createInstance(project)
-    alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
-    AsyncVfsEventsPostProcessor.getInstance().addListener(
-      { events: List<VFileEvent> -> filesChanged(events) }, this)
-    VcsRootChecker.EXTENSION_POINT_NAME.addChangeListener({ scheduleScan() }, this)
-    VcsEP.EP_NAME.addChangeListener({ scheduleScan() }, this)
+    AsyncVfsEventsPostProcessor.getInstance().addListener(::filesChanged, this)
+    VcsRootChecker.EXTENSION_POINT_NAME.addChangeListener(::scheduleScan, this)
+    VcsEP.EP_NAME.addChangeListener(::scheduleScan, this)
   }
 
   companion object {
-    fun getInstance(project: Project): VcsRootScanner {
-      return project.getService(VcsRootScanner::class.java)
-    }
+    fun getInstance(project: Project): VcsRootScanner = project.service<VcsRootScanner>()
 
+    @JvmStatic
     fun visitDirsRecursivelyWithoutExcluded(project: Project,
                                             root: VirtualFile,
                                             visitIgnoredFoldersThemselves: Boolean,
@@ -60,24 +58,31 @@ class VcsRootScanner(private val project: Project) : Disposable {
       val fileIndex = ProjectRootManager.getInstance(project).fileIndex
       val depthLimit = VirtualFileVisitor.limit(Registry.intValue("vcs.root.detector.folder.depth"))
       val ignorePattern = parseDirIgnorePattern()
-      if (isUnderIgnoredDirectory(project, ignorePattern, if (visitIgnoredFoldersThemselves) root.parent else root)) return
+      if (isUnderIgnoredDirectory(project, ignorePattern, if (visitIgnoredFoldersThemselves) root.parent else root)) {
+        return
+      }
+
       VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Void?>(NO_FOLLOW_SYMLINKS, depthLimit) {
         override fun visitFileEx(file: VirtualFile): Result {
           if (!file.isDirectory) {
             return CONTINUE
           }
+
           if (visitIgnoredFoldersThemselves) {
             val apply = processor.apply(file)
             if (apply != CONTINUE) {
               return apply
             }
           }
+
           if (isIgnoredDirectory(project, ignorePattern, file)) {
             return SKIP_CHILDREN
           }
+
           if (ReadAction.compute<Boolean, RuntimeException> { project.isDisposed || !fileIndex.isInContent(file) }) {
             return SKIP_CHILDREN
           }
+
           if (!visitIgnoredFoldersThemselves) {
             val apply = processor.apply(file)
             if (apply != CONTINUE) {
@@ -90,54 +95,49 @@ class VcsRootScanner(private val project: Project) : Disposable {
     }
 
     private fun isVcsDir(checkers: List<VcsRootChecker>, filePath: String): Boolean {
-      return checkers.any { it -> it.isVcsDir(filePath) }
+      return checkers.any { it.isVcsDir(filePath) }
     }
 
+    @JvmStatic
     fun isUnderIgnoredDirectory(project: Project, ignorePattern: Pattern?, dir: VirtualFile?): Boolean {
       var parent = dir
       while (parent != null) {
-        if (isIgnoredDirectory(project, ignorePattern, parent)) return true
+        if (isIgnoredDirectory(project, ignorePattern, parent)) {
+          return true
+        }
         parent = parent.parent
       }
       return false
     }
 
-    private fun isIgnoredDirectory(project: Project, ignorePattern: Pattern?, dir: VirtualFile): Boolean {
-      if (ProjectLevelVcsManager.getInstance(project).isIgnored(dir)) {
-        LOG.debug("Skipping ignored dir: ", dir)
-        return true
-      }
-      if (ignorePattern != null && ignorePattern.matcher(dir.name).matches()) {
-        LOG.debug("Skipping dir by pattern: ", dir)
-        return true
-      }
-      return false
-    }
-
+    @JvmStatic
     fun parseDirIgnorePattern(): Pattern? {
-      return try {
-        Pattern.compile(Registry.stringValue("vcs.root.detector.ignore.pattern"))
+      try {
+        return Pattern.compile(Registry.stringValue("vcs.root.detector.ignore.pattern"))
       }
       catch (e: MissingResourceException) {
         LOG.warn(e)
-        null
+        return null
       }
       catch (e: PatternSyntaxException) {
         LOG.warn(e)
-        null
+        return null
       }
     }
   }
 
-
   override fun dispose() {}
+
   private fun filesChanged(events: List<VFileEvent>) {
     val checkers = VcsRootChecker.EXTENSION_POINT_NAME.extensionList
-    if (checkers.isEmpty()) return
+    if (checkers.isEmpty()) {
+      return
+    }
+
     for (event in events) {
       val file = event.file
       if (file != null && file.isDirectory) {
-        visitDirsRecursivelyWithoutExcluded(project, file, true) { dir: VirtualFile ->
+        visitDirsRecursivelyWithoutExcluded(project, file, true) { dir ->
           if (isVcsDir(checkers, dir.name)) {
             scheduleScan()
             return@visitDirsRecursivelyWithoutExcluded VirtualFileVisitor.skipTo(file)
@@ -149,10 +149,15 @@ class VcsRootScanner(private val project: Project) : Disposable {
   }
 
   fun scheduleScan() {
-    if (alarm.isDisposed) return
-    if (VcsRootChecker.EXTENSION_POINT_NAME.extensionList.isEmpty()) return
+    if (alarm.isDisposed || VcsRootChecker.EXTENSION_POINT_NAME.extensionList.isEmpty()) {
+      return
+    }
+
     ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG.debug("VcsRootScanner.scheduleScan")
-    if (!VcsUtil.shouldDetectVcsMappingsFor(project)) return
+    if (!VcsUtil.shouldDetectVcsMappingsFor(project)) {
+      return
+    }
+
     alarm.cancelAllRequests() // one scan is enough, no need to queue, they all do the same
     alarm.addRequest({ BackgroundTaskUtil.runUnderDisposeAwareIndicator(alarm) { rootProblemNotifier.rescanAndNotifyIfNeeded() } },
                      WAIT_BEFORE_SCAN)
@@ -160,15 +165,19 @@ class VcsRootScanner(private val project: Project) : Disposable {
 
   internal class DetectRootsStartupActivity : VcsStartupActivity {
     override fun runActivity(project: Project) {
-      if (ApplicationManager.getApplication().isUnitTestMode) return
-      if (!project.isTrusted()) return  // vcs is disabled
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        return
+      }
+      if (!project.isTrusted()) {
+        // vcs is disabled
+        return
+      }
+
       ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG.debug("VcsRootScanner.start activity")
       getInstance(project).scheduleScan()
     }
 
-    override fun getOrder(): Int {
-      return VcsInitObject.AFTER_COMMON.order
-    }
+    override fun getOrder(): Int = VcsInitObject.AFTER_COMMON.order
   }
 
   internal class TrustListener : TrustedProjectsListener {
@@ -176,4 +185,17 @@ class VcsRootScanner(private val project: Project) : Disposable {
       ProjectLevelVcsManager.getInstance(project).runAfterInitialization { getInstance(project).scheduleScan() }
     }
   }
+}
+
+private fun isIgnoredDirectory(project: Project, ignorePattern: Pattern?, dir: VirtualFile): Boolean {
+  if (ProjectLevelVcsManager.getInstance(project).isIgnored(dir)) {
+    LOG.debug { "Skipping ignored dir: $dir" }
+    return true
+  }
+
+  if (ignorePattern != null && ignorePattern.matcher(dir.name).matches()) {
+    LOG.debug { "Skipping dir by pattern: $dir" }
+    return true
+  }
+  return false
 }
