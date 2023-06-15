@@ -151,4 +151,5 @@ class IdeToolkit : SunToolkit() {
 
   override fun isDesktopSupported(): Boolean = true
   override fun isTaskbarSupported(): Boolean = false
+  override fun areExtraMouseButtonsEnabled() = true
 }
