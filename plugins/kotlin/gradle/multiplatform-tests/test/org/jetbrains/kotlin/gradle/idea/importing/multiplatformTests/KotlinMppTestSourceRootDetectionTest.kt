@@ -30,7 +30,19 @@ class KotlinMppTestSourceRootDetectionTest : AbstractKotlinMppGradleImportingTes
     }
 
     @Test
-    fun testJvmNativeWithAdditionalCompilations() {
-        doTest()
+    @TestMetadata("jvmNativeWithAdditionalCompilations")
+    fun `testJvmNativeWithAdditionalCompilations - default`() {
+        doTest {
+            testClassifier = "default"
+        }
+    }
+
+    @Test
+    @TestMetadata("jvmNativeWithAdditionalCompilations")
+    fun `testJvmNativeWithAdditionalCompilations - legacy`() {
+        doTest {
+            testClassifier = "legacy"
+            this.addCustomGradleProperty("kotlin.mpp.import.legacyTestSourceSetDetection", "true")
+        }
     }
 }
