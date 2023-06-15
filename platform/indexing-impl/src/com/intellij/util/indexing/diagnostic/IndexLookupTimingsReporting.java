@@ -69,7 +69,7 @@ public final class IndexLookupTimingsReporting {
    * enabling its reporting may produce quite a lot of data.
    */
   public static final boolean REPORT_INDIVIDUAL_LOOKUPS_TO_OPEN_TELEMETRY = getBooleanProperty(
-    "IndexLookupTimingsReporting.REPORT_INDIVIDUAL_LOOKUP_TO_OPEN_TELEMETRY",
+    "IndexLookupTimingsReporting.REPORT_INDIVIDUAL_LOOKUPS_TO_OPEN_TELEMETRY",
     false
   );
 
