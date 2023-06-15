@@ -68,7 +68,7 @@ internal class GitLabCloneComponent(
     }
 
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      cloneVm.accounts.collect {
+      cloneVm.accountsRefreshRequest.collect {
         dialogStateListener.onListItemChanged()
       }
     }

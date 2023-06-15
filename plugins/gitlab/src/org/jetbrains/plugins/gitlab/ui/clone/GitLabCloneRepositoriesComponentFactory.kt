@@ -108,7 +108,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
   private fun createAccountsModel(cs: CoroutineScope, cloneVm: GitLabCloneViewModel): ListModel<GitLabAccount> {
     val accountsModel = CollectionListModel<GitLabAccount>()
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      cloneVm.accounts.collectLatest { accounts ->
+      cloneVm.accountsRefreshRequest.collectLatest { accounts ->
         accountsModel.replaceAll(accounts.toList())
       }
     }
@@ -119,7 +119,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
   private fun createRepositoriesModel(cs: CoroutineScope, cloneVm: GitLabCloneViewModel): ListModel<GitLabCloneListItem> {
     val accountsModel = CollectionListModel<GitLabCloneListItem>()
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
-      cloneVm.accounts.collectLatest { accounts ->
+      cloneVm.accountsRefreshRequest.collectLatest { accounts ->
         cloneVm.runTask {
           val repositories = accounts.flatMap { account ->
             cloneVm.collectAccountRepositories(account)

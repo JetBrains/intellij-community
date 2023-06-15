@@ -43,7 +43,7 @@ internal object GitLabCloneLoginComponentFactory {
       })
     }
     val backLink = LinkLabel<Unit>(IdeBundle.message("button.back"), null) { _, _ -> cloneVm.switchToRepositoryList() }.apply {
-      bindVisibilityIn(cs, cloneVm.accounts.map { it.isNotEmpty() })
+      bindVisibilityIn(cs, cloneVm.accountsRefreshRequest.map { it.isNotEmpty() })
     }
     val loginInputPanel = TokenLoginInputPanelFactory(loginModel).create(
       serverFieldDisabled = false,

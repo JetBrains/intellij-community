@@ -15,10 +15,7 @@ import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabApiImpl
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
@@ -35,9 +32,8 @@ internal interface GitLabCloneViewModel {
   val accountManager: GitLabAccountManager
 
   val uiState: Flow<UIState>
-
+  val accountsRefreshRequest: Flow<Set<GitLabAccount>>
   val isLoading: Flow<Boolean>
-  val accounts: Flow<Set<GitLabAccount>>
   val errorLogin: Flow<Throwable?>
   val selectedItem: Flow<GitLabCloneListItem?>
 
@@ -74,11 +70,13 @@ internal class GitLabCloneViewModelImpl(
   private val cs: CoroutineScope = parentCs.childScope()
   private val taskLauncher: SingleCoroutineLauncher = SingleCoroutineLauncher(cs)
 
+  private val accounts: Flow<Set<GitLabAccount>> = accountManager.accountsState
+
   private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(UIState.LOGIN)
   override val uiState: Flow<UIState> = _uiState.asSharedFlow()
 
+  override val accountsRefreshRequest: MutableSharedFlow<Set<GitLabAccount>> = MutableSharedFlow()
   override val isLoading: Flow<Boolean> = taskLauncher.busy
-  override val accounts: Flow<Set<GitLabAccount>> = accountManager.accountsState
 
   private val _errorLogin: MutableStateFlow<Throwable?> = MutableStateFlow(null)
   override val errorLogin: Flow<Throwable?> = _errorLogin.asSharedFlow()
@@ -101,8 +99,15 @@ internal class GitLabCloneViewModelImpl(
   init {
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       accounts.collectLatest { accounts ->
+        accountsRefreshRequest.emit(accounts)
         if (accounts.isNotEmpty()) {
           _uiState.value = UIState.REPOSITORY_LIST
+        }
+
+        accounts.forEach { account ->
+          accountManager.getCredentialsFlow(account).collectLatest {
+            accountsRefreshRequest.emit(accounts)
+          }
         }
       }
     }
