@@ -20,6 +20,10 @@ fun isSupported(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean
   return GradleJvmSupportMatrix.getInstance().isSupported(gradleVersion, javaVersion)
 }
 
+fun getOldestSupportedGradleVersion(): GradleVersion {
+  return getAllSupportedGradleVersions().min()
+}
+
 /**
  * Returns sorted list (from min to max) of Gradle version which supported by current Idea.
  */
