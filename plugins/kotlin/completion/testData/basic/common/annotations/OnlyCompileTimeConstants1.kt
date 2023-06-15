@@ -15,7 +15,7 @@ class B
 // EXIST: B
 // EXIST: constInt
 // EXIST: constString
-// EXIST: arrayOf
+// ABSENT: arrayOf
 // ABSENT: nonConstInt
 // ABSENT: foo
 // ABSENT: hashCode

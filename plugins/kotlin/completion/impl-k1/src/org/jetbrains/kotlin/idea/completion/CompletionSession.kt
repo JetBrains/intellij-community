@@ -115,7 +115,7 @@ abstract class CompletionSession(
         }
 
         if (position.isInsideAnnotationEntryArgumentList()) {
-            applicabilityFilter = { suggestDescriptorInsideAnnotationEntryArgumentList(it) }
+            applicabilityFilter = { suggestDescriptorInsideAnnotationEntryArgumentList(it, expectedInfos) }
         } else {
             applicabilityFilter = { true }
         }
@@ -482,14 +482,22 @@ abstract class CompletionSession(
     }
 
     companion object {
-        private fun suggestDescriptorInsideAnnotationEntryArgumentList(descriptor: DeclarationDescriptor): Boolean {
+        private fun suggestDescriptorInsideAnnotationEntryArgumentList(
+            descriptor: DeclarationDescriptor,
+            expectedInfos: Collection<ExpectedInfo>,
+        ): Boolean {
             if (descriptor.annotations.any { it.classId == StandardClassIds.Annotations.IntrinsicConstEvaluation }) return true
 
             if (descriptor !is CallableDescriptor) return true
 
             return when (descriptor) {
                 is VariableDescriptor -> descriptor.isConst
-                is FunctionDescriptor -> descriptor.fqNameOrNull() in ArrayFqNames.ARRAY_CALL_FQ_NAMES
+                is FunctionDescriptor -> {
+                    if (descriptor.fqNameOrNull() !in ArrayFqNames.ARRAY_CALL_FQ_NAMES) return false
+
+                    val fuzzyType = descriptor.returnType?.toFuzzyType(descriptor.typeParameters) ?: return false
+                    expectedInfos.isEmpty() || expectedInfos.any { it.fuzzyType?.checkIsSubtypeOf(fuzzyType) != null }
+                }
 
                 else -> false
             }

@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.ShadowedCallabl
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -126,7 +127,7 @@ internal open class FirCallableCompletionContributor(
             receiver != null -> collectDotCompletion(scopesContext, receiver, extensionChecker, visibilityChecker)
             else -> completeWithoutReceiver(scopesContext, extensionChecker, visibilityChecker)
         }
-            .filterIfInsideAnnotationEntryArgument(position)
+            .filterIfInsideAnnotationEntryArgument(position, weighingContext.expectedType)
             .filterOutShadowedCallables()
             .filterOutUninitializedCallables(position)
 
@@ -498,6 +499,7 @@ internal open class FirCallableCompletionContributor(
     context(KtAnalysisSession)
     private fun Sequence<CallableWithMetadataForCompletion>.filterIfInsideAnnotationEntryArgument(
         position: PsiElement,
+        expectedType: KtType?,
     ): Sequence<CallableWithMetadataForCompletion> {
         if (!position.isInsideAnnotationEntryArgumentList()) return this
 
@@ -510,7 +512,11 @@ internal open class FirCallableCompletionContributor(
                 is KtJavaFieldSymbol -> symbol.isStatic && symbol.isVal && symbol.hasPrimitiveOrStringReturnType()
                 is KtKotlinPropertySymbol -> symbol.isConst
                 is KtEnumEntrySymbol -> true
-                is KtFunctionSymbol -> symbol.callableIdIfNonLocal?.asSingleFqName() in ArrayFqNames.ARRAY_CALL_FQ_NAMES
+                is KtFunctionSymbol -> {
+                    val isArrayOfCall = symbol.callableIdIfNonLocal?.asSingleFqName() in ArrayFqNames.ARRAY_CALL_FQ_NAMES
+
+                    isArrayOfCall && expectedType?.let { symbol.returnType.isPossiblySubTypeOf(it) } != false
+                }
 
                 else -> false
             }
