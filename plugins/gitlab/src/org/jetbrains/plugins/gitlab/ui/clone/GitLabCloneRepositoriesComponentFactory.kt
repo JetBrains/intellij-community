@@ -6,10 +6,14 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.details.GroupedRenderer
 import com.intellij.collaboration.ui.util.bindBusyIn
+import com.intellij.dvcs.ui.CloneDvcsValidationUtils
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBEmptyBorder
@@ -21,13 +25,17 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
-import javax.swing.JComponent
 import javax.swing.JSeparator
 import javax.swing.ListCellRenderer
 import javax.swing.ListModel
 
 internal object GitLabCloneRepositoriesComponentFactory {
-  fun create(cs: CoroutineScope, cloneVm: GitLabCloneViewModel, searchField: SearchTextField): JComponent {
+  fun create(
+    cs: CoroutineScope,
+    cloneVm: GitLabCloneViewModel,
+    searchField: SearchTextField,
+    directoryField: TextFieldWithBrowseButton
+  ): DialogPanel {
     val accountsModel = createAccountsModel(cs, cloneVm)
     val repositoriesModel = createRepositoriesModel(cs, cloneVm)
 
@@ -56,6 +64,13 @@ internal object GitLabCloneRepositoriesComponentFactory {
           .resizableColumn()
           .align(Align.FILL)
       }.resizableRow()
+      row(CollaborationToolsBundle.message("clone.dialog.directory.to.clone.label.text")) {
+        cell(directoryField)
+          .align(AlignX.FILL)
+          .validationOnApply {
+            CloneDvcsValidationUtils.checkDirectory(it.text, it.textField)
+          }
+      }
     }.apply {
       border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
     }

@@ -36,8 +36,8 @@ class GitLabCloneDialogExtension : VcsCloneDialogExtension {
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent {
     val cs = MainScope() + modalityState.asContextElement()
-    val cloneVm = GitLabCloneViewModelImpl(cs, accountManager)
-    return GitLabCloneComponent(cs, cloneVm)
+    val cloneVm = GitLabCloneViewModelImpl(project, cs, accountManager)
+    return GitLabCloneComponent(project, cs, cloneVm)
   }
 
   private val GitLabAccount.nameWithServer: String

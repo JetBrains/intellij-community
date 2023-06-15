@@ -2,7 +2,17 @@
 package org.jetbrains.plugins.gitlab.ui.clone
 
 import com.intellij.collaboration.auth.ui.login.LoginModel
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.dvcs.ui.CloneDvcsValidationUtils
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.childScope
+import git4idea.checkout.GitCheckoutProvider
+import git4idea.commands.Git
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.Flow
@@ -19,6 +29,7 @@ import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvi
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
 import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneViewModel.UIState
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
+import java.nio.file.Paths
 
 internal interface GitLabCloneViewModel {
   val uiState: Flow<UIState>
@@ -39,6 +50,8 @@ internal interface GitLabCloneViewModel {
 
   fun switchToRepositoryList()
 
+  fun doClone(checkoutListener: CheckoutProvider.Listener, directoryPath: String)
+
   suspend fun collectAccountRepositories(account: GitLabAccount): List<GitLabCloneListItem>
 
   suspend fun login()
@@ -50,9 +63,12 @@ internal interface GitLabCloneViewModel {
 }
 
 internal class GitLabCloneViewModelImpl(
+  private val project: Project,
   parentCs: CoroutineScope,
   private val accountManager: GitLabAccountManager
 ) : GitLabCloneViewModel {
+  private val vcsNotifier: VcsNotifier = project.service<VcsNotifier>()
+
   private val cs: CoroutineScope = parentCs.childScope()
   private val taskLauncher: SingleCoroutineLauncher = SingleCoroutineLauncher(cs)
 
@@ -124,6 +140,32 @@ internal class GitLabCloneViewModelImpl(
     _uiState.value = UIState.REPOSITORY_LIST
   }
 
+  override fun doClone(checkoutListener: CheckoutProvider.Listener, directoryPath: String) {
+    val parent = Paths.get(directoryPath).toAbsolutePath().parent
+    val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
+    if (destinationValidation != null) {
+      notifyCreateDirectoryFailed(destinationValidation.message)
+      return
+    }
+
+    val lfs = LocalFileSystem.getInstance()
+    var destinationParent = lfs.findFileByIoFile(parent.toFile())
+    if (destinationParent == null) {
+      destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
+    }
+    if (destinationParent == null) {
+      notifyDestinationNotFound()
+      return
+    }
+
+    val directoryName = Paths.get(directoryPath).fileName.toString()
+    val parentDirectory = parent.toAbsolutePath().toString()
+
+    val selectedRepository = _selectedItem.value!!
+    val selectedUrl = selectedRepository.projectMember.project.httpUrlToRepo
+    GitCheckoutProvider.clone(project, Git.getInstance(), checkoutListener, destinationParent, selectedUrl, directoryName, parentDirectory)
+  }
+
   override suspend fun collectAccountRepositories(account: GitLabAccount): List<GitLabCloneListItem> {
     val token = accountManager.findCredentials(account) ?: return emptyList() // TODO: missing token
     val apiClient = GitLabApiImpl { token }
@@ -137,5 +179,28 @@ internal class GitLabCloneViewModelImpl(
 
   override suspend fun login() {
     loginModel.login()
+  }
+
+  private fun notifyCreateDirectoryFailed(message: String) {
+    thisLogger().error(CollaborationToolsBundle.message("clone.dialog.error.unable.to.create.destination.directory"), message)
+    vcsNotifier.notifyError(
+      CLONE_UNABLE_TO_CREATE_DESTINATION_DIRECTORY,
+      CollaborationToolsBundle.message("clone.dialog.clone.failed"),
+      CollaborationToolsBundle.message("clone.dialog.error.unable.to.find.destination.directory")
+    )
+  }
+
+  private fun notifyDestinationNotFound() {
+    thisLogger().error(CollaborationToolsBundle.message("clone.dialog.error.destination.not.exist"))
+    vcsNotifier.notifyError(
+      CLONE_UNABLE_TO_FIND_DESTINATION_DIRECTORY,
+      CollaborationToolsBundle.message("clone.dialog.clone.failed"),
+      CollaborationToolsBundle.message("clone.dialog.error.unable.to.find.destination.directory")
+    )
+  }
+
+  companion object {
+    private const val CLONE_UNABLE_TO_CREATE_DESTINATION_DIRECTORY = "gitlab.clone.unable.to.create.destination.directory"
+    private const val CLONE_UNABLE_TO_FIND_DESTINATION_DIRECTORY = "gitlab.clone.unable.to.find.destination.directory"
   }
 }
