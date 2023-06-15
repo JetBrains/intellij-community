@@ -48,6 +48,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleOlderThan
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager.getGradleVersionSafe
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
@@ -112,6 +113,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
       sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
         .columns(COLUMNS_MEDIUM)
+        .validationOnInput { validateJavaSdk(withDialog = false) }
+        .validationOnApply { validateJavaSdk(withDialog = true) }
         .whenItemSelectedFromUi { logSdkChanged(sdk) }
         .onApply { logSdkFinished(sdk) }
     }.bottomGap(BottomGap.SMALL)
@@ -226,6 +229,37 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       ))
     }
     return null
+  }
+
+  private fun ValidationInfoBuilder.validateJavaSdk(withDialog: Boolean): ValidationInfo? {
+    val javaVersion = getJdkVersion()
+    if (javaVersion == null) {
+      return error(GradleBundle.message("gradle.settings.wizard.java.undefined"))
+    }
+    return validateIdeaJavaCompatibility(withDialog, javaVersion)
+  }
+
+  private fun ValidationInfoBuilder.validateIdeaJavaCompatibility(withDialog: Boolean, javaVersion: JavaVersion): ValidationInfo? {
+    if (GradleJvmSupportMatrix.getInstance().isSupportedByIdea(javaVersion)) {
+      return null
+    }
+    val oldestSupportedJavaVersion = getOldestSupportedJavaVersion()
+    return errorWithDialog(
+      withDialog = withDialog,
+      message = GradleBundle.message(
+        "gradle.settings.wizard.java.unsupported.message",
+        ApplicationNamesInfo.getInstance().productName,
+        oldestSupportedJavaVersion.toFeatureString()
+      ),
+      dialogTitle = GradleBundle.message(
+        "gradle.settings.wizard.java.unsupported.title"
+      ),
+      dialogMessage = GradleBundle.message(
+        "gradle.settings.wizard.java.unsupported.message",
+        ApplicationNamesInfo.getInstance().productName,
+        oldestSupportedJavaVersion.toFeatureString(),
+      )
+    )
   }
 
   private fun ValidationInfoBuilder.validateIdeaGradleCompatibility(
