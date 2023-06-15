@@ -133,16 +133,27 @@
 
       <add-to-group group-id="Git.MainMenu" relative-to-action="Git.Configure.Remotes" anchor="before"/>
     </group>
+
+    <action id="Github.PullRequest.Open.Link"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPullRequestOpenURLAction"
+            icon="AllIcons.Vcs.Vendors.Github"/>
+    <action id="Github.PullRequest.Copy.Link"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPullRequestCopyURLAction"
+            icon="AllIcons.Vcs.Vendors.Github"/>
+
     <group id="Github.PullRequest.ToolWindow.List.Popup">
       <action id="Github.PullRequest.Show"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenPullRequestAction"/>
-      <reference id="Github.Open.In.Browser"/>
+      <reference id="Github.PullRequest.Open.Link"/>
+      <reference id="Github.PullRequest.Copy.Link"/>
       <separator/>
       <action id="Github.PullRequest.List.Reload"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadListAction" use-shortcut-of="Refresh"/>
     </group>
     <group id="Github.PullRequest.Details.Popup">
       <reference id="Github.PullRequest.Details.Reload"/>
+      <reference id="Github.PullRequest.Open.Link"/>
+      <reference id="Github.PullRequest.Copy.Link"/>
     </group>
     <action id="Github.PullRequest.Branch.Checkout.Remote"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRCheckoutRemoteBranchAction"/>
@@ -162,7 +173,6 @@
     <group id="Github.PullRequest.Changes.Popup">
       <reference id="Diff.ShowDiff"/>
       <reference id="Diff.ShowStandaloneDiff"/>
-      <reference id="Github.PullRequest.Details.Reload"/>
       <reference id="EditSource"/>
       <action id="Github.PullRequest.Changes.MarkViewed"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRMarkFilesViewedAction"/>
@@ -174,11 +184,17 @@
       </group>
       <reference ref="ExpandAll"/>
       <reference ref="CollapseAll"/>
+      <separator/>
+      <reference id="Github.PullRequest.Details.Reload"/>
+      <reference id="Github.PullRequest.Open.Link"/>
+      <reference id="Github.PullRequest.Copy.Link"/>
     </group>
 
     <group id="Github.PullRequest.Timeline.Popup">
       <action id="Github.PullRequest.Timeline.Update"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateTimelineAction" use-shortcut-of="Refresh"/>
+      <reference id="Github.PullRequest.Open.Link"/>
+      <reference id="Github.PullRequest.Copy.Link"/>
     </group>
 
     <action id="Github.Break.Api.Requests" internal="true"
