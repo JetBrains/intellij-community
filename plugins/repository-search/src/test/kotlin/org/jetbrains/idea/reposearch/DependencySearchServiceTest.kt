@@ -9,6 +9,7 @@ import junit.framework.TestCase
 import org.jetbrains.concurrency.isPending
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CopyOnWriteArrayList
 
 class DependencySearchServiceTest : LightPlatformTestCase() {
 
@@ -65,11 +66,10 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     ExtensionTestUtil.maskExtensions(DependencySearchService.EP_NAME, listOf(DependencySearchProvidersFactory {
       listOf(
         testProviderLocal1, testProviderLocal2, testProviderRemote3, testProviderRemote4)
-    }),
-                                     testRootDisposable, false)
+    }), testRootDisposable, false)
     val searchParameters = SearchParameters(true, false)
 
-    val result = ArrayList<RepositoryArtifactData>()
+    val result = CopyOnWriteArrayList<RepositoryArtifactData>()
     val promise = dependencySearchService.suggestPrefix("group", "artifact", searchParameters) {
       result.add(it)
     }
