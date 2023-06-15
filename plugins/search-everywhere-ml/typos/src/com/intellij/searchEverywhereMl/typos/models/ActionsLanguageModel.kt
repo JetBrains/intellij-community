@@ -59,12 +59,8 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
     get() = languageModelComputationJob.isCompleted
 
   private fun getWordsFromActions(): Sequence<@NlsActions.ActionText String> {
-    return (ActionManager.getInstance() as ActionManagerImpl)
-      .let { actionManager ->
-        actionManager.actionIds
-          .asSequence()
-          .mapNotNull { actionManager.getActionOrStub(it) }
-      }.filterNot { it is ActionGroup && !it.isSearchable }
+    return (ActionManager.getInstance() as ActionManagerImpl).actionsOrStubs()
+      .filterNot { it is ActionGroup && !it.isSearchable }
       .mapNotNull { it.templateText }
   }
 

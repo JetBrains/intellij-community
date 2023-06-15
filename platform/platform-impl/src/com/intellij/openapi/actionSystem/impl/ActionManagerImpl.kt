@@ -33,6 +33,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.actionSystem.EditorAction
@@ -43,7 +44,6 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.keymap.impl.DefaultKeymap.Companion.isBundledKeymapHidden
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ProjectType
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtilRt
@@ -62,8 +62,10 @@ import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.xml.dom.XmlElement
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.coroutines.Job
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.AWTEvent
 import java.awt.Component
@@ -82,8 +84,8 @@ import kotlin.coroutines.CoroutineContext
 
 open class ActionManagerImpl protected constructor() : ActionManagerEx(), Disposable {
   private val lock = Any()
-  @Suppress("SSBasedInspection")
-  private val idToAction = Object2ObjectOpenHashMap<String, AnAction>()
+  @Volatile
+  private var idToAction = persistentHashMapOf<String, AnAction>()
   private val pluginToId = HashMap<PluginId, MutableList<String>>()
   private val idToIndex = Object2IntOpenHashMap<String>()
   private val prohibitedActionIds = HashSet<String>()
@@ -135,18 +137,6 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   companion object {
-    internal fun convertStub(stub: ActionStub): AnAction? {
-      val componentManager = ApplicationManager.getApplication() ?: throw AlreadyDisposedException("Application is already disposed")
-      val anAction = instantiate(stubClassName = stub.className,
-                                 pluginDescriptor = stub.plugin,
-                                 expectedClass = AnAction::class.java,
-                                 componentManager = componentManager)
-                     ?: return null
-      stub.initAction(anAction)
-      updateIconFromStub(stub = stub, anAction = anAction, componentManager = componentManager)
-      return anAction
-    }
-
     internal fun checkUnloadActions(module: IdeaPluginDescriptorImpl): String? {
       for (descriptor in module.actions) {
         val element = descriptor.element
@@ -191,8 +181,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
 
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
+  @Experimental
+  @Internal
   fun reinitializeTimer() {
     if (timer != null) {
       val oldListeners = timer!!.listeners
@@ -319,9 +309,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   override fun getAction(id: String): AnAction? = getActionImpl(id = id, canReturnStub = false)
 
   private fun getActionImpl(id: String, canReturnStub: Boolean): AnAction? {
-    var action = synchronized(lock) {
-      idToAction.get(id)
-    }
+    var action = idToAction.get(id)
     if (canReturnStub || action !is ActionStubBase) {
       return action
     }
@@ -339,27 +327,23 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     }
 
     synchronized(lock) {
+      // get under lock - maybe already replaced in parallel
       action = idToAction.get(id)
-      if (action is ActionStubBase) {
-        action = replaceStub(action as ActionStubBase, converted)
-      }
-      return action
+      return replaceStub(stub = action as? ActionStubBase ?: return action, convertedAction = converted)
     }
   }
 
-  private fun replaceStub(stub: ActionStubBase, anAction: AnAction): AnAction? {
-    LOG.assertTrue(actionToId.containsKey(stub))
-    actionToId.remove(stub)
-    LOG.assertTrue(idToAction.containsKey(stub.id))
-    val action = idToAction.remove(stub.id)
-    LOG.assertTrue(action != null)
-    LOG.assertTrue(action == stub)
-    actionToId.put(anAction, stub.id)
-    updateHandlers(anAction)
-    val result = addToMap(actionId = stub.id, action = anAction, projectType = if (stub is ActionStub) stub.projectType else null)
-    if (result == null) {
-      reportActionIdCollision(actionId = stub.id, action = action!!, pluginId = stub.plugin.pluginId)
+  // executed under lock
+  private fun replaceStub(stub: ActionStubBase, convertedAction: AnAction): AnAction {
+    if (actionToId.remove(stub) == null) {
+      throw IllegalStateException("No action in actionToId by stub (stub=$stub)")
     }
+
+    updateHandlers(convertedAction)
+
+    actionToId.put(convertedAction, stub.id)
+    val result = (if (stub is ActionStub) stub.projectType else null)?.let { ChameleonAction(convertedAction, it) } ?: convertedAction
+    idToAction = idToAction.put(stub.id, result)
     return result
   }
 
@@ -371,9 +355,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   override fun getActionIdList(idPrefix: String): List<String> {
-    return synchronized(lock) {
-      idToAction.keys.filter { it.startsWith(idPrefix) }
-    }
+    return idToAction.keys.filter { it.startsWith(idPrefix) }
   }
 
   @Suppress("OVERRIDE_DEPRECATION")
@@ -388,6 +370,12 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   override fun getActionOrStub(id: String): AnAction? = getActionImpl(id = id, canReturnStub = true)
+
+  @Experimental
+  @Internal
+  fun actionsOrStubs(): Sequence<AnAction> {
+    return idToAction.values.asSequence()
+  }
 
   /**
    * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of `AnAction`.
@@ -487,7 +475,10 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         }
       }
       else {
-        registerAction(actionId = id, action = action, pluginId = plugin.pluginId, projectType = element.attributes.get(PROJECT_TYPE))
+        registerAction(actionId = id,
+                       action = action,
+                       pluginId = plugin.pluginId,
+                       projectType = element.attributes.get(PROJECT_TYPE)?.let { ProjectType.create(it) })
       }
       onActionLoadedFromXml(action = action, actionId = id, plugin = plugin)
     }
@@ -927,20 +918,20 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     registerAction(actionId = actionId, action = action, pluginId = pluginId, projectType = null)
   }
 
-  private fun registerAction(actionId: String, action: AnAction, pluginId: PluginId?, projectType: String?) {
+  private fun registerAction(actionId: String, action: AnAction, pluginId: PluginId?, projectType: ProjectType?) {
     synchronized(lock) {
       if (prohibitedActionIds.contains(actionId)) {
         return
       }
 
-      if (addToMap(actionId = actionId, action = action, projectType = ProjectType.create(projectType)) == null) {
-        reportActionIdCollision(actionId, action, pluginId)
+      if (addToMap(actionId = actionId, action = action, projectType = projectType) == null) {
+        reportActionIdCollision(actionId = actionId, action = action, pluginId = pluginId)
         return
       }
 
       if (actionToId.containsKey(action)) {
         val module = if (pluginId == null) null else PluginManagerCore.getPluginSet().findEnabledPlugin(pluginId)
-        val message = "ID '${actionToId[action]}' is already taken by action '$action' (${action.javaClass})." +
+        val message = "ID '${actionToId.get(action)}' is already taken by action '$action' (${action.javaClass})." +
                       " ID '$actionId' cannot be registered for the same action"
         if (module == null) {
           LOG.error(PluginException("$message $pluginId", null, pluginId))
@@ -962,18 +953,24 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     }
   }
 
+  // executed under lock
   private fun addToMap(actionId: String, action: AnAction, projectType: ProjectType?): AnAction? {
-    val chameleonAction = idToAction.computeIfPresent(actionId) { _, old ->
-      old as? ChameleonAction ?: ChameleonAction(old, projectType)
+    val existing = idToAction.get(actionId)
+    val chameleonAction: ChameleonAction
+    if (existing is ChameleonAction) {
+      chameleonAction = existing
     }
-    if (chameleonAction == null) {
-      val result = projectType?.let { ChameleonAction(action, it) } ?: action
-      idToAction.put(actionId, result)
-      return result
+    else if (existing != null) {
+      chameleonAction = ChameleonAction(existing, projectType)
+      idToAction = idToAction.put(actionId, chameleonAction)
     }
     else {
-      return (chameleonAction as ChameleonAction).addAction(action, projectType)
+      val result = projectType?.let { ChameleonAction(action, it) } ?: action
+      idToAction = idToAction.put(actionId, result)
+      return result
     }
+
+    return chameleonAction.addAction(action, projectType)
   }
 
   private fun reportActionIdCollision(actionId: String, action: AnAction, pluginId: PluginId?) {
@@ -1004,10 +1001,9 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
 
   private fun unregisterAction(actionId: String, removeFromGroups: Boolean) {
     synchronized(lock) {
-      if (!idToAction.containsKey(actionId)) {
-        if (LOG.isDebugEnabled) {
-          LOG.debug("action with ID $actionId wasn't registered")
-        }
+      val actionToRemove = idToAction.get(actionId)
+      if (actionToRemove == null) {
+        LOG.debug { "action with ID $actionId wasn't registered" }
         return
       }
 
@@ -1016,7 +1012,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         LOG.info("Unregistering line comment action", Throwable())
       }
 
-      val actionToRemove = idToAction.remove(actionId)
+      idToAction = idToAction.remove(actionId)
+
       actionToId.remove(actionToRemove)
       idToIndex.removeInt(actionId)
       for (value in pluginToId.values) {
@@ -1033,7 +1030,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
             continue
           }
 
-          group.remove(actionToRemove!!, actionId)
+          group.remove(actionToRemove, actionId)
           if (group !is ActionGroupStub) {
             // group can be used as a stub in other actions
             for (parentOfGroup in (idToGroupId.get(groupId) ?: emptyList())) {
@@ -1066,7 +1063,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
    * Unregisters already registered action and prevented the action from being registered in the future.
    * Should be used only in IDE configuration
    */
-  @ApiStatus.Internal
+  @Internal
   fun prohibitAction(actionId: String) {
     synchronized(lock) { prohibitedActionIds.add(actionId) }
     val action = getAction(actionId)
@@ -1229,14 +1226,10 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   val actionIds: Set<String>
-    get() {
-      synchronized(lock) { return HashSet(idToAction.keys) }
-    }
+    get() = idToAction.keys
 
-  fun preloadActions(indicator: ProgressIndicator) {
-    val ids = synchronized(lock) { ArrayList(idToAction.keys) }
-    for (id in ids) {
-      indicator.checkCanceled()
+  fun preloadActions() {
+    for (id in idToAction.keys) {
       getActionImpl(id = id, canReturnStub = false)
       // don't preload ActionGroup.getChildren() because that would un-stub child actions
       // and make it impossible to replace the corresponding actions later
@@ -1746,4 +1739,16 @@ private fun updateHandlers(action: Any?) {
   if (action is EditorAction) {
     action.clearDynamicHandlersCache()
   }
+}
+
+internal fun convertStub(stub: ActionStub): AnAction? {
+  val componentManager = ApplicationManager.getApplication() ?: throw AlreadyDisposedException("Application is already disposed")
+  val anAction = instantiate(stubClassName = stub.className,
+                             pluginDescriptor = stub.plugin,
+                             expectedClass = AnAction::class.java,
+                             componentManager = componentManager)
+                 ?: return null
+  stub.initAction(anAction)
+  updateIconFromStub(stub = stub, anAction = anAction, componentManager = componentManager)
+  return anAction
 }
