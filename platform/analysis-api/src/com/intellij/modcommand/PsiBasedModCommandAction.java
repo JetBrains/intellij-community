@@ -55,7 +55,9 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   @Nullable
   private E getElement(@NotNull ActionContext context) {
     if (myPointer != null) {
-      return myPointer.getElement();
+      E element = myPointer.getElement();
+      if (element != null && !BaseIntentionAction.canModify(element)) return null;
+      return element;
     }
     int offset = context.offset();
     PsiFile file = context.file();
