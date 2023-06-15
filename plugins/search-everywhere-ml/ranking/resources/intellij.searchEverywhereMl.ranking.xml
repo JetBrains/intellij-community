@@ -116,6 +116,8 @@
       implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereRunConfigurationFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywherePsiElementFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereTypoFeaturesProvider"/>
 
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.ActionKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.PsiElementKeyProvider"/>
