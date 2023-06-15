@@ -24,6 +24,10 @@ fun getOldestSupportedGradleVersion(): GradleVersion {
   return getAllSupportedGradleVersions().min()
 }
 
+fun getOldestSupportedJavaVersion(): JavaVersion {
+  return getAllSupportedJavaVersions().min()
+}
+
 /**
  * Returns sorted list (from min to max) of Gradle version which supported by current Idea.
  */
