@@ -1,4 +1,4 @@
-// IS_APPLICABLE: false
+// REPORT_NON_TRIVIAL_ACCESSORS: true
 // WITH_STDLIB
 
 fun foo() {
