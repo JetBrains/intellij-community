@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.test.events
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import junit.framework.ComparisonFailure
 import org.gradle.util.GradleVersion
@@ -696,8 +697,8 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
         withJavaPlugin()
         withJUnit5()
         addTestImplementationDependency(call("files", list(
-          PathManager.getJarPathForClass(FileComparisonFailure::class.java)!!,
-          PathManager.getJarPathForClass(ComparisonFailure::class.java)!!
+          FileUtil.toSystemIndependentName(PathManager.getJarPathForClass(FileComparisonFailure::class.java)!!),
+          FileUtil.toSystemIndependentName(PathManager.getJarPathForClass(ComparisonFailure::class.java)!!)
         )))
       }
     }
