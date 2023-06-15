@@ -210,20 +210,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       if (!wasMavenized) {
         return;
       }
-      initMavenized();
+      doInit(false);
     });
-  }
-
-  private void initMavenized() {
-    doInit(false);
-  }
-
-  private void initNew(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
-    myState.originalFiles = MavenUtil.collectPaths(files);
-    MavenWorkspaceSettings workspaceSettings = getWorkspaceSettings();
-    workspaceSettings.setEnabledProfiles(explicitProfiles.getEnabledProfiles());
-    workspaceSettings.setDisabledProfiles(explicitProfiles.getDisabledProfiles());
-    doInit(true);
   }
 
   @TestOnly
@@ -491,7 +479,11 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
     myPreviewModule = previewModuleToDelete;
     if (!isInitialized()) {
-      initNew(files, profiles);
+      myState.originalFiles = MavenUtil.collectPaths(files);
+      MavenWorkspaceSettings workspaceSettings = getWorkspaceSettings();
+      workspaceSettings.setEnabledProfiles(profiles.getEnabledProfiles());
+      workspaceSettings.setDisabledProfiles(profiles.getDisabledProfiles());
+      doInit(true);
     }
     else {
       myWatcher.addManagedFilesWithProfiles(files, profiles);
@@ -753,7 +745,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @ApiStatus.Internal
   public void setProjectsTree(@NotNull MavenProjectsTree newTree) {
     if (!isInitialized()) {
-      initNew(Collections.emptyList(), MavenExplicitProfiles.NONE);
+      doInit(true);
     }
     newTree.addListenersFrom(myProjectsTree);
     myProjectsTree = newTree;
