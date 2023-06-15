@@ -22,7 +22,7 @@ class SyntheticVersionCatalogAccessor(project: Project, scope: GlobalSearchScope
 
   private val libraries: Array<PsiMethod> =
     SyntheticAccessorBuilder(project, scope, className, Kind.LIBRARY)
-      .buildMethods(this, model.libraries(className)!!.properties.map(::PropertyModelGraphNode), "")
+      .buildMethods(this, model.libraries(className)!!.properties.map(::PropertyModelGraphNode).let(::assembleGraph), "")
       .toTypedArray()
 
   private val plugins: PsiMethod = SyntheticAccessorBuilder(project, scope, className, Kind.PLUGIN)
@@ -115,7 +115,7 @@ class SyntheticVersionCatalogAccessor(project: Project, scope: GlobalSearchScope
         method.containingClass = constructedClass
         val graph =
           if (kind == Kind.VERSION) distributeNames(model.map { it.name.split("_", "-") }) ?: emptyList()
-          else model.map(::PropertyModelGraphNode)
+          else model.map(::PropertyModelGraphNode).let(::assembleGraph)
         val syntheticClass = buildSyntheticInnerClass(graph, constructedClass, "")
         method.setMethodReturnType(PsiElementFactory.getInstance(project).createType(syntheticClass, PsiSubstitutor.EMPTY))
         return method
@@ -127,8 +127,8 @@ class SyntheticVersionCatalogAccessor(project: Project, scope: GlobalSearchScope
       fun getChildren(): Map<String, GraphNode>?
     }
 
-    private class PropertyModelGraphNode(val model: GradlePropertyModel) : GraphNode {
-      override fun getName(): String = model.name
+    private class PropertyModelGraphNode(val model: GradlePropertyModel, val customName : String? = null) : GraphNode {
+      override fun getName(): String = customName ?: model.name
 
       override fun getChildren(): Map<String, GraphNode>? = model.getValue(
         GradlePropertyModel.MAP_TYPE)?.mapValues { PropertyModelGraphNode(it.value) }
@@ -145,12 +145,20 @@ class SyntheticVersionCatalogAccessor(project: Project, scope: GlobalSearchScope
       }
     }
 
-    private class PrefixBasedGraphNode(val rootName: String, val nested: List<PrefixBasedGraphNode>?) : GraphNode {
+    private class PrefixBasedGraphNode(val rootName: String, val nested: List<GraphNode>?) : GraphNode {
       override fun getName(): String = rootName
 
-      override fun getChildren(): Map<String, GraphNode>? = nested?.associateBy { it.rootName }
+      override fun getChildren(): Map<String, GraphNode>? = nested?.associateBy { it.getName() }
     }
 
+    private fun assembleGraph(model: List<PropertyModelGraphNode>) : List<GraphNode> {
+      val (nodes, leafs) = model.partition { it.getName().contains(Regex("\\-|_")) }
+      val prefixes = nodes.groupBy { it.getName().split("-", "_", limit = 2)[0] }
+      return prefixes.map { (prefix, associated) ->
+        val children = assembleGraph(associated.map { PropertyModelGraphNode(it.model, it.getName().drop(prefix.length + 1)) })
+        PrefixBasedGraphNode(prefix, children)
+      } + leafs
+    }
   }
 
 }
