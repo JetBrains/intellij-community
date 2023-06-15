@@ -7,7 +7,7 @@ import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Strings
@@ -69,10 +69,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     }
 
   private fun getDefaultWorkingDirectory(): String? {
-    val roots = ProjectRootManager.getInstance(project).contentRoots
-    @Suppress("DEPRECATION")
-    val dir = if (roots.size == 1 && roots[0] != null && roots[0].isDirectory) roots[0] else project.baseDir
-    return dir?.canonicalPath
+    return project.guessProjectDir()?.canonicalPath
   }
 
   var shellPath: String
