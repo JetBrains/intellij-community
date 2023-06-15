@@ -57,8 +57,6 @@ public abstract class ExperimentalUI {
 
   @Contract(pure = true)
   public static boolean isNewUI() {
-    // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
-    // Please apply any modifications here and there synchronously. Or solve the dependency problem :)
     Boolean override = newUiOneSessionOverrideForThinClient;
     return override == null
            ? EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY)
@@ -71,6 +69,7 @@ public abstract class ExperimentalUI {
 
   public static void overrideNewUiForOneSessionForThinClient(boolean newUi) {
     newUiOneSessionOverrideForThinClient = newUi;
+    getInstance().lookAndFeelChanged();
   }
 
   public static void setNewUI(boolean newUI) {
