@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.DnDTarget;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -59,8 +60,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
         if (!TabContentLayout.this.ui.isCurrent(TabContentLayout.this)) {
           return;
         }
-        Rectangle moreRect = getMoreRect();
-        if (moreRect != null) {
+        if (canShowMorePopup()) {
           showMorePopup();
         }
       }
@@ -109,8 +109,12 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     doubleClickActions = actions;
   }
 
-  private Rectangle getMoreRect() {
-    return lastLayout == null ? null : lastLayout.moreRect;
+  /**
+   * Show popup after the last visible tab.
+   * This is close to the "TabList" action location on {@link ActionPlaces#TOOLWINDOW_TITLE}.
+   */
+  private @Nullable Point getMorePopupOffset() {
+    return lastLayout != null ? lastLayout.morePopupOffset : null;
   }
 
   public void dropCaches() {
@@ -119,19 +123,19 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
 
   @Override
   public boolean canShowMorePopup() {
-    return getMoreRect() != null;
+    return getMorePopupOffset() != null;
   }
 
   @Override
   public @Nullable JBPopup showMorePopup() {
-    Rectangle rect = getMoreRect();
-    if (rect == null) {
+    Point offset = getMorePopupOffset();
+    if (offset == null) {
       return null;
     }
     List<? extends ContentTabLabel> tabs = ContainerUtil.filter(this.tabs, lastLayout.toDrop::contains);
     final List<Content> contentsToShow = ContainerUtil.map(tabs, ContentTabLabel::getContent);
     final SelectContentStep step = new SelectContentStep(contentsToShow);
-    RelativePoint point = new RelativePoint(ui.getTabComponent(), new Point(rect.x, rect.y + rect.height));
+    RelativePoint point = new RelativePoint(ui.getTabComponent(), offset);
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
     popup.show(point);
     return popup;
@@ -213,7 +217,6 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
       }
 
       boolean reachedBounds = false;
-      data.moreRect = null;
       TabsDrawMode toDrawTabs = isToDrawTabs();
       for (JLabel each : data.toLayout) {
         if (toDrawTabs == TabsDrawMode.HIDE) {
@@ -246,17 +249,12 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
 
     boolean toolbarUpdateNeeded;
     if (data.toDrop.size() > 0) {
-      toolbarUpdateNeeded = lastLayout != null && lastLayout.moreRect == null;
-
-      int moreToolbarWidth = 16;
-      data.moreRect = new Rectangle(data.eachX + MORE_ICON_BORDER, 0, moreToolbarWidth, bounds.height);
-      Rectangle moreWithBorder = new Rectangle(data.eachX, 0, moreToolbarWidth + MORE_ICON_BORDER, bounds.height);
-      ui.isResizableArea = p -> !moreWithBorder.contains(p);
+      toolbarUpdateNeeded = lastLayout != null && lastLayout.morePopupOffset == null;
+      data.morePopupOffset = new Point(data.eachX + MORE_ICON_BORDER, bounds.height);
     }
     else {
-      toolbarUpdateNeeded = lastLayout != null && lastLayout.moreRect != null;
-      data.moreRect = null;
-      ui.isResizableArea = p -> true;
+      toolbarUpdateNeeded = lastLayout != null && lastLayout.morePopupOffset != null;
+      data.morePopupOffset = null;
     }
 
     lastLayout = data;
@@ -327,7 +325,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     ArrayList<JLabel> toLayout = new ArrayList<>();
     Collection<JLabel> toDrop = new HashSet<>();
 
-    Rectangle moreRect;
+    Point morePopupOffset;
 
     public int eachX;
     public int eachY;
