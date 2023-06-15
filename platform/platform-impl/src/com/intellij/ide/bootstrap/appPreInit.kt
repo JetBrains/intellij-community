@@ -85,7 +85,7 @@ internal suspend fun preInitApp(app: ApplicationImpl,
     initConfigurationStore(app)
 
     launch(CoroutineName("critical services preloading")) {
-      preloadCriticalServices(app = app, asyncScope = asyncScope, appRegistered = appRegisteredJob)
+      preloadCriticalServices(app = app, asyncScope = asyncScope, appRegistered = appRegisteredJob, initLafJob = initLafJob)
     }
 
     if (!app.isHeadlessEnvironment) {
