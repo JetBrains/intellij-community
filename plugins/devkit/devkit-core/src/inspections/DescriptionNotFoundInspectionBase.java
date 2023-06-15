@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -42,10 +41,6 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBas
     if (base == null || !psiClass.isInheritor(base, true)) return null;
 
     if (skipIfNotRegistered(psiClass)) {
-      return null;
-    }
-
-    if (TestSourcesFilter.isTestSources(psiClass.getContainingFile().getVirtualFile(), manager.getProject())) {
       return null;
     }
 
