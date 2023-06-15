@@ -182,7 +182,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
                                                                              @NotNull Collection<? extends EntityChange<?>> events,
                                                                              @NotNull EntityStorage entityStorage) {
     List<IndexableIteratorBuilder> builders = new SmartList<>();
-    WorkspaceIndexingRootsBuilder descriptionsBuilder = new WorkspaceIndexingRootsBuilder();
+    WorkspaceIndexingRootsBuilder descriptionsBuilder = new WorkspaceIndexingRootsBuilder(false);
     for (EntityChange<? extends WorkspaceEntity> change : events) {
       collectIteratorBuildersOnChange(Change.fromEntityChange(change), change.getOldEntity(), change.getNewEntity(), project, builders,
                                       descriptionsBuilder, entityStorage);
@@ -357,7 +357,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     if (entities.isEmpty()) return Collections.emptyList();
     List<IndexableIteratorBuilder> builders = new SmartList<>();
 
-    WorkspaceIndexingRootsBuilder descriptionsBuilder = new WorkspaceIndexingRootsBuilder();
+    WorkspaceIndexingRootsBuilder descriptionsBuilder = new WorkspaceIndexingRootsBuilder(false);
     for (WorkspaceEntity entity : entities) {
       collectIteratorBuildersOnChange(Change.Added, null, entity, project, builders, descriptionsBuilder, entityStorage);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.application.runReadAction
@@ -25,11 +25,14 @@ open class ModuleIndexableFilesPolicy {
   open fun shouldIndexSeparateRoots(): Boolean = true
 }
 
+/**
+ * @param roots is null when iterator should just iterate all files in module, no explicit root list
+ */
 internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
-                                                private val roots: List<VirtualFile>,
+                                                private val roots: List<VirtualFile>?,
                                                 private val printRootsInDebugName: Boolean) : ModuleIndexableFilesIterator {
   init {
-    assert(roots.isNotEmpty())
+    assert(roots?.isNotEmpty() ?: true)
   }
 
   companion object {
@@ -53,7 +56,15 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
 
   override fun getDebugName(): String =
     if (printRootsInDebugName) {
-      val rootsDebugStr = if (roots.isEmpty()) "empty" else roots.map { it.name }.sorted().joinToString(", ", limit = 10)
+      val rootsDebugStr = if (roots == null) {
+        "all roots"
+      }
+      else if (roots.isEmpty()) {
+        "empty"
+      }
+      else {
+        roots.map { it.name }.sorted().joinToString(", ", limit = 10)
+      }
       "Module '" + module.name + "' ($rootsDebugStr)"
     }
     else {
@@ -85,10 +96,12 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
       return@runReadAction if (module.isDisposed) null else ModuleRootManager.getInstance(module).fileIndex
     }
     if (index == null) return false
-    for (root in roots) {
-      index.iterateContentUnderDirectory(root, fileIterator, fileFilter)
+    if (roots == null) {
+      return index.iterateContent(fileIterator, fileFilter)
     }
-    return true
+    else {
+      return roots.all { root -> index.iterateContentUnderDirectory(root, fileIterator, fileFilter) }
+    }
   }
 
   override fun getRootUrls(project: Project): Set<String> = module.rootManager.contentRootUrls.toSet()
