@@ -915,42 +915,43 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   override fun registerAction(actionId: String, action: AnAction, pluginId: PluginId?) {
-    registerAction(actionId = actionId, action = action, pluginId = pluginId, projectType = null)
+    synchronized(lock) {
+      registerAction(actionId = actionId, action = action, pluginId = pluginId, projectType = null)
+    }
   }
 
+  // executed under lock
   private fun registerAction(actionId: String, action: AnAction, pluginId: PluginId?, projectType: ProjectType?) {
-    synchronized(lock) {
-      if (prohibitedActionIds.contains(actionId)) {
-        return
-      }
-
-      if (addToMap(actionId = actionId, action = action, projectType = projectType) == null) {
-        reportActionIdCollision(actionId = actionId, action = action, pluginId = pluginId)
-        return
-      }
-
-      if (actionToId.containsKey(action)) {
-        val module = if (pluginId == null) null else PluginManagerCore.getPluginSet().findEnabledPlugin(pluginId)
-        val message = "ID '${actionToId.get(action)}' is already taken by action '$action' (${action.javaClass})." +
-                      " ID '$actionId' cannot be registered for the same action"
-        if (module == null) {
-          LOG.error(PluginException("$message $pluginId", null, pluginId))
-        }
-        else {
-          reportActionError(module, message)
-        }
-        return
-      }
-
-      action.registerCustomShortcutSet(ProxyShortcutSet(actionId), null)
-      idToIndex.put(actionId, registeredActionCount++)
-      actionToId.put(action, actionId)
-      if (pluginId != null) {
-        pluginToId.computeIfAbsent(pluginId) { mutableListOf() }.add(actionId)
-      }
-      notifyCustomActionsSchema(actionId)
-      updateHandlers(action)
+    if (prohibitedActionIds.contains(actionId)) {
+      return
     }
+
+    if (addToMap(actionId = actionId, action = action, projectType = projectType) == null) {
+      reportActionIdCollision(actionId = actionId, action = action, pluginId = pluginId)
+      return
+    }
+
+    if (actionToId.containsKey(action)) {
+      val module = if (pluginId == null) null else PluginManagerCore.getPluginSet().findEnabledPlugin(pluginId)
+      val message = "ID '${actionToId.get(action)}' is already taken by action '$action' (${action.javaClass})." +
+                    " ID '$actionId' cannot be registered for the same action"
+      if (module == null) {
+        LOG.error(PluginException("$message $pluginId", null, pluginId))
+      }
+      else {
+        reportActionError(module, message)
+      }
+      return
+    }
+
+    action.registerCustomShortcutSet(ProxyShortcutSet(actionId), null)
+    idToIndex.put(actionId, registeredActionCount++)
+    actionToId.put(action, actionId)
+    if (pluginId != null) {
+      pluginToId.computeIfAbsent(pluginId) { mutableListOf() }.add(actionId)
+    }
+    notifyCustomActionsSchema(actionId)
+    updateHandlers(action)
   }
 
   // executed under lock
@@ -992,7 +993,9 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   override fun registerAction(actionId: String, action: AnAction) {
-    registerAction(actionId = actionId, action = action, pluginId = null, projectType = null)
+    synchronized(lock) {
+      registerAction(actionId = actionId, action = action, pluginId = null, projectType = null)
+    }
   }
 
   override fun unregisterAction(actionId: String) {
