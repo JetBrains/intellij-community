@@ -2,11 +2,6 @@
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import java.util.*
-
-fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootPropertiesEntity? = javaSourceRoots.firstOrNull()
-fun SourceRootEntity.asJavaResourceRoot(): JavaResourceRootPropertiesEntity? = javaResourceRoots.firstOrNull()
 
 val ModuleEntity.sourceRoots: List<SourceRootEntity>
   get() = contentRoots.flatMap { it.sourceRoots }
