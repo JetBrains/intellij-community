@@ -34,7 +34,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.BitUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -875,8 +874,7 @@ public class HighlightInfo implements Segment {
 
     @Override
     public String toString() {
-      String text = getAction().getText();
-      return "IntentionActionDescriptor: " + (text.isEmpty() ? IntentionActionDelegate.unwrap(getAction()).getClass() : text + " (" + IntentionActionDelegate.unwrap(getAction()).getClass() + ")");
+      return "IntentionActionDescriptor: " + IntentionActionDelegate.unwrap(getAction()).getClass();
     }
 
     @Nullable
