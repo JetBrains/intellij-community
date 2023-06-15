@@ -9,7 +9,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -20,10 +19,8 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -135,54 +132,19 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       }
       return PyUnionType.union(leftType, rightType);
     }
-
     final String referencedName = getReferencedName();
-    if (PyNames.CONTAINS.equals(referencedName)) return PyBuiltinCache.getInstance(this).getBoolType();
-
-    final List<PyCallExpression.PyArgumentsMapping> results =
-      PyCallExpressionHelper.mapArguments(this, PyResolveContext.defaultContext(context));
-    if (!results.isEmpty()) {
-      final List<PyType> types = new ArrayList<>();
-      final List<PyType> matchedTypes = new ArrayList<>();
-      for (PyCallExpression.PyArgumentsMapping result : results) {
-        final PyCallableType callableType = result.getCallableType();
-        if (callableType == null) continue;
-
-        boolean matched = true;
-        for (Map.Entry<PyExpression, PyCallableParameter> entry : result.getMappedParameters().entrySet()) {
-          final PyType parameterType = entry.getValue().getArgumentType(context);
-          final PyType argumentType = context.getType(entry.getKey());
-          if (!PyTypeChecker.match(parameterType, argumentType, context)) {
-            matched = false;
-          }
-        }
-        final PyType type = callableType.getCallType(context, this);
-        types.add(type);
-        if (matched) {
-          matchedTypes.add(type);
-        }
-      }
-      final boolean bothOperandsAreKnown = operandIsKnown(getLeftExpression(), context) && operandIsKnown(getRightExpression(), context);
-      final List<PyType> resultTypes = !matchedTypes.isEmpty() ? matchedTypes : types;
-      if (!resultTypes.isEmpty()) {
-        final PyType result = bothArgumentsAreLiteralStrings(matchedTypes, context) ? resultTypes.get(0) : PyUnionType.union(resultTypes);
-        return bothOperandsAreKnown ? result : PyUnionType.createWeakType(result);
-      }
+    if (PyNames.CONTAINS.equals(referencedName)) {
+      return PyBuiltinCache.getInstance(this).getBoolType();
+    }
+    PyType callResultType = PyCallExpressionHelper.getCallType(this, context, key);
+    if (callResultType != null) {
+      boolean bothOperandsAreKnown = operandIsKnown(getLeftExpression(), context) && operandIsKnown(getRightExpression(), context);
+      return bothOperandsAreKnown ? callResultType : PyUnionType.createWeakType(callResultType);
     }
     if (referencedName != null && PyNames.COMPARISON_OPERATORS.contains(referencedName)) {
       return PyBuiltinCache.getInstance(this).getBoolType();
     }
     return null;
-  }
-
-  private boolean bothArgumentsAreLiteralStrings(List<PyType> matchedTypes, TypeEvalContext context) {
-    PyExpression left = getLeftExpression();
-    PyType leftType = left != null ? context.getType(left) : null;
-    PyExpression right = getRightExpression();
-    PyType rightType = right != null ? context.getType(right) : null;
-    return leftType instanceof PyLiteralStringType &&
-           rightType instanceof PyLiteralStringType &&
-           ContainerUtil.exists(matchedTypes, it -> it instanceof PyLiteralStringType);
   }
 
   @Override
