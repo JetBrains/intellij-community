@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.ui.cloneDialog
 import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.collaboration.auth.ui.CompactAccountsPanelFactory
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.util.LinkActionMouseAdapter
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils

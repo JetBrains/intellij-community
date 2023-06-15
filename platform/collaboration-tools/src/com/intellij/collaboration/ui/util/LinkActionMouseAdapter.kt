@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.ui.cloneDialog
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.collaboration.ui.util
 
 import com.intellij.ui.ListUtil
 import com.intellij.ui.SimpleColoredComponent
@@ -11,7 +11,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JList
 
-internal class LinkActionMouseAdapter(private val list: JList<*>) : MouseAdapter() {
+class LinkActionMouseAdapter(private val list: JList<*>) : MouseAdapter() {
   private fun getActionAt(e: MouseEvent): ActionListener? {
     val point = e.point
     val renderer = ListUtil.getDeepestRendererChildComponentAt(list, point)
