@@ -36,7 +36,7 @@ class MakeMemberStaticFix(declaration: KtNamedDeclaration) : KotlinQuickFixActio
         val containingClass = copyDeclaration.containingClassOrObject ?: return IntentionPreviewInfo.EMPTY
         val copyDeclarationInCompanion = if (containingClass is KtClass) {
             val companionObject = containingClass.getOrCreateCompanionObject()
-            MoveMemberToCompanionObjectIntention.removeModifiers(copyDeclaration)
+            MoveMemberToCompanionObjectIntention.Factory.removeModifiers(copyDeclaration)
             val newDeclaration = companionObject.addDeclaration(copyDeclaration)
             copyDeclaration.delete()
             newDeclaration

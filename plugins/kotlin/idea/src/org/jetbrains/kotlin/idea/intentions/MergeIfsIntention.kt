@@ -20,7 +20,7 @@ class MergeIfsIntention : SelfTargetingIntention<KtExpression>(KtExpression::cla
         element.ifExpression()?.isApplicable(caretOffset) == true
 
     override fun applyTo(element: KtExpression, editor: Editor?) {
-        element.ifExpression()?.let(::applyTo)
+        element.ifExpression()?.let(Holder::applyTo)
     }
 
     private fun KtExpression.ifExpression(): KtIfExpression? = when (this) {
@@ -39,7 +39,7 @@ class MergeIfsIntention : SelfTargetingIntention<KtExpression>(KtExpression::cla
         return caretOffset !in TextRange(nestedIf.startOffset, nestedIf.endOffset + 1)
     }
 
-    companion object {
+    object Holder {
         fun applyTo(element: KtIfExpression): Int {
             val then = element.then
             val nestedIf = then?.nestedIf() ?: return -1
@@ -70,7 +70,7 @@ class MergeIfsIntention : SelfTargetingIntention<KtExpression>(KtExpression::cla
             return then.replace(nestedBody).reformatted(true).textRange.startOffset
         }
 
-        private fun KtExpression.nestedIf() = when (this) {
+        private fun KtExpression.nestedIf(): KtIfExpression? = when (this) {
             is KtBlockExpression -> this.statements.singleOrNull() as? KtIfExpression
             is KtIfExpression -> this
             else -> null

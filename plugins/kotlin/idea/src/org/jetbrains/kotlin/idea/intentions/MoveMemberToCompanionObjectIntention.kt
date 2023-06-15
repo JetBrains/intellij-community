@@ -308,7 +308,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
 
         val hasInstanceArg = nameSuggestions.isNotEmpty()
 
-        removeModifiers(element)
+        Factory.removeModifiers(element)
 
         val newDeclaration = KotlinMover.Default(element, companionObject)
         progressIndicator.checkCanceled()
@@ -412,7 +412,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
         }
     }
 
-    companion object : KotlinSingleIntentionActionFactory() {
+    object Factory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction = MoveMemberToCompanionObjectIntention()
 
         fun removeModifiers(element: KtModifierListOwner) {

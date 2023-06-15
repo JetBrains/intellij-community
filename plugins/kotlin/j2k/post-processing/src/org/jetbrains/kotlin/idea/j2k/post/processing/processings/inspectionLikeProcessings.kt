@@ -388,7 +388,7 @@ internal class RedundantExplicitTypeInspectionBasedProcessing : InspectionLikePr
 
     override fun apply(element: KtProperty) {
         element.typeReference = null
-        RemoveExplicitTypeIntention.removeExplicitType(element)
+        RemoveExplicitTypeIntention.Holder.removeExplicitType(element)
     }
 }
 

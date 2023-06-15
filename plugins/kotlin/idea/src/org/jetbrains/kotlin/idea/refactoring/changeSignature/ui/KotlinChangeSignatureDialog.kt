@@ -503,7 +503,7 @@ class KotlinChangeSignatureDialog(
                     DaemonCodeAnalyzer.getInstance(codeFragment.project).restart(codeFragment)
                 }
 
-                if (!forPreview) AddFullQualifierIntention.addQualifiersRecursively(codeFragment)
+                if (!forPreview) AddFullQualifierIntention.Holder.addQualifiersRecursively(codeFragment)
 
                 val oldDefaultValue = parameterInfo.defaultValueForCall
                 if (codeFragment.text != (if (oldDefaultValue != null) oldDefaultValue.text else "")) {

@@ -42,7 +42,7 @@ class JoinBlockIntoSingleStatementHandler : JoinLinesHandlerDelegate {
                 // if outer if has else-branch and inner does not have it, do not remove braces otherwise else-branch will belong to different if!
                 if (pparent.`else` != null) return CANNOT_JOIN
 
-                return MergeIfsIntention.applyTo(pparent)
+                return MergeIfsIntention.Holder.applyTo(pparent)
             }
 
             if (block == pparent.`else`) {
