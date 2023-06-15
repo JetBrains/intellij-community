@@ -244,6 +244,7 @@
             <arg value="${patchJps}"/>
         </exec>
 
+    <!--
         <property name="patchJBUIScale"
                   value="${basedir}/patches/JBUIScale.patch"/>
         <echo message="Applying ${patchJBUIScale}"/>
@@ -256,6 +257,7 @@
             <arg value="apply"/>
             <arg value="${patchJBUIScale}"/>
         </exec>
+    -->
 
     </target>
 

@@ -4,9 +4,9 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/platform/util/ui/src/com/intellij/ui/scale/JBUIScale.kt b/platform/util/ui/src/com/intellij/ui/scale/JBUIScale.kt
---- a/platform/util/ui/src/com/intellij/ui/scale/JBUIScale.kt	(revision 1d27236ae89e91e502e388d0c11c912f51e152a3)
-+++ b/platform/util/ui/src/com/intellij/ui/scale/JBUIScale.kt	(date 1665571944542)
-@@ -98,6 +98,10 @@
+--- a/platform/util/ui/src/com/intellij/ui/scale/JBUIScale.kt	(revision f34dfce5ba37a9cc56515a078ba587476ae2fd20)
++++ b/platform/util/ui/src/com/intellij/ui/scale/JBUIScale.kt	(date 1686640605189)
+@@ -105,6 +105,10 @@
      }
  
      val log = thisLogger()
@@ -16,4 +16,4 @@ diff --git a/platform/util/ui/src/com/intellij/ui/scale/JBUIScale.kt b/platform/
 +    }
      val isScaleVerbose = SCALE_VERBOSE
      if (isScaleVerbose) {
-       log.info(String.format("Label font: %s, %d", font.fontName, font.size))
+       log.info("Label font: ${font.fontName}, ${font.size}")

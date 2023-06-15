@@ -4,8 +4,8 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt b/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt
---- a/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt	(revision 1d27236ae89e91e502e388d0c11c912f51e152a3)
-+++ b/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt	(date 1665567126676)
+--- a/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt	(revision f34dfce5ba37a9cc56515a078ba587476ae2fd20)
++++ b/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt	(date 1686638218242)
 @@ -51,9 +51,8 @@
  
    val includeInBuiltinCustomRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
@@ -14,6 +14,6 @@ diff --git a/platform/build-scripts/src/org/jetbrains/intellij/build/impl/Plugin
    val compatibleBuildRange = when {
 -    isBundled || plugin.pluginCompatibilityExactVersion || includeInBuiltinCustomRepository -> CompatibleBuildRange.EXACT
 +    plugin.pluginCompatibilityExactVersion || includeInBuiltinCustomRepository -> CompatibleBuildRange.EXACT
-     context.applicationInfo.isEAP -> CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
+     context.applicationInfo.isEAP || plugin.pluginCompatibilitySameRelease -> CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
      else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
    }
