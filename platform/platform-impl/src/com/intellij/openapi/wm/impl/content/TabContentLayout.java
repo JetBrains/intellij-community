@@ -132,8 +132,8 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     if (offset == null) {
       return null;
     }
-    List<? extends ContentTabLabel> tabs = ContainerUtil.filter(this.tabs, lastLayout.toDrop::contains);
-    final List<Content> contentsToShow = ContainerUtil.map(tabs, ContentTabLabel::getContent);
+    List<? extends ContentTabLabel> hiddenTabs = ContainerUtil.filter(this.tabs, tab -> tab.getWidth() == 0);
+    final List<Content> contentsToShow = ContainerUtil.map(hiddenTabs, ContentTabLabel::getContent);
     final SelectContentStep step = new SelectContentStep(contentsToShow);
     RelativePoint point = new RelativePoint(ui.getTabComponent(), offset);
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
@@ -173,82 +173,82 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
         ContainerUtil.all(tabs, Component::isValid)) {
       for (ContentTabLabel each : tabs) {
         if (each.getContent() == selected && each.getBounds().width != 0) {
-          data = lastLayout;
-          data.fullLayout = false;
+          return; // keep last layout
         }
       }
     }
 
-    if (data.fullLayout) {
-      for (JLabel eachTab : tabs) {
-        final Dimension eachSize = eachTab.getPreferredSize();
-        data.requiredWidth += eachSize.width;
-        data.toLayout.add(eachTab);
+    ArrayList<JLabel> toLayout = new ArrayList<>();
+    Collection<JLabel> toDrop = new HashSet<>();
+
+    for (JLabel eachTab : tabs) {
+      final Dimension eachSize = eachTab.getPreferredSize();
+      data.requiredWidth += eachSize.width;
+      toLayout.add(eachTab);
+    }
+
+    if (ui.dropOverIndex != -1 && !isSingleContentView) {
+      data.requiredWidth += ui.dropOverWidth;
+      int index = Math.min(toLayout.size(), Math.max(0, ui.dropOverIndex - 1));
+      toLayout.add(index, dropOverPlaceholder);
+    }
+
+    data.toFitWidth = bounds.getSize().width - data.eachX;
+
+    final ContentTabLabel selectedTab = contentToTabs.get(selected);
+    while (true) {
+      if (data.requiredWidth <= data.toFitWidth) break;
+      if (toLayout.size() <= 1) break;
+
+      JLabel firstLabel = toLayout.get(0);
+      JLabel lastLabel = toLayout.get(toLayout.size() - 1);
+      JLabel labelToDrop;
+      if (firstLabel != selectedTab && firstLabel != dropOverPlaceholder) {
+        labelToDrop = firstLabel;
       }
-
-      if (ui.dropOverIndex != -1 && !isSingleContentView) {
-        data.requiredWidth += ui.dropOverWidth;
-        int index = Math.min(data.toLayout.size(), Math.max(0, ui.dropOverIndex - 1));
-        data.toLayout.add(index, dropOverPlaceholder);
+      else if (lastLabel != selectedTab && lastLabel != dropOverPlaceholder) {
+        labelToDrop = lastLabel;
       }
-
-      data.toFitWidth = bounds.getSize().width - data.eachX;
-
-      final ContentTabLabel selectedTab = contentToTabs.get(selected);
-      while (true) {
-        if (data.requiredWidth <= data.toFitWidth) break;
-        if (data.toLayout.size() <= 1) break;
-
-        JLabel firstLabel = data.toLayout.get(0);
-        JLabel lastLabel = data.toLayout.get(data.toLayout.size() - 1);
-        JLabel labelToDrop;
-        if (firstLabel != selectedTab && firstLabel != dropOverPlaceholder) {
-          labelToDrop = firstLabel;
-        }
-        else if (lastLabel != selectedTab && lastLabel != dropOverPlaceholder) {
-          labelToDrop = lastLabel;
-        }
-        else {
-          break;
-        }
-        data.requiredWidth -= (labelToDrop.getPreferredSize().width + 1);
-        data.toDrop.add(labelToDrop);
-        data.toLayout.remove(labelToDrop);
+      else {
+        break;
       }
+      data.requiredWidth -= (labelToDrop.getPreferredSize().width + 1);
+      toDrop.add(labelToDrop);
+      toLayout.remove(labelToDrop);
+    }
 
-      boolean reachedBounds = false;
-      TabsDrawMode toDrawTabs = isToDrawTabs();
-      for (JLabel each : data.toLayout) {
-        if (toDrawTabs == TabsDrawMode.HIDE) {
-          each.setBounds(0, 0, 0, 0);
-          continue;
-        }
-        data.eachY = 0;
-        final Dimension eachSize = each.getPreferredSize();
-        if (data.eachX + eachSize.width < data.toFitWidth + tabsStart) {
-          each.setBounds(data.eachX, data.eachY, eachSize.width, bounds.height - data.eachY);
-          data.eachX += eachSize.width;
-        }
-        else {
-          if (!reachedBounds) {
-            final int width = bounds.width - data.eachX;
-            each.setBounds(data.eachX, data.eachY, width, bounds.height - data.eachY);
-            data.eachX += width;
-          }
-          else {
-            each.setBounds(0, 0, 0, 0);
-          }
-          reachedBounds = true;
-        }
-      }
-
-      for (JLabel each : data.toDrop) {
+    boolean reachedBounds = false;
+    TabsDrawMode toDrawTabs = isToDrawTabs();
+    for (JLabel each : toLayout) {
+      if (toDrawTabs == TabsDrawMode.HIDE) {
         each.setBounds(0, 0, 0, 0);
+        continue;
       }
+      data.eachY = 0;
+      final Dimension eachSize = each.getPreferredSize();
+      if (data.eachX + eachSize.width < data.toFitWidth + tabsStart) {
+        each.setBounds(data.eachX, data.eachY, eachSize.width, bounds.height - data.eachY);
+        data.eachX += eachSize.width;
+      }
+      else {
+        if (!reachedBounds) {
+          final int width = bounds.width - data.eachX;
+          each.setBounds(data.eachX, data.eachY, width, bounds.height - data.eachY);
+          data.eachX += width;
+        }
+        else {
+          each.setBounds(0, 0, 0, 0);
+        }
+        reachedBounds = true;
+      }
+    }
+
+    for (JLabel each : toDrop) {
+      each.setBounds(0, 0, 0, 0);
     }
 
     boolean toolbarUpdateNeeded;
-    if (data.toDrop.size() > 0) {
+    if (!toDrop.isEmpty()) {
       toolbarUpdateNeeded = lastLayout != null && lastLayout.morePopupOffset == null;
       data.morePopupOffset = new Point(data.eachX + MORE_ICON_BORDER, bounds.height);
     }
@@ -258,6 +258,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     }
 
     lastLayout = data;
+
     if (toolbarUpdateNeeded) {
       ActivityTracker.getInstance().inc();
     }
@@ -320,10 +321,6 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     int toFitWidth;
     int requiredWidth;
     Dimension layoutSize;
-    boolean fullLayout = true;
-
-    ArrayList<JLabel> toLayout = new ArrayList<>();
-    Collection<JLabel> toDrop = new HashSet<>();
 
     Point morePopupOffset;
 
