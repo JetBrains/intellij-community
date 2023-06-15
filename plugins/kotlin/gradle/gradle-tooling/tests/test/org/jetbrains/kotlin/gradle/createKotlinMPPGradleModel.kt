@@ -99,7 +99,8 @@ internal fun createKotlinCompilation(
         kotlinTaskProperties = kotlinTaskProperties,
         nativeExtensions = nativeExtensions,
         associateCompilations = associateCompilations,
-        extras = IdeaKotlinExtras.wrap(extras)
+        extras = IdeaKotlinExtras.wrap(extras),
+        isTestComponent = associateCompilations.isNotEmpty(),
     )
 }
 
