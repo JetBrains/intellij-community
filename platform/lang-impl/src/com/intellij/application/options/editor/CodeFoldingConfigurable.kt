@@ -48,12 +48,15 @@ class CodeFoldingConfigurable : BoundCompositeConfigurable<CodeFoldingOptionsPro
         val text = if (ExperimentalUI.isNewUI()) ApplicationBundle.message("checkbox.show.code.folding.arrows") else ApplicationBundle.message("checkbox.show.code.folding.outline")
         showGutterOutline = checkBox(text)
           .bindSelected(settings::isFoldingOutlineShown, settings::setFoldingOutlineShown)
-        comboBox(
-          listOf(false, true),
-          renderer = SimpleListCellRenderer.create { label, value, _ ->
-            label.text = if (value) ApplicationBundle.message("checkbox.show.code.folding.outline.on.hover") else ApplicationBundle.message("checkbox.show.code.folding.outline.always")
-          }
-        ).bindItem({ settings.isFoldingOutlineShownOnlyOnHover }, { settings.isFoldingOutlineShownOnlyOnHover = it!! })
+        if (ExperimentalUI.isNewUI()) {
+          comboBox(
+            listOf(false, true),
+            renderer = SimpleListCellRenderer.create { label, value, _ ->
+              label.text = if (value) ApplicationBundle.message("checkbox.show.code.folding.outline.on.hover")
+              else ApplicationBundle.message("checkbox.show.code.folding.outline.always")
+            }
+          ).bindItem({ settings.isFoldingOutlineShownOnlyOnHover }, { settings.isFoldingOutlineShownOnlyOnHover = it!! })
+        }
       }
 
       indent {
