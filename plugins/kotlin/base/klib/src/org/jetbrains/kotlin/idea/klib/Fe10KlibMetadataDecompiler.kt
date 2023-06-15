@@ -25,8 +25,7 @@ abstract class Fe10KlibMetadataDecompiler<out V : BinaryVersion>(
     serializerProtocol,
     flexibleTypeDeserializer,
     expectedBinaryVersion,
-    invalidBinaryVersion,
-    stubVersion
+    invalidBinaryVersion
 ) {
     private val renderer: DescriptorRenderer by lazy {
         DescriptorRenderer.withOptions { defaultDecompilerRendererOptions() }
