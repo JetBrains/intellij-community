@@ -182,7 +182,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     return null
   }
 
-  private fun checkNotMergeCommit(commitEditingData: T): @Nls String? {
+  protected open fun checkNotMergeCommit(commitEditingData: T): @Nls String? {
     val commitList = commitEditingData.selectedCommitList
     commitList.forEach { commit ->
       if (commit !is LoadingDetails && commit.parents.size > 1) {
