@@ -516,6 +516,8 @@
                  This results in better stack traces when generated assertions throw exceptions, but might slow down the compilation."/>
     <registryKey key="kotlin.commit.message.validation.enabled" defaultValue="true"
                  description="Enables commit messages validation for kotlin plugin"/>
+
+    <smartUpdateStep implementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesStep" order="first"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">

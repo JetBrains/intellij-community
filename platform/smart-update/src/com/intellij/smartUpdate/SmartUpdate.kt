@@ -32,15 +32,13 @@ class SmartUpdate(val project: Project) : PersistentStateComponent<SmartUpdate.O
 
   var restartRequested: Boolean = false
   private val options = Options()
-  private val allSteps = listOf(IdeUpdateStep(), IdeRestartStep(), VcsUpdateStep(), BuildProjectStep())
 
   init {
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(UpdateActionsListener.TOPIC, object : UpdateActionsListener {
       override fun actionReceived(action: UpdateAction) {
         if (restartRequested && action.isRestartRequired) {
           restartRequested = false
-          val event = AnActionEvent.createFromDataContext("", null, SimpleDataContext.getProjectContext(project))
-          IdeRestartStep().performUpdateStep(project, event) {}
+          restartIde(project, action)
         }
       }
     })
@@ -52,9 +50,10 @@ class SmartUpdate(val project: Project) : PersistentStateComponent<SmartUpdate.O
     XmlSerializerUtil.copyBean(state, options)
   }
 
+  fun availableSteps(): List<SmartUpdateStep> = EP_NAME.extensionList.filter { it.isAvailable(project) }
+
   fun execute(project: Project, e: AnActionEvent? = null) {
-    val steps = LinkedList(allSteps.filter { options.value(it.id) })
-    executeNext(steps, project, e)
+    executeNext(LinkedList(availableSteps().filter { options.value(it.id) }), project, e)
   }
 
   private fun executeNext(steps: Queue<SmartUpdateStep>, project: Project, e: AnActionEvent?) {
