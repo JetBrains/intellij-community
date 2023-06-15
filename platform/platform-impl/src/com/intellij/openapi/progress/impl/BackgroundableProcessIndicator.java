@@ -76,9 +76,10 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
       Project nonDefaultProject = myProject == null || myProject.isDisposed() || myProject.isDefault() ? null : myProject;
       IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameHelper(nonDefaultProject);
       myStatusBar = frame != null ? (StatusBarEx)frame.getStatusBar() : null;
-    }
-    if (myStatusBar == null && LOG.isDebugEnabled()) {
-      LOG.debug("No status bar found for " + this + ", progress will be displayed in a popup", new Throwable());
+      if (myStatusBar == null && LOG.isDebugEnabled()) {
+        LOG.debug("No status bar for [" + this + "], progress will be displayed in a popup\nproject:" + myProject + "\nframe:" + frame,
+                  new Throwable());
+      }
     }
     doBackground(myStatusBar);
   }
