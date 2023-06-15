@@ -52,7 +52,7 @@ import kotlin.io.path.name
 
 private val LOG = logger<UpdateIdeFromSourcesAction>()
 
-fun updateFromSources(project: Project, error: (@DialogMessage String) -> Unit) {
+fun updateFromSources(project: Project, beforeRestart: () -> Unit, error: (@DialogMessage String) -> Unit) {
   val state = UpdateFromSourcesSettings.getState()
   val devIdeaHome = project.basePath ?: return
   val workIdeHome = state.actualIdePath
@@ -122,10 +122,11 @@ fun updateFromSources(project: Project, error: (@DialogMessage String) -> Unit) 
     .run(taskManager.createModulesBuildTask(ModuleManager.getInstance(project).modules, true, true, true, false))
     .onSuccess {
       if (!it.isAborted && !it.hasErrors()) {
-        runUpdateScript(params, project, workIdeHome, deployDir, distRelativePath, backupDir, restartAutomatically)
+        runUpdateScript(params, project, workIdeHome, deployDir, distRelativePath, backupDir, restartAutomatically, beforeRestart)
       }
     }
 }
+
 private fun checkIdeHome(workIdeHome: String): String? {
   val homeDir = Path.of(workIdeHome)
   if (Files.notExists(homeDir)) {
@@ -152,7 +153,8 @@ private fun runUpdateScript(params: JavaParameters,
                             deployDirPath: String,
                             distRelativePath: String,
                             backupDir: String,
-                            restartAutomatically: Boolean) {
+                            restartAutomatically: Boolean,
+                            beforeRestart: () -> Unit) {
   val builtDistPath = "$deployDirPath/$distRelativePath"
   object : Task.Backgroundable(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.title"), true) {
     override fun run(indicator: ProgressIndicator) {
@@ -203,7 +205,7 @@ private fun runUpdateScript(params: JavaParameters,
           }
 
           val command = generateUpdateCommand(builtDistPath, workIdeHome)
-          restartOrNotify(project, restartAutomatically) { restartWithCommand(command, deployDirPath) }
+          restartOrNotify(project, restartAutomatically) { restartWithCommand(command, deployDirPath, beforeRestart) }
         }
       })
       scriptHandler.startNotify()
@@ -295,7 +297,7 @@ private fun generateUpdateCommand(builtDistPath: String, workIdeHome: String): A
   return arrayOf("/bin/sh", "-c", command.joinToString(" && "))
 }
 
-private fun restartWithCommand(command: Array<String>, deployDirPath: String) {
+private fun restartWithCommand(command: Array<String>, deployDirPath: String, beforeRestart: () -> Unit) {
   val pluginsDir = Path.of(deployDirPath)
     .resolve("artifacts/${ApplicationInfo.getInstance().build.productCode}-plugins")
 
@@ -305,6 +307,7 @@ private fun restartWithCommand(command: Array<String>, deployDirPath: String) {
   }
 
   Restarter.doNotLockInstallFolderOnRestart()
+  beforeRestart()
   (ApplicationManagerEx.getApplicationEx() as ApplicationImpl).restart(
     ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED or ApplicationEx.SAVE,
     command,

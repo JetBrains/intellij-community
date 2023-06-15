@@ -43,9 +43,13 @@ private fun getUpdateAction() = service<ToolboxSettingsActionRegistry>().getActi
 
 fun restartIde(project: Project, updateAction: SettingsEntryPointAction.UpdateAction) {
     restartOrNotify(project, true) {
-      RecentProjectsManagerBase.getInstanceEx().forceReopenProjects()
-      PropertiesComponent.getInstance().setValue(IDE_RESTARTED_KEY, true)
+      beforeRestart()
       val event = AnActionEvent.createFromDataContext("", null, SimpleDataContext.getProjectContext(project))
       updateAction.actionPerformed(event)
     }
+}
+
+fun beforeRestart() {
+  RecentProjectsManagerBase.getInstanceEx().forceReopenProjects()
+  PropertiesComponent.getInstance().setValue(IDE_RESTARTED_KEY, true)
 }
