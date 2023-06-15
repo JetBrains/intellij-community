@@ -243,19 +243,22 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
         each.setBounds(0, 0, 0, 0);
       }
     }
+
     boolean toolbarUpdateNeeded;
     if (data.toDrop.size() > 0) {
       toolbarUpdateNeeded = lastLayout != null && lastLayout.moreRect == null;
-      data.moreRect = new Rectangle(data.eachX + MORE_ICON_BORDER, 0, /*getMoreToolbarWidth()*/16, bounds.height);
+
+      int moreToolbarWidth = 16;
+      data.moreRect = new Rectangle(data.eachX + MORE_ICON_BORDER, 0, moreToolbarWidth, bounds.height);
+      Rectangle moreWithBorder = new Rectangle(data.eachX, 0, moreToolbarWidth + MORE_ICON_BORDER, bounds.height);
+      ui.isResizableArea = p -> !moreWithBorder.contains(p);
     }
     else {
       toolbarUpdateNeeded = lastLayout != null && lastLayout.moreRect != null;
       data.moreRect = null;
+      ui.isResizableArea = p -> true;
     }
 
-    Rectangle moreRect =
-      data.moreRect == null ? null : new Rectangle(data.eachX, 0, /*getMoreToolbarWidth()*/16 + MORE_ICON_BORDER, bounds.height);
-    ui.isResizableArea = p -> moreRect == null || !moreRect.contains(p);
     lastLayout = data;
     if (toolbarUpdateNeeded) {
       ActivityTracker.getInstance().inc();
