@@ -55,17 +55,21 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
      */
     @JvmStatic
     fun getConfigurables(project: Project?, withIdeSettings: Boolean, checkNonDefaultProject: Boolean): List<Configurable> {
-      val list = ArrayList<Configurable>()
-      for (configurable in ConfigurableExtensionPointUtil.getConfigurables(
-        if (withIdeSettings) project else currentOrDefaultProject(project),
-        withIdeSettings, checkNonDefaultProject
-      )) {
-        list.add(configurable)
-        if (configurable is Configurable.Composite) {
-          collect(list, (configurable as Configurable.Composite).configurables)
+      return configurables(project = project, withIdeSettings = withIdeSettings, checkNonDefaultProject = checkNonDefaultProject).toList()
+    }
+
+    fun configurables(project: Project?, withIdeSettings: Boolean, checkNonDefaultProject: Boolean): Sequence<Configurable> {
+      return sequence {
+        for (configurable in ConfigurableExtensionPointUtil.getConfigurables(
+          if (withIdeSettings) project else currentOrDefaultProject(project),
+          withIdeSettings, checkNonDefaultProject
+        )) {
+          yield(configurable)
+          if (configurable is Configurable.Composite) {
+            collect((configurable as Configurable.Composite).configurables)
+          }
         }
       }
-      return list
     }
 
     @JvmStatic
@@ -220,11 +224,11 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   }
 }
 
-private fun collect(list: MutableList<Configurable>, configurables: Array<Configurable>) {
+private suspend fun SequenceScope<Configurable>.collect(configurables: Array<Configurable>) {
   for (configurable in configurables) {
-    list.add(configurable)
+    yield(configurable)
     if (configurable is Configurable.Composite) {
-      collect(list = list, configurables = (configurable as Configurable.Composite).configurables)
+      collect(configurables = (configurable as Configurable.Composite).configurables)
     }
   }
 }

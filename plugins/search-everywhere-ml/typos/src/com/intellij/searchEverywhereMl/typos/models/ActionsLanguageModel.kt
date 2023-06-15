@@ -69,8 +69,7 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
   }
 
   private fun getWordsFromSettings(): Sequence<@NlsContexts.ConfigurableName String> {
-    return ShowSettingsUtilImpl.getConfigurables(project = null, withIdeSettings = true, checkNonDefaultProject = false)
-      .asSequence()
+    return ShowSettingsUtilImpl.configurables(project = null, withIdeSettings = true, checkNonDefaultProject = false)
       .filterIsInstance<SearchableConfigurable>()
       .mapNotNull { it.displayNameFast }
   }
