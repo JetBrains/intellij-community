@@ -34,6 +34,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.canUnloadActionGroup
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -261,7 +262,7 @@ object DynamicPlugins {
     }
 
     checkNoComponentsOrServiceOverrides(module)?.let { return it }
-    ActionManagerImpl.checkUnloadActions(module)?.let { return it }
+    checkUnloadActions(module)?.let { return it }
 
     for (moduleRef in module.content.modules) {
       if (pluginSet.isModuleEnabled(moduleRef.name)) {
@@ -1378,4 +1379,16 @@ private fun clearCachedValues() {
   for (project in ProjectUtil.getOpenProjects()) {
     (CachedValuesManager.getManager(project) as? CachedValuesManagerImpl)?.clearCachedValues()
   }
+}
+
+private fun checkUnloadActions(module: IdeaPluginDescriptorImpl): String? {
+  for (descriptor in module.actions) {
+    val element = descriptor.element
+    val elementName = descriptor.name
+    if (elementName != ActionDescriptorName.action &&
+        !(elementName == ActionDescriptorName.group && canUnloadActionGroup(element)) && elementName != ActionDescriptorName.reference) {
+      return "Plugin $module is not unload-safe because of action element $elementName"
+    }
+  }
+  return null
 }

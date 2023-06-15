@@ -138,20 +138,6 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                                                                                                    }, this)
   }
 
-  companion object {
-    internal fun checkUnloadActions(module: IdeaPluginDescriptorImpl): String? {
-      for (descriptor in module.actions) {
-        val element = descriptor.element
-        val elementName = descriptor.name
-        if (elementName != ActionDescriptorName.action &&
-            !(elementName == ActionDescriptorName.group && canUnloadGroup(element)) && elementName != ActionDescriptorName.reference) {
-          return "Plugin $module is not unload-safe because of action element $elementName"
-        }
-      }
-      return null
-    }
-  }
-
   internal fun registerActions(modules: Iterable<IdeaPluginDescriptorImpl>) {
     val keymapManager = KeymapManagerEx.getInstanceEx()!!
     for (module in modules) {
@@ -1715,12 +1701,12 @@ private fun getReferenceActionId(element: XmlElement): String? {
   return element.attributes.get(REF_ATTR_NAME) ?: element.attributes.get(ID_ATTR_NAME)
 }
 
-private fun canUnloadGroup(element: XmlElement): Boolean {
+internal fun canUnloadActionGroup(element: XmlElement): Boolean {
   if (element.attributes[ID_ATTR_NAME] == null) {
     return false
   }
   for (child in element.children) {
-    if (child.name == GROUP_ELEMENT_NAME && !canUnloadGroup(child)) {
+    if (child.name == GROUP_ELEMENT_NAME && !canUnloadActionGroup(child)) {
       return false
     }
   }
