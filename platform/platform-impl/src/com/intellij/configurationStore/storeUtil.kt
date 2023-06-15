@@ -20,7 +20,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.withModalProgressBlocking
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.SystemInfoRt
@@ -64,7 +64,7 @@ object StoreUtil {
   fun saveDocumentsAndProjectSettings(project: Project) {
     runInAutoSaveDisabledMode {
       FileDocumentManager.getInstance().saveAllDocuments()
-      withModalProgressBlocking(project, CommonBundle.message("title.save.project")) {
+      runWithModalProgressBlocking(project, CommonBundle.message("title.save.project")) {
         com.intellij.configurationStore.saveSettings(project)
       }
     }
@@ -82,7 +82,7 @@ object StoreUtil {
   fun saveDocumentsAndProjectsAndApp(forceSavingAllSettings: Boolean) {
     runInAutoSaveDisabledMode {
       FileDocumentManager.getInstance().saveAllDocuments()
-      withModalProgressBlocking(ModalTaskOwner.guess(), "") {
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
         saveProjectsAndApp(forceSavingAllSettings)
       }
     }
@@ -275,7 +275,7 @@ inline fun runInAllowSaveMode(isSaveAllowed: Boolean = true, task: () -> Unit) {
 @Internal
 fun forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project: Project, forceSavingAllSettings: Boolean = false) {
   runInAutoSaveDisabledMode {
-    withModalProgressBlocking(project, CommonBundle.message("title.save.project")) {
+    runWithModalProgressBlocking(project, CommonBundle.message("title.save.project")) {
       saveSettings(project, forceSavingAllSettings = forceSavingAllSettings)
     }
   }

@@ -6,7 +6,7 @@ import com.intellij.ide.projectView.impl.PackageViewPane
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.withModalProgressBlocking
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.ui.Queryable
 import com.intellij.project.stateStore
 import com.intellij.testFramework.PsiTestUtil
@@ -71,7 +71,7 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
     """.trimIndent()
     assertStructureEqual(expected)
 
-    withModalProgressBlocking(myProject, "") {
+    runWithModalProgressBlocking(myProject, "") {
       ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded", "unloaded-inner"))
     }
     assertStructureEqual("""
@@ -111,7 +111,7 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
     """.trimIndent()
     assertStructureEqual(expected)
 
-    withModalProgressBlocking(myProject, "") {
+    runWithModalProgressBlocking(myProject, "") {
       ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded"))
     }
     assertStructureEqual(expected)

@@ -259,7 +259,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                         filesToDelete: MutableList<VirtualFile>): List<Module> {
     // unit tests
     if (ApplicationManager.getApplication().isDispatchThread) {
-      return withModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
+      return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
         updateMavenProjects(spec, filesToUpdate, filesToDelete)
       }
     }
@@ -312,7 +312,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         return emptyList()
       }
       else {
-        return withModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
+        return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
           updateAllMavenProjects(spec)
         }
       }

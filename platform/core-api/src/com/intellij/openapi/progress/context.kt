@@ -43,7 +43,7 @@ fun <X> withJob(job: Job, action: () -> X): X = blockingContext(job, action)
  *         blockingContext {
  *           // currentThreadContext() should not contain BlockingJob here
  *           // => BlockingJob is removed during blocking -> coroutine transition in `runBlockingCancellable`
- *           // Same applies for `withModalProgressBlocking`
+ *           // Same applies for `runWithModalProgressBlocking`
  *         }
  *       }
  *     }

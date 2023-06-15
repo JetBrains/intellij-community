@@ -107,11 +107,11 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     val dispatcher = currentCoroutineContext()[CoroutineDispatcher.Key]
     return withContext(Dispatchers.EDT) {
       val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
-      withModalProgressBlockingInternal(dispatcher, descriptor, action)
+      runWithModalProgressBlockingInternal(dispatcher, descriptor, action)
     }
   }
 
-  override fun <T> withModalProgressBlockingInternal(
+  override fun <T> runWithModalProgressBlockingInternal(
     owner: ModalTaskOwner,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
@@ -120,14 +120,14 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     val descriptor = ModalIndicatorDescriptor(owner, title, cancellation)
     val scope = CoroutineScope(ctx + ClientId.coroutineContext())
     try {
-      scope.withModalProgressBlockingInternal(dispatcher = null, descriptor, action)
+      scope.runWithModalProgressBlockingInternal(dispatcher = null, descriptor, action)
     }
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)
     }
   }
 
-  private fun <T> CoroutineScope.withModalProgressBlockingInternal(
+  private fun <T> CoroutineScope.runWithModalProgressBlockingInternal(
     dispatcher: CoroutineDispatcher?,
     descriptor: ModalIndicatorDescriptor,
     action: suspend CoroutineScope.() -> T,

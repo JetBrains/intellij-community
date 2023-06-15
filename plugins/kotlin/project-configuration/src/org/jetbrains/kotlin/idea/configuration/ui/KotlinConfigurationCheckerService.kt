@@ -10,7 +10,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.TaskCancellation
 import com.intellij.openapi.progress.progressStep
 import com.intellij.openapi.progress.withBackgroundProgress
-import com.intellij.openapi.progress.withModalProgressBlocking
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.startup.ProjectActivity
@@ -46,7 +46,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
     }
 
     fun performProjectPostOpenActionsInEdt() {
-        withModalProgressBlocking(project, KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings")) {
+        runWithModalProgressBlocking(project, KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings")) {
             doPerformProjectPostOpenActions()
         }
     }

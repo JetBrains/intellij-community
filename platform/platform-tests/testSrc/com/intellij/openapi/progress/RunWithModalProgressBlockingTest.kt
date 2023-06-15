@@ -23,13 +23,13 @@ import kotlin.coroutines.ContinuationInterceptor
 /**
  * @see WithModalProgressTest
  */
-class WithModalProgressBlockingTest : ModalCoroutineTest() {
+class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
 
   @Test
   fun context(): Unit = timeoutRunBlocking {
     val testElement = TestElement("xx")
     withContext(testElement) {
-      withModalProgressBlockingContext {
+      runWithModalProgressBlockingContext {
         assertSame(testElement, coroutineContext[TestElementKey])
         assertNull(currentThreadContextOrNull())
         withContext(Dispatchers.EDT) {
@@ -44,7 +44,7 @@ class WithModalProgressBlockingTest : ModalCoroutineTest() {
   fun `modal context`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       assertFalse(LaterInvocator.isInModalContext())
-      withModalProgressBlocking {
+      runWithModalProgressBlocking {
         assertNull(currentThreadContextOrNull())
         withContext(Dispatchers.EDT) {
           assertNull(currentThreadContextOrNull())
@@ -61,14 +61,14 @@ class WithModalProgressBlockingTest : ModalCoroutineTest() {
 
   @Test
   fun dispatcher(): Unit = timeoutRunBlocking {
-    withModalProgressBlockingContext {
+    runWithModalProgressBlockingContext {
       assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
     }
   }
 
   @Test
   fun `normal completion`(): Unit = timeoutRunBlocking {
-    val result = withModalProgressBlockingContext {
+    val result = runWithModalProgressBlockingContext {
       42
     }
     assertEquals(42, result)
@@ -77,24 +77,24 @@ class WithModalProgressBlockingTest : ModalCoroutineTest() {
   @Test
   fun rethrow(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
-      testWithModalProgressBlockingRethrow(object : Throwable() {})
-      testWithModalProgressBlockingRethrow(CancellationException()) // manual CE
-      testWithModalProgressBlockingRethrow(ProcessCanceledException()) // manual PCE
+      testRunWithModalProgressBlockingRethrow(object : Throwable() {})
+      testRunWithModalProgressBlockingRethrow(CancellationException()) // manual CE
+      testRunWithModalProgressBlockingRethrow(ProcessCanceledException()) // manual PCE
     }
   }
 
-  private inline fun <reified T : Throwable> testWithModalProgressBlockingRethrow(t: T) {
+  private inline fun <reified T : Throwable> testRunWithModalProgressBlockingRethrow(t: T) {
     val thrown = assertThrows<T> {
-      withModalProgressBlocking {
+      runWithModalProgressBlocking {
         throw t
       }
     }
     assertSame(t, thrown)
   }
 
-  private fun testWithModalProgressBlockingRethrow(t: CancellationException) {
+  private fun testRunWithModalProgressBlockingRethrow(t: CancellationException) {
     val thrown = assertThrows<CeProcessCanceledException> {
-      withModalProgressBlocking {
+      runWithModalProgressBlocking {
         throw t
       }
     }
@@ -103,8 +103,8 @@ class WithModalProgressBlockingTest : ModalCoroutineTest() {
 
   @Test
   fun nested(): Unit = timeoutRunBlocking {
-    val result = withModalProgressBlockingContext {
-      withModalProgressBlockingContext {
+    val result = runWithModalProgressBlockingContext {
+      runWithModalProgressBlockingContext {
         42
       }
     }
@@ -113,7 +113,7 @@ class WithModalProgressBlockingTest : ModalCoroutineTest() {
 
   @Test
   fun `modal delays non-modal`(): Unit = timeoutRunBlocking {
-    val modalCoroutine = withModalProgressBlockingCoroutine { awaitCancellation() }
+    val modalCoroutine = runWithModalProgressBlockingCoroutine { awaitCancellation() }
     val nonModalCoroutine = launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {}
     processApplicationQueue()
     assertFalse(nonModalCoroutine.isCompleted)
@@ -122,7 +122,7 @@ class WithModalProgressBlockingTest : ModalCoroutineTest() {
 
   @Test
   fun `modal delays default non-modal`(): Unit = timeoutRunBlocking {
-    val modalCoroutine = withModalProgressBlockingCoroutine { awaitCancellation() }
+    val modalCoroutine = runWithModalProgressBlockingCoroutine { awaitCancellation() }
     val nonModalCoroutine = launch(Dispatchers.EDT) {} // modality is not specified
     processApplicationQueue()
     assertFalse(nonModalCoroutine.isCompleted)
@@ -131,8 +131,8 @@ class WithModalProgressBlockingTest : ModalCoroutineTest() {
 
   @Test
   fun `modal delays modal`(): Unit = timeoutRunBlocking {
-    val modalCoroutine = withModalProgressBlockingCoroutine { awaitCancellation() }
-    val modalCoroutine2 = withModalProgressBlockingCoroutine {}
+    val modalCoroutine = runWithModalProgressBlockingCoroutine { awaitCancellation() }
+    val modalCoroutine2 = runWithModalProgressBlockingCoroutine {}
     processApplicationQueue()
     assertFalse(modalCoroutine2.isCompleted)
     modalCoroutine.cancel()
@@ -141,7 +141,7 @@ class WithModalProgressBlockingTest : ModalCoroutineTest() {
   @Test
   fun `any edt coroutine is resumed while modal is running`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val modalCoroutine = withModalProgressBlockingCoroutine { awaitCancellation() }
+      val modalCoroutine = runWithModalProgressBlockingCoroutine { awaitCancellation() }
       yield()
       assertFalse(modalCoroutine.isCompleted)
       modalCoroutine.cancel()
@@ -151,7 +151,7 @@ class WithModalProgressBlockingTest : ModalCoroutineTest() {
   @Test
   fun `non-modal edt coroutine is not resumed while modal is running`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-      val modalCoroutine = withModalProgressBlockingCoroutine { yield() }
+      val modalCoroutine = runWithModalProgressBlockingCoroutine { yield() }
       yield() // this resumes in NON_MODAL
       assertTrue(modalCoroutine.isCompleted) // this line won't be executed until modalCoroutine is completed
     }
@@ -160,7 +160,7 @@ class WithModalProgressBlockingTest : ModalCoroutineTest() {
   @Test
   fun `cancelled edt coroutine is able to complete`(): Unit = timeoutRunBlocking {
     val modalEntered = Semaphore(1, 1)
-    val modalCoroutine = withModalProgressBlockingCoroutine {
+    val modalCoroutine = runWithModalProgressBlockingCoroutine {
       withContext(Dispatchers.EDT) {
         try {
           modalEntered.release()
@@ -182,7 +182,7 @@ class WithModalProgressBlockingTest : ModalCoroutineTest() {
 
   @Test
   fun `current modality state is set properly`(): Unit = timeoutRunBlocking {
-    withModalProgressBlockingTest {
+    runWithModalProgressBlockingTest {
       blockingContextTest()
     }
     progressManagerTest {
@@ -201,7 +201,7 @@ class WithModalProgressBlockingTest : ModalCoroutineTest() {
             assertSame(nestedModality, ModalityState.defaultModalityState())
           }
         }
-        withModalProgressBlockingTest {
+        runWithModalProgressBlockingTest {
           val nestedModality = currentCoroutineContext().contextModality()
           blockingContext {
             assertSame(nestedModality, ModalityState.defaultModalityState())
@@ -211,9 +211,9 @@ class WithModalProgressBlockingTest : ModalCoroutineTest() {
     }
   }
 
-  private suspend fun withModalProgressBlockingTest(action: suspend () -> Unit) {
+  private suspend fun runWithModalProgressBlockingTest(action: suspend () -> Unit) {
     withContext(Dispatchers.EDT) {
-      withModalProgressBlocking(ModalTaskOwner.guess(), "") {
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
         val modality = requireNotNull(currentCoroutineContext().contextModality())
         assertNotEquals(modality, ModalityState.nonModal())
         assertSame(ModalityState.nonModal(), ModalityState.defaultModalityState())
@@ -237,22 +237,22 @@ class WithModalProgressBlockingTest : ModalCoroutineTest() {
   }
 }
 
-private fun CoroutineScope.withModalProgressBlockingCoroutine(action: suspend CoroutineScope.() -> Unit): Job {
+private fun CoroutineScope.runWithModalProgressBlockingCoroutine(action: suspend CoroutineScope.() -> Unit): Job {
   return launch(Dispatchers.EDT) {
     blockingContext {
-      withModalProgressBlocking(action)
+      runWithModalProgressBlocking(action)
     }
   }
 }
 
-private suspend fun <T> withModalProgressBlockingContext(action: suspend CoroutineScope.() -> T): T {
+private suspend fun <T> runWithModalProgressBlockingContext(action: suspend CoroutineScope.() -> T): T {
   return withContext(Dispatchers.EDT) {
     blockingContext {
-      withModalProgressBlocking(action)
+      runWithModalProgressBlocking(action)
     }
   }
 }
 
-private fun <T> withModalProgressBlocking(action: suspend CoroutineScope.() -> T): T {
-  return withModalProgressBlocking(ModalTaskOwner.guess(), "", action = action)
+private fun <T> runWithModalProgressBlocking(action: suspend CoroutineScope.() -> T): T {
+  return runWithModalProgressBlocking(ModalTaskOwner.guess(), "", action = action)
 }

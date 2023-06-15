@@ -32,7 +32,7 @@ interface TaskSupport {
     action: suspend CoroutineScope.() -> T,
   ): T
 
-  fun <T> withModalProgressBlockingInternal(
+  fun <T> runWithModalProgressBlockingInternal(
     owner: ModalTaskOwner,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,

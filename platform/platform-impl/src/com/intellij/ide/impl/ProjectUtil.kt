@@ -591,7 +591,7 @@ object ProjectUtil {
   @JvmStatic
   @RequiresEdt
   fun openOrCreateProject(name: String, file: Path): Project? {
-    return withModalProgressBlocking(ModalTaskOwner.guess(), "") {
+    return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
       openOrCreateProjectInner(name, file)
     }
   }
@@ -702,12 +702,12 @@ object ProjectUtil {
 @Internal
 @ScheduledForRemoval
 @Deprecated(
-  "Use withModalProgressBlocking on EDT with proper owner and title, " +
+  "Use runWithModalProgressBlocking on EDT with proper owner and title, " +
   "or runBlockingCancellable(+withBackgroundProgress with proper title) on BGT"
 )
 fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
   if (ApplicationManager.getApplication().isDispatchThread) {
-    return withModalProgressBlocking(ModalTaskOwner.guess(), "", TaskCancellation.cancellable(), task)
+    return runWithModalProgressBlocking(ModalTaskOwner.guess(), "", TaskCancellation.cancellable(), task)
   }
   else {
     return runBlockingMaybeCancellable(task)
