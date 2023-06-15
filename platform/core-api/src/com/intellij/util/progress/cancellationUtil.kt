@@ -4,10 +4,7 @@
 package com.intellij.util.progress
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.isInCancellableContext
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.*
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -143,8 +140,24 @@ fun <T> Future<T>.getCancellable(): T {
 
 @RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
+fun <T> Future<T>.getMaybeCancellable(): T {
+  return runBlockingMaybeCancellable {
+    await()
+  }
+}
+
+@RequiresBackgroundThread(generateAssertion = false)
+@RequiresBlockingContext
 fun <T> CompletableFuture<T>.getCancellable(): T {
   return runBlockingCancellable {
+    asDeferred().await()
+  }
+}
+
+@RequiresBackgroundThread(generateAssertion = false)
+@RequiresBlockingContext
+fun <T> CompletableFuture<T>.getMaybeCancellable(): T {
+  return runBlockingMaybeCancellable {
     asDeferred().await()
   }
 }
