@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
-import java.util.function.Function
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 import kotlin.time.Duration.Companion.seconds
@@ -74,7 +73,7 @@ class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScop
     fun visitDirsRecursivelyWithoutExcluded(project: Project,
                                             root: VirtualFile,
                                             visitIgnoredFoldersThemselves: Boolean,
-                                            processor: Function<in VirtualFile, VirtualFileVisitor.Result>) {
+                                            processor: (VirtualFile) -> VirtualFileVisitor.Result) {
       val fileIndex = ProjectRootManager.getInstance(project).fileIndex
       val depthLimit = VirtualFileVisitor.limit(Registry.intValue("vcs.root.detector.folder.depth"))
       val ignorePattern = parseDirIgnorePattern()
@@ -82,14 +81,14 @@ class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScop
         return
       }
 
-      VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Void?>(NO_FOLLOW_SYMLINKS, depthLimit) {
+      VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Unit?>(NO_FOLLOW_SYMLINKS, depthLimit) {
         override fun visitFileEx(file: VirtualFile): Result {
           if (!file.isDirectory) {
             return CONTINUE
           }
 
           if (visitIgnoredFoldersThemselves) {
-            val apply = processor.apply(file)
+            val apply = processor(file)
             if (apply != CONTINUE) {
               return apply
             }
@@ -104,7 +103,7 @@ class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScop
           }
 
           if (!visitIgnoredFoldersThemselves) {
-            val apply = processor.apply(file)
+            val apply = processor(file)
             if (apply != CONTINUE) {
               return apply
             }
