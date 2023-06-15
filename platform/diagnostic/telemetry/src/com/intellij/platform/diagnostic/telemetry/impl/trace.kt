@@ -3,18 +3,14 @@ package com.intellij.platform.diagnostic.telemetry.impl
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ThrowableNotNullFunction
+import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.util.ThrowableConsumer
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.context.Context
-import io.opentelemetry.extension.kotlin.asContextElement
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 import java.util.function.Consumer
-import kotlin.coroutines.CoroutineContext
 
 inline fun <T> SpanBuilder.useWithScope(operation: (Span) -> T): T {
   val span = startSpan()
@@ -23,21 +19,20 @@ inline fun <T> SpanBuilder.useWithScope(operation: (Span) -> T): T {
   }
 }
 
-suspend inline fun <T> SpanBuilder.useWithScope2(crossinline operation: suspend (Span) -> T): T {
-  val span = startSpan()
-  return withContext(Context.current().with(span).asContextElement()) {
-    span.use {
-      operation(span)
-    }
-  }
+
+fun runWithSpanSimple(tracer: IJTracer, spanName: String, operation: Runnable) {
+  runWithSpan(tracer, spanName) { _ -> operation.run() }
 }
 
-suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext, crossinline operation: suspend CoroutineScope.(Span) -> T): T {
-  val span = startSpan()
-  return withContext(Context.current().with(span).asContextElement() + context) {
-    span.use {
-      operation(span)
-    }
+fun <T> computeWithSpanAttribute(tracer: IJTracer,
+                                 spanName: String,
+                                 attributeName: String,
+                                 attributeValue: (T) -> String,
+                                 operation: () -> T): T {
+  return computeWithSpan(tracer, spanName) { span ->
+    val result = operation.invoke()
+    span.setAttribute(attributeName, attributeValue.invoke(result))
+    return@computeWithSpan result
   }
 }
 
