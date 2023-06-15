@@ -111,9 +111,17 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
             location: ${suspendContext.location} at ${file?.path}
         """.trimIndent()
 
+        val suspendStackTrace = suspendContext.thread?.frames()?.joinToString(System.lineSeparator()) {
+            val location = it.location()
+            "${location.method()} at line ${location.lineNumber()}"
+        }
+
         val attachments = buildList {
             add(Attachment("debugger_context.txt", debuggerContext).apply { isIncluded = true })
             add(Attachment("code_fragment.txt", codeFragment.text).apply { isIncluded = true })
+            suspendStackTrace?.let {
+                add(Attachment("suspend_stack_trace.txt", it))
+            }
             fileContents?.let {
                 add(Attachment("opened_file_contents.txt", it))
             }
