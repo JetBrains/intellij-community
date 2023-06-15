@@ -11,7 +11,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JList
 
-internal class GHRepositoryMouseAdapter(private val list: JList<*>) : MouseAdapter() {
+internal class LinkActionMouseAdapter(private val list: JList<*>) : MouseAdapter() {
   private fun getActionAt(e: MouseEvent): ActionListener? {
     val point = e.point
     val renderer = ListUtil.getDeepestRendererChildComponentAt(list, point)

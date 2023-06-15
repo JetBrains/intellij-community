@@ -110,7 +110,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       isFocusable = false
       selectionModel = loader.listSelectionModel
     }.also {
-      val mouseAdapter = GHRepositoryMouseAdapter(it)
+      val mouseAdapter = LinkActionMouseAdapter(it)
       it.addMouseListener(mouseAdapter)
       it.addMouseMotionListener(mouseAdapter)
       it.addListSelectionListener { evt ->
