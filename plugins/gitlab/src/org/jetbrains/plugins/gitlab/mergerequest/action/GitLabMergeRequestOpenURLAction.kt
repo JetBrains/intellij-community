@@ -7,16 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 
-class GitLabMergeRequestOpenURLAction : DumbAwareAction() {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-  override fun update(e: AnActionEvent) {
-    val ctrl = e.getData(GitLabMergeRequestViewModel.DATA_KEY)
-    e.presentation.isEnabledAndVisible = ctrl != null
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val url = e.getRequiredData(GitLabMergeRequestViewModel.DATA_KEY).url
-    BrowserUtil.browse(url)
-  }
+class GitLabMergeRequestOpenURLAction : GitLabMergeRequestURLAction() {
+  override fun handleURL(mergeRequestUrl: String) = BrowserUtil.browse(mergeRequestUrl)
 }
