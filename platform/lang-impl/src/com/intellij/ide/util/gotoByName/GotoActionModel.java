@@ -11,6 +11,9 @@ import com.intellij.ide.ui.RegistryTextOptionDescriptor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.Utils;
@@ -166,9 +169,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     myUpdateSession = newUpdateSession();
   }
 
-  public enum MatchedValueType { ABBREVIATION, INTENTION, TOP_HIT, OPTION, ACTION }
+  public enum MatchedValueType {ABBREVIATION, INTENTION, TOP_HIT, OPTION, ACTION}
 
-  public static class MatchedValue {
+  public static class MatchedValue implements UiInspectorContextProvider {
     @NotNull public final Object value;
     @NotNull final MatchedValueType type;
     @NotNull final String pattern;
@@ -283,6 +286,17 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         return 3;
       }
       throw new IllegalArgumentException(value.getClass() + " - " + value);
+    }
+
+    @Override
+    public @NotNull List<PropertyBean> getUiInspectorContext() {
+      // Implement here, as GotoActionListCellRenderer is behind 9000 wrappers
+      List<PropertyBean> result = new ArrayList<>();
+      if (value instanceof ActionWrapper actionWrapper) {
+        result.add(new PropertyBean("Action ID", UiInspectorUtil.getActionId(actionWrapper.myAction), true));
+        result.add(new PropertyBean("Action Class", UiInspectorUtil.getClassPresentation(actionWrapper.myAction), true));
+      }
+      return result;
     }
 
     @Override
@@ -771,7 +785,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
           panel.setIcon(EMPTY_ICON);
         }
         String str = cutName((String)matchedValue, null, list, panel);
-        nameComponent.append(str, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, defaultActionForeground(isSelected, cellHasFocus, null)));
+        nameComponent.append(str, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
+                                                           defaultActionForeground(isSelected, cellHasFocus, null)));
         return panel;
       }
 
@@ -953,7 +968,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       SimpleTextAttributes plain = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fg);
 
       if (name.startsWith("<html>")) {
-        new HtmlToSimpleColoredComponentConverter(HtmlToSimpleColoredComponentConverter.DEFAULT_TAG_HANDLER).appendHtml(nameComponent, name, plain);
+        new HtmlToSimpleColoredComponentConverter(HtmlToSimpleColoredComponentConverter.DEFAULT_TAG_HANDLER).appendHtml(nameComponent, name,
+                                                                                                                        plain);
         name = nameComponent.getCharSequence(false).toString();
       }
       else {
