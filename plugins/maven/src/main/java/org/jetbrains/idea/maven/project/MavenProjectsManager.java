@@ -242,7 +242,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
           listenForExternalChanges();
         }
         if (!MavenUtil.isLinearImportEnabled()) {
-          scheduleUpdateAllProjects(new MavenImportSpec(false, isNew, false));
+          myWatcher.scheduleUpdateAll(new MavenImportSpec(false, isNew, false));
         }
       });
     }
@@ -486,7 +486,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       doInit(true);
     }
     else {
-      myWatcher.addManagedFilesWithProfiles(files, profiles);
+      myProjectsTree.addManagedFilesWithProfiles(files, profiles);
+      myWatcher.scheduleUpdateAll(new MavenImportSpec(false, true, true));
     }
   }
 

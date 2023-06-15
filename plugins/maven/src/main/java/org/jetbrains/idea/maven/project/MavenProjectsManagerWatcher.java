@@ -88,12 +88,6 @@ public final class MavenProjectsManagerWatcher {
     Disposer.dispose(myDisposable);
   }
 
-  public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
-    myProjectsTree.addManagedFilesWithProfiles(files, explicitProfiles);
-    scheduleUpdateAll(new MavenImportSpec(false, true, true));
-  }
-
-
   public void setProjectsTree(MavenProjectsTree tree) {
     myProjectsTree = tree;
   }
