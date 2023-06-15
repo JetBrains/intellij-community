@@ -175,6 +175,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
       if (isFloatingMenuBarSupported) {
         menuBar = IdeMenuBar.createMenuBar()
+        menuBar.isOpaque = true
         layeredPane.add(menuBar, (JLayeredPane.DEFAULT_LAYER - 1) as Any)
       }
     }
