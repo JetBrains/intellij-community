@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.JulLogger
@@ -58,7 +59,8 @@ class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
         while (isActive && !FSRecords.implOrFail().isDisposed) {
           delay(checkingPeriod)
 
-          if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) {
+          if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY
+              || PowerSaveMode.isEnabled()) {
             delay(checkingPeriod) //make it twice rarer
           }
           //MAYBE RC: track FSRecords.getLocalModCount() to run the check only if there are enough changes
