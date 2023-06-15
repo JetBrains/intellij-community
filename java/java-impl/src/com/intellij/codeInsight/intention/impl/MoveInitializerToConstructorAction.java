@@ -2,8 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddDefaultConstructorFix;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -64,7 +63,7 @@ public class MoveInitializerToConstructorAction extends BaseMoveInitializerToMet
   protected Collection<PsiMethod> getOrCreateMethods(@NotNull Project project, @NotNull Editor editor, PsiFile file, @NotNull PsiClass aClass) {
     final Collection<PsiMethod> constructors = Arrays.asList(aClass.getConstructors());
     if (constructors.isEmpty()) {
-      return createConstructor(project, editor, file, aClass);
+      return createConstructor(aClass);
     }
 
     return removeChainedConstructors(constructors);
@@ -78,14 +77,8 @@ public class MoveInitializerToConstructorAction extends BaseMoveInitializerToMet
   }
 
   @NotNull
-  private static Collection<PsiMethod> createConstructor(@NotNull Project project,
-                                                         @NotNull Editor editor,
-                                                         PsiFile file,
-                                                         @NotNull PsiClass aClass) {
-    final IntentionAction addDefaultConstructorFix = QuickFixFactory.getInstance().createAddDefaultConstructorFix(aClass);
-    final int offset = editor.getCaretModel().getOffset();
-    addDefaultConstructorFix.invoke(project, editor, file);
-    editor.getCaretModel().moveToOffset(offset); //restore caret
+  private static Collection<PsiMethod> createConstructor(@NotNull PsiClass aClass) {
+    AddDefaultConstructorFix.addDefaultConstructor(aClass);
     return Arrays.asList(aClass.getConstructors());
   }
 }

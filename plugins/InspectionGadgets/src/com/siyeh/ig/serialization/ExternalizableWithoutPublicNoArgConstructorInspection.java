@@ -4,14 +4,12 @@ package com.siyeh.ig.serialization;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddDefaultConstructorFix;
 import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +29,7 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
         // can't create constructor for anonymous class
         return null;
       }
-      return new AddDefaultConstructorFix(aClass, PsiModifier.PUBLIC);
+      return new AddDefaultConstructorFix(aClass, PsiModifier.PUBLIC).asQuickFix();
     }
     else {
       return new MakeConstructorPublicFix();
