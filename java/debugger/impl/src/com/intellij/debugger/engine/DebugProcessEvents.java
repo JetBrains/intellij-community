@@ -18,6 +18,8 @@ import com.intellij.debugger.ui.breakpoints.InstrumentationTracker;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
+import com.intellij.ide.BrowserUtil;
+import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -727,6 +729,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
       };
       XDebuggerManagerImpl.getNotificationGroup()
         .createNotification(message, MessageType.WARNING)
+        .addAction(NotificationAction.createSimpleExpiring(JavaDebuggerBundle.message("message.breakpoint.skipped.learn.more"), () -> {
+          BrowserUtil.browse("https://www.jetbrains.com/help/idea/?skipped.breakpoints");
+        }))
         .notify(getProject());
     }
   }
