@@ -37,7 +37,9 @@ enum class PyRuntimeCompletionType {
 /**
  * @param completionType - type of completion items to choose post-processing function in the future
  */
-data class CompletionResultData(val setOfCompletionItems: Set<String>, val completionType: PyRuntimeCompletionType)
+data class CompletionResultData(val setOfCompletionItems: Set<String>,
+                                val completionType: PyRuntimeCompletionType,
+                                val referenceString: String)
 
 private fun processDataFrameColumns(columns: Set<String>,
                                     needValidatorCheck: Boolean,
@@ -74,7 +76,7 @@ private fun postProcessingChildren(completionResultData: CompletionResultData,
                               needValidatorCheck,
                               parameters.position,
                               project,
-                              PyBundle.message("pandas.completion.type.text", candidate.psiName.pyQualifiedName))
+                              PyBundle.message("pandas.completion.type.text", completionResultData.referenceString))
     }
     PyRuntimeCompletionType.DICT_KEYS -> {
       val setOfCompletionItems = completionResultData.setOfCompletionItems.filter { it != "__len__" }.map {
@@ -102,6 +104,13 @@ private fun proceedPyValueChildrenNames(childrenNodes: Set<String>,
   }
 }
 
+private fun getReferenceString(pyDebugValue: PyDebugValue): String {
+  val parent = pyDebugValue.parent ?: return pyDebugValue.name
+  return generateSequence(parent, PyDebugValue::getParent).fold(pyDebugValue.name) { name, parentValue ->
+    "${parentValue.name}.$name"
+  }
+}
+
 interface PyRuntimeCompletionRetrievalService {
   /**
    * This function checks additional conditions before calling completion
@@ -115,16 +124,16 @@ interface PyRuntimeCompletionRetrievalService {
     val debugValue = node.valueContainer
     if (debugValue is DataFrameDebugValue) {
       val dfColumns = completePandasDataFrameColumns(debugValue.treeColumns, listOfCalls.map { it.pyQualifiedName }) ?: return null
-      return CompletionResultData(dfColumns, PyRuntimeCompletionType.DATA_FRAME_COLUMNS)
+      return CompletionResultData(dfColumns, PyRuntimeCompletionType.DATA_FRAME_COLUMNS, getReferenceString(debugValue))
     }
     if (completionType == CompletionType.BASIC) return null
     computeChildrenIfNeeded(node)
     if ((debugValue as PyDebugValue).qualifiedType == "builtins.dict") {
       return CompletionResultData(node.loadedChildren.mapNotNull { (it as? XValueNodeImpl)?.name }.toSet(),
-                                  PyRuntimeCompletionType.DICT_KEYS)
+                                  PyRuntimeCompletionType.DICT_KEYS, getReferenceString(debugValue))
     }
     return CompletionResultData(node.loadedChildren.mapNotNull { (it as? XValueNodeImpl)?.name }.toSet(),
-                                PyRuntimeCompletionType.DYNAMIC_CLASS)
+                                PyRuntimeCompletionType.DYNAMIC_CLASS, getReferenceString(debugValue))
   }
 }
 
