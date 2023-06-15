@@ -284,7 +284,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     String generate(CommentTracker ct);
   }
 
-  private static class ReplaceWithSwitchExpressionFix implements LocalQuickFix {
+  private static class ReplaceWithSwitchExpressionFix extends PsiUpdateModCommandQuickFix {
     private final ReplacementType myReplacementType;
 
     ReplaceWithSwitchExpressionFix(ReplacementType replacementType) { myReplacementType = replacementType; }
@@ -302,8 +302,8 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiSwitchStatement statement = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiSwitchStatement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiSwitchStatement statement = PsiTreeUtil.getParentOfType(element, PsiSwitchStatement.class);
       if (statement == null) return;
       SwitchReplacer replacer =
         ContainerUtil.find(findSwitchReplacers(statement, Integer.MAX_VALUE), t -> t.getType() == myReplacementType);

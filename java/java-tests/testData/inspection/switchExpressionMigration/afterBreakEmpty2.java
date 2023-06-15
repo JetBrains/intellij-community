@@ -1,4 +1,4 @@
-// "Replace with enhanced 'switch' statement" "true"
+// "Replace with enhanced 'switch' statement" "true-preview"
 
 class A {
   private static void testSwitch2(int c) {

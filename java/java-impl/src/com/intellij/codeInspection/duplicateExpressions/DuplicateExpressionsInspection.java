@@ -304,7 +304,7 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
     }
   }
 
-  private static final class ReuseVariableFix implements LocalQuickFix {
+  private static final class ReuseVariableFix extends PsiUpdateModCommandQuickFix {
     private final String myExpressionText;
     private final String myVariableName;
 
@@ -328,15 +328,14 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (element instanceof PsiExpression) {
         new CommentTracker().replaceAndRestoreComments(element, myVariableName);
       }
     }
   }
 
-  private static final class ReplaceOtherOccurrencesFix implements LocalQuickFix {
+  private static final class ReplaceOtherOccurrencesFix extends PsiUpdateModCommandQuickFix {
     private final String myExpressionText;
     private final String myVariableName;
 
@@ -360,10 +359,9 @@ public final class DuplicateExpressionsInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiExpression) {
-        List<PsiExpression> occurrences = collectReplaceableOccurrences((PsiExpression)element);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      if (element instanceof PsiExpression expr) {
+        List<PsiExpression> occurrences = collectReplaceableOccurrences(expr);
         for (PsiExpression occurrence : occurrences) {
           new CommentTracker().replaceAndRestoreComments(occurrence, myVariableName);
         }
