@@ -2,14 +2,24 @@
 package org.jetbrains.plugins.gitlab.ui.clone
 
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.ProjectMemberDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 
-internal data class GitLabCloneListItem(
-  val account: GitLabAccount,
-  val projectMember: ProjectMemberDTO
-)
+internal sealed interface GitLabCloneListItem {
+  val account: GitLabAccount
 
-internal fun GitLabCloneListItem.presentation(): @NlsSafe String {
+  data class Repository(
+    override val account: GitLabAccount,
+    val projectMember: ProjectMemberDTO
+  ) : GitLabCloneListItem
+
+  data class Error(
+    override val account: GitLabAccount,
+    val message: @Nls String
+  ) : GitLabCloneListItem
+}
+
+internal fun GitLabCloneListItem.Repository.presentation(): @NlsSafe String {
   return "${projectMember.createdBy.username}/${projectMember.project.name}"
 }

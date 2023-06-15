@@ -5,8 +5,10 @@ import com.intellij.collaboration.auth.ui.CompactAccountsPanelFactory
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.details.GroupedRenderer
+import com.intellij.collaboration.ui.util.LinkActionMouseAdapter
 import com.intellij.collaboration.ui.util.bindBusyIn
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.CollectionListModel
@@ -25,12 +27,15 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.exception.GitLabHttpStatusErrorAction
 import javax.swing.JSeparator
 import javax.swing.ListCellRenderer
 import javax.swing.ListModel
 
 internal object GitLabCloneRepositoriesComponentFactory {
   fun create(
+    project: Project,
     cs: CoroutineScope,
     cloneVm: GitLabCloneViewModel,
     searchField: SearchTextField,
@@ -44,9 +49,12 @@ internal object GitLabCloneRepositoriesComponentFactory {
       VcsCloneDialogUiSpec.Components.avatarSize,
       AccountsPopupConfig(cloneVm)
     )
-    val repositoryList = createRepositoryList(cs, cloneVm, accountsModel, repositoriesModel)
+    val repositoryList = createRepositoryList(project, cs, cloneVm, accountsModel, repositoriesModel)
     CollaborationToolsUIUtil.attachSearch(repositoryList, searchField) { cloneItem ->
-      cloneItem.presentation()
+      when (cloneItem) {
+        is GitLabCloneListItem.Error -> ""
+        is GitLabCloneListItem.Repository -> cloneItem.presentation()
+      }
     }
 
     return panel {
@@ -77,18 +85,23 @@ internal object GitLabCloneRepositoriesComponentFactory {
   }
 
   private fun createRepositoryList(
+    project: Project,
     cs: CoroutineScope,
     cloneVm: GitLabCloneViewModel,
     accountsModel: ListModel<GitLabAccount>,
     repositoriesModel: ListModel<GitLabCloneListItem>
   ): JBList<GitLabCloneListItem> {
     return JBList(repositoriesModel).apply {
-      cellRenderer = createRepositoryRenderer(accountsModel, repositoriesModel)
+      cellRenderer = createRepositoryRenderer(project, cs, cloneVm.accountManager, accountsModel, repositoriesModel)
       isFocusable = false
       selectionModel.addListSelectionListener {
         cloneVm.selectItem(selectedValue)
       }
       bindBusyIn(cs, cloneVm.isLoading)
+
+      val mouseAdapter = LinkActionMouseAdapter(this)
+      addMouseListener(mouseAdapter)
+      addMouseMotionListener(mouseAdapter)
     }
   }
 
@@ -120,11 +133,14 @@ internal object GitLabCloneRepositoriesComponentFactory {
   }
 
   private fun createRepositoryRenderer(
+    project: Project,
+    cs: CoroutineScope,
+    accountManager: GitLabAccountManager,
     accountsModel: ListModel<GitLabAccount>,
     repositoriesModel: ListModel<GitLabCloneListItem>
   ): ListCellRenderer<GitLabCloneListItem> {
     return GroupedRenderer(
-      baseRenderer = GitLabCloneListRenderer(),
+      baseRenderer = GitLabCloneListRenderer { account -> GitLabHttpStatusErrorAction.LogInAgain(project, cs, account, accountManager) },
       hasSeparatorAbove = { value, index ->
         when (index) {
           0 -> accountsModel.size > 1

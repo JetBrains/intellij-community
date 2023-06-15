@@ -40,7 +40,7 @@ internal class GitLabCloneComponent(
 
   private val loginPanel: JComponent = GitLabCloneLoginComponentFactory.create(cs, cloneVm)
   private val repositoriesPanel: DialogPanel = GitLabCloneRepositoriesComponentFactory.create(
-    cs, cloneVm, searchField, directoryField
+    project, cs, cloneVm, searchField, directoryField
   ).apply {
     registerValidators(cs.nestedDisposable())
   }
@@ -56,9 +56,11 @@ internal class GitLabCloneComponent(
   init {
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       cloneVm.selectedItem.collect { selectedItem ->
-        dialogStateListener.onOkActionEnabled(selectedItem != null)
-        if (selectedItem != null) {
-          val selectedUrl = selectedItem.projectMember.project.httpUrlToRepo
+        val isRepositorySelected = selectedItem != null && selectedItem is GitLabCloneListItem.Repository
+        dialogStateListener.onOkActionEnabled(isRepositorySelected)
+        if (isRepositorySelected) {
+          val repository = selectedItem as GitLabCloneListItem.Repository
+          val selectedUrl = repository.projectMember.project.httpUrlToRepo
           val path = ClonePathProvider.relativeDirectoryPathForVcsUrl(project, selectedUrl).removeSuffix(GitUtil.DOT_GIT)
           cloneDirectoryChildHandle.trySetChildPath(path)
         }

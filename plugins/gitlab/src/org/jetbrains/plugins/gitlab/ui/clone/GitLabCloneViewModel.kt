@@ -32,6 +32,8 @@ import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 import java.nio.file.Paths
 
 internal interface GitLabCloneViewModel {
+  val accountManager: GitLabAccountManager
+
   val uiState: Flow<UIState>
 
   val isLoading: Flow<Boolean>
@@ -65,7 +67,7 @@ internal interface GitLabCloneViewModel {
 internal class GitLabCloneViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
-  private val accountManager: GitLabAccountManager
+  override val accountManager: GitLabAccountManager
 ) : GitLabCloneViewModel {
   private val vcsNotifier: VcsNotifier = project.service<VcsNotifier>()
 
@@ -161,17 +163,21 @@ internal class GitLabCloneViewModelImpl(
     val directoryName = Paths.get(directoryPath).fileName.toString()
     val parentDirectory = parent.toAbsolutePath().toString()
 
-    val selectedRepository = _selectedItem.value!!
+    val selectedRepository = _selectedItem.value!! as GitLabCloneListItem.Repository
     val selectedUrl = selectedRepository.projectMember.project.httpUrlToRepo
     GitCheckoutProvider.clone(project, Git.getInstance(), checkoutListener, destinationParent, selectedUrl, directoryName, parentDirectory)
   }
 
   override suspend fun collectAccountRepositories(account: GitLabAccount): List<GitLabCloneListItem> {
-    val token = accountManager.findCredentials(account) ?: return emptyList() // TODO: missing token
+    val token = accountManager.findCredentials(account) ?: return listOf(
+      GitLabCloneListItem.Error(account, CollaborationToolsBundle.message("account.token.missing"))
+    )
     val apiClient = GitLabApiImpl { token }
-    val currentUser = apiClient.graphQL.getCurrentUser(account.server) ?: return emptyList() // TODO: expired token
+    val currentUser = apiClient.graphQL.getCurrentUser(account.server) ?: return listOf(
+      GitLabCloneListItem.Error(account, CollaborationToolsBundle.message("http.status.error.refresh.token"))
+    )
     val accountRepositories = currentUser.projectMemberships.map { projectMember ->
-      GitLabCloneListItem(account, projectMember)
+      GitLabCloneListItem.Repository(account, projectMember)
     }
 
     return accountRepositories.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.presentation() })

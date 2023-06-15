@@ -183,7 +183,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   private inner class ErrorHandler : GHRepositoryListCellRenderer.ErrorHandler {
 
     override fun getPresentableText(error: Throwable): @Nls String = when (error) {
-      is GithubMissingTokenException -> GithubBundle.message("account.token.missing")
+      is GithubMissingTokenException -> CollaborationToolsBundle.message("account.token.missing")
       is GithubAuthenticationException -> GithubBundle.message("credentials.invalid.auth.data", "")
       else -> GithubBundle.message("clone.error.load.repositories")
     }

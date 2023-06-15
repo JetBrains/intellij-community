@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.authentication.ui
 
 import com.intellij.collaboration.auth.ui.login.LoginPanelModelBase
 import com.intellij.collaboration.auth.ui.login.LoginTokenGenerator
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.components.service
@@ -25,7 +26,7 @@ class GitLabTokenLoginPanelModel(private val requiredUsername: String? = null,
     val api = service<GitLabApiManager>().getClient(token)
     val user = withContext(Dispatchers.IO) {
       api.graphQL.getCurrentUser(server)
-    } ?: throw IllegalArgumentException(GitLabBundle.message("account.token.invalid"))
+    } ?: throw IllegalArgumentException(CollaborationToolsBundle.message("account.token.invalid"))
 
     service<GitLabServersManager>().validateServerVersion(server, api)
 
