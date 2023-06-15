@@ -23,38 +23,41 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
     fun getInstance(): TipsUsageManager = service()
   }
 
-  private val shownTips = Object2LongOpenHashMap<String>()
+  private val shownTips: Object2LongOpenHashMap<String> = Object2LongOpenHashMap()
+  private val proposedTips: Object2LongOpenHashMap<String> = Object2LongOpenHashMap()
+  var tipsOrderSeed: Long = System.currentTimeMillis()
 
   init {
     ApplicationManager.getApplication().messageBus.connect().subscribe(FeaturesRegistryListener.TOPIC, TipsUsageListener())
   }
 
-  override fun getState(): State = State(shownTips)
+  override fun getState(): State = State(shownTips, proposedTips, tipsOrderSeed)
 
   override fun loadState(state: State) {
     state.shownTips.forEach { (filename, timestamp) ->
       // migration from tip filename to tip id
       shownTips.put(TipAndTrickBean.getTipId(filename), timestamp)
     }
+    state.proposedTips.forEach { (tipId, timestamp) ->
+      proposedTips.put(tipId, timestamp)
+    }
+    tipsOrderSeed = state.tipsOrderSeed
   }
 
   fun fireTipShown(tip: TipAndTrickBean) {
     shownTips.put(tip.id, System.currentTimeMillis())
   }
 
+  fun fireTipProposed(tip: TipAndTrickBean) {
+    proposedTips.put(tip.id, System.currentTimeMillis())
+  }
+
   fun getLastTimeShown(tipId: String): Long {
     return shownTips.getLong(tipId)
   }
 
-  fun makeLastShownTipFirst(tips: List<TipAndTrickBean>): List<TipAndTrickBean> {
-    val resultTips = tips.toMutableList()
-    shownTips.maxByOrNull { it.value }?.let {
-      resultTips.find { tip -> tip.id == it.key }?.let { tip ->
-        resultTips.remove(tip)
-        resultTips.add(0, tip)
-      }
-    }
-    return resultTips
+  fun getLastTimeProposed(tipId: String): Long {
+    return proposedTips.getLong(tipId)
   }
 
   fun wereTipsShownToday(): Boolean {
@@ -66,7 +69,9 @@ internal class TipsUsageManager : PersistentStateComponent<TipsUsageManager.Stat
   }
 
   @Serializable
-  data class State(val shownTips: Map<String, Long> = emptyMap())
+  data class State(val shownTips: Map<String, Long> = emptyMap(),
+                   val proposedTips: Map<String, Long> = emptyMap(),
+                   val tipsOrderSeed: Long = System.currentTimeMillis())
 
   private class TipsUsageListener : FeaturesRegistryListener {
     override fun featureUsed(feature: FeatureDescriptor) {
