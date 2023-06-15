@@ -36,7 +36,7 @@ internal open class UpdateIdeFromSourcesAction
       }
     }
 
-    updateFromSources(project) {
+    updateFromSources(project, {}) {
       Messages.showErrorDialog(project, it, CommonBundle.getErrorTitle())
     }
   }
