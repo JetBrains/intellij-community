@@ -34,20 +34,100 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
-import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationAggregatesCollector.MAX_TRACKABLE_DURATION_MS;
+import static com.intellij.util.SystemProperties.getIntProperty;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationAggregatesCollector.MAX_TRACKABLE_DURATION_MS;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.*;
 import static java.util.stream.Collectors.toSet;
 
 /**
- *
+ * Index lookup timings: various stats and reporting.
+ * Basically: there are detailed (per lookup) and aggregated (mean, %-iles, per minute) timings, which
+ * could be reported to FUS, and/or OpenTelemetry.
+ * <p/>
+ * Be cautious with enabling detailed (per lookup) reporting: index lookup is one of the most frequent calls
+ * in the platform API, hence detailed (per lookup) reporting produces quite a lot of data.
  */
-public final class IndexOperationFUS {
-  private static final Logger LOG = Logger.getInstance(IndexOperationFUS.class);
+public final class IndexLookupTimingsReporting {
+  private static final Logger LOG = Logger.getInstance(IndexLookupTimingsReporting.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(10));
 
   private static final IJTracer OTEL_TRACER = TelemetryTracer.getInstance().getTracer(Indexes);
 
+  /**
+   * 'Feature flag': report individual index lookup events to FUS.
+   * Default: true for EAP, false otherwise
+   * See {@link #REPORT_TO_FUS_INDIVIDUAL_LOOKUPS_ONLY_LONGER_THAN_MS}
+   */
+  private static final boolean REPORT_INDIVIDUAL_LOOKUPS_TO_FUS = getBooleanProperty(
+    "IndexLookupTimingsReporting.REPORT_INDIVIDUAL_LOOKUPS_TO_FUS", ApplicationManager.getApplication().isEAP()
+  );
+
+  /**
+   * 'Feature flag': report individual index lookup timings as OpenTelemetry.Traces
+   * Default: false.
+   * Enable with caution, since index lookup is one of the most frequent operations, and
+   * enabling its reporting may produce quite a lot of data.
+   */
+  public static final boolean REPORT_INDIVIDUAL_LOOKUPS_TO_OPEN_TELEMETRY = getBooleanProperty(
+    "IndexLookupTimingsReporting.REPORT_INDIVIDUAL_LOOKUP_TO_OPEN_TELEMETRY",
+    false
+  );
+
+  //OTel span names:
+  private static final String SPAN_NAME_INDEX_LOOKUP_ALL_KEYS = "index lookup: all keys";
+  private static final String SPAN_NAME_INDEX_LOOKUP_ENTRIES = "index lookup: file entries";
+  private static final String SPAN_NAME_INDEX_LOOKUP_STUBS = "index lookup: stub entries";
+  private static final String SPAN_NAME_INDEX_UP_TO_DATE_CHECK = "index up-to-date check";
+  private static final String SPAN_NAME_STUB_TREE_DESERIALIZATION = "stub tree deserialization";
+
+
+  /**
+   * Collect aggregated statistics over index lookups: mean, %-iles, lookup counts.
+   * Collected stats could be then reported to FUS/OTel, see {@link #REPORT_AGGREGATED_STATS_TO_FUS},
+   * {@link #REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY}.
+   * Beware: if any of REPORT_AGGREGATED_STATS_TO_XXX flags are set -- this flag must be set also.
+   */
+  private static final boolean COLLECT_AGGREGATED_STATS = getBooleanProperty(
+    "IndexLookupTimingsReporting.COLLECT_AGGREGATED_STATS", true
+  );
+
+  /**
+   * 'Feature flag': report aggregated (mean, %-iles) index lookup statistics to FUS.
+   * Default: true
+   */
+  private static final boolean REPORT_AGGREGATED_STATS_TO_FUS = getBooleanProperty(
+    "IndexLookupTimingsReporting.REPORT_AGGREGATED_STATS_TO_FUS", true
+  );
+
+  /**
+   * Report lookup operation X to analytics only if total duration of the operation X {@code >REPORT_TO_FUS_INDIVIDUAL_LOOKUPS_ONLY_LONGER_THAN_MS}.
+   * There are a lot of index lookups, and this threshold allows reducing reporting traffic, since we're really only interested in
+   * long operations. Default value 0 means 'report lookups >0ms only'.
+   * <p>
+   * BEWARE: different values for that parameter correspond to a different way of sampling, hence, in theory, should be treated as
+   * different event schema _version_.
+   */
+  private static final int REPORT_TO_FUS_INDIVIDUAL_LOOKUPS_ONLY_LONGER_THAN_MS = getIntProperty(
+    "IndexLookupTimingsReporting.REPORT_TO_FUS_INDIVIDUAL_LOOKUPS_ONLY_LONGER_THAN_MS",
+    100
+  );
+
+  /**
+   * 'Feature flag': report aggregated (mean, %-iles) index lookup statistics to OpenTelemetry.Metrics
+   * Default: true
+   */
+  private static final boolean REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY = getBooleanProperty(
+    "IndexLookupTimingsReporting.REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY", true
+  );
+
+
+  /**
+   * How many recursive lookups to allow before suspect it is not a recursive lookup, but
+   * just buggy code (missed {@linkplain IndexOperationFusCollector.LookupTraceBase#close()} call) and throw exception
+   */
+  @VisibleForTesting
+  static final int MAX_LOOKUP_DEPTH = Integer.getInteger("IndexLookup.MAX_LOOKUP_DEPTH", 16);
   /**
    * If true -> throw exception if tracing methods are (likely) called in incorrect order (e.g. .finish() before start(),
    * or .finish() without .start() beforehand).
@@ -55,56 +135,7 @@ public final class IndexOperationFUS {
    * <p>
    */
   @VisibleForTesting
-  static final boolean THROW_ON_INCORRECT_USAGE = getBooleanProperty("IndexOperationFUS.THROW_ON_INCORRECT_USAGE", false);
-
-  /**
-   * 'Feature flag': report detailed index lookup events. Default: true for EAP, false otherwise
-   */
-  private static final boolean REPORT_DETAILED_STATS = getBooleanProperty(
-    "IndexOperationFUS.REPORT_DETAILED_STATS", ApplicationManager.getApplication().isEAP()
-  );
-
-  public static final boolean REPORT_TRACES_TO_OPEN_TELEMETRY = getBooleanProperty(
-    "IndexOperationFUS.REPORT_DETAILED_STATS_TO_OPEN_TELEMETRY",
-    ApplicationManager.getApplication().isEAP() || ApplicationManager.getApplication().isUnitTestMode()
-  );
-
-  private static final String SPAN_NAME_INDEX_LOOKUP_ALL_KEYS = "index lookup: all keys";
-  private static final String SPAN_NAME_INDEX_LOOKUP_ENTRIES = "index lookup: file entries";
-  private static final String SPAN_NAME_INDEX_LOOKUP_STUBS = "index lookup: stub entries";
-  private static final String SPAN_NAME_INDEX_UP_TO_DATE_CHECK = "index up-to-date check";
-  private static final String SPAN_NAME_STUB_TREE_DESERIALIZATION = "stub tree deserialization";
-
-  /**
-   * 'Feature flag': report aggregated (mean, %-iles) index lookup statistics. Default: true
-   */
-  private static final boolean REPORT_AGGREGATED_STATS = getBooleanProperty(
-    "IndexOperationFUS.REPORT_AGGREGATED_STATS", true
-  );
-  /**
-   * 'Feature flag': report aggregated (mean, %-iles) index lookup statistics to OpenTelemetry. Default: true
-   */
-  private static final boolean REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY = getBooleanProperty(
-    "IndexOperationFUS.REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY", true
-  );
-
-
-  /**
-   * Report lookup operation X to analytics only if total duration of the operation X {@code >REPORT_ONLY_OPERATIONS_LONGER_THAN_MS}.
-   * There are a lot of index lookups, and this threshold allows to reduce reporting traffic, since we're really only interested in
-   * long operations. Default value 0 means 'report lookups >0ms only'.
-   * <p>
-   * BEWARE: different values for that parameter correspond to a different way of sampling, hence, in theory, should be treated as
-   * different event schema _version_.
-   */
-  private static final int REPORT_ONLY_OPERATIONS_LONGER_THAN_MS =
-    Integer.getInteger("IndexOperationFUS.REPORT_ONLY_OPERATIONS_LONGER_THAN_MS", 100);
-
-  /**
-   * How many recursive lookups to allow before suspect it is not a recursive lookup, but
-   * just buggy code (missed {@linkplain IndexOperationFusCollector.LookupTraceBase#close()} call) and throw exception
-   */
-  static final int MAX_LOOKUP_DEPTH = Integer.getInteger("IndexOperationFUS.MAX_LOOKUP_DEPTH", 16);
+  static final boolean THROW_ON_INCORRECT_USAGE = getBooleanProperty("IndexLookup.THROW_ON_INCORRECT_USAGE", false);
 
 
   /* ================== EVENTS GROUPS: ====================================================== */
@@ -313,17 +344,17 @@ public final class IndexOperationFUS {
           final long lookupFinishedAtMs = System.currentTimeMillis();
           final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
 
-          if (REPORT_DETAILED_STATS) {
-            if (lookupDurationMs > REPORT_ONLY_OPERATIONS_LONGER_THAN_MS || lookupFailed) {
-              reportDetailedDataToAnalytics(lookupFinishedAtMs);
+          if (REPORT_INDIVIDUAL_LOOKUPS_TO_FUS) {
+            if (lookupDurationMs > REPORT_TO_FUS_INDIVIDUAL_LOOKUPS_ONLY_LONGER_THAN_MS || lookupFailed) {
+              reportDetailedDataToFUS(lookupFinishedAtMs);
             }
           }
-          if (REPORT_TRACES_TO_OPEN_TELEMETRY) {
+          if (REPORT_INDIVIDUAL_LOOKUPS_TO_OPEN_TELEMETRY) {
             reportDetailedDataToOTel(lookupFinishedAtMs);
           }
 
-          if (REPORT_AGGREGATED_STATS) {
-            reportAggregatesData(lookupFinishedAtMs);
+          if (COLLECT_AGGREGATED_STATS) {
+            collectAggregatedData(lookupFinishedAtMs);
           }
         }
         finally {
@@ -340,11 +371,11 @@ public final class IndexOperationFUS {
         }
       }
 
-      protected abstract void reportDetailedDataToAnalytics(long lookupFinishedAtMs);
+      protected abstract void reportDetailedDataToFUS(long lookupFinishedAtMs);
 
       protected abstract void reportDetailedDataToOTel(long lookupFinishedAtMs);
 
-      protected abstract void reportAggregatesData(long lookupFinishedAtMs);
+      protected abstract void collectAggregatedData(long lookupFinishedAtMs);
 
       @Override
       public final void close() {
@@ -482,7 +513,7 @@ public final class IndexOperationFUS {
       }
 
       @Override
-      protected void reportDetailedDataToAnalytics(final long lookupFinishedAtMs) {
+      protected void reportDetailedDataToFUS(final long lookupFinishedAtMs) {
         final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
         EVENT_INDEX_ALL_KEYS_LOOKUP.log(
           project,
@@ -521,7 +552,7 @@ public final class IndexOperationFUS {
       }
 
       @Override
-      protected void reportAggregatesData(final long lookupFinishedAtMs) {
+      protected void collectAggregatedData(final long lookupFinishedAtMs) {
         final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
         IndexOperationAggregatesCollector.recordAllKeysLookup(indexId, lookupFailed, lookupDurationMs);
       }
@@ -578,7 +609,7 @@ public final class IndexOperationFUS {
       }
 
       @Override
-      protected void reportDetailedDataToAnalytics(final long lookupFinishedAtMs) {
+      protected void reportDetailedDataToFUS(final long lookupFinishedAtMs) {
         EVENT_INDEX_LOOKUP_ENTRIES_BY_KEYS.log(
           project,
 
@@ -623,7 +654,7 @@ public final class IndexOperationFUS {
       }
 
       @Override
-      protected void reportAggregatesData(final long lookupFinishedAtMs) {
+      protected void collectAggregatedData(final long lookupFinishedAtMs) {
         final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
         IndexOperationAggregatesCollector.recordEntriesByKeysLookup(indexId, lookupFailed, lookupDurationMs);
       }
@@ -695,7 +726,7 @@ public final class IndexOperationFUS {
       }
 
       @Override
-      protected void reportDetailedDataToAnalytics(long lookupFinishedAtMs) {
+      protected void reportDetailedDataToFUS(long lookupFinishedAtMs) {
         EVENT_STUB_INDEX_LOOKUP_ENTRIES_BY_KEY.log(
           project,
 
@@ -745,7 +776,7 @@ public final class IndexOperationFUS {
       }
 
       @Override
-      protected void reportAggregatesData(long lookupFinishedAtMs) {
+      protected void collectAggregatedData(long lookupFinishedAtMs) {
         final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
         IndexOperationAggregatesCollector.recordStubEntriesByKeysLookup(indexId, lookupFailed, lookupDurationMs);
       }
@@ -756,13 +787,10 @@ public final class IndexOperationFUS {
     }
   }
 
-  /**
-   * Collects and reports aggregated performance data (averages, %-iles) about index lookup timings
-   */
+  /** Collects and reports aggregated performance data (averages, %-iles) about index lookup timings to FUS */
   public static class IndexOperationAggregatesCollector extends ApplicationUsagesCollector {
 
-    public static final int MAX_TRACKABLE_DURATION_MS =
-      SystemProperties.getIntProperty("IndexOperationFUS.MAX_TRACKABLE_DURATION_MS", 5000);
+    public static final int MAX_TRACKABLE_DURATION_MS = getIntProperty("IndexLookupTimingsReporting.MAX_TRACKABLE_DURATION_MS", 5000);
 
     private static final IntEventField FIELD_LOOKUPS_TOTAL = EventFields.Int("lookups_total");
     private static final IntEventField FIELD_LOOKUPS_FAILED = EventFields.Int("lookups_failed");
@@ -822,9 +850,10 @@ public final class IndexOperationFUS {
     //FIXME RC: OTel reporting is implicitly guarded by REPORT_AGGREGATED_STATS, which is not obvious. Better to separate FUS and
     //          OTel reporting to independent branches
     @Nullable
-    private static final IndexOperationFUS.IndexesToOTelMetricsReporter otelReporter = REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY ?
-                                                                                       new IndexesToOTelMetricsReporter() :
-                                                                                       null;
+    private static final IndexLookupTimingsReporting.IndexOperationToOTelMetricsReporter otelReporter =
+      REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY ?
+      new IndexOperationToOTelMetricsReporter() :
+      null;
 
 
     public IndexOperationAggregatesCollector() {
@@ -904,7 +933,7 @@ public final class IndexOperationFUS {
     @NotNull
     @Override
     public Set<MetricEvent> getMetrics() {
-      if (REPORT_AGGREGATED_STATS) {
+      if (REPORT_AGGREGATED_STATS_TO_FUS) {
         final Set<MetricEvent> allKeysLookupStats = allKeysLookupDurationsMsByIndexId.entrySet().stream().map(e -> {
           final IndexId<?, ?> indexId = e.getKey();
           final Recorder recorderForIndex = e.getValue();
@@ -977,10 +1006,11 @@ public final class IndexOperationFUS {
     }
   }
 
-  private static class IndexesToOTelMetricsReporter implements AutoCloseable {
+  /** Collects and reports aggregated performance data (averages, %-iles) about index lookup timings to OpenTelemetry */
+  private static class IndexOperationToOTelMetricsReporter implements AutoCloseable {
 
-    private static final Recorder allKeysLookupDurationMsHisto =
-      new Recorder(MAX_TRACKABLE_DURATION_MS, /* significant digits = */ 2);/* 2 digits =~ 1% accuracy */
+    // 2 digits =~ 1% accuracy
+    private static final Recorder allKeysLookupDurationMsHisto = new Recorder(MAX_TRACKABLE_DURATION_MS, /* significant digits = */ 2);
     private static final Recorder entriesLookupDurationsMsHisto = new Recorder(MAX_TRACKABLE_DURATION_MS, /* significant digits = */ 2);
     private static final Recorder stubEntriesLookupDurationsMsHisto = new Recorder(MAX_TRACKABLE_DURATION_MS, /* significant digits = */ 2);
 
@@ -1003,7 +1033,7 @@ public final class IndexOperationFUS {
     /** Needed only to stop reporting on .close() */
     private final BatchCallback batchCallbackHandle;
 
-    private IndexesToOTelMetricsReporter() {
+    private IndexOperationToOTelMetricsReporter() {
       final Meter meter = TelemetryTracer.getMeter(Indexes);
 
       allKeysTotalLookups = meter.gaugeBuilder("Indexes.allKeys.lookups").buildObserver();
