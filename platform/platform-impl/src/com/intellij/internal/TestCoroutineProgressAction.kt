@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.*
 import javax.swing.JComponent
+import kotlin.time.Duration.Companion.milliseconds
 
 internal class TestCoroutineProgressAction : AnAction() {
 
@@ -69,6 +70,26 @@ internal class TestCoroutineProgressAction : AnAction() {
               TaskCancellation.nonCancellable(),
             ) {
               doStuff()
+            }
+          }
+        }
+        row {
+          button("Delayed Completion BG Progress") {
+            cs.launch {
+              withBackgroundProgress(project, "Delayed completion BG progress") {
+                withContext(NonCancellable) {
+                  stage(parallel = true)
+                }
+              }
+            }
+          }
+          button("Delayed Completion Modal Progress") {
+            cs.launch {
+              withModalProgress(project, "Delayed completion modal progress") {
+                withContext(NonCancellable) {
+                  stage(parallel = true)
+                }
+              }
             }
           }
         }
