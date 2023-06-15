@@ -62,6 +62,10 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBas
 
   protected abstract boolean skipIfNotRegistered(PsiClass epClass);
 
+  protected boolean skipOptionalBeforeAfter(PsiClass epClass) {
+    return false;
+  }
+
   protected boolean checkDynamicDescription(ProblemsHolder holder, Module module, PsiClass psiClass) {
     throw new IllegalStateException("must be implemented for " + getClass());
   }
@@ -81,7 +85,8 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBas
       final PsiFile descr = dir.findFile("description.html");
       if (descr == null) continue;
 
-      if (!hasBeforeAndAfterTemplate(dir.getVirtualFile())) {
+      if (!hasBeforeAndAfterTemplate(dir.getVirtualFile()) &&
+          !skipOptionalBeforeAfter(psiClass)) {
         ProblemHolderUtilKt.registerUProblem(holder, uClass, getHasNotBeforeAfterError());
       }
       return true;
