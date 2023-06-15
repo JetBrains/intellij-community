@@ -97,7 +97,7 @@ public class MalformedFormatStringInspection extends BaseInspection {
     final FormatDecode.Validator validator = (FormatDecode.Validator)infos[3];
     String specifier = validator.getInvalidSpecifier(argumentType);
     return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.arguments.do.not.match.type",
-                                           argumentType.getPresentableText(), specifier == null ? validator.getSpecifier() : specifier);
+                                           argumentType.getPresentableText(), specifier);
   }
 
   @Override
