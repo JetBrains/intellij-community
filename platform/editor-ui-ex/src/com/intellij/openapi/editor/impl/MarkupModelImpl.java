@@ -124,7 +124,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   // NB: Can return invalid highlighters
   @Override
-  public RangeHighlighter @NotNull [] getAllHighlighters() {
+  public @NotNull RangeHighlighter @NotNull [] getAllHighlighters() {
     RangeHighlighter[] cachedHighlighters = myCachedHighlighters;
     if (cachedHighlighters == null) {
       int size = myHighlighterTree.size() + myHighlighterTreeForLines.size();
