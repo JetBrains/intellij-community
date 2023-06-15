@@ -197,15 +197,19 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
 
         JLabel firstLabel = data.toLayout.get(0);
         JLabel lastLabel = data.toLayout.get(data.toLayout.size() - 1);
+        JLabel labelToDrop;
         if (firstLabel != selectedTab && firstLabel != dropOverPlaceholder) {
-          dropTab(data, firstLabel);
+          labelToDrop = firstLabel;
         }
         else if (lastLabel != selectedTab && lastLabel != dropOverPlaceholder) {
-          dropTab(data, lastLabel);
+          labelToDrop = lastLabel;
         }
         else {
           break;
         }
+        data.requiredWidth -= (labelToDrop.getPreferredSize().width + 1);
+        data.toDrop.add(labelToDrop);
+        data.toLayout.remove(labelToDrop);
       }
 
       boolean reachedBounds = false;
@@ -249,7 +253,8 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
       data.moreRect = null;
     }
 
-    Rectangle moreRect = data.moreRect == null ? null : new Rectangle(data.eachX, 0, /*getMoreToolbarWidth()*/16+MORE_ICON_BORDER, bounds.height);
+    Rectangle moreRect =
+      data.moreRect == null ? null : new Rectangle(data.eachX, 0, /*getMoreToolbarWidth()*/16 + MORE_ICON_BORDER, bounds.height);
     ui.isResizableArea = p -> moreRect == null || !moreRect.contains(p);
     lastLayout = data;
     if (toolbarUpdateNeeded) {
@@ -287,12 +292,6 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
 
   @Nullable ContentTabLabel findTabLabelByContent(@Nullable Content content) {
     return contentToTabs.get(content);
-  }
-
-  static void dropTab(LayoutData data, JLabel toDropLabel) {
-    data.requiredWidth -= (toDropLabel.getPreferredSize().width + 1);
-    data.toDrop.add(toDropLabel);
-    data.toLayout.remove(toDropLabel);
   }
 
   @NotNull
@@ -470,7 +469,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     HIDE
   }
 
-  public static int getTabLayoutStart(){
+  public static int getTabLayoutStart() {
     return ExperimentalUI.isNewUI() ? 0 : TAB_LAYOUT_START;
   }
 }
