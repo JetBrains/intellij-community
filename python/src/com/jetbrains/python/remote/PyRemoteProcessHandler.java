@@ -36,19 +36,25 @@ public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<Remot
   @NotNull private final PyRemotePathMapper myPathMapper;
   private final List<PathMappingSettings.PathMapping> myFileMappings = new ArrayList<>();
   @NotNull private final PyRemoteSocketToLocalHostProvider myRemoteSocketProvider;
-  private final boolean myHasPty;
+  /**
+   * Indicates if [myProcess] is launched with PTY.
+   * It changes the logic of readerOptions, so it can break the output if the [myProcess] has been launched without PTY and that value is
+   * set as true.
+   * Look at PY-60900, PY-55322.
+   */
+  private final boolean myIsRunWithPty;
 
   private PyRemoteProcessHandler(@NotNull RemoteProcess process,
                                  @NotNull String commandLine,
                                  @NotNull Charset charset,
                                  @Nullable PyRemotePathMapper pathMapper,
                                  @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider,
-                                 boolean hasPty) {
+                                 boolean isRunWithPty) {
     super(process, commandLine, charset);
     myRemoteSocketProvider = remoteSocketProvider;
 
     myPathMapper = pathMapper != null ? pathMapper : new PyRemotePathMapper();
-    myHasPty = hasPty;
+    myIsRunWithPty = isRunWithPty;
 
     putUserData(PythonRemoteInterpreterManager.PATH_MAPPING_SETTINGS_KEY, pathMapper);
   }
@@ -116,8 +122,8 @@ public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<Remot
                                                             @NotNull Charset charset,
                                                             @Nullable PyRemotePathMapper pathMapper,
                                                             @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider,
-                                                            boolean hasPty) {
-    return new PyRemoteProcessHandler(remoteProcess, commandLine, charset, pathMapper, remoteSocketProvider, hasPty);
+                                                            boolean isRunWithPty) {
+    return new PyRemoteProcessHandler(remoteProcess, commandLine, charset, pathMapper, remoteSocketProvider, isRunWithPty);
   }
 
   @NotNull
@@ -131,7 +137,7 @@ public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<Remot
 
   @Override
   public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
-    if (hasPty()) {
+    if (isRunWithPty()) {
       boolean foundPyCharmFileMapping = handlePyCharmFileMapping(text);
       if (!foundPyCharmFileMapping) {
         super.notifyTextAvailable(text, outputType);
@@ -169,13 +175,13 @@ public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<Remot
     }
   }
 
-  public boolean hasPty() {
-    return myHasPty;
+  public boolean isRunWithPty() {
+    return myIsRunWithPty;
   }
 
   @Override
   protected BaseOutputReader.@NotNull Options readerOptions() {
-    if (hasPty()) {
+    if (isRunWithPty()) {
       return BaseOutputReader.Options.forTerminalPtyProcess();
     }
     return super.readerOptions();
