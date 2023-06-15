@@ -16,6 +16,10 @@ class UpdateFromSourcesStep: SmartUpdateStep {
   override val stepName: @Nls String = DevKitBundle.message("update.ide.from.sources")
 
   override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
+    if (e == null) { // skip after restart
+      onSuccess()
+      return
+    }
     updateFromSources(project, ::beforeRestart) { Notification("Update from Sources", it, NotificationType.ERROR) }
   }
 
