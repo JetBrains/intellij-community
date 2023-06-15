@@ -10,7 +10,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
@@ -24,27 +24,47 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.util.Alarm
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.*
-import java.util.concurrent.TimeUnit
 import java.util.function.Function
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG = Logger.getInstance(VcsRootScanner::class.java)
-private val WAIT_BEFORE_SCAN = TimeUnit.SECONDS.toMillis(1)
 
 @Service(Service.Level.PROJECT)
-class VcsRootScanner(private val project: Project) : Disposable {
+class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScope) : Disposable {
   private val rootProblemNotifier = VcsRootProblemNotifier.createInstance(project)
-  private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
+
+  private val scanRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     AsyncVfsEventsPostProcessor.getInstance().addListener(::filesChanged, this)
     VcsRootChecker.EXTENSION_POINT_NAME.addChangeListener(::scheduleScan, this)
     VcsEP.EP_NAME.addChangeListener(::scheduleScan, this)
+
+    coroutineScope.launch {
+      @Suppress("OPT_IN_USAGE")
+      scanRequests
+        .debounce(1.seconds)
+        .collectLatest {
+          withContext(Dispatchers.IO) {
+            coroutineToIndicator {
+              rootProblemNotifier.rescanAndNotifyIfNeeded()
+            }
+          }
+        }
+    }
   }
 
   companion object {
@@ -148,8 +168,8 @@ class VcsRootScanner(private val project: Project) : Disposable {
     }
   }
 
-  fun scheduleScan() {
-    if (alarm.isDisposed || VcsRootChecker.EXTENSION_POINT_NAME.extensionList.isEmpty()) {
+  private fun scheduleScan() {
+    if (VcsRootChecker.EXTENSION_POINT_NAME.extensionList.isEmpty()) {
       return
     }
 
@@ -158,9 +178,7 @@ class VcsRootScanner(private val project: Project) : Disposable {
       return
     }
 
-    alarm.cancelAllRequests() // one scan is enough, no need to queue, they all do the same
-    alarm.addRequest({ BackgroundTaskUtil.runUnderDisposeAwareIndicator(alarm) { rootProblemNotifier.rescanAndNotifyIfNeeded() } },
-                     WAIT_BEFORE_SCAN)
+    check(scanRequests.tryEmit(Unit))
   }
 
   internal class DetectRootsStartupActivity : VcsStartupActivity {
