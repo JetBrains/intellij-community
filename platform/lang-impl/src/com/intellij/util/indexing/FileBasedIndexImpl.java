@@ -126,7 +126,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private static final boolean USE_GENTLE_FLUSHER = SystemProperties.getBooleanProperty("indexes.flushing.use-gentle-flusher", true);
   /** How often, on average, flush each index to the disk */
-  private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(5);
+  private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(FlushingDaemon.FLUSHING_PERIOD_IN_SECONDS);
 
 
   private volatile RegisteredIndexes myRegisteredIndexes;

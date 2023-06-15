@@ -13,6 +13,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -445,7 +446,7 @@ public final class AnnotationsHighlightUtil {
             IntentionAction action1 =
               QUICK_FIX_FACTORY.createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
             info.registerFix(action1, null, null, null, null);
-            IntentionAction action = new ReplaceVarWithExplicitTypeFix(typeElement);
+            ModCommandAction action = new ReplaceVarWithExplicitTypeFix(typeElement);
             info.registerFix(action, null, null, null, null);
             return info;
           }

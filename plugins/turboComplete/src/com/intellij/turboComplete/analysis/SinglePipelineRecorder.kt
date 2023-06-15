@@ -7,7 +7,7 @@ import kotlin.properties.Delegates
 
 class SinglePipelineRecorder : PipelineListener {
   private var collectionStarted by Delegates.notNull<Long>()
-  private var collectionFinished by Delegates.notNull<Long>()
+  private var collectionMaybeFinished: Long? = null
   private val generatorCollected: MutableMap<CompletionKind, Long> = mutableMapOf()
   private val generatorStarted: MutableMap<CompletionKind, Long> = mutableMapOf()
   private val generatorFinished: MutableMap<CompletionKind, Long> = mutableMapOf()
@@ -26,7 +26,7 @@ class SinglePipelineRecorder : PipelineListener {
   }
 
   override fun onCollectionFinished() {
-    collectionFinished = System.currentTimeMillis()
+    collectionMaybeFinished = System.currentTimeMillis()
   }
 
   override fun onGenerationStarted(suggestionGenerator: SuggestionGenerator) {
@@ -37,11 +37,13 @@ class SinglePipelineRecorder : PipelineListener {
     generatorFinished[suggestionGenerator.kind] = System.currentTimeMillis()
   }
 
-  fun captureChronologyDurations(): PipelineChronologyDurations {
-    return PipelineChronologyDurations(
-      generation = collectionFinished - collectionStarted,
-      ranking = rankingDurations.sum(),
-    )
+  fun captureChronologyDurations(): PipelineChronologyDurations? {
+    return collectionMaybeFinished?.let { collectionFinished ->
+      PipelineChronologyDurations(
+        generation = collectionFinished - collectionStarted,
+        ranking = rankingDurations.sum(),
+      )
+    }
   }
 
   override fun onRankingStarted() {

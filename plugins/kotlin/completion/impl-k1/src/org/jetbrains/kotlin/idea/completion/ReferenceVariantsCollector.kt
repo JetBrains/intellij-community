@@ -294,16 +294,15 @@ class ReferenceVariantsCollector(
             if (descriptor.isArtificialImportAliasedDescriptor) return false // do not exclude aliased descriptors - they cannot be completed via indices
             val containingPackage = descriptor.containingDeclaration as? PackageFragmentDescriptor ?: return false
             // TODO: temporary solution for Android synthetic extensions
-            if (containingPackage.fqName.asString().startsWith("kotlinx.android.synthetic.")) return false
-            return true
+            return !containingPackage.fqName.asString().startsWith("kotlinx.android.synthetic.")
         }
 
         override val fullyExcludedDescriptorKinds: Int get() = 0
     }
 
     private fun isDataClassComponentFunction(descriptor: DeclarationDescriptor): Boolean =
-        descriptor is FunctionDescriptor && descriptor.isOperator && DataClassResolver.isComponentLike(descriptor.name) && descriptor.kind == CallableMemberDescriptor.Kind
-            .SYNTHESIZED
+        descriptor is FunctionDescriptor && descriptor.isOperator &&
+                DataClassResolver.isComponentLike(descriptor.name) && descriptor.kind == CallableMemberDescriptor.Kind.SYNTHESIZED
 
     private fun isEnumEntriesProperty(descriptor: DeclarationDescriptor): Boolean {
         return descriptor.name == StandardNames.ENUM_ENTRIES &&

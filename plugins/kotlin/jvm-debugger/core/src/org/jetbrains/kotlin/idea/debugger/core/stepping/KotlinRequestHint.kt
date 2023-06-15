@@ -143,11 +143,7 @@ class KotlinStepOverRequestHint(
             }
         }
 
-        if (endArgs[endArgs.size - 1].descriptor != "Ljava/lang/Object;") {
-            return false
-        }
-
-        return true
+        return endArgs[endArgs.size - 1].descriptor == "Ljava/lang/Object;"
     }
 
     private fun installCoroutineResumedBreakpoint(context: SuspendContextImpl): Boolean {

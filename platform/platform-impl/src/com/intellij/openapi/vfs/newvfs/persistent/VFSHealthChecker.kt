@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.JulLogger
 import com.intellij.openapi.diagnostic.Logger
@@ -14,6 +15,7 @@ import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.DataEnumeratorEx
+import com.intellij.util.io.PowerStatus
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import kotlinx.coroutines.*
 import java.io.IOException
@@ -30,14 +32,15 @@ import kotlin.time.toDuration
 
 object VFSHealthCheckerConstants {
   @JvmStatic
-  val HEALTH_CHECKING_ENABLED = SystemProperties.getBooleanProperty("vfs.health-check.enabled", false)
+  val HEALTH_CHECKING_ENABLED = SystemProperties.getBooleanProperty("vfs.health-check.enabled",
+                                                                    ApplicationManager.getApplication().isEAP)
 
   @JvmStatic
   val HEALTH_CHECKING_PERIOD_MS = SystemProperties.getIntProperty("vfs.health-check.checking-period-ms",
                                                                   1.hours.inWholeMilliseconds.toInt())
 
   @JvmStatic
-  val LOG : Logger = FSRecords.LOG
+  val LOG: Logger = FSRecords.LOG
 }
 
 
@@ -55,13 +58,22 @@ class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
         while (isActive && !FSRecords.implOrFail().isDisposed) {
           delay(checkingPeriod)
 
-          //TODO RC: use IdleTracker.getInstance() to launch checkup on next _idle_ period?
+          if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) {
+            delay(checkingPeriod) //make it twice rarer
+          }
+          //MAYBE RC: track FSRecords.getLocalModCount() to run the check only if there are enough changes
+          //          since the last check.
+
+          //MAYBE RC: use IdleTracker.getInstance().events to launch checkup on next _idle_ period?
           launch(Dispatchers.IO) {
-            //TODO RC: show a progress bar -- or better not bother user?
+            //MAYBE RC: show a progress bar -- or better not bother user?
             doCheckupAndReportResults()
           }
         }
       }
+    }
+    else {
+      LOG.info("VFS health-check disabled")
     }
   }
 
@@ -151,7 +163,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val allRoots = IntOpenHashSet(impl.listRoots())
     return report.apply {
       val invalidFlagsMask = PersistentFS.Flags.getAllValidFlags().inv()
-      for (fileId in FSRecords.MIN_REGULAR_FILE_ID .. maxAllocatedID) {
+      for (fileId in FSRecords.MIN_REGULAR_FILE_ID..maxAllocatedID) {
         try {
           val nameId = fileRecords.getNameId(fileId)
           val parentId = fileRecords.getParent(fileId)
@@ -198,7 +210,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             }
             try {
               //just ensure storage has the record 
-              contentsStorage.readStream(contentId).use { _ ->  }
+              contentsStorage.readStream(contentId).use { _ -> }
             }
             catch (e: IOException) {
               unresolvableContentIds++

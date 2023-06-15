@@ -251,6 +251,10 @@ public abstract class ActionPlaces {
     return ourPopupPlaces.contains(place) || place.startsWith(POPUP_PREFIX);
   }
 
+  public static boolean isNewUiToolbarPlace(@NotNull String place) {
+    return place.startsWith(NEW_UI_RUN_TOOLBAR);
+  }
+
   public static boolean isCommonPlace(@NotNull String place) {
     return ourPopupPlaces.contains(place) || ourCommonPlaces.contains(place) ||
            place.startsWith(POPUP_PREFIX) && isCommonPlace(place.substring(POPUP_PREFIX.length()));

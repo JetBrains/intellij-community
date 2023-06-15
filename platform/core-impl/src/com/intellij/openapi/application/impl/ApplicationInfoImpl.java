@@ -343,6 +343,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
+    requireNonNull(mySvgIconUrl, "Missing attribute: //icon@svg");
+    requireNonNull(mySmallSvgIconUrl, "Missing attribute: //icon@svg-small");
+
     overrideFromProperties();
 
     essentialPluginsIds.sort(null);
@@ -515,16 +518,16 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public @Nullable String getApplicationSvgIconUrl() {
+  public @NotNull String getApplicationSvgIconUrl() {
     return isEAP() && mySvgEapIconUrl != null ? mySvgEapIconUrl : mySvgIconUrl;
   }
 
   @Override
-  public @Nullable String getSmallApplicationSvgIconUrl() {
+  public @NotNull String getSmallApplicationSvgIconUrl() {
     return getSmallApplicationSvgIconUrl(isEAP());
   }
 
-  public @Nullable String getSmallApplicationSvgIconUrl(boolean isEap) {
+  public @NotNull String getSmallApplicationSvgIconUrl(boolean isEap) {
     return isEap && mySmallSvgEapIconUrl != null ? mySmallSvgEapIconUrl : mySmallSvgIconUrl;
   }
 

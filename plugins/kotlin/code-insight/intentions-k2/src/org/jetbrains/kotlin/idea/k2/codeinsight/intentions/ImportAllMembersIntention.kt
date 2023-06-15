@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
@@ -60,9 +61,7 @@ internal class ImportAllMembersIntention :
             return null
         }
         if (element.getQualifiedExpressionForReceiver()?.isEnumSyntheticMethodCall(target) == true) return null
-        with (this@KtAnalysisSession) {
-            if (element.containingKtFile.hasImportedEnumSyntheticMethodCall()) return null
-        }
+        if (element.containingKtFile.hasImportedEnumSyntheticMethodCall()) return null
 
         val shortenCommand = collectPossibleReferenceShortenings(
             element.containingKtFile,
@@ -92,7 +91,25 @@ internal class ImportAllMembersIntention :
     }
 
     override fun apply(element: KtExpression, context: Context, project: Project, editor: Editor?) {
-        context.shortenCommand.invokeShortening()
+        val shortenCommand = context.shortenCommand
+        val file = shortenCommand.targetFile.element ?: return
+        removeExistingImportsWhichWillBecomeRedundantAfterAddingStarImports(shortenCommand.starImportsToAdd, file)
+        shortenCommand.invokeShortening()
+    }
+
+    private fun removeExistingImportsWhichWillBecomeRedundantAfterAddingStarImports(
+        starImportsToAdd: List<FqName>,
+        ktFile: KtFile
+    ) {
+        for (starImportFqName in starImportsToAdd) {
+            for (existingImportFromFile in ktFile.importDirectives) {
+                if (existingImportFromFile.alias == null
+                    && existingImportFromFile.importPath?.fqName?.parent() == starImportFqName
+                ) {
+                    existingImportFromFile.delete()
+                }
+            }
+        }
     }
 }
 

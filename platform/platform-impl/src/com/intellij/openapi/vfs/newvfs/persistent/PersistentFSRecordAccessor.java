@@ -86,7 +86,8 @@ final class PersistentFSRecordAccessor {
       final boolean recordInFreeList = freeRecords.contains(id);
       final boolean recordMarkedAsFree = hasDeletedFlag(flags);
       if (recordMarkedAsFree) {
-        LOG.assertTrue(recordInFreeList, "Record, marked free, not in free list: " + id);
+        //Record is marked free, but not in free list: it is OK, we fill freeList on VFS load only,
+        //  so records free-ed in current session are not in it
       }
       else {
         LOG.assertTrue(!recordInFreeList, "Record, not marked free, in free list: " + id);

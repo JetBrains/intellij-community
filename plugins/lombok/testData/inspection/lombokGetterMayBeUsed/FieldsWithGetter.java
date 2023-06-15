@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-<warning descr="Class 'FieldsWithGetter' may use Lombok @Getter">public class FieldsWithGetter {
+public class <warning descr="Class 'FieldsWithGetter' may use Lombok @Getter">FieldsWithGetter</warning> {
   private int bar;
 
   public int getBar() {
@@ -24,7 +24,7 @@
       return InstanceField.this.fooBar;
     }</warning>
   }
-  <warning descr="Class 'AllInstanceFields' may use Lombok @Getter">public class AllInstanceFields {
+  public class <warning descr="Class 'AllInstanceFields' may use Lombok @Getter">AllInstanceFields</warning> {
     private int bar;
     private boolean Baz;
     private int fooBar;
@@ -41,7 +41,7 @@
     public int getFooBar() {
       return AllInstanceFields.this.fooBar;
     }
-  }</warning>
+  }
   public class StaticField {
     private static int bar;
     private int fieldWithoutGetter;
@@ -50,4 +50,4 @@
       return bar;
     }</warning>
   }
-}</warning>
+}

@@ -63,8 +63,7 @@ private data class IdPerCount(val id: Int, var usageCount: Long) {
 
     other as IdPerCount
 
-    if (id != other.id) return false
-    return true
+    return id == other.id
   }
 
   override fun hashCode() = 31 * id.hashCode()

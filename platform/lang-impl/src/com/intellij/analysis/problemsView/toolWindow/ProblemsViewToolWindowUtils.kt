@@ -1,11 +1,16 @@
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 object ProblemsViewToolWindowUtils {
   fun selectContent(contentManager: ContentManager, id: String) {
@@ -41,6 +46,25 @@ object ProblemsViewToolWindowUtils {
 
       if (!toolWindow.isVisible) toolWindow.show {
         toolWindow.contentManager.setSelectedContent(content, true)
+      } else {
+        toolWindow.contentManager.setSelectedContent(content, true)
+      }
+    }
+  }
+
+  suspend fun selectTabAsync(project: Project, id: String) {
+    val toolWindow = getToolWindow(project) ?: return
+
+    withContext(Dispatchers.EDT) {
+      val content = getContentById(project, id) ?: return@withContext
+
+      if (!toolWindow.isVisible) {
+        suspendCoroutine { continuation ->
+          toolWindow.show {
+            toolWindow.contentManager.setSelectedContent(content, true)
+            continuation.resume(Unit)
+          }
+        }
       } else {
         toolWindow.contentManager.setSelectedContent(content, true)
       }

@@ -88,6 +88,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   private lateinit var tree: Tree
 
+  private val treeStateHolder = project.service<GitBranchesPopupTreeStateHolder>()
+
   private var showingChildPath: TreePath? = null
   private var pendingChildPath: TreePath? = null
 
@@ -167,6 +169,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
       overrideTreeActions(it)
       addTreeListeners(it)
       Disposer.register(this) {
+        treeStateHolder.saveStateFrom(it)
         it.model = null
       }
     }
@@ -514,6 +517,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   override fun afterShow() {
     selectPreferred()
     traverseNodesAndExpand()
+    if (!isChild()) {
+      treeStateHolder.applyStateTo(tree)
+    }
     if (treeStep.isSpeedSearchEnabled) {
       installSpeedSearchActions()
     }

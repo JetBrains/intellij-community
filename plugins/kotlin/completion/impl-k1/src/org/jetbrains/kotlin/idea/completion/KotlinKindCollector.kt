@@ -18,6 +18,7 @@ import com.intellij.platform.ml.impl.turboComplete.KindCollector
 import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorConsumer
 import com.intellij.psi.PsiComment
 import com.intellij.util.indexing.DumbModeAccessType
+import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.StringTemplateCompletion
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletionSession
 import org.jetbrains.kotlin.idea.completion.stringTemplates.wrapLookupElementForStringTemplateAfterDotCompletion
@@ -45,34 +46,34 @@ class KotlinKindCollector : KindCollector {
   )
 
   override fun shouldBeCalled(parameters: CompletionParameters): Boolean {
+      // executing old completion code in K2 plugin does not make sense
+      if (isK2Plugin()) return false
+
       val position = parameters.position
       val parametersOriginFile = parameters.originalFile
       return position.containingFile is KtFile && parametersOriginFile is KtFile
   }
 
   override fun collectKinds(
-      parameters: CompletionParameters,
-      generatorConsumer: SuggestionGeneratorConsumer,
-      result: CompletionResultSet,
-      resultPolicyController: PolicyController
+    parameters: CompletionParameters,
+    generatorConsumer: SuggestionGeneratorConsumer,
+    result: CompletionResultSet
   ) {
     if (!shouldBeCalled(parameters)) return
 
     StringTemplateCompletion.correctParametersForInStringTemplateCompletion(parameters)?.let { correctedParameters ->
-      generateCompletionKinds(correctedParameters, generatorConsumer, result, resultPolicyController,
-                              ::wrapLookupElementForStringTemplateAfterDotCompletion)
+      generateCompletionKinds(correctedParameters, generatorConsumer, result, ::wrapLookupElementForStringTemplateAfterDotCompletion)
       return
     }
 
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-      generateCompletionKinds(parameters, generatorConsumer, result, resultPolicyController, null)
+      generateCompletionKinds(parameters, generatorConsumer, result, null)
     })
   }
 
   private fun generateCompletionKinds(parameters: CompletionParameters,
                                       suggestionGeneratorConsumer: SuggestionGeneratorConsumer,
                                       result: CompletionResultSet,
-                                      resultPolicyController: PolicyController,
                                       lookupElementPostProcessor: ((LookupElement) -> LookupElement)?
   ) {
     val position = parameters.position
@@ -102,6 +103,8 @@ class KotlinKindCollector : KindCollector {
     }
 
     result.restartCompletionWhenNothingMatches()
+
+    val resultPolicyController = PolicyController(result)
 
     val configuration = CompletionSessionConfiguration(parameters)
     if (parameters.completionType == CompletionType.BASIC) {

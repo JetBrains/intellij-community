@@ -69,7 +69,7 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
 
     presentation.isPopupGroup = actions.size > 1
     presentation.isPerformGroup = actions.size == 1
-    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup);
+    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup)
     presentation.isVisible = actions.isNotEmpty()
   }
 

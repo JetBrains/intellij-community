@@ -147,7 +147,9 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       val provider = MyBytecodeProvider(files)
       val saver = MyResultSaver()
 
-      val decompiler = BaseDecompiler(provider, saver, options, myLogger.value, SimpleCancellationManager())
+      val maxSecProcessingMethod = options[IFernflowerPreferences.MAX_PROCESSING_METHOD]?.toString()?.toIntOrNull() ?: 0
+      val decompiler = BaseDecompiler(provider, saver, options, myLogger.value,
+                                      IdeaCancellationManager(maxSecProcessingMethod))
       files.forEach { decompiler.addSource(File(it.path)) }
       try {
         decompiler.decompileContext()

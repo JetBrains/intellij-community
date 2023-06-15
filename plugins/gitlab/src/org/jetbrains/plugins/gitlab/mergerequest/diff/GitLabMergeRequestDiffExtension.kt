@@ -17,9 +17,12 @@ import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
+import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.Side
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.diff.impl.GenericDataProvider
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -45,6 +48,13 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
     val reviewVm = context.getUserData(GitLabMergeRequestDiffReviewViewModel.KEY) ?: return
 
     val change = request.getUserData(ChangeDiffRequestProducer.CHANGE_KEY) ?: return
+
+    val dataProvider = GenericDataProvider().apply {
+      putData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY, reviewVm)
+    }
+    context.putUserData(DiffUserDataKeys.DATA_PROVIDER, dataProvider)
+    context.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS,
+                        listOf(ActionManager.getInstance().getAction("GitLab.MergeRequest.Review.Submit")))
 
     val cs = DisposingMainScope(viewer)
     val changeVmFlow = reviewVm.getViewModelFor(change).filterNotNull()

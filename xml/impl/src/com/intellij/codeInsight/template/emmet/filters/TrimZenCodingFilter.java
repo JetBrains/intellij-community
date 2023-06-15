@@ -61,7 +61,7 @@ public class TrimZenCodingFilter extends ZenCodingFilter {
             final XmlTagValue tagValue = tag.getValue();
             final Matcher matcher = PATTERN.matcher(tagValue.getText());
             if (matcher.matches()) {
-              ApplicationManager.getApplication().runWriteAction(() -> tagValue.setText(matcher.replaceAll("")));
+              tagValue.setText(matcher.replaceAll(""));
             }
           }
           tag.acceptChildren(this);

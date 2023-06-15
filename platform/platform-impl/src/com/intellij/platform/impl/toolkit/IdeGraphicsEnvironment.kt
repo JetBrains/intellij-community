@@ -18,7 +18,7 @@ class IdeGraphicsEnvironment: SunGraphicsEnvironment() {
 
     @JvmStatic
     val isRealHeadless: Boolean
-      get() = PlatformGraphicsInfo.getDefaultHeadlessProperty();
+      get() = PlatformGraphicsInfo.getDefaultHeadlessProperty()
 
     @JvmStatic
     private fun getClientInstance(): ClientGraphicsEnvironment {

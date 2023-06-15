@@ -248,7 +248,7 @@ class JarPackager private constructor(private val outputDir: Path, private val c
       val moduleOutputDir = context.getModuleOutputDir(context.findRequiredModule(moduleName))
       val extraExcludes = layout?.moduleExcludes?.get(moduleName) ?: emptyList()
 
-      val packToDir = isUnpackedDist && layout is PlatformLayout && patchedDirs.isEmpty() && extraExcludes.isEmpty()
+      val packToDir = isUnpackedDist && layout is PlatformLayout && patchedContent.isEmpty() && extraExcludes.isEmpty()
 
       val descriptor = jarDescriptors.computeIfAbsent(outputDir.resolve(item.relativeOutputFile)) { jarFile ->
         createJarDescriptor(outputDir = outputDir, targetFile = jarFile, context = context)
@@ -607,9 +607,10 @@ private suspend fun buildJars(descriptors: Collection<JarDescriptor>,
           object : NativeFileHandler {
             override val sourceToNativeFiles = HashMap<ZipSource, List<String>>()
 
-            @Suppress("SpellCheckingInspection")
-            override suspend fun sign(name: String, data: ByteBuffer): Path? {
-              if (!context.isMacCodeSignEnabled || context.proprietaryBuildTools.signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
+            @Suppress("SpellCheckingInspection", "GrazieInspection")
+            override suspend fun sign(name: String, dataSupplier: () -> ByteBuffer): Path? {
+              if (!context.isMacCodeSignEnabled ||
+                  context.proprietaryBuildTools.signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
                 return null
               }
 
@@ -619,6 +620,7 @@ private suspend fun buildJars(descriptors: Collection<JarDescriptor>,
                 return null
               }
 
+              val data = dataSupplier()
               data.mark()
               val byteBufferChannel = ByteBufferChannel(data)
               if (byteBufferChannel.DetectFileType().first != FileType.MachO) {

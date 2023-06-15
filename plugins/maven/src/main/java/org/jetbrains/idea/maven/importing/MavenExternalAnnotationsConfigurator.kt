@@ -58,11 +58,7 @@ private class MavenExternalAnnotationsConfigurator : MavenImporter("org.apache.m
     }
 
     val resolvers = getResolvers()
-    if (resolvers.isEmpty()) {
-      return false
-    }
-
-    return true
+    return resolvers.isNotEmpty()
   }
 
   private fun getResolvers(): List<ExternalAnnotationsArtifactsResolver> = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList

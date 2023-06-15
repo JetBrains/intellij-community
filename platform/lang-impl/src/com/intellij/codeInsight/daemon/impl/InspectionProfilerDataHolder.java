@@ -35,7 +35,7 @@ final class InspectionProfilerDataHolder {
 
   /**
    * @param latencies       array of 3 elements for (ERROR,WARNING,OTHER) latency infos
-   * @param favoriteElement tool id -> PsiElement which produced some diagnostics during last run
+   * @param favoriteElement tool id -> {@link PsiElement} which produced some diagnostics during last run
    */
   private record InspectionFileData(@NotNull Latencies @NotNull [] latencies, @NotNull Map<String, PsiElement> favoriteElement) {
   }
@@ -44,7 +44,7 @@ final class InspectionProfilerDataHolder {
     return project.getService(InspectionProfilerDataHolder.class);
   }
 
-  private InspectionProfilerDataHolder(Project project) {
+  private InspectionProfilerDataHolder(@NotNull Project project) {
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
       @Override
@@ -108,7 +108,8 @@ final class InspectionProfilerDataHolder {
         minId = context.tool.getID();
       }
     }
-    String topSmallestLatenciesStat(String mySeverity) {
+
+    String topSmallestLatenciesStat(@NotNull String mySeverity) {
       List<Pair<String, Long>> result = new ArrayList<>();
       int REPORT_TOP_N = 5;
       //noinspection unchecked
@@ -127,9 +128,14 @@ final class InspectionProfilerDataHolder {
   }
 
   /**
-   * after inspections completed, save their latencies (from corresponding {@link InspectionRunner.InspectionContext#holder}) to use later in {@link #sort(PsiFile, List)}
+   * after inspections completed, save their latencies (from corresponding {@link InspectionRunner.InspectionContext#holder})
+   * to use later in {@link #sortAndRetrieveFavoriteElement(PsiFile, List)}
    */
-  void saveStats(@NotNull PsiFile file, @NotNull List<? extends InspectionRunner.InspectionContext> contexts, long totalHighlightingNanos) {
+  void saveStats(@NotNull PsiFile psiFile, @NotNull List<? extends InspectionRunner.InspectionContext> contexts, long totalHighlightingNanos) {
+    if (!psiFile.getViewProvider().isPhysical()) {
+      // ignore editor text fields/consoles etc
+      return;
+    }
     Latencies[] latencies = new Latencies[3]; // ERROR,WARNING,OTHER
     Map<String, PsiElement> favoriteElement = new HashMap<>();
     Arrays.setAll(latencies, __ -> new Latencies());
@@ -141,26 +147,29 @@ final class InspectionProfilerDataHolder {
         favoriteElement.putIfAbsent(context.tool.getID(), context.myFavoriteElement);
       }
     }
-    data.put(file, new InspectionFileData(latencies, favoriteElement));
+    data.put(psiFile, new InspectionFileData(latencies, favoriteElement));
     if (LOG.isTraceEnabled()) {
       String s0 = latencies[0].topSmallestLatenciesStat("ERROR");
       String s1 = latencies[1].topSmallestLatenciesStat("WARNING");
       String s2 = latencies[2].topSmallestLatenciesStat("INFO");
       LOG.trace(String.format("Inspections latencies stat: total tools: %4d; total highlighting time: %4dms; in %s:",
                               contexts.size(),
-                              totalHighlightingNanos / 1_000_000, file.getName()) +
+                              totalHighlightingNanos / 1_000_000, psiFile.getName()) +
                               StringUtil.notNullize(s0)+
                               StringUtil.notNullize(s1)+
                               StringUtil.notNullize(s2));
     }
   }
 
-  // rearrange contexts in 'init' according to their inspection tools statistics gathered earlier:
-  // - first, contexts with inspection tools which produced errors in previous run, ordered by latency to the 1st created error
-  // - second, contexts with inspection tools which produced warnings in previous run, ordered by latency to the 1st created warning
-  // - last, contexts with inspection tools which produced all other problems in previous run, ordered by latency to the 1st created problem
-  void sort(@NotNull PsiFile file, @NotNull List<? extends InspectionRunner.InspectionContext> init) {
-    InspectionFileData data = this.data.get(file);
+  /**
+   * rearrange contexts in 'init' according to their inspection tools statistics gathered earlier:
+   * - first, contexts with inspection tools which produced errors in previous run, ordered by latency to the 1st created error
+   * - second, contexts with inspection tools which produced warnings in previous run, ordered by latency to the 1st created warning
+   * - last, contexts with inspection tools which produced all other problems in previous run, ordered by latency to the 1st created problem
+   * store the favorite element (i.e., the one with the lowest latency saved from the previous inspection run) to the {@link InspectionRunner.InspectionContext#myFavoriteElement}
+   */
+  void sortAndRetrieveFavoriteElement(@NotNull PsiFile psiFile, @NotNull List<? extends InspectionRunner.InspectionContext> init) {
+    InspectionFileData data = this.data.get(psiFile);
     if (data == null) {
       // no statistics => do nothing
       return;
@@ -175,20 +184,7 @@ final class InspectionProfilerDataHolder {
       }
       return 0;
     });
-  }
 
-  private static int compareLatencies(String id1, String id2, @NotNull Object2LongMap<String> latencies) {
-    long latency1 = latencies.getOrDefault(id1, Long.MAX_VALUE);
-    long latency2 = latencies.getOrDefault(id2, Long.MAX_VALUE);
-    return Long.compare(latency1, latency2);
-  }
-
-  void retrieveFavoriteElements(@NotNull PsiFile file, @NotNull List<? extends InspectionRunner.InspectionContext> init) {
-    InspectionFileData data = this.data.get(file);
-    if (data == null) {
-      // no statistics => do nothing
-      return;
-    }
     Map<String, PsiElement> favoriteElement = data.favoriteElement;
     for (InspectionRunner.InspectionContext context : init) {
       PsiElement element = favoriteElement.get(context.tool.getID());
@@ -199,5 +195,11 @@ final class InspectionProfilerDataHolder {
         context.myFavoriteElement = element;
       }
     }
+  }
+
+  private static int compareLatencies(String id1, String id2, @NotNull Object2LongMap<String> latencies) {
+    long latency1 = latencies.getOrDefault(id1, Long.MAX_VALUE);
+    long latency2 = latencies.getOrDefault(id2, Long.MAX_VALUE);
+    return Long.compare(latency1, latency2);
   }
 }

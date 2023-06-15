@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
-import com.intellij.compiler.cache.git.GitRepositoryUtil;
 import com.intellij.compiler.cache.CompilerCacheLoadingSettings;
+import com.intellij.compiler.cache.git.GitRepositoryUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -29,9 +29,10 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   public final void handleBuildMessage(final Channel channel, final UUID sessionId, final CmdlineRemoteProto.Message.BuilderMessage msg) {
     //noinspection EnumSwitchStatementWhichMissesCases
     switch (msg.getType()) {
-      case BUILD_EVENT:
+      case BUILD_EVENT -> {
         final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event = msg.getBuildEvent();
-        if (event.getEventType() == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type.CUSTOM_BUILDER_MESSAGE && event.hasCustomBuilderMessage()) {
+        if (event.getEventType() == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type.CUSTOM_BUILDER_MESSAGE &&
+            event.hasCustomBuilderMessage()) {
           final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message = event.getCustomBuilderMessage();
           if (!myProject.isDisposed()) {
             myProject.getMessageBus().syncPublisher(CustomBuilderMessageHandler.TOPIC).messageReceived(
@@ -40,15 +41,15 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
           }
         }
         handleBuildEvent(sessionId, event);
-        break;
-      case COMPILE_MESSAGE:
+      }
+      case COMPILE_MESSAGE -> {
         CmdlineRemoteProto.Message.BuilderMessage.CompileMessage compileMessage = msg.getCompileMessage();
         handleCompileMessage(sessionId, compileMessage);
         if (compileMessage.getKind() == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.INTERNAL_BUILDER_ERROR) {
           LOG.error("Internal build error:\n" + compileMessage.getText());
         }
-        break;
-      case CACHE_DOWNLOAD_MESSAGE:
+      }
+      case CACHE_DOWNLOAD_MESSAGE -> {
         CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage cacheDownloadMessage = msg.getCacheDownloadMessage();
         ProgressIndicator progressIndicator = getProgressIndicator();
         progressIndicator.setIndeterminate(false);
@@ -58,19 +59,18 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         if (cacheDownloadMessage.hasDone()) {
           progressIndicator.setFraction(cacheDownloadMessage.getDone());
         }
-        break;
-      case SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE:
-        CmdlineRemoteProto.Message.BuilderMessage.CommitAndDownloadStatistics downloadStatisticsMessage = msg.getCommitAndDownloadStatistics();
+      }
+      case SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE -> {
+        CmdlineRemoteProto.Message.BuilderMessage.CommitAndDownloadStatistics downloadStatisticsMessage =
+          msg.getCommitAndDownloadStatistics();
         GitRepositoryUtil.saveLatestDownloadedCommit(downloadStatisticsMessage.getCommit());
         CompilerCacheLoadingSettings.saveApproximateDecompressionSpeed(downloadStatisticsMessage.getDecompressionSpeed());
         CompilerCacheLoadingSettings.saveApproximateDeletionSpeed(downloadStatisticsMessage.getDeletionSpeed());
-        break;
-      case SAVE_LATEST_BUILT_COMMIT_MESSAGE:
-        GitRepositoryUtil.saveLatestBuiltMasterCommit(myProject);
-        break;
-      case CONSTANT_SEARCH_TASK:
+      }
+      case SAVE_LATEST_BUILT_COMMIT_MESSAGE -> GitRepositoryUtil.saveLatestBuiltMasterCommit(myProject);
+      case CONSTANT_SEARCH_TASK -> {
         // ignored, because the functionality is deprecated
-        break;
+      }
     }
   }
 

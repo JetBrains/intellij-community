@@ -66,6 +66,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
   fun `test annotation`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.lang.SafeVarargs;
       class Annotation {
         @<error descr="Usage of API documented as @since 1.7+">SafeVarargs</error>
         public final void a(java.util.List<String>... ls) {}

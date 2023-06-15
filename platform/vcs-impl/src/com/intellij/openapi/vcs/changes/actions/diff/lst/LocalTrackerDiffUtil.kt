@@ -443,19 +443,21 @@ object LocalTrackerDiffUtil {
           isExclude -> ActionsBundle.message("action.Vcs.Diff.ExcludeChangedLinesFromCommit.text")
           else -> ActionsBundle.message("action.Vcs.Diff.IncludeChangedLinesIntoCommit.text")
         }
+
+        e.presentation.isEnabled = affectedRanges.any {
+          val selectionState = checkPartialSelectionState(it, selectedLines)
+          if (isExclude) selectionState.hasIncluded else selectionState.hasExcluded
+        }
       }
       else {
         e.presentation.text = when {
           isExclude -> VcsBundle.message("changes.ExcludeChangedLinesFromCommit.chunks.action.text")
           else -> VcsBundle.message("changes.IncludeChangedLinesIntoCommit.chunks.action.text")
         }
-      }
-      e.presentation.isEnabled = affectedRanges.any {
-        if (isExclude) {
-          !it.exclusionState.isFullyExcluded
-        }
-        else {
-          !it.exclusionState.isFullyIncluded
+
+        e.presentation.isEnabled = affectedRanges.any {
+          val exclusionState = it.exclusionState
+          if (isExclude) exclusionState.hasIncluded else exclusionState.hasExcluded
         }
       }
     }
@@ -495,15 +497,65 @@ object LocalTrackerDiffUtil {
       if (range.exclusionState is RangeExclusionState.Partial) return true
 
       if (selectedLines.localLines != null && range.line1 != range.line2 &&
-          selectedLines.localLines.nextClearBit(range.line1) < range.line2) {
+          !selectionCovers(selectedLines.localLines, range.line1, range.line2)) {
         return true
       }
       if (selectedLines.vcsLines != null && range.vcsLine1 != range.vcsLine2 &&
-          selectedLines.vcsLines.nextClearBit(range.vcsLine1) < range.vcsLine2) {
+          !selectionCovers(selectedLines.vcsLines, range.vcsLine1, range.vcsLine2)) {
         return true
       }
       return false
     }
+
+    private fun checkPartialSelectionState(range: LocalRange, selectedLines: SelectedTrackerLine): SelectionState {
+      val exclusionState = range.exclusionState
+      if (exclusionState !is RangeExclusionState.Partial) {
+        return SelectionState(exclusionState.hasExcluded, exclusionState.hasIncluded)
+      }
+
+      var hasExcluded = false
+      var hasIncluded = false
+      if (selectedLines.localLines != null) {
+        val changeStart = range.line1
+        exclusionState.iterateAdditionOffsets { start, end, isIncluded ->
+          if (selectionIntersects(selectedLines.localLines, changeStart + start, changeStart + end)) {
+            if (isIncluded) {
+              hasIncluded = true
+            }
+            else {
+              hasExcluded = true
+            }
+          }
+        }
+      }
+
+      if (selectedLines.vcsLines != null) {
+        val changeStart = range.vcsLine1
+        exclusionState.iterateDeletionOffsets { start, end, isIncluded ->
+          if (selectionIntersects(selectedLines.vcsLines, changeStart + start, changeStart + end)) {
+            if (isIncluded) {
+              hasIncluded = true
+            }
+            else {
+              hasExcluded = true
+            }
+          }
+        }
+      }
+
+      return SelectionState(hasExcluded, hasIncluded)
+    }
+
+    private fun selectionCovers(selection: BitSet, startLine: Int, endLine: Int): Boolean {
+      return selection.nextClearBit(startLine) >= endLine
+    }
+
+    private fun selectionIntersects(selection: BitSet, startLine: Int, endLine: Int): Boolean {
+      val nextSetBit = selection.nextSetBit(startLine)
+      return nextSetBit != -1 && nextSetBit < endLine
+    }
+
+    private class SelectionState(val hasExcluded: Boolean, val hasIncluded: Boolean)
   }
 
   private fun getLocalSelectedLines(changes: List<LocalTrackerChange>): BitSet {

@@ -726,4 +726,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testBooleanOrEquals() { doTest(); }
   public void testDuplicatedByPointlessBooleanInspection() { doTest(); }
   public void testSystemOutNullSource() { doTest(); }
+  public void testPrimitiveTypeFieldInWrapper() { doTest(); }
 }

@@ -97,7 +97,7 @@ internal class GitLabReviewTabComponentFactory(
     val diffBridge = ctx.getDiffBridge(reviewId)
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
       detailsVmFlow.flatMapLatest {
-        it.changesVm.userChangesSelection
+        it.changesVm.changesSelection
       }.collectLatest {
         diffBridge.setChanges(it.toSelection())
       }

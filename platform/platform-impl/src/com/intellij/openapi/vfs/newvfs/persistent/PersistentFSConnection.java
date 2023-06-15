@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
 import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.FlushingDaemon;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
@@ -430,7 +431,7 @@ public final class PersistentFSConnection {
    */
   private class GentleVFSFlusher extends GentleFlusherBase {
     /** How often, on average, flush each index to the disk */
-    private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(5);
+    private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(FlushingDaemon.FLUSHING_PERIOD_IN_SECONDS);
 
 
     private static final int MIN_CONTENTION_QUOTA = 2;

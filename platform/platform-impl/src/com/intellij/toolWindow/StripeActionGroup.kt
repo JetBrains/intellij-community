@@ -80,7 +80,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     }
 
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-      return object : SquareStripeButton(this@MyButtonAction, window) {
+      return object : SquareStripeButton(this@MyButtonAction, window, presentation) {
         override fun isFocused(): Boolean = false
 
         override fun addNotify() {
@@ -135,7 +135,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     init {
       project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
         override fun stateChanged(toolWindowManager: ToolWindowManager) {
-          UIUtil.invokeAndWaitIfNeeded(this@ButtonsRepaintService::repaintButtons)
+          UIUtil.invokeLaterIfNeeded(this@ButtonsRepaintService::repaintButtons)
         }
       })
     }
@@ -152,9 +152,8 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
     @RequiresEdt
     fun repaintButtons() {
-      for (button in buttons.toList()) {
-        button.repaint()
-      }
+      val toolbars = buttons.mapNotNullTo(LinkedHashSet()) { ActionToolbar.findToolbarBy(it) }
+      toolbars.forEach { it.updateActionsImmediately() }
     }
 
     override fun dispose() {

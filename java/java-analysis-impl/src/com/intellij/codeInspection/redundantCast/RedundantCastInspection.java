@@ -17,7 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class RedundantCastInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   private final LocalQuickFix myQuickFixAction;
@@ -82,7 +83,7 @@ public class RedundantCastInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
 
-  private static class AcceptSuggested implements LocalQuickFix {
+  private static class AcceptSuggested extends PsiUpdateModCommandQuickFix {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -90,10 +91,8 @@ public class RedundantCastInspection extends AbstractBaseJavaLocalInspectionTool
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement castTypeElement = descriptor.getPsiElement();
-      PsiTypeCastExpression cast = castTypeElement == null ? null : (PsiTypeCastExpression)castTypeElement.getParent();
-      if (cast != null) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement castTypeElement, @NotNull EditorUpdater updater) {
+      if (castTypeElement.getParent() instanceof PsiTypeCastExpression cast) {
         RemoveRedundantCastUtil.removeCast(cast);
       }
     }

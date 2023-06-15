@@ -219,7 +219,8 @@ public class PyTypeCheckerInspection extends PyInspection {
           }
         }
 
-        if (PyUtil.isInitMethod(node) && !(getExpectedReturnType(node) instanceof PyNoneType)) {
+        if (PyUtil.isInitMethod(node) && !(getExpectedReturnType(node) instanceof PyNoneType
+                                           || PyTypingTypeProvider.isNoReturn(node, myTypeEvalContext))) {
           registerProblem(annotation != null ? annotation.getValue() : node.getTypeComment(),
                           PyPsiBundle.message("INSP.type.checker.init.should.return.none"));
         }

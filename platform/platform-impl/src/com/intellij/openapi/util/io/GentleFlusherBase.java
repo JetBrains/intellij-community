@@ -131,7 +131,7 @@ public abstract class GentleFlusherBase implements Runnable, Closeable {
   public synchronized void run() {
     try {
       if (betterPostponeFlushNow()) {
-        log.debug("Flush short-circuit -> next turn scheduled early");
+        log.debug("Flush short-circuit -> schedule next turn earlier");
         scheduledFuture = scheduler.schedule(this, quickReCheckingPeriodMs, MILLISECONDS);
         return;
       }
@@ -254,8 +254,11 @@ public abstract class GentleFlusherBase implements Runnable, Closeable {
   }
 
   protected enum FlushResult {
+    /** Was able to flush everything needed in limits of contention quota -- i.e. without overdraw */
     FLUSHED_ALL,
+    /** Was able to flush something, but not all needed, since available contention quota was not enough */
     HAS_MORE_TO_FLUSH,
+    /** contention quota spent must be == 0 */
     NOTHING_TO_FLUSH_NOW;
 
     public boolean needsMoreToFlush() {

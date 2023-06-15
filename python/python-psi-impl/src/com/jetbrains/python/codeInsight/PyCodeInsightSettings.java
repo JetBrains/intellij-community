@@ -31,11 +31,12 @@ public class PyCodeInsightSettings implements PersistentStateComponent<PyCodeIns
   public boolean RENAME_CLASS_CONTAINING_FILE = true;
   public boolean RENAME_CLASS_INHERITORS = true;
   public boolean RENAME_PARAMETERS_IN_HIERARCHY = true;
-
-  public boolean INSERT_BACKSLASH_ON_WRAP = true;
+  
   public boolean INSERT_SELF_FOR_METHODS = true;
 
   public boolean INSERT_TYPE_DOCSTUB;
+
+  public boolean PARENTHESISE_ON_ENTER;
 
   @Override
   public PyCodeInsightSettings getState() {

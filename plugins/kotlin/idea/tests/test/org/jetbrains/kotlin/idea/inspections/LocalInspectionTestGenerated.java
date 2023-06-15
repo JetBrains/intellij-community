@@ -7682,6 +7682,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/inUnaryAndProperty.kt");
         }
 
+        @TestMetadata("longProperty.kt")
+        public void testLongProperty() throws Exception {
+            runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/longProperty.kt");
+        }
+
+        @TestMetadata("longProperty2.kt")
+        public void testLongProperty2() throws Exception {
+            runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/longProperty2.kt");
+        }
+
         @TestMetadata("multiLineWithOneLineInitializer.kt")
         public void testMultiLineWithOneLineInitializer() throws Exception {
             runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/multiLineWithOneLineInitializer.kt");
@@ -16112,6 +16122,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("delegated.kt")
         public void testDelegated() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryVariable/delegated.kt");
+        }
+
+        @TestMetadata("hasAnnotation.kt")
+        public void testHasAnnotation() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryVariable/hasAnnotation.kt");
         }
 
         @TestMetadata("ifElse.kt")

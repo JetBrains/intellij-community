@@ -42,8 +42,8 @@ class BreakpointChecker {
             .filter { it is KotlinBreakpointType }
     }
 
-    fun check(file: KtFile, line: Int): EnumSet<BreakpointType> {
-        val actualBreakpointTypes = EnumSet.noneOf(BreakpointType::class.java)
+    fun check(file: KtFile, line: Int): List<BreakpointType> {
+        val actualBreakpointTypes = mutableListOf<BreakpointType>()
 
         for (breakpointType in breakpointTypes) {
             val sign = BREAKPOINT_TYPES[breakpointType.javaClass] ?: continue

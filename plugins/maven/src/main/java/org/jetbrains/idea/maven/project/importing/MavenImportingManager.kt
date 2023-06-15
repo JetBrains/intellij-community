@@ -159,7 +159,7 @@ class MavenImportingManager(val project: Project) {
       }
     }
 
-    val vfsRefreshPromise = AsyncPromise<Any?>();
+    val vfsRefreshPromise = AsyncPromise<Any?>()
     VirtualFileManager.getInstance().asyncRefresh {
       vfsRefreshPromise.setResult(null)
     }

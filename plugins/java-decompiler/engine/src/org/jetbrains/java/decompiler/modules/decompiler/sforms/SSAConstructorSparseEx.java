@@ -74,7 +74,7 @@ public class SSAConstructorSparseEx {
     HashSet<String> updated = new HashSet<>();
     do {
       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
-      cancellationManager.checkSavedCancelled();
+      cancellationManager.checkCanceled();
       ssaStatements(dgraph, updated);
       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
     }

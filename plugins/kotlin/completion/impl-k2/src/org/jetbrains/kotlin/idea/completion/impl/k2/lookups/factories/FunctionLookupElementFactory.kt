@@ -13,13 +13,12 @@ import com.intellij.refactoring.suggested.endOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.KotlinCompletionCharFilter
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
@@ -75,7 +74,7 @@ internal class FunctionLookupElementFactory {
                     object : QuotedNamesAwareInsertionHandler() {
                         override fun handleInsert(context: InsertionContext, item: LookupElement) {
                             super.handleInsert(context, item)
-                            context.insertSymbol(argString)
+                            context.insertString(argString)
                         }
                     }
                 ).withTailText(argString, false)

@@ -72,6 +72,7 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
 
   public static final Object FAKE_BALLOON = new Object();
 
+  private final IdeStatusBarImpl myStatusBar;
   private final ProcessPopup myPopup;
   private final ProcessBalloon myBalloon = new ProcessBalloon(3);
 
@@ -106,7 +107,8 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
     }
   };
 
-  InfoAndProgressPanel(@NotNull UISettings uiSettings) {
+  InfoAndProgressPanel(@NotNull UISettings uiSettings, IdeStatusBarImpl statusBar) {
+    myStatusBar = statusBar;
     myMainPanel = NotNullLazyValue.lazy(() -> new InfoAndProgressPanelImpl(uiSettings));
     myUpdateQueue = new MergingUpdateQueue("Progress indicator", 50, true, MergingUpdateQueue.ANY_COMPONENT);
     myPopup = new ProcessPopup(this);
@@ -184,13 +186,13 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
     return myMainPanel.get();
   }
 
-  @NotNull List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
+  @NotNull List<Pair<TaskInfo, ProgressIndicatorEx>> getBackgroundProcesses() {
     synchronized (myOriginals) {
       if (myDisposed || myOriginals.isEmpty()) {
         return Collections.emptyList();
       }
 
-      List<Pair<TaskInfo, ProgressIndicator>> result = new ArrayList<>(myOriginals.size());
+      List<Pair<TaskInfo, ProgressIndicatorEx>> result = new ArrayList<>(myOriginals.size());
       for (int i = 0; i < myOriginals.size(); i++) {
         result.add(new Pair<>(myInfos.get(i), myOriginals.get(i)));
       }
@@ -268,6 +270,7 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
     Disposer.dispose(progress);
     if (progress.isCompact()) {
       myBalloon.removeIndicator(getRootPane(), progress);
+      myStatusBar.notifyProgressRemoved();
     }
   }
 

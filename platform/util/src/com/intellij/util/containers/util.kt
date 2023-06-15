@@ -320,3 +320,5 @@ fun <Node> generateRecursiveSequence(initialSequence: Sequence<Node>, children: 
  * Returns a new sequence either of single given element, if it is not null, or empty sequence if the element is null.
  */
 fun <T : Any> sequenceOfNotNull(element: T?): Sequence<T> = if (element == null) emptySequence() else sequenceOf(element)
+
+fun <K, V : Any> Map<K, V>.reverse(): Map<V, K> = map { (k, v) -> v to k }.toMap()

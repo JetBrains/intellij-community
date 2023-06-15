@@ -48,9 +48,10 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
         version: IdeKotlinVersion,
         collector: NotificationMessageCollector,
         filesToOpen: MutableCollection<PsiFile>,
-        addVersion: Boolean
+        addVersion: Boolean,
+        useJDK1_6forTests: Boolean
     ) {
-        super.configureModule(module, file, isTopLevelProjectFile, version, collector, filesToOpen, addVersion)
+        super.configureModule(module, file, isTopLevelProjectFile, version, collector, filesToOpen, addVersion, useJDK1_6forTests)
 
         val moduleGroup = module.getWholeModuleGroup()
         for (sourceModule in moduleGroup.allModules()) {

@@ -14,10 +14,8 @@ class ConvertVariableAssignmentToExpressionIntention : SelfTargetingIntention<Kt
     KtBinaryExpression::class.java,
     KotlinBundle.lazyMessage("convert.to.assignment.expression"),
 ) {
-    override fun isApplicableTo(element: KtBinaryExpression, caretOffset: Int): Boolean {
-        if (element.operationToken == KtTokens.EQ) return true
-        return false
-    }
+    override fun isApplicableTo(element: KtBinaryExpression, caretOffset: Int): Boolean =
+        element.operationToken == KtTokens.EQ
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
         val left = element.left ?: return

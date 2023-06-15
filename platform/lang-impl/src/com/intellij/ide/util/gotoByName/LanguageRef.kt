@@ -39,9 +39,7 @@ data class LanguageRef(val id: String, @field:Nls val displayName: String, val i
 
     other as LanguageRef
 
-    if (id != other.id) return false
-
-    return true
+    return id == other.id
   }
 
   override fun hashCode(): Int {
@@ -68,9 +66,7 @@ data class FileTypeRef(val name: String, val icon: Icon?) {
 
     other as FileTypeRef
 
-    if (name != other.name) return false
-
-    return true
+    return name == other.name
   }
 
   override fun hashCode(): Int {

@@ -213,7 +213,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
 
   suspend fun convertToHTML(contentType: String?, description: String): String {
     return withContext(Dispatchers.IO) {
-      when (contentType) {
+      when (contentType?.split(';')?.firstOrNull()?.trim()) {
         "text/markdown" -> markdownToHtml(description, ProjectRootManager.getInstance(project).contentRoots.first(), project)
         "text/x-rst", "" -> rstToHtml(description, currentSdk!!)
         else -> description

@@ -254,11 +254,30 @@ private fun CoroutineScope.showModalIndicator(
   stateFlow: Flow<ProgressState>,
   deferredDialog: CompletableDeferred<DialogWrapper>?,
 ): Job = launch(Dispatchers.Default) {
-  if (isHeadlessEnv()) {
-    return@launch
+  try {
+    supervisorScope {
+      if (isHeadlessEnv()) {
+        return@supervisorScope
+      }
+      delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
+      val mainJob = this@showModalIndicator.coroutineContext.job
+      doShowModalIndicator(mainJob, descriptor, stateFlow, deferredDialog)
+    }
   }
-  delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
-  val mainJob = this@showModalIndicator.coroutineContext.job
+  catch (ce: CancellationException) {
+    throw ce
+  }
+  catch (t: Throwable) {
+    logger<PlatformTaskSupport>().error(t)
+  }
+}
+
+private suspend fun doShowModalIndicator(
+  mainJob: Job,
+  descriptor: ModalIndicatorDescriptor,
+  stateFlow: Flow<ProgressState>,
+  deferredDialog: CompletableDeferred<DialogWrapper>?,
+) {
   // Use Dispatchers.EDT to avoid showing the dialog on top of another unrelated modal dialog (e.g. MessageDialogBuilder.YesNoCancel)
   withContext(Dispatchers.EDT) {
     val window = ownerWindow(descriptor.owner)

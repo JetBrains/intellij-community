@@ -9,6 +9,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
@@ -66,6 +67,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   @NonNls public static final Key<Boolean> DONT_HIDE_TOOLBAR_IN_HEADER = Key.create("DontHideToolbarInHeader");
   @NonNls private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
+  @ApiStatus.Internal public static final Key<Boolean> SHOW_BETA_LABEL = Key.create("ShowBetaLabel");
 
   private final @NotNull ContentManager contentManager;
   int dropOverIndex = -1;
@@ -510,7 +512,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       }
 
       private boolean isToolWindowDrag(MouseEvent e) {
-        if (!Registry.is("ide.new.tool.window.dnd")) {
+        if (!AdvancedSettings.getBoolean("ide.tool.window.header.dnd")) {
           return false;
         }
 

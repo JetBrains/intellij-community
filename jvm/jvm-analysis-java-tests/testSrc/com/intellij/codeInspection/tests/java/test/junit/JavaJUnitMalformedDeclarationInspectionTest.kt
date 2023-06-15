@@ -300,6 +300,14 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EmptySource
         void testString(String input) { }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testList(java.util.Collection<String> input) { }
+        
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testList(java.util.Map<String, String> input) { }        
       
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EmptySource
@@ -355,6 +363,22 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       }      
     """.trimIndent())
   }
+  fun `test malformed parameterized empty source map with zero-arg constructor`() {
+    myFixture.addClass("""
+      import java.util.HashMap;
+      
+      public class MyArgMap extends HashMap<String, String> {
+        public MyArgMap() { }
+      }
+    """.trimIndent())
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class MyTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EmptySource
+        void testArgMap(MyArgMap input) { }
+      }
+    """.trimIndent())
+  }
   fun `test malformed parameterized empty source map with single arg constructor`() {
     myFixture.addClass("""
       import java.util.HashMap;
@@ -368,6 +392,22 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.jupiter.params.ParameterizedTest
         <warning descr="'@EmptySource' cannot provide an argument to method because method has an unsupported parameter of 'MyArgMap' type">@org.junit.jupiter.params.provider.EmptySource</warning>
         void testArgMap(MyArgMap input) { }
+      }
+    """.trimIndent())
+  }
+  fun `test malformed parameterized empty source collection with private zero-arg constructor`() {
+    myFixture.addClass("""
+      import java.util.HashSet;
+      
+      public class MyArgSet extends HashSet<String, String> {
+        private MyArgSet() { }
+      }
+    """.trimIndent())
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class MyTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        <warning descr="'@EmptySource' cannot provide an argument to method because method has an unsupported parameter of 'MyArgSet' type">@org.junit.jupiter.params.provider.EmptySource</warning>
+        void testArgSet(MyArgSet input) { }
       }
     """.trimIndent())
   }

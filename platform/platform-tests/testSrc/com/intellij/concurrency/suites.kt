@@ -27,10 +27,11 @@ import org.junit.platform.suite.api.Suite
   // rw
   CancellableReadActionWithJobTest::class,
   CancellableReadActionWithIndicatorTest::class,
-  Blocking::class,
-  NonBlocking::class,
-  NonBlockingUndispatched::class,
+  BlockingSuspendingReadActionTest::class,
+  NonBlockingSuspendingReadActionTest::class,
+  NonBlockingUndispatchedSuspendingReadActionTest::class,
   SuspendingWriteActionTest::class,
+  SuspendingReadAndWriteActionTest::class,
 
   // propagation
   ThreadContextPropagationTest::class,

@@ -988,15 +988,8 @@ open class JBTabsImpl(private var project: Project?,
               var clickToUnpin = false
               if (tabInfo.isPinned) {
                 if (tabAction != null) {
-                  val component = tabInfo.getComponent()
-                  val wasShowing = UIUtil.isShowing(component)
-                  try {
-                    UIUtil.markAsShowing(component, true)
-                    ActionManager.getInstance().tryToExecute(tabAction, e, tabInfo.getComponent(), tabInfo.getTabActionPlace(), true)
-                  }
-                  finally {
-                    UIUtil.markAsShowing(component, wasShowing)
-                  }
+                  val component = infoToLabel[tabInfo]!!
+                  ActionManager.getInstance().tryToExecute(tabAction, e, component, tabInfo.tabActionPlace, true)
                   clickToUnpin = true
                 }
               }

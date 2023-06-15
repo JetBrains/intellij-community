@@ -16,7 +16,7 @@ class VersionCatalogsLocator(val myProject: Project) {
     val externalProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module) ?: return emptyMap()
     val projectInfo = ProjectDataManager.getInstance()
                         .getExternalProjectData(myProject, GradleConstants.SYSTEM_ID, externalProjectPath)
-                      ?: return emptyMap();
+                      ?: return emptyMap()
     val versionCatalogsModel = projectInfo.externalProjectStructure?.let {
       ExternalSystemApiUtil.find(it, BuildScriptClasspathData.VERSION_CATALOGS)?.data
     }

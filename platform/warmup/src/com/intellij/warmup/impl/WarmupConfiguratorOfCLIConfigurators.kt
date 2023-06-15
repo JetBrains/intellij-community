@@ -2,6 +2,7 @@
 package com.intellij.warmup.impl
 
 import com.intellij.ide.CommandLineInspectionProgressReporter
+import com.intellij.ide.CommandLineInspectionProjectAsyncConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.openapi.diagnostic.logger
@@ -30,9 +31,15 @@ internal class WarmupConfiguratorOfCLIConfigurator(val delegate: CommandLineInsp
   override suspend fun runWarmup(project: Project): Boolean =
     withRawProgressReporter {
       val context = produceConfigurationContext(project.guessProjectDir()?.path?.let(Path::of), delegate.name)
-      blockingContext {
-        delegate.configureProject(project, context)
+      if (delegate is CommandLineInspectionProjectAsyncConfigurator) {
+        delegate.configureProjectAsync(project, context)
         false
+      }
+      else{
+        blockingContext {
+          delegate.configureProject(project, context)
+          false
+        }
       }
     }
 

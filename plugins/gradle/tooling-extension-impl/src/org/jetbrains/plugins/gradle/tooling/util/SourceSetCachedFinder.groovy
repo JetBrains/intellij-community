@@ -104,7 +104,7 @@ class SourceSetCachedFinder {
       projects = exposeIncludedBuilds(gradle, projects)
     }
     for (Project p : projects) {
-      SourceSetContainer sourceSetContainer = JavaPluginUtil.getSourceSetContainer(p)
+      SourceSetContainer sourceSetContainer = JavaPluginUtil.getJavaPluginAccessor(p).sourceSetContainer
       if (sourceSetContainer == null || sourceSetContainer.isEmpty()) continue
 
       for (SourceSet sourceSet : sourceSetContainer) {

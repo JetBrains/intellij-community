@@ -129,7 +129,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       configuration.register(notification.getGroupId(), NotificationDisplayType.BALLOON);
     }
 
-    if (!settings.isShouldLog() && (settings.getDisplayType() == NotificationDisplayType.NONE || !configuration.SHOW_BALLOONS)) {
+    if (!settings.isShouldLog() && (settings.getDisplayType() == NotificationDisplayType.NONE ||
+                                    notification.isShowingPopupSuppressed() ||
+                                    !configuration.SHOW_BALLOONS)) {
       notification.expire();
     }
 
@@ -178,6 +180,11 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     if (type == NotificationDisplayType.TOOL_WINDOW &&
         (toolWindowId == null || project == null || !ToolWindowManager.getInstance(project).canShowNotification(toolWindowId))) {
       type = NotificationDisplayType.BALLOON;
+    }
+
+    if (notification.isShowingPopupSuppressed()) {
+      type = NotificationDisplayType.NONE;
+      if (LOG.isDebugEnabled()) LOG.debug("showing popup is suppressed for the notification");
     }
 
     switch (type) {

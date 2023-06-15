@@ -78,10 +78,16 @@ object CodeWithMeClientDownloader {
   val cwmJbrManifestFilter: (Path) -> Boolean = { !it.isDirectory() || isSymlink(it) }
 
   fun getJetBrainsClientManifestFilter(clientBuildNumber: String): (Path) -> Boolean {
-    if (isClientWithBundledJre(clientBuildNumber)) {
-      return { !it.isDirectory() || isSymlink(it) }
+    val universalFilter: (Path) -> Boolean = if (isClientWithBundledJre(clientBuildNumber)) {
+      { !it.isDirectory() || isSymlink(it) }
     } else {
-      return { !isJbrSymlink(it) && (!it.isDirectory() || isSymlink(it)) }
+      { !isJbrSymlink(it) && (!it.isDirectory() || isSymlink(it)) }
+    }
+
+    when {
+      SystemInfoRt.isMac -> return { it.name != ".DS_Store" && universalFilter.invoke(it) }
+      SystemInfoRt.isWindows -> return { !it.name.equals("Thumbs.db", ignoreCase = true) && universalFilter.invoke(it) }
+      else -> return universalFilter
     }
   }
 
@@ -248,7 +254,7 @@ object CodeWithMeClientDownloader {
   @ApiStatus.Experimental
   fun downloadClientAndJdk(clientBuildVersion: String,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     val jdkBuildProgressIndicator = progressIndicator.createSubProgress(0.1)
     val jdkBuild = if (isClientWithBundledJre(clientBuildVersion)) {
@@ -290,7 +296,7 @@ object CodeWithMeClientDownloader {
   fun downloadClientAndJdk(clientBuildVersion: String,
                            jreBuild: String?,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     val sessionInfo = createSessionInfo(clientBuildVersion, jreBuild, true)
     return downloadClientAndJdk(sessionInfo, progressIndicator)
@@ -330,7 +336,7 @@ object CodeWithMeClientDownloader {
    */
   fun downloadClientAndJdk(sessionInfoResponse: JetbrainsClientDownloadInfo,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
     LOG.info("Downloading Thin Client in $tempDir...")
@@ -532,7 +538,7 @@ object CodeWithMeClientDownloader {
   }
 
   private fun downloadWithRetries(url: URI, path: Path, progressIndicator: ProgressIndicator) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     @Suppress("LocalVariableName")
     val MAX_ATTEMPTS = 5

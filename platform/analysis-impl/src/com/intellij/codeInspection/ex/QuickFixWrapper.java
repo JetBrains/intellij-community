@@ -16,6 +16,7 @@ import com.intellij.codeInspection.QuickFix;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -44,13 +45,17 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     LOG.assertTrue(fixes != null && fixes.length > fixNumber);
 
     final QuickFix<?> fix = fixes[fixNumber];
+    if (fix instanceof IntentionAction intention) {
+      return intention;
+    }
+    LocalQuickFix localFix = (LocalQuickFix) fix;
     if (fix instanceof ModCommandQuickFix modCommandFix) {
       IntentionAction intention = new ModCommandQuickFixAction(descriptor, modCommandFix).asIntention();
       PsiFile file = descriptor.getPsiElement().getContainingFile();
       intention.isAvailable(file.getProject(), null, file); // cache presentation in wrapper
       return intention;
     }
-    return fix instanceof IntentionAction ? (IntentionAction)fix : new QuickFixWrapper(descriptor, (LocalQuickFix)fix);
+    return new QuickFixWrapper(descriptor, localFix);
   }
 
   /**
@@ -201,13 +206,15 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     return myFix.getRangesToHighlight(file.getProject(), myDescriptor);
   }
 
-  private static class ModCommandQuickFixAction implements ModCommandAction {
+  private static final class ModCommandQuickFixAction implements ModCommandAction {
     private final @NotNull ProblemDescriptor myDescriptor;
     private final @NotNull ModCommandQuickFix myFix;
+    private final @Nullable ModCommandAction myUnwrappedAction;
 
     private ModCommandQuickFixAction(@NotNull ProblemDescriptor descriptor, @NotNull ModCommandQuickFix fix) {
       myDescriptor = descriptor;
       myFix = fix;
+      myUnwrappedAction = ModCommandService.getInstance().unwrap(myFix);
     }
 
     @Override
@@ -217,6 +224,9 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
     @Override
     public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+      if (myUnwrappedAction != null) {
+        return myUnwrappedAction.getPresentation(ActionContext.from(myDescriptor));
+      }
       PsiElement psiElement = myDescriptor.getPsiElement();
       if (psiElement == null || !psiElement.isValid()) return null;
       PsiFile containingFile = psiElement.getContainingFile();

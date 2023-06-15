@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JarBuilder")
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RAW_RUN_BLOCKING")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build
 
@@ -87,10 +87,10 @@ data class InMemoryContentSource(@JvmField val relativePath: String,
   }
 }
 
-interface NativeFileHandler {
+internal interface NativeFileHandler {
   val sourceToNativeFiles: MutableMap<ZipSource, List<String>>
 
-  suspend fun sign(name: String, data: ByteBuffer): Path?
+  suspend fun sign(name: String, dataSupplier: () -> ByteBuffer): Path?
 }
 
 @Obsolete
@@ -100,11 +100,15 @@ fun buildJarSync(targetFile: Path, sources: List<Source>) {
   }
 }
 
-suspend fun buildJar(targetFile: Path,
-                     sources: List<Source>,
-                     compress: Boolean = false,
-                     dryRun: Boolean = false,
-                     nativeFileHandler: NativeFileHandler? = null) {
+suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false) {
+  buildJar(targetFile = targetFile, sources = sources, compress = compress, nativeFileHandler = null)
+}
+
+internal suspend fun buildJar(targetFile: Path,
+                              sources: List<Source>,
+                              compress: Boolean = false,
+                              dryRun: Boolean = false,
+                              nativeFileHandler: NativeFileHandler? = null) {
   if (dryRun) {
     for (source in sources) {
       source.sizeConsumer?.accept(0)
@@ -153,7 +157,8 @@ suspend fun buildJar(targetFile: Path,
                             uniqueNames = uniqueNames,
                             sources = sources,
                             packageIndexBuilder = packageIndexBuilder,
-                            zipCreator = zipCreator)
+                            zipCreator = zipCreator,
+                            compress = compress)
           }
         }
 
@@ -170,7 +175,8 @@ private suspend fun handleZipSource(source: ZipSource,
                                     uniqueNames: MutableMap<String, Path>,
                                     sources: List<Source>,
                                     packageIndexBuilder: PackageIndexBuilder?,
-                                    zipCreator: ZipFileWriter) {
+                                    zipCreator: ZipFileWriter,
+                                    compress: Boolean) {
   val nativeFiles = if (nativeFileHandler == null) {
     null
   }
@@ -203,10 +209,14 @@ private suspend fun handleZipSource(source: ZipSource,
           packageIndexBuilder?.addFile(name)
 
           // sign it
-          val data = dataSupplier()
-          val file = nativeFileHandler.sign(name, data)
+          val file = nativeFileHandler.sign(name, dataSupplier)
           if (file == null) {
-            zipCreator.uncompressedData(name, dataSupplier())
+            if (compress) {
+              zipCreator.compressedData(name, dataSupplier())
+            }
+            else {
+              zipCreator.uncompressedData(name, dataSupplier())
+            }
           }
           else {
             zipCreator.file(name, file)
@@ -217,7 +227,13 @@ private suspend fun handleZipSource(source: ZipSource,
       else {
         packageIndexBuilder?.addFile(name)
 
-        zipCreator.uncompressedData(name, dataSupplier())
+        val data = dataSupplier()
+        if (compress) {
+          zipCreator.compressedData(name, data)
+        }
+        else {
+          zipCreator.uncompressedData(name, data)
+        }
       }
     }
   }

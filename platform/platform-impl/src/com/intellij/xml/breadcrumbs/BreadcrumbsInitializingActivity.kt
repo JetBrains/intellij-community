@@ -85,10 +85,9 @@ private fun reinitBreadcrumbsComponent(fileEditorManager: FileEditorManager, fil
   val above = EditorSettingsExternalizable.getInstance().isBreadcrumbsAbove
   for (fileEditor in fileEditorManager.getAllEditors(file)) {
     if (fileEditor is TextEditor) {
-      val textEditor = fileEditor
-      val editor = textEditor.editor
+      val editor = fileEditor.editor
       var wrapper = BreadcrumbsXmlWrapper.getBreadcrumbsWrapper(editor)
-      if (isSuitable(fileEditorManager.project, textEditor, file)) {
+      if (isSuitable(fileEditorManager.project, fileEditor, file)) {
         if (wrapper != null) {
           if (wrapper.breadcrumbs.above != above) {
             remove(fileEditorManager, fileEditor, wrapper)

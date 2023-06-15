@@ -208,7 +208,12 @@ public final class JBCefApp {
                                    ", current is " + version.apiVersion.major + "." + version.apiVersion.minor);
         }
       }
-      if (!SKIP_MODULE_CHECK) {
+      String altCefPath = System.getProperty("ALT_CEF_FRAMEWORK_DIR", null);
+      if (altCefPath == null || altCefPath.isEmpty())
+        altCefPath = System.getenv("ALT_CEF_FRAMEWORK_DIR");
+
+      final boolean skipModuleCheck = (altCefPath != null && !altCefPath.isEmpty()) || SKIP_MODULE_CHECK;
+      if (!skipModuleCheck) {
         URL url = JCefAppConfig.class.getResource("JCefAppConfig.class");
         if (url == null) {
           return unsupported.apply("JCefAppConfig.class not found");

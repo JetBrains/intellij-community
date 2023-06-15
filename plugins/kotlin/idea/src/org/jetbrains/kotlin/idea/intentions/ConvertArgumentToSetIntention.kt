@@ -223,8 +223,7 @@ class ConvertArgumentToSetIntention : SelfTargetingIntention<KtExpression>(
          */
         private fun resolveName(element: KtElement): PsiElement? {
             val editor = element.findExistingEditor() ?: return null
-            val resolved = TargetElementUtil.findReference(editor, element.textOffset)?.resolve()
-            return resolved
+            return TargetElementUtil.findReference(editor, element.textOffset)?.resolve()
         }
 
         /**

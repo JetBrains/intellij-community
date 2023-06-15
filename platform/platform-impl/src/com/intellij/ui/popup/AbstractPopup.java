@@ -1956,8 +1956,23 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void setCaption(@NotNull @NlsContexts.PopupTitle String title) {
-    if (myCaption instanceof TitlePanel) {
-      ((TitlePanel)myCaption).setText(title);
+    if (myCaption instanceof TitlePanel titlePanel) {
+      titlePanel.setText(title);
+    }
+  }
+
+  @Override
+  public void setCaptionIcon(@Nullable Icon icon) {
+    if (myCaption instanceof TitlePanel titlePanel) {
+      titlePanel.setRegularIcon(icon);
+      titlePanel.setInactiveIcon(icon);
+    }
+  }
+
+  @Override
+  public void setCaptionIconPosition(boolean left) {
+    if (myCaption instanceof TitlePanel titlePanel) {
+      titlePanel.setHorizontalTextPosition(left ? SwingUtilities.RIGHT : SwingUtilities.LEFT);
     }
   }
 

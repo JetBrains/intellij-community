@@ -341,7 +341,7 @@ public abstract class ResourceInspection extends BaseInspection {
     if (codeBlock == null) {
       return false;
     }
-    final EscapeVisitor visitor = new EscapeVisitor(boundVariable);
+    final EscapeVisitor visitor = new EscapeVisitor(boundVariable, resourceCreationExpression);
     codeBlock.accept(visitor);
     return visitor.isEscaped();
   }
@@ -470,10 +470,13 @@ public abstract class ResourceInspection extends BaseInspection {
   private class EscapeVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiVariable boundVariable;
+    @Nullable
+    private final PsiLoopStatement loopStatement;
     private boolean escaped;
 
-    EscapeVisitor(@NotNull PsiVariable boundVariable) {
+    EscapeVisitor(@NotNull PsiVariable boundVariable, @NotNull PsiExpression creationExpression) {
       this.boundVariable = boundVariable;
+      loopStatement = PsiTreeUtil.getParentOfType(creationExpression, PsiLoopStatement.class);
     }
 
     @Override
@@ -535,7 +538,7 @@ public abstract class ResourceInspection extends BaseInspection {
       PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(expression);
       if (call == null) return;
       String callName = call.getMethodExpression().getReferenceName();
-      if ("close".equals(callName)) {
+      if ("close".equals(callName) && !canBeCloseOutsideLoop(call)) {
         escaped = true;
       }
     }
@@ -548,9 +551,17 @@ public abstract class ResourceInspection extends BaseInspection {
       }
       String name = expression.getMethodExpression().getReferenceName();
       if (name == null) return;
-      if (StringUtil.containsIgnoreCase(name, "close") || StringUtil.containsIgnoreCase(name, "cleanup")) {
+      if ((StringUtil.containsIgnoreCase(name, "close") || StringUtil.containsIgnoreCase(name, "cleanup")) &&
+          !canBeCloseOutsideLoop(expression)) {
         escaped = true;
       }
+    }
+
+    private boolean canBeCloseOutsideLoop(PsiExpression expression) {
+      if (loopStatement == null) {
+        return false;
+      }
+      return !PsiTreeUtil.isAncestor(loopStatement, expression, false);
     }
 
     @Override

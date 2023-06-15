@@ -44,13 +44,10 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
   object Immediate : EdtCoroutineDispatcher() {
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
-      if (!EDT.isCurrentThreadEdt()) {
-        return true
-      }
       // The current coroutine is executed with the correct modality state
       // (the execution would be postponed otherwise)
       // => there is no need to check modality state here.
-      return false
+      return !EDT.isCurrentThreadEdt()
     }
 
     override fun toString(): String = "Dispatchers.EDT.immediate"

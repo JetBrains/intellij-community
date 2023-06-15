@@ -9,13 +9,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.RunAll;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder;
 import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder;
 import org.junit.Assume;
@@ -60,17 +58,7 @@ public class MavenModuleBuilderSameFolderAsParentTest extends MavenMultiVersionI
       model.commit();
     });
 
-    resolveDependenciesAndImport();
-  }
-
-  @Override
-  protected void resolveDependenciesAndImport() {
-    if (isNewImportingProcess) {
-      importProject();
-      return;
-    }
-
-    myProjectsManager.resolveAndImportMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
+    updateAllProjects();
   }
 
   @Test

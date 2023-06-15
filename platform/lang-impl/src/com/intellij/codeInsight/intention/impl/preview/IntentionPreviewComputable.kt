@@ -35,7 +35,7 @@ import java.io.IOException
 import java.lang.ref.Reference
 import java.util.concurrent.Callable
 
-internal class IntentionPreviewComputable(private val project: Project,
+class IntentionPreviewComputable(private val project: Project,
                                           private val action: IntentionAction,
                                           private val originalFile: PsiFile,
                                           private val originalEditor: Editor) : Callable<IntentionPreviewInfo> {

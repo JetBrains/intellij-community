@@ -204,9 +204,7 @@ abstract class CompletionSession(
         }
 
         val fqName = descriptor.importableFqName
-        if (fqName != null && fqName.isExcludedFromAutoImport(project, file)) return false
-
-        return true
+        return fqName == null || !fqName.isExcludedFromAutoImport(project, file)
     }
 
     private fun DeclarationDescriptor.isFromLibrary(): Boolean {

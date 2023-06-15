@@ -24,7 +24,7 @@ import java.awt.datatransfer.StringSelection
 
 abstract class CopyPathProvider : AnAction() {
   companion object {
-    @JvmField val QUALIFIED_NAME : Key<@NlsSafe String> = Key.create("QUALIFIED_NAME");
+    @JvmField val QUALIFIED_NAME : Key<@NlsSafe String> = Key.create("QUALIFIED_NAME")
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

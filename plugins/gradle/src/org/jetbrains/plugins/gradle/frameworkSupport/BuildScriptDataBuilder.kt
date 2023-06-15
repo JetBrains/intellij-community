@@ -119,6 +119,10 @@ class BuildScriptDataBuilder(
   override fun withJUnit() = apply { backend.withJUnit() }
   override fun withJUnit4() = apply { backend.withJUnit4() }
   override fun withJUnit5() = apply { backend.withJUnit5() }
+  override fun withJava(configure: ScriptTreeBuilder.() -> Unit) = apply { backend.withJava(configure) }
+  override fun withJava(configure: Consumer<ScriptTreeBuilder>) = apply { backend.withJava(configure) }
+  override fun targetCompatibility(level: String) = apply { backend.targetCompatibility(level) }
+  override fun sourceCompatibility(level: String) = apply { backend.sourceCompatibility(level) }
   // @formatter:on
 
   companion object {

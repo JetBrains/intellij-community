@@ -292,12 +292,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             policy.waitForHighlighting(project, editor);
           }
           IdentifierHighlighterPassFactory.waitForIdentifierHighlighting();
-          try {
-            ExternalAnnotatorManager.getInstance().waitForAllExecuted(1, TimeUnit.MINUTES);
-          }
-          catch (ExecutionException | InterruptedException | TimeoutException e) {
-            throw new RuntimeException(e);
-          }
           UIUtil.dispatchAllInvocationEvents();
           infos.addAll(DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), null, project));
           if (readEditorMarkupModel) {
@@ -660,6 +654,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper<?,?> toolWrapper) {
     VirtualFile sourceDir = copyDirectoryToProject(new File(testDir, "src").getPath(), "");
+    testInspection(testDir, toolWrapper, sourceDir);
+  }
+
+  @Override
+  public void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper<?, ?> toolWrapper, @NotNull VirtualFile sourceDir) {
     PsiDirectory psiDirectory = getPsiManager().findDirectory(sourceDir);
     assertNotNull(psiDirectory);
 

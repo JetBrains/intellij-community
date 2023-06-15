@@ -43,7 +43,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -91,6 +90,9 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   public static final String TYPING_EXTENSIONS_CONCATENATE = "typing_extensions.Concatenate";
   public static final String OPTIONAL = "typing.Optional";
   public static final String NO_RETURN = "typing.NoReturn";
+  public static final String NEVER = "typing.Never";
+  public static final String NO_RETURN_EXT = "typing_extensions.NoReturn";
+  public static final String NEVER_EXT = "typing_extensions.Never";
   public static final String FINAL = "typing.Final";
   public static final String FINAL_EXT = "typing_extensions.Final";
   public static final String LITERAL = "typing.Literal";
@@ -796,7 +798,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
       if (callableType != null) {
         return Ref.create(callableType);
       }
-      final Ref<PyType> classVarType = getClassVarType(resolved, context);
+      final Ref<PyType> classVarType = unwrapTypeModifier(resolved, context, CLASS_VAR);
       if (classVarType != null) {
         return classVarType;
       }
@@ -804,7 +806,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
       if (classObjType != null) {
         return classObjType;
       }
-      final Ref<PyType> finalType = getFinalType(resolved, context);
+      final Ref<PyType> finalType = unwrapTypeModifier(resolved, context, FINAL, FINAL_EXT);
       if (finalType != null) {
         return finalType;
       }
@@ -927,19 +929,6 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
       String qualifiedName = ((PyQualifiedNameOwner)resolved).getQualifiedName();
       if (TYPE_ALIAS.equals(qualifiedName) || TYPE_ALIAS_EXT.equals(qualifiedName)) {
         return Ref.create();
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Ref<PyType> getClassVarType(@NotNull PsiElement resolved, @NotNull Context context) {
-    if (resolved instanceof PySubscriptionExpression subscriptionExpr) {
-      if (resolvesToClassVar(subscriptionExpr.getOperand(), context.getTypeContext())) {
-        final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
-        if (indexExpr != null) {
-          return getType(indexExpr, context);
-        }
       }
     }
     return null;
@@ -1119,9 +1108,9 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   }
 
   @Nullable
-  private static Ref<PyType> getFinalType(@NotNull PsiElement resolved, @NotNull Context context) {
+  private static Ref<PyType> unwrapTypeModifier(@NotNull PsiElement resolved, @NotNull Context context, String... type) {
     if (resolved instanceof PySubscriptionExpression subscriptionExpr) {
-      if (resolvesToFinal(subscriptionExpr.getOperand(), context.getTypeContext())) {
+      if (resolvesToQualifiedNames(subscriptionExpr.getOperand(), context.getTypeContext(), type)) {
         final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
         if (indexExpr != null) {
           return getType(indexExpr, context);
@@ -1132,24 +1121,24 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
     return null;
   }
 
-  private static <T extends PyTypeCommentOwner & PyAnnotationOwner> boolean isSpecialModifierImpl(@NotNull T owner,
-                                                                                                  @NotNull TypeEvalContext context,
-                                                                                                  @NotNull BiFunction<PyExpression, TypeEvalContext, Boolean> resolver) {
+  private static <T extends PyTypeCommentOwner & PyAnnotationOwner> boolean typeHintedWithName(@NotNull T owner,
+                                                                                               @NotNull TypeEvalContext context,
+                                                                                               String... names) {
     final PyExpression annotation = getAnnotationValue(owner, context);
     if (annotation instanceof PySubscriptionExpression) {
-      return resolver.apply(((PySubscriptionExpression)annotation).getOperand(), context);
+      return resolvesToQualifiedNames(((PySubscriptionExpression)annotation).getOperand(), context, names);
     }
     else if (annotation instanceof PyReferenceExpression) {
-      return resolver.apply(annotation, context);
+      return resolvesToQualifiedNames(annotation, context, names);
     }
 
     final String typeCommentValue = owner.getTypeCommentAnnotation();
     final PyExpression typeComment = typeCommentValue == null ? null : toExpression(typeCommentValue, owner);
     if (typeComment instanceof PySubscriptionExpression) {
-      return resolver.apply(((PySubscriptionExpression)typeComment).getOperand(), context);
+      return resolvesToQualifiedNames(((PySubscriptionExpression)typeComment).getOperand(), context, names);
     }
     else if (typeComment instanceof PyReferenceExpression) {
-      return resolver.apply(typeComment, context);
+      return resolvesToQualifiedNames(typeComment, context, names);
     }
 
     return false;
@@ -1161,25 +1150,23 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   }
 
   public static <T extends PyTypeCommentOwner & PyAnnotationOwner> boolean isFinal(@NotNull T owner, @NotNull TypeEvalContext context) {
-    return PyUtil.getParameterizedCachedValue(owner, context, p -> isSpecialModifierImpl(owner, p, (e, c) -> {
-      return resolvesToFinal(e, c);
-    }));
-  }
-
-  private static boolean resolvesToFinal(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    final var qualifiedNames = resolveToQualifiedNames(expression, context);
-    return qualifiedNames.contains(FINAL) || qualifiedNames.contains(FINAL_EXT);
+    return PyUtil.getParameterizedCachedValue(owner, context, p ->
+      typeHintedWithName(owner, context, FINAL, FINAL_EXT));
   }
 
   public static <T extends PyAnnotationOwner & PyTypeCommentOwner> boolean isClassVar(@NotNull T owner, @NotNull TypeEvalContext context) {
-    return PyUtil.getParameterizedCachedValue(owner, context, p -> isSpecialModifierImpl(owner, p, (e, c) -> {
-      return resolvesToClassVar(e, c);
-    }));
+    return PyUtil.getParameterizedCachedValue(owner, context, p ->
+      typeHintedWithName(owner, context, CLASS_VAR));
   }
 
-  private static boolean resolvesToClassVar(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+  public static boolean isNoReturn(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    return PyUtil.getParameterizedCachedValue(function, context, p ->
+      typeHintedWithName(function, context, NO_RETURN, NO_RETURN_EXT, NEVER, NEVER_EXT));
+  }
+
+  private static boolean resolvesToQualifiedNames(@NotNull PyExpression expression, @NotNull TypeEvalContext context, String... names) {
     final var qualifiedNames = resolveToQualifiedNames(expression, context);
-    return qualifiedNames.contains(CLASS_VAR);
+    return ContainerUtil.exists(names, qualifiedNames::contains);
   }
 
   @Nullable

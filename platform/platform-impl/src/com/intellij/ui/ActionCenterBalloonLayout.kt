@@ -144,13 +144,13 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
     val info = collapsedData[oldBalloon]
     if (info == null) {
       remove(oldBalloon)
-      return createCollapsedData(newBalloon, newLayoutData)
+      return createCollapsedData(newBalloon, newLayoutData).updateHost(newBalloon)
     }
 
     collapsedData.remove(oldBalloon)
     remove(oldBalloon)
 
-    collapsedData[newBalloon] = info
+    collapsedData[newBalloon] = info.updateHost(newBalloon)
 
     return info
   }
@@ -190,8 +190,8 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
   }
 
   override fun setBounds(balloons: List<Balloon>, startX: Int, startY: Int) {
-    val shadowVerticalOffset = JBUI.scale(8)
-    var verticalOffset = JBUI.scale(2)
+    val shadowVerticalOffset = if (ShadowJava2DPainter.enabled()) 0 else JBUI.scale(8)
+    var verticalOffset = if (ShadowJava2DPainter.enabled()) 0 else JBUI.scale(2)
     var y = startY
 
     for (balloon in balloons) {
@@ -275,6 +275,16 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
           }
         })
       }
+    }
+
+    fun updateHost(hostBalloon: Balloon): CollapseInfo {
+      if (hostBalloon is BalloonImpl) {
+        val provider = hostBalloon.shadowBorderProvider
+        if (provider is NotificationBalloonRoundShadowBorderProvider) {
+          provider.hideBottomSide()
+        }
+      }
+      return this
     }
 
     fun addBalloon() {

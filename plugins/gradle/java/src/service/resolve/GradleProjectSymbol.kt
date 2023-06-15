@@ -53,9 +53,7 @@ abstract class GradleProjectSymbol(
 
     other as GradleProjectSymbol
 
-    if (rootProjectPath != other.rootProjectPath) return false
-
-    return true
+    return rootProjectPath == other.rootProjectPath
   }
 
   override fun hashCode(): Int {

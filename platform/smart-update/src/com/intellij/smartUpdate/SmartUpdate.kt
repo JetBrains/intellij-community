@@ -11,11 +11,11 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
+import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.util.xmlb.XmlSerializerUtil
-import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.MapAnnotation
 import org.jetbrains.ide.UpdateActionsListener
 import java.util.*
 
@@ -23,20 +23,16 @@ import java.util.*
 @Service(Service.Level.PROJECT)
 class SmartUpdate(val project: Project) : PersistentStateComponent<SmartUpdate.Options>, Disposable {
 
-  class Options {
-    @get:Attribute
-    var updateIde = true
-    @get:Attribute
-    var restartIde = true
-    @get:Attribute
-    var updateProject = true
-    @get:Attribute
-    var buildProject = true
+  class Options: BaseState() {
+    @get:MapAnnotation(surroundWithTag = false)
+    var map: MutableMap<String, Boolean> by linkedMap()
+    fun value(id: String) = map[id] ?: true
+    fun property(id: String) = MutableProperty({ value(id) }, { map[id] = it })
   }
 
   var restartRequested: Boolean = false
   private val options = Options()
-  private val allSteps = listOf(IdeUpdateStep(), IdeRestartStep(), VcsUpdateStep(), BuildStep())
+  private val allSteps = listOf(IdeUpdateStep(), IdeRestartStep(), VcsUpdateStep(), BuildProjectStep())
 
   init {
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(UpdateActionsListener.TOPIC, object : UpdateActionsListener {
@@ -57,7 +53,7 @@ class SmartUpdate(val project: Project) : PersistentStateComponent<SmartUpdate.O
   }
 
   fun execute(project: Project, e: AnActionEvent? = null) {
-    val steps = LinkedList(allSteps.filter { it.isRequested(options) })
+    val steps = LinkedList(allSteps.filter { options.value(it.id) })
     executeNext(steps, project, e)
   }
 
@@ -90,12 +86,6 @@ class SmartUpdateAction: DumbAwareAction(SmartUpdateBundle.message("action.smart
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
-}
-
-interface SmartUpdateStep {
-  fun performUpdateStep(project: Project, e: AnActionEvent? = null, onSuccess: () -> Unit)
-  fun isRequested(options: SmartUpdate.Options): Boolean
-  fun isAvailable(): Boolean = true
 }
 
 const val IDE_RESTARTED_KEY = "smart.update.ide.restarted"

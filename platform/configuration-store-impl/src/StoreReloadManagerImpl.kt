@@ -189,6 +189,24 @@ internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private va
     scheduleProcessingChangedFiles()
   }
 
+  override fun storageFilesBatchProcessing(batchStorageEvents: Map<IComponentStore, Collection<StateStorage>>) {
+    batchStorageEvents.forEach { (store, storages) ->
+      LOG.debug(Exception()) { "[RELOAD] registering to reload: ${storages.joinToString("\n")}" }
+
+      synchronized(changedStorages) {
+        changedStorages.computeIfAbsent(store as ComponentStoreImpl) { LinkedHashSet() }.addAll(storages)
+      }
+
+      for (storage in storages) {
+        if (storage is StateStorageBase<*>) {
+          storage.disableSaving()
+        }
+      }
+    }
+
+    scheduleProcessingChangedFiles()
+  }
+
   internal fun <T : Scheme, M : T> registerChangedSchemes(events: List<SchemeChangeEvent<T, M>>,
                                                           schemeFileTracker: SchemeChangeApplicator<T, M>) {
     if (LOG.isDebugEnabled) {

@@ -561,7 +561,7 @@ final class PassExecutorService implements Disposable {
   }
 
   // return true if terminated
-  boolean waitFor(int millis) {
+  boolean waitFor(long millis) {
     long deadline = System.currentTimeMillis() + millis;
     try {
       for (Job<Void> job : mySubmittedPasses.values()) {

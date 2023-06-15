@@ -10,12 +10,12 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfTypeSafe
-import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
@@ -163,9 +163,9 @@ class KtSymbolFromIndexProvider(private val project: Project) {
 
 private val KotlinBuiltins = setOf("kotlin/ArrayIntrinsicsKt", "kotlin/internal/ProgressionUtilKt")
 fun KtCallableDeclaration.isKotlinBuiltins(): Boolean {
-    if (this !is KtNamedFunction) return false
     val file = containingKtFile
     val virtualFile = file.virtualFile
     if (virtualFile.extension == "kotlin_metadata") return true
+    if (this !is KtNamedFunction) return false
     return file.packageFqName.asString().replace(".", "/") + "/" + virtualFile.nameWithoutExtension in KotlinBuiltins
 }

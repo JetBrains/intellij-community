@@ -288,7 +288,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
 
       tree.requestFocusInWindow()
-      val settings = getSelectedConfiguration()
+      val settings = getInitialSelectedConfiguration()
       if (settings != null) {
         if (selectConfiguration(settings.configuration)) {
           return@invokeLater
@@ -301,7 +301,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }, ModalityState.stateForComponent(wholePanel!!))
   }
 
-  protected open fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
+  protected open fun getInitialSelectedConfiguration(): RunnerAndConfigurationSettings? {
     return runManager.selectedConfiguration
   }
 
@@ -752,7 +752,11 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
   private fun updateDialog() {
     val runDialog = runDialog
-    val executor = runDialog?.executor ?: return
+    runDialog?.executor?.let { updateDialogForSingleExecutor(it, runDialog) }
+    (runDialog as? EditConfigurationsDialog)?.updateRunAction()
+  }
+
+  private fun updateDialogForSingleExecutor(executor: Executor, runDialog: RunDialogBase) {
     val buffer = StringBuilder()
     buffer.append(executor.id)
     val configuration = selectedConfiguration
@@ -775,7 +779,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     SwingUtilities.invokeLater { UIUtil.setupEnclosingDialogBounds(wholePanel!!) }
   }
 
-  private val selectedConfiguration: SingleConfigurationConfigurable<RunConfiguration>?
+  val selectedConfiguration: SingleConfigurationConfigurable<RunConfiguration>?
     get() {
       val selectionPath = tree.selectionPath
       if (selectionPath != null) {

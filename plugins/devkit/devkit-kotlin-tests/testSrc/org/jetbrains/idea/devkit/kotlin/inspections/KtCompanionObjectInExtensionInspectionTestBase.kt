@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-open class KtCompanionObjectInExtensionInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
+abstract class KtCompanionObjectInExtensionInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
 
   protected val fileExtension = "kt"
 

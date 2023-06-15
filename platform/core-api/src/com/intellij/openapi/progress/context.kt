@@ -121,7 +121,8 @@ internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, act
 }
 
 private fun cancelWithIndicator(job: Job, indicator: ProgressIndicator): Job {
-  return CoroutineScope(Dispatchers.IO).launch(CoroutineName("indicator watcher")) {
+  @OptIn(DelicateCoroutinesApi::class)
+  return GlobalScope.launch(indicatorWatcherDispatcher + CoroutineName("indicator watcher")) {
     while (!indicator.isCanceled) {
       delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
     }
@@ -134,3 +135,7 @@ private fun cancelWithIndicator(job: Job, indicator: ProgressIndicator): Job {
     }
   }
 }
+
+// use elasticity property of the IO dispatcher
+@OptIn(ExperimentalCoroutinesApi::class)
+private val indicatorWatcherDispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(parallelism = 1)

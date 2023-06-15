@@ -1,5 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
@@ -21,19 +22,25 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
   companion object {
     const val NAME = "waitVcsLogIndexing"
     const val PREFIX = CMD_PREFIX + NAME
+    private val LOG = Logger.getInstance(WaitVcsLogIndexingCommand::class.java)
   }
 
   private val executor: ScheduledExecutorService = AppExecutorUtil.getAppScheduledExecutorService()
 
   override suspend fun doExecute(context: PlaybackContext) {
+    LOG.info("$NAME command started its execution")
     val logManager = getInstance(context.project).logManager ?: return
     val dataManager = logManager.dataManager
     val vcsIndex = dataManager.index as VcsLogModifiableIndex
 
-    if (vcsIndex.needIndexing()) {
+    LOG.info("Need indexing = ${vcsIndex.needIndexing()}, is indexing paused = " + vcsIndex.isIndexingPaused())
+    if (vcsIndex.needIndexing() || !vcsIndex.isIndexingPaused()) {
       val isIndexingCompleted = CompletableDeferred<Boolean>()
-      vcsIndex.addListener { _ -> isIndexingCompleted.complete(true) }
-      val indexPauseTask = buildIndexPauseTask(vcsIndex, isIndexingCompleted)
+      vcsIndex.addListener { _ ->
+        LOG.info("$NAME command was completed due to indexing was finished after listener invocation")
+        isIndexingCompleted.complete(true)
+      }
+      val indexPauseTask = scheduleIndexPauseTask(vcsIndex, isIndexingCompleted)
       try {
         val args = extractCommandArgument(PREFIX)
         //Will wait infinitely while test execution timeout won't be occurred
@@ -49,21 +56,24 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
         }
       }
       finally {
+        //Second polling check, verifies situation when indexing was paused due to threshold specified in vcs.log.index.limit.minutes was reached
         indexPauseTask.cancel(false)
       }
     }
-
+    vcsIndex.indexingRoots.forEach { LOG.info("Status of git root ${it.name}, indexed = ${vcsIndex.isIndexed(it)}") }
   }
 
   /**
    * Polling of the property isIndexingPaused. This task will detect the case when indexing wasn't fully completed
    * due to timeout of 20 minutes was reached
    */
-  private fun buildIndexPauseTask(vscIndex: VcsLogModifiableIndex, isIndexingCompleted: CompletableDeferred<Boolean>): ScheduledFuture<*> {
+  private fun scheduleIndexPauseTask(vscIndex: VcsLogModifiableIndex,
+                                     isIndexingCompleted: CompletableDeferred<Boolean>): ScheduledFuture<*> {
     return executor.scheduleWithFixedDelay(
       {
         if (vscIndex.isIndexingPaused()) {
           isIndexingCompleted.complete(true)
+          LOG.info("$NAME command was completed due to indexing process was paused")
           return@scheduleWithFixedDelay
         }
       }, 0, 10, TimeUnit.SECONDS)

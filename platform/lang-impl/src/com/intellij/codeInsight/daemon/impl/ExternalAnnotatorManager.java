@@ -7,15 +7,15 @@ import com.intellij.openapi.components.Service;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-@Service(Service.Level.APP)
-public final class ExternalAnnotatorManager implements Disposable {
-  public static ExternalAnnotatorManager getInstance() {
+@Service
+final class ExternalAnnotatorManager implements Disposable {
+  static ExternalAnnotatorManager getInstance() {
     return ApplicationManager.getApplication().getService(ExternalAnnotatorManager.class);
   }
 
@@ -27,12 +27,26 @@ public final class ExternalAnnotatorManager implements Disposable {
   public void dispose() {
   }
 
-  public void queue(@NotNull Update update) {
+  void queue(@NotNull Update update) {
     myExternalActivitiesQueue.queue(update);
   }
 
-  @TestOnly
-  public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
-    myExternalActivitiesQueue.waitForAllExecuted(timeout, unit);
+  void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    CompletableFuture<?> future = new CompletableFuture<>();
+    queue(new Update(new Object()/*must not coalesce with anything in the queue*/) {
+      @Override
+      public void setRejected() {
+        super.setRejected();
+        future.cancel(false);
+      }
+
+      @Override
+      public void run() {
+        future.complete(null);
+      }
+    });
+    myExternalActivitiesQueue.flush();
+    future.get(timeout, unit);
   }
 }

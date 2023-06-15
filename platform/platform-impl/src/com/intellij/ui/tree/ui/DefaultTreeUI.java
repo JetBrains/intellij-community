@@ -217,7 +217,8 @@ public class DefaultTreeUI extends BasicTreeUI {
 
   private void repaintPath(@Nullable TreePath path) {
     Rectangle bounds = getPathBounds(getTree(), path);
-    if (bounds != null) tree.repaint(0, bounds.y, tree.getWidth(), bounds.height);
+    // repaint 1 px above and 1 px below to avoid rounding errors with fractional scaling:
+    if (bounds != null) tree.repaint(0, bounds.y - 1, tree.getWidth(), bounds.height + 2);
   }
 
   private void removeCachedRenderers() {
@@ -457,7 +458,7 @@ public class DefaultTreeUI extends BasicTreeUI {
   @Override
   protected void updateCachedPreferredSize() {
     JTree tree = getTree();
-    AbstractLayoutCache cache = treeState; // TODO: treeState ???
+    AbstractLayoutCache cache = treeState;
     if (tree != null && isValid(tree) && cache != null && tree.isLargeModel() && is("ide.tree.experimental.preferred.width")) {
       Rectangle paintBounds = tree.getVisibleRect();
       if (!paintBounds.isEmpty()) {
@@ -476,12 +477,14 @@ public class DefaultTreeUI extends BasicTreeUI {
           int maxPaintX = paintBounds.x + paintBounds.width;
           int maxPaintY = paintBounds.y + paintBounds.height;
           int width = 0;
-          while (path != null) {
+          for (; path != null; path = cache.getPathForRow(++row)) {
             Rectangle bounds = cache.getBounds(path, buffer);
-            if (bounds == null) continue; // something goes wrong
+            if (bounds == null) {
+              LOG.warn("The bounds for the row " + row + " of the tree " + tree + " with model " + treeModel + " are null, looks like a bug in " + cache);
+              continue;
+            }
             width = Math.max(width, bounds.x + bounds.width);
             if ((bounds.y + bounds.height) >= maxPaintY) break;
-            path = cache.getPathForRow(++row);
           }
           width += insets.left + insets.right;
           if (width < maxPaintX) {

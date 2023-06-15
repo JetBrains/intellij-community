@@ -480,7 +480,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     return myFlushing;
   }
 
-  public void setTrackUiActivity(boolean trackUiActivity) {
+  protected void setTrackUiActivity(boolean trackUiActivity) {
     if (myTrackUiActivity && !trackUiActivity) {
       finishActivity();
     }

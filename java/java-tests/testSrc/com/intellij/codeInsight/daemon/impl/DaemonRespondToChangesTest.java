@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.options.editor.CodeFoldingConfigurable;
@@ -14,6 +14,7 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
@@ -784,24 +785,24 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("after added")));
+        changed(highlighter, "after added");
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("before removed")));
+        changed(highlighter, "before removed");
       }
 
       @Override
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleChanged) {
-        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("changed")));
+        changed(highlighter, "changed");
       }
 
-      private void changed(@NotNull RangeHighlighterEx highlighter, String reason) {
+      private void changed(@NotNull RangeHighlighterEx highlighter, @NotNull String reason) {
         if (highlighter.getTargetArea() != HighlighterTargetArea.LINES_IN_RANGE) return; // not line marker
         List<LineMarkerInfo<?>> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
         if (ContainerUtil.find(lineMarkers, lm -> lm.highlighter == highlighter) != null) {
-          changed.add(highlighter + ": \n" + reason);
+          changed.add(highlighter + ": \n" + ExceptionUtil.getThrowableText(new Throwable(reason)));
         } // else not line marker
       }
     });
@@ -1859,7 +1860,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         EditorTracker editorTracker = EditorTracker.getInstance(myProject);
         editorTracker.setActiveEditors(Collections.singletonList(editor));
         while (HeavyProcessLatch.INSTANCE.isRunning()) {
-          CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
+          UIUtil.dispatchAllInvocationEvents();
         }
         type("xxx"); // restart daemon
         assertTrue(editorTracker.getActiveEditors().contains(editor));
@@ -1869,7 +1870,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         // wait for the first pass to complete
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning() || !applied.contains(editor)) {
-          CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
+          UIUtil.dispatchAllInvocationEvents();
           if (System.currentTimeMillis() - start > 1000000) {
             fail("Too long waiting for daemon");
           }
@@ -1883,7 +1884,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           })
         );
         while (!HeavyProcessLatch.INSTANCE.isRunning()) {
-          CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
+          UIUtil.dispatchAllInvocationEvents();
         }
         applied.clear();
         collected.clear();
@@ -1894,7 +1895,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         while (System.currentTimeMillis() < start + 5000) {
           assertEmpty(applied);  // it should not restart
           assertEmpty(collected);
-          CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
+          UIUtil.dispatchAllInvocationEvents();
         }
       }
       finally {
@@ -2135,21 +2136,19 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     runWithReparseDelay(0, () -> {
       for (int i = 0; i < 1000; i++) {
         caretRight();
-
-        CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
+        UIUtil.dispatchAllInvocationEvents();
         caretLeft();
         Object updateProgress = new HashMap<>(myDaemonCodeAnalyzer.getUpdateProgress());
         long waitForDaemonStart = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress) && System.currentTimeMillis() < waitForDaemonStart + 5000) { // wait until the daemon started
-          CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
+          UIUtil.dispatchAllInvocationEvents();
         }
         if (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress)) {
           throw new RuntimeException("Daemon failed to start in 5000 ms");
         }
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning() && System.currentTimeMillis() < start + 500) {
-          // wait for a bit more until ShowIntentionsPass.doApplyInformationToEditor() called
-          CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
+          UIUtil.dispatchAllInvocationEvents(); // wait for a bit more until ShowIntentionsPass.doApplyInformationToEditor() called
         }
       }
     });
@@ -2205,7 +2204,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertEmpty(visibleHints);
     }
     else {
-      assertFalse(lastHintAfterDeletion.getCachedIntentions().toString(), ContainerUtil.exists(lastHintBeforeDeletion.getCachedIntentions().getErrorFixes(), e -> e.getText().equals("Initialize variable 'var'")));
+      CachedIntentions after = lastHintAfterDeletion.getCachedIntentions();
+      assertFalse(after.toString(), ContainerUtil.exists(after.getErrorFixes(), e -> e.getText().equals("Initialize variable 'var'")));
     }
   }
 

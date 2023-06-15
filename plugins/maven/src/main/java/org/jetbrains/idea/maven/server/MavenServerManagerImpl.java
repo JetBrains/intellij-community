@@ -342,16 +342,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
       eventListenerJar = new File(root, "maven-event-listener.jar");
     }
     if (!eventListenerJar.exists()) {
-      if (ApplicationManager.getApplication().isInternal()) {
-        MavenLog.LOG.warn("""
-                            Event listener does not exist: Please run rebuild for maven modules:
-                            community/plugins/maven/maven-event-listener
-                            and all maven*-server* modules"""
-        );
-      }
-      else {
-        MavenLog.LOG.warn("Event listener does not exist " + eventListenerJar);
-      }
+      MavenLog.LOG.warn("Event listener does not exist " + eventListenerJar);
     }
     return eventListenerJar;
   }

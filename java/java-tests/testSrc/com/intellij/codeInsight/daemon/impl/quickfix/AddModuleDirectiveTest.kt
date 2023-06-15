@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix
 
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiJavaModule
@@ -99,9 +99,9 @@ class AddModuleDirectiveTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   private fun doExportsTest(text: String, expected: String, target: String = "M2") = doTest(text, { AddExportsDirectiveFix(it, "pkg.m", target) }, expected)
   private fun doUsesTest(text: String, expected: String) = doTest(text, { AddUsesDirectiveFix(it, "pkg.m.C") }, expected)
 
-  private fun doTest(text: String, fix: (PsiJavaModule) -> IntentionAction, expected: String) {
+  private fun doTest(text: String, fix: (PsiJavaModule) -> ModCommandAction, expected: String) {
     val file = myFixture.configureByText("module-info.java", text) as PsiJavaFile
-    val action = fix(file.moduleDeclaration!!)
+    val action = fix(file.moduleDeclaration!!).asIntention()
     WriteCommandAction.writeCommandAction(file).run<RuntimeException> { action.invoke(project, editor, file) }
     assertEquals(expected, file.text)
   }

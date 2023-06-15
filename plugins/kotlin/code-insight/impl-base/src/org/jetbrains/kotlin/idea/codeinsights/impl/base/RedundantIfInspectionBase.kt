@@ -2,7 +2,8 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
 import com.intellij.codeInspection.*
-import com.intellij.codeInspection.ProblemHighlightType.*
+import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
@@ -17,7 +18,9 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 
 /**
  * A parent class for K1 and K2 RedundantIfInspection.
@@ -188,9 +191,7 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                  * See the code and comment in [RedundancyType.of].
                  */
                 returnExpressionAfterIf?.element?.let {
-                    val prev = it.prevSibling
-                    if (prev is PsiWhiteSpace && prev.prevSibling == element) prev.delete()
-                    it.delete()
+                    it.parent.deleteChildRange(it.prevSibling as? PsiWhiteSpace ?: it, it)
                 }
 
                 val replaced = element.replace(newExpressionOnlyWithCondition)

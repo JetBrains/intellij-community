@@ -30,6 +30,8 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
@@ -498,18 +500,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
     long deadline = System.currentTimeMillis() + millis;
     try {
-      Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        try {
-          return myPassExecutorService.waitFor(millis);
-        }
-        catch (Throwable e) {
-          throw new RuntimeException(e);
-        }
-      });
+      Future<?> passesFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> myPassExecutorService.waitFor(System.currentTimeMillis() - deadline));
       do {
         assertOnModification.set(true);
         try {
-          future.get(50, TimeUnit.MILLISECONDS);
+          passesFuture.get(50, TimeUnit.MILLISECONDS);
         }
         catch (TimeoutException ignored) {
         }
@@ -517,6 +512,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           assertOnModification.set(false); //do not assert during dispatchAllEvents() because that's where all quick fixes happen
         }
       } while (runWhile.compute() && System.currentTimeMillis() < deadline);
+      // it will wait for the async spawned processes
+      Future<?> externalPassFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        ExternalAnnotatorManager.getInstance().waitForAllExecuted(deadline-System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+        return null;
+      });
+      externalPassFuture.get(1_000+deadline-System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     }
     catch (InterruptedException ignored) {
     }
@@ -859,8 +860,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   public static @NotNull List<LineMarkerInfo<?>> getLineMarkers(@NotNull Document document, @NotNull Project project) {
     List<LineMarkerInfo<?>> result = new ArrayList<>();
-    LineMarkersUtil.processLineMarkers(project, document, new TextRange(0, document.getTextLength()), -1,
-                                       new CommonProcessors.CollectProcessor<>(result));
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
+    markupModel.processRangeHighlightersOverlappingWith(0, document.getTextLength(),
+      highlighter -> {
+        LineMarkerInfo<?> info = LineMarkersUtil.getLineMarkerInfo(highlighter);
+        if (info != null) {
+          result.add(info);
+        }
+        return true;
+      }
+    );
     return result;
   }
 

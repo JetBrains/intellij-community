@@ -22,8 +22,7 @@ data class EndpointSettings(val releaseType: ReleaseType = ReleaseType.ALL,
     val version = Version.parseVersion(applicationInfo.fullVersion)
     if (version == null || !majorBuildVersionBorders.satisfies(version)) return false
     val bucket = EventLogConfiguration.getInstance().bucket
-    if (bucket < fromBucket || bucket > toBucket) return false
-    return true
+    return bucket in fromBucket..toBucket
   }
 }
 

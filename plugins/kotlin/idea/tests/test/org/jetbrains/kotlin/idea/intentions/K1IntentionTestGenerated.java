@@ -4132,6 +4132,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/chop/argumentList/leftParOnSameLine.kt");
             }
 
+            @TestMetadata("onArgument.kt")
+            public void testOnArgument() throws Exception {
+                runTest("testData/intentions/chop/argumentList/onArgument.kt");
+            }
+
+            @TestMetadata("onArgumentName.kt")
+            public void testOnArgumentName() throws Exception {
+                runTest("testData/intentions/chop/argumentList/onArgumentName.kt");
+            }
+
             @TestMetadata("onNestedArgumentList.kt")
             public void testOnNestedArgumentList() throws Exception {
                 runTest("testData/intentions/chop/argumentList/onNestedArgumentList.kt");
@@ -12392,6 +12402,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("noLineBreak.kt")
         public void testNoLineBreak() throws Exception {
             runTest("testData/intentions/joinArgumentList/noLineBreak.kt");
+        }
+
+        @TestMetadata("onArgument.kt")
+        public void testOnArgument() throws Exception {
+            runTest("testData/intentions/joinArgumentList/onArgument.kt");
+        }
+
+        @TestMetadata("onArgumentName.kt")
+        public void testOnArgumentName() throws Exception {
+            runTest("testData/intentions/joinArgumentList/onArgumentName.kt");
         }
 
         @TestMetadata("onNestedArgumentList.kt")

@@ -15,7 +15,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.project.processOpenedProjects
+import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
@@ -90,7 +90,7 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
   }
 
   override fun fireProfileChanged(profile: InspectionProfileImpl) {
-    processOpenedProjects { project ->
+    for (project in getOpenedProjects()) {
       ProjectInspectionProfileManager.getInstance(project).fireProfileChanged(profile)
     }
   }

@@ -76,9 +76,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
 
     other as DefaultVcsLogFile
 
-    if (tabId != other.tabId) return false
-
-    return true
+    return tabId == other.tabId
   }
 
   override fun hashCode(): Int {

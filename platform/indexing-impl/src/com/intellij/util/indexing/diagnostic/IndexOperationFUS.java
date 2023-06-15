@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic;
 
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -17,6 +18,9 @@ import com.intellij.util.indexing.IndexId;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.metrics.ObservableDoubleMeasurement;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.context.Scope;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +33,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationAggregatesCollector.MAX_TRACKABLE_DURATION_MS;
 import static java.util.Objects.requireNonNull;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 import static java.util.stream.Collectors.toSet;
 
 /**
@@ -41,6 +46,8 @@ public final class IndexOperationFUS {
   private static final Logger LOG = Logger.getInstance(IndexOperationFUS.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(10));
 
+  private static final IJTracer OTEL_TRACER = TelemetryTracer.getInstance().getTracer(Indexes);
+
   /**
    * If true -> throw exception if tracing methods are (likely) called in incorrect order (e.g. .finish() before start(),
    * or .finish() without .start() beforehand).
@@ -48,22 +55,38 @@ public final class IndexOperationFUS {
    * <p>
    */
   @VisibleForTesting
-  static final boolean THROW_ON_INCORRECT_USAGE = SystemProperties.getBooleanProperty("IndexOperationFUS.THROW_ON_INCORRECT_USAGE", false);
+  static final boolean THROW_ON_INCORRECT_USAGE = getBooleanProperty("IndexOperationFUS.THROW_ON_INCORRECT_USAGE", false);
 
   /**
    * 'Feature flag': report detailed index lookup events. Default: true for EAP, false otherwise
    */
-  private static final boolean REPORT_DETAILED_STATS = SystemProperties.getBooleanProperty("IndexOperationFUS.REPORT_DETAILED_STATS",
-                                                                                           ApplicationManager.getApplication().isEAP());
+  private static final boolean REPORT_DETAILED_STATS = getBooleanProperty(
+    "IndexOperationFUS.REPORT_DETAILED_STATS", ApplicationManager.getApplication().isEAP()
+  );
+
+  public static final boolean REPORT_TRACES_TO_OPEN_TELEMETRY = getBooleanProperty(
+    "IndexOperationFUS.REPORT_DETAILED_STATS_TO_OPEN_TELEMETRY",
+    ApplicationManager.getApplication().isEAP() || ApplicationManager.getApplication().isUnitTestMode()
+  );
+
+  private static final String SPAN_NAME_INDEX_LOOKUP_ALL_KEYS = "index lookup: all keys";
+  private static final String SPAN_NAME_INDEX_LOOKUP_ENTRIES = "index lookup: file entries";
+  private static final String SPAN_NAME_INDEX_LOOKUP_STUBS = "index lookup: stub entries";
+  private static final String SPAN_NAME_INDEX_UP_TO_DATE_CHECK = "index up-to-date check";
+  private static final String SPAN_NAME_STUB_TREE_DESERIALIZATION = "stub tree deserialization";
+
   /**
    * 'Feature flag': report aggregated (mean, %-iles) index lookup statistics. Default: true
    */
-  private static final boolean REPORT_AGGREGATED_STATS = SystemProperties.getBooleanProperty("IndexOperationFUS.REPORT_AGGREGATED_STATS", true);
+  private static final boolean REPORT_AGGREGATED_STATS = getBooleanProperty(
+    "IndexOperationFUS.REPORT_AGGREGATED_STATS", true
+  );
   /**
    * 'Feature flag': report aggregated (mean, %-iles) index lookup statistics to OpenTelemetry. Default: true
    */
-  private static final boolean REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY =
-    SystemProperties.getBooleanProperty("IndexOperationFUS.REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY", true);
+  private static final boolean REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY = getBooleanProperty(
+    "IndexOperationFUS.REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY", true
+  );
 
 
   /**
@@ -120,6 +143,7 @@ public final class IndexOperationFUS {
    * How many keys (approximately) current index contains in total -- kind of 'lookup scale'
    */
   private static final IntEventField FIELD_TOTAL_KEYS_INDEXED_COUNT = EventFields.Int("total_keys_indexed");
+
 
   /* ================== EVENTS: ========================================================== */
 
@@ -294,6 +318,9 @@ public final class IndexOperationFUS {
               reportDetailedDataToAnalytics(lookupFinishedAtMs);
             }
           }
+          if (REPORT_TRACES_TO_OPEN_TELEMETRY) {
+            reportDetailedDataToOTel(lookupFinishedAtMs);
+          }
 
           if (REPORT_AGGREGATED_STATS) {
             reportAggregatesData(lookupFinishedAtMs);
@@ -314,6 +341,8 @@ public final class IndexOperationFUS {
       }
 
       protected abstract void reportDetailedDataToAnalytics(long lookupFinishedAtMs);
+
+      protected abstract void reportDetailedDataToOTel(long lookupFinishedAtMs);
 
       protected abstract void reportAggregatesData(long lookupFinishedAtMs);
 
@@ -473,6 +502,25 @@ public final class IndexOperationFUS {
       }
 
       @Override
+      protected void reportDetailedDataToOTel(long lookupFinishedAtMs) {
+        Span lookupSpan = OTEL_TRACER.spanBuilder(SPAN_NAME_INDEX_LOOKUP_ALL_KEYS)
+          .setAttribute("index_id", indexId.getName())
+          .setAttribute("total_keys_in_index", totalKeysIndexed)
+          .setAttribute("lookup_result_size", lookupResultSize)
+          .setStartTimestamp(lookupStartedAtMs, MILLISECONDS)
+          .startSpan();
+        lookupSpan.setStatus(lookupFailed ? StatusCode.ERROR : StatusCode.OK);
+        try (Scope scope = lookupSpan.makeCurrent()) {
+          OTEL_TRACER.spanBuilder(SPAN_NAME_INDEX_UP_TO_DATE_CHECK)
+            .setStartTimestamp(lookupStartedAtMs, MILLISECONDS)
+            .startSpan()
+            .end(indexValidationFinishedAtMs, MILLISECONDS);
+        }
+
+        lookupSpan.end(lookupFinishedAtMs, MILLISECONDS);
+      }
+
+      @Override
       protected void reportAggregatesData(final long lookupFinishedAtMs) {
         final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
         IndexOperationAggregatesCollector.recordAllKeysLookup(indexId, lookupFailed, lookupDurationMs);
@@ -549,6 +597,29 @@ public final class IndexOperationFUS {
           FIELD_TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed),
           FIELD_LOOKUP_RESULT_ENTRIES_COUNT.with(lookupResultSize)
         );
+      }
+
+      @Override
+      protected void reportDetailedDataToOTel(long lookupFinishedAtMs) {
+        Span lookupSpan = OTEL_TRACER.spanBuilder(SPAN_NAME_INDEX_LOOKUP_ENTRIES)
+          .setAttribute("index_id", indexId.getName())
+          .setAttribute("total_keys_in_index", totalKeysIndexed)
+          .setAttribute("lookup_result_size", lookupResultSize)
+          .setAttribute("lookup_keys", lookupKeysCount)
+          .setAttribute("lookup_op", lookupOperation.name())
+          .setStartTimestamp(lookupStartedAtMs, MILLISECONDS)
+          .startSpan();
+        lookupSpan.setStatus(lookupFailed ? StatusCode.ERROR : StatusCode.OK);
+        try (Scope scope = lookupSpan.makeCurrent()) {
+          if (indexValidationFinishedAtMs > 0) {
+            OTEL_TRACER.spanBuilder(SPAN_NAME_INDEX_UP_TO_DATE_CHECK)
+              .setStartTimestamp(lookupStartedAtMs, MILLISECONDS)
+              .startSpan()
+              .end(indexValidationFinishedAtMs, MILLISECONDS);
+          }
+        }
+
+        lookupSpan.end(lookupFinishedAtMs, MILLISECONDS);
       }
 
       @Override
@@ -646,6 +717,34 @@ public final class IndexOperationFUS {
       }
 
       @Override
+      protected void reportDetailedDataToOTel(long lookupFinishedAtMs) {
+        Span lookupSpan = OTEL_TRACER.spanBuilder(SPAN_NAME_INDEX_LOOKUP_STUBS)
+          .setAttribute("index_id", indexId.getName())
+          .setAttribute("total_keys_in_index", totalKeysIndexed)
+          .setAttribute("lookup_result_size", lookupResultSize)
+          .setStartTimestamp(lookupStartedAtMs, MILLISECONDS)
+          .startSpan();
+        lookupSpan.setStatus(lookupFailed ? StatusCode.ERROR : StatusCode.OK);
+        try (Scope scope = lookupSpan.makeCurrent()) {
+          if (indexValidationFinishedAtMs > 0) {
+            OTEL_TRACER.spanBuilder(SPAN_NAME_INDEX_UP_TO_DATE_CHECK)
+              .setStartTimestamp(lookupStartedAtMs, MILLISECONDS)
+              .startSpan()
+              .end(indexValidationFinishedAtMs, MILLISECONDS);
+          }
+
+          if (stubTreesDeserializingStarted > 0) {
+            OTEL_TRACER.spanBuilder(SPAN_NAME_STUB_TREE_DESERIALIZATION)
+              .setStartTimestamp(stubTreesDeserializingStarted, MILLISECONDS)
+              .startSpan()
+              .end(lookupFinishedAtMs, MILLISECONDS);
+          }
+        }
+
+        lookupSpan.end(lookupFinishedAtMs, MILLISECONDS);
+      }
+
+      @Override
       protected void reportAggregatesData(long lookupFinishedAtMs) {
         final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
         IndexOperationAggregatesCollector.recordStubEntriesByKeysLookup(indexId, lookupFailed, lookupDurationMs);
@@ -723,9 +822,9 @@ public final class IndexOperationFUS {
     //FIXME RC: OTel reporting is implicitly guarded by REPORT_AGGREGATED_STATS, which is not obvious. Better to separate FUS and
     //          OTel reporting to independent branches
     @Nullable
-    private static final OTelIndexesMetricsReporter otelReporter = REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY ?
-                                                                   new OTelIndexesMetricsReporter() :
-                                                                   null;
+    private static final IndexOperationFUS.IndexesToOTelMetricsReporter otelReporter = REPORT_AGGREGATED_STATS_TO_OPEN_TELEMETRY ?
+                                                                                       new IndexesToOTelMetricsReporter() :
+                                                                                       null;
 
 
     public IndexOperationAggregatesCollector() {
@@ -878,9 +977,10 @@ public final class IndexOperationFUS {
     }
   }
 
-  private static class OTelIndexesMetricsReporter implements AutoCloseable {
+  private static class IndexesToOTelMetricsReporter implements AutoCloseable {
 
-    private static final Recorder allKeysLookupDurationMsHisto = new Recorder(MAX_TRACKABLE_DURATION_MS, /* significant digits = */ 2);/* 2 digits =~ 1% accuracy */
+    private static final Recorder allKeysLookupDurationMsHisto =
+      new Recorder(MAX_TRACKABLE_DURATION_MS, /* significant digits = */ 2);/* 2 digits =~ 1% accuracy */
     private static final Recorder entriesLookupDurationsMsHisto = new Recorder(MAX_TRACKABLE_DURATION_MS, /* significant digits = */ 2);
     private static final Recorder stubEntriesLookupDurationsMsHisto = new Recorder(MAX_TRACKABLE_DURATION_MS, /* significant digits = */ 2);
 
@@ -903,7 +1003,7 @@ public final class IndexOperationFUS {
     /** Needed only to stop reporting on .close() */
     private final BatchCallback batchCallbackHandle;
 
-    private OTelIndexesMetricsReporter() {
+    private IndexesToOTelMetricsReporter() {
       final Meter meter = TelemetryTracer.getMeter(Indexes);
 
       allKeysTotalLookups = meter.gaugeBuilder("Indexes.allKeys.lookups").buildObserver();
@@ -922,7 +1022,7 @@ public final class IndexOperationFUS {
       stubsLookupDurationMax = meter.gaugeBuilder("Indexes.stubs.lookupDurationMaxMs").buildObserver();
 
       batchCallbackHandle = meter.batchCallback(
-        this::reportValues,
+        this::drainValuesToOTel,
         allKeysTotalLookups, allKeysLookupDurationAvg, allKeysLookupDuration90P, allKeysLookupDurationMax,
         entriesTotalLookups, entriesLookupDurationAvg, entriesLookupDuration90P, entriesLookupDurationMax,
         stubsTotalLookups, stubsLookupDurationAvg, stubsLookupDuration90P, stubsLookupDurationMax
@@ -935,7 +1035,7 @@ public final class IndexOperationFUS {
     private transient Histogram stubsIntervalHisto;
 
 
-    private void reportValues() {
+    private void drainValuesToOTel() {
       allKeysIntervalHisto = allKeysLookupDurationMsHisto.getIntervalHistogram(allKeysIntervalHisto);
       allKeysTotalLookups.record(allKeysIntervalHisto.getTotalCount());
       allKeysLookupDurationAvg.record(allKeysIntervalHisto.getMean());

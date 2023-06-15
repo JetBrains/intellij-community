@@ -22,6 +22,6 @@ dependencies {
 // VERSION: 1.6.20-dev-456
 kotlin {
     jvmToolchain {
-        (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(11))
+        (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(8))
     }
 }

@@ -2,11 +2,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.impl.toolkit
 
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
 import sun.awt.LightweightFrame
 import sun.awt.SunToolkit
@@ -25,28 +23,22 @@ class IdeToolkit : SunToolkit() {
     @JvmStatic
     private val logger = logger<IdeToolkit>()
     val instance: IdeToolkit
-      get() = Toolkit.getDefaultToolkit() as IdeToolkit
+      get() = getDefaultToolkit() as IdeToolkit
 
-    private val isPluginEnabled: Boolean by lazy {
-      PluginManagerCore.getPluginSet().isPluginEnabled(PluginId.getId("com.jetbrains.codeWithMe"))
-    }
-
-    private val clientInstance: ClientToolkit
-      get() {
-        assert(isPluginEnabled) { "CodeWithMe plugin is not enabled" }
-        return service()
-      }
+    private fun clientInstance(): ClientToolkit = service()
 
     private val clipboard = Clipboard("System")
   }
+
   fun peerCreated(target: Component, peer: ComponentPeer, disposable: Disposable) {
     targetCreatedPeer(target, peer)
     Disposer.register(disposable) { targetDisposedPeer(target, peer) }
   }
-  fun createPanelWindow(panel: Component, target: Window): WindowPeer = clientInstance.createPanelWindow(panel, target)
-  override fun createWindow(target: Window): WindowPeer = clientInstance.createWindow(target)
-  override fun createDialog(target: Dialog): DialogPeer = clientInstance.createDialog(target)
-  override fun createFrame(target: Frame): FramePeer = clientInstance.createFrame(target)
+
+  fun createPanelWindow(panel: Component, target: Window): WindowPeer = clientInstance().createPanelWindow(panel, target)
+  override fun createWindow(target: Window): WindowPeer = clientInstance().createWindow(target)
+  override fun createDialog(target: Dialog): DialogPeer = clientInstance().createDialog(target)
+  override fun createFrame(target: Frame): FramePeer = clientInstance().createFrame(target)
   override fun getSystemClipboard(): Clipboard = clipboard
 
   override fun getScreenResolution(): Int = 96

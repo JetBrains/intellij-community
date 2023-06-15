@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.annotations.NotNull;
@@ -62,11 +60,13 @@ public abstract class Statement implements IMatchable {
 
   Statement(@NotNull StatementType type) {
     this.type = type;
+    cancellationManager.checkCanceled();
   }
 
   Statement(@NotNull StatementType type, int id) {
     this.type = type;
     this.id = id;
+    cancellationManager.checkCanceled();
   }
 
   // *****************************************************************************
@@ -103,7 +103,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public void collapseNodesToStatement(Statement stat) {
-    cancellationManager.checkSavedCancelled();
+    cancellationManager.checkCanceled();
     Statement head = stat.getFirst();
     Statement post = stat.getPost();
 
@@ -121,7 +121,7 @@ public abstract class Statement implements IMatchable {
 
     // regular head edges
     for (StatEdge prededge : head.getAllPredecessorEdges()) {
-      cancellationManager.checkSavedCancelled();
+      cancellationManager.checkCanceled();
 
       if (prededge.getType() != EdgeType.EXCEPTION &&
           stat.containsStatementStrict(prededge.getSource())) {
@@ -318,7 +318,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public HashSet<Statement> buildContinueSet() {
-    cancellationManager.checkSavedCancelled();
+    cancellationManager.checkCanceled();
     continueSet.clear();
 
     for (Statement st : stats) {
@@ -346,7 +346,7 @@ public abstract class Statement implements IMatchable {
     }
 
     switch (type) {
-      case BASIC_BLOCK:
+      case BASIC_BLOCK -> {
         BasicBlockStatement bblock = (BasicBlockStatement)this;
         InstructionSequence seq = bblock.getBlock().getSeq();
 
@@ -359,24 +359,20 @@ public abstract class Statement implements IMatchable {
           }
           isMonitorEnter = (seq.getLastInstr().opcode == CodeConstants.opc_monitorenter);
         }
-        break;
-      case SEQUENCE:
-      case IF:
+      }
+      case SEQUENCE, IF -> {
         containsMonitorExit = false;
         for (Statement st : stats) {
           containsMonitorExit |= st.isContainsMonitorExit();
         }
-
-        break;
-      case SYNCHRONIZED:
-      case ROOT:
-      case GENERAL:
-        break;
-      default:
+      }
+      case SYNCHRONIZED, ROOT, GENERAL -> { }
+      default -> {
         containsMonitorExit = false;
         for (Statement st : stats) {
           containsMonitorExit |= st.isContainsMonitorExit();
         }
+      }
     }
   }
 
@@ -398,7 +394,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public List<Statement> getPostReversePostOrderList(List<Statement> lstexits) {
-    cancellationManager.checkSavedCancelled();
+    cancellationManager.checkCanceled();
     List<Statement> res = new ArrayList<>();
 
     if (lstexits == null) {
@@ -408,7 +404,7 @@ public abstract class Statement implements IMatchable {
     HashSet<Statement> setVisited = new HashSet<>();
 
     for (Statement exit : lstexits) {
-      cancellationManager.checkSavedCancelled();
+      cancellationManager.checkCanceled();
       addToPostReversePostOrderList(exit, res, setVisited);
     }
 
@@ -465,7 +461,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public void replaceStatement(Statement oldstat, Statement newstat) {
-
+    cancellationManager.checkCanceled();
     for (StatEdge edge : oldstat.getAllPredecessorEdges()) {
       oldstat.removePredecessor(edge);
       edge.getSource().changeEdgeNode(EdgeDirection.FORWARD, edge, newstat);
@@ -634,6 +630,7 @@ public abstract class Statement implements IMatchable {
 
 
   private List<StatEdge> getEdges(EdgeType type, @NotNull EdgeDirection direction) {
+    cancellationManager.checkCanceled();
 
     Map<EdgeType, List<StatEdge>> map = direction == EdgeDirection.BACKWARD ? mapPredEdges : mapSuccEdges;
 
@@ -775,6 +772,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public List<Exprent> getVarDefinitions() {
+    cancellationManager.checkCanceled();
     return varDefinitions;
   }
 

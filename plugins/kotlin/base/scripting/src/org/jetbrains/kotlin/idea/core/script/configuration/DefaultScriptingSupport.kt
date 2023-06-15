@@ -509,7 +509,7 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
         newConfigurationSnapshot: ScriptConfigurationSnapshot?,
         syncUpdate: Boolean = false
     ) {
-        manager.updater.checkInTransaction()
+        manager.updater.checkHasTransactionToHappen()
         val newConfiguration = newConfigurationSnapshot?.configuration
         scriptingDebugLog(file) { "configuration changed = $newConfiguration" }
 

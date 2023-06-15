@@ -161,9 +161,6 @@ open class IdeRootPane internal constructor(frame: JFrame,
         layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
       }
       else if (hideNativeLinuxTitle) {
-        if (!frame.isDisplayable) {
-          frame.isUndecorated = true
-        }
         val customFrameTitlePane = ToolbarFrameHeader(frame = frame, root = this)
         helper = DecoratedHelper(
           customFrameTitlePane = customFrameTitlePane,
@@ -178,6 +175,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
       if (isFloatingMenuBarSupported) {
         menuBar = IdeMenuBar.createMenuBar()
+        menuBar.isOpaque = true
         layeredPane.add(menuBar, (JLayeredPane.DEFAULT_LAYER - 1) as Any)
       }
     }
@@ -468,6 +466,11 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
 
   fun makeComponentToBeMouseTransparentInTitleBar(component: JComponent) {
+    if (hideNativeLinuxTitle) {
+      val windowMoveListener = WindowMoveListener(this)
+      windowMoveListener.installTo(component)
+      return
+    }
     val customTitleBar = ((helper as? DecoratedHelper)?.customFrameTitlePane as? CustomHeader)?.customTitleBar ?: return
 
     val listener = HeaderClickTransparentListener(customTitleBar)

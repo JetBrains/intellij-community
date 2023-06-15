@@ -3,6 +3,7 @@ package com.intellij.ui.tree.ui
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.tree.CachingTreePath
+import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
 import java.awt.Rectangle
 import java.util.*
@@ -16,7 +17,9 @@ import kotlin.math.max
 internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) -> Unit) : AbstractLayoutCache() {
 
   private var root: Node? = null
-  private val rows = mutableListOf<Node>()
+  private val rows = NodeList(onUpdate = {
+    variableHeight?.updateSums()
+  })
   private val nodeByPath = hashMapOf<TreePath, Node>()
   private val boundsBuffer = Rectangle()
   private val defaultRowHeight = JBUI.CurrentTheme.Tree.rowHeight()
@@ -35,14 +38,14 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     val root = this.root ?: return
     if (rootVisible) {
       root.invalidateSize()
-      rows.add(0, root)
-      root.row = 0
-      updateVisibleRowIndexes()
+      rows.update {
+        rows.add(0, root)
+      }
     }
     else {
-      rows.removeAt(0)
-      root.row = -1
-      updateVisibleRowIndexes()
+      rows.update {
+        rows.removeAt(0)
+      }
       treeSelectionModel?.removeSelectionPath(root.path)
     }
     treeSelectionModel?.resetRowSelection()
@@ -74,15 +77,16 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     val node = getOrCreateNode(path) ?: return
     val wasVisible = node.isVisible
     val oldVisibleChildren = node.visibleChildCount
-    if (isExpanded) {
-      node.ensureVisibleAndExpanded()
+    rows.update {
+      if (isExpanded) {
+        node.ensureChildrenVisible()
+      }
+      else {
+        node.parent?.ensureChildrenVisible()
+        node.collapse()
+        node.invalidateSize()
+      }
     }
-    else {
-      node.parent?.ensureVisibleAndExpanded()
-      node.collapse()
-      node.invalidateSize()
-    }
-    updateVisibleRowIndexes()
     checkInvariants("setExpandedState(%s, %s)", path, isExpanded)
     val newVisibleChildren = node.visibleChildCount
     if (wasVisible && oldVisibleChildren == 0 && newVisibleChildren == 1) {
@@ -185,11 +189,10 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     if (!changedNode.isChildrenLoaded) {
       return
     }
-    for (i in insertedChildIndexes) {
-      changedNode.createChildAt(i, treeModel.getChild(changedNode.userObject, i))
-    }
-    if (changedNode.isChildrenVisible) {
-      updateVisibleRowIndexes()
+    rows.update {
+      for (i in insertedChildIndexes) {
+        changedNode.createChildAt(i, treeModel.getChild(changedNode.userObject, i))
+      }
     }
     treeSelectionModel?.resetRowSelection()
     if (insertedChildIndexes.size == 1 && changedNode.visibleChildCount == 1) {
@@ -212,15 +215,13 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     if (!changedNode.isChildrenLoaded) {
       return
     }
-    val childrenWereVisible = changedNode.isChildrenVisible
-    for (index in removedChildIndexes.reversed()) {
-      changedNode.removeChildAt(index)
-    }
-    if (changedNode.childCount == 0 && changedNode.isLeaf) {
-      changedNode.collapse()
-    }
-    if (childrenWereVisible) {
-      updateVisibleRowIndexes()
+    rows.update {
+      for (index in removedChildIndexes.reversed()) {
+        changedNode.removeChildAt(index)
+      }
+      if (changedNode.childCount == 0 && changedNode.isLeaf) {
+        changedNode.collapse()
+      }
     }
     treeSelectionModel?.resetRowSelection()
     checkInvariants("treeNodesRemoved(value=%s, indices=%s)", changedValue, removedChildIndexes)
@@ -242,11 +243,12 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       checkNotNull(parent) { "Changed node $changedNode is not root, but its parent is null" }
       val index = parent.getChildIndex(changedNode)
       check(index != -1) { "The node $parent has no child $changedNode" }
-      parent.removeChildAt(index)
-      val newNode = parent.createChildAt(index, changedPath.lastPathComponent)
-      if (childrenWereVisible) {
-        newNode.ensureVisibleAndExpanded()
-        updateVisibleRowIndexes()
+      rows.update {
+        parent.removeChildAt(index)
+        val newNode = parent.createChildAt(index, changedPath.lastPathComponent)
+        if (childrenWereVisible) {
+          newNode.ensureChildrenVisible()
+        }
       }
     }
     checkInvariants("treeStructureChanged(path=%s)", changedPath)
@@ -259,19 +261,12 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     val newRootObject = treeModel?.root ?: return
     val newRootNode = Node(null, CachingTreePath(newRootObject))
     this.root = newRootNode
-    if (isRootVisible) {
-      rows += newRootNode
-      newRootNode.row = 0
+    rows.update {
+      if (isRootVisible) {
+        rows.add(0, newRootNode)
+      }
+      newRootNode.ensureChildrenVisible()
     }
-    newRootNode.ensureVisibleAndExpanded()
-    updateVisibleRowIndexes()
-  }
-
-  private fun updateVisibleRowIndexes() {
-    for ((i, row) in rows.withIndex()) {
-      row.row = i
-    }
-    variableHeight?.updateSums()
   }
 
   private fun getRowByY(y: Int): Int =
@@ -354,7 +349,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       get() = variableHeight?.getY(row) ?: (row * rowHeight)
 
     val height: Int
-      get() = defaultRowHeight + heightDelta
+      get() = if (rowHeight > 0) rowHeight else defaultRowHeight + heightDelta
 
     var children: MutableList<Node>? = null
       private set
@@ -437,9 +432,9 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       requireNotNull(children) { "No children or not expanded yet" }
       val child = children.removeAt(index)
       if (child.isVisible) {
-        val visibleChildren = rows.subList(child.row, child.row + child.visibleSubtreeNodeCount())
-        visibleChildren.forEach { it.row = -1 }
-        visibleChildren.clear()
+        rows.update {
+          rows.clearRange(child.row, child.row + child.visibleSubtreeNodeCount())
+        }
       }
       child.disposeRecursively()
     }
@@ -494,8 +489,8 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       return result
     }
 
-    fun ensureVisibleAndExpanded() {
-      parent?.ensureVisibleAndExpanded()
+    fun ensureChildrenVisible() {
+      parent?.ensureChildrenVisible()
       expand()
     }
 
@@ -510,9 +505,8 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     private fun doExpand() {
       val firstChildRow = row + 1
       val children = this.children ?: loadChildren()
-      rows.addAll(firstChildRow, children)
-      for ((i, child) in children.withIndex()) {
-        child.row = firstChildRow + i
+      rows.update {
+        rows.addAll(firstChildRow, children)
       }
     }
 
@@ -538,9 +532,9 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       }
       val visibleChildrenCount = visibleSubtreeNodeCount() - 1 // minus this node, it remains visible
       val firstChildRow = row + 1
-      val visibleChildren = rows.subList(firstChildRow, firstChildRow + visibleChildrenCount)
-      visibleChildren.forEach { it.row = -1 }
-      visibleChildren.clear()
+      rows.update {
+        rows.clearRange(firstChildRow, firstChildRow + visibleChildrenCount)
+      }
     }
 
     fun visibleSubtreeNodeCount(): Int = when {
@@ -553,6 +547,79 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       nodeByPath.remove(path)
       row = -1
       children?.forEach { it.disposeRecursively() }
+    }
+
+  }
+
+  private class NodeList(private val onUpdate: () -> Unit) : Iterable<Node> {
+
+    val indices: ClosedRange<Int> get() = nodes.indices
+    val size: Int get() = nodes.size
+    fun isEmpty(): Boolean = nodes.isEmpty()
+    val lastIndex: Int get() = nodes.lastIndex
+    operator fun get(index: Int): Node = nodes[index]
+    fun getOrNull(index: Int): Node? = nodes.getOrNull(index)
+
+    private val nodes = mutableListOf<Node>()
+    private var minimumAffectedRow: Int = -1
+
+    override fun iterator(): Iterator<Node> = nodes.iterator()
+
+    fun clear() {
+      nodes.clear()
+    }
+
+    inline fun update(update: () -> Unit) {
+      val reentry = minimumAffectedRow != -1
+      if (reentry) { // Indirect recursion, will update later up the stack.
+        update()
+        return
+      }
+      try {
+        minimumAffectedRow = Integer.MAX_VALUE
+        update()
+        for (i in minimumAffectedRow..nodes.lastIndex) {
+          nodes[i].row = i
+        }
+        onUpdate()
+      } finally {
+        minimumAffectedRow = -1
+      }
+    }
+
+    fun add(index: Int, value: Node) {
+      nodes.add(index, value)
+      value.row = index
+      if (minimumAffectedRow >= index) { // The current dirty region is to the right?
+        minimumAffectedRow = index + 1 // Extend it to this index, excluding this node.
+      } // Otherwise, we're operating inside a dirty region already, do nothing.
+    }
+
+    fun removeAt(index: Int) {
+      nodes[index].row = -1
+      nodes.removeAt(index)
+      if (minimumAffectedRow > index) { // The current dirty region is to the right?
+        minimumAffectedRow = index // Extend it to this index.
+      } // Otherwise, we're operating inside a dirty region already, do nothing.
+    }
+
+    fun clearRange(fromInclusive: Int, toExclusive: Int) {
+      val subList = nodes.subList(fromInclusive, toExclusive)
+      subList.forEach { it.row = -1 }
+      subList.clear()
+      if (minimumAffectedRow > fromInclusive) { // The current dirty region is to the right?
+        minimumAffectedRow = fromInclusive // Extend it to this index.
+      } // Otherwise, we're operating inside a dirty region already, do nothing.
+    }
+
+    fun addAll(index: Int, newNodes: List<Node>) {
+      nodes.addAll(index, newNodes)
+      for ((i, node) in newNodes.withIndex()) {
+        node.row = index + i
+      }
+      if (minimumAffectedRow >= index) { // The current dirty region is to the right?
+        minimumAffectedRow = index + newNodes.size // Extend it to this index, excluding the added nodes.
+      } // Otherwise, we're operating inside a dirty region already, do nothing.
     }
 
   }
@@ -572,10 +639,6 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
   }
 
   private inner class VariableHeightSupport {
-
-    init {
-      updateSums()
-    }
 
     fun updateSums() {
       for (node in rows) {
@@ -642,7 +705,9 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     if (!LOG.isDebugEnabled) {
       return
     }
-    InvariantChecker(location.format(*args)).checkInvariants()
+    SlowOperations.startSection(SlowOperations.GENERIC).use { // Only for debugging, so slow ops are fine here.
+      InvariantChecker(location.format(*args)).checkInvariants()
+    }
   }
 
   private inner class InvariantChecker(private val location: String) {
@@ -670,7 +735,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     }
 
     private fun checkRows() {
-      for (i in rows.indices) {
+      for (i in 0 until rows.size) {
         if (rows[i].row != i) {
           messages += "Row inconsistency: row $i contains ${rows[i].path} which is supposed to be at ${rows[i].row}"
         }
@@ -714,7 +779,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     }
 
     private fun checkVisibleSubtrees() {
-      for (i in rows.indices) {
+      for (i in 0 until rows.size) {
         val node = rows[i]
         val visibleSubtreeSize = node.visibleSubtreeNodeCount()
         if (visibleSubtreeSize <= 0) {

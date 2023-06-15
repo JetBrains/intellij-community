@@ -1,16 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
@@ -20,6 +27,12 @@ public class RedundantEscapeInRegexReplacementInspection extends BaseInspection 
   protected @NotNull String buildErrorString(Object... infos) {
     char c = (char)infos[0];
     return InspectionGadgetsBundle.message("redundant.escape.in.regex.replacement.problem.descriptor", c);
+  }
+
+  @Override
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+    final boolean buildFix = (Boolean)infos[1];
+    return buildFix ? new RedundantEscapeInRegexReplacementFix().asQuickFix() : null;
   }
 
   @Override
@@ -57,18 +70,42 @@ public class RedundantEscapeInRegexReplacementInspection extends BaseInspection 
         else {
           if (escaped) {
             escaped = false;
-            if (c == '$') continue;
+            if (c == '$') continue; // $ needs escaping
             final TextRange range = ExpressionUtils.findStringLiteralRange(lastArgument, i - 1, i);
             if (range != null) {
-              registerErrorAtOffset(lastArgument, range.getStartOffset(), range.getLength(), c);
+              registerErrorAtOffset(lastArgument, range.getStartOffset(), range.getLength(), c, Boolean.TRUE);
             }
             else {
-              registerError(lastArgument, c);
+              registerError(lastArgument, c, Boolean.FALSE);
               return;
             }
           }
         }
       }
+    }
+  }
+
+  private static class RedundantEscapeInRegexReplacementFix extends PsiUpdateModCommandAction<PsiLiteralExpression> {
+    RedundantEscapeInRegexReplacementFix() {
+      super(PsiLiteralExpression.class);
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiLiteralExpression literal, @NotNull EditorUpdater updater) {
+      final TextRange range = context.selection().shiftLeft(literal.getTextRange().getStartOffset());
+      final String text = literal.getText();
+      final int length = text.length();
+      final int start = range.getStartOffset();
+      final int end = range.getEndOffset();
+
+      if (start >= length || end >= length || !StringUtil.unescapeStringCharacters(text.substring(start, end)).equals("\\")) return;
+      final String newText = text.substring(0, start) + text.substring(end);
+      PsiReplacementUtil.replaceExpression(literal, newText);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("redundant.escape.in.regex.replacement.quickfix");
     }
   }
 }

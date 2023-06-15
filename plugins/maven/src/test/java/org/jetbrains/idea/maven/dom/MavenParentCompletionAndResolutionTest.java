@@ -251,7 +251,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                     """);
 
     myFixture.enableInspections(MavenRedundantGroupIdInspection.class);
-    checkHighlighting(myProjectPom);
+    checkHighlighting();
   }
 
   @Test

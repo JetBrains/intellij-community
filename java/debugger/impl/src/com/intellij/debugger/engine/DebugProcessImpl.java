@@ -2014,12 +2014,20 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         thread.popFrames(myStackFrame);
         getSuspendManager().popFrame(suspendContext);
       }
-      catch (final EvaluateException e) {
-        DebuggerInvocationUtil.swingInvokeLater(myProject, () ->
-          Messages.showMessageDialog(myProject, JavaDebuggerBundle.message("error.pop.stackframe", e.getLocalizedMessage()),
-                                     XDebuggerBundle.message("xdebugger.reset.frame.title"), Messages.getErrorIcon()));
+      catch (NativeMethodException e) {
+        showError(JavaDebuggerBundle.message("error.native.method.exception"));
         LOG.info(e);
       }
+      catch (EvaluateException e) {
+        showError(JavaDebuggerBundle.message("error.pop.stackframe", e.getLocalizedMessage()));
+        LOG.info(e);
+      }
+    }
+
+    private void showError(@NlsContexts.DialogMessage String message) {
+      DebuggerInvocationUtil.swingInvokeLater(myProject, () ->
+        Messages.showMessageDialog(myProject, message,
+                                   XDebuggerBundle.message("xdebugger.reset.frame.title"), Messages.getErrorIcon()));
     }
   }
 

@@ -94,6 +94,18 @@
     <action id="Github.Sync.Fork" class="org.jetbrains.plugins.github.GithubSyncForkAction">
       <add-to-group group-id="Git.Menu"/>
     </action>
+    <group id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GHOpenInBrowserActionGroup">
+      <override-text place="EditorTabPopup"/>
+      <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
+      <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
+      <override-text place="FavoritesPopup" use-text-of-place="EditorTabPopup"/>
+      <add-to-group group-id="Git.Hosting.Open.In.Browser.Group"/>
+    </group>
+    <group id="GitHub.Copy.Link" class="org.jetbrains.plugins.github.GHCopyLinkActionGroup"
+           icon="AllIcons.Vcs.Vendors.Github">
+      <override-text place="CopyReferencePopup"/>
+      <add-to-group group-id="Git.Hosting.Copy.Link.Group"/>
+    </group>
     <action id="Github.Create.Pull.Request" class="org.jetbrains.plugins.github.pullrequest.action.GHPRCreatePullRequestAction">
       <add-to-group group-id="Git.Menu"/>
     </action>
@@ -105,17 +117,6 @@
             use-shortcut-of="Refresh"/>
     <action id="Github.PullRequest.Timeline.Show"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenPullRequestTimelineAction"/>
-    <group id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GHOpenInBrowserActionGroup">
-      <override-text place="EditorTabPopup"/>
-      <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
-      <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
-      <override-text place="FavoritesPopup" use-text-of-place="EditorTabPopup"/>
-      <add-to-group group-id="RevealGroup"/>
-      <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
-      <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
-      <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
-      <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="last"/>
-    </group>
     <action id="Github.Create.Gist" class="org.jetbrains.plugins.github.GithubCreateGistAction">
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
@@ -191,14 +192,6 @@
       <keyboard-shortcut first-keystroke="meta shift X" keymap="Eclipse (Mac OS X)" remove="true"/>
       <keyboard-shortcut first-keystroke="control shift X" keymap="Emacs" remove="true"/>
       <add-to-group group-id="Diff.EditorPopupMenu"/>
-    </action>
-
-    <action id="GithubCopyPathProvider" class="org.jetbrains.plugins.github.GithubCopyPathProvider" icon="AllIcons.Vcs.Vendors.Github">
-      <add-to-group group-id="CopyFileReference"/>
-    </action>
-
-    <action id="Github.Copy.Link.To.GitHub" class="org.jetbrains.plugins.github.GithubCopyPathProvider" icon="AllIcons.Vcs.Vendors.Github">
-      <add-to-group group-id="Copy.Paste.Special" relative-to-action="CopyReference" anchor="after"/>
     </action>
 
     <group id="Github.PullRequest.Diff.Thread.View.Options"

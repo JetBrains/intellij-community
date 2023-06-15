@@ -17,15 +17,13 @@
 
 package org.jetbrains.sqlite
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 
 internal abstract class SqliteDb {
   // tracer for statements to avoid unfinalized statements on db close
   private val statements = ConcurrentHashMap.newKeySet<SafeStatementPointer>()
-  private val updateListeners = HashSet<SQLiteUpdateListener>()
-  private val commitListeners = HashSet<SQLiteCommitListener>()
 
   companion object {
     /**
@@ -136,10 +134,10 @@ internal abstract class SqliteDb {
     // finalize any remaining statements before closing db
     for (element in statements) {
       try {
-        element.internalClose()
+        element.internalClose(this)
       }
       catch (e: Throwable) {
-        Logger.getInstance(SqliteDb::class.java).error(e)
+        logger<SqliteDb>().error(e)
       }
     }
     _close()
@@ -150,8 +148,7 @@ internal abstract class SqliteDb {
    * @see [http://www.sqlite.org/c3ref/prepare.html](http://www.sqlite.org/c3ref/prepare.html)
    */
   @Synchronized
-  fun prepareForStatement(sql: ByteArray): SafeStatementPointer {
-    val pointer = prepare(sql)
+  fun addStatement(pointer: SafeStatementPointer): SafeStatementPointer {
     check(statements.add(pointer)) { "Already added pointer to statements set" }
     return pointer
   }
@@ -198,8 +195,6 @@ internal abstract class SqliteDb {
    * @see [http://www.sqlite.org/c3ref/exec.html](http://www.sqlite.org/c3ref/exec.html)
    */
   abstract fun _exec(sql: ByteArray): Int
-
-  protected abstract fun prepare(sql: ByteArray): SafeStatementPointer
 
   /**
    * Destroys a prepared statement.
@@ -253,7 +248,7 @@ internal abstract class SqliteDb {
 
   /**
    * @param stmt Pointer to the statement.
-   * @param col  Number of column.
+   * @param col  Number of columns.
    * @return Datatype code for the initial data type of the result column.
    * @see [http://www.sqlite.org/c3ref/column_blob.html](http://www.sqlite.org/c3ref/column_blob.html)
    */
@@ -267,164 +262,8 @@ internal abstract class SqliteDb {
   abstract fun bind_int(stmt: Long, oneBasedColumnIndex: Int, v: Int): Int
   abstract fun bind_long(stmt: Long, oneBasedColumnIndex: Int, v: Long): Int
   abstract fun bind_double(stmt: Long, oneBasedColumnIndex: Int, v: Double): Int
-  abstract fun bind_text(stmt: Long, oneBasedColumnIndex: Int, v: String?): Int
+  abstract fun bind_text(stmt: Long, oneBasedColumnIndex: Int, v: String): Int
   abstract fun bind_blob(stmt: Long, oneBasedColumnIndex: Int, v: ByteArray?): Int
-
-  /**
-   * Sets the result of an SQL function as NULL with the pointer to the SQLite database context.
-   *
-   * @param context Pointer to the SQLite database context.
-   * @see [http://www.sqlite.org/c3ref/result_blob.html](http://www.sqlite.org/c3ref/result_blob.html)
-   */
-  abstract fun result_null(context: Long)
-
-  /**
-   * Sets the result of an SQL function as text data type with the pointer to the SQLite database
-   * context and the the result value of String.
-   *
-   * @param context Pointer to the SQLite database context.
-   * @param val     Result value of an SQL function.
-   * @see [http://www.sqlite.org/c3ref/result_blob.html](http://www.sqlite.org/c3ref/result_blob.html)
-   */
-  abstract fun result_text(context: Long, `val`: String?)
-
-  /**
-   * Sets the result of an SQL function as blob data type with the pointer to the SQLite database
-   * context and the the result value of byte array.
-   *
-   * @param context Pointer to the SQLite database context.
-   * @param val     Result value of an SQL function.
-   * @see [http://www.sqlite.org/c3ref/result_blob.html](http://www.sqlite.org/c3ref/result_blob.html)
-   */
-  abstract fun result_blob(context: Long, `val`: ByteArray?)
-
-  /**
-   * Sets the result of an SQL function as double data type with the pointer to the SQLite
-   * database context and the the result value of double.
-   *
-   * @param context Pointer to the SQLite database context.
-   * @param val     Result value of an SQL function.
-   * @see [http://www.sqlite.org/c3ref/result_blob.html](http://www.sqlite.org/c3ref/result_blob.html)
-   */
-  abstract fun result_double(context: Long, `val`: Double)
-
-  /**
-   * Sets the result of an SQL function as long data type with the pointer to the SQLite database
-   * context and the the result value of long.
-   *
-   * @param context Pointer to the SQLite database context.
-   * @param val     Result value of an SQL function.
-   * @see [http://www.sqlite.org/c3ref/result_blob.html](http://www.sqlite.org/c3ref/result_blob.html)
-   */
-  abstract fun result_long(context: Long, `val`: Long)
-
-  /**
-   * Sets the result of an SQL function as int data type with the pointer to the SQLite database
-   * context and the the result value of int.
-   *
-   * @param context Pointer to the SQLite database context.
-   * @param val     Result value of an SQL function.
-   * @see [http://www.sqlite.org/c3ref/result_blob.html](http://www.sqlite.org/c3ref/result_blob.html)
-   */
-  abstract fun result_int(context: Long, `val`: Int)
-
-  /**
-   * Sets the result of an SQL function as an error with the pointer to the SQLite database
-   * context and the error of String.
-   *
-   * @param context Pointer to the SQLite database context.
-   * @param err     Error result of an SQL function.
-   * @see [http://www.sqlite.org/c3ref/result_blob.html](http://www.sqlite.org/c3ref/result_blob.html)
-   */
-  abstract fun result_error(context: Long, err: String?)
-
-  /**
-   * @param f   SQLite function object.
-   * @param arg Pointer to the parameter of the SQLite function or aggregate.
-   * @return Parameter value of the given SQLite function or aggregate in text data type.
-   * @see [http://www.sqlite.org/c3ref/value_blob.html](http://www.sqlite.org/c3ref/value_blob.html)
-   */
-  abstract fun value_text(f: Function, arg: Int): String
-
-  /**
-   * @param f   SQLite function object.
-   * @param arg Pointer to the parameter of the SQLite function or aggregate.
-   * @return Parameter value of the given SQLite function or aggregate in blob data type.
-   * @see [http://www.sqlite.org/c3ref/value_blob.html](http://www.sqlite.org/c3ref/value_blob.html)
-   */
-  abstract fun value_blob(f: Function?, arg: Int): ByteArray?
-
-  /**
-   * @param f   SQLite function object.
-   * @param arg Pointer to the parameter of the SQLite function or aggregate.
-   * @return Parameter value of the given SQLite function or aggregate in double data type
-   * @see [http://www.sqlite.org/c3ref/value_blob.html](http://www.sqlite.org/c3ref/value_blob.html)
-   */
-  abstract fun value_double(f: Function?, arg: Int): Double
-
-  /**
-   * @param f   SQLite function object.
-   * @param arg Pointer to the parameter of the SQLite function or aggregate.
-   * @return Parameter value of the given SQLite function or aggregate in long data type.
-   * @see [http://www.sqlite.org/c3ref/value_blob.html](http://www.sqlite.org/c3ref/value_blob.html)
-   */
-  abstract fun value_long(f: Function?, arg: Int): Long
-
-  /**
-   * Accesses the parameter values on the function or aggregate in int data type with the function
-   * object and the parameter value.
-   *
-   * @param f   SQLite function object.
-   * @param arg Pointer to the parameter of the SQLite function or aggregate.
-   * @return Parameter value of the given SQLite function or aggregate.
-   * @see [http://www.sqlite.org/c3ref/value_blob.html](http://www.sqlite.org/c3ref/value_blob.html)
-   */
-  abstract fun value_int(f: Function?, arg: Int): Int
-
-  /**
-   * @param f   SQLite function object.
-   * @param arg Pointer to the parameter of the SQLite function or aggregate.
-   * @return Parameter datatype of the function or aggregate in int data type.
-   * @see [http://www.sqlite.org/c3ref/value_blob.html](http://www.sqlite.org/c3ref/value_blob.html)
-   */
-  abstract fun value_type(f: Function, arg: Int): Int
-
-  /**
-   * Create a user defined function with given function name and the function object.
-   *
-   * @param name  The function name to be created.
-   * @param function     SQLite function object.
-   * @param flags Extra flags to use when creating the function, such as [              ][Function.FLAG_DETERMINISTIC]
-   * @return [Result Codes](http://www.sqlite.org/c3ref/c_abort.html)
-   * @see [http://www.sqlite.org/c3ref/create_function.html](http://www.sqlite.org/c3ref/create_function.html)
-   */
-  abstract fun create_function(name: String, function: Function, nArgs: Int, flags: Int): Int
-
-  /**
-   * De-registers a user defined function
-   *
-   * @param name Name of the function to de-register.
-   * @return [Result Codes](http://www.sqlite.org/c3ref/c_abort.html)
-   */
-  abstract fun destroy_function(name: String): Int
-
-  /**
-   * Create a user defined collation with given collation name and the collation object.
-   *
-   * @param name The collation name to be created.
-   * @param collation    SQLite collation object.
-   * @return [Result Codes](https://www.sqlite.org/c3ref/c_abort.html)
-   * @see [https://www.sqlite.org/c3ref/create_collation.html](https://www.sqlite.org/c3ref/create_collation.html)
-   */
-  abstract fun create_collation(name: String, collation: Collation): Int
-
-  /**
-   * Create a user defined collation with given collation name and the collation object.
-   *
-   * @param name The collation name to be created.
-   * @return [Result Codes](https://www.sqlite.org/c3ref/c_abort.html)
-   */
-  abstract fun destroy_collation(name: String): Int
 
   /**
    * @param dbName       Database name to be backed up.
@@ -473,8 +312,8 @@ internal abstract class SqliteDb {
    * negative, the entire DB is copied at once.
    * @return [Result Codes](http://www.sqlite.org/c3ref/c_abort.html)
    */
-  abstract fun restore(dbName: String?,
-                       sourceFileName: String?,
+  abstract fun restore(dbName: String,
+                       sourceFileName: String,
                        observer: ProgressObserver?,
                        sleepTimeMillis: Int,
                        nTimeouts: Int,
@@ -492,61 +331,6 @@ internal abstract class SqliteDb {
   abstract fun set_commit_listener(enabled: Boolean)
 
   abstract fun set_update_listener(enabled: Boolean)
-
-  @Synchronized
-  fun addUpdateListener(listener: SQLiteUpdateListener) {
-    if (updateListeners.add(listener) && updateListeners.size == 1) {
-      set_update_listener(true)
-    }
-  }
-
-  @Synchronized
-  fun addCommitListener(listener: SQLiteCommitListener) {
-    if (commitListeners.add(listener) && commitListeners.size == 1) {
-      set_commit_listener(true)
-    }
-  }
-
-  @Synchronized
-  fun removeUpdateListener(listener: SQLiteUpdateListener) {
-    if (updateListeners.remove(listener) && updateListeners.isEmpty()) {
-      set_update_listener(false)
-    }
-  }
-
-  @Synchronized
-  fun removeCommitListener(listener: SQLiteCommitListener) {
-    if (commitListeners.remove(listener) && commitListeners.isEmpty()) {
-      set_commit_listener(false)
-    }
-  }
-
-  fun onUpdate(type: Int, database: String?, table: String?, rowId: Long) {
-    var listeners: Set<SQLiteUpdateListener>
-    synchronized(this) { listeners = HashSet(updateListeners) }
-    for (listener in listeners) {
-      val operationType = when (type) {
-        18 -> SQLiteUpdateListener.Type.INSERT
-        9 -> SQLiteUpdateListener.Type.DELETE
-        23 -> SQLiteUpdateListener.Type.UPDATE
-        else -> throw AssertionError("Unknown type: $type")
-      }
-      listener.onUpdate(operationType, database, table, rowId)
-    }
-  }
-
-  fun onCommit(commit: Boolean) {
-    var listeners: Set<SQLiteCommitListener>
-    synchronized(this) { listeners = HashSet(commitListeners) }
-    for (listener in listeners) {
-      if (commit) {
-        listener.onCommit()
-      }
-      else {
-        listener.onRollback()
-      }
-    }
-  }
 
   /**
    * Throws IOException with an error message.
@@ -572,22 +356,6 @@ internal abstract class SqliteDb {
 }
 
 class SqliteException internal constructor(message: String, @Suppress("unused") val resultCode: SqliteErrorCode) : IOException(message)
-
-// https://www.sqlite.org/c3ref/commit_hook.html)
-interface SQLiteCommitListener {
-  fun onCommit()
-  fun onRollback()
-}
-
-/** [...](https://www.sqlite.org/c3ref/update_hook.html)  */
-interface SQLiteUpdateListener {
-  fun onUpdate(type: Type?, database: String?, table: String?, rowId: Long)
-  enum class Type {
-    INSERT,
-    DELETE,
-    UPDATE
-  }
-}
 
 internal object SqliteCodes {
   /** Successful result  */

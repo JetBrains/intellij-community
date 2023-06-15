@@ -44,6 +44,7 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
+import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZonedDateTime
@@ -1135,7 +1136,7 @@ private fun buildBlockMap(file: Path, json: JSON) {
   val fileParent = file.parent
   val fileName = file.fileName.toString()
   writeNewZip(fileParent.resolve("$fileName.blockmap.zip"), compress = true) {
-    it.compressedData("blockmap.json", bytes)
+    it.compressedData("blockmap.json", ByteBuffer.wrap(bytes))
   }
 
   val hashFile = fileParent.resolve("$fileName.hash.json")

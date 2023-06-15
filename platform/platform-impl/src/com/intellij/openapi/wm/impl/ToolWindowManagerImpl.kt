@@ -44,7 +44,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.project.processOpenedProjects
+import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ThreeComponentsSplitter
@@ -240,7 +240,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         }
         else if (event.id == FocusEvent.FOCUS_GAINED) {
           val component = event.component ?: return
-          processOpenedProjects { project ->
+          for (project in getOpenedProjects()) {
             for (composite in (FileEditorManagerEx.getInstanceExIfCreated(project) ?: return).activeSplittersComposites) {
               if (composite.allEditors.any { SwingUtilities.isDescendingFrom(component, it.component) }) {
                 (getInstance(project) as ToolWindowManagerImpl).activeStack.clear()
@@ -251,7 +251,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
 
       private inline fun process(processor: (manager: ToolWindowManagerImpl) -> Unit) {
-        processOpenedProjects { project ->
+        for (project in getOpenedProjects()) {
           processor(getInstance(project) as ToolWindowManagerImpl)
         }
       }
@@ -279,11 +279,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       val awtFocusListener = MyListener()
       Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK or AWTEvent.WINDOW_FOCUS_EVENT_MASK)
 
-      val updateHeadersAlarm = SingleAlarm({
-        processOpenedProjects { project ->
+      val updateHeadersRunnable = {
+        for (project in getOpenedProjects()) {
           (getInstance(project) as ToolWindowManagerImpl).updateToolWindowHeaders()
         }
-      }, 50, ApplicationManager.getApplication())
+      }
+      val updateHeadersAlarm = SingleAlarm(updateHeadersRunnable, 50, ApplicationManager.getApplication())
       val focusListener = PropertyChangeListener { updateHeadersAlarm.cancelAndRequest() }
       FocusUtil.addFocusOwnerListener(ApplicationManager.getApplication(), focusListener)
 

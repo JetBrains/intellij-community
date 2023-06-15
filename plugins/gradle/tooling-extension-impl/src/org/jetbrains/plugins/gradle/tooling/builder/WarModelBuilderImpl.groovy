@@ -30,6 +30,7 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
   private static final String WEB_APP_DIR_NAME_PROPERTY = "webAppDirName"
   private static is4OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("4.0")
   private static is6OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("6.0")
+  private static is82OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("8.2")
 
 
   @Override
@@ -43,16 +44,24 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
     final WarPlugin warPlugin = project.plugins.findPlugin(WarPlugin)
     if (warPlugin == null) return null
 
-    final String webAppDirName = !project.hasProperty(WEB_APP_DIR_NAME_PROPERTY) ?
-                                 "src/main/webapp" : String.valueOf(project.property(WEB_APP_DIR_NAME_PROPERTY))
-
-    final File webAppDir = !project.hasProperty(WEB_APP_DIR_PROPERTY) ? new File(project.projectDir, webAppDirName) :
-                           (File)project.property(WEB_APP_DIR_PROPERTY)
-
     def warModels = []
 
     project.tasks.each { Task task ->
       if (task instanceof War) {
+        File webAppDir
+        String webAppDirName
+
+        if (is82OrBetter) {
+          webAppDir = task.webAppDirectory.asFile.get()
+          webAppDirName = webAppDir.getName()
+        } else {
+          webAppDirName = !project.hasProperty(WEB_APP_DIR_NAME_PROPERTY) ?
+                                       "src/main/webapp" : String.valueOf(project.property(WEB_APP_DIR_NAME_PROPERTY))
+
+          webAppDir = !project.hasProperty(WEB_APP_DIR_PROPERTY) ? new File(project.projectDir, webAppDirName) :
+                                 (File)project.property(WEB_APP_DIR_PROPERTY)
+        }
+
 
         final WarModelImpl warModel =
           is6OrBetter ? new WarModelImpl(task.getArchiveFileName().get(), webAppDirName, webAppDir) :

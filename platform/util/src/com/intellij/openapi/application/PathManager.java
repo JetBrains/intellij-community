@@ -34,6 +34,7 @@ public final class PathManager {
   public static final String PROPERTY_LOG_PATH = "idea.log.path";
   public static final String PROPERTY_LOG_CONFIG_FILE = "idea.log.config.properties.file";
   public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
+  public static final String SYSTEM_PATHS_CUSTOMIZER = "idea.paths.customizer";
 
   public static final String OPTIONS_DIRECTORY = "options";
   public static final String DEFAULT_EXT = ".xml";
@@ -606,6 +607,34 @@ public final class PathManager {
     // Check and fix conflicting properties.
     if ("true".equals(sysProperties.getProperty("jbScreenMenuBar.enabled"))) {
       sysProperties.setProperty("apple.laf.useScreenMenuBar", "false");
+    }
+  }
+
+  public static void customizePaths() {
+    String property = System.getProperty(SYSTEM_PATHS_CUSTOMIZER);
+    if (property == null) return;
+
+    try {
+      Class<?> aClass = PathManager.class.getClassLoader().loadClass(property);
+      Object customizer = aClass.getConstructor().newInstance();
+      if (customizer instanceof PathCustomizer) {
+        PathCustomizer.CustomPaths paths = ((PathCustomizer)customizer).customizePaths();
+        if (paths != null) {
+          if (paths.configPath != null) System.setProperty(PROPERTY_CONFIG_PATH, paths.configPath);
+          if (paths.systemPath != null) System.setProperty(PROPERTY_SYSTEM_PATH, paths.systemPath);
+          if (paths.pluginsPath != null) System.setProperty(PROPERTY_PLUGINS_PATH, paths.pluginsPath);
+
+          // NB: IDE might use instance from a different classloader
+          ourConfigPath = null;
+          ourSystemPath = null;
+          ourPluginPath = null;
+          ourScratchPath = null;
+          ourLogPath = null;
+        }
+      }
+    }
+    catch (Throwable e) {
+      log(e.getMessage());
     }
   }
 

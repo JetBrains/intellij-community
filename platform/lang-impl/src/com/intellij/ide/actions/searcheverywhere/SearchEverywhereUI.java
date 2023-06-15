@@ -880,9 +880,17 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     var spellCheckResult = mySpellingCorrector.checkSpellingOf(query);
     if (spellCheckResult instanceof SearchEverywhereSpellCheckResult.Correction correction) {
-      var elementInfo = new SearchEverywhereFoundElementInfo(correction,
-                                                             Integer.MAX_VALUE,
-                                                             new SearchEverywhereSpellingCorrectorContributor(mySearchField));
+      SearchEverywhereFoundElementInfo elementInfo;
+      if (myMlService != null) {
+        elementInfo = myMlService.createFoundElementInfo(new SearchEverywhereSpellingCorrectorContributor(mySearchField),
+                                                         correction,
+                                                         Integer.MAX_VALUE);
+      }
+      else {
+        elementInfo = new SearchEverywhereFoundElementInfo(correction,
+                                                           Integer.MAX_VALUE,
+                                                           new SearchEverywhereSpellingCorrectorContributor(mySearchField));
+      }
       myListModel.addElements(Collections.singletonList(elementInfo));
     }
   }

@@ -13,7 +13,7 @@ interface PathsProvider {
   val outputRootFolder: File
 
   val tempFolder: File
-    get() = TeamCityHelper.tempDirectory?.toFile() ?: sourcesRootFolder.resolve("out").resolve("tmp")
+    get() = resolveTempFolder(sourcesRootFolder)
 
   val launcherFolder: File
     get() = tempFolder.resolve("launcher").resolve(productId)
@@ -46,4 +46,9 @@ interface PathsProvider {
 
   val pluginsFolder: File
     get() = configFolder.resolve("plugins")
+
+  companion object {
+    fun resolveTempFolder(sourcesRootFolder: File) = TeamCityHelper.tempDirectory?.toFile()
+                                                     ?: sourcesRootFolder.resolve("out").resolve("tmp")
+  }
 }

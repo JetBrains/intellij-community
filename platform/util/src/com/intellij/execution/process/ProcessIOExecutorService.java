@@ -34,7 +34,7 @@ public final class ProcessIOExecutorService extends ThreadPoolExecutor {
   private static final class MyCountingThreadFactory extends CountingThreadFactory {
     // Ensure that we don't keep the classloader of the plugin which caused this thread to be created
     // in Thread.inheritedAccessControlContext
-    private final ThreadFactory myThreadFactory = Executors.defaultThreadFactory();
+    private final ThreadFactory myThreadFactory = Executors.privilegedThreadFactory();
 
     @Override
     public @NotNull Thread newThread(final @NotNull Runnable r) {

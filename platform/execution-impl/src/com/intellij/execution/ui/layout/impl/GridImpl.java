@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.*;
@@ -329,17 +329,10 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     final TabImpl tab = (TabImpl)getTab();
     if (tab != null) {
       switch (placeInGrid) {
-        case left:
-          setLeftProportion(tab.getLeftProportion());
-          break;
-        case right:
-          setRightProportion(tab.getRightProportion());
-          break;
-        case bottom:
-          mySplitter.setProportion(tab.getBottomProportion());
-          break;
-        case center:
-          break;
+        case left -> setLeftProportion(tab.getLeftProportion());
+        case right -> setRightProportion(tab.getRightProportion());
+        case bottom -> mySplitter.setProportion(tab.getBottomProportion());
+        case center -> {}
       }
     }
   }

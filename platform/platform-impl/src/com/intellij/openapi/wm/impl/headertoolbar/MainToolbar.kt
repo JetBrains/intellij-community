@@ -3,6 +3,8 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.customization.ActionUrl
+import com.intellij.ide.ui.customization.CustomActionsListener.Companion.fireSchemaChanged
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
@@ -14,6 +16,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
@@ -28,6 +31,7 @@ import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.jetbrains.WindowDecorations
@@ -41,6 +45,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 private const val MAIN_TOOLBAR_ID = IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
+private val LOG = logger<MainToolbar>()
 
 internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   private val disposable = Disposer.newDisposable()
@@ -99,16 +104,58 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
       addWidget(it.button, HorizontalLayout.LEFT)
     }
 
-    val customizationGroup = CustomActionsSchema.getInstance().getCorrectedAction(MAIN_TOOLBAR_ID) as? ActionGroup
+    val schema = CustomActionsSchema.getInstance()
+    val customizationGroup = schema.getCorrectedAction(MAIN_TOOLBAR_ID) as? ActionGroup
 
     for ((actionGroup, position) in actionGroups) {
       addWidget(widget = createActionBar(actionGroup, customizationGroup), position = position)
     }
 
     customizationGroup
-      ?.let { CustomizationUtil.createToolbarCustomizationHandler(customizationGroup, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR) }
+      ?.let { CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR) }
       ?.let { installClickListener(it, customTitleBar) }
+
+    migratePreviousCustomizations(schema)
+  }
+
+  /*
+   * this is temporary solutions for migration customizations from 2023.1 version
+   * todo please remove it when users are not migrate any more from 2023.1
+   */
+  private fun migratePreviousCustomizations(schema: CustomActionsSchema) {
+    val backup = CustomActionsSchema(null)
+    backup.copyFrom(schema)
+    try {
+      val mainToolbarPath = listOf("root", schema.getDisplayName(MAIN_TOOLBAR_ID)!!)
+      val url = ActionUrl().apply { groupPath = ArrayList(mainToolbarPath) }
+      if (!schema.getChildActions(url).isEmpty()) return
+
+      migrateToolbar(schema, listOf("root", "Main Toolbar Left"), mainToolbarPath + "Left")
+      migrateToolbar(schema, listOf("root", "Main Toolbar Center"), mainToolbarPath + "Center")
+      migrateToolbar(schema, listOf("root", "Main Toolbar Right"), mainToolbarPath + "Right")
+    } catch (e: Throwable) {
+      LOG.error("Migration of Main Toolbar customizations is failed", e)
+      schema.copyFrom(backup)
+      fireSchemaChanged()
     }
+  }
+
+  private fun migrateToolbar(schema: CustomActionsSchema, fromPath: List<String>, toPath: List<String>) {
+    val parentURL = ActionUrl().apply { groupPath = ArrayList(fromPath) }
+    val childActions = schema.getChildActions(parentURL)
+    if (childActions.isEmpty()) return
+
+    val tmpSchema = CustomActionsSchema(null)
+    tmpSchema.copyFrom(schema)
+    val newUrls = childActions.map { ActionUrl(ArrayList(toPath), it.component, it.actionType, it.absolutePosition) }
+    val actions = tmpSchema.getActions().toMutableList()
+    actions.addAll(newUrls)
+    actions.removeIf { url: ActionUrl -> fromPath == url.groupPath }
+    tmpSchema.setActions(actions)
+
+    schema.copyFrom(tmpSchema)
+    fireSchemaChanged()
+  }
 
   private fun installClickListener(popupHandler: PopupHandler, customTitleBar: WindowDecorations.CustomTitleBar?) {
     if (IdeRootPane.hideNativeLinuxTitle) {
@@ -234,6 +281,7 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
 
     if (action is ComboBoxAction) {
       findComboButton(component)?.apply {
+        margin = JBInsets.emptyInsets()
         setUI(MainToolbarComboBoxButtonUI())
         addPropertyChangeListener("UI") { event -> if (event.newValue !is MainToolbarComboBoxButtonUI) setUI(MainToolbarComboBoxButtonUI())}
       }

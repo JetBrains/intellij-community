@@ -8,8 +8,11 @@ import git4idea.changes.GitBranchComparisonResult
 
 sealed interface ChangesSelection {
   val changes: List<Change>
+  val selectedIdx: Int
 
-  class Single(override val changes: List<Change>, val selectedIdx: Int, val location: DiffLineLocation? = null) : ChangesSelection {
+  data class Single(override val changes: List<Change>,
+                    override val selectedIdx: Int,
+                    val location: DiffLineLocation? = null) : ChangesSelection {
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
       if (other !is Single) return false
@@ -28,10 +31,11 @@ sealed interface ChangesSelection {
     }
   }
 
-  class Multiple(override val changes: List<Change>) : ChangesSelection {
+  data class Multiple(override val changes: List<Change>, override val selectedIdx: Int = 0) : ChangesSelection {
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
       if (other !is Multiple) return false
+      if (selectedIdx != other.selectedIdx) return false
 
       return changes.isEqual(other.changes)
     }
@@ -51,8 +55,8 @@ sealed interface ChangesSelection {
   }
 }
 
-val ChangesSelection.Single.selectedChange: Change?
-  get() = selectedIdx.takeIf { it in changes.indices }?.let { changes[it] }
+val ChangesSelection.selectedChange: Change?
+  get() = selectedIdx.let { changes.getOrNull(it) }
 
 internal fun Collection<Change>.isEqual(other: Collection<Change>): Boolean =
   equalsVia(other, Change::isEqual)

@@ -13,7 +13,7 @@ class GitLabMergeRequestShowDiffActionProvider : AnActionExtensionProvider {
 
   override fun update(e: AnActionEvent) {
     val vm = e.getData(GitLabMergeRequestChangesViewModel.DATA_KEY)
-    e.presentation.isEnabled = vm != null && !vm.userChangesSelection.value.isEmpty
+    e.presentation.isEnabled = vm != null && !vm.changesSelection.value.isEmpty
   }
 
   override fun actionPerformed(e: AnActionEvent) {

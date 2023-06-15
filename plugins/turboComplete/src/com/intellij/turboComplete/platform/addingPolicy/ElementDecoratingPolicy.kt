@@ -4,7 +4,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.addingPolicy.ElementsAddingPolicy
 import com.intellij.codeInsight.lookup.LookupElement
 
-abstract class ElementDecoratingPolicy(protected val base: ElementsAddingPolicy) : ElementsAddingPolicy {
+abstract class ElementDecoratingPolicy(protected val base: ElementsAddingPolicy) : ElementsAddingPolicy by base {
   override fun addElement(result: CompletionResultSet, element: LookupElement) {
     decorate(element)
     base.addElement(result, element)
@@ -15,11 +15,5 @@ abstract class ElementDecoratingPolicy(protected val base: ElementsAddingPolicy)
     base.addAllElements(result, elements)
   }
 
-  override fun onActivate(result: CompletionResultSet) = base.onActivate(result)
-
-  override fun onDeactivate(result: CompletionResultSet) = base.onDeactivate(result)
-
   abstract fun decorate(element: LookupElement)
-
-  override fun onResultStop(result: CompletionResultSet) = base.onResultStop(result)
 }

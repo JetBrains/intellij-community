@@ -42,7 +42,7 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
       return null;
     }
 
-    final SourceSetContainer container = JavaPluginUtil.getSourceSetContainer(project);
+    final SourceSetContainer container = JavaPluginUtil.getJavaPluginAccessor(project).getSourceSetContainer();
     if (container == null) {
       return null;
     }

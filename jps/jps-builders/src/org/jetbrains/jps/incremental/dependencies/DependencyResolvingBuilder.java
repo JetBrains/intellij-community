@@ -425,10 +425,10 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     Path outputDir = Path.of(outputDirPath);
 
     Properties description = new Properties();
-    description.put("libraryName", libraryName);
-    description.put("mavenId", descriptor.getMavenId());
-    description.put("problem", problemKind);
-    description.put("sha256", sha256sum);
+    description.setProperty("libraryName", libraryName);
+    description.setProperty("mavenId", descriptor.getMavenId());
+    description.setProperty("problem", problemKind);
+    description.setProperty("sha256", sha256sum);
 
     Path artifactCopy;
     try {

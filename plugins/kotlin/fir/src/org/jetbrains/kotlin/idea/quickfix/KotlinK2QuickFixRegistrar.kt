@@ -83,11 +83,21 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerApplicators(MakeSuperTypeOpenFixFactory.makeSuperTypeOpenFixFactory)
     }
 
+    private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeAbstract::class, AddModifierFix.addAbstractModifier)
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeAbstractWarning::class, AddModifierFix.addAbstractModifier)
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrFinalOrAbstract::class, AddModifierFix.addAbstractModifier)
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning::class, AddModifierFix.addAbstractModifier)
+    }
+
+    private val addFinal = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeFinal::class, AddModifierFix.addFinalToProperty)
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeFinalWarning::class, AddModifierFix.addFinalToProperty)
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrFinalOrAbstract::class, AddModifierFix.addFinalToProperty)
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning::class, AddModifierFix.addFinalToProperty)
+    }
+
     private val propertyInitialization = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerPsiQuickFixes(
-            KtFirDiagnostic.MustBeInitializedOrBeAbstract::class,
-            AddModifierFix.addAbstractModifier,
-        )
         registerApplicators(InitializePropertyQuickFixFactories.initializePropertyFactory)
         registerApplicator(AddLateInitFactory.addLateInitFactory)
         registerApplicators(AddAccessorsFactories.addAccessorsToUninitializedProperty)
@@ -120,6 +130,13 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerPsiQuickFixes(KtFirDiagnostic.InapplicableLateinitModifier::class, ChangeVariableMutabilityFix.LATEINIT_VAL_FACTORY)
         registerPsiQuickFixes(KtFirDiagnostic.ValWithSetter::class, ChangeVariableMutabilityFix.VAL_WITH_SETTER_FACTORY)
         registerPsiQuickFixes(KtFirDiagnostic.MustBeInitialized::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedWarning::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeFinal::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeFinalWarning::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeAbstract::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeAbstractWarning::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrFinalOrAbstract::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
     }
 
     private val expressions = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -229,6 +246,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
     override val list: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(
         keywords,
+        addAbstract,
+        addFinal,
         propertyInitialization,
         overrides,
         imports,

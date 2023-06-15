@@ -47,7 +47,8 @@ import java.util.concurrent.ConcurrentMap
 
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
 import static org.jetbrains.plugins.gradle.tooling.builder.ModelBuildersDataProviders.TASKS_PROVIDER
-import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.*
+import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.dynamicCheckInstanceOf
+import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveGetProperty
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
 /**
@@ -277,13 +278,13 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def projectTargetCompatibility = getTargetCompatibility(project)
 
     def result = new LinkedHashMap<String, DefaultExternalSourceSet>();
-    def sourceSets = JavaPluginUtil.getSourceSetContainer(project)
+    def sourceSets = JavaPluginUtil.getJavaPluginAccessor(project).sourceSetContainer
     if (sourceSets == null) {
       return result
     }
 
     // ignore inherited source sets from parent project
-    def parentProjectSourceSets = project.parent == null ? null : JavaPluginUtil.getSourceSetContainer(project.parent)
+    def parentProjectSourceSets = project.parent == null ? null : JavaPluginUtil.getJavaPluginAccessor(project.parent).sourceSetContainer
     if (parentProjectSourceSets && sourceSets.is(parentProjectSourceSets)) {
       return result
     }
@@ -590,16 +591,12 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   @Nullable
   private static String getSourceCompatibility(Project project) {
-    def javaPluginConvention = JavaPluginUtil.getJavaPluginConvention(project)
-    if (javaPluginConvention == null) return null
-    return javaPluginConvention.sourceCompatibility.toString()
+    return JavaPluginUtil.getJavaPluginAccessor(project).sourceCompatibility
   }
 
   @Nullable
   private static String getTargetCompatibility(Project project) {
-    def javaPluginConvention = JavaPluginUtil.getJavaPluginConvention(project)
-    if (javaPluginConvention == null) return null
-    return javaPluginConvention.targetCompatibility.toString()
+    return JavaPluginUtil.getJavaPluginAccessor(project).targetCompatibility
   }
 
   private static void cleanupSharedSourceFolders(Map<String, ExternalSourceSet> map) {

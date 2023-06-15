@@ -145,6 +145,10 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return myMethodOccurrence.isRecursive();
   }
 
+  public boolean canDrop() {
+    return !myFrame.isBottom() && myMethodOccurrence.canDrop();
+  }
+
   @Nullable
   public ValueMarkup getValueMarkup() {
     Map<?, ValueMarkup> markers = getValueMarkers();

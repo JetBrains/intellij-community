@@ -241,7 +241,7 @@ public class PackageChooserDialog extends PackageChooser {
     PackageUpdate(@NotNull PsiPackage pkg) {
       myPkg = pkg;
       PsiPackage parentPkg = pkg.getParentPackage();
-      if (parentPkg == null) myParentUpdate = null; else myParentUpdate = new PackageUpdate(parentPkg);
+      myParentUpdate = parentPkg == null ? null : new PackageUpdate(parentPkg);
     }
 
     @NotNull PsiPackage getPkg() {

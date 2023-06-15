@@ -57,7 +57,9 @@ class PersistentFSTreeAccessor {
 
   void doSaveChildren(int parentId, @NotNull ListResult toSave) throws IOException {
     if (parentId == SUPER_ROOT_ID) {
-      throw new AssertionError("Incorrect call .doSaveChildren() with is a super-root record id(=" + SUPER_ROOT_ID + ")");
+      throw new AssertionError(
+        "Incorrect call .doSaveChildren() with is a super-root record id(=" + SUPER_ROOT_ID + "). " +
+        "Super-root is a special file record for internal use, it MUST NOT be used directly");
     }
 
     connection.markDirty();
@@ -91,7 +93,9 @@ class PersistentFSTreeAccessor {
   ListResult doLoadChildren(final int parentId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(parentId);
     if (parentId == SUPER_ROOT_ID) {
-      throw new AssertionError("Incorrect call .doLoadChildren() with is a super-root record id(=" + SUPER_ROOT_ID + ")");
+      throw new AssertionError(
+        "Incorrect call .doLoadChildren() with a super-root record id(=" + SUPER_ROOT_ID + "). " +
+        "Super-root is a special file record for internal use, it MUST NOT be used directly");
     }
 
     final PersistentFSRecordsStorage records = connection.getRecords();
@@ -141,6 +145,7 @@ class PersistentFSTreeAccessor {
    * MAYBE rename to childrenIds()?
    */
   int @NotNull [] listIds(final int fileId) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(fileId);
     if (fileId == SUPER_ROOT_ID) {
       throw new AssertionError(
         "Incorrect call .listIds() with is a super-root record id(=" + SUPER_ROOT_ID + ") -- use .listRoots() instead");
@@ -164,6 +169,14 @@ class PersistentFSTreeAccessor {
   }
 
   boolean mayHaveChildren(final int fileId) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(fileId);
+    if (fileId == SUPER_ROOT_ID) {
+      throw new AssertionError(
+        "Incorrect call .mayHaveChildren() with is a super-root record id(=" + SUPER_ROOT_ID + ")" +
+        "Super-root is a special file record for internal use, it MUST NOT be used directly"
+      );
+    }
+
     try (final DataInputStream input = myAttributeAccessor.readAttribute(fileId, CHILDREN_ATTR)) {
       if (input == null) return true;
       final int count = DataInputOutputUtil.readINT(input);
@@ -185,7 +198,7 @@ class PersistentFSTreeAccessor {
         if (input != null) {
           final int count = DataInputOutputUtil.readINT(input);
           if (count < 0) {
-            throw new IOException("ROOT.CHILDREN attribute is corrupted: roots count(=" + count + ") must be >=0");
+            throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: roots count(=" + count + ") must be >=0");
           }
           names = ArrayUtil.newIntArray(count);
           ids = ArrayUtil.newIntArray(count);

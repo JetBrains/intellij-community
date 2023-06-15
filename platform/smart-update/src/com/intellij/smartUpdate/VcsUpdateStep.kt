@@ -11,7 +11,11 @@ import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
 
+const val VCS_UPDATE = "vcs.update"
+
 class VcsUpdateStep: SmartUpdateStep {
+  override val id: String = VCS_UPDATE
+
   override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
     val action = object: CommonUpdateProjectAction() {
       override fun onSuccess() {
@@ -26,7 +30,6 @@ class VcsUpdateStep: SmartUpdateStep {
     action.actionPerformed(UpdateProjectContext(project))
   }
 
-  override fun isRequested(options: SmartUpdate.Options) = options.updateProject
 }
 
 class UpdateProjectContext(private val _project: Project): VcsContext {

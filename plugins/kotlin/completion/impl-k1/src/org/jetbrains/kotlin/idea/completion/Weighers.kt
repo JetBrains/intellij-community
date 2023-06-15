@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.lookup.WeighingContext
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.proximity.PsiProximityComparator
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.toFuzzyType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils.isEnumClass
+import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.findOriginalTopMostOverriddenDescriptors
@@ -411,7 +413,16 @@ object PreferLessParametersWeigher : LookupElementWeigher("kotlin.preferLessPara
     override fun weigh(element: LookupElement): Int? {
         val lookupObject = element.`object` as? DescriptorBasedDeclarationLookupObject ?: return null
         val function = lookupObject.descriptor as? FunctionDescriptor ?: return null
-        return function.valueParameters.size
+        val valueParameters = function.valueParameters
+        val size = valueParameters.size
+        return if (
+          valueParameters.singleOrNull()?.isVararg == true &&
+          Registry.`is`("kotlin.auto.completion.prefer.vararg.to.noargs")
+        ) {
+            -1
+        } else {
+            size
+        }
     }
 }
 

@@ -2,11 +2,15 @@
 package com.intellij.find.findInProject
 
 import com.intellij.find.FindModel
-import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import com.intellij.util.xmlb.XmlSerializerUtil
+import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.Nls
 
-class FindInProjectState private constructor(private val storage: PropertiesComponent) {
+@Service(Service.Level.PROJECT)
+@State(name = "FindInProjectScope", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
+internal class FindInProjectState : PersistentStateComponent<FindInProjectState> {
 
   fun load(model: FindModel) {
     val customScopeName = this.customScopeName
@@ -14,7 +18,10 @@ class FindInProjectState private constructor(private val storage: PropertiesComp
     model.isProjectScope = isProjectScope
     model.directoryName = directoryName
     model.moduleName = moduleName
-    model.customScopeName = customScopeName
+    if (model.isCustomScope) {
+      model.customScope = null
+      model.customScopeName = customScopeName
+    }
   }
 
   fun save(model: FindModel) {
@@ -35,39 +42,26 @@ class FindInProjectState private constructor(private val storage: PropertiesComp
     customScopeName = model.customScopeName
   }
 
-  private var isCustomScope: Boolean
-    get() = storage.getBoolean("FindInProjectState.isCustomScope", false)
-    set(value) {
-      storage.setValue("FindInProjectState.isCustomScope", value, false)
-    }
+  @Property
+  private var isCustomScope: Boolean = false
+  @Property
+  private var isProjectScope: Boolean = false
+  @Property
+  private var directoryName: String? = null
+  @Property
+  private var moduleName: String? = null
+  @Nls
+  @Property
+  private var customScopeName: String? = null
 
-  private var isProjectScope: Boolean
-    get() = storage.getBoolean("FindInProjectState.isProjectScope", true)
-    set(value) {
-      storage.setValue("FindInProjectState.isProjectScope", value, true)
-    }
+  override fun getState(): FindInProjectState = this
 
-  private var directoryName: String?
-    get() = storage.getValue("FindInProjectState.directoryName")
-    set(value) {
-      storage.setValue("FindInProjectState.directoryName", value, null)
-    }
-
-  private var moduleName: String?
-    get() = storage.getValue("FindInProjectState.moduleName")
-    set(value) {
-      storage.setValue("FindInProjectState.moduleName", value, null)
-    }
-
-  @get:Nls
-  private var customScopeName: String?
-    get() = storage.getValue("FindInProjectState.customScopeName") // NON-NLS
-    set(@Nls value) {
-      storage.setValue("FindInProjectState.customScopeName", value, null)
-    }
+  override fun loadState(state: FindInProjectState) {
+    XmlSerializerUtil.copyBean(state, this)
+  }
 
   companion object {
-    @JvmStatic fun getInstance(project: Project) = FindInProjectState(PropertiesComponent.getInstance(project))
+    @JvmStatic fun getInstance(project: Project): FindInProjectState = project.service()
   }
 
 }

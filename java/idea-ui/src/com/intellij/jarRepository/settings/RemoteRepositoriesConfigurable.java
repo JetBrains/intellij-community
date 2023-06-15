@@ -19,8 +19,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListUtil;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
@@ -40,7 +40,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.intellij.jarRepository.settings.JarRepositoryLibraryBindUtils.*;
+import static com.intellij.jarRepository.settings.JarRepositoryLibraryBindUtils.countBindLibraries;
+import static com.intellij.jarRepository.settings.JarRepositoryLibraryBindUtils.updateLibrariesRepositoryId;
 import static com.intellij.ui.ListUtil.removeSelectedItems;
 
 public class RemoteRepositoriesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
@@ -209,7 +210,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
                                                   final @NlsContexts.StatusText String emptyListHint, DataAdapter<T, String> adapter) {
     list.setModel(model);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(SimpleListCellRenderer.create("", adapter::toPresentation));
+    list.setCellRenderer(BuilderKt.simpleListCellRenderer(adapter::toPresentation));
     addButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

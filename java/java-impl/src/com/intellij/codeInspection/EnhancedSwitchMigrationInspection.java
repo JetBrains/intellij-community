@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
@@ -360,7 +361,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
 
   @Nullable
   private static PsiCaseLabelElement findNullLabel(@NotNull List<? extends PsiCaseLabelElement> expressions) {
-    return ContainerUtil.find(expressions, label -> label instanceof PsiLiteralExpression literal && literal.textMatches("null"));
+    return ContainerUtil.find(expressions, label -> label instanceof PsiExpression literal && TypeConversionUtil.isNullType(literal.getType()));
   }
 
   private static final class ReturningSwitchReplacer implements SwitchReplacer {

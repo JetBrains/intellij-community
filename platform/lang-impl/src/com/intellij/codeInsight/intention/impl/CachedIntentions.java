@@ -2,9 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
@@ -341,6 +339,10 @@ public final class CachedIntentions {
     if (action.getAction() instanceof EmptyIntentionAction) {
       return IntentionGroup.EMPTY_ACTION;
     }
+    if (IntentionActionDelegate.unwrap(action.getAction()) instanceof AdvertisementAction) {
+      return IntentionGroup.ADVERTISEMENT;
+    }
+
     return IntentionGroup.OTHER;
   }
 

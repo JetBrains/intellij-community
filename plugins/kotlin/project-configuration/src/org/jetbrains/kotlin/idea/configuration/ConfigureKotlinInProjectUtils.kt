@@ -315,10 +315,20 @@ fun findApplicableConfigurator(module: Module): KotlinProjectConfigurator {
         ?: KotlinJavaModuleConfigurator.instance
 }
 
+/**
+ * Returns true if the Kotlin compiler plugin (Gradle/Maven/JPS) is enabled
+ * in the module and the Kotlin compiler is set up.
+ */
 fun Module.hasKotlinPluginEnabled(): Boolean {
-    val settings = KotlinFacetSettingsProvider.getInstance(project)
-    val moduleSettings = settings?.getSettings(this) ?: return false
-    return moduleSettings.compilerSettings != null
+    if (buildSystemType == BuildSystemType.JPS) {
+        // JPS uses the built-in Kotlin compiler as soon as there is any Kotlin stdlib
+        // on the classpath, even from transitive dependencies.
+        return hasAnyKotlinRuntimeInScope(this)
+    } else {
+        val settings = KotlinFacetSettingsProvider.getInstance(project)
+        val moduleSettings = settings?.getSettings(this) ?: return false
+        return moduleSettings.compilerSettings != null
+    }
 }
 
 fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {

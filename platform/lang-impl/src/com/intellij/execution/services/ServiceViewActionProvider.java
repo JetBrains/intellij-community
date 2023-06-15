@@ -27,6 +27,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.execution.services.ServiceViewDragHelper.getTheOnlyRootContributor;
@@ -103,8 +104,12 @@ class ServiceViewActionProvider {
   }
 
   List<AnAction> getAdditionalGearActions() {
+    List<AnAction> result = new ArrayList<>();
+    AnAction configureServicesActions = ActionManager.getInstance().getAction("ServiceView.ConfigureServices");
+    ContainerUtil.addIfNotNull(result, configureServicesActions);
     AnAction showServicesActions = ActionManager.getInstance().getAction("ServiceView.ShowServices");
-    return ContainerUtil.createMaybeSingletonList(showServicesActions);
+    ContainerUtil.addIfNotNull(result, showServicesActions);
+    return result;
   }
 
   @Nullable

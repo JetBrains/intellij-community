@@ -46,8 +46,6 @@
               extensions="pyi"
               implementationClass="com.jetbrains.python.pyi.PyiFileType"
               fieldName="INSTANCE"/>
-    <fileType name="Qt UI file" extensions="ui" implementationClass="com.jetbrains.pyqt.QtUIFileType" fieldName="INSTANCE"/>
-    <fileType name="XML" language="XML" extensions="qrc"/>
     <editorHighlighterProvider filetype="Python" implementationClass="com.jetbrains.python.PyEditorHighlighterProvider"/>
     <lang.syntaxHighlighterFactory language="Python" implementationClass="com.jetbrains.python.highlighting.PySyntaxHighlighterFactory"/>
     <lang.braceMatcher language="Python" implementationClass="com.jetbrains.python.PyBraceMatcher"/>
@@ -660,12 +658,10 @@
 
     <!-- Console -->
     <visitorFilter language="Python" implementationClass="com.jetbrains.python.console.ConsoleVisitorFilter"/>
+    <inspectionExtension implementation="com.jetbrains.python.console.PyDebuggerConsoleUnresolvedReferenceSkipper"/>
 
     <!-- Packaging -->
     <keywordArgumentProvider implementation="com.jetbrains.python.packaging.setupPy.SetupKeywordArgumentProvider"/>
-
-    <!-- PyQt -->
-    <typeProvider implementation="com.jetbrains.pyqt.PyQtTypeProvider"/>
 
     <!-- PyFunctionTypeAnnotation and PyTypeHint -->
     <visitorFilter language="PyFunctionTypeComment"
@@ -764,10 +760,6 @@
     <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction"
             icon="AllIcons.Nodes.Package">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
-    </action>
-
-    <action id="CompuleQrc" class="com.jetbrains.pyqt.CompileQrcAction">
-      <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </action>
 
     <action id="CleanPyc" class="com.jetbrains.python.actions.CleanPycAction">

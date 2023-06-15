@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.listCellRenderer
 
 import com.intellij.ui.dsl.listCellRenderer.impl.LcrRowImpl
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import javax.swing.ListCellRenderer
 
 @DslMarker
@@ -34,7 +35,7 @@ fun <T> listCellRenderer(init: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
  * Simplified version of [listCellRenderer] with one text cell
  */
 @ApiStatus.Experimental
-fun <T> simpleListCellRenderer(textExtractor: (T) -> String): ListCellRenderer<T> {
+fun <T> simpleListCellRenderer(textExtractor: (T) -> @Nls String?): ListCellRenderer<T> {
   return listCellRenderer {
     val text = text()
     renderer { value -> text.text = textExtractor(value) }

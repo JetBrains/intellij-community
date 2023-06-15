@@ -88,7 +88,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     createProjectSubFile(".mvn/maven.config", "-aaaaT1")
     createAndImportProject()
     assertModules("test")
-    assertEvent { it.message.contains("Unable to parse maven.config:") }
+    assertEvent { it.message.contains("Unrecognized option: -aaaaT1") }
   }
 
   private fun loggedErrorProcessor(search: String) = object : LoggedErrorProcessor() {

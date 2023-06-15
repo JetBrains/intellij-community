@@ -61,11 +61,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Override
   public void importProject(@NonNls @Language("Groovy") String config) throws IOException {
-    config += """
-
+    boolean useConventions = isGradleOlderThan("8.2");
+    config += "\n\n def useConventions = " + useConventions + "\n" + """
       allprojects {
         afterEvaluate {
-          if(convention.findPlugin(JavaPluginConvention)) {
+          if((useConventions && convention.findPlugin(JavaPluginConvention) != null)
+           || (!useConventions && extensions.findByType(JavaPluginExtension) != null)) {
             sourceSets.each { SourceSet sourceSet ->
               tasks.create(name: 'print'+ sourceSet.name.capitalize() +'CompileDependencies') {
                 doLast { println sourceSet.compileClasspath.files.collect {it.name}.join(' ') }
@@ -569,7 +570,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       "    group 'server'\n" +
       "    version '1.0-SNAPSHOT'\n" +
       "    apply plugin: 'java'\n" +
-      "    sourceCompatibility = 1.8\n" +
+      (isGradleNewerOrSameAs("8.2")
+       ? "  java { sourceCompatibility = 1.8 }\n"
+       : "    sourceCompatibility = 1.8\n") +
       "}\n" +
       "\n" +
       "project(':api') {\n" +
@@ -768,7 +771,9 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .addPostfix("configurations { tests }")
             .withTask("testJar", "Jar", task -> {
               task.code("dependsOn testClasses");
-              if (isGradleNewerOrSameAs("7.0")) {
+              if (isGradleNewerOrSameAs("8.2")) {
+                task.code("archiveBaseName = \"${project.base.archivesName}-tests\"");
+              } else if (isGradleNewerOrSameAs("7.0")) {
                 task.code("archiveBaseName = \"${project.archivesBaseName}-tests\"");
               } else {
                 task.code("baseName = \"${project.archivesBaseName}-tests\"");

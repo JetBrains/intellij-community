@@ -59,16 +59,14 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
     return UnsupportedGradleVersionIssue(gradleVersionUsed, issueData.projectPath, gradleMinimumVersionRequired)
   }
 
-  companion object {
-    private fun causedByOldGradleClasspathInferer(gradleVersionUsed: GradleVersion?, rootCause: Throwable): Boolean {
-      val message = rootCause.message ?: return false
-      if (!message.startsWith("Cannot determine classpath for resource")) return false
-      if (gradleVersionUsed == null) {
-        return rootCause.stackTrace.find { it.className == "org.gradle.tooling.internal.provider.ClasspathInferer" } != null
-      }
-      else
-        return (gradleVersionUsed.baseVersion ?: return true) < GradleVersion.version(MINIMAL_SUPPORTED_GRADLE_VERSION)
+  private fun causedByOldGradleClasspathInferer(gradleVersionUsed: GradleVersion?, rootCause: Throwable): Boolean {
+    val message = rootCause.message ?: return false
+    if (!message.startsWith("Cannot determine classpath for resource")) return false
+    if (gradleVersionUsed == null) {
+      return rootCause.stackTrace.find { it.className == "org.gradle.tooling.internal.provider.ClasspathInferer" } != null
     }
+    else
+      return (gradleVersionUsed.baseVersion ?: return true) < GradleVersion.version(MINIMAL_SUPPORTED_GRADLE_VERSION)
   }
 }
 
@@ -76,11 +74,11 @@ class UnsupportedGradleVersionIssue(gradleVersionUsed: GradleVersion?,
                                     projectPath: String,
                                     gradleMinimumVersionRequired: GradleVersion) : BuildIssue {
 
-  override val title: String
-  override val description: String
-  override val quickFixes: List<BuildIssueQuickFix>
+  override lateinit var title: String
+  override lateinit var description: String
+  override lateinit var quickFixes: List<BuildIssueQuickFix>
   init {
-    val quickFixes1 = mutableListOf<BuildIssueQuickFix>()
+    val suggestedFixes = mutableListOf<BuildIssueQuickFix>()
     val issueDescription = StringBuilder()
     val gradleVersionString = if (gradleVersionUsed != null) gradleVersionUsed.version else "version"
 
@@ -97,20 +95,20 @@ class UnsupportedGradleVersionIssue(gradleVersionUsed: GradleVersion?,
       issueDescription.append(
         " - <a href=\"${gradleVersionFix.id}\">Upgrade Gradle wrapper to ${gradleMinimumVersionRequired.version} version " +
         "and re-import the project</a>\n")
-      quickFixes1.add(gradleVersionFix)
+      suggestedFixes.add(gradleVersionFix)
     }
     else {
       val wrapperSettingsOpenQuickFix = GradleWrapperSettingsOpenQuickFix(projectPath, "distributionUrl")
       val reimportQuickFix = ReimportQuickFix(projectPath, SYSTEM_ID)
       issueDescription.append(" - <a href=\"${wrapperSettingsOpenQuickFix.id}\">Open Gradle wrapper settings</a>, " +
                               "upgrade version to ${gradleMinimumVersionRequired.version} or newer and <a href=\"${reimportQuickFix.id}\">reload the project</a>\n")
-      quickFixes1.add(wrapperSettingsOpenQuickFix)
-      quickFixes1.add(reimportQuickFix)
+      suggestedFixes.add(wrapperSettingsOpenQuickFix)
+      suggestedFixes.add(reimportQuickFix)
     }
 
     description = issueDescription.toString()
     title = getMessageTitle(description)
-    quickFixes = quickFixes1
+    quickFixes = suggestedFixes
   }
   override fun getNavigatable(project: Project): Navigatable? = null
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("unused", "RAW_RUN_BLOCKING")
+@file:Suppress("unused")
 @file:JvmName("DevMainImpl")
-
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager

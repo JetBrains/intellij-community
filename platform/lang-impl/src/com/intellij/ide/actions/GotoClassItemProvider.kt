@@ -44,6 +44,6 @@ class GotoClassItemProvider(val context: PsiElement?) : DefaultChooseByNameItemP
       true
     }
 
-    return processByNames(base, true, indicator, context, consumerFQN, names, FindSymbolParameters.simple(project, false));
+    return processByNames(base, true, indicator, context, consumerFQN, names, FindSymbolParameters.simple(project, false))
   }
 }

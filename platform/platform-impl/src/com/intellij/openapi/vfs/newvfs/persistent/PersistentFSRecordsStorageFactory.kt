@@ -40,7 +40,7 @@ object PersistentFSRecordsStorageFactory {
   @JvmStatic
   @JvmName("setRecordsStorageImplementation")
   fun setRecordsStorageImplementation(value: RecordsStorageKind) {
-    RECORDS_STORAGE_KIND = value;
+    RECORDS_STORAGE_KIND = value
   }
 
   @VisibleForTesting

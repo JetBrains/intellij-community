@@ -3173,6 +3173,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/testData/basic/common/TypeParameterInReturnType.kt");
             }
 
+            @TestMetadata("VargsBeforeNoArgs.kt")
+            public void testVargsBeforeNoArgs() throws Exception {
+                runTest("../completion/testData/basic/common/VargsBeforeNoArgs.kt");
+            }
+
             @TestMetadata("VariableClassName.kt")
             public void testVariableClassName() throws Exception {
                 runTest("../completion/testData/basic/common/VariableClassName.kt");

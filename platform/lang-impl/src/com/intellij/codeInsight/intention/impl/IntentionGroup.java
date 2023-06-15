@@ -6,6 +6,7 @@ public enum IntentionGroup {
   INSPECTION(20),
   NOTIFICATION(7),
   GUTTER(-5),
+  ADVERTISEMENT(-10),
   EMPTY_ACTION(-10),
   OTHER(0);
 

@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.hover.HoverListener;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -144,7 +143,6 @@ public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
 
     if (((ComboBoxAction.ComboBoxButton)c).isArrowVisible())
       size.width += ((AbstractButton)c).getIconTextGap() + EXPAND_ICON.getIconWidth();
-    if (StringUtil.isNotEmpty(button.getText())) size.width += button.getIconTextGap();
 
     JBInsets.addTo(size, button.getMargin());
     return size;
