@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
+import org.jetbrains.kotlin.idea.intentions.MergeIfsIntention.Holder.nestedIf
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -70,7 +71,7 @@ class MergeIfsIntention : SelfTargetingIntention<KtExpression>(KtExpression::cla
             return then.replace(nestedBody).reformatted(true).textRange.startOffset
         }
 
-        private fun KtExpression.nestedIf(): KtIfExpression? = when (this) {
+        internal fun KtExpression.nestedIf(): KtIfExpression? = when (this) {
             is KtBlockExpression -> this.statements.singleOrNull() as? KtIfExpression
             is KtIfExpression -> this
             else -> null
