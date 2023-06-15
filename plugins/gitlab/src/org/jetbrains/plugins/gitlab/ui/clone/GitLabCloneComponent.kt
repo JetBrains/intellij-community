@@ -11,7 +11,6 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.swing.JComponent
 
@@ -22,17 +21,28 @@ internal class GitLabCloneComponent(
   private val cs: CoroutineScope = parentCs.childScope()
 
   private val searchField: SearchTextField = SearchTextField(false)
+
+  private val loginPanel: JComponent = GitLabCloneLoginComponentFactory.create(cs, cloneVm)
   private val repositoriesPanel: JComponent = GitLabCloneRepositoriesComponentFactory.create(cs, cloneVm, searchField)
   private val wrapper: Wrapper = Wrapper().apply {
-    bindContentIn(cs, cloneVm.accounts.map { accounts ->
-      if (accounts.isEmpty()) null else repositoriesPanel
-    })
+    bindContentIn(cs, cloneVm.uiState) { componentState ->
+      when (componentState) {
+        GitLabCloneViewModel.UIState.LOGIN -> loginPanel
+        GitLabCloneViewModel.UIState.REPOSITORY_LIST -> repositoriesPanel
+      }
+    }
   }
 
   init {
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       cloneVm.selectedItem.collect { selectedItem ->
         dialogStateListener.onOkActionEnabled(selectedItem != null)
+      }
+    }
+
+    cs.launch(start = CoroutineStart.UNDISPATCHED) {
+      cloneVm.accounts.collect {
+        dialogStateListener.onListItemChanged()
       }
     }
   }

@@ -53,9 +53,8 @@ class GitLabTokenLoginPanelModel(private val requiredUsername: String? = null,
     return URIUtil.isValidHttpUri(serverUri)
   }
 
-  override fun generateToken(serverUri: String): String? {
-    val newTokenUrl = GitLabSecurityUtil.buildNewTokenUrl(serverUri) ?: return null
+  override fun generateToken(serverUri: String) {
+    val newTokenUrl = GitLabSecurityUtil.buildNewTokenUrl(serverUri) ?: return
     BrowserUtil.browse(newTokenUrl)
-    return null
   }
 }

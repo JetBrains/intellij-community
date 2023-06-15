@@ -12,6 +12,7 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ComponentPredicate
@@ -30,7 +31,11 @@ class TokenLoginInputPanelFactory(
   private val model: TokenLoginPanelModel
 ) {
 
-  fun create(serverFieldDisabled: Boolean, tokenNote: @NlsContexts.DetailedDescription String?): DialogPanel {
+  fun create(
+    serverFieldDisabled: Boolean,
+    tokenNote: @NlsContexts.DetailedDescription String?,
+    footer: Panel.() -> Unit = { }
+  ): DialogPanel {
 
     val serverTextField = ExtendableTextField()
     val progressExtension = ExtendableTextComponent.Extension
@@ -49,7 +54,6 @@ class TokenLoginInputPanelFactory(
           .bindText(model::serverUri)
           .align(AlignX.FILL)
           .resizableColumn()
-          .comment(tokenNote)
           .enabledIf(progressModel.toComponentPredicate(!serverFieldDisabled))
           .validationOnApply {
             when {
@@ -60,28 +64,32 @@ class TokenLoginInputPanelFactory(
           }
       }
       row(CollaborationToolsBundle.message("login.field.token")) {
-        val tokenField = textField()
+        val tokenField = passwordField()
           .bindText(model::token)
           .align(AlignX.FILL)
           .resizableColumn()
+          .comment(tokenNote)
           .enabledIf(progressModel.toComponentPredicate())
           .validationOnApply {
             when {
-              it.text.isBlank() -> error(CollaborationToolsBundle.message("login.token.empty"))
+              it.password.isEmpty() -> error(CollaborationToolsBundle.message("login.token.empty"))
               else -> null
             }
           }
           .focused()
+          .apply {
+            onReset { component.text = "" }
+          }
           .component
 
         if (model is LoginTokenGenerator) {
           button(CollaborationToolsBundle.message("login.token.generate")) {
-            val token = model.generateToken(serverTextField.text)
-            if (token != null) tokenField.text = token
+            model.generateToken(serverTextField.text)
             IdeFocusManager.findInstanceByComponent(tokenField).requestFocus(tokenField, false)
           }.enabledIf(TokenGeneratorPredicate(model, serverTextField))
         }
       }
+      footer()
     }.withPreferredWidth(350).apply {
       // need to force update server field
       reset()
