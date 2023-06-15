@@ -26,9 +26,14 @@ abstract class GradleJvmSupportMatricesTestCase : LightIdeaTestCase() {
     isSupported(GradleVersion.version(gradleVersion), JavaVersion.compose(javaVersion))
 
   fun suggestGradleVersion(javaVersion: Int): String? =
+    suggestGradleVersion {
+      withJavaVersionFilter(JavaVersion.compose(javaVersion))
+    }?.version
+
+  fun suggestLatestGradleVersion(javaVersion: Int): String? =
     suggestLatestGradleVersion(JavaVersion.compose(javaVersion))?.version
 
-  fun suggestJavaVersion(gradleVersion: String): Int? =
+  fun suggestLatestJavaVersion(gradleVersion: String): Int? =
     suggestLatestJavaVersion(GradleVersion.version(gradleVersion))?.feature
 
   fun suggestOldestCompatibleGradleVersion(javaVersion: Int): String? =
