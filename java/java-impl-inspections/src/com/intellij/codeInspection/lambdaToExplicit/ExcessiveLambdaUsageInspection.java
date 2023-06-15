@@ -63,7 +63,7 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
     };
   }
 
-  static class RemoveExcessiveLambdaFix implements LocalQuickFix {
+  static class RemoveExcessiveLambdaFix extends PsiUpdateModCommandQuickFix {
     private final LambdaAndExplicitMethodPair myInfo;
     private final String myName;
 
@@ -87,8 +87,8 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      Context context = Context.from(descriptor.getStartElement());
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      Context context = Context.from(element);
       if (context == null) return;
       ExpressionUtils.bindCallTo(context.myCall, myInfo.getExplicitMethodName(context.myCall));
       CommentTracker ct = new CommentTracker();
@@ -96,15 +96,15 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
     }
   }
 
-  static class ReplaceWithCollectionsFillFix implements LocalQuickFix {
+  static class ReplaceWithCollectionsFillFix extends PsiUpdateModCommandQuickFix {
     @Override
     public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.excessive.lambda.fix.name", "Collections.fill()");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      Context context = Context.from(descriptor.getStartElement());
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      Context context = Context.from(element);
       if (context == null) return;
       PsiExpression expression = ExpressionUtils.getEffectiveQualifier(context.myCall.getMethodExpression());
       if (expression == null) return;

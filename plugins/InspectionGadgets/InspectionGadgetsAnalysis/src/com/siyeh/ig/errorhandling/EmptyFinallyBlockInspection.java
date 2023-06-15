@@ -16,7 +16,10 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -25,7 +28,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -54,8 +56,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection implements Clean
     }
   }
 
-  private static class RemoveTryFinallyBlockFix extends InspectionGadgetsFix {
-
+  private static class RemoveTryFinallyBlockFix extends PsiUpdateModCommandQuickFix {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -63,8 +64,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection implements Clean
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
       if (tryStatement == null || tryStatement.getResourceList() != null || tryStatement.getParent() == null) {
         return;

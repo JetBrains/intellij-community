@@ -2,8 +2,9 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -77,7 +78,7 @@ public final class DfaOptionalSupport {
     return SpecialField.OPTIONAL_VALUE.asDfType(valueType);
   }
 
-  private static class ReplaceOptionalCallFix implements LocalQuickFix {
+  private static class ReplaceOptionalCallFix extends PsiUpdateModCommandQuickFix {
     private final String myTargetMethodName;
     private final boolean myClearArguments;
 
@@ -93,9 +94,8 @@ public final class DfaOptionalSupport {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression
-        methodCallExpression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (methodCallExpression != null) {
         ExpressionUtils.bindCallTo(methodCallExpression, myTargetMethodName);
         if (myClearArguments) {

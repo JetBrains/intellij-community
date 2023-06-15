@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -18,7 +18,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,11 +33,11 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection implements 
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new HtmlTagCanBeJavaDocTagFix();
   }
 
-  private static class HtmlTagCanBeJavaDocTagFix extends InspectionGadgetsFix {
+  private static class HtmlTagCanBeJavaDocTagFix extends ModCommandQuickFix {
 
     @Override
     @NotNull
@@ -47,10 +46,12 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection implements 
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final TextRange range = descriptor.getTextRangeInElement();
-      PsiElement element = descriptor.getPsiElement();
-      PsiFile file = descriptor.getPsiElement().getContainingFile();
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      return ModCommands.psiUpdate(descriptor.getStartElement(), e -> applyFix(e, descriptor.getTextRangeInElement()));
+    }
+
+    protected void applyFix(@NotNull PsiElement element, @NotNull TextRange range) {
+      PsiFile file = element.getContainingFile();
       Document document = file.getViewProvider().getDocument();
       if (document == null) {
         return;
