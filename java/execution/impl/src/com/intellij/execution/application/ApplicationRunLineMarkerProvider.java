@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
@@ -47,11 +48,27 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     }
 
     AnAction[] actions = ExecutorAction.getActions(Integer.MAX_VALUE);
-    return new Info(AllIcons.RunConfigurations.TestState.Run, actions,
-                    e -> Arrays.stream(actions)
-                      .map(action -> getText(action, e))
-                      .filter(Objects::nonNull)
-                      .collect(Collectors.joining("\n")));
+    return new Info(AllIcons.RunConfigurations.TestState.Run, actions, new ActionsTooltipProvider(actions));
+  }
+
+  private record ActionsTooltipProvider(@NotNull AnAction @NotNull [] myActions) implements Function<PsiElement, String> {
+    @Override
+    public String apply(PsiElement element) {
+      return Arrays.stream(myActions)
+            .map(action -> getText(action, element))
+            .filter(Objects::nonNull)
+            .collect(Collectors.joining("\n"));
+    }
+
+    @Override
+    public int hashCode() {
+      return Arrays.hashCode(myActions);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof ActionsTooltipProvider other && Arrays.equals(myActions, other.myActions);
+    }
   }
 
   protected boolean isIdentifier(@NotNull PsiElement e) {
