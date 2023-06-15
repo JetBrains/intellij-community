@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import git4idea.repo.GitRepository
@@ -15,13 +16,17 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 internal interface GitLabMergeRequestDetailsViewModel {
   val isLoading: Flow<Boolean>
 
+  val url: String
+
   val detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel
   val detailsReviewFlowVm: GitLabMergeRequestReviewFlowViewModel
   val branchesVm: CodeReviewBranchesViewModel
   val statusVm: CodeReviewStatusViewModel
   val changesVm: GitLabMergeRequestChangesViewModel
 
-  val repository: GitRepository
+  companion object {
+    val DATA_KEY = DataKey.create<GitLabMergeRequestDetailsViewModel>("GitLab.MergeRequest.Details.ViewModel")
+  }
 }
 
 internal class GitLabMergeRequestDetailsViewModelImpl(
@@ -34,13 +39,13 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
 
   private val cs = parentCs.childScope()
 
-  override val isLoading: Flow<Boolean> = mergeRequest.isLoading
+  override val url: String = mergeRequest.url
 
-  override val repository: GitRepository = projectData.projectMapping.remote.repository
+  override val isLoading: Flow<Boolean> = mergeRequest.isLoading
 
   override val detailsInfoVm = GitLabMergeRequestDetailsInfoViewModelImpl(cs, mergeRequest)
   override val detailsReviewFlowVm = GitLabMergeRequestReviewFlowViewModelImpl(project, cs, currentUser, projectData, mergeRequest)
-  override val branchesVm = GitLabMergeRequestBranchesViewModel(project, cs, mergeRequest, repository)
+  override val branchesVm = GitLabMergeRequestBranchesViewModel(project, cs, mergeRequest, projectData.projectMapping.remote.repository)
   override val statusVm = GitLabMergeRequestStatusViewModel(mergeRequest, projectData.projectMapping.repository.serverPath)
   override val changesVm = GitLabMergeRequestChangesViewModelImpl(cs, mergeRequest.changes)
 }
