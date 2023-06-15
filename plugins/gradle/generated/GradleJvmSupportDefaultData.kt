@@ -24,7 +24,7 @@ internal val DEFAULT_DATA = GradleCompatibilityState(
     VersionMapping("16-17", "7.0-INF"),
     VersionMapping("17-18", "7.2-INF", "Gradle 7.2 and Java 17 are partially compatible: https://github.com/gradle/gradle/issues/16857"),
     VersionMapping("18-19", "7.5-INF"),
-    VersionMapping("19-INF", "7.6-INF")
+    VersionMapping("19-20", "7.6-INF")
   ),
   listOf(
    "7",
