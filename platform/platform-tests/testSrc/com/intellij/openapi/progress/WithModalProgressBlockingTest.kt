@@ -98,7 +98,7 @@ class WithModalProgressBlockingTest : ModalCoroutineTest() {
         throw t
       }
     }
-    assertSame(t, assertInstanceOf<CancellationException>(thrown.cause).cause)
+    assertSame(t, assertInstanceOf<CancellationException>(thrown.cause))
   }
 
   @Test
