@@ -46,10 +46,9 @@ public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalIn
       }
 
       private void registerTypeElementProblem(@NotNull PsiTypeElement typeElement) {
-        holder.registerProblem(typeElement,
-                               JavaAnalysisBundle.message("var.can.be.replaced.with.explicit.type"),
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               new ReplaceVarWithExplicitTypeFix(typeElement).asQuickFix());
+        holder.problem(typeElement, JavaAnalysisBundle.message("var.can.be.replaced.with.explicit.type"))
+          .fix(new ReplaceVarWithExplicitTypeFix(typeElement))
+          .register();
       }
     };
   }

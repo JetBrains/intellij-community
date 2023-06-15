@@ -61,7 +61,7 @@ public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLo
           if (otherModule != null && otherModule != javaModule) {
             if (!JavaModuleGraphUtil.reads(javaModule, otherModule)) {
               String message = JavaBundle.message("module.not.in.requirements", javaModule.getName(), otherModule.getName());
-              holder.registerProblem(classNameArgument, message, new AddRequiresDirectiveFix(javaModule, otherModule.getName()).asQuickFix());
+              holder.problem(classNameArgument, message).fix(new AddRequiresDirectiveFix(javaModule, otherModule.getName())).register();
               return;
             }
 
@@ -80,10 +80,10 @@ public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLo
               }
               if (publicApi) {
                 final String message = JavaBundle.message("module.package.not.exported", otherModule.getName(), packageName, javaModule.getName());
-                holder.registerProblem(classNameArgument, message, new AddExportsDirectiveFix(otherModule, packageName, javaModule.getName()).asQuickFix());
+                holder.problem(classNameArgument, message).fix(new AddExportsDirectiveFix(otherModule, packageName, javaModule.getName())).register();
               } else {
                 final String message = JavaBundle.message("module.package.not.open", otherModule.getName(), packageName, javaModule.getName());
-                holder.registerProblem(classNameArgument, message, new AddOpensDirectiveFix(otherModule, packageName, javaModule.getName()).asQuickFix());
+                holder.problem(classNameArgument, message).fix(new AddOpensDirectiveFix(otherModule, packageName, javaModule.getName())).register();
               }
             }
           }
