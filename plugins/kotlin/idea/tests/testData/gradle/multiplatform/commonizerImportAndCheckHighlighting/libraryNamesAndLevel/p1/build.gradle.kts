@@ -18,11 +18,8 @@ kotlin {
 
     linuxX64()
     linuxArm64()
-
     macosX64("macos")
-
     mingwX64("windowsX64")
-    mingwX86("windowsX86")
 
     val commonMain by sourceSets.getting
     val nativeMain by sourceSets.creating
@@ -30,9 +27,7 @@ kotlin {
     val linuxX64Main by sourceSets.getting
     val linuxArm64Main by sourceSets.getting
     val macosMain by sourceSets.getting
-    val windowsMain by sourceSets.creating
     val windowsX64Main by sourceSets.getting
-    val windowsX86Main by sourceSets.getting
 
     commonMain {
         -nativeMain {
@@ -43,10 +38,7 @@ kotlin {
                 -linuxX64Main
             }
 
-            -windowsMain {
-                -windowsX64Main
-                -windowsX86Main
-            }
+            -windowsX64Main
         }
     }
 
