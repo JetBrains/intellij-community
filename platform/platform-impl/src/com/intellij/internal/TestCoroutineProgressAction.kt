@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.*
 import javax.swing.JComponent
-import kotlin.time.Duration.Companion.milliseconds
 
 internal class TestCoroutineProgressAction : AnAction() {
 
@@ -18,7 +17,7 @@ internal class TestCoroutineProgressAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     try {
-      withModalProgressBlocking(ModalTaskOwner.guess(), "Synchronous never-ending modal progress") {
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "Synchronous never-ending modal progress") {
         awaitCancellation()
       }
     }
@@ -59,12 +58,12 @@ internal class TestCoroutineProgressAction : AnAction() {
         }
         row {
           button("Cancellable Synchronous Modal Progress") {
-            withModalProgressBlocking(project, "Cancellable synchronous modal progress") {
+            runWithModalProgressBlocking(project, "Cancellable synchronous modal progress") {
               doStuff()
             }
           }
           button("Non-Cancellable Synchronous Modal Progress") {
-            withModalProgressBlocking(
+            runWithModalProgressBlocking(
               ModalTaskOwner.project(project),
               "Non-cancellable synchronous modal progress",
               TaskCancellation.nonCancellable(),

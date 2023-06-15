@@ -62,7 +62,7 @@ suspend fun checkCancelled() {
  * ### EDT
  *
  * This method is **forbidden on EDT** because it does not pump the event queue.
- * Switch to a BGT, or use [withModalProgressBlocking][com.intellij.openapi.progress.withModalProgressBlocking].
+ * Switch to a BGT, or use [runWithModalProgressBlocking][com.intellij.openapi.progress.runWithModalProgressBlocking].
  *
  * ### Non-cancellable `runBlocking`
  *
@@ -410,7 +410,7 @@ private fun assertBackgroundThreadOrWriteAction() {
   }
   LOG.error(IllegalStateException(
     "This method is forbidden on EDT because it does not pump the event queue. " +
-    "Switch to a BGT, or use com.intellij.openapi.progress.TasksKt.withModalProgressBlocking. "
+    "Switch to a BGT, or use com.intellij.openapi.progress.TasksKt.runWithModalProgressBlocking. "
   ))
 }
 

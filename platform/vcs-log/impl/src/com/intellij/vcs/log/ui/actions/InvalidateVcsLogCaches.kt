@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.TaskCancellation
-import com.intellij.openapi.progress.withModalProgressBlocking
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -40,9 +40,9 @@ private class InvalidateVcsLogCaches : DumbAwareAction(actionText(VcsLogBundle.m
     val logManager = projectLog.logManager ?: return
 
     val vcsName = VcsLogUtil.getVcsDisplayName(project, logManager)
-    withModalProgressBlocking(owner = ModalTaskOwner.project(project),
-                              title = VcsLogBundle.message("vcs.log.invalidate.caches.progress", vcsName),
-                              cancellation = TaskCancellation.nonCancellable()) {
+    runWithModalProgressBlocking(owner = ModalTaskOwner.project(project),
+                                 title = VcsLogBundle.message("vcs.log.invalidate.caches.progress", vcsName),
+                                 cancellation = TaskCancellation.nonCancellable()) {
       projectLog.invalidateCaches(logManager)
     }
   }
