@@ -50,18 +50,21 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
   private final @NotNull TextRange myRestrictRange;
 
   private final @NotNull Mode myMode;
+  private final HighlightingSession myHighlightingSession;
 
   LineMarkersPass(@NotNull Project project,
                   @NotNull PsiFile file,
                   @NotNull Document document,
                   @NotNull TextRange priorityBounds,
                   @NotNull TextRange restrictRange,
-                  @NotNull LineMarkersPass.Mode mode) {
+                  @NotNull LineMarkersPass.Mode mode,
+                  @NotNull HighlightingSession session) {
     super(project, document, false);
     myFile = file;
     myPriorityBounds = priorityBounds;
     myRestrictRange = restrictRange;
     myMode = mode;
+    myHighlightingSession = session;
   }
 
   @Override
@@ -72,7 +75,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     List<LineMarkerInfo<?>> markers = doCollectMarkers();
     try {
-      LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, markers, getId());
+      LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, markers, getId(), myHighlightingSession);
       DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
       fileStatusMap.markFileUpToDate(myDocument, getId());
@@ -256,19 +259,19 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
       List<PsiElement> injElements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
       List<LineMarkerProvider> providers = getMarkerProviders(injectedPsi.getLanguage(), project);
 
-      queryProviders(injElements, injectedPsi, providers, (injectedElement, injectedMarker) -> {
-        GutterIconRenderer gutterRenderer = injectedMarker.createGutterRenderer();
-        TextRange injectedRange = new TextRange(injectedMarker.startOffset, injectedMarker.endOffset);
+      queryProviders(injElements, injectedPsi, providers, (injectedElement, injectedMarkerInfo) -> {
+        GutterIconRenderer gutterRenderer = injectedMarkerInfo.createGutterRenderer();
+        TextRange injectedRange = new TextRange(injectedMarkerInfo.startOffset, injectedMarkerInfo.endOffset);
         List<TextRange> editables = manager.intersectWithAllEditableFragments(injectedPsi, injectedRange);
         for (TextRange editable : editables) {
           TextRange hostRange = manager.injectedToHost(injectedPsi, editable);
           Icon icon = gutterRenderer == null ? null : gutterRenderer.getIcon();
           //noinspection unchecked
-          GutterIconNavigationHandler<PsiElement> navigationHandler = (GutterIconNavigationHandler<PsiElement>)injectedMarker.getNavigationHandler();
+          GutterIconNavigationHandler<PsiElement> navigationHandler = (GutterIconNavigationHandler<PsiElement>)injectedMarkerInfo.getNavigationHandler();
           LineMarkerInfo<PsiElement> converted = icon == null
                                                  ? new LineMarkerInfo<>(injectedElement, hostRange)
                                                  : new LineMarkerInfo<>(injectedElement, hostRange, icon,
-                                                                        e -> injectedMarker.getLineMarkerTooltip(),
+                                                                        e -> injectedMarkerInfo.getLineMarkerTooltip(),
                                                                         navigationHandler, GutterIconRenderer.Alignment.RIGHT,
                                                                         () -> gutterRenderer.getAccessibleName());
           consumer.consume(injectedElement, converted);
@@ -282,7 +285,8 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
       // binary file? see IDEADEV-2809
       return Collections.emptyList();
     }
-    LineMarkersPass pass = new LineMarkersPass(file.getProject(), file, document, file.getTextRange(), file.getTextRange(), Mode.ALL);
+    LineMarkersPass pass = new LineMarkersPass(file.getProject(), file, document, file.getTextRange(), file.getTextRange(), Mode.ALL,
+                                               HighlightingSessionImpl.getFromCurrentIndicator(file));
     return pass.doCollectMarkers();
   }
 
