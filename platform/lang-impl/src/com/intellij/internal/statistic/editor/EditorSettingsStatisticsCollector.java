@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.ide", 8);
+  private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.ide", 9);
   private static final EnumEventField<Settings> SETTING_ID = EventFields.Enum("setting_id", Settings.class, it -> it.internalName);
   private static final IntEventField INT_VALUE_FIELD = EventFields.Int("value");
   private static final StringEventField TRAILING_SPACES_FIELD = EventFields.String("value", List.of("Whole", "Changed", "None"));
