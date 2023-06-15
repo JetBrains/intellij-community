@@ -191,8 +191,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "ASM (JetBrains's fork)", libraryName = "ASM",
                    url = "https://github.com/JetBrains/intellij-deps-asm")
       .newBsd("https://github.com/JetBrains/intellij-deps-asm/blob/master/LICENSE.txt"),
-    LibraryLicense(name = "ASM Common", libraryName = "asm-commons", url = "https://asm.ow2.io", )
-      .newBsd("https://asm.ow2.io/license.html"),
     LibraryLicense(name = "ASM Tools", libraryName = "asm-tools", url = "https://asm.ow2.io", )
       .newBsd("https://asm.ow2.io/license.html"),
     LibraryLicense(name = "AssertJ fluent assertions", libraryName = "assertJ",
