@@ -28,9 +28,11 @@ public final class ChameleonAction extends AnAction {
 
   @Nullable ChameleonAction addAction(@NotNull AnAction action, @Nullable ProjectType projectType) {
     if (action instanceof ActionStub actionStub) {
-      action = ActionManagerImpl.Companion.convertStub$intellij_platform_ide_impl(actionStub);
+      action = ActionManagerImplKt.convertStub(actionStub);
+      if (action == null) {
+        return this;
+      }
 
-      if (action == null) return this;
       projectType = actionStub.getProjectType();
     }
     return myActions.put(projectType, action) == null ? this : null;
