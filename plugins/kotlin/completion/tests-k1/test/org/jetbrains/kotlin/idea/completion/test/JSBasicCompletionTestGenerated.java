@@ -3173,6 +3173,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/TypeParameterInReturnType.kt");
             }
 
+            @TestMetadata("VargsBeforeNoArgs.kt")
+            public void testVargsBeforeNoArgs() throws Exception {
+                runTest("../testData/basic/common/VargsBeforeNoArgs.kt");
+            }
+
             @TestMetadata("VariableClassName.kt")
             public void testVariableClassName() throws Exception {
                 runTest("../testData/basic/common/VariableClassName.kt");
