@@ -489,6 +489,19 @@
     <notificationGroup id="pyproject.toml Watcher" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="python.sdk.poetry.pip.file.watcher"/>
 
+    <completion.contributor language="TOML"
+                            implementationClass="com.jetbrains.python.packaging.pyproject.PyprojectPackageCompletionContributor"/>
+    <completion.contributor language="TOML"
+                            implementationClass="com.jetbrains.python.packaging.pyproject.PyprojectMetadataCompletionContributor"/>
+    <localInspection language="TOML"
+                     shortName="PyprojectInspection"
+                     suppressId="PyprojectInspection"
+                     bundle="messages.PyBundle"
+                     groupKey="INSP.GROUP.python"
+                     key="INSP.NAME.pyproject.packages"
+                     level="WARNING"
+                     enabledByDefault="true"
+                     implementationClass="com.jetbrains.python.packaging.pyproject.PyprojectPackageInspection"/>
     <toolWindow id="Python Packages" anchor="bottom"
                 icon="PythonIcons.Python.PythonPackages"
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
