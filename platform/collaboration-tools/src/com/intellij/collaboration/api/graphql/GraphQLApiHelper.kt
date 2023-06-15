@@ -67,6 +67,7 @@ private class GraphQLApiHelperImpl(private val logger: Logger,
           deserializer.readAndTraverseGQLResponse(it, pathFromData, clazz)
         }
         catch (e: Throwable) {
+          logger.warn("API response deserialization failed", e)
           throw HttpJsonDeserializationException(request.logName(), e)
         }
       }
