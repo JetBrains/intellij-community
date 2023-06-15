@@ -87,10 +87,10 @@ data class InMemoryContentSource(@JvmField val relativePath: String,
   }
 }
 
-interface NativeFileHandler {
+internal interface NativeFileHandler {
   val sourceToNativeFiles: MutableMap<ZipSource, List<String>>
 
-  suspend fun sign(name: String, data: ByteBuffer): Path?
+  suspend fun sign(name: String, dataSupplier: () -> ByteBuffer): Path?
 }
 
 @Obsolete
@@ -100,11 +100,15 @@ fun buildJarSync(targetFile: Path, sources: List<Source>) {
   }
 }
 
-suspend fun buildJar(targetFile: Path,
-                     sources: List<Source>,
-                     compress: Boolean = false,
-                     dryRun: Boolean = false,
-                     nativeFileHandler: NativeFileHandler? = null) {
+suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false) {
+  buildJar(targetFile = targetFile, sources = sources, compress = compress, nativeFileHandler = null)
+}
+
+internal suspend fun buildJar(targetFile: Path,
+                              sources: List<Source>,
+                              compress: Boolean = false,
+                              dryRun: Boolean = false,
+                              nativeFileHandler: NativeFileHandler? = null) {
   if (dryRun) {
     for (source in sources) {
       source.sizeConsumer?.accept(0)
@@ -205,14 +209,13 @@ private suspend fun handleZipSource(source: ZipSource,
           packageIndexBuilder?.addFile(name)
 
           // sign it
-          val data = dataSupplier()
-          val file = nativeFileHandler.sign(name, data)
+          val file = nativeFileHandler.sign(name, dataSupplier)
           if (file == null) {
             if (compress) {
-              zipCreator.compressedData(name, data)
+              zipCreator.compressedData(name, dataSupplier())
             }
             else {
-              zipCreator.uncompressedData(name, data)
+              zipCreator.uncompressedData(name, dataSupplier())
             }
           }
           else {
