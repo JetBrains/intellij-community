@@ -25,6 +25,10 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -38,7 +42,7 @@ open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope
   private var pluginCostMap: Map<String, Object2LongMap<String>>? = null
 
   private var lastReport: ByteBuffer? = null
-  private var lastMetrics: Object2IntMap<String>? = null
+  private var lastMetrics = MutableSharedFlow<Object2IntMap<String>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   companion object {
     @JvmStatic
@@ -67,7 +71,7 @@ open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope
     }
   }
 
-  override fun getMetrics(): Object2IntMap<String>? = lastMetrics
+  override fun getMetrics(): Flow<Object2IntMap<String>> = lastMetrics
 
   override fun getPluginCostMap(): Map<String, Object2LongMap<String>> = pluginCostMap!!
 
@@ -85,7 +89,7 @@ open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope
         val params = logAndClearStats(projectName, perfFilePath)
         pluginCostMap = params.pluginCostMap
         lastReport = params.lastReport
-        lastMetrics = params.lastMetrics
+        lastMetrics.emit(params.lastMetrics)
       }
     }
   }
@@ -248,7 +252,7 @@ private class HeadlessStartUpPerformanceService : StartUpPerformanceService {
 
   override fun getPluginCostMap(): Map<String, Object2LongMap<String>> = emptyMap()
 
-  override fun getMetrics(): Object2IntMap<String>? = null
+  override fun getMetrics(): Flow<Object2IntMap<String>> = emptyFlow()
 
   override fun getLastReport(): ByteBuffer? = null
 }
