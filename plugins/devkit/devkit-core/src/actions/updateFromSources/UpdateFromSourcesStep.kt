@@ -1,0 +1,20 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.actions.updateFromSources
+
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.Project
+import com.intellij.smartUpdate.SmartUpdateStep
+import org.jetbrains.annotations.Nls
+import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.util.PsiUtil
+
+class UpdateFromSourcesStep: SmartUpdateStep {
+  override val id = "update.from.sources"
+  override val stepName: @Nls String = DevKitBundle.message("update.ide.from.sources")
+
+  override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
+    updateFromSources(project) { }
+  }
+
+  override fun isAvailable(project: Project) = PsiUtil.isIdeaProject(project)
+}

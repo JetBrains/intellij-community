@@ -15,6 +15,7 @@ const val VCS_UPDATE = "vcs.update"
 
 class VcsUpdateStep: SmartUpdateStep {
   override val id: String = VCS_UPDATE
+  override val stepName = SmartUpdateBundle.message("checkbox.update.project")
 
   override fun performUpdateStep(project: Project, e: AnActionEvent?, onSuccess: () -> Unit) {
     val action = object: CommonUpdateProjectAction() {
