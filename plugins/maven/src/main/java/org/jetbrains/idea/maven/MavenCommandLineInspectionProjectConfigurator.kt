@@ -98,8 +98,9 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     if (!isMavenProjectLinked) {
       ApplicationManager.getApplication().invokeAndWait {
         FileDocumentManager.getInstance().saveAllDocuments()
-        mavenProjectAware.linkAndLoadProject(project, basePath)
+        MavenUtil.setupProjectSdk(project)
       }
+      mavenProjectAware.linkAndLoadProject(project, basePath)
     }
     MavenLog.LOG.warn("linked finished for ${project.name}")
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
