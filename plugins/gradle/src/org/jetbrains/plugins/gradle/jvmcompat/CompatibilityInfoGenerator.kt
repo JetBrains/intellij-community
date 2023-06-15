@@ -127,13 +127,7 @@ internal val DEFAULT_DATA = GradleCompatibilityState(
 }
 
 private fun VersionMapping.toConstructor(): String {
-  if (comment == null) {
-    return "VersionMapping(\"${javaVersionInfo}\", \"${gradleVersionInfo}\")"
-  }
-  else {
-    return "VersionMapping(\"${javaVersionInfo}\", \"${gradleVersionInfo}\", \"${comment}\")"
-  }
-
+  return "VersionMapping(\"${javaVersionInfo}\", \"${gradleVersionInfo}\")"
 }
 
 private fun List<String>.printAsListData(indent: Int): String {

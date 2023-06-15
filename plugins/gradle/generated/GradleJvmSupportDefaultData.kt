@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilityState
  
 internal val DEFAULT_DATA = GradleCompatibilityState(
   listOf(
-    VersionMapping("6-8", "INF-5.0", "https://docs.gradle.org/5.0/release-notes.html#potential-breaking-changes"),
+    VersionMapping("6-8", "INF-5.0"),
     VersionMapping("8-9", "INF-INF"),
     VersionMapping("9-10", "4.3-INF"),
     VersionMapping("10-11", "4.7-INF"),
@@ -20,9 +20,9 @@ internal val DEFAULT_DATA = GradleCompatibilityState(
     VersionMapping("12-13", "5.4-INF"),
     VersionMapping("13-14", "6.0-INF"),
     VersionMapping("14-15", "6.3-INF"),
-    VersionMapping("15-16", "6.7-INF", "Many builds might work with Java 15 but there are some known issues: https://github.com/gradle/gradle/issues/13532"),
+    VersionMapping("15-16", "6.7-INF"),
     VersionMapping("16-17", "7.0-INF"),
-    VersionMapping("17-18", "7.2-INF", "Gradle 7.2 and Java 17 are partially compatible: https://github.com/gradle/gradle/issues/16857"),
+    VersionMapping("17-18", "7.2-INF"),
     VersionMapping("18-19", "7.5-INF"),
     VersionMapping("19-20", "7.6-INF")
   ),
