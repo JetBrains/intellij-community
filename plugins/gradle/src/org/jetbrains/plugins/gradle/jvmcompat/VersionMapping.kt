@@ -8,8 +8,8 @@ class VersionMapping() : BaseState() {
   var javaVersionInfo by string()
   var gradleVersionInfo by string()
 
-  constructor(initialVersionInfo: String, initialGradleInfo: String) : this() {
-    javaVersionInfo = initialVersionInfo
-    gradleVersionInfo = initialGradleInfo
+  constructor(java: String, gradle: String) : this() {
+    javaVersionInfo = java
+    gradleVersionInfo = gradle
   }
 }
