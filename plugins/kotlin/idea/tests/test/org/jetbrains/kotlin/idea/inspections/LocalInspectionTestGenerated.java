@@ -17270,34 +17270,161 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/usePropertyAccessSyntax")
-    public static class UsePropertyAccessSyntax extends AbstractLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class UsePropertyAccessSyntax extends AbstractLocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors")
+        public abstract static class ReportNonTrivialAccessors extends AbstractLocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default")
+            public static class Default extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("nonTrivalGet.kt")
+                public void testNonTrivalGet() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/nonTrivalGet.kt");
+                }
+
+                @TestMetadata("nonTrivalGet2.kt")
+                public void testNonTrivalGet2() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/nonTrivalGet2.kt");
+                }
+
+                @TestMetadata("nonTrivalGet3.kt")
+                public void testNonTrivalGet3() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/nonTrivalGet3.kt");
+                }
+
+                @TestMetadata("nonTrivalSet.kt")
+                public void testNonTrivalSet() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/nonTrivalSet.kt");
+                }
+
+                @TestMetadata("nonTrivalSet2.kt")
+                public void testNonTrivalSet2() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/nonTrivalSet2.kt");
+                }
+
+                @TestMetadata("nonTrivalSet3.kt")
+                public void testNonTrivalSet3() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/nonTrivalSet3.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false")
+            public static class False extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("nonTrivalGet.kt")
+                public void testNonTrivalGet() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/nonTrivalGet.kt");
+                }
+
+                @TestMetadata("nonTrivalGet2.kt")
+                public void testNonTrivalGet2() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/nonTrivalGet2.kt");
+                }
+
+                @TestMetadata("nonTrivalGet3.kt")
+                public void testNonTrivalGet3() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/nonTrivalGet3.kt");
+                }
+
+                @TestMetadata("nonTrivalSet.kt")
+                public void testNonTrivalSet() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/nonTrivalSet.kt");
+                }
+
+                @TestMetadata("nonTrivalSet2.kt")
+                public void testNonTrivalSet2() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/nonTrivalSet2.kt");
+                }
+
+                @TestMetadata("nonTrivalSet3.kt")
+                public void testNonTrivalSet3() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/nonTrivalSet3.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true")
+            public static class True extends AbstractLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("nonTrivalGet.kt")
+                public void testNonTrivalGet() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/nonTrivalGet.kt");
+                }
+
+                @TestMetadata("nonTrivalGet2.kt")
+                public void testNonTrivalGet2() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/nonTrivalGet2.kt");
+                }
+
+                @TestMetadata("nonTrivalGet3.kt")
+                public void testNonTrivalGet3() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/nonTrivalGet3.kt");
+                }
+
+                @TestMetadata("nonTrivalSet.kt")
+                public void testNonTrivalSet() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/nonTrivalSet.kt");
+                }
+
+                @TestMetadata("nonTrivalSet2.kt")
+                public void testNonTrivalSet2() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/nonTrivalSet2.kt");
+                }
+
+                @TestMetadata("nonTrivalSet3.kt")
+                public void testNonTrivalSet3() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/nonTrivalSet3.kt");
+                }
+
+                @TestMetadata("nonVoidSet.kt")
+                public void testNonVoidSet() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/nonVoidSet.kt");
+                }
+            }
         }
 
-        @TestMetadata("caretOnValueArgumentList.kt")
-        public void testCaretOnValueArgumentList() throws Exception {
-            runTest("testData/inspectionsLocal/usePropertyAccessSyntax/caretOnValueArgumentList.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/usePropertyAccessSyntax")
+        public static class Uncategorized extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("get.kt")
-        public void testGet() throws Exception {
-            runTest("testData/inspectionsLocal/usePropertyAccessSyntax/get.kt");
-        }
+            @TestMetadata("caretOnValueArgumentList.kt")
+            public void testCaretOnValueArgumentList() throws Exception {
+                runTest("testData/inspectionsLocal/usePropertyAccessSyntax/caretOnValueArgumentList.kt");
+            }
 
-        @TestMetadata("getCallableReference.kt")
-        public void testGetCallableReference() throws Exception {
-            runTest("testData/inspectionsLocal/usePropertyAccessSyntax/getCallableReference.kt");
-        }
+            @TestMetadata("get.kt")
+            public void testGet() throws Exception {
+                runTest("testData/inspectionsLocal/usePropertyAccessSyntax/get.kt");
+            }
 
-        @TestMetadata("getCallableReferenceOldLV.kt")
-        public void testGetCallableReferenceOldLV() throws Exception {
-            runTest("testData/inspectionsLocal/usePropertyAccessSyntax/getCallableReferenceOldLV.kt");
-        }
+            @TestMetadata("getCallableReference.kt")
+            public void testGetCallableReference() throws Exception {
+                runTest("testData/inspectionsLocal/usePropertyAccessSyntax/getCallableReference.kt");
+            }
 
-        @TestMetadata("set.kt")
-        public void testSet() throws Exception {
-            runTest("testData/inspectionsLocal/usePropertyAccessSyntax/set.kt");
+            @TestMetadata("getCallableReferenceOldLV.kt")
+            public void testGetCallableReferenceOldLV() throws Exception {
+                runTest("testData/inspectionsLocal/usePropertyAccessSyntax/getCallableReferenceOldLV.kt");
+            }
+
+            @TestMetadata("set.kt")
+            public void testSet() throws Exception {
+                runTest("testData/inspectionsLocal/usePropertyAccessSyntax/set.kt");
+            }
         }
     }
 
