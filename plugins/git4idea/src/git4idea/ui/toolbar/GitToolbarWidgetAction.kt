@@ -43,6 +43,8 @@ private const val GIT_WIDGET_BRANCH_NAME_MAX_LENGTH: Int = 80
 internal class GitToolbarWidgetAction : ExpandableComboAction() {
   private val widgetIcon = ExpUiIcons.General.Vcs
 
+  private val incomingOutgoingIconsEnabled = !GitToolbarActions.isEnabledAndVisible()
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun createPopup(event: AnActionEvent): JBPopup? {
@@ -74,12 +76,14 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     widget.text = presentation.text
     widget.toolTipText = presentation.description
     widget.leftIcons = listOfNotNull(presentation.icon)
-    widget.rightIcons = presentation.getClientProperty(changesKey)?.let { changes ->
-      val res = mutableListOf<Icon>()
-      if (changes.incoming) res.add(DvcsImplIcons.Incoming)
-      if (changes.outgoing) res.add(DvcsImplIcons.Outgoing)
-      res
-    } ?: emptyList()
+    if (incomingOutgoingIconsEnabled) {
+      widget.rightIcons = presentation.getClientProperty(changesKey)?.let { changes ->
+        val res = mutableListOf<Icon>()
+        if (changes.incoming) res.add(DvcsImplIcons.Incoming)
+        if (changes.outgoing) res.add(DvcsImplIcons.Outgoing)
+        res
+      } ?: emptyList()
+    }
   }
 
   override fun update(e: AnActionEvent) {
