@@ -110,20 +110,6 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass toClass) {
-    return new AddMethodFix(method, toClass);
-  }
-
-  @NotNull
-  @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull String methodText,
-                                                                        @NotNull PsiClass toClass,
-                                                                        String @NotNull ... exceptions) {
-    return new AddMethodFix(methodText, toClass, exceptions);
-  }
-
-  @NotNull
-  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createImplementMethodsFix(@NotNull PsiClass aClass) {
     return new ImplementMethodsFix(aClass);
   }
@@ -136,8 +122,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createAssignmentToComparisonFix(@NotNull PsiAssignmentExpression expr) {
-    return new ReplaceAssignmentWithComparisonFix(expr);
+  public IntentionAction createAssignmentToComparisonFix(@NotNull PsiAssignmentExpression expr) {
+    return new ReplaceAssignmentWithComparisonFix(expr).asIntention();
   }
 
   @NotNull
@@ -154,12 +140,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createAddDefaultConstructorFix(@NotNull PsiClass aClass) {
-    return new AddDefaultConstructorFix(aClass);
-  }
-
-  @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createAddConstructorFix(@NotNull PsiClass aClass, @NotNull String modifier) {
-    return aClass.getName() != null ? new AddDefaultConstructorFix(aClass, modifier) : null;
+    return LocalQuickFixAndIntentionActionOnPsiElement.from(new AddDefaultConstructorFix(aClass), aClass);
   }
 
   @NotNull
@@ -169,12 +150,6 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                                                   @NotNull PsiType newType,
                                                                                   boolean fixWholeHierarchy) {
     return new MethodParameterFix(method, newType, index, fixWholeHierarchy);
-  }
-
-  @NotNull
-  @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass, final boolean makeInterface) {
-    return new MakeClassInterfaceFix(aClass, makeInterface);
   }
 
   @NotNull
@@ -240,7 +215,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddExceptionFromFieldInitializerToConstructorThrowsFix(@NotNull PsiElement element) {
-    return new AddExceptionFromFieldInitializerToConstructorThrowsFix(element);
+    return new AddExceptionFromFieldInitializerToConstructorThrowsFix(element).asIntention();
   }
 
   @NotNull
@@ -266,37 +241,37 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddTypeCastFix(@NotNull PsiType type, @NotNull PsiExpression expression) {
-    return new AddTypeCastFix(type, expression);
+    return new AddTypeCastFix(type, expression).asIntention();
   }
 
   @NotNull
   @Override
   public IntentionAction createReuseVariableDeclarationFix(@NotNull PsiLocalVariable variable) {
-    return new ReuseVariableDeclarationFix(variable);
+    return new ReuseVariableDeclarationFix(variable).asIntention();
   }
 
   @NotNull
   @Override
   public IntentionAction createNavigateToAlreadyDeclaredVariableFix(@NotNull PsiVariable variable) {
-    return new NavigateToAlreadyDeclaredVariableFix(variable);
+    return new NavigateToAlreadyDeclaredVariableFix(variable).asIntention();
   }
 
   @NotNull
   @Override
   public IntentionAction createNavigateToDuplicateElementFix(@NotNull NavigatablePsiElement element) {
-    return new NavigateToDuplicateElementFix(element);
+    return new NavigateToDuplicateElementFix(element).asIntention();
   }
 
   @NotNull
   @Override
   public IntentionAction createConvertToStringLiteralAction() {
-    return new ConvertToStringLiteralAction();
+    return new ConvertToStringLiteralAction().asIntention();
   }
 
   @NotNull
   @Override
   public IntentionAction createDeleteReturnFix(@NotNull PsiMethod method, @NotNull PsiReturnStatement returnStatement) {
-    return new DeleteReturnFix(method, returnStatement);
+    return new DeleteReturnFix(method, returnStatement).asIntention();
   }
 
   @NotNull

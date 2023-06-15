@@ -17,8 +17,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddDefaultConstructorFix;
 import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
@@ -128,8 +127,7 @@ public class ClassInitializerInspection extends BaseInspection {
     private static Collection<PsiMethod> getOrCreateConstructors(@NotNull PsiClass aClass) {
       PsiMethod[] constructors = aClass.getConstructors();
       if (constructors.length == 0) {
-        final IntentionAction addDefaultConstructorFix = QuickFixFactory.getInstance().createAddDefaultConstructorFix(aClass);
-        addDefaultConstructorFix.invoke(aClass.getProject(), null, aClass.getContainingFile());
+        AddDefaultConstructorFix.addDefaultConstructor(aClass);
       }
       constructors = aClass.getConstructors();
       return ContainerUtil.filter(constructors, constructor -> JavaHighlightUtil.getChainedConstructors(constructor).isEmpty());

@@ -118,6 +118,10 @@ public interface ModCommandAction extends CommonIntentionAction {
       return file.findElementAt(offset);
     }
 
+    public ActionContext withElement(@NotNull PsiElement element) {
+      return new ActionContext(project, file, offset, selection, element);
+    }
+
     /**
      * @param editor editor the action is invoked in
      * @param file file the action is invoked on

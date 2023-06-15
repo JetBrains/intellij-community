@@ -16,9 +16,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -163,11 +162,7 @@ public class ModCommandServiceImpl implements ModCommandService {
   }
 
   private static Editor getEditor(@NotNull Project project, VirtualFile file) {
-    FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
-    if (fileEditor instanceof TextEditor textEditor) {
-      return textEditor.getEditor();
-    }
-    return null;
+    return FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
   }
 
   private boolean executeComposite(@NotNull Project project, ModCompositeCommand cmp) {
