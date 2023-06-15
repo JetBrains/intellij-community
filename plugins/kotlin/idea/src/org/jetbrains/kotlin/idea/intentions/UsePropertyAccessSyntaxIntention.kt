@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
+import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.CallResolver
 import org.jetbrains.kotlin.resolve.calls.context.BasicCallResolutionContext
 import org.jetbrains.kotlin.resolve.calls.context.CheckArgumentTypesMode
@@ -186,9 +187,10 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
     }
 
     fun detectPropertyNameToUseForCall(callExpression: KtCallExpression): Name? {
-        if (callExpression.getQualifiedExpressionForSelector()
-                ?.receiverExpression is KtSuperExpression
-        ) return null // cannot call extensions on "super"
+        val qualifiedOrCall = callExpression.getQualifiedExpressionForSelectorOrThis()
+
+        val receiver = (qualifiedOrCall as? KtQualifiedExpression)?.receiverExpression
+        if (receiver is KtSuperExpression) return null // cannot call extensions on "super"
 
         val callee = callExpression.calleeExpression as? KtNameReferenceExpression ?: return null
         val methodName = callee.getReferencedName()
@@ -196,9 +198,13 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
 
         val resolutionFacade = callExpression.getResolutionFacade()
         val bindingContext = callExpression.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL_FOR_COMPLETION)
+
+        val isSetUsage = callExpression.valueArguments.size == 1
+        val isBodyExpression = (qualifiedOrCall.parent as? KtDeclarationWithBody)?.bodyExpression == qualifiedOrCall
+        if (isSetUsage && !isBodyExpression && qualifiedOrCall.isUsedAsExpression(bindingContext)) return null
+
         val resolvedCall = callExpression.getResolvedCall(bindingContext) ?: return null
         if (!resolvedCall.isReallySuccess()) return null
-
         val function = resolvedCall.resultingDescriptor as? FunctionDescriptor ?: return null
 
         val notProperties =
@@ -213,8 +219,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         if (KtTokens.KEYWORDS.types.any { it.toString() == property.name.asString() }) return null
 
         val dataFlowInfo = bindingContext.getDataFlowInfoBefore(callee)
-        val qualifiedExpression = callExpression.getQualifiedExpressionForSelectorOrThis()
-        val expectedType = bindingContext[BindingContext.EXPECTED_EXPRESSION_TYPE, qualifiedExpression] ?: TypeUtils.NO_EXPECTED_TYPE
+        val expectedType = bindingContext[BindingContext.EXPECTED_EXPRESSION_TYPE, qualifiedOrCall] ?: TypeUtils.NO_EXPECTED_TYPE
 
         if (!checkWillResolveToProperty(
                 resolvedCall,
@@ -245,9 +250,9 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         }
 
         if (property.type != function.valueParameters.single().type) {
-            val qualifiedExpressionCopy = qualifiedExpression.copied()
+            val qualifiedOrCallCopy = qualifiedOrCall.copied()
             val callExpressionCopy =
-                ((qualifiedExpressionCopy as? KtQualifiedExpression)?.selectorExpression ?: qualifiedExpressionCopy) as KtCallExpression
+                ((qualifiedOrCallCopy as? KtQualifiedExpression)?.selectorExpression ?: qualifiedOrCallCopy) as KtCallExpression
             val newExpression = applyTo(callExpressionCopy, property.name, reformat = false)
             val bindingTrace = DelegatingBindingTrace(bindingContext, "Temporary trace")
             val newBindingContext = newExpression.analyzeInContext(

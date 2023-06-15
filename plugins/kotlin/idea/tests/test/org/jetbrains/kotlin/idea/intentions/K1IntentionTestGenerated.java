@@ -18457,6 +18457,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/usePropertyAccessSyntax/setAsExpressionBodyUnqualified.kt");
         }
 
+        @TestMetadata("setAsPropertyInitializer.kt")
+        public void testSetAsPropertyInitializer() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/setAsPropertyInitializer.kt");
+        }
+
+        @TestMetadata("setAsReturnedExpression.kt")
+        public void testSetAsReturnedExpression() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/setAsReturnedExpression.kt");
+        }
+
         @TestMetadata("setFunctionReferenceArgument.kt")
         public void testSetFunctionReferenceArgument() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/setFunctionReferenceArgument.kt");
