@@ -820,6 +820,7 @@ public class MavenUtil {
       return null;
     }
     File directory = resolveMavenHomeDirectory(overriddenMavenHome);
+    if (directory == null) return null;
     return new File(new File(directory, CONF_DIR), SETTINGS_XML);
   }
 
