@@ -40,6 +40,7 @@ fun setupGradleJvm(project: Project, projectSettings: GradleProjectSettings, gra
     else -> getGradleJvmLookupProvider(project, projectSettings)
       .newLookupBuilder()
       .withVersionFilter {
+        GradleJvmSupportMatrix.isJavaSupportedByIdea(it) &&
         GradleJvmSupportMatrix.isSupported(gradleVersion, it)
       }
       .withSdkType(ExternalSystemJdkUtil.getJavaSdkType())
