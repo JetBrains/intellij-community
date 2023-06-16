@@ -46,6 +46,6 @@ fun importMavenProjectsSync(mavenProjectsManager: MavenProjectsManager,
       toImport[project] = MavenProjectChanges.ALL
     }
   }
-  mavenProjectsManager.importMavenProjectsSync(modelsProvider, toImport)
+  mavenProjectsManager.importMavenProjectsSync(toImport, modelsProvider)
 }
 

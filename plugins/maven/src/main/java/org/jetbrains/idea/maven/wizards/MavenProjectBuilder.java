@@ -240,7 +240,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
         (!MavenUtil.isMavenUnitTestModeEnabled() ||
          Registry.is("ide.force.maven.import", false)) // workaround for inspection integration test
     ) {
-      return manager.importMavenProjectsSync(Map.of());
+      return manager.importMavenProjectsSync(Map.of(), null);
     }
 
     var projectsToImport = new HashMap<MavenProject, MavenProjectChanges>();
@@ -254,10 +254,10 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     List<Module> createdModules;
     if (isFromUI) {
       var modelsProvider = new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel);
-      createdModules = manager.importMavenProjectsSync(modelsProvider, projectsToImport);
+      createdModules = manager.importMavenProjectsSync(projectsToImport, modelsProvider);
     }
     else {
-      createdModules = manager.importMavenProjectsSync(projectsToImport);
+      createdModules = manager.importMavenProjectsSync(projectsToImport, null);
     }
     return createdModules;
   }
