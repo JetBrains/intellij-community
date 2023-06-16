@@ -280,55 +280,63 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
   }
 
-  private void createRequestForPreparedClassOriginal(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType) {
+  /**
+   * Return `true` if the method has the same name and signature as the breakpoint.
+   */
+  protected boolean isMethodMatch(@NotNull Method method, @NotNull DebugProcessImpl debugProcess) {
     try {
-      boolean hasMethod = false;
-      for (Method method : classType.allMethods()) {
-        String signature = method.signature();
-        String name = method.name();
+      String name = getMethodName();
+      return
+        name != null && name.equals(method.name()) &&
+        mySignature != null && mySignature.getName(debugProcess).equals(method.signature());
+    }
+    catch (EvaluateException e) {
+      LOG.debug("Should not happen. mySignature is a JVMRawText and it doesn't throw", e);
+      return false;
+    }
+  }
 
-        if (getMethodName().equals(name) && mySignature.getName(debugProcess).equals(signature)) {
-          hasMethod = true;
-          break;
-        }
-      }
-
-      if (!hasMethod) {
-        debugProcess.getRequestsManager().setInvalid(
-          this, JavaDebuggerBundle.message("error.invalid.breakpoint.method.not.found", classType.name())
-        );
-        return;
-      }
-
-      RequestManagerImpl requestManager = debugProcess.getRequestsManager();
-      if (isWatchEntry()) {
-        MethodEntryRequest entryRequest = findRequest(debugProcess, MethodEntryRequest.class, this);
-        if (entryRequest == null) {
-          entryRequest = requestManager.createMethodEntryRequest(this);
-        }
-        else {
-          entryRequest.disable();
-        }
-        //entryRequest.addClassFilter(myClassQualifiedName);
-        // use addClassFilter(ReferenceType) in order to stop on subclasses also!
-        entryRequest.addClassFilter(classType);
-        debugProcess.getRequestsManager().enableRequest(entryRequest);
-      }
-      if (isWatchExit()) {
-        MethodExitRequest exitRequest = findRequest(debugProcess, MethodExitRequest.class, this);
-        if (exitRequest == null) {
-          exitRequest = requestManager.createMethodExitRequest(this);
-        }
-        else {
-          exitRequest.disable();
-        }
-        //exitRequest.addClassFilter(myClassQualifiedName);
-        exitRequest.addClassFilter(classType);
-        debugProcess.getRequestsManager().enableRequest(exitRequest);
+  private void createRequestForPreparedClassOriginal(@NotNull DebugProcessImpl debugProcess, @NotNull ReferenceType classType) {
+    boolean hasMethod = false;
+    for (Method method : classType.allMethods()) {
+      if (isMethodMatch(method, debugProcess)) {
+        hasMethod = true;
+        break;
       }
     }
-    catch (Exception e) {
-      LOG.debug(e);
+
+    if (!hasMethod) {
+      debugProcess.getRequestsManager().setInvalid(
+        this, JavaDebuggerBundle.message("error.invalid.breakpoint.method.not.found", classType.name())
+      );
+      return;
+    }
+
+    RequestManagerImpl requestManager = debugProcess.getRequestsManager();
+    if (isWatchEntry()) {
+      MethodEntryRequest entryRequest = findRequest(debugProcess, MethodEntryRequest.class, this);
+      if (entryRequest == null) {
+        entryRequest = requestManager.createMethodEntryRequest(this);
+      }
+      else {
+        entryRequest.disable();
+      }
+      //entryRequest.addClassFilter(myClassQualifiedName);
+      // use addClassFilter(ReferenceType) in order to stop on subclasses also!
+      entryRequest.addClassFilter(classType);
+      debugProcess.getRequestsManager().enableRequest(entryRequest);
+    }
+    if (isWatchExit()) {
+      MethodExitRequest exitRequest = findRequest(debugProcess, MethodExitRequest.class, this);
+      if (exitRequest == null) {
+        exitRequest = requestManager.createMethodExitRequest(this);
+      }
+      else {
+        exitRequest.disable();
+      }
+      //exitRequest.addClassFilter(myClassQualifiedName);
+      exitRequest.addClassFilter(classType);
+      debugProcess.getRequestsManager().enableRequest(exitRequest);
     }
   }
 
@@ -419,7 +427,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return super.evaluateCondition(context, event);
   }
 
-  public boolean matchesEvent(@NotNull final LocatableEvent event, final DebugProcessImpl process) throws EvaluateException {
+  public boolean matchesEvent(@NotNull final LocatableEvent event, final DebugProcessImpl process) {
     if (isEmulated()) {
       return true;
     }
@@ -427,7 +435,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       return false;
     }
     final Method method = event.location().method();
-    return method != null && method.name().equals(getMethodName()) && method.signature().equals(mySignature.getName(process));
+    return isMethodMatch(method, process);
   }
 
   @Nullable
@@ -533,7 +541,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   @Nullable
-  private String getMethodName() {
+  protected String getMethodName() {
     return getProperties().myMethodName;
   }
 
