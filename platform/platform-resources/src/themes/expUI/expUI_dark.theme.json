@@ -884,6 +884,7 @@
       }
     },
     "HelpBrowser": {
+      "titleHighlightForeground": "Blue4",
       "UserMessage": {
         "background": "Grey4",
         "Snippet": {

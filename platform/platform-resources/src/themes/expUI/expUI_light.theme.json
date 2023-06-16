@@ -913,6 +913,7 @@
       }
     },
     "HelpBrowser": {
+      "titleHighlightForeground": "Blue4",
       "UserMessage": {
         "background": "Grey11",
         "Snippet": {
