@@ -477,14 +477,17 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       getLafState(element, ELEMENT_PREFERRED_DARK_LAF, preferredDarkLaf)
     }
 
-    val lafsToSchemes = Element(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
-    for ((laf, scheme) in lafToPreviousScheme) {
-      val lafToScheme = Element(ELEMENT_LAF_TO_SCHEME)
-      lafToScheme.setAttribute(ATTRIBUTE_LAF, laf)
-      lafToScheme.setAttribute(ATTRIBUTE_SCHEME, scheme)
-      lafsToSchemes.addContent(lafToScheme)
+    if (lafToPreviousScheme.isNotEmpty()) {
+      val lafsToSchemes = Element(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
+      for ((laf, scheme) in lafToPreviousScheme) {
+        val lafToScheme = Element(ELEMENT_LAF_TO_SCHEME)
+        lafToScheme.setAttribute(ATTRIBUTE_LAF, laf)
+        lafToScheme.setAttribute(ATTRIBUTE_SCHEME, scheme)
+        lafsToSchemes.addContent(lafToScheme)
+      }
+      element.addContent(lafsToSchemes)
     }
-    element.addContent(lafsToSchemes)
+
     return element
   }
 
