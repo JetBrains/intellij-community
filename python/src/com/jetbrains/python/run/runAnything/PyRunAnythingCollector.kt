@@ -23,6 +23,6 @@ enum class CommandType(val command: String) {
   PIP("pip")
 }
 
-private val PY_RUN_ANY_GROUP: EventLogGroup = EventLogGroup("python.run.anything", 1)
+private val PY_RUN_ANY_GROUP: EventLogGroup = EventLogGroup("python.run.anything", 2)
 private val EXECUTED: EventId1<CommandType> = PY_RUN_ANY_GROUP.registerEvent("executed",
                                                                              EventFields.Enum<CommandType>("command_type"))
