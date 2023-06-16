@@ -421,6 +421,8 @@ public abstract class Statement implements IMatchable {
   }
 
   public boolean containsStatementStrict(Statement stat) {
+    cancellationManager.checkCanceled();
+
     if (stats.contains(stat)) {
       return true;
     }
@@ -576,6 +578,7 @@ public abstract class Statement implements IMatchable {
   // *****************************************************************************
 
   public void changeEdgeNode(EdgeDirection direction, StatEdge edge, Statement value) {
+    cancellationManager.checkCanceled();
 
     Map<EdgeType, List<StatEdge>> mapEdges = direction == EdgeDirection.BACKWARD ? mapPredEdges : mapSuccEdges;
     Map<EdgeType, List<Statement>> mapStates = direction == EdgeDirection.BACKWARD ? mapPredStates : mapSuccStates;
@@ -609,6 +612,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public void changeEdgeType(EdgeDirection direction, StatEdge edge, EdgeType newtype) {
+    cancellationManager.checkCanceled();
 
     EdgeType oldtype = edge.getType();
     if (oldtype == newtype) {
@@ -656,6 +660,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public List<Statement> getNeighbours(EdgeType type, EdgeDirection direction) {
+    cancellationManager.checkCanceled();
 
     Map<EdgeType, List<Statement>> map = direction == EdgeDirection.BACKWARD ? mapPredStates : mapSuccStates;
 
@@ -700,6 +705,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public Statement getFirst() {
+    cancellationManager.checkCanceled();
     return first;
   }
 
@@ -762,6 +768,7 @@ public abstract class Statement implements IMatchable {
 
 
   public Statement getParent() {
+    cancellationManager.checkCanceled();
     return parent;
   }
 
@@ -779,6 +786,7 @@ public abstract class Statement implements IMatchable {
   }
 
   public List<Exprent> getExprents() {
+    cancellationManager.checkCanceled();
     return exprents;
   }
 
