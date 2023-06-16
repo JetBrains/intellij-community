@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
+import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -15,9 +16,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -25,9 +24,11 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.IntroduceTargetChooser;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -90,6 +91,9 @@ public class ModCommandServiceImpl implements ModCommandService {
     }
     if (command instanceof ModNavigate nav) {
       return executeNavigate(project, nav);
+    }
+    if (command instanceof ModHighlight highlight) {
+      return executeHighlight(project, highlight);
     }
     if (command instanceof ModNothing) {
       return true;
@@ -158,6 +162,19 @@ public class ModCommandServiceImpl implements ModCommandService {
     if (caret != -1) {
       editor.getCaretModel().moveToOffset(caret);
     }
+    return true;
+  }
+
+  private static boolean executeHighlight(Project project, ModHighlight highlight) {
+    FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(highlight.virtualFile());
+    if (!(fileEditor instanceof TextEditor textEditor)) return false;
+    Editor editor = textEditor.getEditor();
+    HighlightManager manager = HighlightManager.getInstance(project);
+    for (ModHighlight.HighlightInfo info : highlight.highlights()) {
+      manager.addRangeHighlight(editor, info.range().getStartOffset(), info.range().getEndOffset(), info.attributesKey(),
+                                 info.hideByTextChange(), null);
+    }
+    WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
     return true;
   }
 
