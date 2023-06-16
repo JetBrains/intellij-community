@@ -23,8 +23,8 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
             RemoveRedundantParameterTypesFix.isApplicable(parameterList)) {
           for (PsiParameter parameter : parameterList.getParameters()) {
             if (parameter.getTypeElement() != null) {
-              holder.registerProblem(parameter.getTypeElement(), JavaBundle.message("inspection.message.lambda.parameter.type.is.redundant"),
-                                     new RemoveRedundantParameterTypesFix((PsiLambdaExpression)parameterList.getParent()));
+              holder.problem(parameter.getTypeElement(), JavaBundle.message("inspection.message.lambda.parameter.type.is.redundant"))
+                .fix(new RemoveRedundantParameterTypesFix((PsiLambdaExpression)parameterList.getParent())).register();
             }
           }
         }

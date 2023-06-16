@@ -1167,7 +1167,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createRemoveRedundantLambdaParameterTypesFix(@NotNull PsiLambdaExpression lambdaExpression,
                                                                                @IntentionName String message) {
-    return new RemoveRedundantLambdaParameterTypesFix(lambdaExpression, message);
+    return new RemoveRedundantLambdaParameterTypesFix(lambdaExpression, message).asIntention();
   }
 
   @Override
@@ -1183,10 +1183,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
       myMessage = message;
     }
 
-    @Nls
     @Override
-    public @NotNull String getText() {
-      return myMessage;
+    protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiLambdaExpression element) {
+      return Presentation.of(myMessage);
     }
   }
 

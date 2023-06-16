@@ -90,12 +90,11 @@ public class RedundantArrayForVarargsCallInspection extends AbstractBaseJavaLoca
     }
 
 
-    private static final class RedundantArrayForVarargsCallFix implements LocalQuickFix {
+    private static final class RedundantArrayForVarargsCallFix extends PsiUpdateModCommandQuickFix {
       @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        PsiElement arrayCreation = descriptor.getPsiElement();
-        if (!(arrayCreation instanceof PsiNewExpression)) return;
-        CommonJavaRefactoringUtil.inlineArrayCreationForVarargs((PsiNewExpression)arrayCreation);
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement arrayCreation, @NotNull EditorUpdater updater) {
+        if (!(arrayCreation instanceof PsiNewExpression newExpression)) return;
+        CommonJavaRefactoringUtil.inlineArrayCreationForVarargs(newExpression);
       }
 
       @Override
