@@ -5,6 +5,8 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
 import com.intellij.icons.ExpUiIcons
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.ide.ui.customization.groupContainsAction
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
@@ -43,7 +45,7 @@ private const val GIT_WIDGET_BRANCH_NAME_MAX_LENGTH: Int = 80
 internal class GitToolbarWidgetAction : ExpandableComboAction() {
   private val widgetIcon = ExpUiIcons.General.Vcs
 
-  private val incomingOutgoingIconsEnabled = !GitToolbarActions.isEnabledAndVisible()
+  private val actionsWithIncomingOutgoingEnabled = GitToolbarActions.isEnabledAndVisible()
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -76,14 +78,18 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     widget.text = presentation.text
     widget.toolTipText = presentation.description
     widget.leftIcons = listOfNotNull(presentation.icon)
-    if (incomingOutgoingIconsEnabled) {
-      widget.rightIcons = presentation.getClientProperty(changesKey)?.let { changes ->
-        val res = mutableListOf<Icon>()
-        if (changes.incoming) res.add(DvcsImplIcons.Incoming)
-        if (changes.outgoing) res.add(DvcsImplIcons.Outgoing)
-        res
-      } ?: emptyList()
-    }
+    val schema = CustomActionsSchema.getInstance()
+    val shouldShowIncoming =
+      actionsWithIncomingOutgoingEnabled && !groupContainsAction("MainToolbarNewUI", "main.toolbar.git.update.project", schema)
+    val shouldShowOutgoing =
+      actionsWithIncomingOutgoingEnabled && !groupContainsAction("MainToolbarNewUI", "main.toolbar.git.push", schema)
+
+    widget.rightIcons = presentation.getClientProperty(changesKey)?.let { changes ->
+      val res = mutableListOf<Icon>()
+      if (changes.incoming && (!actionsWithIncomingOutgoingEnabled || shouldShowIncoming)) res.add(DvcsImplIcons.Incoming)
+      if (changes.outgoing && (!actionsWithIncomingOutgoingEnabled || shouldShowOutgoing)) res.add(DvcsImplIcons.Outgoing)
+      res
+    } ?: emptyList()
   }
 
   override fun update(e: AnActionEvent) {
