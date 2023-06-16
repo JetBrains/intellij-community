@@ -36,7 +36,7 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val author: GitLabUserDTO
 
   val targetProject: StateFlow<GitLabProjectDTO>
-  val sourceProject: StateFlow<GitLabProjectDTO>
+  val sourceProject: StateFlow<GitLabProjectDTO?>
   val title: Flow<String>
   val description: Flow<String>
   val descriptionHtml: Flow<String>
@@ -116,7 +116,7 @@ internal class LoadedGitLabMergeRequest(
     MutableStateFlow(GitLabMergeRequestFullDetails.fromGraphQL(mergeRequest))
 
   override val targetProject: StateFlow<GitLabProjectDTO> = mergeRequestDetailsState.mapState(cs) { it.targetProject }
-  override val sourceProject: StateFlow<GitLabProjectDTO> = mergeRequestDetailsState.mapState(cs) { it.sourceProject }
+  override val sourceProject: StateFlow<GitLabProjectDTO?> = mergeRequestDetailsState.mapState(cs) { it.sourceProject }
   override val title: Flow<String> = mergeRequestDetailsState.map { it.title }
   override val description: Flow<String> = mergeRequestDetailsState.map { it.description }
   override val descriptionHtml: Flow<String> = description.map { if (it.isNotBlank()) GitLabUIUtil.convertToHtml(it) else it }
