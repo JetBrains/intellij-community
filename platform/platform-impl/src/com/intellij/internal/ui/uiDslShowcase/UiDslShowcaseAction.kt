@@ -34,6 +34,7 @@ private val DEMOS = arrayOf(
   ::demoGaps,
   ::demoGroups,
   ::demoAvailability,
+  ::demoValidation,
   ::demoBinding,
   ::demoTips
 )
@@ -92,13 +93,15 @@ private class UiDslShowcaseDialog(val project: Project?, dialogTitle: String) :
         { it },
         {
           when (it.name) {
-            "parentDisposable" -> myDisposable
+            "parentDisposable" -> disposable
             else -> null
           }
         }
       )
 
       val dialogPanel = demo.callBy(args)
+      dialogPanel.registerValidators(disposable)
+
       if (annotation.scrollbar) {
         row {
           dialogPanel.border = JBEmptyBorder(10)
