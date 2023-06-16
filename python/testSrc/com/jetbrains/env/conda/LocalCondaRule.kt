@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.conda
 
+import com.intellij.execution.processTools.getResultStdout
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.jetbrains.env.conda.LocalCondaRule.Companion.CONDA_PATH
@@ -8,10 +9,12 @@ import com.jetbrains.python.sdk.add.target.conda.TargetCommandExecutor
 import com.jetbrains.python.sdk.add.target.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import kotlinx.coroutines.runBlocking
 import org.junit.AssumptionViolatedException
 import org.junit.rules.ExternalResource
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentSkipListSet
 import kotlin.io.path.isExecutable
 
 /**
@@ -33,6 +36,8 @@ class LocalCondaRule : ExternalResource() {
 
   val condaCommand: PyCondaCommand get() = PyCondaCommand(condaPathOnTarget, null)
 
+  private val condasBeforeTest = ConcurrentSkipListSet<String>()
+
   override fun before() {
     super.before()
     val condaPathEnv = System.getenv()[CONDA_PATH]
@@ -42,5 +47,24 @@ class LocalCondaRule : ExternalResource() {
     if (!condaPath.isExecutable()) {
       throw AssumptionViolatedException("$condaPath is not executable")
     }
+    runBlocking {
+      condasBeforeTest.addAll(getCondaNames())
+    }
   }
+
+  override fun after(): Unit = runBlocking {
+    val condasToRemove = getCondaNames()
+    condasToRemove.removeAll(condasBeforeTest)
+    for (envName in condasToRemove) {
+      val condaPath = condaPath.toString()
+      val args = arrayOf(condaPath, "remove", "--name", envName, "--all", "-y")
+      println("Removing $envName")
+      Runtime.getRuntime().exec(args).getResultStdout().getOrThrow()
+    }
+  }
+
+
+  private suspend fun getCondaNames() = PyCondaEnv.getEnvs(commandExecutor, condaPathOnTarget).getOrThrow()
+    .map { it.envIdentity.userReadableName }
+    .toMutableSet()
 }
