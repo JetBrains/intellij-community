@@ -60,6 +60,7 @@ class GradleProjectSettingsUpdater : ExternalSystemSettingsListenerEx {
         .newLookupBuilder()
         .withSdkName(gradleJvm)
         .withVersionFilter {
+          GradleJvmSupportMatrix.isJavaSupportedByIdea(it) &&
           GradleJvmSupportMatrix.isSupported(gradleVersion, it)
         }
         .withSdkType(ExternalSystemJdkUtil.getJavaSdkType())
