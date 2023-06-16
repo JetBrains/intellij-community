@@ -1,6 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.trivialif;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -10,7 +12,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author anna
  */
-public class ConvertToNestedIfIntention extends Intention {
+public class ConvertToNestedIfIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -27,7 +29,7 @@ public class ConvertToNestedIfIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  public @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("convert.to.nested.if.intention.name");
   }
 
@@ -52,7 +54,7 @@ public class ConvertToNestedIfIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  protected void processIntention(@NotNull ActionContext context, @NotNull EditorUpdater updater, @NotNull PsiElement element) {
     final PsiReturnStatement returnStatement = (PsiReturnStatement)element;
     final PsiExpression returnValue = returnStatement.getReturnValue();
     if (returnValue == null || ErrorUtil.containsDeepError(returnValue)) {
@@ -65,14 +67,20 @@ public class ConvertToNestedIfIntention extends Intention {
     final PsiBlockStatement blockStatement = (PsiBlockStatement)elementFactory.createStatementFromText("{" + newStatementText + "}", returnStatement);
     final PsiElement parent = returnStatement.getParent();
     if (parent instanceof PsiCodeBlock) {
-      for (PsiStatement st : blockStatement.getCodeBlock().getStatements()) {
-        CodeStyleManager.getInstance(project).reformat(parent.addBefore(st, returnStatement));
+      PsiStatement @NotNull [] statements = blockStatement.getCodeBlock().getStatements();
+      for (int i = 0; i < statements.length; i++) {
+        PsiStatement st = statements[i];
+        PsiElement result = CodeStyleManager.getInstance(project).reformat(parent.addBefore(st, returnStatement));
+        if (i == 0) {
+          updater.moveTo(result);
+        }
       }
       PsiReplacementUtil.replaceStatement(returnStatement, "return false;", tracker);
     }
     else {
       blockStatement.getCodeBlock().add(elementFactory.createStatementFromText("return false;", returnStatement));
-      tracker.replaceAndRestoreComments(returnStatement, blockStatement);
+      PsiBlockStatement result = (PsiBlockStatement)tracker.replaceAndRestoreComments(returnStatement, blockStatement);
+      updater.moveTo(result.getCodeBlock().getStatements()[0]);
     }
   }
 

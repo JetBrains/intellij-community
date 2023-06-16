@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.whileloop;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -9,14 +10,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ExtractWhileLoopConditionToIfStatementIntention extends Intention {
+public class ExtractWhileLoopConditionToIfStatementIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -24,7 +25,7 @@ public class ExtractWhileLoopConditionToIfStatementIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  public @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("extract.while.loop.condition.to.if.statement.intention.name");
   }
 

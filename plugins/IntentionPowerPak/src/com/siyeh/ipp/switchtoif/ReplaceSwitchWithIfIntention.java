@@ -16,15 +16,16 @@
 package com.siyeh.ipp.switchtoif;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ConvertSwitchToIfIntention;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiSwitchStatement;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceSwitchWithIfIntention extends Intention {
+public class ReplaceSwitchWithIfIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -32,7 +33,7 @@ public class ReplaceSwitchWithIfIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  public @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("replace.switch.with.if.intention.name");
   }
 

@@ -3,7 +3,7 @@ public class Main {
 
     public void foo() {
         do {
-            System.out.println<caret>(i);
+            Syste<caret>m.out.println(i);
             i++;
         }
         while (true);

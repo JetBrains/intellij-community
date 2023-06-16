@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.conditional;
 
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -22,11 +23,11 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class FlipConditionalIntention extends Intention {
+public class FlipConditionalIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -34,7 +35,7 @@ public class FlipConditionalIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  public @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("flip.conditional.intention.name");
   }
 

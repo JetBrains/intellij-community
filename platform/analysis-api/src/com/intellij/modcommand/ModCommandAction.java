@@ -118,6 +118,13 @@ public interface ModCommandAction extends CommonIntentionAction {
       return file.findElementAt(offset);
     }
 
+    /**
+     * @return a context leaf element left to caret, if available
+     */
+    public @Nullable PsiElement findLeafOnTheLeft() {
+      return offset == 0 ? null : file.findElementAt(offset - 1);
+    }
+
     public ActionContext withElement(@NotNull PsiElement element) {
       return new ActionContext(project, file, offset, selection, element);
     }
