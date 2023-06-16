@@ -61,9 +61,11 @@ UFile (package = ) [public final class ReifiedReturnTypeKt {...]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return 42] = Nothing
                     ULiteralExpression (value = 42) [42] = 42
-        UMethod (name = function6) [public static fun function6($this$function6: T, t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {...}]
-            UParameter (name = $this$function6) [var $this$function6: T]
-            UParameter (name = t) [var t: T]
+        UMethod (name = function6) [public static fun function6(@org.jetbrains.annotations.NotNull $this$function6: T, @org.jetbrains.annotations.NotNull t: T, @org.jetbrains.annotations.NotNull i: int, @org.jetbrains.annotations.NotNull s: java.lang.String) : T {...}]
+            UParameter (name = $this$function6) [@org.jetbrains.annotations.NotNull var $this$function6: T]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UParameter (name = t) [@org.jetbrains.annotations.NotNull var t: T]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UParameter (name = s) [@org.jetbrains.annotations.NotNull var s: java.lang.String]
