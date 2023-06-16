@@ -29,7 +29,7 @@ public abstract class XDebuggerActionBase extends AnAction {
     }
 
     boolean enabled = isEnabled(event);
-    if (myHideDisabledInPopup && ActionPlaces.isPopupPlace(event.getPlace()) || RunWidgetManager.shouldHideDisabledDebugActions(event.getPlace())) {
+    if (myHideDisabledInPopup && ActionPlaces.isPopupPlace(event.getPlace())) {
       presentation.setVisible(enabled);
     }
     else {
