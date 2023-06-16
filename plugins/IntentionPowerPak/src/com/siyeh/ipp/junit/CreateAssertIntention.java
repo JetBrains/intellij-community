@@ -16,24 +16,26 @@
 package com.siyeh.ipp.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class CreateAssertIntention extends Intention {
+public class CreateAssertIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -41,7 +43,7 @@ public class CreateAssertIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  public @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("create.assert.intention.name");
   }
 
@@ -155,7 +157,7 @@ public class CreateAssertIntention extends Intention {
       return false;
     }
     final Set<TestFramework> frameworks = TestFrameworks.detectApplicableFrameworks(aClass);
-    return frameworks.stream().anyMatch(framework -> framework.getName().equals("JUnit5") && framework.isTestMethod(method, false));
+    return ContainerUtil.exists(frameworks, framework -> framework.getName().equals("JUnit5") && framework.isTestMethod(method, false));
   }
 
   private static boolean isJUnitMethod(PsiMethod method) {

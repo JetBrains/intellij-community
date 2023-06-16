@@ -21,12 +21,12 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedIntention {
+public class ReplaceConcatenationWithStringBufferIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -34,7 +34,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
   }
 
   @Override
-  protected String getTextForElement(PsiElement element) {
+  protected String getTextForElement(@NotNull PsiElement element) {
     return PsiUtil.isLanguageLevel5OrHigher(element)
            ? IntentionPowerPackBundle.message("replace.concatenation.with.string.builder.intention.name")
            : IntentionPowerPackBundle.message("replace.concatenation.with.string.buffer.intention.name");

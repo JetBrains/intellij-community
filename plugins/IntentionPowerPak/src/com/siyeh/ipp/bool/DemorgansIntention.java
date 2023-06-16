@@ -24,11 +24,11 @@ import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class DemorgansIntention extends MutablyNamedIntention {
+public class DemorgansIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -36,7 +36,7 @@ public class DemorgansIntention extends MutablyNamedIntention {
   }
 
   @Override
-  protected String getTextForElement(PsiElement element) {
+  protected String getTextForElement(@NotNull PsiElement element) {
     final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)element;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     if (tokenType.equals(JavaTokenType.ANDAND)) {

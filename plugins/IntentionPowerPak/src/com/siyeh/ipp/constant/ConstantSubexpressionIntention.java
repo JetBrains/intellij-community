@@ -20,12 +20,12 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ConstantSubexpressionIntention extends MutablyNamedIntention {
+public class ConstantSubexpressionIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -39,7 +39,7 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
   }
 
   @Override
-  protected String getTextForElement(PsiElement element) {
+  protected String getTextForElement(@NotNull PsiElement element) {
     final PsiJavaToken token;
     if (element instanceof PsiJavaToken) {
       token = (PsiJavaToken)element;
