@@ -991,6 +991,11 @@
       }
     },
 
+    "WindowControls": {
+      "foreground": "#050708",
+      "inactiveForeground": "#9B9C9C"
+    },
+
     "Tag": {
       "background": "#dfdfdf"
     },

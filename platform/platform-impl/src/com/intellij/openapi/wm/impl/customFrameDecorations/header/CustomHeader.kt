@@ -138,11 +138,12 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     setCustomFrameTopBorder()
 
     customTitleBar = JBR.getWindowDecorations()?.createCustomTitleBar()
+    System.out.println("")
   }
 
   override fun updateUI() {
     super.updateUI()
-    customTitleBar?.putProperty("controls.dark", ColorUtil.isDark(background))
+    updateWinControlsTheme()
     if (ExperimentalUI.isNewUI()) {
       preferredSize = preferredSize.apply {
         height = JBUI.scale(
@@ -154,6 +155,12 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
         )
       }
     }
+  }
+
+  private fun updateWinControlsTheme() {
+    customTitleBar?.putProperty("controls.dark", ColorUtil.isDark(background))
+    customTitleBar?.putProperty("controls.foreground.normal", UIManager.getColor("WindowControls.foreground"))
+    customTitleBar?.putProperty("controls.foreground.inactive", UIManager.getColor("WindowControls.inactiveForeground"))
   }
 
   protected open fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
@@ -235,7 +242,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     customFrameTopBorder?.repaintBorder()
 
     background = getHeaderBackground(myActive)
-    customTitleBar?.putProperty("controls.dark", ColorUtil.isDark(background))
+    updateWinControlsTheme()
   }
 
   protected val myCloseAction: Action = CustomFrameAction(CommonBundle.getCloseButtonText(), AllIcons.Windows.CloseSmall) { close() }

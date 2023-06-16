@@ -587,6 +587,11 @@
       }
     },
 
+    "WindowControls": {
+      "foreground": "#A9A9A9",
+      "inactiveForeground": "#8C8C8C"
+    },
+
     "Plugins.borderColor": "#515151",
 
     "TipOfTheDay": {
