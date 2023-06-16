@@ -194,6 +194,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean isReleased;
 
+  private boolean mySuppressPainting;
+
   private @Nullable MouseEvent myMousePressedEvent;
   private @Nullable MouseEvent myMouseMovedEvent;
 
@@ -1939,6 +1941,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return getUserData(BUFFER) != null;
   }
 
+  public void suppressPainting(boolean suppress) {
+    mySuppressPainting = suppress;
+  }
+
   void paint(@NotNull Graphics2D g) {
     ReadAction.run(() -> {
       Rectangle clip = g.getClipBounds();
@@ -1954,7 +1960,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return;
       }
 
-      if (isReleased) {
+      if (isReleased || mySuppressPainting) {
         g.setColor(getDisposedBackground());
         g.fillRect(clip.x, clip.y, clip.width, clip.height);
         return;

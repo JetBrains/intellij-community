@@ -32,7 +32,7 @@ public class StackVarsProcessor {
     SSAUConstructorSparseEx ssau = null;
 
     while (true) {
-      cancellationManager.checkSavedCancelled();
+      cancellationManager.checkCanceled();
       boolean found = false;
 
       SSAConstructorSparseEx ssa = new SSAConstructorSparseEx();
@@ -40,7 +40,7 @@ public class StackVarsProcessor {
 
       SimplifyExprentsHelper sehelper = new SimplifyExprentsHelper(ssau == null);
       while (sehelper.simplifyStackVarsStatement(root, setReorderedIfs, ssa, cl)) {
-        cancellationManager.checkSavedCancelled();
+        cancellationManager.checkCanceled();
         found = true;
       }
 
@@ -50,7 +50,7 @@ public class StackVarsProcessor {
 
       ssau = new SSAUConstructorSparseEx();
       ssau.splitVariables(root, mt);
-      cancellationManager.checkSavedCancelled();
+      cancellationManager.checkCanceled();
       if (iterateStatements(root, ssau)) {
         found = true;
       }
@@ -116,7 +116,7 @@ public class StackVarsProcessor {
     stackMaps.add(new HashMap<>());
 
     while (!stack.isEmpty()) {
-      cancellationManager.checkSavedCancelled();
+      cancellationManager.checkCanceled();
       DirectNode nd = stack.removeFirst();
       Map<VarVersionPair, Exprent> mapVarValues = stackMaps.removeFirst();
 
@@ -242,7 +242,7 @@ public class StackVarsProcessor {
 
     for (Exprent expr : exprent.getAllExprents()) {
       while (true) {
-        cancellationManager.checkSavedCancelled();
+        cancellationManager.checkCanceled();
         Object[] arr = iterateChildExprent(expr, exprent, next, mapVarValues, ssau);
         Exprent retexpr = (Exprent)arr[0];
         changed |= (Boolean)arr[1] ? 1 : 0;

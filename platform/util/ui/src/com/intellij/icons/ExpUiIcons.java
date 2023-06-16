@@ -681,8 +681,10 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon CurrentBranchFavorite = load("expui/vcs/currentBranchFavorite.svg", -217857881, 2);
     /** 16x16 */ public static final @NotNull Icon Diff = load("expui/vcs/diff.svg", 1250676145, 2);
     /** 16x16 */ public static final @NotNull Icon Fetch = load("expui/vcs/fetch.svg", 2009646, 2);
+    /** 16x16 */ public static final @NotNull Icon IncomingUpdate = load("expui/vcs/incomingUpdate.svg", 1809288822, 2);
     /** 16x16 */ public static final @NotNull Icon IntelliSort = load("expui/vcs/intelliSort.svg", 205091346, 2);
     /** 16x16 */ public static final @NotNull Icon Merge = load("expui/vcs/merge.svg", -1685592985, 2);
+    /** 16x16 */ public static final @NotNull Icon OutgoingPush = load("expui/vcs/outgoingPush.svg", -1330824186, 2);
     /** 16x16 */ public static final @NotNull Icon Patch = load("expui/vcs/patch.svg", -706028010, 2);
     /** 16x16 */ public static final @NotNull Icon Push = load("expui/vcs/push.svg", 1584403848, 2);
     /** 16x16 */ public static final @NotNull Icon Revert = load("expui/vcs/revert.svg", -684069834, 2);

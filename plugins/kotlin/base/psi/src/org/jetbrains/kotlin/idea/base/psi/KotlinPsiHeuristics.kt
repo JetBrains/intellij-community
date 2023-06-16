@@ -262,11 +262,7 @@ object KotlinPsiHeuristics {
         }
 
         val name = declaration.name ?: return false
-        if (!OperatorConventions.isConventionName(Name.identifier(name))) {
-            return false
-        }
-
-        return true
+        return OperatorConventions.isConventionName(Name.identifier(name))
     }
 
     /**

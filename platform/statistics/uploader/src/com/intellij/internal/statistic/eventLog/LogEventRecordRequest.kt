@@ -134,9 +134,7 @@ class LogEventRecord(val events: List<LogEvent>) {
 
     other as LogEventRecord
 
-    if (events != other.events) return false
-
-    return true
+    return events == other.events
   }
 
   override fun hashCode(): Int {

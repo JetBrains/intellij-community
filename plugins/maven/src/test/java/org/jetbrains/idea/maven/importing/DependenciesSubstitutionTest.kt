@@ -6,10 +6,7 @@ import com.intellij.maven.testFramework.utils.importMavenProjectsSync
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.RunAll
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectResolver
-import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 
 open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
@@ -63,7 +60,7 @@ open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
     myProjectsManager.initForTests()
     myProjectResolver = MavenProjectResolver.getInstance(myProject)
 
-    myProjectsManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles(emptyList(), emptyList()), null)
+    myProjectsManager.addManagedFiles(files)
 
     ApplicationManager.getApplication().invokeAndWait {
       try {

@@ -74,13 +74,17 @@ abstract class AbstractOpenProjectProvider {
   }
 
   fun linkToExistingProject(projectFilePath: String, project: Project) {
+    linkToExistingProject(getProjectFile(projectFilePath), project)
+  }
+
+  protected fun getProjectFile(projectFilePath: String): VirtualFile {
     val localFileSystem = LocalFileSystem.getInstance()
     val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
     if (projectFile == null) {
       val shortPath = getPresentablePath(projectFilePath)
       throw IllegalArgumentException(ExternalSystemBundle.message("error.project.does.not.exist", systemId.readableName, shortPath))
     }
-    linkToExistingProject(projectFile, project)
+    return projectFile
   }
 
   private fun focusOnOpenedSameProject(projectDirectory: Path): Boolean {

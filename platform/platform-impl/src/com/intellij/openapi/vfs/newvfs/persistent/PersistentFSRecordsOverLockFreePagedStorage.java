@@ -127,6 +127,11 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   }
 
   @Override
+  public int maxAllocatedID() {
+    return allocatedRecordsCount.get();
+  }
+
+  @Override
   public <R, E extends Throwable> R readRecord(final int recordId,
                                                final @NotNull RecordReader<R, E> reader) throws E, IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);

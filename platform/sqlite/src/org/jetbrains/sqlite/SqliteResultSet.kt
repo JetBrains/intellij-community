@@ -25,8 +25,7 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement<*>) {
     if (isOpen && !statement.pointer.isClosed) {
       val pointer = statement.pointer
       if (!pointer.isClosed) {
-        val db = statement.db
-        synchronized(db) {
+        statement.connection.useDb { db ->
           db.reset(pointer.pointer)
         }
       }
@@ -69,7 +68,7 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement<*>) {
         row++
         true
       }
-      else -> throw statement.db.newException(statusCode)
+      else -> throw statement.connection.useDb { db -> db.newException(statusCode) }
     }
   }
 
@@ -138,10 +137,10 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement<*>) {
   }
 
   fun getLong(zeroBasedColumnIndex: Int): Long {
-    val pointer = statement.pointer
-    synchronized(statement.db) {
+    statement.connection.useDb { db ->
+      val pointer = statement.pointer
       pointer.ensureOpen()
-      return statement.db.column_long(pointer.pointer, markColumn(zeroBasedColumnIndex))
+      return db.column_long(pointer.pointer, markColumn(zeroBasedColumnIndex))
     }
   }
 
@@ -152,10 +151,10 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement<*>) {
   }
 
   private fun safeGetDoubleCol(zeroBasedColumnIndex: Int): Double {
-    val pointer = statement.pointer
-    synchronized(statement.db) {
+    statement.connection.useDb { db ->
+      val pointer = statement.pointer
       pointer.ensureOpen()
-      return statement.db.column_double(pointer.pointer, markColumn(zeroBasedColumnIndex))
+      return db.column_double(pointer.pointer, markColumn(zeroBasedColumnIndex))
     }
   }
 

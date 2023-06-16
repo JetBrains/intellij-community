@@ -20,6 +20,7 @@
   <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="searching-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="statistics.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="codeInsights.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="lowLevelApiFir.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="light-classes.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -204,9 +205,6 @@
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService"/>
-
-    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex"/>
-    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex"/>
   </extensions>
 
   <content>

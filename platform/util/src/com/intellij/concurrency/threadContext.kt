@@ -9,12 +9,14 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.concurrency.isCheckContextAssertions
 import com.intellij.util.concurrency.captureCallableThreadContext
+import com.intellij.util.concurrency.capturePropagationAndCancellationContext
 import com.intellij.util.concurrency.captureRunnableThreadContext
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.Callable
+import java.util.function.Function
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -159,7 +161,7 @@ fun <T> withThreadLocal(variable: ThreadLocal<T>, update: (value: T) -> T): Acce
   val previousValue = variable.get()
   val newValue = update(previousValue)
   if (newValue === previousValue) {
-    return AccessToken.EMPTY_ACCESS_TOKEN;
+    return AccessToken.EMPTY_ACCESS_TOKEN
   }
   variable.set(newValue)
   return object : AccessToken() {
@@ -195,6 +197,13 @@ fun <T> withThreadLocal(variable: ThreadLocal<T>, update: (value: T) -> T): Acce
  */
 fun captureThreadContext(runnable: Runnable): Runnable {
   return captureRunnableThreadContext(runnable)
+}
+
+/**
+ * Same as [captureThreadContext] but for [Function]
+ */
+fun <T, U> captureThreadContext(f : Function<in T, out U>) : Function<in T, out U> {
+  return capturePropagationAndCancellationContext(f)
 }
 
 /**

@@ -254,8 +254,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     if (serverSettings.isUpdateSnapshots()) {
       commandLineOptions.add("-U");
     }
-
     if (serverSettings.getLoggingLevel() == MavenServerConsoleIndicator.LEVEL_DEBUG) {
+
       commandLineOptions.add("-X");
       commandLineOptions.add("-e");
     }
@@ -268,11 +268,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       commandLineOptions.addAll(StringUtilRt.splitHonorQuotes(mavenEmbedderCliOptions, ' '));
     }
 
-    if (serverSettings.getGlobalSettingsPath() != null) {
+    if (serverSettings.getGlobalSettingsPath() != null && new File(serverSettings.getGlobalSettingsPath()).isFile()) {
       commandLineOptions.add("-gs");
       commandLineOptions.add(serverSettings.getGlobalSettingsPath());
     }
-    if (serverSettings.getUserSettingsPath() != null) {
+
+    if (serverSettings.getUserSettingsPath() != null && new File(serverSettings.getUserSettingsPath()).isFile()) {
       commandLineOptions.add("-s");
       commandLineOptions.add(serverSettings.getUserSettingsPath());
     }

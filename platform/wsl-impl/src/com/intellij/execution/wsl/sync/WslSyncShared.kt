@@ -30,9 +30,7 @@ class FilePathRelativeToDir(path: String) {
 
     other as FilePathRelativeToDir
 
-    if (path.toLowerCasePreservingASCIIRules() != other.path.toLowerCasePreservingASCIIRules()) return false
-
-    return true
+    return path.toLowerCasePreservingASCIIRules() == other.path.toLowerCasePreservingASCIIRules()
   }
 
   override fun hashCode(): Int {

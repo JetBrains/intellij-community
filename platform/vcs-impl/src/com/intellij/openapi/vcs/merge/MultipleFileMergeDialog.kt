@@ -184,6 +184,9 @@ open class MultipleFileMergeDialog(
             }
         }
       }
+    }.also {
+      // Temporary workaround for IDEA-302779
+      it.minimumSize = JBUI.size(200, 150)
     }
   }
 

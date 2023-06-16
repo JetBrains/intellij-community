@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.CommonBundle;
@@ -425,7 +425,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       ChangeBrowserSettings settings = filterDialog.getSettings();
 
       if (myProject.isDefault() || (ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length == 0) ||
-          (!ModalityState.NON_MODAL.equals(ModalityState.current()))) {
+          (!ModalityState.nonModal().equals(ModalityState.current()))) {
         final List<CommittedChangeList> versions = new ArrayList<>();
 
         if (parent == null || !parent.isValid()) {
@@ -539,7 +539,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   public static boolean showCommittedChangesAsTab() {
     return Registry.is("vcs.show.affected.files.as.tab") &&
-           ModalityState.current() == ModalityState.NON_MODAL;
+           ModalityState.current() == ModalityState.nonModal();
   }
 
   @NotNull

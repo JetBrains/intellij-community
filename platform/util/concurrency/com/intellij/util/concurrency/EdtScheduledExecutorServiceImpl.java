@@ -36,7 +36,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
       boolean executeMeInBackendExecutor() {
         // optimization: can be cancelled already
         if (!isDone()) {
-          ApplicationManager.getApplication().invokeLater((ContextAwareRunnable) () -> this.run(), modalityState, __ -> {
+          ApplicationManager.getApplication().invokeLater(this, modalityState, __ -> {
             return isCancelled();
           });
         }

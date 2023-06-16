@@ -46,6 +46,8 @@ public interface CommonClassNames {
   String JAVA_UTIL_MAP_ENTRY = "java.util.Map.Entry";
   String JAVA_UTIL_HASH_MAP = "java.util.HashMap";
   String JAVA_UTIL_LINKED_HASH_MAP = "java.util.LinkedHashMap";
+  String JAVA_UTIL_SORTED_MAP = "java.util.SortedMap";
+  String JAVA_UTIL_NAVIGABLE_MAP = "java.util.NavigableMap";
   String JAVA_UTIL_CONCURRENT_HASH_MAP = "java.util.concurrent.ConcurrentHashMap";
   String JAVA_UTIL_LIST = "java.util.List";
   String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
@@ -54,6 +56,7 @@ public interface CommonClassNames {
   String JAVA_UTIL_HASH_SET = "java.util.HashSet";
   String JAVA_UTIL_LINKED_HASH_SET = "java.util.LinkedHashSet";
   String JAVA_UTIL_SORTED_SET = "java.util.SortedSet";
+  String JAVA_UTIL_NAVIGABLE_SET = "java.util.NavigableSet";
   String JAVA_UTIL_QUEUE = "java.util.Queue";
   String JAVA_UTIL_STACK = "java.util.Stack";
   String JAVA_UTIL_PROPERTIES = "java.util.Properties";

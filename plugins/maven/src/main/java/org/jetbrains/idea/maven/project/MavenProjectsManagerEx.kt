@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.project
 import com.intellij.build.SyncViewManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
@@ -21,6 +21,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -31,31 +32,33 @@ import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.importing.MavenImportStats
+import org.jetbrains.idea.maven.importing.MavenImportStats.ImportingTask
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.model.MavenArtifact
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
-import org.jetbrains.idea.maven.utils.*
-import java.util.*
+import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
+import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.performInBackground
 import java.util.function.Supplier
 
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
-  fun updateAllMavenProjectsSync(spec: MavenImportSpec)
-  suspend fun updateAllMavenProjects(spec: MavenImportSpec)
+  fun updateAllMavenProjectsSync(spec: MavenImportSpec): List<Module>
+  suspend fun updateAllMavenProjects(spec: MavenImportSpec): List<Module>
   fun updateMavenProjectsSync(spec: MavenImportSpec,
                               filesToUpdate: MutableList<VirtualFile>,
-                              filesToDelete: MutableList<VirtualFile>)
+                              filesToDelete: MutableList<VirtualFile>): List<Module>
   suspend fun updateMavenProjects(spec: MavenImportSpec,
                                   filesToUpdate: MutableList<VirtualFile>,
-                                  filesToDelete: MutableList<VirtualFile>)
-  suspend fun importMavenProjects(): List<Module>
-  suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module>
-  fun resolveAndImportMavenProjectsSync(spec: MavenImportSpec): List<Module>
+                                  filesToDelete: MutableList<VirtualFile>): List<Module>
+
+  @ApiStatus.Internal
   suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
-  fun importMavenProjectsSync(): List<Module>
-  fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module>
-  fun importMavenProjectsSync(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
-  fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider, projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
+  @ApiStatus.Internal
+  fun importMavenProjectsSync(projectsToImport: Map<MavenProject, MavenProjectChanges>, modelsProvider: IdeModifiableModelsProvider?): List<Module>
+
   suspend fun downloadArtifacts(projects: Collection<MavenProject>,
                                 artifacts: Collection<MavenArtifact>?,
                                 sources: Boolean,
@@ -65,75 +68,58 @@ interface MavenAsyncProjectsManager {
                             artifacts: Collection<MavenArtifact>?,
                             sources: Boolean,
                             docs: Boolean): MavenArtifactDownloader.DownloadResult
+
+  @ApiStatus.Internal
+  suspend fun addManagedFilesWithProfilesAndUpdate(files: List<VirtualFile>,
+                                                   profiles: MavenExplicitProfiles,
+                                                   previewModuleToDelete: Module?,
+                                                   modelsProvider: IdeModifiableModelsProvider?): List<Module>
 }
 
 open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(project) {
-  // region import maven projects
-  override suspend fun importMavenProjects(): List<Module> {
-    val createdModules = doImportMavenProjects(false)
-    fireProjectImportCompleted()
-    return createdModules
+  override suspend fun addManagedFilesWithProfilesAndUpdate(files: List<VirtualFile>,
+                                                            profiles: MavenExplicitProfiles,
+                                                            previewModuleToDelete: Module?,
+                                                            modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+    doAddManagedFilesWithProfiles(files, profiles, previewModuleToDelete)
+    return updateAllMavenProjects(MavenImportSpec(false, true, false), modelsProvider)
   }
 
   override suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
-    val createdModules = doImportMavenProjects(projectsToImport, false)
+    return importMavenProjects(projectsToImport, null)
+  }
+
+  private suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
+                                          modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+    val createdModules = doImportMavenProjects(projectsToImport, false, modelsProvider)
     fireProjectImportCompleted()
     return createdModules
   }
 
-  override fun importMavenProjectsSync(): List<Module> {
-    return importMavenProjectsSync(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject))
+  override fun importMavenProjectsSync() {
+    prepareImporter(null, emptyMap(), false).importMavenProjectsBlocking()
   }
 
-  override fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module> {
-    return prepareImporter(modelsProvider, false).importMavenProjectsBlocking()
-  }
-
-  override fun importMavenProjectsSync(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
-    return importMavenProjectsSync(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject), projectsToImport)
-  }
-
-  override fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider, projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
+  override fun importMavenProjectsSync(projectsToImport: Map<MavenProject, MavenProjectChanges>,
+                                       modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     return prepareImporter(modelsProvider, projectsToImport, false).importMavenProjectsBlocking()
   }
 
-  override fun resolveAndImportMavenProjectsSync(spec: MavenImportSpec): List<Module> {
-    return runBlockingCancellableUnderIndicator { resolveAndImportMavenProjects(spec) }
-  }
-
-  override suspend fun resolveAndImportMavenProjects(projects: Collection<MavenProject>): List<Module> {
-    return resolveAndImport(projects)
-  }
-
   private suspend fun doImportMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
-                                            importModuleGroupsRequired: Boolean): List<Module> {
-    val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
+                                            importModuleGroupsRequired: Boolean,
+                                            modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     return prepareImporter(modelsProvider, projectsToImport, importModuleGroupsRequired).importMavenProjects()
   }
 
-  private suspend fun doImportMavenProjects(importModuleGroupsRequired: Boolean): List<Module> {
-    val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
-    return prepareImporter(modelsProvider, importModuleGroupsRequired).importMavenProjects()
-  }
-
-  private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider,
-                              importModuleGroupsRequired: Boolean): MavenProjectsManagerImporter {
-    val projectsToImport = Collections.unmodifiableMap(LinkedHashMap(myProjectsToImport))
-    projectsToImport.forEach { (key: MavenProject, value: MavenProjectChanges) ->
-      myProjectsToImport.remove(key, value)
-    }
-    return prepareImporter(
-      modelsProvider,
-      projectsToImport,
-      importModuleGroupsRequired
-    )
-  }
-
-  private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider,
+  private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider?,
                               projectsToImport: Map<MavenProject, MavenProjectChanges>,
                               importModuleGroupsRequired: Boolean): MavenProjectsManagerImporter {
+    if (projectsToImport.any { it.key == null }) {
+      throw IllegalArgumentException("Null key in projectsToImport")
+    }
+    val finalModelsProvider = modelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
     return MavenProjectsManagerImporter(
-      modelsProvider,
+      finalModelsProvider,
       projectsToImport,
       importModuleGroupsRequired
     )
@@ -150,7 +136,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         return importMavenProjectsEdt()
       }
       else {
-        return runBlockingCancellableUnderIndicator { importMavenProjectsBg() }
+        return runBlockingMaybeCancellable { importMavenProjectsBg() }
       }
     }
 
@@ -165,7 +151,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
     @RequiresEdt
     fun importMavenProjectsEdt(): List<Module> {
-      val importResult = this.doImport()
+      val importResult = doImport()
       getVirtualFileManager().syncRefresh()
       performPostImportTasks(importResult.postTasks)
       return importResult.createdModules
@@ -224,7 +210,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
     }
   }
-  //endregion
 
   override fun listenForSettingsChanges() {
     importingSettings.addListener(object : MavenImportingSettings.Listener {
@@ -248,9 +233,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     })
   }
 
-
   private suspend fun importSettings(importModuleGroupsRequired: Boolean) {
-    doImportMavenProjects(importModuleGroupsRequired)
+    doImportMavenProjects(emptyMap(), importModuleGroupsRequired, null)
   }
 
   private suspend fun importAllProjects() {
@@ -258,214 +242,228 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     importMavenProjects(projectsToImport)
   }
 
-  private suspend fun resolveAndImportMavenProjects(spec: MavenImportSpec): List<Module> {
-    val console = syncConsole
-    console.startImport(myProgressListener, spec)
-    val activity = MavenImportStats.startImportActivity(myProject)
-    fireImportAndResolveScheduled(spec)
-
-    val projectsToResolve = LinkedHashSet(myProjectsToResolve)
-    myProjectsToResolve.removeAll(projectsToResolve)
-
-    val createdModules = resolveAndImport(projectsToResolve)
-
-    activity.finished()
-    MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
-    MavenSyncConsole.finishTransaction(myProject)
-
-    return createdModules
-  }
-
-  private suspend fun resolveAndImport(projectsToResolve: Collection<MavenProject>): List<Module> {
-    val resolver = MavenProjectResolver.getInstance(project)
-
-    val resolutionResult = withBackgroundProgress(myProject, MavenProjectBundle.message("maven.resolving"), true) {
-      runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorResolvingTask::class.java) {
-        withRawProgressReporter {
-          coroutineToIndicator {
-            val indicator = ProgressManager.getGlobalProgressIndicator()
-            resolver.resolve(projectsToResolve, projectsTree, generalSettings, embeddersManager, mavenConsole, indicator, syncConsole)
-          }
-        }
-      }
-    }
-
-    val projectsToImport = resolutionResult.mavenProjectMap.entries
-      .flatMap { it.value }
-      .filter { it.changes.hasChanges() }
-      .associateBy({ it.mavenProject }, { it.changes })
-
-    // TODO: plugins and artifacts can be resolved in parallel with import
-    val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
-    val pluginResolver = MavenPluginResolver(projectsTree)
-    withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
-      runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorPluginsResolvingTask::class.java) {
-        withRawProgressReporter {
-          coroutineToIndicator {
-            for (mavenProjects in resolutionResult.mavenProjectMap) {
-              pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, indicator, true)
-            }
-          }
-        }
-      }
-    }
-    downloadArtifacts(projectsToImport.map { it.key },
-                      listOf(),
-                      importingSettings.isDownloadSourcesAutomatically,
-                      importingSettings.isDownloadDocsAutomatically)
-
-    return importMavenProjects(projectsToImport + myProjectsToImport)
-  }
-
-
   override fun updateMavenProjectsSync(spec: MavenImportSpec,
                                        filesToUpdate: MutableList<VirtualFile>,
-                                       filesToDelete: MutableList<VirtualFile>) {
+                                       filesToDelete: MutableList<VirtualFile>): List<Module> {
     MavenLog.LOG.warn("updateMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
+    try {
+      return doUpdateMavenProjectsSync(spec, filesToUpdate, filesToDelete)
+    }
+    finally {
+      MavenLog.LOG.warn("updateMavenProjectsSync finished, edt=" + ApplicationManager.getApplication().isDispatchThread)
+    }
+  }
 
+  private fun doUpdateMavenProjectsSync(spec: MavenImportSpec,
+                                        filesToUpdate: MutableList<VirtualFile>,
+                                        filesToDelete: MutableList<VirtualFile>): List<Module> {
     // unit tests
     if (ApplicationManager.getApplication().isDispatchThread) {
-      withModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
+      return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
         updateMavenProjects(spec, filesToUpdate, filesToDelete)
       }
     }
     else {
-      runBlockingCancellableUnderIndicator {
+      return runBlockingMaybeCancellable {
         updateMavenProjects(spec, filesToUpdate, filesToDelete)
       }
     }
-
-    MavenLog.LOG.warn("updateMavenProjectsSync finished, edt=" + ApplicationManager.getApplication().isDispatchThread)
-
   }
 
   override suspend fun updateMavenProjects(spec: MavenImportSpec,
                                            filesToUpdate: MutableList<VirtualFile>,
-                                           filesToDelete: MutableList<VirtualFile>) {
-    importMutex.withLock { doUpdateMavenProjects(spec, filesToUpdate, filesToDelete) }
+                                           filesToDelete: MutableList<VirtualFile>): List<Module> {
+    return importMutex.withLock { doUpdateMavenProjects(spec, filesToUpdate, filesToDelete) }
   }
 
   private suspend fun doUpdateMavenProjects(spec: MavenImportSpec,
-                                           filesToUpdate: MutableList<VirtualFile>,
-                                           filesToDelete: MutableList<VirtualFile>) {
-    // display all import activities using the same build progress
-    MavenSyncConsole.startTransaction(myProject)
-    try {
-      val mavenProgressIndicator = MavenProgressIndicator(project, Supplier { syncConsole })
-      withBackgroundProgress(myProject, MavenProjectBundle.message("maven.reading"), false) {
-        runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
-          withRawProgressReporter {
-            coroutineToIndicator {
-              readMavenProjects(spec, filesToUpdate, filesToDelete, mavenProgressIndicator)
-            }
-          }
-        }
-      }
-    }
-    finally {
-      if (spec.isForceResolve) {
-        resolveAndImportMavenProjects(spec)
-      }
-      else {
-        MavenSyncConsole.finishTransaction(myProject)
-      }
-    }
+                                            filesToUpdate: MutableList<VirtualFile>,
+                                            filesToDelete: MutableList<VirtualFile>): List<Module> {
+    return doUpdateMavenProjects(spec, null) { readMavenProjects(spec, filesToUpdate, filesToDelete) }
   }
 
   private fun readMavenProjects(spec: MavenImportSpec,
                                 filesToUpdate: MutableList<VirtualFile>,
-                                filesToDelete: MutableList<VirtualFile>,
-                                mavenProgressIndicator: MavenProgressIndicator) {
+                                filesToDelete: MutableList<VirtualFile>): MavenProjectsTreeUpdateResult {
+    val indicator = ProgressManager.getGlobalProgressIndicator()
+    val deleted = projectsTree.delete(filesToDelete, generalSettings, indicator)
+    val updated = projectsTree.update(filesToUpdate, spec.isForceReading, generalSettings, indicator)
+    return deleted + updated
+  }
+
+  override fun updateAllMavenProjectsSync(spec: MavenImportSpec): List<Module> {
+    MavenLog.LOG.warn("updateAllMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
     try {
-      val indicator = ProgressManager.getGlobalProgressIndicator()
-      // TODO: use indicator
-      projectsTree.delete(filesToDelete, generalSettings, mavenProgressIndicator)
-      projectsTree.update(filesToUpdate, spec.isForceReading, generalSettings, mavenProgressIndicator)
-      generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
+      return doUpdateAllMavenProjectsSync(spec)
     }
-    catch (e: Throwable) {
-      logImportErrorIfNotControlFlow(e)
+    finally {
+      MavenLog.LOG.warn("updateAllMavenProjectsSync finished, edt=" + ApplicationManager.getApplication().isDispatchThread)
     }
   }
 
-  override fun updateAllMavenProjectsSync(spec: MavenImportSpec) {
-    MavenLog.LOG.warn("updateAllMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
-
+  private fun doUpdateAllMavenProjectsSync(spec: MavenImportSpec): List<Module> {
     // unit tests
     if (ApplicationManager.getApplication().isDispatchThread) {
       if (ApplicationManager.getApplication().isWriteAccessAllowed) {
         MavenLog.LOG.warn("Updating maven projects under write action. " +
                           "This should only happen in test mode. " +
                           "Resolution and import will be skipped.")
-        val mavenProgressIndicator = MavenProgressIndicator(project, Supplier { syncConsole })
-        readAllMavenProjects(spec, mavenProgressIndicator)
+        readAllMavenProjects(spec)
+        return emptyList()
       }
       else {
-        withModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
+        return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
           updateAllMavenProjects(spec)
         }
       }
     }
     else {
-      runBlockingCancellableUnderIndicator {
+      return runBlockingMaybeCancellable {
         updateAllMavenProjects(spec)
       }
     }
-
-    MavenLog.LOG.warn("updateAllMavenProjectsSync finished, edt=" + ApplicationManager.getApplication().isDispatchThread)
   }
 
   private val importMutex = Mutex()
 
-  override suspend fun updateAllMavenProjects(spec: MavenImportSpec) {
-    importMutex.withLock { doUpdateAllMavenProjects(spec) }
+  override suspend fun updateAllMavenProjects(spec: MavenImportSpec): List<Module> {
+    return updateAllMavenProjects(spec, null)
   }
 
-  private suspend fun doUpdateAllMavenProjects(spec: MavenImportSpec) {
+  private suspend fun updateAllMavenProjects(spec: MavenImportSpec, modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+    return importMutex.withLock { doUpdateAllMavenProjects(spec, modelsProvider) }
+  }
+
+  private suspend fun doUpdateAllMavenProjects(spec: MavenImportSpec, modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+    return doUpdateMavenProjects(spec, modelsProvider) { readAllMavenProjects(spec) }
+  }
+
+  private suspend fun doUpdateMavenProjects(spec: MavenImportSpec,
+                                            modelsProvider: IdeModifiableModelsProvider?,
+                                            read: () -> MavenProjectsTreeUpdateResult): List<Module> {
     // display all import activities using the same build progress
+    logDebug("Start update ${project.name}, ${spec.isForceReading}, ${spec.isForceResolve}, ${spec.isExplicitImport}")
     MavenSyncConsole.startTransaction(myProject)
     try {
-      val mavenProgressIndicator = MavenProgressIndicator(project, Supplier { syncConsole })
-      withBackgroundProgress(myProject, MavenProjectBundle.message("maven.reading"), false) {
-        runImportActivity(project, MavenUtil.SYSTEM_ID, MavenProjectsProcessorReadingTask::class.java) {
-          withRawProgressReporter {
-            coroutineToIndicator {
-              readAllMavenProjects(spec, mavenProgressIndicator)
+      val readingResult = readMavenProjectsActivity { read() }
+
+      if (spec.isForceResolve) {
+        val console = syncConsole
+        console.startImport(myProgressListener, spec)
+
+        fireImportAndResolveScheduled()
+        val projectsToResolve = collectProjectsToResolve(readingResult)
+
+        val result = runMavenImportActivity(project, ImportingTask::class.java) {
+          val resolver = MavenProjectResolver.getInstance(project)
+
+          val resolutionResult = withBackgroundProgress(myProject, MavenProjectBundle.message("maven.resolving"), true) {
+            runMavenImportActivity(project, MavenProjectsProcessorResolvingTask::class.java) {
+              withRawProgressReporter {
+                coroutineToIndicator {
+                  val indicator = ProgressManager.getGlobalProgressIndicator()
+                  resolver.resolve(projectsToResolve, projectsTree, generalSettings, embeddersManager, mavenConsole, indicator, syncConsole)
+                }
+              }
             }
+          }
+
+          val projectsToImport = resolutionResult.mavenProjectMap.entries
+            .flatMap { it.value }
+            .associateBy({ it.mavenProject }, { MavenProjectChanges.ALL })
+
+          // TODO: plugins and artifacts can be resolved in parallel with import
+          val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
+          val pluginResolver = MavenPluginResolver(projectsTree)
+          withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
+            runMavenImportActivity(project, MavenProjectsProcessorPluginsResolvingTask::class.java) {
+              withRawProgressReporter {
+                coroutineToIndicator {
+                  for (mavenProjects in resolutionResult.mavenProjectMap) {
+                    pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, indicator, true)
+                  }
+                }
+              }
+            }
+          }
+          downloadArtifacts(projectsToImport.map { it.key },
+                            listOf(),
+                            importingSettings.isDownloadSourcesAutomatically,
+                            importingSettings.isDownloadDocsAutomatically)
+
+          importMavenProjects(projectsToImport, modelsProvider)
+        }
+
+        MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
+
+        return result
+      }
+      return emptyList()
+    }
+    catch (e: Throwable) {
+      logImportErrorIfNotControlFlow(e)
+      return emptyList()
+    }
+    finally {
+      logDebug("Finish update ${project.name}, ${spec.isForceReading}, ${spec.isForceResolve}, ${spec.isExplicitImport}")
+      MavenSyncConsole.finishTransaction(myProject)
+    }
+  }
+
+  private suspend fun readMavenProjectsActivity(read: () -> MavenProjectsTreeUpdateResult): MavenProjectsTreeUpdateResult {
+    return withBackgroundProgress(myProject, MavenProjectBundle.message("maven.reading"), false) {
+      runMavenImportActivity(project, MavenProjectsProcessorReadingTask::class.java) {
+        withRawProgressReporter {
+          coroutineToIndicator {
+            read()
           }
         }
       }
     }
-    finally {
-      if (spec.isForceResolve) {
-        resolveAndImportMavenProjects(spec)
-      }
-      else {
-        MavenSyncConsole.finishTransaction(myProject)
-      }
-    }
   }
 
-  private fun readAllMavenProjects(spec: MavenImportSpec,
-                                   mavenProgressIndicator: MavenProgressIndicator) {
-    try {
-      val indicator = ProgressManager.getGlobalProgressIndicator()
-      checkOrInstallMavenWrapper(project)
-      // TODO: use indicator
-      projectsTree.updateAll(spec.isForceReading, generalSettings, mavenProgressIndicator)
-      generalSettings.updateFromMavenConfig(projectsTree.rootProjectsFiles)
-    }
-    catch (e: Throwable) {
-      logImportErrorIfNotControlFlow(e)
-    }
+  private fun readAllMavenProjects(spec: MavenImportSpec): MavenProjectsTreeUpdateResult {
+    val indicator = ProgressManager.getGlobalProgressIndicator()
+    checkOrInstallMavenWrapper(project)
+    return projectsTree.updateAll(spec.isForceReading, generalSettings, indicator)
   }
 
-  private fun logImportErrorIfNotControlFlow(e: Throwable) {
+  private fun collectProjectsToResolve(readingResult: MavenProjectsTreeUpdateResult): Collection<MavenProject> {
+    val updated = readingResult.updated
+    val deleted = readingResult.deleted
+
+    val updatedProjects = updated.map { it.key }
+
+    // resolve updated, theirs dependents, and dependents of deleted
+    val toResolve: MutableSet<MavenProject> = HashSet(updatedProjects)
+    toResolve.addAll(projectsTree.getDependentProjects(ContainerUtil.concat(updatedProjects, deleted)))
+
+    // do not try to resolve projects with syntactic errors
+    val it = toResolve.iterator()
+    while (it.hasNext()) {
+      val each = it.next()
+      if (each.hasReadingProblems()) {
+        syncConsole.notifyReadingProblems(each.file)
+        it.remove()
+      }
+    }
+
+    if (toResolve.isEmpty() && !deleted.isEmpty()) {
+      val project = nonIgnoredProjects.firstOrNull()
+      if (project != null) {
+        toResolve.add(project)
+      }
+    }
+
+    return toResolve
+  }
+
+  private suspend fun logImportErrorIfNotControlFlow(e: Throwable) {
     if (e is ControlFlowException) {
       ExceptionUtil.rethrowAllAsUnchecked(e)
     }
-    runReadAction {
-      if (myProject.isDisposed) return@runReadAction
+    readAction {
+      if (myProject.isDisposed) return@readAction
       getInstance(myProject).showServerException(e)
       if (ExceptionUtil.causedBy(e, BuildIssueException::class.java)) {
         MavenLog.LOG.info(e)
@@ -497,7 +495,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     if (ApplicationManager.getApplication().isDispatchThread) {
       return doDownloadArtifacts(projects, artifacts, sources, docs)
     }
-    return runBlockingCancellableUnderIndicator { downloadArtifacts(projects, artifacts, sources, docs) }
+    return runBlockingMaybeCancellable { downloadArtifacts(projects, artifacts, sources, docs) }
   }
 
   override suspend fun downloadArtifacts(projects: Collection<MavenProject>,
@@ -541,6 +539,31 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     finally {
       downloadConsole.finishDownload()
     }
+  }
+
+  private suspend fun <T> runMavenImportActivity(project: Project, taskClass: Class<*>, action: suspend () -> T): T {
+    logDebug("Import activity started: ${taskClass.simpleName}")
+    val result = runImportActivity(project, MavenUtil.SYSTEM_ID, taskClass, action)
+    logDebug("Import activity finished: ${taskClass.simpleName}, result: ${resultSummary(result)}")
+    return result
+  }
+
+  private fun logDebug(debugMessage: String) {
+    MavenLog.LOG.debug(debugMessage)
+  }
+
+  private fun resultSummary(result: Any?): String {
+    if (null == result) return "null"
+    if (result is MavenProjectsTreeUpdateResult) {
+      val updated = result.updated.map { it.key }
+      val deleted = result.deleted.map { it }
+      return "updated ${updated}, deleted ${deleted}"
+    }
+    if (result is MavenProjectResolver.MavenProjectResolutionResult) {
+      val mavenProjects = result.mavenProjectMap.flatMap { it.value }.map { it.mavenProject }
+      return "resolved ${mavenProjects}"
+    }
+    return result.toString()
   }
 
   private fun getVirtualFileManager() : VirtualFileManager {

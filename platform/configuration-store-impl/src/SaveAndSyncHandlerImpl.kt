@@ -19,9 +19,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.processOpenedProjects
+import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
@@ -301,11 +300,11 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   }
 
   private suspend fun doScheduledRefresh() {
-    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+    withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
       blockingContext {
         eventPublisher.beforeRefresh()
         refreshOpenFiles()
-        maybeRefresh(ModalityState.NON_MODAL)
+        maybeRefresh(ModalityState.nonModal())
       }
     }
   }
@@ -330,13 +329,13 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   }
 
   override fun refreshOpenFiles() {
-    val files = ArrayList<VirtualFile>()
-    processOpenedProjects { project ->
-      FileEditorManager.getInstance(project).selectedEditors
-        .asSequence()
-        .flatMap { it.filesToRefresh }
-        .filterTo(files) { it is NewVirtualFile }
-    }
+    val files = getOpenedProjects()
+      .flatMap { project ->
+        FileEditorManager.getInstance(project).selectedEditors.asSequence()
+      }
+      .flatMap { it.filesToRefresh }
+      .filter { it is NewVirtualFile }
+      .toList()
 
     if (files.isNotEmpty()) {
       // refresh open files synchronously, so it doesn't wait for potentially longish refresh request in the queue to finish

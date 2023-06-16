@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.FileTypeFilterCollector;
-import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoKt.createPsiExtendedInfo;
+import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplKt.createPsiExtendedInfo;
 
 /**
  * @author Konstantin Bulenkov

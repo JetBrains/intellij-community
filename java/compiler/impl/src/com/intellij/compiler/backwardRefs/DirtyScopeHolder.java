@@ -127,6 +127,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
             addToDirtyModules(ModuleEntityUtils.findModule(newEntity.getModule(), event.getStorageAfter()));
           }
         }
+        clearDisposedModules();
       }
     });
   }
@@ -335,14 +336,10 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     }
   }
 
-  private void removeFromDirtyModules(@NotNull Module module) {
+  private void clearDisposedModules() {
     synchronized (myLock) {
-      if (myCompilationPhase) {
-        myChangedModulesDuringCompilation.remove(module);
-      }
-      else {
-        myVFSChangedModules.remove(module);
-      }
+      myChangedModulesDuringCompilation.removeIf(module -> module.isDisposed());
+      myVFSChangedModules.removeIf(module -> module.isDisposed());
     }
   }
 

@@ -240,22 +240,24 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
         (!MavenUtil.isMavenUnitTestModeEnabled() ||
          Registry.is("ide.force.maven.import", false)) // workaround for inspection integration test
     ) {
-      return manager.resolveAndImportMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
+      return manager.importMavenProjectsSync(Map.of(), null);
     }
 
     var projectsToImport = new HashMap<MavenProject, MavenProjectChanges>();
     for (var selectedProject : selectedProjects) {
       var projectToImport = manager.getProjectsTree().findProject(selectedProject.getFile());
-      projectsToImport.put(projectToImport, MavenProjectChanges.ALL);
+      if (null != projectToImport) {
+        projectsToImport.put(projectToImport, MavenProjectChanges.ALL);
+      }
     }
     boolean isFromUI = model != null;
     List<Module> createdModules;
     if (isFromUI) {
       var modelsProvider = new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel);
-      createdModules = manager.importMavenProjectsSync(modelsProvider, projectsToImport);
+      createdModules = manager.importMavenProjectsSync(projectsToImport, modelsProvider);
     }
     else {
-      createdModules = manager.importMavenProjectsSync(projectsToImport);
+      createdModules = manager.importMavenProjectsSync(projectsToImport, null);
     }
     return createdModules;
   }
@@ -339,7 +341,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   private void readMavenProjectTree(MavenProgressIndicator process) {
     MavenProjectsTree tree = new MavenProjectsTree(getProjectOrDefault());
     tree.addManagedFilesWithProfiles(getParameters().myFiles, MavenExplicitProfiles.NONE);
-    tree.updateAll(false, getGeneralSettings(), process);
+    tree.updateAll(false, getGeneralSettings(), process.getIndicator());
 
     getParameters().myMavenProjectTree = tree;
     getParameters().mySelectedProjects = tree.getRootProjects();

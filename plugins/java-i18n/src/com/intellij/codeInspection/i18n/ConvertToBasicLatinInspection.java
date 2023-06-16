@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -187,7 +187,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
   private static class CommentHandler extends DocCommentHandler {
   }
 
-  private static class ConvertToBasicLatinFix implements LocalQuickFix {
+  private static class ConvertToBasicLatinFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -196,8 +196,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final Handler handler;
       if (element instanceof PsiLiteralExpression) {
         handler = new LiteralHandler();

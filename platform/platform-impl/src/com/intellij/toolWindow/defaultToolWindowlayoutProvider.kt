@@ -266,11 +266,10 @@ internal class DefaultToolWindowLayoutBuilderImpl : DefaultToolWindowLayoutBuild
             weight = 0.25f
             contentUiType = ToolWindowDescriptor.ToolWindowContentUiType.COMBO
           }
-          addOrUpdate("AI Assistant") { weight = 0.25f }
+          addOrUpdate("AIAssistant") { weight = 0.25f }
           addOrUpdate("Database") { weight = 0.25f }
           addOrUpdate("Gradle") { weight = 0.25f }
           addOrUpdate("Maven") { weight = 0.25f }
-          addOrUpdate("Web Inspector") { weight = 0.25f }
         }
         ToolWindowDescriptor.ToolWindowAnchor.BOTTOM -> {
           addOrUpdate("Version Control")
@@ -366,5 +365,4 @@ class DefaultToolWindowLayoutProviderToExtensionAdapter : DefaultToolWindowLayou
       }
     }
   }
-
 }

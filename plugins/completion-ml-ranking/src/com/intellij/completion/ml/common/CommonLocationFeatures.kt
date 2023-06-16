@@ -40,8 +40,6 @@ class CommonLocationFeatures : ContextFeatureProvider {
       "chars_in_line_after_caret" to MLFeatureValue.float(lineEndOffset - caretOffset)
     )
 
-    result["is_completion_performance_mode"] = MLFeatureValue.binary(false)
-
     if (DumbService.isDumb(lookup.project)) {
       result["dumb_mode"] = MLFeatureValue.binary(true)
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.ide.IdeBundle;
@@ -231,12 +231,14 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       }
 
       switch (NetUtils.isValidHost(host)) {
-        case INVALID:
+        case INVALID -> {
           return IdeBundle.message("dialog.message.invalid.host.value");
-        case VALID:
+        }
+        case VALID -> {
           return null;
-        case VALID_PROXY:
-          break;
+        }
+        case VALID_PROXY -> {
+        }
       }
       if (myProxyAuthCheckBox.isSelected()) {
         if (StringUtil.isEmptyOrSpaces(myProxyLoginTextField.getText())) {

@@ -368,13 +368,13 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
     catch (InternalException e) {
       switch (e.errorCode()) {
-        case JvmtiError.DUPLICATE : LOG.info(e); break;
+        case JvmtiError.DUPLICATE -> LOG.info(e);
+        case JvmtiError.NOT_FOUND -> {
+          //event request not found
+          //there could be no requests after hotswap
+        }
 
-        case JvmtiError.NOT_FOUND : break;
-        //event request not found
-        //there could be no requests after hotswap
-
-        default: LOG.error(e);
+        default -> LOG.error(e);
       }
     }
     return CompletableFuture.completedFuture(null);

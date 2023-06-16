@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("RAW_RUN_BLOCKING")
+
 package com.intellij.platform.diagnostic.telemetry
 
 import com.intellij.openapi.diagnostic.logger
@@ -41,7 +43,7 @@ interface AsyncSpanExporter {
 
 @Internal
 class BatchSpanProcessor(
-  mainScope: CoroutineScope,
+  coroutineScope: CoroutineScope,
   private val spanExporters: List<AsyncSpanExporter>,
   meterProvider: MeterProvider = MeterProvider.noop(),
   private val scheduleDelay: Duration = 5.seconds,
@@ -99,7 +101,7 @@ class BatchSpanProcessor(
       SPAN_PROCESSOR_DROPPED_LABEL,
       false)
 
-    processingJob = mainScope.launch(Dispatchers.IO) {
+    processingJob = coroutineScope.launch(Dispatchers.IO) {
       processQueue()
     }
   }
@@ -126,6 +128,7 @@ class BatchSpanProcessor(
     runBlocking(NonCancellable) {
       try {
         withTimeout(1.minutes) {
+          @Suppress("DuplicatedCode")
           processingJob.join()
 
           val batch = ArrayList<SpanData>(maxExportBatchSize)
@@ -150,7 +153,41 @@ class BatchSpanProcessor(
         }
       }
     }
+    processingJob.cancel()
     return CompletableResultCode.ofSuccess()
+  }
+
+  @Suppress("DuplicatedCode")
+  suspend fun shutdownAsync() {
+    if (isShutdown.getAndSet(true)) {
+      return
+    }
+
+    continueWork = false
+    withContext(NonCancellable) {
+      try {
+        processingJob.join()
+
+        val batch = ArrayList<SpanData>(maxExportBatchSize)
+        while (true) {
+          val span = queue.tryReceive().getOrNull() ?: break
+          queueSize.decrement()
+          batch.add(span.toSpanData())
+        }
+        exportCurrentBatch(batch)
+      }
+      finally {
+        for (spanExporter in spanExporters) {
+          try {
+            spanExporter.shutdown()
+          }
+          catch (e: Throwable) {
+            logger<BatchSpanProcessor>().error("Failed to shutdown", e)
+          }
+        }
+      }
+    }
+    processingJob.cancel()
   }
 
   override fun forceFlush(): CompletableResultCode {
@@ -267,4 +304,5 @@ class BatchSpanProcessor(
       batch.clear()
     }
   }
+
 }

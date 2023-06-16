@@ -139,7 +139,7 @@ private fun waitForConstraint(loopJob: Job, constraint: ReadConstraint): Job {
   }
 }
 
-private suspend fun yieldUntilRun(schedule: (Runnable) -> Unit) {
+internal suspend fun yieldUntilRun(schedule: (Runnable) -> Unit) {
   suspendCancellableCoroutine { continuation ->
     schedule(ResumeContinuationRunnable(continuation))
   }

@@ -128,7 +128,7 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
         }
       },\neditorTracker=$editorTracker)"
 
-      takeScreenshotOfFrame("no-focus-in-editor")
+      takeScreenshotOfAllWindows("no-focus-in-editor")
 
       if (focusOwner == null) {
         val activeEditors = editorTracker.activeEditors

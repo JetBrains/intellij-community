@@ -2,9 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
@@ -260,7 +258,7 @@ public final class CachedIntentions {
                                             @Nullable Editor containingEditor) {
     IntentionActionWithTextCaching cachedAction =
       new IntentionActionWithTextCaching(
-        descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(),
+        descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(), descriptor.getToolId(),
         (cached, action) -> {
           if (QuickFixWrapper.unwrap(action) != null) {
             // remove only inspection fixes after invocation,
@@ -275,7 +273,7 @@ public final class CachedIntentions {
       Pair<PsiFile, Editor> availableIn = ShowIntentionActionsHandler
         .chooseBetweenHostAndInjected(myFile, editor, containingFile, (f, e) -> ShowIntentionActionsHandler.availableFor(f, e, option));
       if (availableIn == null) continue;
-      IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option, option.getText(), null, (__1, __2) -> {
+      IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option, option.getText(), null, null, (__1, __2) -> {
       });
       boolean isErrorFix = myErrorFixes.contains(textCaching);
       if (isErrorFix) {
@@ -341,6 +339,10 @@ public final class CachedIntentions {
     if (action.getAction() instanceof EmptyIntentionAction) {
       return IntentionGroup.EMPTY_ACTION;
     }
+    if (IntentionActionDelegate.unwrap(action.getAction()) instanceof AdvertisementAction) {
+      return IntentionGroup.ADVERTISEMENT;
+    }
+
     return IntentionGroup.OTHER;
   }
 

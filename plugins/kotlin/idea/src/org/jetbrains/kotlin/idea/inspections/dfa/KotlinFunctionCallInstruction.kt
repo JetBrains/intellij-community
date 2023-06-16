@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.*
@@ -18,9 +18,12 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.*
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.contracts.description.*
+import org.jetbrains.kotlin.contracts.description.expressions.*
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
+import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinExpressionAnchor
 import org.jetbrains.kotlin.psi.KtExpression
@@ -28,7 +31,6 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.resolve.source.PsiSourceElement
 
 // TODO: support Java contracts
-// TODO: support Kotlin contracts
 class KotlinFunctionCallInstruction(
     private val call: KtExpression,
     private val argCount: Int,
@@ -44,7 +46,7 @@ class KotlinFunctionCallInstruction(
     override fun accept(interpreter: DataFlowInterpreter, stateBefore: DfaMemoryState): Array<DfaInstructionState> {
         val arguments = popArguments(stateBefore, interpreter)
         val factory = interpreter.factory
-        val (resultValue, pure) = getMethodReturnValue(factory, stateBefore, arguments)
+        var (resultValue, pure) = getMethodReturnValue(factory, stateBefore, arguments)
         if (!pure || JavaDfaHelpers.mayLeakFromType(resultValue.dfType)) {
             arguments.arguments.forEach { arg -> JavaDfaHelpers.dropLocality(arg, stateBefore) }
             val qualifier = arguments.qualifier
@@ -60,11 +62,99 @@ class KotlinFunctionCallInstruction(
             val exceptional = stateBefore.createCopy()
             result += exceptionTransfer.dispatch(exceptional, interpreter)
         }
+        resultValue = processContracts(interpreter, stateBefore, resultValue, arguments, result)
         if (resultValue.dfType != DfType.BOTTOM) {
             pushResult(interpreter, stateBefore, resultValue)
             result += nextState(interpreter, stateBefore)
         }
         return result.toTypedArray()
+    }
+
+    private fun KotlinFunctionCallInstruction.processContracts(
+        interpreter: DataFlowInterpreter,
+        stateBefore: DfaMemoryState,
+        resultValue: DfaValue,
+        arguments: DfaCallArguments,
+        result: MutableList<DfaInstructionState>
+    ): DfaValue {
+        val factory = resultValue.factory
+        val callDescriptor = call.resolveToCall()?.resultingDescriptor
+        if (callDescriptor != null) {
+            val contractDescription = callDescriptor.getUserData(ContractProviderKey)?.getContractDescription()
+            if (contractDescription != null) {
+                for (effect in contractDescription.effects) {
+                    if (effect is ConditionalEffectDeclaration) {
+                        val crv = effect.effect.toContractReturnValue() ?: continue
+                        val condition = effect.condition.toCondition(factory, callDescriptor, arguments) ?: continue
+                        val notCondition = condition.negate()
+                        if (notCondition == DfaCondition.getFalse()) continue
+                        val returnValue = crv.getDfaValue(factory, DfaCallState(stateBefore, arguments, factory.unknown))
+                        val negated = returnValue.dfType.tryNegate() ?: continue
+                        val negatedResult = factory.fromDfType(resultValue.dfType.meet(negated))
+                        if (notCondition == DfaCondition.getTrue()) {
+                            return negatedResult
+                        }
+                        if (negatedResult.dfType != DfType.BOTTOM) {
+                            val notSatisfiedState = stateBefore.createCopy()
+                            if (notSatisfiedState.applyCondition(notCondition)) {
+                                pushResult(interpreter, notSatisfiedState, negatedResult)
+                                result += nextState(interpreter, notSatisfiedState)
+                            }
+                        }
+                        if (!stateBefore.applyCondition(condition)) {
+                            return factory.fromDfType(DfType.BOTTOM)
+                        }
+                    }
+                }
+            }
+        }
+        return resultValue
+    }
+
+    private fun BooleanExpression.toCondition(
+        factory: DfaValueFactory,
+        callDescriptor: CallableDescriptor,
+        arguments: DfaCallArguments
+    ): DfaCondition? {
+        return when(this) {
+            BooleanConstantReference.TRUE -> DfaCondition.getTrue()
+            BooleanConstantReference.FALSE -> DfaCondition.getFalse()
+            is BooleanVariableReference -> {
+                findDfaValue(callDescriptor, arguments)?.cond(RelationType.EQ, factory.fromDfType(DfTypes.TRUE))
+            }
+            is LogicalNot -> arg.toCondition(factory, callDescriptor, arguments)?.negate()
+            is IsNullPredicate -> arg.findDfaValue(callDescriptor, arguments)?.cond(RelationType.equivalence(!isNegated),
+                                                                                    factory.fromDfType(DfTypes.NULL))
+            is IsInstancePredicate -> arg.findDfaValue(callDescriptor, arguments)?.cond(if (isNegated) RelationType.IS_NOT else RelationType.IS,
+                                                                                        factory.fromDfType(type.toDfType()))
+            else -> null
+        }
+    }
+
+    private fun VariableReference.findDfaValue(
+        callDescriptor: CallableDescriptor,
+        arguments: DfaCallArguments
+    ): DfaValue? {
+        if (descriptor is ReceiverParameterDescriptor && descriptor.containingDeclaration == callDescriptor.original) {
+            return arguments.qualifier
+        }
+        val parameterIndex = callDescriptor.original.valueParameters.indexOf(descriptor)
+        return if (parameterIndex >= 0 && parameterIndex < arguments.arguments.size) {
+            arguments.arguments[parameterIndex]
+        } else {
+            null
+        }
+    }
+
+    private fun EffectDeclaration.toContractReturnValue():ContractReturnValue? {
+        return when ((this as? ReturnsEffectDeclaration)?.value) {
+            ConstantReference.NOT_NULL -> ContractReturnValue.returnNotNull()
+            ConstantReference.NULL -> ContractReturnValue.returnNull()
+            ConstantReference.WILDCARD -> ContractReturnValue.returnAny()
+            BooleanConstantReference.FALSE -> ContractReturnValue.returnFalse()
+            BooleanConstantReference.TRUE -> ContractReturnValue.returnTrue()
+            else -> null
+        }
     }
 
     data class MethodEffect(val dfaValue: DfaValue, val pure: Boolean)
@@ -150,6 +240,7 @@ class KotlinFunctionCallInstruction(
     private fun popArguments(stateBefore: DfaMemoryState, interpreter: DataFlowInterpreter): DfaCallArguments {
         val args = mutableListOf<DfaValue>()
         repeat(argCount) { args += stateBefore.pop() }
+        args.reverse()
         val qualifier: DfaValue = if (qualifierOnStack) stateBefore.pop() else interpreter.factory.unknown
         return DfaCallArguments(qualifier, args.toTypedArray(), MutationSignature.unknown())
     }

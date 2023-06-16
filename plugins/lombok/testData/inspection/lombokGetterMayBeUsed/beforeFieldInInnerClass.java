@@ -1,11 +1,11 @@
 // "Use lombok @Getter for 'InnerClass'" "true"
 
 public class Foo {
-  public class InnerClass {
+  public class InnerClass<caret> {
     private int bar;
 
     public int getBar() {
-      return bar<caret>; // Keep this comment
+      return bar; // Keep this comment
     }
   }
 }

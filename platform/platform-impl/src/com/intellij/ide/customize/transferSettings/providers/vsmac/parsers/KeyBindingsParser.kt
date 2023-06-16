@@ -37,12 +37,7 @@ class KeyBindingsParser(private val settings: Settings) {
   private fun processKeyBindings(root: Element) {
     val currentScheme = root.children.firstOrNull { scheme ->
       val schemeAttributes = scheme?.attributes ?: return@firstOrNull false
-
-      if (!(schemeAttributes.size == 1 && schemeAttributes[0]?.value == CURRENT)) {
-        return@firstOrNull false
-      }
-
-      return@firstOrNull true
+      return@firstOrNull schemeAttributes.size == 1 && schemeAttributes[0]?.value == CURRENT
     } ?: return
 
     processCurrentScheme(currentScheme)

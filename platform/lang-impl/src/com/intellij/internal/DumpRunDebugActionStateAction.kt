@@ -9,8 +9,10 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.Messages
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "not really needed anymore")
 internal class DumpRunDebugActionStateAction : AnAction() {
 

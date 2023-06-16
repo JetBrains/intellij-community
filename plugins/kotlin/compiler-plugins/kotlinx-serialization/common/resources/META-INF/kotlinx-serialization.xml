@@ -1,4 +1,10 @@
 <idea-plugin>
+    <extensionPoints>
+        <extensionPoint
+                interface="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationEnabledChecker"
+                qualifiedName="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.kotlinSerializationEnabledChecker"
+                dynamic="true"/>
+    </extensionPoints>
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
         <expressionCodegenExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.extensions.SerializationIDECodegenExtension"/>
         <syntheticResolveExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.extensions.SerializationIDEResolveExtension"/>
@@ -6,5 +12,9 @@
         <irGenerationExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.extensions.SerializationIDEIrExtension"/>
         <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.extensions.SerializationIDEContainerContributor"/>
         <quickFixContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.quickfixes.SerializationQuickFixContributor"/>
+        <idea.compilerPlugin.kotlinxSerialization.kotlinSerializationEnabledChecker
+                implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationEnabledChecker$Default"
+                order="last"
+                id="DefaultKotlinSerializationEnabledChecker"/>
     </extensions>
 </idea-plugin>

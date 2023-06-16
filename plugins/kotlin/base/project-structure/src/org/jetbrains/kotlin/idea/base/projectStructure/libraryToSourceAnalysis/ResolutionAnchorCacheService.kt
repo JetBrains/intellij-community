@@ -22,7 +22,7 @@ interface ResolutionAnchorCacheService {
      * Library dependencies means other libraries those used in the same module.
      *
      * For any of `L1`, `L2` or `L3` method returns [`M3`] as those libraries have
-     * direct or transient `dependency` on `L3` that has anchor module `M3`.
+     * direct or transitive `dependency` on `L3` that has anchor module `M3`.
      */
     fun getDependencyResolutionAnchors(libraryInfo: LibraryInfo): Set<ModuleSourceInfo>
 

@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.TaskCancellation
 import com.intellij.openapi.progress.impl.pumpEventsForHierarchy
-import com.intellij.openapi.progress.withModalProgressBlocking
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.registry.Registry
@@ -48,7 +48,7 @@ internal fun cancelAndJoinBlocking(application: ApplicationImpl) {
 
 internal fun cancelAndJoinBlocking(project: ProjectImpl) {
   cancelAndJoinBlocking(project.coroutineScope, debugString = "Project $project") { job, _ ->
-    withModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.closing.project"), TaskCancellation.nonCancellable()) {
+    runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.closing.project"), TaskCancellation.nonCancellable()) {
       job.join()
     }
   }

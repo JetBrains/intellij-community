@@ -22,7 +22,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
   private val myCurrentParameters: MutableMap<PsiElement, TaintValue> = HashMap()
   private val myVisitedMethods: MutableMap<Pair<PsiElement, List<TaintValue>>, TaintValue> = HashMap()
   private val myNonMarkedElements: MutableList<NonMarkedElement> = ArrayList()
-  private val safeLambdaClass = listOf("java.lang.Iterable", "java.util.Collection", "java.util.Map",
+  private val safeLambdaClass = setOf("java.lang.Iterable", "java.util.Collection", "java.util.Map",
                                        "kotlin.collections.CollectionsKt___CollectionsKt")
   private val skipClasses: Set<String> = myTaintValueFactory.getConfiguration()
     .skipClasses
@@ -416,19 +416,20 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       val callExpression = lambda.uastParent as? UCallExpression ?: return TaintValue.TAINTED
       val valueArguments = callExpression.valueArguments
       if (analyzeContext.processOuterMethodAsQualifierAndArguments &&
-          valueArguments.map { it.sourcePsi }.contains(targetPsi) &&
-          safeLambdaClass.contains((callExpression.resolve() as PsiMember).containingClass?.qualifiedName ?: "")
-      ) {
-        taintValue = taintValue.joinUntil(analyzeContext.untilTaintValue) {
-          fromExpressionWithoutCollection(callExpression.receiver, analyzeContext)
-        }
-        for (valueArgument in valueArguments) {
-          if (targetPsi != null && valueArgument.sourcePsi == targetPsi) continue
+          valueArguments.map { it.sourcePsi }.contains(targetPsi)) {
+        val psiMember = callExpression.resolve() as? PsiMember
+        if (psiMember != null && safeLambdaClass.contains(psiMember.containingClass?.qualifiedName ?: "")) {
           taintValue = taintValue.joinUntil(analyzeContext.untilTaintValue) {
-            fromExpressionWithoutCollection(valueArgument, analyzeContext)
+            fromExpressionWithoutCollection(callExpression.receiver, analyzeContext)
           }
+          for (valueArgument in valueArguments) {
+            if (targetPsi != null && valueArgument.sourcePsi == targetPsi) continue
+            taintValue = taintValue.joinUntil(analyzeContext.untilTaintValue) {
+              fromExpressionWithoutCollection(valueArgument, analyzeContext)
+            }
+          }
+          return taintValue
         }
-        return taintValue
       }
     }
 

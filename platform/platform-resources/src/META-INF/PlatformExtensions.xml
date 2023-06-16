@@ -815,8 +815,8 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.WindowsDefenderStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.DumbModeStatisticsCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.IndexOperationFUS$IndexOperationFusCollector"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.util.indexing.diagnostic.IndexOperationFUS$IndexOperationAggregatesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationAggregatesCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.util.indexing.diagnostic.IndexIdRuleValidator" />
     <statistics.counterUsagesCollector implementationClass="com.intellij.task.impl.ProjectTaskManagerStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ProjectImportCollector"/>
@@ -1373,6 +1373,7 @@
     <postStartupActivity implementation="com.intellij.openapi.util.registry.RegistryToAdvancedSettingsMigration"/>
 
     <advancedSetting id="ide.always.show.tool.window.header.icons" default="false" groupKey="group.advanced.settings.tool.windows"/>
+    <advancedSetting id="ide.tool.window.header.dnd" default="true" groupKey="group.advanced.settings.tool.windows"/>
     <advancedSetting id="ide.show.fileType.icon.in.titleBar" default="false" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.macos.disable.native.shortcut.symbols" default="false" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.max.recent.projects" default="50" groupKey="group.advanced.settings.ide"/>
@@ -1424,8 +1425,8 @@
 
     <applicationService serviceInterface="com.intellij.openapi.application.CoroutineSupport"
                         serviceImplementation="com.intellij.openapi.application.impl.PlatformCoroutineSupport"/>
-    <applicationService serviceInterface="com.intellij.openapi.application.ReadActionSupport"
-                        serviceImplementation="com.intellij.openapi.application.rw.PlatformReadActionSupport"/>
+    <applicationService serviceInterface="com.intellij.openapi.application.ReadWriteActionSupport"
+                        serviceImplementation="com.intellij.openapi.application.rw.PlatformReadWriteActionSupport"/>
 
     <persistentFsConnectionListener implementation="com.intellij.openapi.vfs.impl.jar.ArchiveCachesCleaner"/>
     <applicationService serviceInterface="com.intellij.openapi.progress.TaskSupport"
@@ -1504,6 +1505,10 @@
                  description="Turn on the highlighting passes preload experiment"/>
 
     <actionConfigurationCustomizer implementation="com.intellij.openapi.project.impl.SeparateProcessActionsCustomizer" />
+
+    <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.CustomPluginRepositoriesConfigurationComponent"
+                    configurationSchemaKey="plugins"/>
+    <updateSettingsProvider implementation="com.intellij.openapi.updateSettings.impl.ConfigurationScriptPluginRepositoriesProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

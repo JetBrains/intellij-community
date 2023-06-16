@@ -5,6 +5,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Executes given action for each client connected to all projects opened in IDE
@@ -37,11 +38,13 @@ val currentSession: ClientAppSession get() = ClientSessionsManager.getAppSession
 val Project.currentSession: ClientProjectSession get() = ClientSessionsManager.getProjectSession(this)!!
 
 // region Deprecated
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use forEachClient")
 fun broadcastAllClients(includeLocal: Boolean = false, action: () -> Unit) {
   forEachClient(if (includeLocal) ClientKind.ALL else ClientKind.REMOTE) { action() }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use project.forEachClient")
 fun broadcastAllClients(project: Project, includeLocal: Boolean = false, action: () -> Unit) {
   project.forEachClient(if (includeLocal) ClientKind.ALL else ClientKind.REMOTE) { action() }

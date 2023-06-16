@@ -342,7 +342,7 @@ private fun MutableList<KotlinScriptLibraryEntity>.fillWithIdeSpecificDependenci
 private fun KotlinScriptLibraryEntity.hasSameRootsAs(dependency: KotlinScriptLibraryEntity): Boolean =
     this.roots.containsAll(dependency.roots) && dependency.roots.containsAll(this.roots)
 
-fun VirtualFile.relativeName(project: Project): String =
+internal fun VirtualFile.relativeName(project: Project): String =
     if (ScratchUtil.isScratch(this) || this is LightVirtualFile) presentableName
     else toNioPath().relativeToOrNull(Path.of(project.basePath!!))?.pathString
         ?: presentableName

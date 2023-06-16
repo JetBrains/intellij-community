@@ -30,8 +30,13 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
   @Override
   @NotNull ListResult doLoadChildren(final int parentId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(parentId);
+    if (parentId == SUPER_ROOT_ID) {
+      throw new AssertionError(
+        "Incorrect call .doLoadChildren() with a super-root record id(=" + SUPER_ROOT_ID + "). " +
+        "Super-root is a special file record for internal use, it MUST NOT be used directly");
+    }
 
-    final PersistentFSRecordsStorage records = myFSConnection.getRecords();
+    final PersistentFSRecordsStorage records = connection.getRecords();
 
     //MAYBE RC: .listIds() and .doLoadChildren() both contains same code for reading&parsing children array. It seems
     //         they were implemented this way for optimization i.e. to avoid creating childrenIds array. Could be
@@ -70,6 +75,12 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
 
   @Override
   int @NotNull [] listIds(final int fileId) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(fileId);
+    if (fileId == SUPER_ROOT_ID) {
+      throw new AssertionError(
+        "Incorrect call .listIds() with is a super-root record id(=" + SUPER_ROOT_ID + ") -- use .listRoots() instead");
+    }
+
     final int[] childrenIds = myAttributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
       final int count = DataInputOutputUtil.readINT(buffer);
       final int[] result = ArrayUtil.newIntArray(count);
@@ -87,6 +98,14 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
 
   @Override
   boolean mayHaveChildren(final int fileId) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(fileId);
+    if (fileId == SUPER_ROOT_ID) {
+      throw new AssertionError(
+        "Incorrect call .mayHaveChildren() with is a super-root record id(=" + SUPER_ROOT_ID + ")" +
+        "Super-root is a special file record for internal use, it MUST NOT be used directly"
+      );
+    }
+
     final Boolean hasChildren = myAttributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
       final int count = DataInputOutputUtil.readINT(buffer);
       return Boolean.valueOf(count != 0);

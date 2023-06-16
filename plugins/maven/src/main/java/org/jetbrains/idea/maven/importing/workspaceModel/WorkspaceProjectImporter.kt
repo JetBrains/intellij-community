@@ -143,7 +143,7 @@ internal class WorkspaceProjectImporter(
       }
       else {
         MavenLog.LOG.info("Project has been migrated to external project files storage")
-        notifyUserAboutExternalStorageMigration();
+        notifyUserAboutExternalStorageMigration()
       }
     }
     return migratedToExternalStorage

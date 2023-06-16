@@ -23,6 +23,7 @@ public final class ContainerUtilRt {
    * @deprecated Use {@link ArrayList#ArrayList()} instead
    */
   @NotNull
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(value = " -> new", pure = true)
   public static <T> ArrayList<T> newArrayList() {

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Nls
 
 /**
- * Migrate to [withModalProgress] or [withModalProgressBlocking]:
+ * Migrate to [withModalProgress] or [runWithModalProgressBlocking]:
  * ```
  * launch {
  *   withModalProgress(project, title) {

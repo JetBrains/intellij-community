@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
-import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -15,7 +14,7 @@ import java.util.concurrent.*;
  * An {@link ExecutorService} implementation which
  * delegates tasks to the EDT for execution.
  */
-final class EdtExecutorServiceImpl extends EdtExecutorService implements ContextPropagatingExecutor {
+final class EdtExecutorServiceImpl extends EdtExecutorService {
   static final EdtExecutorService INSTANCE = new EdtExecutorServiceImpl();
 
   private EdtExecutorServiceImpl() {
@@ -35,11 +34,6 @@ final class EdtExecutorServiceImpl extends EdtExecutorService implements Context
     else {
       app.invokeLater(command, ModalityState.any());
     }
-  }
-
-  @Override
-  public void executeRaw(@NotNull Runnable command) {
-    execute((ContextAwareRunnable)command::run);
   }
 
   @Override

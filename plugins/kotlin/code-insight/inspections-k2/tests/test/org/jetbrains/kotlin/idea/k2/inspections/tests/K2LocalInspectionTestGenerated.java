@@ -1671,6 +1671,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equalsInExpectClass.kt");
         }
 
+        @TestMetadata("equalsInInterface.kt")
+        public void testEqualsInInterface() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equalsInInterface.kt");
+        }
+
         @TestMetadata("equalsWithKotlinAnyParam.kt")
         public void testEqualsWithKotlinAnyParam() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/equalsWithKotlinAnyParam.kt");

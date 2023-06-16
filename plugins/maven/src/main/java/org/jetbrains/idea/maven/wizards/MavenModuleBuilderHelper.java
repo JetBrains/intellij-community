@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.EditorHelper;
@@ -138,7 +138,7 @@ public class MavenModuleBuilderHelper {
     MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles();
 
     // execute when current dialog is closed (e.g. Project Structure)
-    MavenUtil.invokeLater(project, ModalityState.NON_MODAL, () -> {
+    MavenUtil.invokeLater(project, ModalityState.nonModal(), () -> {
       if (!pom.isValid()) {
         showError(project, new RuntimeException("Project is not valid"));
         return;

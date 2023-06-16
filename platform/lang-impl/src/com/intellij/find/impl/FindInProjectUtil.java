@@ -3,6 +3,7 @@ package com.intellij.find.impl;
 
 import com.intellij.find.*;
 import com.intellij.find.findInProject.FindInProjectManager;
+import com.intellij.find.findInProject.FindInProjectState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.LangBundle;
@@ -17,6 +18,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -65,6 +67,15 @@ public final class FindInProjectUtil {
   private static final int USAGES_PER_READ_ACTION = 100;
 
   private FindInProjectUtil() {}
+
+  public static void setScope(@NotNull Project project, @NotNull FindModel model, @NotNull DataContext dataContext) {
+    if (AdvancedSettings.getBoolean("ide.remember.last.search.scope")) {
+      FindInProjectState.getInstance(project).load(model);
+    }
+    else {
+      setDirectoryName(model, dataContext);
+    }
+  }
 
   public static void setDirectoryName(@NotNull FindModel model, @NotNull DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);

@@ -163,21 +163,27 @@ private fun Sequence<SourceFolder>.toExistingFiles(
     sourceFolder.file?.takeIf { pureKotlinSourceFoldersHolder.hasPurePrefixInVirtualFile(project, it) }
 }.toList()
 
-fun Module.findOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder: PureKotlinSourceFoldersHolder): List<VirtualFile> {
+fun Module.findOrConfigureKotlinSourceRoots(
+    pureKotlinSourceFoldersHolder: PureKotlinSourceFoldersHolder,
+    contentRootChooser: (List<ExternalSystemContentRootContributor.ExternalContentRoot>) -> Path?
+): List<VirtualFile> {
     val nonGeneratedSourceFolders = findNonGeneratedKotlinSourceFolders().toList()
     nonGeneratedSourceFolders.asSequence().toExistingFiles(project, pureKotlinSourceFoldersHolder).ifNotEmpty { return this }
-    return listOfNotNull(createSourceRootDirectory(nonGeneratedSourceFolders))
+    return listOfNotNull(createSourceRootDirectory(nonGeneratedSourceFolders, contentRootChooser))
 }
 
 private fun convertUrlToPath(url: String): Path? = VfsUtilCore.convertToURL(url)?.path?.let(::Path)
 private fun VirtualFile.pathOrNull(): Path? = fileSystem.getNioPath(this)
 
-private fun Module.createSourceRootDirectory(nonGeneratedSourceFolders: List<SourceFolder>): VirtualFile? {
+private fun Module.createSourceRootDirectory(
+    nonGeneratedSourceFolders: List<SourceFolder>,
+    contentRootChooser: (List<ExternalSystemContentRootContributor.ExternalContentRoot>) -> Path?
+): VirtualFile? {
     val sourceFolderPaths = nonGeneratedSourceFolders.mapNotNull { convertUrlToPath(it.url) }.ifEmpty { null }
     val contentEntryPaths by lazy { rootManager.contentEntries.mapNotNull { it.file?.pathOrNull() ?: convertUrlToPath(it.url) } }
 
     val allowedPaths = sourceFolderPaths ?: contentEntryPaths
-    val srcFolderPath = chooseSourceRootPath(allowedPaths, sourceFolderPaths, contentEntryPaths) ?: return null
+    val srcFolderPath = chooseSourceRootPath(allowedPaths, sourceFolderPaths, contentEntryPaths, contentRootChooser) ?: return null
 
     runWriteAction {
         VfsUtil.createDirectoryIfMissing(srcFolderPath.absolutePathString())
@@ -187,7 +193,12 @@ private fun Module.createSourceRootDirectory(nonGeneratedSourceFolders: List<Sou
     return VfsUtil.findFile(srcFolderPath, true)
 }
 
-private fun Module.chooseSourceRootPath(allowedPaths: List<Path>, sourceFolderPaths: List<Path>?, contentEntryPaths: List<Path>): Path? {
+private fun Module.chooseSourceRootPath(
+    allowedPaths: List<Path>,
+    sourceFolderPaths: List<Path>?,
+    contentEntryPaths: List<Path>,
+    contentRootChooser: (List<ExternalSystemContentRootContributor.ExternalContentRoot>) -> Path?
+): Path? {
     val externalContentRoots = findSourceRootPathByExternalProject(allowedPaths)
     if (!externalContentRoots.isNullOrEmpty()) {
         externalContentRoots.singleOrNull()?.let { return it.path }
@@ -197,7 +208,7 @@ private fun Module.chooseSourceRootPath(allowedPaths: List<Path>, sourceFolderPa
             externalContentRoots.find { it.path.name == "kotlin" }?.let { return it.path }
         }
 
-        return ExternalContentRootChooser.choose(project, externalContentRoots)?.path
+        return contentRootChooser(externalContentRoots)
     }
 
     return sourceFolderPaths?.singleOrNull() ?: chooseSourceRootPathHeuristically(contentEntryPaths)
@@ -274,7 +285,9 @@ fun findOrCreateDirectoryForPackage(module: Module, packageName: String): PsiDir
     }
 
     val existingDirectory = existingDirectoryByPackage ?: run {
-        val sourceRoots = module.findOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder)
+        val sourceRoots = module.findOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder) { externalContentRoots ->
+            ExternalContentRootChooser.choose(project, externalContentRoots)?.path
+        }
         if (sourceRoots.isEmpty()) {
             return null
         }

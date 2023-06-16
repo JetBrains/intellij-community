@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.searchEverywhereMl.common.SearchEverywhereMlExperiment
+import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.ranking.features.FeaturesProviderCacheDataProvider
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereContributorStatistician

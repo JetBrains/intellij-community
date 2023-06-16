@@ -289,7 +289,7 @@ class EditorInlaysManager(val project: Project, private val editor: EditorImpl, 
         if (descriptor.isInlayElement(element)) inlaysPsiElements.add(element)
         true
       }
-    }.finishOnUiThread(ModalityState.NON_MODAL) {
+    }.finishOnUiThread(ModalityState.nonModal()) {
       inlayElements.clear()
       inlayElements.addAll(inlaysPsiElements)
     }.inSmartMode(project).submit(NonUrgentExecutor.getInstance())

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
@@ -75,13 +75,7 @@ internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private va
 
     val projectsToReload = LinkedHashSet<Project>()
     withContext(Dispatchers.EDT) {
-      for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: return@withContext)) {
-        if (project.isDisposed || !project.isInitialized) {
-          continue
-        }
-
-        applyProjectChanges(project, projectsToReload)
-      }
+      applyProjectChanges(projectsToReload)
 
       if (projectsToReload.isNotEmpty()) {
         for (project in projectsToReload) {
@@ -92,7 +86,7 @@ internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private va
   }
 
   @RequiresEdt
-  private suspend fun applyProjectChanges(project: Project, projectsToReload: LinkedHashSet<Project>) {
+  private suspend fun applyProjectChanges(projectsToReload: LinkedHashSet<Project>) {
     if (changedSchemes.isEmpty() && changedStorages.isEmpty()
         && !JpsProjectModelSynchronizer.getInstance(project).needToReloadProjectEntities()) {
       return
@@ -189,6 +183,24 @@ internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private va
     for (storage in storages) {
       if (storage is StateStorageBase<*>) {
         storage.disableSaving()
+      }
+    }
+
+    scheduleProcessingChangedFiles()
+  }
+
+  override fun storageFilesBatchProcessing(batchStorageEvents: Map<IComponentStore, Collection<StateStorage>>) {
+    batchStorageEvents.forEach { (store, storages) ->
+      LOG.debug(Exception()) { "[RELOAD] registering to reload: ${storages.joinToString("\n")}" }
+
+      synchronized(changedStorages) {
+        changedStorages.computeIfAbsent(store as ComponentStoreImpl) { LinkedHashSet() }.addAll(storages)
+      }
+
+      for (storage in storages) {
+        if (storage is StateStorageBase<*>) {
+          storage.disableSaving()
+        }
       }
     }
 
@@ -335,5 +347,5 @@ private fun doReloadProject(project: Project) {
     }
 
     ProjectManagerEx.getInstanceEx().openProject(Path.of(presentableUrl), OpenProjectTask())
-  }, ModalityState.NON_MODAL, project.disposed)
+  }, ModalityState.nonModal(), project.disposed)
 }

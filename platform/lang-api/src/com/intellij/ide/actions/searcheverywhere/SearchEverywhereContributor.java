@@ -109,16 +109,6 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
   @Nls
   default String getAdvertisement() { return null; }
 
-  /**
-   * There is a footer in the search everywhere popup that shows additional information for a selected item.
-   * E.g., it renders description and "Assign/Change" shortcut for a selected action.
-   * {@code ExtendedInfo} is responsible for building this component.
-   */
-  @Nullable
-  default ExtendedInfo createExtendedInfo() {
-    return null;
-  }
-
   @NotNull
   default List<AnAction> getActions(@NotNull Runnable onChanged) {
     return Collections.emptyList();

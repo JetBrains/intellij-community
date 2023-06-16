@@ -320,7 +320,7 @@ public final class CodeInsightTestUtil {
   @NotNull
   public static <In, Out> List<Annotation> runExternalAnnotator(@NotNull ExternalAnnotator<In, Out> annotator,
                                                                 @NotNull PsiFile psiFile,
-                                                                In in,
+                                                                @NotNull In in,
                                                                 @NotNull Consumer<? super Out> resultChecker) {
     Out result = annotator.doAnnotate(in);
     resultChecker.accept(result);

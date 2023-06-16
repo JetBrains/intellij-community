@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ public interface MarkupModelEx extends MarkupModel {
    * @deprecated use {@code RangeHighlighterEx.setXXX()} methods to fire changes
    */
   @Deprecated
+  @ApiStatus.Internal
   default void fireAttributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {}
   
   boolean containsHighlighter(@NotNull RangeHighlighter highlighter);

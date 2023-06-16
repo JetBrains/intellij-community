@@ -183,7 +183,21 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
                                            final int fileId,
                                            final @NotNull IntList usedAttributeRecordIds,
                                            final @NotNull IntList validAttributeIds) throws IOException {
-    throw new UnsupportedOperationException("Method not implemented yet");
+    lock.readLock().lock();
+    try {
+      int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
+
+      if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+        return;
+      }
+
+      if (attributeRecordId > 0) {
+        checkAttributeRecordSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds);
+      }
+    }
+    finally {
+      lock.readLock().unlock();
+    }
   }
 
   @Override
@@ -1140,4 +1154,13 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
         "attributeId(=" + attributeId + ") must be in [0.." + MAX_SUPPORTED_ATTRIBUTE_ID + "]");
     }
   }
+
+  private void checkAttributeRecordSanity(int attributeRecordId,
+                                          @NotNull IntList usedAttributeRecordIds,
+                                          @NotNull IntList validAttributeIds) {
+    assert !usedAttributeRecordIds.contains(attributeRecordId);
+    usedAttributeRecordIds.add(attributeRecordId);
+    //FIXME RC: read all the entries in attributeRecordId
+  }
+
 }

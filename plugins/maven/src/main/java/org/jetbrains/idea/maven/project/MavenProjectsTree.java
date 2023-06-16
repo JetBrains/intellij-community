@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
@@ -439,33 +440,43 @@ public final class MavenProjectsTree {
     return result;
   }
 
+  /**
+   * @deprecated use {@link MavenProjectsManager#updateAllMavenProjectsSync(MavenImportSpec)} instead
+   */
+  @Deprecated
   public void updateAll(boolean force, MavenGeneralSettings generalSettings, MavenProgressIndicator process) {
+    updateAll(force, generalSettings, process.getIndicator());
+  }
+
+  @ApiStatus.Internal
+  public MavenProjectsTreeUpdateResult updateAll(boolean force, MavenGeneralSettings generalSettings, ProgressIndicator process) {
     List<VirtualFile> managedFiles = getExistingManagedFiles();
     MavenExplicitProfiles explicitProfiles = getExplicitProfiles();
 
     MavenProjectReader projectReader = new MavenProjectReader(myProject);
-    update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, process);
+    var updated = update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, process);
 
     Collection<VirtualFile> obsoleteFiles = ContainerUtil.subtract(getRootProjectsFiles(), managedFiles);
-    delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, process);
+    var deleted = delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, process);
+
+    return updated.plus(deleted);
   }
 
-  public void update(Collection<VirtualFile> files,
-                     boolean force,
-                     MavenGeneralSettings generalSettings,
-                     MavenProgressIndicator process) {
-    update(files, false, force, getExplicitProfiles(), new MavenProjectReader(myProject), generalSettings, process);
+  @ApiStatus.Internal
+  public MavenProjectsTreeUpdateResult update(Collection<VirtualFile> files,
+                                              boolean force,
+                                              MavenGeneralSettings generalSettings,
+                                              ProgressIndicator process) {
+    return update(files, false, force, getExplicitProfiles(), new MavenProjectReader(myProject), generalSettings, process);
   }
 
-  private void update(final Collection<VirtualFile> files,
-                      final boolean updateModules,
-                      final boolean forceRead,
-                      final MavenExplicitProfiles explicitProfiles,
-                      final MavenProjectReader projectReader,
-                      final MavenGeneralSettings generalSettings,
-                      final MavenProgressIndicator process) {
-    if (files.isEmpty()) return;
-
+  private MavenProjectsTreeUpdateResult update(Collection<VirtualFile> files,
+                                               boolean updateModules,
+                                               boolean forceRead,
+                                               MavenExplicitProfiles explicitProfiles,
+                                               MavenProjectReader projectReader,
+                                               MavenGeneralSettings generalSettings,
+                                               ProgressIndicator process) {
     UpdateContext updateContext = new UpdateContext();
 
     var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process, updateModules);
@@ -484,7 +495,7 @@ public final class MavenProjectsTree {
           var mavenProject = findProject(moduleFile);
           if (null != mavenProject) {
             if (reconnect(aggregator, mavenProject)) {
-              updateContext.update(mavenProject, MavenProjectChanges.NONE);
+              updateContext.updated(mavenProject, MavenProjectChanges.NONE);
             }
           }
         }
@@ -500,6 +511,8 @@ public final class MavenProjectsTree {
 
     updateExplicitProfiles();
     updateContext.fireUpdatedIfNecessary();
+
+    return updateContext.toUpdateResult();
   }
 
   private record UpdateSpec(VirtualFile mavenProjectFile, boolean forceRead) {
@@ -511,7 +524,7 @@ public final class MavenProjectsTree {
     private final UpdateContext updateContext;
     private final MavenProjectReader reader;
     private final MavenGeneralSettings generalSettings;
-    private final MavenProgressIndicator process;
+    private final ProgressIndicator process;
     private final ConcurrentHashMap<VirtualFile, Boolean> updated = new ConcurrentHashMap<>();
     private final boolean updateModules;
 
@@ -520,7 +533,7 @@ public final class MavenProjectsTree {
                              UpdateContext context,
                              MavenProjectReader reader,
                              MavenGeneralSettings settings,
-                             MavenProgressIndicator process,
+                             ProgressIndicator process,
                              boolean updateModules) {
       this.tree = tree;
       explicitProfiles = profiles;
@@ -548,8 +561,10 @@ public final class MavenProjectsTree {
         MavenLog.LOG.debug("Has already been updated (%s): %s; forceRead: %s".formatted(previousUpdate, mavenProjectFile, forceRead));
         return false;
       }
-      process.setText(MavenProjectBundle.message("maven.reading.pom", projectPath));
-      process.setText2("");
+      if (null != process) {
+        process.setText(MavenProjectBundle.message("maven.reading.pom", projectPath));
+        process.setText2("");
+      }
       return true;
     }
 
@@ -579,7 +594,7 @@ public final class MavenProjectsTree {
 
         var forcedChanges = forceRead ? MavenProjectChanges.ALL : MavenProjectChanges.NONE;
         var changes = MavenProjectChangesBuilder.merged(forcedChanges, readChanges);
-        updateContext.update(mavenProject, changes);
+        updateContext.updated(mavenProject, changes);
       }
 
       return readPom;
@@ -591,7 +606,7 @@ public final class MavenProjectsTree {
         VirtualFile moduleFile = module.getFile();
         if (tree.isManagedFile(moduleFile)) {
           if (tree.reconnectRoot(module)) {
-            updateContext.update(module, MavenProjectChanges.NONE);
+            updateContext.updated(module, MavenProjectChanges.NONE);
           }
         }
         else {
@@ -606,7 +621,7 @@ public final class MavenProjectsTree {
         MavenProject module = tree.findProject(file);
         if (null != module) {
           if (tree.reconnect(mavenProject, module)) {
-            updateContext.update(module, MavenProjectChanges.NONE);
+            updateContext.updated(module, MavenProjectChanges.NONE);
           }
         }
       }
@@ -766,25 +781,22 @@ public final class MavenProjectsTree {
     return false;
   }
 
-  public void delete(List<VirtualFile> files,
-                     MavenGeneralSettings generalSettings,
-                     MavenProgressIndicator process) {
-    delete(new MavenProjectReader(myProject), files, getExplicitProfiles(), generalSettings, process);
+  @ApiStatus.Internal
+  public MavenProjectsTreeUpdateResult delete(List<VirtualFile> files, MavenGeneralSettings generalSettings, ProgressIndicator process) {
+    return delete(new MavenProjectReader(myProject), files, getExplicitProfiles(), generalSettings, process);
   }
 
-  private void delete(MavenProjectReader projectReader,
-                      Collection<VirtualFile> files,
-                      MavenExplicitProfiles explicitProfiles,
-                      MavenGeneralSettings generalSettings,
-                      MavenProgressIndicator process) {
-    if (files.isEmpty()) return;
-
+  private MavenProjectsTreeUpdateResult delete(MavenProjectReader projectReader,
+                                               Collection<VirtualFile> files,
+                                               MavenExplicitProfiles explicitProfiles,
+                                               MavenGeneralSettings generalSettings,
+                                               ProgressIndicator process) {
     UpdateContext updateContext = new UpdateContext();
 
     Set<MavenProject> inheritorsToUpdate = new HashSet<>();
     for (VirtualFile each : files) {
       MavenProject mavenProject = findProject(each);
-      if (mavenProject == null) return;
+      if (mavenProject == null) continue;
 
       inheritorsToUpdate.addAll(findInheritors(mavenProject));
       doDelete(findAggregator(mavenProject), mavenProject, updateContext);
@@ -800,18 +812,20 @@ public final class MavenProjectsTree {
 
     for (MavenProject mavenProject : inheritorsToUpdate) {
       if (reconnectRoot(mavenProject)) {
-        updateContext.update(mavenProject, MavenProjectChanges.NONE);
+        updateContext.updated(mavenProject, MavenProjectChanges.NONE);
       }
     }
     updateExplicitProfiles();
     updateContext.fireUpdatedIfNecessary();
+
+    return updateContext.toUpdateResult();
   }
 
   private void doDelete(MavenProject aggregator, MavenProject project, UpdateContext updateContext) {
     for (MavenProject each : getModules(project)) {
       if (isManagedFile(each.getPath())) {
         if (reconnectRoot(each)) {
-          updateContext.update(each, MavenProjectChanges.NONE);
+          updateContext.updated(each, MavenProjectChanges.NONE);
         }
       }
       else {
@@ -1288,7 +1302,7 @@ public final class MavenProjectsTree {
     private final Map<MavenProject, MavenProjectChanges> updatedProjectsWithChanges = new ConcurrentHashMap<>();
     private final Set<MavenProject> deletedProjects = ConcurrentHashMap.newKeySet();
 
-    public void update(MavenProject project, @NotNull MavenProjectChanges changes) {
+    public void updated(MavenProject project, @NotNull MavenProjectChanges changes) {
       deletedProjects.remove(project);
       updatedProjectsWithChanges.compute(project, (__, previousChanges) ->
         previousChanges == null ? changes : MavenProjectChangesBuilder.merged(changes, previousChanges)
@@ -1300,17 +1314,17 @@ public final class MavenProjectsTree {
       deletedProjects.add(project);
     }
 
+    public MavenProjectsTreeUpdateResult toUpdateResult() {
+      return new MavenProjectsTreeUpdateResult(mapToListWithPairs(), new ArrayList<>(deletedProjects));
+    }
+
     public void fireUpdatedIfNecessary() {
       if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) {
         return;
       }
-      List<MavenProject> mavenProjects = deletedProjects.isEmpty()
-                                         ? Collections.emptyList()
-                                         : new ArrayList<>(deletedProjects);
-      List<Pair<MavenProject, MavenProjectChanges>> updated = updatedProjectsWithChanges.isEmpty()
-                                                              ? Collections.emptyList()
-                                                              : mapToListWithPairs();
-      fireProjectsUpdated(updated, mavenProjects);
+      List<Pair<MavenProject, MavenProjectChanges>> updated = mapToListWithPairs();
+      List<MavenProject> deleted = new ArrayList<>(deletedProjects);
+      fireProjectsUpdated(updated, deleted);
     }
 
     private @NotNull List<Pair<MavenProject, MavenProjectChanges>> mapToListWithPairs() {

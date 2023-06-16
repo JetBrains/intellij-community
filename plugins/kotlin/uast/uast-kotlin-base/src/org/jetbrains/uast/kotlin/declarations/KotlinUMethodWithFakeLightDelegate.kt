@@ -33,8 +33,7 @@ class KotlinUMethodWithFakeLightDelegate(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as KotlinUMethodWithFakeLightDelegate
-        if (original != other.original) return false
-        return true
+        return original == other.original
     }
 
     override fun hashCode(): Int = original.hashCode()

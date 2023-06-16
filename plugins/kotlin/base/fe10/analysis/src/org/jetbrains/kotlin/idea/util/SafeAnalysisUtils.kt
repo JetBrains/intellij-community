@@ -6,6 +6,7 @@ import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -48,6 +49,7 @@ inline fun <T> Exception.returnIfNoDescriptorForDeclarationException(
 val KOTLIN_AWARE_SOURCE_ROOT_TYPES: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
     JavaModuleSourceRootTypes.SOURCES + ALL_KOTLIN_SOURCE_ROOT_TYPES
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use 'org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes()' instead")
 fun PsiElement?.isUnderKotlinSourceRootTypes(): Boolean {
     val ktFile = this?.containingFile.safeAs<KtFile>() ?: return false

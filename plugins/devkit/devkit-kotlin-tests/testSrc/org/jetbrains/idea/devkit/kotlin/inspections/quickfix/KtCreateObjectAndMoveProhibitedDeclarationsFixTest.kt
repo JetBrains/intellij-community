@@ -8,7 +8,7 @@ import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.kotlin.inspections.KtCompanionObjectInExtensionInspectionTestBase
 
 @TestDataPath("/inspections/createObjectAndMoveProhibitedDeclarations")
-open class KtCreateObjectAndMoveProhibitedDeclarationsFixTest : KtCompanionObjectInExtensionInspectionTestBase() {
+class KtCreateObjectAndMoveProhibitedDeclarationsFixTest : KtCompanionObjectInExtensionInspectionTestBase() {
 
   private val quickFixName = DevKitKotlinBundle.message("inspections.create.object.and.move.prohibited.declarations.fix.text")
 

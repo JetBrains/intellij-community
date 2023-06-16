@@ -46,6 +46,7 @@ import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 
 /**
@@ -295,6 +296,10 @@ internal class SingleContentLayout(
         title = displayName
       )
       label.toolTipText = displayName
+    }
+    if (ui.window.component.getClientProperty(ToolWindowContentUi.SHOW_BETA_LABEL) == true) {
+      label.icon = AllIcons.General.Beta
+      label.horizontalTextPosition = SwingConstants.LEFT
     }
   }
 

@@ -83,8 +83,7 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
     val brightness = 1.0f - y.toFloat() / size.height
 
     val argb = ahsbToArgb(alpha, hue, saturation, brightness)
-    val newColor = Color(argb, true)
-    return newColor
+    return Color(argb, true)
   }
 
   override fun getPreferredSize(): Dimension = JBUI.size(PICKER_PREFERRED_WIDTH, 150)

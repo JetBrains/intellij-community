@@ -10,6 +10,7 @@ import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -21,6 +22,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 )
 fun <X> withCurrentJob(job: Job, action: () -> X): X = blockingContext(job, action)
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Renamed to `withCurrentJob`",
   replaceWith = ReplaceWith(
@@ -41,7 +43,7 @@ fun <X> withJob(job: Job, action: () -> X): X = blockingContext(job, action)
  *         blockingContext {
  *           // currentThreadContext() should not contain BlockingJob here
  *           // => BlockingJob is removed during blocking -> coroutine transition in `runBlockingCancellable`
- *           // Same applies for `withModalProgressBlocking`
+ *           // Same applies for `runWithModalProgressBlocking`
  *         }
  *       }
  *     }
@@ -119,7 +121,8 @@ internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, act
 }
 
 private fun cancelWithIndicator(job: Job, indicator: ProgressIndicator): Job {
-  return CoroutineScope(Dispatchers.IO).launch(CoroutineName("indicator watcher")) {
+  @OptIn(DelicateCoroutinesApi::class)
+  return GlobalScope.launch(indicatorWatcherDispatcher + CoroutineName("indicator watcher")) {
     while (!indicator.isCanceled) {
       delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
     }
@@ -132,3 +135,7 @@ private fun cancelWithIndicator(job: Job, indicator: ProgressIndicator): Job {
     }
   }
 }
+
+// use elasticity property of the IO dispatcher
+@OptIn(ExperimentalCoroutinesApi::class)
+private val indicatorWatcherDispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(parallelism = 1)

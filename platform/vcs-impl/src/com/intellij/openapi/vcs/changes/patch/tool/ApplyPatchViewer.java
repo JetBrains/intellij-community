@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.*;
@@ -586,14 +586,9 @@ class ApplyPatchViewer implements DataProvider, Disposable {
         for (int i = changes.size() - 1; i >= 0; i--) {
           ApplyPatchChange change = changes.get(i);
           switch (change.getStatus()) {
-            case ALREADY_APPLIED:
-              markChangeResolved(change);
-              break;
-            case EXACTLY_APPLIED:
-              replaceChange(change);
-              break;
-            case NOT_APPLIED:
-              break;
+            case ALREADY_APPLIED -> markChangeResolved(change);
+            case EXACTLY_APPLIED -> replaceChange(change);
+            case NOT_APPLIED -> {}
           }
         }
       });
@@ -736,14 +731,9 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
         totalUnresolved++;
         switch (change.getStatus()) {
-          case ALREADY_APPLIED:
-            alreadyApplied++;
-            break;
-          case NOT_APPLIED:
-            notApplied++;
-            break;
-          case EXACTLY_APPLIED:
-            break;
+          case ALREADY_APPLIED -> alreadyApplied++;
+          case NOT_APPLIED -> notApplied++;
+          case EXACTLY_APPLIED -> {}
         }
       }
 

@@ -6,7 +6,7 @@ import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.withModalProgressBlocking
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.FilePath
@@ -87,7 +87,7 @@ object CheckinActionUtil {
                                 executor: CommitExecutor?,
                                 forceUpdateCommitStateFromContext: Boolean) {
     FileDocumentManager.getInstance().saveAllDocuments()
-    withModalProgressBlocking(project, CommonBundle.message("title.save.project")) {
+    runWithModalProgressBlocking(project, CommonBundle.message("title.save.project")) {
       saveSettings(project)
     }
 

@@ -35,7 +35,8 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
   @NonNls private static final String INPUT_VARIABLE_NAME = "INPUTVAR";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OTHERVAR";
   private final boolean myUnresolvedOnly;
-  private @Nls String myText;
+  @NotNull
+  private @Nls String myText = QuickFixBundle.message("rename.wrong.reference.text");
 
   public RenameWrongRefFix(@NotNull PsiReferenceExpression refExpr) {
     this(refExpr, false);

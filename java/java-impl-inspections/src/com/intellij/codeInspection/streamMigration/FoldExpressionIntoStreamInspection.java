@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.*;
@@ -172,7 +172,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
     return "." + getMapOperationName(elementType, resultType) + "(" + lambda + ")";
   }
 
-  private static final class FoldExpressionIntoStreamFix implements LocalQuickFix {
+  private static final class FoldExpressionIntoStreamFix extends PsiUpdateModCommandQuickFix {
     private final boolean myStringJoin;
 
     private FoldExpressionIntoStreamFix(boolean stringJoin) {myStringJoin = stringJoin;}
@@ -194,8 +194,8 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiPolyadicExpression expression = tryCast(descriptor.getStartElement(), PsiPolyadicExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiPolyadicExpression expression = tryCast(element, PsiPolyadicExpression.class);
       if (expression == null) return;
       TerminalGenerator generator = getGenerator(expression);
       if (generator == null) return;

@@ -15,7 +15,6 @@ import com.intellij.util.io.RepresentableAsByteArraySequence;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.io.storage.Storage;
-import com.intellij.util.progress.CancellationUtil;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -168,7 +167,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
     lock.writeLock().lock();
     try {
       int attPage = fileAttributeRecordId(connection, fileId);
-      if (attPage != 0) {
+      if (attPage != NON_EXISTENT_ATTR_RECORD_ID) {
         try (final DataInputStream attStream = attributesBlobStorage.readStream(attPage)) {
           if (bulkAttrReadSupport) skipRecordHeader(attStream, PersistentFSConnection.RESERVED_ATTR_ID, fileId);
 
@@ -183,7 +182,10 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
               }
               attAddressOrSize -= INLINE_ATTRIBUTE_SMALLER_THAN;
             }
-            attributesBlobStorage.deleteRecord(attAddressOrSize);
+            //RC: must always be true, but there are reports ...
+            if (attAddressOrSize > NON_EXISTENT_ATTR_RECORD_ID) {
+              attributesBlobStorage.deleteRecord(attAddressOrSize);
+            }
           }
         }
         attributesBlobStorage.deleteRecord(attPage);

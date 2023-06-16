@@ -6,8 +6,8 @@ import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.MnemonicHelper.DISABLE_MNEMONIC_PROCESSING
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
@@ -73,7 +73,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
     enableEvents(AWTEvent.MOUSE_EVENT_MASK)
     addMouseMotionListener(object : MouseMotionAdapter() {
       override fun mouseDragged(e: MouseEvent) {
-        if (!Registry.`is`("ide.new.tool.window.dnd")) processDrag(e)
+        if (!AdvancedSettings.getBoolean("ide.tool.window.header.dnd")) processDrag(e)
       }
     })
     updateHelpTooltip()

@@ -46,12 +46,12 @@ object CodeWithMeGuestLauncher {
 
     val uri = UrlUtil.parseOrShowError(url, product) ?: return
 
-    if (!alreadyDownloading.add(url)) {
-      LOG.info("Already downloading a client for $url")
+    if (runAlreadyDownloadedClient(clientBuild, lifetime, project, url, onDone)) {
       return
     }
 
-    if (runAlreadyDownloadedClient(clientBuild, lifetime, project, url, onDone)) {
+    if (!alreadyDownloading.add(url)) {
+      LOG.info("Already downloading a client for $url")
       return
     }
 

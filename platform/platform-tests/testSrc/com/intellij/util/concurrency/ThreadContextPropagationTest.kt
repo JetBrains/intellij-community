@@ -8,14 +8,27 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.currentThreadContextModality
 import com.intellij.openapi.progress.*
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.timeoutWaitUp
 import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.getValue
+import com.intellij.util.setValue
 import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.*
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -24,11 +37,10 @@ import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.lang.Runnable
 import java.lang.reflect.Method
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Future
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -191,6 +203,91 @@ class ThreadContextPropagationTest {
   }
 
   @Test
+  fun testNBRA() {
+    val element = TestElement("element")
+    val element2 = TestElement2("element2")
+    var callTracker by AtomicReference(false)
+    val callbackSemaphore = Semaphore(1)
+    var cancellationTracker by AtomicReference(0)
+    val uiThreadFinishSemaphore = Semaphore(1)
+    var runAction by AtomicReference(false)
+    val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Test NBRA", 1)
+
+    timeoutRunBlocking {
+      val future = withContext(element) {
+        blockingContext {
+          ReadAction.nonBlocking(Callable {
+            while (!runAction) {
+              // the action should complete only when we explicitly allow it
+              Thread.sleep(10)
+              try {
+                ProgressManager.checkCanceled()
+              } catch (e : ProcessCanceledException) {
+                cancellationTracker += 1
+                throw e
+              }
+            }
+
+            // so the read action actually was completed
+            callTracker = true
+            // the context of read action should be the same as the context of read action's author
+            assertSame(element, currentThreadContext()[TestElementKey])
+            // callback's context should not leak to read action
+            assertNull(currentThreadContext()[TestElement2Key])
+          })
+            .finishOnUiThread(ModalityState.defaultModalityState()) {
+              assertSame(element, currentThreadContext()[TestElementKey])
+              assertNull(currentThreadContext()[TestElement2Key])
+              uiThreadFinishSemaphore.up()
+            }
+            .submit(executor)
+        }
+      }
+      withContext(element2) {
+        blockingContext {
+          assertNull(currentThreadContext()[TestElementKey])
+          future.onSuccess {
+            // callback's context belongs to the callback's owner
+            assertSame(element2, currentThreadContext()[TestElement2Key])
+            // callback's context does not belong to the future's owner
+            assertNull(currentThreadContext()[TestElementKey])
+            callbackSemaphore.up()
+          }
+        }
+      }
+
+
+      blockingContext {
+        // the testing
+        assertEquals(0, cancellationTracker) // not cancelled yet
+        assertFalse(callTracker) // not completed yet
+
+        ApplicationManager.getApplication().invokeAndWait {
+          ApplicationManager.getApplication().runWriteAction {
+            // we just cancelled NBRA by a write action
+          }
+        }
+        assertEquals(1, cancellationTracker) // cancelled 1 time
+        assertFalse(callTracker) // not completed yet
+
+        runAction = true // read action is allowed to complete now
+        while (true) {
+          try {
+            future.get(100, TimeUnit.MILLISECONDS)
+            break
+          }
+          catch (_: TimeoutException) {
+          }
+        }
+
+        assertEquals(1, cancellationTracker) // still cancelled 1 time
+        callbackSemaphore.timeoutWaitUp()
+        uiThreadFinishSemaphore.timeoutWaitUp()
+      }
+    }
+  }
+
+  @Test
   fun `EDT dispatcher does not capture thread context`(): Unit = timeoutRunBlocking {
     blockingContext {
       launch(Dispatchers.EDT) {
@@ -221,7 +318,7 @@ class ThreadContextPropagationTest {
         object : Task.Modal(null, "", true) {
           override fun run(indicator: ProgressIndicator) {
             finished.completeWith(runCatching {
-              assertFalse(currentThreadContextModality() == ModalityState.NON_MODAL)
+              assertFalse(currentThreadContextModality() == ModalityState.nonModal())
               assertSame(currentThreadContextModality(), indicator.modalityState)
               assertSame(currentThreadContextModality(), ModalityState.defaultModalityState())
             })

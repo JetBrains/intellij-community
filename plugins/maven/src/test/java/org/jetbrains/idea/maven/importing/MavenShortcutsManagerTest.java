@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.tasks.MavenKeymapExtension;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -24,9 +23,6 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
 
   @Override
   protected void setUp() throws Exception {
-    if (!isWorkspaceImport()) {
-      MavenUtil.setNotUpdateSuspendable();
-    }
     super.setUp();
     myShortcutsManager = MavenShortcutsManager.getInstance(myProject);
     myShortcutsManager.doInit(myProject);
@@ -36,7 +32,6 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
   @Override
   public void tearDown() throws Exception {
     try {
-      MavenUtil.resetNotUpdateSuspendable();
       MavenKeymapExtension.clearActions(myProject);
     }
     catch (Throwable e) {
@@ -225,7 +220,9 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
 
     WriteCommandAction.writeCommandAction(myProject).run(() -> p1.delete(this));
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     importProjects(p1, p2);
 
     assertModules( "p2");

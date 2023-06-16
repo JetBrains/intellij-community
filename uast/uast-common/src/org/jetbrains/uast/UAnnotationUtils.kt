@@ -79,10 +79,11 @@ fun getContainingUAnnotationEntry(uElement: UElement?, annotationsHint: Collecti
   val plugin = UastLanguagePlugin.byLanguage(sourcePsi.language) ?: return null
   val entry = plugin.getContainingAnnotationEntry(uElement, annotationsHint)
 
-  if (entry != null
-      && annotationsHint.isNotEmpty()
-      && !annotationsHint.contains(entry.first.qualifiedName)) {
-    return null
+  if (entry != null && annotationsHint.isNotEmpty()) {
+    val qualifiedName = entry.first.qualifiedName ?: return null
+    if (!annotationsHint.contains(qualifiedName)) {
+      return null
+    }
   }
 
   return entry

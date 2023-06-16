@@ -46,7 +46,9 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new SourceToSinkFlowInspection());
+    SourceToSinkFlowInspection inspection = new SourceToSinkFlowInspection();
+    inspection.warnIfComplex = true;
+    myFixture.enableInspections(inspection);
   }
 
   @Override
@@ -89,13 +91,20 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
     PsiClass psiClass = Objects.requireNonNull(facade.findClass("com.jetbrains.A", GlobalSearchScope.allScope(project)));
     myFixture.openFileInEditor(psiClass.getContainingFile().getVirtualFile());
     MethodBody methodBody = MethodBody.generate(env);
-    PsiClass aClass = WriteCommandAction.runWriteCommandAction(project, 
-                                                               (Computable<PsiClass>)() -> recreateClass(facade.getElementFactory(), psiClass));
+    PsiClass aClass = WriteCommandAction.runWriteCommandAction(project,
+                                                               (Computable<PsiClass>)() -> recreateClass(facade.getElementFactory(),
+                                                                                                         psiClass));
     JavaContext javaContext = JavaContext.create(aClass, facade);
     WriteCommandAction.runWriteCommandAction(project, () -> methodBody.add(javaContext));
     env.logMessage("A class:\n" + aClass.getText());
     TaintState taintState = methodBody.taintState();
-    List<HighlightInfo> infos = myFixture.doHighlighting(HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = myFixture.doHighlighting(HighlightSeverity.WEAK_WARNING);
+    if (infos.size() == 1) {
+      HighlightInfo info = infos.get(0);
+      if (info.getDescription().equals(JvmAnalysisBundle.message("jvm.inspections.source.to.sink.flow.too.complex"))) {
+        return;
+      }
+    }
     if (taintState == TaintState.SAFE) {
       assertEmpty(infos);
     }
@@ -164,7 +173,7 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
                                                                               CallExpression::generate,
                                                                               TernaryExpression::generate,
                                                                               ParenthesizedExpression::generate);
-    
+
     @NotNull String getText();
 
     @NotNull TaintState taintState();

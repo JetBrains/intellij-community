@@ -23,6 +23,16 @@ public class BreakpointHighlightingTestGenerated extends AbstractBreakpointHighl
         KotlinTestUtils.runTest(this::doCustomTest, this, testDataFilePath);
     }
 
+    @TestMetadata("conditionalReturn.kt")
+    public void testConditionalReturn() throws Exception {
+        runTest("testData/highlighting/conditionalReturn.kt");
+    }
+
+    @TestMetadata("conditionalReturnInLambda.kt")
+    public void testConditionalReturnInLambda() throws Exception {
+        runTest("testData/highlighting/conditionalReturnInLambda.kt");
+    }
+
     @TestMetadata("lambdasOnSameLine.kt")
     public void testLambdasOnSameLine() throws Exception {
         runTest("testData/highlighting/lambdasOnSameLine.kt");

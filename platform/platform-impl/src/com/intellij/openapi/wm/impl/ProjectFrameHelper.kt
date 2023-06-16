@@ -406,7 +406,7 @@ open class ProjectFrameHelper internal constructor(
         modalBlockerField.isAccessible = true
         val modalBlocker = modalBlockerField.get(frame) as? Window
         if (modalBlocker != null) {
-          ApplicationManager.getApplication().invokeLater({ toggleFullScreen(state) }, ModalityState.NON_MODAL)
+          ApplicationManager.getApplication().invokeLater({ toggleFullScreen(state) }, ModalityState.nonModal())
           return true
         }
       }

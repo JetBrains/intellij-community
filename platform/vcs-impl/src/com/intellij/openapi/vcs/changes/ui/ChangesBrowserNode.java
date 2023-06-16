@@ -474,7 +474,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
    * @deprecated Use {@link #iterateFilesUnder()}
    */
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public List<VirtualFile> getAllFilesUnder() {
     return iterateFilesUnder().toList();
   }
@@ -483,7 +483,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
    * @deprecated Use {@link #iterateFilesUnder()}
    */
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Stream<VirtualFile> getFilesUnderStream() {
     return iterateFilesUnder().toStream();
   }
@@ -492,7 +492,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
    * @deprecated Use {@link #iterateFilePathsUnder()}
    */
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public List<FilePath> getAllFilePathsUnder() {
     return iterateFilePathsUnder().toList();
   }
@@ -501,7 +501,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
    * @deprecated Use {@link #iterateFilePathsUnder()}
    */
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Stream<FilePath> getFilePathsUnderStream() {
     return iterateFilePathsUnder().toStream();
   }
@@ -510,7 +510,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
    * @deprecated Use {@link #traverse()}
    */
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Stream<ChangesBrowserNode<?>> getNodesUnderStream() {
     return traverse().toStream();
   }

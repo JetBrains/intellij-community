@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -70,15 +70,15 @@ public class EscapedSpaceInspection extends AbstractBaseJavaLocalInspectionTool 
     return list.toIntArray();
   }
 
-  private static class ReplaceWithSpaceFix implements LocalQuickFix {
+  private static class ReplaceWithSpaceFix extends PsiUpdateModCommandQuickFix {
     @Override
     public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.use.of.slash.s.fix.family");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiLiteralExpression literal = ObjectUtils.tryCast(descriptor.getStartElement(), PsiLiteralExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiLiteralExpression literal = ObjectUtils.tryCast(element, PsiLiteralExpression.class);
       if (literal == null) return;
       int[] positions = findPositions(literal);
       String text = literal.getText();

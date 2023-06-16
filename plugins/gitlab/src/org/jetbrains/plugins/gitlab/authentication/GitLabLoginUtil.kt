@@ -100,4 +100,7 @@ object GitLabLoginUtil {
       null
     }
   }
+
+  fun isAccountUnique(accounts: Collection<GitLabAccount>, server: GitLabServerPath, username: String): Boolean =
+    accounts.none { it.server == server && it.name == username }
 }

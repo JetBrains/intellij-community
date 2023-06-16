@@ -11,13 +11,14 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl.WithDestructuringDeclaration
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.variableCallOrThis
-import org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
+import org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntention.Holder.setParameterListIfAny
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.refactoring.getThisLabelName
 import org.jetbrains.kotlin.name.FqName
@@ -26,8 +27,6 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class ForEachParameterNotUsedInspection : AbstractKotlinInspection() {
     companion object {
@@ -77,9 +76,7 @@ class ForEachParameterNotUsedInspection : AbstractKotlinInspection() {
             val literal = callExpression.lambdaArguments.singleOrNull()?.getLambdaExpression()?.functionLiteral ?: return
             val psiFactory = KtPsiFactory(project)
             val newParameterList = psiFactory.createLambdaParameterList("_")
-            with(SpecifyExplicitLambdaSignatureIntention) {
-                literal.setParameterListIfAny(psiFactory, newParameterList)
-            }
+            literal.setParameterListIfAny(psiFactory, newParameterList)
         }
     }
 

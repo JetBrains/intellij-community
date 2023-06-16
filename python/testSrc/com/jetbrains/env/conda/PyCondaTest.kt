@@ -10,16 +10,17 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
+import com.intellij.util.io.awaitExit
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.target.conda.loadLocalPythonCondaPath
 import com.jetbrains.python.sdk.add.target.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
-import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.*
+import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.EmptyNamedEnv
+import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert
 import org.junit.Before
@@ -32,6 +33,7 @@ import org.junit.runners.Parameterized.Parameter
 import org.junit.runners.Parameterized.Parameters
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(Parameterized::class)
 internal class PyCondaTest {
@@ -85,7 +87,7 @@ internal class PyCondaTest {
   }
 
   @Test
-  fun testCondaCreateByYaml() = runTest {
+  fun testCondaCreateByYaml() = runTest(timeout = 60.seconds) {
     PyCondaEnv.createEnv(condaRule.condaCommand,
                          LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath)).mapFlat { it.getResultStdoutStr() }.getOrThrow()
     val condaEnv = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget)
@@ -94,6 +96,9 @@ internal class PyCondaTest {
     // Python version contains word "Python", LanguageLevel doesn't expect it
     val pythonVersion = getPythonVersion(condaEnv).trimStart { !it.isDigit() && it != '.' }
     Assert.assertEquals("Wrong python version installed", languageLevel, LanguageLevel.fromPythonVersion(pythonVersion))
+
+    Runtime.getRuntime().exec(
+      arrayOf(condaRule.condaPath.toString(), "remove", "--name", condaEnv.envIdentity.userReadableName, "--all", "-y")).awaitExit()
   }
 
   @Test

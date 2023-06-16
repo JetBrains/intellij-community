@@ -15,12 +15,9 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.RunAll;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -1648,7 +1645,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     setRepositoryPath(new File(myDir, "__repo").getPath());
     myProjectsManager.getEmbeddersManager().reset(); // to recognize repository change
 
-    myProjectsManager.updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
+    updateAllProjects();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
@@ -1680,9 +1677,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     setRepositoryPath(new File(myDir, "__repo").getPath());
     myProjectsManager.getEmbeddersManager().reset(); // to recognize repository change
 
-    resolveAndImportAllMavenProjects();
-
-    resolveDependenciesAndImport();
+    updateAllProjects();
 
     assertModuleLibDep("project", "Maven: org.testng:testng:jdk15:5.8",
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",
@@ -1709,10 +1704,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/"),
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/"));
 
-    resolveAndImportAllMavenProjects();
-    resolveDependenciesAndImport();
-    resolveAndImportAllMavenProjects();
-    resolveDependenciesAndImport();
+    // update twice
+    updateAllProjects();
+    updateAllProjects();
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        Arrays.asList("jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/"),
@@ -1742,10 +1736,9 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        Collections.emptyList(),
                        Collections.emptyList());
 
-    resolveAndImportAllMavenProjects();
-    resolveDependenciesAndImport();
-    resolveAndImportAllMavenProjects();
-    resolveDependenciesAndImport();
+    // update twice
+    updateAllProjects();
+    updateAllProjects();
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://" + getRoot() + "/foo/bar.jar!/"),

@@ -6,10 +6,10 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -21,10 +21,6 @@ class SwapStringEqualsIgnoreCaseIntention : SelfTargetingRangeIntention<KtDotQua
     KtDotQualifiedExpression::class.java,
     KotlinBundle.lazyMessage("flip.equals")
 ), LowPriorityAction {
-    companion object {
-        private val equalsFunctionFqName = FqName("kotlin.text.equals")
-        private val equalsFunctionShortName = equalsFunctionFqName.shortName().asString()
-    }
 
     override fun applicabilityRange(element: KtDotQualifiedExpression): TextRange? {
         val callExpression = element.callExpression ?: return null
@@ -57,5 +53,8 @@ class SwapStringEqualsIgnoreCaseIntention : SelfTargetingRangeIntention<KtDotQua
             editor?.moveCaret(it + offset)
         }
     }
-
 }
+
+private val equalsFunctionFqName: FqName = FqName("kotlin.text.equals")
+
+private val equalsFunctionShortName: String = equalsFunctionFqName.shortName().asString()

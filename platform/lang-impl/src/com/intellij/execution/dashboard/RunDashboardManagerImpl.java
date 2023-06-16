@@ -642,7 +642,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
     RunnerLayoutUiImpl ui = getRunnerLayoutUi(descriptor);
     if (ui != null) {
-      if (!UIExperiment.isNewDebuggerUIEnabled()) {
+      if (!ServiceViewUIUtils.isNewServicesUIEnabled()) {
         ui.setLeftToolbarVisible(visible);
       }
       ui.setContentToolbarBefore(visible);
@@ -721,7 +721,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       textPanel.setFocusable(true);
       JPanel mainPanel = new NonOpaquePanel(new BorderLayout());
       mainPanel.add(textPanel, BorderLayout.CENTER);
-      if (UIExperiment.isNewDebuggerUIEnabled()) {
+      if (ServiceViewUIUtils.isNewServicesUIEnabled()) {
         if (ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR) instanceof ActionGroup group) {
           group.registerCustomShortcutSet(textPanel, myProject);
           ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, group, true);

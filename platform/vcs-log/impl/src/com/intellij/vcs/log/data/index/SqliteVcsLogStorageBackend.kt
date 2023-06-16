@@ -4,7 +4,6 @@
 package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -21,14 +20,13 @@ import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.impl.VcsRefImpl
+import com.intellij.vcs.log.util.PersistentUtil
 import com.intellij.vcs.log.util.StorageId
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import org.intellij.lang.annotations.Language
 import org.jetbrains.sqlite.*
 import java.io.IOException
@@ -94,9 +92,6 @@ private class ProjectLevelConnectionManager(project: Project, logId: String) : D
                                  "$SQLITE_VCS_LOG_DB_FILENAME_PREFIX$DB_VERSION-${VcsLogPersistentIndex.VERSION}", "db")
   private val dbFile = storageId.storagePath
 
-  @Suppress("DEPRECATION")
-  private val coroutineScope: CoroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
-
   @Volatile
   var isFresh = false
 
@@ -124,33 +119,26 @@ private class ProjectLevelConnectionManager(project: Project, logId: String) : D
     connection = connect()
   }
 
-  override fun dispose() {
-    try {
-      connection.close()
-    }
-    finally {
-      coroutineScope.cancel()
-    }
-  }
+  override fun dispose() = connection.close()
 }
 
 private const val RENAME_SQL = "insert into rename(parent, child, rename) values(?, ?, ?)"
 private const val RENAME_DELETE_SQL = "delete from rename where parent = ? and child = ?"
 
 internal class SqliteVcsLogStorageBackend(project: Project,
-                                          logId: String,
-                                          roots: Set<VirtualFile>,
                                           private val logProviders: Map<VirtualFile, VcsLogProvider>,
                                           private val errorHandler: VcsLogErrorHandler,
                                           disposable: Disposable) :
   VcsLogStorageBackend, VcsLogStorage {
 
-  private val connectionManager = ProjectLevelConnectionManager(project, logId).also { Disposer.register(disposable, it) }
+  private val connectionManager = ProjectLevelConnectionManager(project, PersistentUtil.calcLogId(project, logProviders)).also {
+    Disposer.register(disposable, it)
+  }
   override val storageId get() = connectionManager.storageId
 
   private val userRegistry = project.service<VcsUserRegistry>()
 
-  private val sortedRoots = roots.sortedWith(Comparator.comparing(VirtualFile::getPath))
+  private val sortedRoots = logProviders.keys.sortedWith(Comparator.comparing(VirtualFile::getPath))
 
   private val rootsToPosition = Object2IntOpenHashMap<VirtualFile>()
     .apply {
@@ -270,7 +258,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     val result = hashMapOf<Int, MutableList<Hash>>()
     val paramBinder = ObjectBinder(paramCount = 0)
     val inClause = commitIds.toInClause()
-    val sql = "select c.rowid, c.hash from commit_hashes c inner join parent p on p.parent = c.rowid where p.commitId in $inClause"
+    val sql = "select p.rowid, c.hash from commit_hashes c inner join parent p on p.parent = c.rowid where p.commitId in $inClause"
 
     connection.prepareStatement(sql, paramBinder).use { statement ->
       val rs = statement.executeQuery()

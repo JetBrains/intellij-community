@@ -12,6 +12,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
@@ -31,7 +32,6 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
 
   @Override
   protected void setUp() throws Exception {
-    MavenUtil.setNotUpdateSuspendable();
     super.setUp();
     myProjectsManager = MavenProjectsManager.getInstance(myProject);
     myNotificationAware = AutoImportProjectNotificationAware.getInstance(myProject);
@@ -45,12 +45,6 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
     createProjectPom(createPomContent("test", "project"));
     importProject();
     //addManagedFiles(myProjectPom);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    MavenUtil.resetNotUpdateSuspendable();
-    super.tearDown();
   }
 
   @Test
@@ -98,7 +92,10 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
     assertModules("project", "module");
 
     replaceDocumentString(myProjectPom, "<modules><module>module</module></modules>", "");
-    configConfirmationForYesAnswer();
+
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     scheduleProjectImportAndWait();
 
     assertModules("project");

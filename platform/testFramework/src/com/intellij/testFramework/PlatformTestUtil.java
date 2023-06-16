@@ -441,7 +441,7 @@ public final class PlatformTestUtil {
                                    "; alarm passed=" + alarmInvoked1.get() +
                                    "; modality1=" + initialModality +
                                    "; modality2=" + ModalityState.current() +
-                                   "; non-modal=" + (initialModality == ModalityState.NON_MODAL) +
+                                   "; non-modal=" + (initialModality == ModalityState.nonModal()) +
                                    "; invokeLater passed=" + runnableInvoked.get() +
                                    "; pooled alarm passed=" + pooledRunnableInvoked.get() +
                                    "; app.disposed=" + app.isDisposed() +

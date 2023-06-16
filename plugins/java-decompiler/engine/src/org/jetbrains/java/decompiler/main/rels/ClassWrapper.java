@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -42,7 +42,6 @@ public class ClassWrapper {
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_WRAPPER, this);
     DecompilerContext.getLogger().startClass(classStruct.qualifiedName);
 
-    int maxSec = Integer.parseInt(DecompilerContext.getProperty(IFernflowerPreferences.MAX_PROCESSING_METHOD).toString());
     boolean testMode = DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE);
     CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
     for (StructMethod mt : classStruct.getMethods()) {
@@ -62,41 +61,22 @@ public class ClassWrapper {
 
       try {
         if (mt.containsCode()) {
-          if (maxSec == 0 || testMode) {
+          if (testMode) {
             root = MethodProcessorRunnable.codeToJava(classStruct, mt, md, varProc);
           }
           else {
-            MethodProcessorRunnable mtProc =
-              new MethodProcessorRunnable(classStruct, mt, md, varProc, DecompilerContext.getCurrentContext());
-
-            Thread mtThread = new Thread(mtProc, "Java decompiler");
-            long stopAt = System.currentTimeMillis() + maxSec * 1000L;
-
-            mtThread.start();
-
-            while (!mtProc.isFinished()) {
-              try {
-                synchronized (mtProc.lock) {
-                  cancellationManager.saveCancelled();
-                  mtProc.lock.wait(100);
-                }
-              }
-              catch (InterruptedException e) {
-                killThread(mtThread);
-                throw e;
-              }
-
-              if (System.currentTimeMillis() >= stopAt) {
-                String message = "Processing time limit exceeded for method " + mt.getName() + ", execution interrupted.";
-                DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.ERROR);
-                killThread(mtThread);
-                isError = true;
-                break;
-              }
-            }
-
-            if (!isError) {
+            DecompilerContext context = DecompilerContext.getCurrentContext();
+            try {
+              cancellationManager.startMethod(classStruct.qualifiedName, mt.getName());
+              MethodProcessorRunnable mtProc =
+                new MethodProcessorRunnable(classStruct, mt, md, varProc, DecompilerContext.getCurrentContext());
+              mtProc.run();
+              cancellationManager.checkCanceled();
               root = mtProc.getResult();
+            }
+            finally {
+              DecompilerContext.setCurrentContext(context);
+              cancellationManager.finishMethod(classStruct.qualifiedName, mt.getName());
             }
           }
         }
@@ -113,6 +93,11 @@ public class ClassWrapper {
           }
         }
       }
+      catch (CancellationManager.TimeExceedException e) {
+        String message = "Processing time limit exceeded for method " + mt.getName() + ", execution interrupted.";
+        DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.ERROR);
+        isError = true;
+      }
       catch (CancellationManager.CanceledException e) {
         throw e;
       }
@@ -121,7 +106,6 @@ public class ClassWrapper {
         DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, t);
         isError = true;
       }
-      cancellationManager.checkCanceled();
 
       MethodWrapper methodWrapper = new MethodWrapper(root, varProc, mt, counter);
       methodWrapper.decompiledWithErrors = isError;
@@ -189,11 +173,6 @@ public class ClassWrapper {
         });
       }
     }
-  }
-
-  @SuppressWarnings("deprecation")
-  private static void killThread(Thread thread) {
-    thread.stop();
   }
 
   public MethodWrapper getMethodWrapper(String name, String descriptor) {

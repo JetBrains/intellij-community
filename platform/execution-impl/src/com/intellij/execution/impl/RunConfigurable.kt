@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionBundle
@@ -233,7 +233,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     val modalityState = ModalityState.stateForComponent(tree)
 
     // The listener is supposed to be registered for a dialog, so the modality state cannot be NON_MODAL
-    if (modalityState == ModalityState.NON_MODAL) return
+    if (modalityState == ModalityState.nonModal()) return
 
     changeRunConfigurationNodeAlarm = SingleAlarm(
       task = ::selectRunConfiguration,
@@ -288,7 +288,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
 
       tree.requestFocusInWindow()
-      val settings = getSelectedConfiguration()
+      val settings = getInitialSelectedConfiguration()
       if (settings != null) {
         if (selectConfiguration(settings.configuration)) {
           return@invokeLater
@@ -301,7 +301,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }, ModalityState.stateForComponent(wholePanel!!))
   }
 
-  protected open fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
+  protected open fun getInitialSelectedConfiguration(): RunnerAndConfigurationSettings? {
     return runManager.selectedConfiguration
   }
 
@@ -752,7 +752,11 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
   private fun updateDialog() {
     val runDialog = runDialog
-    val executor = runDialog?.executor ?: return
+    runDialog?.executor?.let { updateDialogForSingleExecutor(it, runDialog) }
+    (runDialog as? EditConfigurationsDialog)?.updateRunAction()
+  }
+
+  private fun updateDialogForSingleExecutor(executor: Executor, runDialog: RunDialogBase) {
     val buffer = StringBuilder()
     buffer.append(executor.id)
     val configuration = selectedConfiguration
@@ -775,7 +779,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     SwingUtilities.invokeLater { UIUtil.setupEnclosingDialogBounds(wholePanel!!) }
   }
 
-  private val selectedConfiguration: SingleConfigurationConfigurable<RunConfiguration>?
+  val selectedConfiguration: SingleConfigurationConfigurable<RunConfiguration>?
     get() {
       val selectionPath = tree.selectionPath
       if (selectionPath != null) {

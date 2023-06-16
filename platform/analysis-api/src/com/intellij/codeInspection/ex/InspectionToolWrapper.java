@@ -244,6 +244,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   public abstract JobDescriptor @NotNull [] getJobDescriptors(@NotNull GlobalInspectionContext context);
 
+  @Nullable
   public HighlightDisplayKey getDisplayKey() {
     HighlightDisplayKey key = myDisplayKey;
     if (key == null) {

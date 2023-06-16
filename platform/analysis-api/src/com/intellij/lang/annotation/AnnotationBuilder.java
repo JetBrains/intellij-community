@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -153,6 +154,18 @@ public interface AnnotationBuilder {
    */
   @Contract(pure = true)
   @NotNull AnnotationBuilder withFix(@NotNull IntentionAction fix);
+
+  /**
+   * Registers quick fix for this annotation.
+   * This is an intermediate method in the creating new annotation pipeline.
+   * @param fix the fix to add to this annotation
+   * @return this builder for chaining convenience
+   */
+  @Contract(pure = true)
+  @ApiStatus.Experimental
+  default @NotNull AnnotationBuilder withFix(@NotNull ModCommandAction fix) {
+    return withFix(fix.asIntention());
+  }
 
   /**
    * Begin registration of the new quickfix associated with the annotation.

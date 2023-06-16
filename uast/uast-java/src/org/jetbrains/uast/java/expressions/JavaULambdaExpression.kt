@@ -81,10 +81,7 @@ private class JavaImplicitUReturnExpression(givenParent: UElement?) : JavaAbstra
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
     other as JavaImplicitUReturnExpression
-    val b = returnExpression != other.returnExpression
-    if (b) return false
-
-    return true
+    return returnExpression == other.returnExpression
   }
 
   override fun hashCode(): Int = 31 + returnExpression.hashCode()
@@ -101,8 +98,7 @@ private class JavaImplicitUBlockExpression(givenParent: UElement?) : JavaAbstrac
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
     other as JavaImplicitUBlockExpression
-    if (expressions != other.expressions) return false
-    return true
+    return expressions == other.expressions
   }
 
   override fun hashCode(): Int = 31 + expressions.hashCode()

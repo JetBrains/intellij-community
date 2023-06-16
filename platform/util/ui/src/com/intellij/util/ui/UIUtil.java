@@ -1639,12 +1639,15 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static @Nullable Component getParent(@NotNull Component component) {
-    Component realParent = component.getParent();
-    if (realParent != null) {
-      return realParent;
-    }
     WeakReference<Component> ref = ClientProperty.get(component, FOSTER_PARENT);
-    return ref != null ? ref.get() : null;
+    if (ref != null) {
+      Component fosterParent = ref.get();
+      if (fosterParent != null) {
+        return fosterParent;
+      }
+    }
+
+    return component.getParent();
   }
 
   /**
@@ -3401,15 +3404,16 @@ public final class UIUtil {
     return SystemInfo.isXWindow && !SystemInfo.isWayland && System.getenv("WSLENV") != null;
   }
 
-  public static void applyDeprecatedBackground(@NotNull JComponent component) {
+  public static void applyDeprecatedBackground(@Nullable JComponent component) {
     Color color = getDeprecatedBackground();
-    if (color != null) {
+    if (component != null && color != null) {
       component.setBackground(color);
       component.setOpaque(true);
     }
   }
 
-  private static @Nullable Color getDeprecatedBackground() {
+  @ApiStatus.Internal
+  public static @Nullable Color getDeprecatedBackground() {
     return Registry.getColor("ui.deprecated.components.color", null);
   }
 

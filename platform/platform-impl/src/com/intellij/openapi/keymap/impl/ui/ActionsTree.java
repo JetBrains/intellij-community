@@ -5,7 +5,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
@@ -508,7 +512,7 @@ public final class ActionsTree {
     }
   }
 
-  private class KeymapsRenderer extends ColoredTreeCellRenderer {
+  private class KeymapsRenderer extends ColoredTreeCellRenderer implements UiInspectorTreeRendererContextProvider {
 
     private final MyColoredTreeCellRenderer myLink = new MyColoredTreeCellRenderer();
     private boolean myHaveLink;
@@ -629,6 +633,20 @@ public final class ActionsTree {
 
       setToolTipText(tooltipText);
       putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
+    }
+
+    @Override
+    public @NotNull List<PropertyBean> getUiInspectorContext(@NotNull JTree tree, @Nullable Object value, int row) {
+      List<PropertyBean> result = new ArrayList<>();
+
+      Object userObject = value != null ? ((DefaultMutableTreeNode)value).getUserObject() : null;
+      if (userObject instanceof Group group) {
+        result.add(new PropertyBean("Action ID", group.getId(), true));
+      }
+      else if (userObject instanceof String) {
+        result.add(new PropertyBean("Action ID", userObject, true));
+      }
+      return result;
     }
 
     @NlsActions.ActionText

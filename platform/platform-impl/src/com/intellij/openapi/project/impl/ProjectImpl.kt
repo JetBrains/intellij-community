@@ -164,7 +164,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
           val frame = WindowManager.getInstance().getFrame(this) ?: return@Runnable
           val title = FrameTitleBuilder.getInstance().getProjectTitle(this) ?: return@Runnable
           frame.title = title
-        }, ModalityState.NON_MODAL, disposed)
+        }, ModalityState.nonModal(), disposed)
       }
     }
   }

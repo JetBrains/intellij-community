@@ -161,6 +161,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/abstract/mustBeInitializedOrBeAbstractInSealedClass.kt");
         }
 
+        @TestMetadata("mustBeInitializedOrFinalOrAbstract.kt")
+        public void testMustBeInitializedOrFinalOrAbstract() throws Exception {
+            runTest("testData/quickfix/abstract/mustBeInitializedOrFinalOrAbstract.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrFinalOrAbstractWarning.kt")
+        public void testMustBeInitializedOrFinalOrAbstractWarning() throws Exception {
+            runTest("testData/quickfix/abstract/mustBeInitializedOrFinalOrAbstractWarning.kt");
+        }
+
         @TestMetadata("nonAbstractFunctionWithNoBody.kt")
         public void testNonAbstractFunctionWithNoBody() throws Exception {
             runTest("testData/quickfix/abstract/nonAbstractFunctionWithNoBody.kt");
@@ -1138,6 +1148,36 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("memberPropertyWithDelegateRuntime.kt")
         public void testMemberPropertyWithDelegateRuntime() throws Exception {
             runTest("testData/quickfix/addInitializer/memberPropertyWithDelegateRuntime.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrBeAbstract.kt")
+        public void testMustBeInitializedOrBeAbstract() throws Exception {
+            runTest("testData/quickfix/addInitializer/mustBeInitializedOrBeAbstract.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrBeFinal.kt")
+        public void testMustBeInitializedOrBeFinal() throws Exception {
+            runTest("testData/quickfix/addInitializer/mustBeInitializedOrBeFinal.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrBeFinalWarning.kt")
+        public void testMustBeInitializedOrBeFinalWarning() throws Exception {
+            runTest("testData/quickfix/addInitializer/mustBeInitializedOrBeFinalWarning.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrFinalOrAbstract.kt")
+        public void testMustBeInitializedOrFinalOrAbstract() throws Exception {
+            runTest("testData/quickfix/addInitializer/mustBeInitializedOrFinalOrAbstract.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrFinalOrAbstractWarning.kt")
+        public void testMustBeInitializedOrFinalOrAbstractWarning() throws Exception {
+            runTest("testData/quickfix/addInitializer/mustBeInitializedOrFinalOrAbstractWarning.kt");
+        }
+
+        @TestMetadata("mustBeInitializedWarning.kt")
+        public void testMustBeInitializedWarning() throws Exception {
+            runTest("testData/quickfix/addInitializer/mustBeInitializedWarning.kt");
         }
 
         @TestMetadata("topLevelExtensionProperty.kt")
@@ -8652,6 +8692,39 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/final")
+    public static class Final extends AbstractK1QuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("mustBeInitializedOrBeFinal.kt")
+        public void testMustBeInitializedOrBeFinal() throws Exception {
+            runTest("testData/quickfix/final/mustBeInitializedOrBeFinal.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrBeFinalOverride.kt")
+        public void testMustBeInitializedOrBeFinalOverride() throws Exception {
+            runTest("testData/quickfix/final/mustBeInitializedOrBeFinalOverride.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrBeFinalWarning.kt")
+        public void testMustBeInitializedOrBeFinalWarning() throws Exception {
+            runTest("testData/quickfix/final/mustBeInitializedOrBeFinalWarning.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrFinalOrAbstract.kt")
+        public void testMustBeInitializedOrFinalOrAbstract() throws Exception {
+            runTest("testData/quickfix/final/mustBeInitializedOrFinalOrAbstract.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrFinalOrAbstractWarning.kt")
+        public void testMustBeInitializedOrFinalOrAbstractWarning() throws Exception {
+            runTest("testData/quickfix/final/mustBeInitializedOrFinalOrAbstractWarning.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/foldTryCatch")
     public static class FoldTryCatch extends AbstractK1QuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -11903,6 +11976,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("returnWithoutElse3.kt")
         public void testReturnWithoutElse3() throws Exception {
             runTest("testData/quickfix/redundantIf/returnWithoutElse3.kt");
+        }
+
+        @TestMetadata("returnWithoutElse4.kt")
+        public void testReturnWithoutElse4() throws Exception {
+            runTest("testData/quickfix/redundantIf/returnWithoutElse4.kt");
         }
 
         @TestMetadata("simple.kt")

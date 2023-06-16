@@ -382,7 +382,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setUI(uiClassName == null ?
             BasicButtonUI.createUI(this) :
             UIManager.getUI(this));
-      setMargin(JBUI.insets(0, 8, 0, 5));
     }
 
     @ApiStatus.Experimental

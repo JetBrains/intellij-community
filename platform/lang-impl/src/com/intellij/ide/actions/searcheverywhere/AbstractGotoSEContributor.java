@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -53,7 +53,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class AbstractGotoSEContributor implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting, SearchFieldActionsContributor {
+public abstract class AbstractGotoSEContributor implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
+                                                           SearchFieldActionsContributor,
+                                                           SearchEverywhereExtendedInfoProvider {
   protected static final Pattern ourPatternToDetectAnonymousClasses = Pattern.compile("([.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
   private static final Key<Map<String, String>> SE_SELECTED_SCOPES = Key.create("SE_SELECTED_SCOPES");
@@ -357,7 +359,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
           Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
           return new Pair<>(psiElement, extNavigatable);
         })
-        .finishOnUiThread(ModalityState.NON_MODAL,
+        .finishOnUiThread(ModalityState.nonModal(),
                           pair -> {
                             Navigatable extNavigatable = pair.second;
                             PsiElement psiElement = pair.first;

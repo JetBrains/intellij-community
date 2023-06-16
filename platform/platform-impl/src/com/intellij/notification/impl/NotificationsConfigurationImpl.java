@@ -20,7 +20,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   private static final Logger LOG = Logger.getInstance(NotificationsConfigurationImpl.class);
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";
   private static final String SYSTEM_NOTIFICATIONS_ATTRIBUTE = "systemNotifications";
-  private static final String NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED_ATTRIBUTE = "notificationAnnouncingCustomized";
+  private static final String NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE = "notificationsAnnouncingMode";
 
   private static final Comparator<NotificationSettings> NOTIFICATION_SETTINGS_COMPARATOR =
     (o1, o2) -> o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
@@ -32,9 +32,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   public boolean SHOW_BALLOONS = true;
   public boolean SYSTEM_NOTIFICATIONS = true;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private NotificationAnnouncingMode NOTIFICATION_ANNOUNCING_MODE = NotificationAnnouncingMode.HIGH;
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private boolean NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED = false;
+  private NotificationAnnouncingMode NOTIFICATION_ANNOUNCING_MODE;
 
   public static NotificationsConfigurationImpl getInstanceImpl() {
     return (NotificationsConfigurationImpl)getNotificationsConfiguration();
@@ -140,12 +138,13 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
 
   @Override
   public @NotNull NotificationAnnouncingMode getNotificationAnnouncingMode() {
-    return NOTIFICATION_ANNOUNCING_MODE;
+    if (NOTIFICATION_ANNOUNCING_MODE != null) return NOTIFICATION_ANNOUNCING_MODE;
+    else if (SystemInfo.isWindows) return NotificationAnnouncingMode.NONE;
+    else return NotificationAnnouncingMode.MEDIUM;
   }
 
   @Override
   public void setNotificationAnnouncingMode(@NotNull NotificationAnnouncingMode mode) {
-    NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED = true;
     NOTIFICATION_ANNOUNCING_MODE = mode;
   }
 
@@ -198,11 +197,9 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
       element.setAttribute(SYSTEM_NOTIFICATIONS_ATTRIBUTE, "false");
     }
 
-    if (NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED) {
-      element.setAttribute(NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED_ATTRIBUTE, "true");
+    if (NOTIFICATION_ANNOUNCING_MODE != null) {
+      element.setAttribute(NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE, NOTIFICATION_ANNOUNCING_MODE.getStringValue());
     }
-
-    element.setAttribute(NotificationAnnouncingMode.ATTRIBUTE, NOTIFICATION_ANNOUNCING_MODE.getStringValue());
 
     return element;
   }
@@ -230,24 +227,9 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
       SYSTEM_NOTIFICATIONS = false;
     }
 
-    if ("true".equals(state.getAttributeValue(NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED_ATTRIBUTE))) {
-      NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED = true;
-    }
-
-    NotificationAnnouncingMode announcingMode = NotificationAnnouncingMode.get(state.getAttributeValue(NotificationAnnouncingMode.ATTRIBUTE));
-    if (announcingMode != null && NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED) {
+    NotificationAnnouncingMode announcingMode = NotificationAnnouncingMode.get(state.getAttributeValue(NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE));
+    if (announcingMode != null) {
       NOTIFICATION_ANNOUNCING_MODE = announcingMode;
-    } else initDefaultAnnouncingMode();
-  }
-
-  @Override
-  public void noStateLoaded() {
-    initDefaultAnnouncingMode();
-  }
-
-  private void initDefaultAnnouncingMode() {
-    NOTIFICATION_ANNOUNCING_MODE_CUSTOMIZED = false;
-    if (SystemInfo.isWindows) NOTIFICATION_ANNOUNCING_MODE = NotificationAnnouncingMode.NONE;
-    else NOTIFICATION_ANNOUNCING_MODE = NotificationAnnouncingMode.MEDIUM;
+    }
   }
 }

@@ -34,6 +34,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
          static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
 
+  private static final String IDEA_APPLICATION_INFO_DEFAULT_DARK_LAF = "idea.application.info.default.dark.laf";
+  private static final String IDEA_APPLICATION_INFO_DEFAULT_CLASSIC_DARK_LAF = "idea.application.default.classic.dark.laf";
+  private static final String IDEA_APPLICATION_INFO_DEFAULT_LIGHT_LAF = "idea.application.info.default.light.laf";
+  private static final String IDEA_APPLICATION_INFO_DEFAULT_CLASSIC_LIGHT_LAF = "idea.application.info.default.classic.light.laf";
+
   private static volatile ApplicationInfoImpl instance;
 
   private String myCodeName;
@@ -338,6 +343,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
+    requireNonNull(mySvgIconUrl, "Missing attribute: //icon@svg");
+    requireNonNull(mySmallSvgIconUrl, "Missing attribute: //icon@svg-small");
+
     overrideFromProperties();
 
     essentialPluginsIds.sort(null);
@@ -510,16 +518,16 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public @Nullable String getApplicationSvgIconUrl() {
+  public @NotNull String getApplicationSvgIconUrl() {
     return isEAP() && mySvgEapIconUrl != null ? mySvgEapIconUrl : mySvgIconUrl;
   }
 
   @Override
-  public @Nullable String getSmallApplicationSvgIconUrl() {
+  public @NotNull String getSmallApplicationSvgIconUrl() {
     return getSmallApplicationSvgIconUrl(isEAP());
   }
 
-  public @Nullable String getSmallApplicationSvgIconUrl(boolean isEap) {
+  public @NotNull String getSmallApplicationSvgIconUrl(boolean isEap) {
     return isEap && mySmallSvgEapIconUrl != null ? mySmallSvgEapIconUrl : mySmallSvgIconUrl;
   }
 
@@ -853,21 +861,37 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public @Nullable String getDefaultLightLaf() {
+    String override = System.getProperty(IDEA_APPLICATION_INFO_DEFAULT_LIGHT_LAF);
+    if (override != null) {
+      return override;
+    }
     return myDefaultLightLaf;
   }
 
   @Override
   public @Nullable String getDefaultClassicLightLaf() {
+    String override = System.getProperty(IDEA_APPLICATION_INFO_DEFAULT_CLASSIC_LIGHT_LAF);
+    if (override != null) {
+      return override;
+    }
     return myDefaultClassicLightLaf;
   }
 
   @Override
   public @Nullable String getDefaultDarkLaf() {
+    String override = System.getProperty(IDEA_APPLICATION_INFO_DEFAULT_DARK_LAF);
+    if (override != null) {
+      return override;
+    }
     return myDefaultDarkLaf;
   }
 
   @Override
   public @Nullable String getDefaultClassicDarkLaf() {
+    String override = System.getProperty(IDEA_APPLICATION_INFO_DEFAULT_CLASSIC_DARK_LAF);
+    if (override != null) {
+      return override;
+    }
     return myDefaultClassicDarkLaf;
   }
 

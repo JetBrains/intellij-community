@@ -58,6 +58,7 @@ import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -690,6 +691,7 @@ open class EditorsSplitters internal constructor(
 
   fun containsWindow(window: EditorWindow): Boolean = windows.contains(window)
 
+  @ApiStatus.ScheduledForRemoval
   @Suppress("DEPRECATION")
   @Deprecated("Use {@link #getAllComposites()}")
   fun getEditorComposites(): List<EditorWithProviderComposite> {

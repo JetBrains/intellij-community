@@ -600,9 +600,10 @@ object CommunityLibraryLicenses {
                    url = "https://maven.apache.org/ref/3.8.6/maven-core/")
       .apache("https://github.com/apache/maven/blob/master/LICENSE"),
 
-    LibraryLicense(name = "Maven indexer", libraryName="apache.maven.indexer.core:6.2.2",
+    LibraryLicense(name = "Maven indexer", libraryName="jetbrains.idea.maven.indexer.api.rt",
                    url = "https://maven.apache.org/maven-indexer/indexer-core/index.html")
       .apache("https://github.com/apache/maven-indexer"),
+
 
     LibraryLicense(name = "Maven Resolver Provider",
                    url = "https://maven.apache.org/ref/3.6.1/maven-resolver-provider/", libraryName = "maven-resolver-provider",

@@ -694,14 +694,16 @@ private class JUnitMalformedSignatureVisitor(
       )
       holder.registerProblem(annotation.navigationElement, message)
     } else {
-      var type = passedParameter.type
-      if (type is PsiClassType) type = type.rawType()
-      if (type is PsiArrayType
-          || type.equalsToText(JAVA_LANG_STRING)
-          || type.equalsToText(JAVA_UTIL_LIST)
-          || type.equalsToText(JAVA_UTIL_SET)
-          || type.equalsToText(JAVA_UTIL_MAP)
-      ) return
+      val type = passedParameter.type
+      if (type is PsiClassType) {
+        val psiClass = type.resolve() ?: return
+        if (validEmptySource.any { it == psiClass.qualifiedName }) return
+        val constructors = psiClass.constructors.mapNotNull { it.toUElementOfType<UMethod>() }
+        val isCollectionOrMap = InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_COLLECTION)
+                                || InheritanceUtil.isInheritor(psiClass, JAVA_UTIL_MAP)
+        if (isCollectionOrMap && constructors.any { it.visibility == UastVisibility.PUBLIC && it.isNoArg() }) return
+      }
+      if (type is PsiArrayType) return
       val message = JvmAnalysisBundle.message(
         "jvm.inspections.junit.malformed.param.empty.source.unsupported.descriptor",
         annotation.shortName, type.presentableText
@@ -1228,6 +1230,18 @@ private class JUnitMalformedSignatureVisitor(
       "org.junit.internal.runners.JUnit4ClassRunner",
       "org.junit.experimental.categories.Categories",
       "org.junit.experimental.categories.Enclosed"
+    )
+
+    private val validEmptySource = listOf(
+      JAVA_LANG_STRING,
+      JAVA_UTIL_LIST,
+      JAVA_UTIL_SET,
+      JAVA_UTIL_SORTED_SET,
+      JAVA_UTIL_NAVIGABLE_SET,
+      JAVA_UTIL_SORTED_MAP,
+      JAVA_UTIL_NAVIGABLE_MAP,
+      JAVA_UTIL_MAP,
+      JAVA_UTIL_COLLECTION
     )
 
     val visibilityToModifier = mapOf(

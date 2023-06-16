@@ -277,7 +277,7 @@ public class GenerationNode extends UserDataHolderBase {
       }
       XmlTag tag1 = hasChildren ? expandEmptyTagIfNecessary(tag) : tag;
       setAttributeValues(tag1, attributes, callback, zenCodingGenerator.isHtml(callback));
-      token.setTemplateText(tag1.getContainingFile().getText(), callback);
+      token.setTemplateText(tag1.getContainingFile().getText(), callback.getFile());
     }
     template = zenCodingGenerator.generateTemplate(token, hasChildren, callback.getContext());
     removeVariablesWhichHasNoSegment(template);

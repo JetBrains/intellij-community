@@ -480,6 +480,19 @@
       <action id="addQuickAction.Git.History" class="git4idea.ui.toolbar.HistoryQuickAction" icon="AllIcons.Vcs.History"/>
       <action id="addQuickAction.Git.Rollback" class="git4idea.ui.toolbar.RollbackQuickAction" icon="AllIcons.Diff.Revert"/>
     </group>
+
+    <group id="Git.Hosting.Open.In.Browser.Group" popup="false">
+      <add-to-group group-id="RevealGroup"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
+      <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
+      <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
+      <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="last"/>
+    </group>
+
+    <group id="Git.Hosting.Copy.Link.Group" popup="false">
+      <add-to-group group-id="CopyFileReference"/>
+      <add-to-group group-id="Copy.Paste.Special" relative-to-action="CopyReference" anchor="after"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

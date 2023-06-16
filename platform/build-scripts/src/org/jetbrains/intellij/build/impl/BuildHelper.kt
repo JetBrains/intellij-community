@@ -1,7 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceNegatedIsEmptyWithIsNotEmpty", "LiftReturnOrAssignment",
-               "BlockingMethodInNonBlockingContext", "RAW_RUN_BLOCKING")
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
@@ -146,7 +143,7 @@ suspend fun runApplicationStarter(context: BuildContext,
   }
   disableCompatibleIgnoredPlugins(context = context, configDir = tempDir.resolve("config"), explicitlyEnabledPlugins = additionalPluginIds)
   runIdea(context = context,
-          mainClass = "com.intellij.idea.Main",
+          mainClass = context.productProperties.mainClassName,
           args = arguments,
           jvmArgs = jvmArgs,
           classPath = effectiveIdeClasspath.toList(),

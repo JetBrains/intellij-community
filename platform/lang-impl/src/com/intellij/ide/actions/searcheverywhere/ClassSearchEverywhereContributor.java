@@ -44,7 +44,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoKt.createPsiExtendedInfo;
+import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplKt.createPsiExtendedInfo;
 
 /**
  * @author Konstantin Bulenkov

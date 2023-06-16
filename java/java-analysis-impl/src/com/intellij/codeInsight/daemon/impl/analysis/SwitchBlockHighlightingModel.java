@@ -13,8 +13,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -1147,10 +1145,10 @@ public class SwitchBlockHighlightingModel {
     private static Collection<PsiClass> getPermittedClasses(@NotNull PsiClass psiClass) {
       PsiReferenceList permitsList = psiClass.getPermitsList();
       if (permitsList == null) {
-        TreeSet<PsiClass> result = new TreeSet<>(Comparator.comparing(aClass -> aClass.getName()));
-        GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiClass.getContainingFile());
-        result.addAll(DirectClassInheritorsSearch.search(psiClass, fileScope).findAll());
-        return result;
+        return SyntaxTraverser.psiTraverser(psiClass.getContainingFile())
+          .filter(PsiClass.class)
+          .filter(cls -> cls.isInheritor(psiClass, false))
+          .toList();
       }
       return Stream.of(permitsList.getReferencedTypes()).map(type -> type.resolve()).filter(Objects::nonNull)
         .collect(Collectors.toCollection(LinkedHashSet::new));

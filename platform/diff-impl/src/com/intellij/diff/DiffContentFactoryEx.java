@@ -73,7 +73,7 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
     /**
      * @deprecated Prefer using {@link #buildFromBytes(byte[])}.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     default @NotNull DocumentContent buildFromBytes(byte @NotNull [] content, @NotNull Charset charset) {
       withDefaultCharset(charset);
       return buildFromBytes(content);

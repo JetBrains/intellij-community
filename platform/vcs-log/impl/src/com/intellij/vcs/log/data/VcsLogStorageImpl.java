@@ -12,11 +12,13 @@ import com.intellij.util.Function;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.index.MyCommitIdKeyDescriptor;
+import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StorageId;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +40,6 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   private static final @NotNull @NonNls String HASHES_STORAGE = "hashes";
   private static final @NotNull @NonNls String REFS_STORAGE = "refs";
   private static final @NotNull @NonNls String STORAGE = "storage";
-  public static final @NotNull VcsLogStorage EMPTY = new EmptyLogStorage();
 
   public static final int VERSION = 8;
   public static final int NO_INDEX = -1;
@@ -204,38 +205,46 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     if (myDisposed) throw new ProcessCanceledException();
   }
 
-  private static class EmptyLogStorage implements VcsLogStorage {
-    @Override
-    public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
-      return 0;
+  private static class MyCommitIdKeyDescriptor implements KeyDescriptor<CommitId> {
+    private final @NotNull List<? extends VirtualFile> myRoots;
+    private final @NotNull Object2IntMap<VirtualFile> myRootsReversed;
+
+    MyCommitIdKeyDescriptor(@NotNull List<? extends VirtualFile> roots) {
+      myRoots = roots;
+
+      myRootsReversed = new Object2IntOpenHashMap<>();
+      for (int i = 0; i < roots.size(); i++) {
+        myRootsReversed.put(roots.get(i), i);
+      }
     }
 
     @Override
-    public @NotNull CommitId getCommitId(int commitIndex) {
-      throw new UnsupportedOperationException("Illegal access to empty hash map by index " + commitIndex);
+    public void save(@NotNull DataOutput out, CommitId value) throws IOException {
+      ((HashImpl)value.getHash()).write(out);
+      out.writeInt(myRootsReversed.getInt(value.getRoot()));
     }
 
     @Override
-    public boolean containsCommit(@NotNull CommitId id) {
-      return false;
+    public CommitId read(@NotNull DataInput in) throws IOException {
+      Hash hash = HashImpl.read(in);
+      VirtualFile root = myRoots.get(in.readInt());
+      if (root == null) return null;
+      return new CommitId(hash, root);
     }
 
     @Override
-    public void iterateCommits(@NotNull Predicate<? super CommitId> consumer) {
+    public int getHashCode(CommitId value) {
+      int result = value.getHash().hashCode();
+      result = 31 * result + myRootsReversed.getInt(value);
+      return result;
     }
 
     @Override
-    public int getRefIndex(@NotNull VcsRef ref) {
-      return 0;
-    }
-
-    @Override
-    public @Nullable VcsRef getVcsRef(int refIndex) {
-      throw new UnsupportedOperationException("Illegal access to empty ref map by index " + refIndex);
-    }
-
-    @Override
-    public void flush() {
+    public boolean isEqual(@Nullable CommitId val1, @Nullable CommitId val2) {
+      if (val1 == val2) return true;
+      if (val1 == null || val2 == null) return false;
+      return val1.getHash().equals(val2.getHash()) &&
+             myRootsReversed.getInt(val1.getRoot()) == myRootsReversed.getInt(val2.getRoot());
     }
   }
 

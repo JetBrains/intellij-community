@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -35,6 +36,8 @@ public abstract class PostprocessReformattingAspect implements PomModelAspect {
   public abstract <T> T postponeFormattingInside(@NotNull Computable<T> computable);
 
   public abstract void forcePostprocessFormatInside(@NotNull PsiFile psiFile, @NotNull Runnable runnable);
+  
+  public abstract void forcePostprocessFormat(@NotNull PsiFile psiFile, @NotNull Disposable disposable);
 
   @Override
   public abstract void update(@NotNull PomModelEvent event);

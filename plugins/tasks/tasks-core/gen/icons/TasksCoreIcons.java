@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -19,7 +19,7 @@ public final class TasksCoreIcons {
   /** 16x16 */ public static final @NotNull Icon Bugzilla = load("icons/bugzilla.svg", -1716103067, 0);
   /** 13x13 */ public static final @NotNull Icon Clock = load("icons/clock.svg", 724100218, 2);
   /** 16x16 */ public static final @NotNull Icon Fogbugz = load("icons/fogbugz.svg", -719146675, 0);
-  /** 16x16 */ public static final @NotNull Icon Gitlab = load("icons/gitlab.svg", 2030247168, 0);
+  /** 16x16 */ public static final @NotNull Icon Gitlab = load("icons/gitlab.svg", 1966308031, 0);
   /** 16x16 */ public static final @NotNull Icon Jira = load("icons/jira.svg", -617052944, 0);
   /** 16x16 */ public static final @NotNull Icon Lighthouse = load("icons/lighthouse.svg", 1132138968, 0);
   /** 16x16 */ public static final @NotNull Icon Mantis = load("icons/mantis.svg", 92302063, 0);

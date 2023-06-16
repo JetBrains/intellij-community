@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -622,7 +623,8 @@ public final class RunDashboardServiceViewContributor
     }
   }
 
-  private static class RunDashboardContributorViewDescriptor extends SimpleServiceViewDescriptor {
+  private static class RunDashboardContributorViewDescriptor extends SimpleServiceViewDescriptor
+    implements ServiceViewToolWindowDescriptor {
     private final Project myProject;
 
     RunDashboardContributorViewDescriptor(@NotNull Project project) {
@@ -648,6 +650,27 @@ public final class RunDashboardServiceViewContributor
     @Override
     public @Nullable JComponent getContentComponent() {
       return ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myProject)).getEmptyContent();
+    }
+
+    @Override
+    public @NotNull String getToolWindowId() {
+      return getId();
+    }
+
+    @Override
+    public @NotNull Icon getToolWindowIcon() {
+      return AllIcons.Toolwindows.ToolWindowRun;
+    }
+
+    @Override
+    public @NotNull String getStripeTitle() {
+      @NlsSafe String title = getToolWindowId();
+      return title;
+    }
+
+    @Override
+    public boolean isExclusionAllowed() {
+      return false;
     }
   }
 }

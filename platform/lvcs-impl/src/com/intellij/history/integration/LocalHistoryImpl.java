@@ -86,7 +86,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
         }
       }
     });
-    myFlusherTask = FlushingDaemon.everyFiveSeconds(() -> {
+    myFlusherTask = FlushingDaemon.runPeriodically(() -> {
       myChangeList.force();
     });
     isInitialized.set(true);

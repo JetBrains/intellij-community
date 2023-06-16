@@ -4,14 +4,15 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.options.OptPane
-import com.intellij.codeInspection.options.OptPane.pane
-import com.intellij.codeInspection.options.OptPane.stringList
+import com.intellij.codeInspection.options.OptPane.*
 import com.intellij.codeInspection.options.OptionController
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import org.jdom.Element
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -31,18 +32,22 @@ import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
+import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
+import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.CallResolver
 import org.jetbrains.kotlin.resolve.calls.context.BasicCallResolutionContext
 import org.jetbrains.kotlin.resolve.calls.context.CheckArgumentTypesMode
@@ -74,6 +79,9 @@ class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtExpression>
     @Suppress("MemberVisibilityCanBePrivate")
     var fqNameStrings = NotPropertiesService.DEFAULT.toMutableList()
 
+    @Suppress("MemberVisibilityCanBePrivate")
+    var reportNonTrivialAccessors = false
+
     override fun readSettings(node: Element) {
         super.readSettings(node)
         fqNameList.clear()
@@ -86,7 +94,10 @@ class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtExpression>
         super.writeSettings(node)
     }
 
-    override fun getOptionsPane(): OptPane = pane(stringList("fqNameStrings", KotlinBundle.message("excluded.methods")))
+    override fun getOptionsPane(): OptPane = pane(
+        checkbox("reportNonTrivialAccessors", KotlinBundle.message("use.property.access.syntax.option.report.non.trivial.accessors")),
+        stringList("fqNameStrings", KotlinBundle.message("excluded.methods")),
+    )
 
     override fun getOptionController(): OptionController {
         return super.getOptionController()
@@ -97,8 +108,17 @@ class UsePropertyAccessSyntaxInspection : IntentionBasedInspection<KtExpression>
             }
     }
 
-    override fun inspectionTarget(element: KtExpression): PsiElement? =
-        element.callOrReferenceOrNull(KtCallExpression::getCalleeExpression, KtCallableReferenceExpression::getCallableReference)
+    override fun inspectionTarget(element: KtExpression): PsiElement? {
+        if (isUnitTestMode()) {
+            val reportNonTrivialAccessors = element.containingKtFile
+                .findDescendantOfType<PsiComment> { it.text.startsWith("// REPORT_NON_TRIVIAL_ACCESSORS") }
+                ?.let { it.text.removePrefix("// REPORT_NON_TRIVIAL_ACCESSORS:").trim().toBoolean() }
+            if (reportNonTrivialAccessors != null) {
+                this.reportNonTrivialAccessors = reportNonTrivialAccessors
+            }
+        }
+        return element.callOrReferenceOrNull(KtCallExpression::getCalleeExpression, KtCallableReferenceExpression::getCallableReference)
+    }
 
     override fun inspectionProblemText(element: KtExpression): String? =
         element.callOrReferenceOrNull(
@@ -186,9 +206,10 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
     }
 
     fun detectPropertyNameToUseForCall(callExpression: KtCallExpression): Name? {
-        if (callExpression.getQualifiedExpressionForSelector()
-                ?.receiverExpression is KtSuperExpression
-        ) return null // cannot call extensions on "super"
+        val qualifiedOrCall = callExpression.getQualifiedExpressionForSelectorOrThis()
+
+        val receiver = (qualifiedOrCall as? KtQualifiedExpression)?.receiverExpression
+        if (receiver is KtSuperExpression) return null // cannot call extensions on "super"
 
         val callee = callExpression.calleeExpression as? KtNameReferenceExpression ?: return null
         val methodName = callee.getReferencedName()
@@ -196,14 +217,20 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
 
         val resolutionFacade = callExpression.getResolutionFacade()
         val bindingContext = callExpression.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL_FOR_COMPLETION)
+
+        val isSetUsage = callExpression.valueArguments.size == 1
+        val isBodyExpression = (qualifiedOrCall.parent as? KtDeclarationWithBody)?.bodyExpression == qualifiedOrCall
+        if (isSetUsage && !isBodyExpression && qualifiedOrCall.isUsedAsExpression(bindingContext)) return null
+
         val resolvedCall = callExpression.getResolvedCall(bindingContext) ?: return null
         if (!resolvedCall.isReallySuccess()) return null
-
         val function = resolvedCall.resultingDescriptor as? FunctionDescriptor ?: return null
 
-        val notProperties =
-            (inspection as? UsePropertyAccessSyntaxInspection)?.fqNameList?.toSet() ?: NotPropertiesService.getNotProperties(callExpression)
+        val inspection = this.inspection as? UsePropertyAccessSyntaxInspection
+        val notProperties = inspection?.fqNameList?.toSet() ?: NotPropertiesService.getNotProperties(callExpression)
         if (function.shouldNotConvertToProperty(notProperties)) return null
+
+        if (inspection?.reportNonTrivialAccessors != true && function.hasMultipleStatements()) return null
 
         val resolutionScope = callExpression.getResolutionScope(bindingContext, resolutionFacade)
 
@@ -213,8 +240,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         if (KtTokens.KEYWORDS.types.any { it.toString() == property.name.asString() }) return null
 
         val dataFlowInfo = bindingContext.getDataFlowInfoBefore(callee)
-        val qualifiedExpression = callExpression.getQualifiedExpressionForSelectorOrThis()
-        val expectedType = bindingContext[BindingContext.EXPECTED_EXPRESSION_TYPE, qualifiedExpression] ?: TypeUtils.NO_EXPECTED_TYPE
+        val expectedType = bindingContext[BindingContext.EXPECTED_EXPRESSION_TYPE, qualifiedOrCall] ?: TypeUtils.NO_EXPECTED_TYPE
 
         if (!checkWillResolveToProperty(
                 resolvedCall,
@@ -245,9 +271,9 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         }
 
         if (property.type != function.valueParameters.single().type) {
-            val qualifiedExpressionCopy = qualifiedExpression.copied()
+            val qualifiedOrCallCopy = qualifiedOrCall.copied()
             val callExpressionCopy =
-                ((qualifiedExpressionCopy as? KtQualifiedExpression)?.selectorExpression ?: qualifiedExpressionCopy) as KtCallExpression
+                ((qualifiedOrCallCopy as? KtQualifiedExpression)?.selectorExpression ?: qualifiedOrCallCopy) as KtCallExpression
             val newExpression = applyTo(callExpressionCopy, property.name, reformat = false)
             val bindingTrace = DelegatingBindingTrace(bindingContext, "Temporary trace")
             val newBindingContext = newExpression.analyzeInContext(
@@ -267,6 +293,13 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
 
     private fun String.isSuitableAsPropertyAccessor(): Boolean =
         canBePropertyAccessor(this) && commonGetterLikePrefixes.none { prefix -> this.contains(prefix) }
+
+    private fun FunctionDescriptor.hasMultipleStatements(): Boolean =
+        when (val declaration = DescriptorToSourceUtils.descriptorToDeclaration(this)) {
+            is KtNamedFunction -> declaration.bodyBlockExpression?.statements.orEmpty().size > 1
+            is PsiMethod -> declaration.body?.statements.orEmpty().size > 1
+            else -> false
+        }
 
     private fun checkWillResolveToProperty(
         resolvedCall: ResolvedCall<out CallableDescriptor>,
@@ -320,7 +353,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         val call = getQualifiedExpressionForSelector() ?: this
         val callParent = call.parent
         if (callParent is KtDeclarationWithBody && call == callParent.bodyExpression) {
-            ConvertToBlockBodyIntention.convert(callParent, true)
+            ConvertToBlockBodyIntention.Holder.convert(callParent, true)
             val firstStatement = callParent.bodyBlockExpression?.statements?.first()
             return (firstStatement as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression
                 ?: firstStatement as? KtCallExpression

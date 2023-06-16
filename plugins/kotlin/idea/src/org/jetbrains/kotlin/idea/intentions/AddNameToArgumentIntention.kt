@@ -26,7 +26,7 @@ class AddNameToArgumentIntention : SelfTargetingIntention<KtValueArgument>(
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtValueArgument, caretOffset: Int): Boolean {
         val expression = element.getArgumentExpression() ?: return false
-        val name = detectNameToAdd(
+        val name = Holder.detectNameToAdd(
             element,
             shouldBeLastUnnamed = !element.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
         ) ?: return false
@@ -46,10 +46,10 @@ class AddNameToArgumentIntention : SelfTargetingIntention<KtValueArgument>(
             super.skipProcessingFurtherElementsAfter(element)
 
     override fun applyTo(element: KtValueArgument, editor: Editor?) {
-        apply(element, givenResolvedCall = null)
+        Holder.apply(element, givenResolvedCall = null)
     }
 
-    companion object {
+    object Holder {
         fun apply(element: KtValueArgument, givenResolvedCall: ResolvedCall<*>?) {
             val name = detectNameToAdd(element, shouldBeLastUnnamed = false, givenResolvedCall = givenResolvedCall) ?: return
             addArgumentName(element, name)

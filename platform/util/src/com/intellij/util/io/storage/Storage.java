@@ -28,7 +28,7 @@ public class Storage extends AbstractStorage {
   }
 
   public void deleteRecord(int record) throws IOException {
-    assert record > 0;
+    assert record > 0 : "recordId must be > 0";
     withWriteLock(() -> {
       doDeleteRecord(record);
     });

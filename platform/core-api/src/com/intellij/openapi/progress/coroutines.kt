@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
+import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
@@ -61,7 +62,7 @@ suspend fun checkCancelled() {
  * ### EDT
  *
  * This method is **forbidden on EDT** because it does not pump the event queue.
- * Switch to a BGT, or use [withModalProgressBlocking][com.intellij.openapi.progress.withModalProgressBlocking].
+ * Switch to a BGT, or use [runWithModalProgressBlocking][com.intellij.openapi.progress.runWithModalProgressBlocking].
  *
  * ### Non-cancellable `runBlocking`
  *
@@ -196,6 +197,47 @@ suspend fun <T> blockingContext(action: () -> T): T {
   return blockingContext(coroutineContext, action)
 }
 
+/**
+ * Executes the given [action] in a blocking context and suspends the coroutine until all the children computations,
+ * spawned during the execution of [action], are completed.
+ *
+ * This function is a combination of [blockingContext] and [coroutineScope], providing both their functionalities.
+ * It ensures proper tracking of children computations that are executed in different environments,
+ * such as different threads (like [com.intellij.openapi.application.Application.invokeLater])
+ * or after a certain period of time (like [com.intellij.util.Alarm.addRequest]).
+ *
+ * If any child throws an exception that is not [CancellationException] or [ProcessCanceledException],
+ * then [blockingContextScope] cancels the whole tree of spawned children
+ * and resumes with this exception when every remaining child completes exceptionally.
+ *
+ * Example:
+ * ```
+ * withContext(Dispatchers.EDT) {
+ *   print("A")
+ *   blockingContextScope {
+ *     print("B")
+ *     executeOnPooledThread {
+ *       print("C")
+ *     }
+ *     print("D")
+ *   }
+ *   print("E")
+ * }
+ * ```
+ * The execution of the snippet above prints `"ABCDE"` or `"ABDCE"`, but never `"ABDEC"`.
+ *
+ * @param action The function to execute in the blocking context.
+ * @return The result of [action] after all its children are completed.
+ *
+ * @throws Exception if any of the children computations throw an exception.
+ *
+ * @see [blockingContext]
+ * @see [coroutineScope]
+ */
+suspend fun <T> blockingContextScope(action: () -> T): T = coroutineScope {
+  blockingContext(coroutineContext + BlockingJob(coroutineContext.job), action)
+}
+
 @Internal
 fun <T> blockingContext(currentContext: CoroutineContext, action: () -> T): T {
   val context = currentContext.minusKey(ContinuationInterceptor)
@@ -305,7 +347,7 @@ private fun <T> contextToIndicator(ctx: CoroutineContext, action: () -> T): T {
 
 private fun CoroutineContext.createIndicator(): ProgressIndicator {
   val contextModality = contextModality()
-                        ?: ModalityState.NON_MODAL
+                        ?: ModalityState.nonModal()
   if (progressReporter != null) {
     LOG.error(IllegalStateException(
       "Current context has `ProgressReporter`. " +
@@ -368,7 +410,7 @@ private fun assertBackgroundThreadOrWriteAction() {
   }
   LOG.error(IllegalStateException(
     "This method is forbidden on EDT because it does not pump the event queue. " +
-    "Switch to a BGT, or use com.intellij.openapi.progress.TasksKt.withModalProgressBlocking. "
+    "Switch to a BGT, or use com.intellij.openapi.progress.TasksKt.runWithModalProgressBlocking. "
   ))
 }
 

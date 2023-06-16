@@ -29,7 +29,7 @@ fun neverEndingStory(): Nothing {
 fun withRootJob(action: (rootJob: Job) -> Unit): Job {
   @OptIn(DelicateCoroutinesApi::class)
   return GlobalScope.async {
-    blockingContext {
+    blockingContextScope {
       val currentJob = requireNotNull(Cancellation.currentJob())
       action(currentJob)
     }

@@ -10,18 +10,21 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Functions;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -41,7 +44,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static com.intellij.execution.wsl.WSLUtil.LOG;
-import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
+import static com.intellij.util.ObjectUtils.coalesce;
 
 /**
  * Represents a single linux distribution in WSL, installed after <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Fall Creators Update</a>
@@ -65,8 +68,10 @@ import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
  */
 public class WSLDistribution implements AbstractWslDistribution {
   public static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
+  private static final String DEFAULT_WSL_IP = "127.0.0.1";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
+  private static final String DEFAULT_SHELL = "/bin/sh";
   static final int DEFAULT_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 20_000);
   private static final String SHELL_PARAMETER = "$SHELL";
   public static final String WSL_EXE = "wsl.exe";
@@ -85,7 +90,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   private final @Nullable Path myExecutablePath;
   private @Nullable Integer myVersion;
 
-  private final LazyInitializer.LazyValue<IpOrException> myHostIp = new LazyInitializer.LazyValue<>(() -> {
+  private final SafeNullableLazyValue<IpOrException> myLazyHostIp = SafeNullableLazyValue.create(() -> {
     try {
       return new IpOrException(readHostIp());
     }
@@ -93,18 +98,18 @@ public class WSLDistribution implements AbstractWslDistribution {
       return new IpOrException(e);
     }
   });
-  private final LazyInitializer.LazyValue<String> myWslIp = new LazyInitializer.LazyValue<>(() -> {
+  private final SafeNullableLazyValue<String> myLazyWslIp = SafeNullableLazyValue.create(() -> {
     try {
       return readWslIp();
     }
     catch (ExecutionException ex) {
       // See class doc, IP section
-      LOG.warn("Can't read WSL IP, will use default: 127.0.0.1", ex);
-      return "127.0.0.1";
+      LOG.warn("Can't read WSL IP, will use default: " + DEFAULT_WSL_IP, ex);
+      return DEFAULT_WSL_IP;
     }
   });
-  private final NullableLazyValue<String> myShellPath = lazyNullable(this::readShellPath);
-  private final NullableLazyValue<String> myUserHomeProvider = lazyNullable(this::readUserHome);
+  private final SafeNullableLazyValue<String> myLazyShellPath = SafeNullableLazyValue.create(this::readShellPath);
+  private final SafeNullableLazyValue<String> myLazyUserHome = SafeNullableLazyValue.create(this::readUserHome);
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
@@ -304,7 +309,7 @@ public class WSLDistribution implements AbstractWslDistribution {
           commandLine.addParameters(SHELL_PARAMETER, "-c", linuxCommandStr);
         }
         else {
-          commandLine.addParameters(EXEC_PARAMETER, options.getShellPath());
+          commandLine.addParameters(EXEC_PARAMETER, getShellPath());
           if (options.isExecuteCommandInInteractiveShell()) {
             commandLine.addParameters("-i");
           }
@@ -521,7 +526,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   public final @Nullable @NlsSafe String getUserHome() {
-    return myUserHomeProvider.getValue();
+    return getValueWithLogging(myLazyUserHome, "user's home path");
   }
 
   private @NlsSafe @Nullable String readUserHome() {
@@ -588,7 +593,11 @@ public class WSLDistribution implements AbstractWslDistribution {
    */
   @NotNull
   public final InetAddress getHostIpAddress() throws ExecutionException {
-    return InetAddresses.forString(myHostIp.get().getIp());
+    final var hostIpOrException = getValueWithLogging(myLazyHostIp, "host IP");
+    if (hostIpOrException == null) {
+      throw new ExecutionException(IdeBundle.message("wsl.error.host.ip.not.obtained.message", getPresentableName()));
+    }
+    return InetAddresses.forString(hostIpOrException.getIp());
   }
 
   /**
@@ -599,7 +608,7 @@ public class WSLDistribution implements AbstractWslDistribution {
     if (Registry.is("wsl.proxy.connect.localhost")) {
       return InetAddress.getLoopbackAddress();
     }
-    return InetAddresses.forString(myWslIp.get());
+    return InetAddresses.forString(coalesce(getValueWithLogging(myLazyWslIp, "WSL IP"), DEFAULT_WSL_IP));
   }
 
   // https://docs.microsoft.com/en-us/windows/wsl/compare-versions#accessing-windows-networking-apps-from-linux-host-ip
@@ -694,19 +703,37 @@ public class WSLDistribution implements AbstractWslDistribution {
   public @NonNls @Nullable String getEnvironmentVariable(String name) {
     WSLCommandLineOptions options = new WSLCommandLineOptions()
       .setExecuteCommandInInteractiveShell(true)
-      .setExecuteCommandInLoginShell(true)
-      .setShellPath(getShellPath());
+      .setExecuteCommandInLoginShell(true);
     return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", name), options, DEFAULT_TIMEOUT,
                                                               true);
   }
 
   public @NlsSafe @NotNull String getShellPath() {
-    return ObjectUtils.notNull(myShellPath.getValue(), WSLCommandLineOptions.DEFAULT_SHELL);
+    return coalesce(getValueWithLogging(myLazyShellPath, "user's shell path"), DEFAULT_SHELL);
   }
 
   private @NlsSafe @Nullable String readShellPath() {
     WSLCommandLineOptions options = new WSLCommandLineOptions().setExecuteCommandInDefaultShell(true);
     return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", "SHELL"), options, DEFAULT_TIMEOUT,
                                                               true);
+  }
+
+  private <T> @Nullable T getValueWithLogging(final @NotNull SafeNullableLazyValue<T> lazyValue,
+                                              final @NotNull String fieldName) {
+    final T value = lazyValue.getValue();
+
+    if (value == null) {
+      final var app = ApplicationManager.getApplication();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Lazy value for %s returned null: MsId=%s, EDT=%s, RA=%s, stackTrace=%s"
+                    .formatted(fieldName, getMsId(), app.isDispatchThread(), app.isReadAccessAllowed(), ExceptionUtil.currentStackTrace()));
+      }
+      else {
+        LOG.warn("Lazy value for %s returned null: MsId=%s, EDT=%s, RA=%s"
+                   .formatted(fieldName, getMsId(), app.isDispatchThread(), app.isReadAccessAllowed()));
+      }
+    }
+
+    return value;
   }
 }

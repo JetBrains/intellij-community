@@ -352,7 +352,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
       else {
         val editor = FileEditorManager.getInstance(myProject).getSelectedEditor(file)
         val structureViewBuilder = if (editor != null && editor.isValid)
-          editor.structureViewBuilder else createStructureViewBuilder(file)
+          readAction { editor.structureViewBuilder } else createStructureViewBuilder(file)
         if (structureViewBuilder != null) {
           val structureView = structureViewBuilder.createStructureView(editor, myProject)
           myStructureView = structureView
@@ -429,19 +429,19 @@ class StructureViewWrapperImpl(private val myProject: Project,
     return panel
   }
 
-  private fun createStructureViewBuilder(file: VirtualFile): StructureViewBuilder? {
+  private suspend fun createStructureViewBuilder(file: VirtualFile): StructureViewBuilder? {
     if (file.length > PersistentFSConstants.getMaxIntellisenseFileSize()) return null
-    val providers = getInstance().getProviderList(myProject, file)
+    val providers = getInstance().getProvidersAsync(myProject, file)
     val provider = (if (providers.isEmpty()) null else providers[0]) ?: return null
     if (provider is StructureViewFileEditorProvider) {
-      return (provider as StructureViewFileEditorProvider).getStructureViewBuilder(myProject, file)
+      return readAction { (provider as StructureViewFileEditorProvider).getStructureViewBuilder(myProject, file) }
     }
-    val editor = provider.createEditor(myProject, file)
+    val editor = withContext(Dispatchers.EDT) { provider.createEditor (myProject, file) }
     return try {
-      editor.structureViewBuilder
+      readAction { editor.structureViewBuilder }
     }
     finally {
-      Disposer.dispose(editor)
+      withContext(Dispatchers.EDT) { Disposer.dispose(editor) }
     }
   }
 

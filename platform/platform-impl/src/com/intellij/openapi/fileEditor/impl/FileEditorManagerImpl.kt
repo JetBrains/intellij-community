@@ -52,7 +52,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.progress.withModalProgressBlocking
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
@@ -809,7 +809,7 @@ open class FileEditorManagerImpl(
     }
     else {
       val context = ClientId.coroutineContext()
-      return withModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
+      return runWithModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
         withContext(context) {
           openFileAsync(window = windowToOpenIn, file = getOriginalFile(file), entry = null, options = options)
         }
@@ -947,11 +947,11 @@ open class FileEditorManagerImpl(
                              options: FileEditorOpenOptions): FileEditorComposite {
     assert(ApplicationManager.getApplication().isDispatchThread ||
            !ApplicationManager.getApplication().isReadAccessAllowed) { "must not attempt opening files under read action" }
+    val file = getOriginalFile(_file)
     if (!ClientId.isCurrentlyUnderLocalId) {
-      return openFileUsingClient(file = _file, options = options)
+      return openFileUsingClient(file, options)
     }
 
-    val file = getOriginalFile(_file)
     val existingComposite = if (EDT.isCurrentThreadEdt()) {
       window.getComposite(file)
     }
@@ -1281,12 +1281,12 @@ open class FileEditorManagerImpl(
       requestFocus = focusEditor,
     )
     val result = if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-      // withModalProgressBlocking cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
+      // runWithModalProgressBlocking cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
       openFile(file = file, window = null, options = openOptions).allEditors
     }
     else {
       val context = ClientId.coroutineContext()
-      withModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
+      runWithModalProgressBlocking(project, EditorBundle.message("editor.open.file.progress", file.name)) {
         withContext(context) {
           openFile(file = file, options = openOptions).allEditors
         }
@@ -1541,15 +1541,15 @@ open class FileEditorManagerImpl(
 
   @RequiresEdt
   override fun getComposite(file: VirtualFile): EditorComposite? {
+    val originalFile = getOriginalFile(file)
     if (!ClientId.isCurrentlyUnderLocalId) {
-      return clientFileEditorManager?.getComposite(file)
+      return clientFileEditorManager?.getComposite(originalFile)
     }
 
     if (openedComposites.isEmpty()) {
       return null
     }
 
-    val originalFile = getOriginalFile(file)
     return splitters.currentWindow?.getComposite(originalFile)
            ?: openedComposites.firstOrNull { it.file == originalFile }
   }
@@ -1996,6 +1996,10 @@ open class FileEditorManagerImpl(
   }
 
   override fun refreshIcons() {
+    if (!initJob.isCompleted) {
+      return
+    }
+
     val openedFiles = openedFiles
     for (each in getAllSplitters()) {
       for (file in openedFiles) {

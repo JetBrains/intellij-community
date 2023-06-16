@@ -9,6 +9,7 @@ import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.UISettings
 import com.intellij.idea.AppMode
 import com.intellij.idea.AppStarter
 import com.intellij.idea.prepareShowEuaIfNeededTask
@@ -85,7 +86,7 @@ internal suspend fun preInitApp(app: ApplicationImpl,
     initConfigurationStore(app)
 
     launch(CoroutineName("critical services preloading")) {
-      preloadCriticalServices(app = app, asyncScope = asyncScope, appRegistered = appRegisteredJob)
+      preloadCriticalServices(app = app, asyncScope = asyncScope, appRegistered = appRegisteredJob, initLafJob = initLafJob)
     }
 
     if (!app.isHeadlessEnvironment) {
@@ -105,6 +106,8 @@ internal suspend fun preInitApp(app: ApplicationImpl,
 
     asyncScope.launch {
       loadIconMapping?.join()
+      // preloaded as a part of preloadCriticalServices, used by LafManager
+      app.serviceAsync<UISettings>()
       subtask("laf initialization", RawSwingDispatcher) {
         app.serviceAsync<LafManager>()
       }

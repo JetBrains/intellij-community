@@ -119,7 +119,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
         ReadAction.nonBlocking(
             () -> getFirstItem(mapNotNull(getSelectedBreakpoints(), XBreakpoint::getNavigatable)))
           .expireWith(OverheadView.this)
-          .finishOnUiThread(ModalityState.NON_MODAL, navigatable -> {
+          .finishOnUiThread(ModalityState.nonModal(), navigatable -> {
             if (navigatable != null) {
               navigatable.navigate(true);
             }

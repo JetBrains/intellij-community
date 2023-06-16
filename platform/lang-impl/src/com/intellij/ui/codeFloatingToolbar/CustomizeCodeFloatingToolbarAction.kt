@@ -6,11 +6,11 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-class CustomizeCodeFloatingToolbarAction: AnAction() {
+class CustomizeCodeFloatingToolbarAction(private val targetGroupActionId: String): AnAction(ActionsBundle.actionText("Floating.CodeToolbar.Customize")) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val groupName = ActionsBundle.groupText("Floating.CodeToolbar")
-    val dialogWrapper = CustomizationUtil.createCustomizeGroupDialog(project, "Floating.CodeToolbar", groupName, null)
+    val groupName = ActionsBundle.groupText(targetGroupActionId)
+    val dialogWrapper = CustomizationUtil.createCustomizeGroupDialog(project, targetGroupActionId, groupName, null)
     dialogWrapper.show()
   }
 }

@@ -85,12 +85,14 @@ class ProjectWindowCustomizerService : Disposable {
     fun getInstance(): ProjectWindowCustomizerService = service<ProjectWindowCustomizerService>()
   }
 
+  private data class ProjectColors(val gradient: Color, val background: Color)
+
   private var wasGradientPainted = false
   private var ourSettingsValue = UISettings.getInstance().differentiateProjects
-  private val colorCache = mutableMapOf<String, Color>()
+  private val colorCache = mutableMapOf<String, ProjectColors>()
   private val listeners = mutableListOf<(Boolean) -> Unit>()
 
-  private val colors: Array<Color>
+  private val gradientColors: Array<Color>
     get() = arrayOf(
       JBColor.namedColor("RecentProject.Color1.MainToolbarGradientStart", JBColor(0xDB3D3C, 0xCE443C)),
       JBColor.namedColor("RecentProject.Color2.MainToolbarGradientStart", JBColor(0xF57236, 0xE27237)),
@@ -103,21 +105,37 @@ class ProjectWindowCustomizerService : Disposable {
       JBColor.namedColor("RecentProject.Color9.MainToolbarGradientStart", JBColor(0xE75371, 0xD75370))
     )
 
+  private val backgroundColors: Array<Color>
+    get() = arrayOf(
+      JBColor.namedColor("RecentProject.Color1.MainToolbarDropdownBackground", JBColor(0x534036, 0x534036)),
+      JBColor.namedColor("RecentProject.Color2.MainToolbarDropdownBackground", JBColor(0x453F2D, 0x453F2D)),
+      JBColor.namedColor("RecentProject.Color3.MainToolbarDropdownBackground", JBColor(0x414130, 0x414130)),
+      JBColor.namedColor("RecentProject.Color4.MainToolbarDropdownBackground", JBColor(0x2B434E, 0x2B434E)),
+      JBColor.namedColor("RecentProject.Color5.MainToolbarDropdownBackground", JBColor(0x2F3F5E, 0x2F3F5E)),
+      JBColor.namedColor("RecentProject.Color6.MainToolbarDropdownBackground", JBColor(0x4B2E3E, 0x4B2E3E)),
+      JBColor.namedColor("RecentProject.Color7.MainToolbarDropdownBackground", JBColor(0x47385A, 0x47385A)),
+      JBColor.namedColor("RecentProject.Color8.MainToolbarDropdownBackground", JBColor(0x1E403E, 0x1E403E)),
+      JBColor.namedColor("RecentProject.Color9.MainToolbarDropdownBackground", JBColor(0x324533, 0x324533))
+    )
+
   fun getProjectIcon(project: Project): Icon {
     return project.service<ProjectWindowCustomizerIconCache>().cachedIcon
   }
 
-  fun getProjectColor(project: Project): Color {
+  fun getGradientProjectColor(project: Project): Color = getProjectColor(project).gradient
+  fun getBackgroundProjectColor(project: Project): Color = getProjectColor(project).background
+
+  private fun getProjectColor(project: Project): ProjectColors {
     val projectPath = getProjectNameForIcon(project)
     val colorStr = PropertiesComponent.getInstance(project).getValue(TOOLBAR_BACKGROUND_KEY)
     val color = ColorUtil.fromHex(colorStr, null)
     if (color != null) {
-      return color
+      return ProjectColors(color, color)
     }
 
     return colorCache.getOrPut(projectPath) {
       Disposer.register(project) { colorCache.remove(projectPath) }
-      ColorPalette.select(colors, projectPath)
+      ProjectColors(ColorPalette.select (gradientColors, projectPath), ColorPalette.select(backgroundColors, projectPath))
     }
   }
 
@@ -208,7 +226,7 @@ class ProjectWindowCustomizerService : Disposable {
     g.fillRect(0, 0, parent.width, parent.height)
 
     if (!isActive() || !getPaintingType().isGradient()) return false
-    val color = getProjectColor(project)
+    val color = getGradientProjectColor(project)
 
     val length = Registry.intValue("ide.colorful.toolbar.gradient.length", 600)
     val x = parent.x.toFloat()
@@ -226,7 +244,7 @@ class ProjectWindowCustomizerService : Disposable {
 
   fun getToolbarBackground(project: Project?):Color? {
     if (project == null) return null
-    return getProjectColor(project)
+    return getBackgroundProjectColor(project)
   }
 
   fun setToolbarColor(background:Color, project: Project) {

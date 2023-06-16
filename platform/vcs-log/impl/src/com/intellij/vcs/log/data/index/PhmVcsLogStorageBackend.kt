@@ -19,14 +19,12 @@ import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.LightFilePath
 import com.intellij.vcs.log.history.EdgeData
-import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.impl.VcsLogIndexer.PathsEncoder
 import com.intellij.vcs.log.util.StorageId
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.NonNls
 import java.io.DataInput
 import java.io.DataOutput
@@ -381,42 +379,5 @@ private object CollectionDataExternalizer : DataExternalizer<IntArray> {
       result[i] = `in`.readInt()
     }
     return result
-  }
-}
-
-internal class MyCommitIdKeyDescriptor(private val roots: List<VirtualFile>) : KeyDescriptor<CommitId> {
-  private val rootsReversed = Object2IntOpenHashMap<VirtualFile>(roots.size)
-
-  init {
-    for (i in roots.indices) {
-      rootsReversed.put(roots.get(i), i)
-    }
-  }
-
-  override fun save(out: DataOutput, value: CommitId) {
-    (value.hash as HashImpl).write(out)
-    out.writeInt(rootsReversed.getInt(value.root))
-  }
-
-  override fun read(`in`: DataInput): CommitId {
-    val hash = HashImpl.read(`in`)
-    val root = roots.get(`in`.readInt())
-    return CommitId(hash, root)
-  }
-
-  override fun getHashCode(value: CommitId): Int {
-    var result = value.hash.hashCode()
-    result = 31 * result + rootsReversed.getInt(value)
-    return result
-  }
-
-  override fun isEqual(val1: CommitId?, val2: CommitId?): Boolean {
-    if (val1 === val2) return true
-    return if (val1 == null || val2 == null) {
-      false
-    }
-    else {
-      val1.hash == val2.hash && rootsReversed.getInt(val1.root) == rootsReversed.getInt(val2.root)
-    }
   }
 }

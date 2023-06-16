@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.AccessToken;
@@ -27,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @see AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int) instead
  */
-public final class BoundedTaskExecutor extends AbstractExecutorService implements ContextPropagatingExecutor {
+public final class BoundedTaskExecutor extends AbstractExecutorService {
   private volatile boolean myShutdown;
   private final @NotNull String myName;
   private final Executor myBackendExecutor;
@@ -149,11 +150,6 @@ public final class BoundedTaskExecutor extends AbstractExecutorService implement
   @Override
   public void execute(@NotNull Runnable command) {
     Runnable task = command instanceof LastTask ? command : AppScheduledExecutorService.capturePropagationAndCancellationContext(command);
-    executeRaw(task);
-  }
-
-  @Override
-  public void executeRaw(@NotNull @Async.Schedule Runnable task) {
     if (isShutdown() && !(task instanceof LastTask)) {
       throw new RejectedExecutionException(this+" is already shutdown, trying to execute "+task+" ("+task.getClass()+")");
     }
@@ -203,7 +199,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService implement
 
   private void wrapAndExecute(@NotNull Runnable firstTask, long status) {
     try {
-      Runnable command = new Runnable() {
+      Runnable command = new ContextAwareRunnable() {
         final AtomicReference<Runnable> currentTask = new AtomicReference<>(firstTask);
         @Override
         public void run() {
@@ -239,12 +235,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService implement
           return String.valueOf(info(currentTask.get()));
         }
       };
-      if (myBackendExecutor instanceof ContextPropagatingExecutor) {
-        ((ContextPropagatingExecutor)myBackendExecutor).executeRaw(command);
-      }
-      else {
-        myBackendExecutor.execute(command);
-      }
+      myBackendExecutor.execute(command);
     }
     catch (Error | RuntimeException e) {
       myStatus.decrementAndGet();

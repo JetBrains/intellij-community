@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.completion.lookups
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.fir.utils.addImportToFile
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
+import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -20,7 +20,7 @@ sealed class ImportStrategy {
 
 internal fun addCallableImportIfRequired(targetFile: KtFile, nameToImport: FqName) {
     if (!alreadyHasImport(targetFile, nameToImport)) {
-        addImportToFile(targetFile.project, targetFile, nameToImport)
+        targetFile.addImport(nameToImport)
     }
 }
 

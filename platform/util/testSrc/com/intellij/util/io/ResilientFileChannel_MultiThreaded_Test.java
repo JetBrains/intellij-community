@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ConcurrencyUtil;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -20,6 +21,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.LockSupport;
 import java.util.stream.IntStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -57,7 +59,7 @@ public class ResilientFileChannel_MultiThreaded_Test {
     try (ResilientFileChannel channel = new ResilientFileChannel(file, WRITE, READ)) {
       final List<String> stringsReadFromFile = new ArrayList<>();
       final Ref<Throwable> exceptionThrown = new Ref<>();
-      final Thread channelReader = new Thread(() -> {
+      final Thread readerThread = new Thread(() -> {
         for (int i = 0; i < enoughReadingChunks; i++) {
           final byte[] bytesOfChunkWritten = fileContentChunks.get(i).getBytes(UTF_8);
           final byte[] bytesToRead = new byte[bytesOfChunkWritten.length];
@@ -81,12 +83,9 @@ public class ResilientFileChannel_MultiThreaded_Test {
       }, "channel reading thread");
 
 
-      channelReader.start();
-      while (channelReader.isAlive()) {
-        channelReader.interrupt();
-        Thread.yield();
-      }
-      channelReader.join();
+      readerThread.start();
+      constantlyInterruptThreadUntilItDies(readerThread);
+      readerThread.join();
 
 
       if (!exceptionThrown.isNull()) {
@@ -120,7 +119,7 @@ public class ResilientFileChannel_MultiThreaded_Test {
 
     try (ResilientFileChannel channel = new ResilientFileChannel(file, WRITE, READ)) {
       final Ref<Throwable> exceptionThrown = new Ref<>();
-      final Thread channelWriter = new Thread(() -> {
+      final Thread writerThread = new Thread(() -> {
         for (int i = 0; i < enoughWrites; i++) {
           final ByteBuffer buffer = ByteBuffer.wrap(lineToWriteAsBytes);
           try {
@@ -139,12 +138,9 @@ public class ResilientFileChannel_MultiThreaded_Test {
       }, "channel writing thread");
 
 
-      channelWriter.start();
-      while (channelWriter.isAlive()) {
-        channelWriter.interrupt();
-        Thread.yield();
-      }
-      channelWriter.join();
+      writerThread.start();
+      constantlyInterruptThreadUntilItDies(writerThread);
+      writerThread.join();
 
 
       if (!exceptionThrown.isNull()) {
@@ -334,6 +330,24 @@ public class ResilientFileChannel_MultiThreaded_Test {
     }
     finally {
       pool.shutdown();
+    }
+  }
+
+  // ========= infrastructure: ====================================================================
+  
+  private static void constantlyInterruptThreadUntilItDies(@NotNull Thread victimThread) {
+    int interruptsInARow = 0;
+    while (victimThread.isAlive()) {
+      if (!victimThread.isInterrupted()) {
+        victimThread.interrupt();
+        interruptsInARow++;
+      }
+      if (interruptsInARow >= FileChannelInterruptsRetryer.MAX_RETRIES / 2) {
+        //We need to interrupt thread often enough to catch it mid-IO-operation, but not so often
+        //  that we trigger 'too many retries' (current limit: 64 per op). Hence, the pause here:
+        //  give current IOop a chance to complete and reset retry counter:
+        LockSupport.parkNanos(100_000);
+      }
     }
   }
 }

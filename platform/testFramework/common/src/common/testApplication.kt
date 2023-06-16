@@ -35,7 +35,7 @@ import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.withModalProgressBlocking
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
@@ -163,7 +163,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
     }
 
     if (EDT.isCurrentThreadEdt()) {
-      withModalProgressBlocking(ModalTaskOwner.guess(), "") {
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
         task()
       }
     }
@@ -184,7 +184,10 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
 private suspend fun preloadServicesAndCallAppInitializedListeners(app: ApplicationImpl, pluginSet: PluginSet) {
   coroutineScope {
     withTimeout(Duration.ofSeconds(40).toMillis()) {
-      preloadCriticalServices(app = app, asyncScope = app.coroutineScope, appRegistered = CompletableDeferred(value = null))
+      preloadCriticalServices(app = app,
+                              asyncScope = app.coroutineScope,
+                              appRegistered = CompletableDeferred(value = null),
+                              initLafJob = CompletableDeferred(value = null))
       app.preloadServices(
         modules = pluginSet.getEnabledModules(),
         activityPrefix = "",

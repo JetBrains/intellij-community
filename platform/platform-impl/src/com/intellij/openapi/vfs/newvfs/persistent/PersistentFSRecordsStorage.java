@@ -112,6 +112,9 @@ public interface PersistentFSRecordsStorage {
 
   int recordsCount();
 
+  /** @return max fileId already allocated by this storage */
+  int maxAllocatedID();
+
   boolean isDirty();
 
 

@@ -575,7 +575,7 @@ internal class FirInfixCallableCompletionContributor(
 
     companion object {
         private val insertionStrategy = CallableInsertionStrategy.AsIdentifierCustom {
-            insertSymbolAndInvokeCompletion(" ")
+            insertStringAndInvokeCompletion(" ")
         }
     }
 }

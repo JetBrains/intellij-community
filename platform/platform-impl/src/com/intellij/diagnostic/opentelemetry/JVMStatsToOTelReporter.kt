@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import io.opentelemetry.api.metrics.BatchCallback
 import java.lang.management.ManagementFactory
+import java.util.concurrent.TimeUnit.NANOSECONDS
 
 /**
  * Reports basic JVM stats into OTel.Metrics.
@@ -36,8 +37,18 @@ class JVMStatsToOTelReporter : ProjectActivity {
 
       val threadCountGauge = otelMeter.gaugeBuilder("JVM.threadCount").ofLongs().buildObserver()
 
+      val osLoadAverageGauge = otelMeter.gaugeBuilder("OS.loadAverage").buildObserver()
+
+      val gcCollectionsCounter = otelMeter.counterBuilder("JVM.GC.collections").buildObserver()
+      val gcCollectionTimesCounterMs = otelMeter.counterBuilder("JVM.GC.collectionTimesMs").buildObserver()
+
+      val totalCpuTimeCounterMs = otelMeter.counterBuilder("JVM.totalCpuTimeMs").buildObserver()
+
       val memoryMXBean = ManagementFactory.getMemoryMXBean()
       val threadMXBean = ManagementFactory.getThreadMXBean()
+      val gcBeans = ManagementFactory.getGarbageCollectorMXBeans()
+
+      val osMXBean = ManagementFactory.getOperatingSystemMXBean() as com.sun.management.OperatingSystemMXBean
 
       batchCallback = otelMeter.batchCallback(
         {
@@ -51,10 +62,30 @@ class JVMStatsToOTelReporter : ProjectActivity {
           maxNativeMemoryGauge.record(nonHeapUsage.max)
 
           threadCountGauge.record(threadMXBean.threadCount.toLong())
+
+          osLoadAverageGauge.record(osMXBean.systemLoadAverage)
+
+          var gcCount: Long = 0
+          var gcTimeMs: Long = 0
+          for (gcBean in gcBeans) {
+            gcCount += gcBean.collectionCount
+            gcTimeMs += gcBean.collectionTime
+          }
+          gcCollectionsCounter.record(gcCount)
+          gcCollectionTimesCounterMs.record(gcTimeMs)
+
+          val processCpuTimeNs = osMXBean.processCpuTime
+          if (processCpuTimeNs != -1L) {
+            totalCpuTimeCounterMs.record(NANOSECONDS.toMillis(processCpuTimeNs))
+          }
         },
+
         usedHeapMemoryGauge, maxHeapMemoryGauge,
         usedNativeMemoryGauge, maxNativeMemoryGauge,
-        threadCountGauge
+        threadCountGauge,
+        osLoadAverageGauge,
+        gcCollectionsCounter, gcCollectionTimesCounterMs,
+        totalCpuTimeCounterMs
       )
     }
 

@@ -7,12 +7,18 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.progress.util.BackgroundTaskUtil.runUnderDisposeAwareIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
+import org.jetbrains.kotlin.idea.base.util.sdk
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 
 class KotlinExternalSystemSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
     override fun onStart(id: ExternalSystemTaskId, workingDir: String) {
         val project = id.findResolvedProject() ?: return
+        // If the SDK is null, then the module was not loaded yet
+        val allModulesLoaded = project.modules.all { it.sdk != null }
+        KotlinJ2KOnboardingFUSCollector.logProjectSyncStarted(project, allModulesLoaded)
         runUnderDisposeAwareIndicator(KotlinPluginDisposable.getInstance(project)) {
             KotlinConfigurationCheckerService.getInstance(project).syncStarted()
         }

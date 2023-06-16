@@ -275,7 +275,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     }
 
     override fun createPeer(parent: Component, canBeParent: Boolean): DialogWrapperPeer {
-      return if (useLightPopup()) {
+      return if (useLightPopup() && areLightPopupsEnabled()) {
         try {
           GlassPaneDialogWrapperPeer(this, parent)
         }
@@ -289,7 +289,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     }
 
     override fun createPeer(owner: Window, canBeParent: Boolean, applicationModalIfPossible: Boolean): DialogWrapperPeer {
-      return if (useLightPopup()) {
+      return if (useLightPopup() && areLightPopupsEnabled()) {
         try {
           GlassPaneDialogWrapperPeer(this)
         }

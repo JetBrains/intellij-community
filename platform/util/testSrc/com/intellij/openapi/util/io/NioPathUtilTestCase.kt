@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
 
 @TestApplication
 abstract class NioPathUtilTestCase {
@@ -52,7 +53,7 @@ abstract class NioPathUtilTestCase {
     override suspend fun createAssertion(init: suspend Path.() -> Path?) =
       assertNioPath(init)
 
-    override fun isEmpty(file: Path) = file.getChildren().isEmpty()
+    override fun isEmpty(file: Path) = file.listDirectoryEntries().isEmpty()
     override fun exists(file: Path) = file.exists()
     override fun isFile(file: Path) = file.isFile()
     override fun isDirectory(file: Path) = file.isDirectory()

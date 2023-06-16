@@ -214,8 +214,9 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
         return Rectangle(locationOnScreen.x  - toolWindowSize, locationOnScreen.y, toolWindowSize, size.height)
       }
       if (anchor == ToolWindowAnchor.BOTTOM) {
-        val rootPane = (rootPane as IdeRootPane).getToolWindowPane()
-        val rootBounds = Rectangle(rootPane.locationOnScreen, rootPane.size)
+        val rootPane = rootPane
+        val pane = if (rootPane is IdeRootPane) rootPane.getToolWindowPane() else rootPane
+        val rootBounds = Rectangle(pane.locationOnScreen, pane.size)
         val toolWindowHeight = getFirstVisibleToolWindowSize(false)
         return Rectangle(rootBounds.x, rootBounds.y + rootBounds.height - toolWindowHeight, rootBounds.width, toolWindowHeight)
       }

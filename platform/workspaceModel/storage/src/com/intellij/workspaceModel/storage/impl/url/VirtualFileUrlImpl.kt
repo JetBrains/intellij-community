@@ -50,9 +50,7 @@ open class VirtualFileUrlImpl(val id: Int, internal val manager: VirtualFileUrlM
 
     other as VirtualFileUrlImpl
 
-    if (id != other.id) return false
-
-    return true
+    return id == other.id
   }
 
   override fun hashCode(): Int = id

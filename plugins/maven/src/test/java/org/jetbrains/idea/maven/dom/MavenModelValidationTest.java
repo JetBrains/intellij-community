@@ -228,7 +228,7 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                          </project>
                          """);
 
-    checkHighlighting(myProjectPom, true, false, true);
+    checkHighlighting();
   }
 
   @Test

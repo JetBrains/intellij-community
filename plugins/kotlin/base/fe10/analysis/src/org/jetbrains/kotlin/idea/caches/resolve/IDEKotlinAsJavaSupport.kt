@@ -163,12 +163,12 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         JavaPsiFacade.getInstance(project).findClass(it, scope)
     }
 
-    override fun findFilesForFacade(facadeFqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> = runReadAction {
-        KotlinFileFacadeFqNameIndex[facadeFqName.asString(), project, searchScope].platformSourcesFirst()
+    override fun findFilesForFacade(facadeFqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> {
+        return KotlinFileFacadeFqNameIndex[facadeFqName.asString(), project, searchScope].platformSourcesFirst()
     }
 
-    override fun findFilesForScript(scriptFqName: FqName, searchScope: GlobalSearchScope): Collection<KtScript> = runReadAction {
-        KotlinScriptFqnIndex[scriptFqName.asString(), project, searchScope]
+    override fun findFilesForScript(scriptFqName: FqName, searchScope: GlobalSearchScope): Collection<KtScript> {
+        return KotlinScriptFqnIndex[scriptFqName.asString(), project, searchScope]
     }
 
     override fun getFakeLightClass(classOrObject: KtClassOrObject): KtFakeLightClass = KtDescriptorBasedFakeLightClass(classOrObject)

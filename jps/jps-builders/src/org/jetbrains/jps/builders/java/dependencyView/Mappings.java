@@ -2656,26 +2656,12 @@ public class Mappings {
     final int className = cr.name;
 
     // it is safe to cleanup class information if it is mapped to non-existing files only
-    final Iterable<File> _currentlyMapped = classToSourceFileGet(className);
-    if (_currentlyMapped == null) {
-      return;
-    }
-    final Collection<File> currentlyMapped = ContainerUtil.collect(_currentlyMapped.iterator());
-    if (currentlyMapped.isEmpty()) {
-      return;
-    }
-    if (currentlyMapped.size() == 1) {
-      if (!FileUtil.filesEqual(sourceFile, currentlyMapped.iterator().next())) {
-        // if classname is already mapped to a different source, the class with such FQ name exists elsewhere, so
-        // we cannot destroy all these links
-        return;
-      }
-    }
-    else {
-      // many files
+    final Iterable<File> currentlyMapped = classToSourceFileGet(className);
+    if (currentlyMapped != null) {
       for (File file : currentlyMapped) {
         if (!FileUtil.filesEqual(sourceFile, file) && file.exists()) {
-          // ensure association with particular sourceFile is removed
+          // if classname is already mapped to a different source, the class with such FQ name exists elsewhere, so we cannot destroy all these links
+          // additionally ensure association with particular sourceFile is removed
           myClassToRelativeSourceFilePath.removeFrom(className, toRelative(sourceFile));
           return;
         }

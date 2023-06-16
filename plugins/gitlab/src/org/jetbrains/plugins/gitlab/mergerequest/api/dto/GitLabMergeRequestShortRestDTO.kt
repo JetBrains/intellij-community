@@ -14,7 +14,7 @@ data class GitLabMergeRequestShortRestDTO(
   override val iid: String,
   val projectId: Long,
   val title: String,
-  val description: String,
+  val description: String?,
   val state: String,
   val mergeStatus: String,
   val mergeable: Boolean,

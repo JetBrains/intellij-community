@@ -8,7 +8,7 @@ import com.intellij.ide.actions.searcheverywhere.remote.SearchEverywhereRemoteSu
 class SearchEverywhereRemoteSupportServiceImpl: SearchEverywhereRemoteSupportService {
 
   override fun getConverters(contributorID: String?): List<RemoteSearchEverywhereConverter<*, *>> {
-    val res = mutableListOf<RemoteSearchEverywhereConverter<*, *>>();
+    val res = mutableListOf<RemoteSearchEverywhereConverter<*, *>>()
     RemoteSearchEverywhereConverterSupplier.EP_NAME.extensionList
       .filter { it.contributorsList().contains(contributorID) }
       .forEach { res.add(it.createConverter()) }

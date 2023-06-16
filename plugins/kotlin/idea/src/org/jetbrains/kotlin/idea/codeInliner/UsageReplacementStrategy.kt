@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInliner
 
@@ -17,6 +17,8 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.ModalityUiUtil
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.compareDescriptors
@@ -24,8 +26,6 @@ import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.intentions.ConvertReferenceToLambdaIntention
 import org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntention
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -58,7 +58,7 @@ fun UsageReplacementStrategy.replaceUsagesInWholeProject(
                         .map { ref -> ref.expression }
                 }
 
-              ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL) {
+              ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal()) {
                   project.executeWriteCommand(commandName) {
                       this@replaceUsagesInWholeProject.replaceUsages(usages, unwrapSpecialUsages)
                   }
@@ -157,7 +157,7 @@ fun unwrapSpecialUsageOrNull(
         is KtCallableReferenceExpression -> {
             if (usageParent.callableReference != usage) return null
             val (name, descriptor) = usage.nameAndDescriptor
-            return ConvertReferenceToLambdaIntention.applyTo(usageParent)?.let {
+            return ConvertReferenceToLambdaIntention.Holder.applyTo(usageParent)?.let {
                 findNewUsage(it, name, descriptor)
             }
         }
@@ -165,7 +165,7 @@ fun unwrapSpecialUsageOrNull(
         is KtCallElement -> {
             for (valueArgument in usageParent.valueArguments.asReversed()) {
                 val callableReferenceExpression = valueArgument.getArgumentExpression() as? KtCallableReferenceExpression ?: continue
-                ConvertReferenceToLambdaIntention.applyTo(callableReferenceExpression)
+                ConvertReferenceToLambdaIntention.Holder.applyTo(callableReferenceExpression)
             }
 
             val lambdaExpressions = usageParent.valueArguments.mapNotNull { it.getArgumentExpression() as? KtLambdaExpression }
@@ -176,7 +176,7 @@ fun unwrapSpecialUsageOrNull(
             for (lambdaExpression in lambdaExpressions) {
                 val functionDescriptor = lambdaExpression.functionLiteral.resolveToDescriptorIfAny() as? FunctionDescriptor ?: continue
                 if (functionDescriptor.valueParameters.isNotEmpty()) {
-                    SpecifyExplicitLambdaSignatureIntention.applyTo(lambdaExpression)
+                    SpecifyExplicitLambdaSignatureIntention.Holder.applyTo(lambdaExpression)
                 }
             }
 

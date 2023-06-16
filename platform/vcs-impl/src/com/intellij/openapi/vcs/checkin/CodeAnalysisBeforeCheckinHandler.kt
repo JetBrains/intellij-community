@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -113,7 +113,7 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
     withContext(Dispatchers.Default) {
       val changesByFile = groupChangesByFile(changes)
       // [findCodeSmells] requires [ProgressIndicatorEx] set for thread
-      val progressIndicatorEx = ProgressSinkIndicatorEx(text2DetailsSink, coroutineContext.contextModality() ?: ModalityState.NON_MODAL)
+      val progressIndicatorEx = ProgressSinkIndicatorEx(text2DetailsSink, coroutineContext.contextModality() ?: ModalityState.nonModal())
       jobToIndicator(coroutineContext.job, progressIndicatorEx) {
         // TODO suspending [findCodeSmells]
         codeSmells = findCodeSmells(changesByFile, isPostCommit)

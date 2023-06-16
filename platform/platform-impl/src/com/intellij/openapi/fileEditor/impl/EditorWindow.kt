@@ -41,6 +41,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -274,6 +275,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link #setComposite(EditorComposite, boolean)}",
               ReplaceWith("setComposite(editor, FileEditorOpenOptions().withRequestFocus(focusEditor))",
                           "com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions"))
@@ -874,7 +876,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
     val limit = tabLimit
     fun isUnderLimit(): Boolean =
-      tabbedPane.tabCount <= limit || tabbedPane.tabCount == 0 || areAllTabsPinned(fileToIgnore)
+      tabbedPane.tabCount <= limit || tabbedPane.tabCount == 0 || !isAnyTabClosable(fileToIgnore)
 
     if (isUnderLimit()) {
       return
@@ -961,8 +963,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     return !owner.manager.isChanged(composite)
   }
 
-  private fun areAllTabsPinned(fileToIgnore: VirtualFile?): Boolean {
-    return (tabbedPane.tabCount - 1 downTo 0).none { fileCanBeClosed(getFileAt(it), fileToIgnore) }
+  private fun isAnyTabClosable(fileToIgnore: VirtualFile?): Boolean {
+    return (tabbedPane.tabCount - 1 downTo 0).any { fileCanBeClosed(getFileAt(it), fileToIgnore) }
   }
 
   private fun defaultCloseFile(file: VirtualFile, transferFocus: Boolean) {
@@ -973,7 +975,14 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     if (file is BackedVirtualFile && file.originFile == fileToIgnore) {
       return false
     }
-    return isFileOpen(file) && file != fileToIgnore && !isFilePinned(file)
+    return isFileOpen(file) && file != fileToIgnore && !isFilePinned(file) && isClosingAllowed(file)
+  }
+
+  private fun isClosingAllowed(file: VirtualFile): Boolean {
+    val extensions = EditorAutoClosingHandler.EP_NAME.extensionList
+    if (extensions.isEmpty()) return true
+    val composite = getComposite(file) ?: return true
+    return extensions.all { handler -> handler.isClosingAllowed(composite) }
   }
 
   internal fun getFileAt(i: Int): VirtualFile = getCompositeAt(i).file

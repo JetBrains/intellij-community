@@ -51,14 +51,14 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
   private val screenReaderEnabledProperty = AtomicBooleanProperty(GeneralSettings.getInstance().isSupportScreenReaders)
   private val notificationModeToUserString: Map<NotificationAnnouncingMode, String> =
     if (SystemInfo.isMac) mapOf(
-      Pair(NotificationAnnouncingMode.NONE, IdeBundle.message("notifications.configurable.announcing.value.off")),
-      Pair(NotificationAnnouncingMode.MEDIUM, IdeBundle.message("notifications.configurable.announcing.value.medium")),
-      Pair(NotificationAnnouncingMode.HIGH, IdeBundle.message("notifications.configurable.announcing.value.high"))
+      NotificationAnnouncingMode.NONE to IdeBundle.message("notifications.configurable.announcing.value.off"),
+      NotificationAnnouncingMode.MEDIUM to IdeBundle.message("notifications.configurable.announcing.value.medium"),
+      NotificationAnnouncingMode.HIGH to IdeBundle.message("notifications.configurable.announcing.value.high")
     )
     else mapOf(
-      Pair(NotificationAnnouncingMode.NONE, IdeBundle.message("notifications.configurable.announcing.value.off")),
-      Pair(NotificationAnnouncingMode.MEDIUM, IdeBundle.message("notifications.configurable.announcing.value.not.interrupting")),
-      Pair(NotificationAnnouncingMode.HIGH, IdeBundle.message("notifications.configurable.announcing.value.interrupting"))
+      NotificationAnnouncingMode.NONE to IdeBundle.message("notifications.configurable.announcing.value.off"),
+      NotificationAnnouncingMode.MEDIUM to IdeBundle.message("notifications.configurable.announcing.value.not.interrupting"),
+      NotificationAnnouncingMode.HIGH to IdeBundle.message("notifications.configurable.announcing.value.interrupting")
     )
 
   init {

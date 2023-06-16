@@ -18,14 +18,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.launch
 import kotlin.math.log10
 import kotlin.math.pow
-
-private val lastReportedDaemonFinishedTimestamp = Key<Long>("lastReportedDaemonFinishedTimestamp")
 
 private class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
   @Volatile
@@ -33,7 +30,9 @@ private class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyz
   @Volatile
   private var dirtyRange: TextRange? = null
   private var initialEntireFileHighlightingActivity: Activity? = null
-  private var initialEntireFileHighlightingCompleted: Boolean = false
+  private var initialEntireFileHighlightingReported: Boolean = false
+  private var documentModificationStamp: Long = 0
+  private var documentStartedHash: Int = 0 // Document the `daemonStarting` event was received for. Store the hash instead of Document instance to avoid leaks
   @Volatile
   private var canceled: Boolean = false
 
@@ -41,16 +40,18 @@ private class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyz
     canceled = false
     daemonStartTime = System.currentTimeMillis()
     val editor = fileEditors.asSequence().filterIsInstance<TextEditor>().firstOrNull()?.editor
-    dirtyRange = if (editor == null) {
+    val document = editor?.document
+    dirtyRange = if (document == null) {
       null
     }
     else {
-      val document = editor.document
       val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
       if (psiFile == null) null else FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL)
     }
+    documentModificationStamp = document?.modificationStamp?:0
+    documentStartedHash = document?.hashCode() ?: 0
 
-    if (!initialEntireFileHighlightingCompleted) {
+    if (!initialEntireFileHighlightingReported) {
       initialEntireFileHighlightingActivity = StartUpMeasurer.startActivity("initial entire file highlighting")
     }
   }
@@ -62,14 +63,14 @@ private class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyz
   override fun daemonFinished(fileEditors: Collection<FileEditor>) {
     val editor = fileEditors.filterIsInstance<TextEditor>().firstOrNull()?.editor
     val document = editor?.document
+    if (document != null && documentStartedHash != document.hashCode()) {
+      // unmatched starting/finished events? bail out just in case
+      return
+    }
 
-    if (document != null) {
+    if (document != null && documentModificationStamp == document.modificationStamp && initialEntireFileHighlightingReported) {
       // Don't report 'finished' event in case of no changes in the document
-      val lastReportedTimestamp = document.getUserData(lastReportedDaemonFinishedTimestamp)
-      if (lastReportedTimestamp == document.modificationStamp) {
-        return
-      }
-      document.putUserData(lastReportedDaemonFinishedTimestamp, document.modificationStamp)
+      return
     }
 
     val analyzer = (editor?.markupModel as? EditorMarkupModel)?.errorStripeRenderer as? TrafficLightRenderer
@@ -84,9 +85,10 @@ private class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyz
     val fileType = document?.let { FileDocumentManager.getInstance().getFile(it)?.fileType }
     val wasEntireFileHighlighted = TextRange.from(0, document?.textLength ?: 0) == dirtyRange
 
-    if (wasEntireFileHighlighted && !initialEntireFileHighlightingCompleted) {
-      initialEntireFileHighlightingCompleted = true
-      initialEntireFileHighlightingActivity?.end()
+    if (wasEntireFileHighlighted && !initialEntireFileHighlightingReported) {
+      initialEntireFileHighlightingReported = true
+      initialEntireFileHighlightingActivity!!.end()
+      initialEntireFileHighlightingActivity = null
       StartUpMeasurer.addInstantEvent("editor highlighting completed")
       @Suppress("DEPRECATION")
       project.coroutineScope.launch {
@@ -117,7 +119,7 @@ private fun Int.roundToOneSignificantDigit(): Int {
 private class DaemonFusCollector : CounterUsagesCollector() {
   companion object {
     @JvmField
-    val GROUP: EventLogGroup = EventLogGroup("daemon", 4)
+    val GROUP: EventLogGroup = EventLogGroup("daemon", 5)
     @JvmField
     val ERRORS: IntEventField = EventFields.Int("errors")
     @JvmField

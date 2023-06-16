@@ -38,5 +38,7 @@
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="module" module-name="intellij.platform.ml.impl" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" />
   </component>
 </module>

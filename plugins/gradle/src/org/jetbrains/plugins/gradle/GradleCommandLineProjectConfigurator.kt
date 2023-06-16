@@ -28,6 +28,7 @@ import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsTask
 import org.jetbrains.plugins.gradle.service.project.open.createLinkSettings
 import org.jetbrains.plugins.gradle.settings.GradleImportHintService
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.startup.GradleProjectSettingsUpdater
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.BufferedWriter
@@ -36,14 +37,17 @@ import java.io.FileWriter
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 private val LOG = logger<GradleCommandLineProjectConfigurator>()
 
 private val gradleLogWriter = BufferedWriter(FileWriter(PathManager.getLogPath() + "/gradle-import.log"))
 
 private const val DISABLE_GRADLE_AUTO_IMPORT = "external.system.auto.import.disabled"
+private const val DISABLE_GRADLE_JDK_FIX = "gradle.auto.auto.jdk.fix.disabled"
 private const val DISABLE_ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY = "android.gradle.project.startup.activity.disabled"
 private const val DISABLE_UPDATE_ANDROID_SDK_LOCAL_PROPERTIES = "android.sdk.local.properties.update.disabled"
+private const val JDK_UPDATE_TIMEOUT_MINUTES = 10
 
 class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigurator {
   override fun getName() = "gradle"
@@ -52,6 +56,7 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
 
   override fun configureEnvironment(context: ConfiguratorContext) = context.run {
     Registry.get(DISABLE_GRADLE_AUTO_IMPORT).setValue(true)
+    Registry.get(DISABLE_GRADLE_JDK_FIX).setValue(true)
     Registry.get(DISABLE_ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY).setValue(true)
     Registry.get(DISABLE_UPDATE_ANDROID_SDK_LOCAL_PROPERTIES).setValue(true)
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
@@ -102,10 +107,15 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
   }
 
   private fun importProjects(project: Project) {
-    if (!GradleSettings.getInstance(project).linkedProjectsSettings.isEmpty()) {
-      AutoImportProjectTracker.onceIgnoreDisableAutoReloadRegistry()
-      AutoImportProjectTracker.getInstance(project).scheduleProjectRefresh()
+    val linkedProjectsSettings = GradleSettings.getInstance(project).linkedProjectsSettings
+    if (linkedProjectsSettings.isEmpty()) return
+    
+    linkedProjectsSettings.forEach {
+      GradleProjectSettingsUpdater.Util.updateGradleJvm(project, it).get(JDK_UPDATE_TIMEOUT_MINUTES.toLong(), TimeUnit.MINUTES)
     }
+
+    AutoImportProjectTracker.onceIgnoreDisableAutoReloadRegistry()
+    AutoImportProjectTracker.getInstance(project).scheduleProjectRefresh()
   }
 
   private fun linkRootProject(basePath: String, project: Project): Boolean {

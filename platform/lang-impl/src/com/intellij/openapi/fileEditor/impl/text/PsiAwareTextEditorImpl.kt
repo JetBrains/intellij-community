@@ -2,12 +2,14 @@
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
+import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.documentation.render.DocRenderManager
 import com.intellij.codeInsight.documentation.render.DocRenderPassFactory
 import com.intellij.codeInsight.folding.CodeFoldingManager
+import com.intellij.codeInsight.hints.HintsBuffer
 import com.intellij.codeInsight.hints.InlayHintsPassFactory.Companion.applyPlaceholders
 import com.intellij.codeInsight.hints.InlayHintsPassFactory.Companion.collectPlaceholders
 import com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory.Companion.applyPlaceholders
@@ -24,8 +26,11 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Segment
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.Deferred
 import java.util.concurrent.CancellationException
@@ -53,52 +58,63 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
   override suspend fun loadEditorInBackground(highlighterDeferred: Deferred<EditorHighlighter>): Runnable {
     val highlighter = highlighterDeferred.await()
     val editor = editor
-    return readAction {
-      val psiFile = PsiManager.getInstance(project).findFile(file)
-      val document = editor.document
-      val foldingState = if (project.isDefault || !PsiDocumentManager.getInstance(project).isCommitted(document)) {
-        null
-      }
-      else {
-        catchingExceptions {
+    val document = editor.document
+
+    class State {
+      var foldingState: CodeFoldingState? = null
+      var focusZones: List<Segment>? = null
+      var items: DocRenderPassFactory.Items? = null
+      var buffer: HintsBuffer? = null
+      var placeholders: List<Pair<TextRange, CodeVisionEntry>>? = null
+      var psiFile: PsiFile? = null
+    }
+    val state = State()
+
+    val psiManager = PsiManager.getInstance(project)
+    readAction {
+      if (!project.isDefault && PsiDocumentManager.getInstance(project).isCommitted(document)) {
+        state.foldingState = catchingExceptions {
           CodeFoldingManager.getInstance(project).buildInitialFoldings(document)
         }
       }
-      val focusZones = catchingExceptions { FocusModePassFactory.calcFocusZones(psiFile) }
-      val items = if (psiFile != null && DocRenderManager.isDocRenderingEnabled(getEditor())) {
-        catchingExceptions { DocRenderPassFactory.calculateItemsToRender(editor, psiFile) }
-      }
-      else {
-        null
-      }
 
-      val buffer = if (psiFile == null) null else catchingExceptions { collectPlaceholders(file = psiFile, editor = editor) }
-      val placeholders = catchingExceptions {
-        CodeVisionInitializer.getInstance(project).getCodeVisionHost().collectPlaceholders(editor, psiFile)
+      val psiFile = psiManager.findFile(file)
+      state.psiFile = psiFile
+      state.focusZones = catchingExceptions { FocusModePassFactory.calcFocusZones(psiFile) }
+      if (psiFile != null) {
+        if (DocRenderManager.isDocRenderingEnabled(getEditor())) {
+          state.items = catchingExceptions { DocRenderPassFactory.calculateItemsToRender(editor, psiFile) }
+        }
+        state.buffer = catchingExceptions { collectPlaceholders(file = psiFile, editor = editor) }
       }
+    }
 
-      Runnable {
-        setupEditor(editor, highlighter)
+    state.placeholders = catchingExceptions {
+      CodeVisionInitializer.getInstance(project).getCodeVisionHost().collectPlaceholders(editor, state.psiFile)
+    }
 
-        foldingState?.setToEditor(editor)
-        if (focusZones != null) {
-          FocusModePassFactory.setToEditor(focusZones, editor)
-          if (editor is EditorImpl) {
-            editor.applyFocusMode()
-          }
+    return Runnable {
+      setupEditor(editor, highlighter)
+
+      state.foldingState?.setToEditor(editor)
+      state.focusZones?.let { focusZones ->
+        FocusModePassFactory.setToEditor(focusZones, editor)
+        if (editor is EditorImpl) {
+          editor.applyFocusMode()
         }
-        if (items != null) {
-          DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
-        }
-        if (buffer != null) {
-          applyPlaceholders(file = psiFile!!, editor = editor, hints = buffer)
-        }
-        if (!placeholders.isNullOrEmpty()) {
-          applyPlaceholders(editor, placeholders)
-        }
-        if (psiFile != null && psiFile.isValid) {
-          DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
-        }
+      }
+      state.items?.let { items ->
+        DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
+      }
+      val psiFile = state.psiFile
+      state.buffer?.let { buffer ->
+        applyPlaceholders(file = psiFile!!, editor = editor, hints = buffer)
+      }
+      state.placeholders?.takeIf { it.isNotEmpty() }?.let { placeholders ->
+        applyPlaceholders(editor, placeholders)
+      }
+      if (psiFile != null && psiFile.isValid) {
+        DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
       }
     }
   }

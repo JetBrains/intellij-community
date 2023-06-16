@@ -2,13 +2,11 @@
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.ide.ApplicationInitializedListener
-import com.intellij.ide.IdleTracker
-import com.intellij.openapi.application.AccessToken
+import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.JulLogger
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.IS_DIRECTORY
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.HEALTH_CHECKING_ENABLED
@@ -18,32 +16,36 @@ import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.DataEnumeratorEx
+import com.intellij.util.io.PowerStatus
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import java.io.IOException
 import java.nio.file.Paths
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
+import kotlin.system.exitProcess
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.DurationUnit.MILLISECONDS
+import kotlin.time.toDuration
 
 
 object VFSHealthCheckerConstants {
   @JvmStatic
-  val HEALTH_CHECKING_ENABLED = SystemProperties.getBooleanProperty("vfs.health-check.enabled", false)
+  val HEALTH_CHECKING_ENABLED = SystemProperties.getBooleanProperty("vfs.health-check.enabled",
+                                                                    ApplicationManager.getApplication().isEAP)
 
   @JvmStatic
   val HEALTH_CHECKING_PERIOD_MS = SystemProperties.getIntProperty("vfs.health-check.checking-period-ms",
                                                                   1.hours.inWholeMilliseconds.toInt())
 
   @JvmStatic
-  val LOG = FSRecords.LOG
+  val LOG: Logger = FSRecords.LOG
 }
 
 
 class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
-
   override suspend fun execute(asyncScope: CoroutineScope) {
     if (HEALTH_CHECKING_ENABLED) {
       if (HEALTH_CHECKING_PERIOD_MS < 1000) {
@@ -52,69 +54,75 @@ class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
       }
       LOG.info("VFS health-check enabled: each $HEALTH_CHECKING_PERIOD_MS ms")
 
-      VFSHealthCheckRunner.start()
+      asyncScope.launch(Dispatchers.Default) {
+        val checkingPeriod = HEALTH_CHECKING_PERIOD_MS.toDuration(MILLISECONDS)
+        while (isActive && !FSRecords.implOrFail().isDisposed) {
+          delay(checkingPeriod)
+
+          if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY
+              || PowerSaveMode.isEnabled()) {
+            delay(checkingPeriod) //make it twice rarer
+          }
+          //MAYBE RC: track FSRecords.getLocalModCount() to run the check only if there are enough changes
+          //          since the last check.
+
+          //MAYBE RC: use IdleTracker.getInstance().events to launch checkup on next _idle_ period?
+          launch(Dispatchers.IO) {
+            //MAYBE RC: show a progress bar -- or better not bother user?
+            doCheckupAndReportResults()
+          }
+        }
+      }
+    }
+    else {
+      LOG.info("VFS health-check disabled")
     }
   }
 
-  object VFSHealthCheckRunner {
-    private lateinit var cancelToken: AccessToken;
-
-    fun start() {
-      cancelToken = IdleTracker.getInstance().addIdleListener(HEALTH_CHECKING_PERIOD_MS, ::checkHealth)
-      Disposer.register(ApplicationManager.getApplication()) {
-        cancelToken.close()
-      }
+  private fun doCheckupAndReportResults() {
+    val fsRecordsImpl = FSRecords.implOrFail()
+    if (fsRecordsImpl.isDisposed) {
+      return
+    }
+    val checker = VFSHealthChecker(fsRecordsImpl, LOG)
+    val checkHealthReport = try {
+      checker.checkHealth()
+    }
+    catch (e: AlreadyDisposedException) {
+      return
     }
 
-    private fun checkHealth() {
-      val fsRecordsImpl = FSRecords.implOrFail()
-      if (fsRecordsImpl.isDisposed) {
-        return
-      }
-      val checker = VFSHealthChecker(fsRecordsImpl, LOG)
-      val checkHealthReport = try {
-        //TODO RC: run in a background thread to avoid blocking EDT
-        checker.checkHealth()
-      }
-      catch (e: AlreadyDisposedException) {
-        return
-      }
+    VfsUsageCollector.logVfsHealthCheck(
+      fsRecordsImpl.creationTimestamp,
+      checkHealthReport.timeTaken.inWholeMilliseconds,
 
-      cancelToken.close()
-      cancelToken = IdleTracker.getInstance().addIdleListener(HEALTH_CHECKING_PERIOD_MS, ::checkHealth)
+      checkHealthReport.recordsReport.fileRecordsChecked,
+      checkHealthReport.recordsReport.fileRecordsDeleted,
+      checkHealthReport.recordsReport.nullNameIds,
+      checkHealthReport.recordsReport.unresolvableNameIds,
+      checkHealthReport.recordsReport.notNullContentIds,
+      checkHealthReport.recordsReport.unresolvableContentIds,
+      checkHealthReport.recordsReport.nullParents,
+      checkHealthReport.recordsReport.childrenChecked,
+      checkHealthReport.recordsReport.inconsistentParentChildRelationships,
+      checkHealthReport.recordsReport.generalErrors,
 
-      VfsUsageCollector.logVfsHealthCheck(
-        fsRecordsImpl.creationTimestamp,
-        checkHealthReport.timeTaken.inWholeMilliseconds,
+      checkHealthReport.namesEnumeratorReport.namesChecked,
+      checkHealthReport.namesEnumeratorReport.namesResolvedToNull,
+      checkHealthReport.namesEnumeratorReport.idsResolvedToNull,
+      checkHealthReport.namesEnumeratorReport.inconsistentNames,
+      checkHealthReport.namesEnumeratorReport.generalErrors,
 
-        checkHealthReport.recordsReport.fileRecordsChecked,
-        checkHealthReport.recordsReport.fileRecordsDeleted,
-        checkHealthReport.recordsReport.nullNameIds,
-        checkHealthReport.recordsReport.unresolvableNameIds,
-        checkHealthReport.recordsReport.notNullContentIds,
-        checkHealthReport.recordsReport.unresolvableContentIds,
-        checkHealthReport.recordsReport.nullParents,
-        checkHealthReport.recordsReport.childrenChecked,
-        checkHealthReport.recordsReport.inconsistentParentChildRelationships,
-        checkHealthReport.recordsReport.generalErrors,
+      checkHealthReport.rootsReport.rootsCount,
+      checkHealthReport.rootsReport.rootsWithParents,
+      checkHealthReport.rootsReport.rootsDeletedButNotRemoved,
+      checkHealthReport.rootsReport.generalErrors,
 
-        checkHealthReport.namesEnumeratorReport.namesChecked,
-        checkHealthReport.namesEnumeratorReport.namesResolvedToNull,
-        checkHealthReport.namesEnumeratorReport.idsResolvedToNull,
-        checkHealthReport.namesEnumeratorReport.inconsistentNames,
-        checkHealthReport.namesEnumeratorReport.generalErrors,
+      checkHealthReport.contentEnumeratorReport.contentRecordsChecked,
+      checkHealthReport.contentEnumeratorReport.generalErrors
+    )
 
-        checkHealthReport.rootsReport.rootsCount,
-        checkHealthReport.rootsReport.rootsWithParents,
-        checkHealthReport.rootsReport.rootsDeletedButNotRemoved,
-        checkHealthReport.rootsReport.generalErrors,
-
-        checkHealthReport.contentEnumeratorReport.contentRecordsChecked,
-        checkHealthReport.contentEnumeratorReport.generalErrors
-      )
-
-      //MAYBE RC: create VFS_BROKEN_MARKER?
-    }
+    //MAYBE RC: create VFS_BROKEN_MARKER?
   }
 }
 
@@ -151,13 +159,13 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val contentHashesEnumerator = connection.contentHashesEnumerator
     val contentsStorage = connection.contents
 
-    val recordsCount = fileRecords.recordsCount()
+    val maxAllocatedID = fileRecords.maxAllocatedID()
 
     val report = VFSHealthCheckReport.FileRecordsReport()
     val allRoots = IntOpenHashSet(impl.listRoots())
     return report.apply {
       val invalidFlagsMask = PersistentFS.Flags.getAllValidFlags().inv()
-      for (fileId in FSRecords.MIN_REGULAR_FILE_ID until recordsCount) {
+      for (fileId in FSRecords.MIN_REGULAR_FILE_ID..maxAllocatedID) {
         try {
           val nameId = fileRecords.getNameId(fileId)
           val parentId = fileRecords.getParent(fileId)
@@ -179,12 +187,12 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             continue
           }
 
-          //if (length < 0) {TODO length is regularly -1
+          //if (length < 0) { //RC: length is regularly -1
           //  LOG.warn("file[#" + fileId + "]: length(=" + length + ") is negative -> suspicious");
           //}
 
           if (nameId == DataEnumeratorEx.NULL_ID) {
-            nullNameIds++;
+            nullNameIds++
             log.info("file[#$fileId]: nameId is not set (NULL_ID) -> file record is incorrect (broken?)")
           }
           val fileName = namesEnumerator.valueOf(nameId)
@@ -203,13 +211,14 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
                        "-> content hashes enumerator is inconsistent (broken?)")
             }
             try {
-              contentsStorage.readStream(contentId).use { stream -> }
+              //just ensure storage has the record 
+              contentsStorage.readStream(contentId).use { _ -> }
             }
             catch (e: IOException) {
               unresolvableContentIds++
               log.info("file[#$fileId]{$fileName}: content[#$contentId] can't be read", e)
             }
-          } //else: ok, contentId _could_ be NULL_ID
+          } //else: it is ok, contentId _could_ be NULL_ID
 
           if (parentId == DataEnumeratorEx.NULL_ID && !allRoots.contains(fileId)) {
             nullParents++
@@ -223,10 +232,10 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             for (i in children.indices) {
               childrenChecked++
               val childId = children[i]
-              if (childId < FSRecords.MIN_REGULAR_FILE_ID || childId >= recordsCount) {
+              if (childId < FSRecords.MIN_REGULAR_FILE_ID || childId > maxAllocatedID) {
                 generalErrors++ //MAYBE RC: dedicated counter?
                 log.info("file[#$fileId]{$fileName}: children[$i][#$childId] " +
-                         "is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$recordsCount) ")
+                         "is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$maxAllocatedID]")
               }
               else {
                 val childParentId = fileRecords.getParent(childId)
@@ -239,18 +248,18 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             }
           }
           else if (children.isNotEmpty()) {
-            inconsistentParentChildRelationships++; //MAYBE RC: dedicated counter for that kind of errors?
+            inconsistentParentChildRelationships++ //MAYBE RC: dedicated counter for that kind of errors?
             log.info("file[#$fileId]{$fileName}: !directory (flags: ${Integer.toBinaryString(flags)}) but has children(${children.size})")
           }
 
           //TODO RC: try read _all_ attributes, check all them are readable
         }
         catch (t: Throwable) {
-          generalErrors++;
+          generalErrors++
           log.info("file[#$fileId]: exception while checking", t)
         }
       }
-      log.info("$recordsCount file records checked: ${childrenChecked} children, ${notNullContentIds} contents")
+      log.info("${fileRecords.recordsCount()} file records checked: ${childrenChecked} children, ${notNullContentIds} contents")
     }
   }
 
@@ -260,13 +269,17 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
       try {
         val rootIds = impl.treeAccessor().listRoots()
         val records = impl.connection().records
+        val maxAllocatedID = records.maxAllocatedID()
         rootsCount = rootIds.size
 
         for (rootId in rootIds) {
+          if (rootId < FSRecords.MIN_REGULAR_FILE_ID || rootId > maxAllocatedID) {
+            generalErrors++ //MAYBE RC: dedicated counter for that kind of errors?
+            log.info("root[#$rootId]: is outside of allocated IDs range [${FSRecords.MIN_REGULAR_FILE_ID}..$maxAllocatedID]")
+            continue
+          }
           val rootParentId = records.getParent(rootId)
           if (rootParentId != FSRecords.NULL_FILE_ID) {
-            //FIXME RC: seems like it happens regularly -- how could?
-            //          Maybe it happens when ordinary directory is 'promoted' to become a root?
             rootsWithParents++
             log.info("root[#$rootId]: parentId[#$rootParentId] != ${FSRecords.NULL_FILE_ID} -> inconsistency")
           }
@@ -298,15 +311,15 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
             log.info("name[$name] enumerated to NULL -> namesEnumerator is corrupted")
             return@processAllDataObjects true
           }
-          val _name = namesEnumerator.valueOf(nameId)
-          if (_name == null) {
+          val nameResolved = namesEnumerator.valueOf(nameId)
+          if (nameResolved == null) {
             report.idsResolvedToNull++
             log.info("name[$name]: enumerated to nameId(=$nameId), resolved back to null -> namesEnumerator is corrupted")
             return@processAllDataObjects true
           }
-          if (name != _name) {
+          if (name != nameResolved) {
             report.inconsistentNames++
-            log.info("name[$name]: enumerated to nameId(=$nameId), resolved back to different name [$_name] " +
+            log.info("name[$name]: enumerated to nameId(=$nameId), resolved back to different name [$nameResolved] " +
                      "-> namesEnumerator is corrupted")
           }
         }
@@ -339,7 +352,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
         log.info("contentId[#$contentId]: id is absent in contentHashes -> contentHashEnumerator is corrupted?")
       }
       try {
-        contentsStorage.readStream(contentId).use { stream -> }
+        contentsStorage.readStream(contentId).use { stream -> stream.readAllBytes() }
         //MAYBE RC: evaluate content hash from stream, and check == contentHash?
       }
       catch (e: IOException) {
@@ -405,14 +418,13 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
 /** Runs health-check on given VFS files (<path-to-VFS-dir>) in read-only mode (i.e. doesn't change anything),
  * and prints report */
 fun main(args: Array<String>) {
-  if (args.size == 0) {
+  if (args.isEmpty()) {
     System.err.println("Usage: <path-to-VFS-dir>")
     return
   }
-  //TODO RC: configure logger so it prints .info() -- DefaultLogger prints only .warn() and above
   val path = Paths.get(args[0])
   println("Checking VFS [$path]")
-  val records = FSRecordsImpl.connect(path, emptyList()) { _records, error ->
+  val records = FSRecordsImpl.connect(path, emptyList()) { _, error ->
     throw error
   }
 
@@ -420,7 +432,7 @@ fun main(args: Array<String>) {
   val checkupReport = VFSHealthChecker(records, log).checkHealth()
   println(checkupReport)
 
-  System.exit(0) //too many non-daemon threads
+  exitProcess(0) //too many non-daemon threads
 }
 
 private fun configureLogger(): JulLogger {
@@ -430,7 +442,6 @@ private fun configureLogger(): JulLogger {
   val handler = ConsoleHandler()
   handler.formatter = IdeaLogRecordFormatter()
   julLogger.addHandler(handler)
-  val log = JulLogger(julLogger)
-  return log
+  return JulLogger(julLogger)
 }
 

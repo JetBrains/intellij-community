@@ -352,9 +352,7 @@ class FeatureUsageData(private val recorderId: String) {
 
     other as FeatureUsageData
 
-    if (data != other.data) return false
-
-    return true
+    return data == other.data
   }
 
   override fun hashCode(): Int {

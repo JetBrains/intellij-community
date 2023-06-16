@@ -18,7 +18,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.withModalProgressBlocking
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.ModuleRootManager
@@ -327,7 +327,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmStatic
     @RequiresEdt
     fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
-      return withModalProgressBlocking(project, "") {
+      return runWithModalProgressBlocking(project, "") {
         attachToProjectAsync(projectToClose = project, projectDir = projectDir, callback = callback)
       }
     }
@@ -406,7 +406,7 @@ private fun openFileFromCommandLine(project: Project, file: Path, line: Int, col
         PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
       }
       navigatable.navigate(true)
-    }, ModalityState.NON_MODAL, project.disposed)
+    }, ModalityState.nonModal(), project.disposed)
   }
 }
 

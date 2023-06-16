@@ -17,7 +17,7 @@ internal class TestCoroutineProgressAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     try {
-      withModalProgressBlocking(ModalTaskOwner.guess(), "Synchronous never-ending modal progress") {
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "Synchronous never-ending modal progress") {
         awaitCancellation()
       }
     }
@@ -58,17 +58,37 @@ internal class TestCoroutineProgressAction : AnAction() {
         }
         row {
           button("Cancellable Synchronous Modal Progress") {
-            withModalProgressBlocking(project, "Cancellable synchronous modal progress") {
+            runWithModalProgressBlocking(project, "Cancellable synchronous modal progress") {
               doStuff()
             }
           }
           button("Non-Cancellable Synchronous Modal Progress") {
-            withModalProgressBlocking(
+            runWithModalProgressBlocking(
               ModalTaskOwner.project(project),
               "Non-cancellable synchronous modal progress",
               TaskCancellation.nonCancellable(),
             ) {
               doStuff()
+            }
+          }
+        }
+        row {
+          button("Delayed Completion BG Progress") {
+            cs.launch {
+              withBackgroundProgress(project, "Delayed completion BG progress") {
+                withContext(NonCancellable) {
+                  stage(parallel = true)
+                }
+              }
+            }
+          }
+          button("Delayed Completion Modal Progress") {
+            cs.launch {
+              withModalProgress(project, "Delayed completion modal progress") {
+                withContext(NonCancellable) {
+                  stage(parallel = true)
+                }
+              }
             }
           }
         }

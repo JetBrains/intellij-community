@@ -43,23 +43,27 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   }
 
   @Override
+  @Nullable
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text) {
     return createFileFromText(name, language, text, true, true);
   }
 
   @Override
+  @Nullable
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
                                     boolean eventSystemEnabled, boolean markAsCopy) {
     return createFileFromText(name, language, text, eventSystemEnabled, markAsCopy, false);
   }
 
   @Override
+  @Nullable
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
                                     boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit) {
     return createFileFromText(name, language, text, eventSystemEnabled, markAsCopy, noSizeLimit, null);
   }
 
   @Override
+  @Nullable
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
                                     boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit,
                                     @Nullable VirtualFile original) {

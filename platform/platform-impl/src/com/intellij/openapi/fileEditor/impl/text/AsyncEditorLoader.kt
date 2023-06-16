@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
-import com.intellij.openapi.progress.withModalProgressBlocking
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -76,7 +76,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     editor.putUserData(ASYNC_LOADER, this)
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      val continuation = withModalProgressBlocking(project, "") {
+      val continuation = runWithModalProgressBlocking(project, "") {
         textEditor.loadEditorInBackground(highlighterDeferred)
       }
       editor.putUserData(ASYNC_LOADER, null)
@@ -93,7 +93,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
       }
 
       val editorComponent = textEditor.component
-      // `openEditorImpl` uses withModalProgressBlocking, but an async editor load is performed in the background, out of the `openEditorImpl` call
+      // `openEditorImpl` uses runWithModalProgressBlocking, but an async editor load is performed in the background, out of the `openEditorImpl` call
       val modality = ModalityState.any().asContextElement()
       val indicatorJob = editorComponent.loadingDecorator.startLoading(scope = coroutineScope + modality,
                                                                        addUi = editorComponent::addLoadingDecoratorUi)

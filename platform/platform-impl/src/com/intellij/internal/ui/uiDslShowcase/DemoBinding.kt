@@ -3,7 +3,6 @@ package com.intellij.internal.ui.uiDslShowcase
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.Alarm
 import org.jetbrains.annotations.ApiStatus
@@ -83,10 +82,6 @@ fun demoBinding(parentDisposable: Disposable): DialogPanel {
       }
     }
   }
-
-  val disposable = Disposer.newDisposable()
-  panel.registerValidators(disposable)
-  Disposer.register(parentDisposable, disposable)
 
   SwingUtilities.invokeLater {
     initValidation()

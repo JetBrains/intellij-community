@@ -31,7 +31,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.Alarm
 import com.intellij.util.SystemProperties
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand.Companion.shouldOpenInSmartMode
-import com.jetbrains.performancePlugin.commands.takeScreenshotOfFrame
+import com.jetbrains.performancePlugin.commands.takeScreenshotOfAllWindows
 import com.jetbrains.performancePlugin.profilers.ProfilersController
 import com.jetbrains.performancePlugin.utils.ReporterCommandAsTelemetrySpan
 import io.opentelemetry.context.Context
@@ -198,11 +198,11 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
     private var screenshotJob: kotlinx.coroutines.Job? = null
     private var ourScriptStarted = false
 
-    private fun registerScreenshotTaking(fileName: String, coroutineScope: CoroutineScope) {
+    private fun registerScreenshotTaking(folder: String, coroutineScope: CoroutineScope) {
       screenshotJob = coroutineScope.launch {
         while (true) {
           delay(1.minutes)
-          takeScreenshotOfFrame(fileName)
+          takeScreenshotOfAllWindows(folder)
         }
       }
     }
@@ -375,33 +375,33 @@ private fun reportTeamCityFailedTestAndBuildProblem(testName: String, failureMes
 
 @Suppress("RAW_RUN_BLOCKING")
 private fun registerOnFinishRunnables(future: CompletableFuture<*>, mustExitOnFailure: Boolean) {
-  future
-    .thenRun { LOG.info("Execution of the script has been finished successfully") }
-    .exceptionally(Function { e ->
-      val message = "IDE will be terminated because some errors are detected while running the startup script: $e"
-      if (MUST_REPORT_TEAMCITY_TEST_FAILURE_ON_IDE_ERROR) {
-        val testName = teamCityFailedTestName
-        reportTeamCityFailedTestAndBuildProblem(testName, message, "")
-      }
-      if (SystemProperties.getBooleanProperty("startup.performance.framework", false)) {
-        storeFailureToFile(e.message)
-      }
-      LOG.error(message)
-      if (System.getProperty("ide.performance.screenshot.on.failure") != null) {
-        runBlocking {
-          takeScreenshotOfFrame(System.getProperty("ide.performance.screenshot.on.failure"))
-        }
-      }
-      val threadDump = """
+    future
+      .thenRun { LOG.info("Execution of the script has been finished successfully") }
+      .exceptionally(Function { e ->
+        ApplicationManager.getApplication().executeOnPooledThread {
+          val message = "IDE will be terminated because some errors are detected while running the startup script: $e"
+          if (MUST_REPORT_TEAMCITY_TEST_FAILURE_ON_IDE_ERROR) {
+            val testName = teamCityFailedTestName
+            reportTeamCityFailedTestAndBuildProblem(testName, message, "")
+          }
+          if (SystemProperties.getBooleanProperty("startup.performance.framework", false)) {
+            storeFailureToFile(e.message)
+          }
+          LOG.error(message)
+          runBlocking {
+            takeScreenshotOfAllWindows("onFailure")
+          }
+          val threadDump = """
             Thread dump before IDE termination:
             ${ThreadDumper.dumpThreadsToString()}
             """.trimIndent()
-      LOG.info(threadDump)
-      if (mustExitOnFailure) {
-        ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
-      }
-      null
-    })
+          LOG.info(threadDump)
+          if (mustExitOnFailure) {
+            ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
+          }
+        }
+        null
+      })
 }
 
 private fun storeFailureToFile(errorMessage: String?) {

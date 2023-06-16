@@ -4132,6 +4132,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/chop/argumentList/leftParOnSameLine.kt");
             }
 
+            @TestMetadata("onArgument.kt")
+            public void testOnArgument() throws Exception {
+                runTest("testData/intentions/chop/argumentList/onArgument.kt");
+            }
+
+            @TestMetadata("onArgumentName.kt")
+            public void testOnArgumentName() throws Exception {
+                runTest("testData/intentions/chop/argumentList/onArgumentName.kt");
+            }
+
             @TestMetadata("onNestedArgumentList.kt")
             public void testOnNestedArgumentList() throws Exception {
                 runTest("testData/intentions/chop/argumentList/onNestedArgumentList.kt");
@@ -12394,6 +12404,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/joinArgumentList/noLineBreak.kt");
         }
 
+        @TestMetadata("onArgument.kt")
+        public void testOnArgument() throws Exception {
+            runTest("testData/intentions/joinArgumentList/onArgument.kt");
+        }
+
+        @TestMetadata("onArgumentName.kt")
+        public void testOnArgumentName() throws Exception {
+            runTest("testData/intentions/joinArgumentList/onArgumentName.kt");
+        }
+
         @TestMetadata("onNestedArgumentList.kt")
         public void testOnNestedArgumentList() throws Exception {
             runTest("testData/intentions/joinArgumentList/onNestedArgumentList.kt");
@@ -18435,6 +18455,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("setAsExpressionBodyUnqualified.kt")
         public void testSetAsExpressionBodyUnqualified() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/setAsExpressionBodyUnqualified.kt");
+        }
+
+        @TestMetadata("setAsPropertyInitializer.kt")
+        public void testSetAsPropertyInitializer() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/setAsPropertyInitializer.kt");
+        }
+
+        @TestMetadata("setAsReturnedExpression.kt")
+        public void testSetAsReturnedExpression() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/setAsReturnedExpression.kt");
         }
 
         @TestMetadata("setFunctionReferenceArgument.kt")

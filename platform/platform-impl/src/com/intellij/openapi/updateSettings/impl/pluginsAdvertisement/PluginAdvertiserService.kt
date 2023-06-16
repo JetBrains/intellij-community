@@ -14,6 +14,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
@@ -37,6 +38,11 @@ sealed interface PluginAdvertiserService {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): PluginAdvertiserService = project.service()
+
+    internal fun isCommunityIde(): Boolean {
+      val thisProductCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
+      return getSuggestedCommercialIdeCode(thisProductCode) != null
+    }
 
     fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
       return when (activeProductCode) {

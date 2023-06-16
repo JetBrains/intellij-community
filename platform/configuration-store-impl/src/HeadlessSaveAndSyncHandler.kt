@@ -4,12 +4,12 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.withModalProgressBlocking
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 
 private class HeadlessSaveAndSyncHandler : NoOpSaveAndSyncHandler() {
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean {
     runInAutoSaveDisabledMode {
-      withModalProgressBlocking(ModalTaskOwner.guess(), "") {
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
         componentManager.stateStore.save(forceSavingAllSettings = true)
       }
     }

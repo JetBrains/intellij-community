@@ -44,15 +44,15 @@ public abstract class MavenProjectsTreeTestCase extends MavenMultiVersionImporti
 
   protected void updateAll(List<String> profiles, VirtualFile... files) {
     myTree.resetManagedFilesAndProfiles(asList(files), new MavenExplicitProfiles(profiles));
-    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator());
+    myTree.updateAll(false, getMavenGeneralSettings(), getMavenProgressIndicator().getIndicator());
   }
 
   protected void update(VirtualFile file) {
-    myTree.update(asList(file), false, getMavenGeneralSettings(), getMavenProgressIndicator());
+    myTree.update(asList(file), false, getMavenGeneralSettings(), getMavenProgressIndicator().getIndicator());
   }
 
   protected void deleteProject(VirtualFile file) {
-    myTree.delete(asList(file), getMavenGeneralSettings(), getMavenProgressIndicator());
+    myTree.delete(asList(file), getMavenGeneralSettings(), getMavenProgressIndicator().getIndicator());
   }
 
   protected void updateTimestamps(final VirtualFile... files) throws IOException {

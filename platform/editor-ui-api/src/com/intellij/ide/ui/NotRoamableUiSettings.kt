@@ -3,7 +3,6 @@ package com.intellij.ide.ui
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.FontUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
@@ -11,7 +10,7 @@ import java.awt.Font
 
 @Service(Service.Level.APP)
 @State(name = "NotRoamableUiSettings", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))])
-class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUiOptions>(defaultState()) {
+class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUiOptions>(NotRoamableUiOptions()) {
   companion object {
     fun getInstance(): NotRoamableUiSettings = ApplicationManager.getApplication().service<NotRoamableUiSettings>()
   }
@@ -114,34 +113,28 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
 
     // 1. Sometimes system font cannot display standard ASCII symbols.
     // If so, we have to find any other suitable font withing "preferred" fonts first.
-    var fontIsValid = FontUtil.isValidFont(Font(state.fontFace, Font.PLAIN, 1).deriveFont(state.fontSize))
-    if (!fontIsValid) {
-      for (preferredFont in arrayOf("dialog", "Arial", "Tahoma")) {
-        if (FontUtil.isValidFont(Font(preferredFont, Font.PLAIN, 1).deriveFont(state.fontSize))) {
-          updateState { it.copy(fontFace = preferredFont) }
-          fontIsValid = true
-          break
-        }
-      }
+    if (state.fontFace == null || FontUtil.isValidFont(Font(state.fontFace, Font.PLAIN, 1).deriveFont(state.fontSize))) {
+      return
+    }
 
-      // 2. If all preferred fonts are not valid in the current environment,
-      // we have to find the first valid font (if any)
-      if (!fontIsValid) {
-        val fontNames = FontUtil.getValidFontNames(false)
-        if (fontNames.isNotEmpty()) {
-          updateState { it.copy(fontFace = fontNames[0]) }
-        }
+    var fontIsValid = false
+    for (preferredFont in arrayOf("dialog", "Arial", "Tahoma")) {
+      if (FontUtil.isValidFont(Font(preferredFont, Font.PLAIN, 1).deriveFont(state.fontSize))) {
+        updateState { it.copy(fontFace = preferredFont) }
+        fontIsValid = true
+        break
+      }
+    }
+
+    // 2. If all preferred fonts are not valid in the current environment,
+    // we have to find the first valid font (if any)
+    if (!fontIsValid) {
+      val fontNames = FontUtil.getValidFontNames(false)
+      if (fontNames.isNotEmpty()) {
+        updateState { it.copy(fontFace = fontNames[0]) }
       }
     }
   }
-}
-
-private fun defaultState(): NotRoamableUiOptions {
-  val fontData = JBUIScale.getSystemFontData(null)
-  return NotRoamableUiOptions(
-    fontFace = fontData.first,
-    fontSize = fontData.second.toFloat(),
-  )
 }
 
 data class NotRoamableUiOptions(

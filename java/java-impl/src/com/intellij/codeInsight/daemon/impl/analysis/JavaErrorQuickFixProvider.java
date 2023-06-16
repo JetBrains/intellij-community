@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.InsertMissingTokenFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInspection.ConvertRecordToClassFix;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
@@ -45,8 +44,7 @@ public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
           case PsiKeyword.RECORD -> {
             HighlightUtil.registerIncreaseLanguageLevelFixes(errorElement, HighlightingFeature.RECORDS, registrar);
             if (ConvertRecordToClassFix.tryMakeRecord(errorElement) != null) {
-              IntentionAction action = PriorityIntentionActionWrapper.lowPriority(new ConvertRecordToClassFix(errorElement));
-              registrar.add(action);
+              registrar.add(new ConvertRecordToClassFix(errorElement).asIntention());
             }
           }
           case PsiKeyword.SEALED -> HighlightUtil.registerIncreaseLanguageLevelFixes(errorElement, HighlightingFeature.SEALED_CLASSES, registrar);

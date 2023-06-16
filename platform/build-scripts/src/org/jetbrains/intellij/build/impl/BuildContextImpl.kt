@@ -1,6 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "RAW_RUN_BLOCKING")
-
+@file:Suppress("ReplaceGetOrSet")
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
@@ -191,8 +190,12 @@ class BuildContextImpl(
 
   override val jetBrainsClientModuleFilter: JetBrainsClientModuleFilter by lazy {
     val mainModule = productProperties.embeddedJetBrainsClientMainModule
-    if (mainModule != null && options.enableEmbeddedJetBrainsClient) JetBrainsClientModuleFilterImpl(mainModule, this)
-    else EmptyJetBrainsClientModuleFilter
+    if (mainModule != null && options.enableEmbeddedJetBrainsClient) {
+      JetBrainsClientModuleFilterImpl(mainModule, this)
+    }
+    else {
+      EmptyJetBrainsClientModuleFilter
+    }
   }
   
   override val isEmbeddedJetBrainsClientEnabled: Boolean

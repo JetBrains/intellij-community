@@ -12,11 +12,14 @@ public interface CancellationManager {
   void checkCanceled() throws CanceledException;
 
   /**
-   * Save result of  {@link CancellationManager#checkCanceled} in one thread.
-   * After that this result will be thrown with {@link CancellationManager#checkSavedCancelled} in second thread.
+   * Called every time the body of a new method is started to be decompiled
    */
-  void saveCancelled();
-  void checkSavedCancelled();
+  void startMethod(String className, String methodName);
+
+  /**
+   * Called every time the method decompilation is finished
+   */
+  void finishMethod(String className, String methodName);
 
   @ApiStatus.Experimental
   class CanceledException extends RuntimeException {
@@ -25,19 +28,46 @@ public interface CancellationManager {
       super(cause);
     }
 
+    public CanceledException() {
+      super();
+    }
   }
 
-  CancellationManager DUMMY = new CancellationManager() {
+  @ApiStatus.Experimental
+  class TimeExceedException extends CanceledException {
+  }
+
+  static CancellationManager getSimpleWithTimeout(int maxMethodTimeoutSec) {
+    return new TimeoutCancellationManager(maxMethodTimeoutSec);
+  }
+
+  class TimeoutCancellationManager implements CancellationManager {
+    private final long maxMilis;
+    private long startMilis = 0;
+
+    protected TimeoutCancellationManager(int maxMethodTimeoutSec) {
+      this.maxMilis = maxMethodTimeoutSec * 1000L;
+    }
+
     @Override
     public void checkCanceled() throws CanceledException {
+      if (maxMilis <= 0 || startMilis <= 0) {
+        return;
+      }
+      long timeMillis = System.currentTimeMillis();
+      if (timeMillis - startMilis > maxMilis) {
+        throw new TimeExceedException();
+      }
     }
 
     @Override
-    public void saveCancelled() {
+    public void startMethod(String className, String methodName) {
+      startMilis = System.currentTimeMillis();
     }
 
     @Override
-    public void checkSavedCancelled() {
+    public void finishMethod(String className, String methodName) {
+      startMilis = 0;
     }
-  };
+  }
 }

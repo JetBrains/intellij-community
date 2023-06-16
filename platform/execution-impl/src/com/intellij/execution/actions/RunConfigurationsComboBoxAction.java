@@ -138,7 +138,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         }
       }
       else {
-        name = StringUtil.shortenTextWithEllipsis(settings.getName(), RedesignedRunWidgetKt.CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH, 8, true);
+        name = StringUtil.shortenTextWithEllipsis(
+          settings.getName(),
+          RedesignedRunWidgetKt.CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH,
+          RedesignedRunWidgetKt.CONFIGURATION_NAME_TRIM_SUFFIX_LENGTH,
+          true);
       }
       presentation.setText(name, false);
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -551,8 +555,13 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                          myExecutorFilter);
       addSeparator(ExperimentalUI.isNewUI() ? ExecutionBundle.message("choose.run.popup.separator") : null);
 
-      Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
-      addAction(new ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, myConfiguration, true));
+      if (!ExperimentalUI.isNewUI()) {
+        Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
+        addAction(new ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, myConfiguration, true));
+      }
+      else {
+        addAction(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
+      }
 
       if (myConfiguration.isTemporary()) {
         String actionName = ExecutionBundle.message("choose.run.popup.save");

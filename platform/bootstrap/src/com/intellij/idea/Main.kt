@@ -155,6 +155,7 @@ private fun initLux() {
 private fun bootstrap(startupTimings: MutableList<Any>) {
   addBootstrapTiming("properties loading", startupTimings)
   PathManager.loadProperties()
+  PathManager.customizePaths()
 
   addBootstrapTiming("plugin updates install", startupTimings)
   // this check must be performed before system directories are locked

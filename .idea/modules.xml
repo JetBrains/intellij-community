@@ -711,6 +711,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/protocol/schema-reader-generator/intellij.javascript.schemaReaderGenerator.iml" filepath="$PROJECT_DIR$/platform/script-debugger/protocol/schema-reader-generator/intellij.javascript.schemaReaderGenerator.iml" />
       <module fileurl="file://$PROJECT_DIR$/json/intellij.json.iml" filepath="$PROJECT_DIR$/json/intellij.json.iml" />
       <module fileurl="file://$PROJECT_DIR$/json/tests/intellij.json.tests.iml" filepath="$PROJECT_DIR$/json/tests/intellij.json.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/jsonpath/intellij.jsonpath.iml" filepath="$PROJECT_DIR$/plugins/jsonpath/intellij.jsonpath.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-openapi/intellij.jsp.iml" filepath="$PROJECT_DIR$/java/jsp-openapi/intellij.jsp.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-base-openapi/intellij.jsp.base.iml" filepath="$PROJECT_DIR$/java/jsp-base-openapi/intellij.jsp.base.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-spi/intellij.jsp.spi.iml" filepath="$PROJECT_DIR$/java/jsp-spi/intellij.jsp.spi.iml" />
@@ -1011,7 +1012,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/remoteDev-util/intellij.remoteDev.util.iml" filepath="$PROJECT_DIR$/platform/remoteDev-util/intellij.remoteDev.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/repository-search/intellij.repository.search.iml" filepath="$PROJECT_DIR$/plugins/repository-search/intellij.repository.search.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/intellij.searchEverywhereMl.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/intellij.searchEverywhereMl.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/common/intellij.searchEverywhereMl.common.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/common/intellij.searchEverywhereMl.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/intellij.searchEverywhereMl.ranking.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/intellij.searchEverywhereMl.ranking.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/vcs/intellij.searchEverywhereMl.ranking.vcs.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/vcs/intellij.searchEverywhereMl.ranking.vcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/yaml/intellij.searchEverywhereMl.ranking.yaml.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/yaml/intellij.searchEverywhereMl.ranking.yaml.iml" />
@@ -1053,6 +1053,9 @@
       <module fileurl="file://$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" filepath="$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/launcher-generator/intellij.tools.launcherGenerator.iml" filepath="$PROJECT_DIR$/tools/launcher-generator/intellij.tools.launcherGenerator.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/bootstrap/intellij.tools.testsBootstrap.iml" filepath="$PROJECT_DIR$/platform/testFramework/bootstrap/intellij.tools.testsBootstrap.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/turboComplete/intellij.turboComplete.iml" filepath="$PROJECT_DIR$/plugins/turboComplete/intellij.turboComplete.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/turboComplete/languages/kotlin/intellij.turboComplete.languages.kotlin.iml" filepath="$PROJECT_DIR$/plugins/turboComplete/languages/kotlin/intellij.turboComplete.languages.kotlin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/turboComplete/intellij.turboComplete.tests.iml" filepath="$PROJECT_DIR$/plugins/turboComplete/intellij.turboComplete.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer-core/intellij.uiDesigner.iml" filepath="$PROJECT_DIR$/plugins/ui-designer-core/intellij.uiDesigner.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/changeReminder/intellij.vcs.changeReminder.iml" filepath="$PROJECT_DIR$/plugins/changeReminder/intellij.vcs.changeReminder.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/intellij.vcs.git.iml" filepath="$PROJECT_DIR$/plugins/git4idea/intellij.vcs.git.iml" />

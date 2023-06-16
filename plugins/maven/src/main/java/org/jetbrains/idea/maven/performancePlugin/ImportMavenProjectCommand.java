@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.importing.FilesList;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
@@ -80,9 +81,9 @@ public final class ImportMavenProjectCommand extends AbstractCommand {
             if (!mavenManager.isMavenizedProject()) {
               mavenManager.addManagedFiles(mavenManager.collectAllAvailablePomFiles());
             }
-            return mavenManager.forceUpdateProjects();
+            mavenManager.updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
+            return waitForCurrentMavenImportActivities(context, project);
           })
-          .thenAsync(promise -> waitForCurrentMavenImportActivities(context, project))
           .onProcessed(promise -> {
             context.message("Import of the maven project has been finished", getLine());
             projectTrackerSettings.setAutoReloadType(currentAutoReloadType);

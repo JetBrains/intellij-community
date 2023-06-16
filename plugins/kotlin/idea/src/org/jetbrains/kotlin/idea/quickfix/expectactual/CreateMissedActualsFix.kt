@@ -9,6 +9,7 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager
+import com.intellij.openapi.externalSystem.util.ExternalSystemContentRootContributor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.util.transform
@@ -368,7 +369,13 @@ private fun generateActualsForSelectedModules(
     val pureKotlinSourceFoldersHolder = PureKotlinSourceFoldersHolder()
     val moduleSourceRoots = selectedModules.associateWith { module ->
         module.selectExistingSourceRoot(pureKotlinSourceFoldersHolder) ?: run {
-            val newRoot = module.findOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder)
+            val contentRootChooser: (List<ExternalSystemContentRootContributor.ExternalContentRoot>) -> Path? = { externalContentRoots ->
+                val exactPath = Path(simpleModuleNames[module]!!, "kotlin")
+                externalContentRoots.firstOrNull { it.path.endsWith(exactPath) }?.path
+                    ?: externalContentRoots.firstOrNull { it.path.name == "kotlin" }?.path
+                    ?: externalContentRoots.firstOrNull()?.path
+            }
+            val newRoot = module.findOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder, contentRootChooser)
                 .also { if (it.size > 1) LOG.warn("In ${module.name} were configured more then one source roots. ${it.first().name} was selected.") }
                 .firstOrNull()
             if (newRoot == null) {

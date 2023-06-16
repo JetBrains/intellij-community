@@ -34,7 +34,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", 2)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters",  version = 3)
 
   /**
    * Server returned 5** error
@@ -138,6 +138,7 @@ internal object GitLabStatistics {
   enum class MergeRequestAction {
     MERGE,
     SQUASH_MERGE,
+    REBASE,
     APPROVE,
     UNAPPROVE,
     CLOSE,
@@ -174,6 +175,7 @@ enum class GitLabApiRequestName {
   REST_GET_MERGE_REQUESTS,
   REST_APPROVE_MERGE_REQUEST,
   REST_UNAPPROVE_MERGE_REQUEST,
+  REST_REBASE_MERGE_REQUEST,
   REST_GET_MERGE_REQUEST_STATE_EVENTS,
   REST_GET_MERGE_REQUEST_LABEL_EVENTS,
   REST_GET_MERGE_REQUEST_MILESTONE_EVENTS,

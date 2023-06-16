@@ -24,7 +24,7 @@ public class MultiValuesMap<K, V>{
   /**
    * @deprecated Use {@link MultiMap#createSet()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public MultiValuesMap() {
     this(false);
   }

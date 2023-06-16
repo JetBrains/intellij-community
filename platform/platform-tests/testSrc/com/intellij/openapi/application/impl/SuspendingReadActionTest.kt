@@ -146,7 +146,7 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
   protected abstract suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T
 }
 
-class NonBlocking : SuspendingReadActionTest() {
+class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
 
   override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
     return constrainedReadAction(*constraints, action = action)
@@ -275,7 +275,7 @@ class NonBlocking : SuspendingReadActionTest() {
   }
 }
 
-class NonBlockingUndispatched : SuspendingReadActionTest() {
+class NonBlockingUndispatchedSuspendingReadActionTest : SuspendingReadActionTest() {
 
   override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
     return constrainedReadActionUndispatched(*constraints, action = action)
@@ -303,7 +303,7 @@ class NonBlockingUndispatched : SuspendingReadActionTest() {
   }
 }
 
-class Blocking : SuspendingReadActionTest() {
+class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
 
   override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
     return constrainedReadActionBlocking(*constraints, action = action)

@@ -94,6 +94,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 
 /**
@@ -863,7 +864,12 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   private static boolean getDefaultValue(TreeAction action) {
     String propertyName = action instanceof PropertyOwner ? ((PropertyOwner)action).getPropertyName() : action.getName();
-    return PropertiesComponent.getInstance().getBoolean(TreeStructureUtil.getPropertyName(propertyName), Sorter.ALPHA_SORTER.equals(action));
+    var defaultValue = Sorter.ALPHA_SORTER.equals(action) || hasEnabledStateByDefault(action);
+    return PropertiesComponent.getInstance().getBoolean(TreeStructureUtil.getPropertyName(propertyName), defaultValue);
+  }
+
+  private static boolean hasEnabledStateByDefault(@NotNull TreeAction action) {
+    return action instanceof TreeActionWithDefaultState && ((TreeActionWithDefaultState)action).isEnabledByDefault();
   }
 
   private static void saveState(TreeAction action, boolean state) {
@@ -1140,21 +1146,24 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 }
 
 final class FileStructurePopupTimeTracker extends CounterUsagesCollector {
-  private final static EventLogGroup GROUP = new EventLogGroup("com.intellij.ide.util.file-structure-popup", 1);
-  private final static EventId1<Long> LIFE = GROUP.registerEvent("popup_life", new LongEventField("time"));
-  private final static EventId1<Long> SHOW = GROUP.registerEvent("show_data", new LongEventField("time"));
-  private final static EventId1<Long> REBUILD = GROUP.registerEvent("fill_data", new LongEventField("time"));
+  private final static EventLogGroup GROUP = new EventLogGroup("file.structure.popup", 2);
+  private final static EventId1<Long> LIFE = GROUP.registerEvent("popup.disposed", EventFields.DurationMs);
+  private final static EventId1<Long> SHOW = GROUP.registerEvent("data.shown", EventFields.DurationMs);
+  private final static EventId1<Long> REBUILD = GROUP.registerEvent("data.filled", EventFields.DurationMs);
 
-  static void logRebuildTime(long elapsedTime) {
-    REBUILD.log(elapsedTime);
+  static void logRebuildTime(long elapsedTimeNanos) {
+    long elapsedTimesMs = TimeUnit.NANOSECONDS.toMillis(elapsedTimeNanos);
+    REBUILD.log(elapsedTimesMs);
   }
 
-  static void logShowTime(long elapsedTime) {
-    SHOW.log(elapsedTime);
+  static void logShowTime(long elapsedTimeNanos) {
+    long elapsedTimesMs = TimeUnit.NANOSECONDS.toMillis(elapsedTimeNanos);
+    SHOW.log(elapsedTimesMs);
   }
 
-  static void logPopupLifeTime(long elapsedTime) {
-    LIFE.log(elapsedTime);
+  static void logPopupLifeTime(long elapsedTimeNanos) {
+    long elapsedTimesMs = TimeUnit.NANOSECONDS.toMillis(elapsedTimeNanos);
+    LIFE.log(elapsedTimesMs);
   }
 
   @Override

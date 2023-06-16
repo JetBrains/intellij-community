@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.test.events
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import junit.framework.ComparisonFailure
 import org.gradle.util.GradleVersion
@@ -607,14 +608,14 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `test intellij file comparison test`(gradleVersion: GradleVersion) {
-    val fixture = GradleTestFixtureBuilder.create("GradleTestAssertionTest-file-comparison") {
+  fun `test intellij file comparison test Junit 4`(gradleVersion: GradleVersion) {
+    val fixture = GradleTestFixtureBuilder.create("GradleTestAssertionTest-file-comparison-junit-4") {
       withSettingsFile {
-        setProjectName("GradleTestAssertionTest-file-comparison")
+        setProjectName("GradleTestAssertionTest-file-comparison-junit-4")
       }
       withBuildFile(gradleVersion) {
         withJavaPlugin()
-        withJUnit()
+        withJUnit4()
         addTestImplementationDependency(call("files", list(
           PathManager.getJarPathForClass(FileComparisonFailure::class.java)!!,
           PathManager.getJarPathForClass(ComparisonFailure::class.java)!!
@@ -628,7 +629,87 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
         |package org.example;
         |
         |import com.intellij.rt.execution.junit.FileComparisonFailure;
-        |import $jUnitTestAnnotationClass;
+        |import org.junit.Test;
+        |
+        |public class TestCase {
+        |
+        |  @Test
+        |  public void test_file_comparison_failure() {
+        |    throw new FileComparisonFailure("assertion message", "Expected text.", "Actual text.", "$expectedPath", "$actualPath");
+        |  }
+        |
+        |  @Test
+        |  public void test_file_comparison_failure_without_actual_file() {
+        |    throw new FileComparisonFailure("assertion message", "Expected text.", "Actual text.", "$expectedPath", null);
+        |  }
+        |}
+      """.trimMargin())
+
+      executeTasks(":test", isRunAsTest = true)
+      assertTestTreeView {
+        assertNode("TestCase") {
+          assertNode("test_file_comparison_failure") {
+            assertTestConsoleContains("""
+              |
+              |assertion message
+              |Expected :Expected text.
+              |Actual   :Actual text.
+              |<Click to see difference>
+              |
+              |com.intellij.rt.execution.junit.FileComparisonFailure: assertion message expected:<[Expected] text.> but was:<[Actual] text.>
+            """.trimMargin())
+            assertValue { testProxy ->
+              val diffViewerProvider = testProxy.diffViewerProvider!!
+              Assertions.assertEquals(expectedPath, diffViewerProvider.filePath)
+              Assertions.assertEquals(actualPath, diffViewerProvider.actualFilePath)
+            }
+          }
+          assertNode("test_file_comparison_failure_without_actual_file") {
+            assertTestConsoleContains("""
+              |
+              |assertion message
+              |Expected :Expected text.
+              |Actual   :Actual text.
+              |<Click to see difference>
+              |
+              |com.intellij.rt.execution.junit.FileComparisonFailure: assertion message expected:<[Expected] text.> but was:<[Actual] text.>
+            """.trimMargin())
+            assertValue { testProxy ->
+              val diffViewerProvider = testProxy.diffViewerProvider!!
+              Assertions.assertEquals(expectedPath, diffViewerProvider.filePath)
+              Assertions.assertEquals(null, diffViewerProvider.actualFilePath)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @TargetVersions("4.7+")
+  @AllGradleVersionsSource
+  fun `test intellij file comparison test Junit 5`(gradleVersion: GradleVersion) {
+    val fixture = GradleTestFixtureBuilder.create("GradleTestAssertionTest-file-comparison-junit-5") {
+      withSettingsFile {
+        setProjectName("GradleTestAssertionTest-file-comparison-junit-5")
+      }
+      withBuildFile(gradleVersion) {
+        withJavaPlugin()
+        withJUnit5()
+        addTestImplementationDependency(call("files", list(
+          FileUtil.toSystemIndependentName(PathManager.getJarPathForClass(FileComparisonFailure::class.java)!!),
+          FileUtil.toSystemIndependentName(PathManager.getJarPathForClass(ComparisonFailure::class.java)!!)
+        )))
+      }
+    }
+    test(gradleVersion, fixture) {
+      val expectedPath = writeText("expected.txt", "Expected text.").path
+      val actualPath = writeText("actual.txt", "Actual text.").path
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |
+        |import com.intellij.rt.execution.junit.FileComparisonFailure;
+        |import org.junit.jupiter.api.Test;
         |
         |public class TestCase {
         |
@@ -721,7 +802,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
   @ParameterizedTest
   @TargetVersions("4.7+")
   @AllGradleVersionsSource
-  fun `test not null assertion Junit5`(gradleVersion: GradleVersion) {
+  fun `test not null assertion Junit 5`(gradleVersion: GradleVersion) {
     testJunit5Project(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
         |package org.example;

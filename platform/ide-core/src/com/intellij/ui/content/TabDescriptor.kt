@@ -30,9 +30,7 @@ class TabDescriptor(val component: JComponent, private val displayNamePointer: S
 
     other as TabDescriptor
 
-    if (component != other.component) return false
-
-    return true
+    return component == other.component
   }
 
   override fun hashCode(): Int {
@@ -61,9 +59,7 @@ class TabGroupId @JvmOverloads constructor(@NonNls val id: String,
 
     other as TabGroupId
 
-    if (id != other.id) return false
-
-    return true
+    return id == other.id
   }
 
   override fun hashCode(): Int {

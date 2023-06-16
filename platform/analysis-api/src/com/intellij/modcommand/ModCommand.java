@@ -17,7 +17,7 @@ import java.util.Set;
  * <p>
  * All inheritors are records, so the whole state is declarative and readable.
  */
-public sealed interface ModCommand permits ModChooseTarget, ModCompositeCommand, ModNavigate, ModNothing, ModUpdateFileText {
+public sealed interface ModCommand permits ModChooseTarget, ModCompositeCommand, ModNavigate, ModNothing, ModUpdateFileText, ModHighlight {
   /**
    * Executes the command
    * 

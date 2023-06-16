@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
@@ -283,7 +284,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     String generate(CommentTracker ct);
   }
 
-  private static class ReplaceWithSwitchExpressionFix implements LocalQuickFix {
+  private static class ReplaceWithSwitchExpressionFix extends PsiUpdateModCommandQuickFix {
     private final ReplacementType myReplacementType;
 
     ReplaceWithSwitchExpressionFix(ReplacementType replacementType) { myReplacementType = replacementType; }
@@ -301,8 +302,8 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiSwitchStatement statement = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiSwitchStatement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiSwitchStatement statement = PsiTreeUtil.getParentOfType(element, PsiSwitchStatement.class);
       if (statement == null) return;
       SwitchReplacer replacer =
         ContainerUtil.find(findSwitchReplacers(statement, Integer.MAX_VALUE), t -> t.getType() == myReplacementType);
@@ -360,7 +361,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
 
   @Nullable
   private static PsiCaseLabelElement findNullLabel(@NotNull List<? extends PsiCaseLabelElement> expressions) {
-    return ContainerUtil.find(expressions, label -> label instanceof PsiLiteralExpression literal && literal.textMatches("null"));
+    return ContainerUtil.find(expressions, label -> label instanceof PsiExpression literal && TypeConversionUtil.isNullType(literal.getType()));
   }
 
   private static final class ReturningSwitchReplacer implements SwitchReplacer {

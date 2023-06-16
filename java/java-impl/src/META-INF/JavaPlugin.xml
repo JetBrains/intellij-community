@@ -323,7 +323,6 @@
 
     <editorFactoryDocumentListener implementation="com.intellij.compiler.server.BuildManager$MyDocumentListener"/>
 
-    <highlightingPassFactory implementation="com.intellij.framework.detection.impl.FrameworkDetectionManager$FrameworkDetectionHighlightingPassFactory"/>
     <postStartupActivity implementation="com.intellij.framework.detection.impl.FrameworkDetectionManager$MyPostStartupActivity"/>
 
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
@@ -1542,7 +1541,7 @@
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.bulkOperation.UseBulkOperationInspection"
                      key="inspection.use.bulk.operation.display.name" bundle="messages.JavaBundle"/>
-    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="InconsistentTextBlockIndent"
+    <localInspection groupPath="Java" language="JAVA" shortName="InconsistentTextBlockIndent"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.InconsistentTextBlockIndentInspection"
@@ -1553,7 +1552,7 @@
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyCollectorInspection"
                      key="inspection.simplify.collector.display.name" bundle="messages.JavaBundle"/>
-    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="TrailingWhitespacesInTextBlock"
+    <localInspection groupPath="Java" language="JAVA" shortName="TrailingWhitespacesInTextBlock"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.TrailingWhitespacesInTextBlockInspection"
@@ -2387,8 +2386,10 @@
     <compiler.task execute="BEFORE" implementation="com.intellij.jarRepository.CompilationDependenciesResolutionTask"/>
     <compiler.task execute="AFTER" implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
     <registryKey key="load.maven.dependencies.timeout" defaultValue="120" description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
+
     <referenceInjector implementation="com.intellij.java.JvmMethodNameReferenceInjector"/>
     <referenceInjector implementation="com.intellij.java.JvmFieldNameReferenceInjector"/>
+    <referenceInjector implementation="com.intellij.java.JvmClassNameReferenceInjector"/>
 
     <applicationService serviceInterface="com.intellij.ide.starters.local.generator.AssetsProcessor"
                         serviceImplementation="com.intellij.ide.starters.local.generator.AssetsProcessorImpl"

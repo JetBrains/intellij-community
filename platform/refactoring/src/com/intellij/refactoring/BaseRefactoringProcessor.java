@@ -772,6 +772,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
     @Override
     public void redo() {
+      myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).redoRefactoring(myRefactoringId);
     }
   }
 }

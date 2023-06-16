@@ -336,7 +336,7 @@ class LibraryInfoCache(project: Project) : Disposable {
 
                 for (entry in oldLibDependencies.entries) {
                     val value = entry.value
-                    if (value.scope != newLibDependencies[entry.key]?.scope) {
+                    if (value != newLibDependencies[entry.key]) {
                         val libraryBridge = value.library.findLibraryBridge(storageBefore, project)
                         outdatedLibraries.addIfNotNull(libraryBridge)
                     }

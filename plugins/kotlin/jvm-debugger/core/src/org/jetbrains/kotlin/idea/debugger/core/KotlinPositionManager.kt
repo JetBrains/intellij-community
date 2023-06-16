@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger
@@ -9,12 +9,14 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerUtils.isSynthetic
+import com.intellij.debugger.engine.PositionManagerImpl
 import com.intellij.debugger.engine.PositionManagerWithMultipleStackFrames
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.serviceOrNull
@@ -81,26 +83,27 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         return ThreeState.UNSURE
     }
 
-    override fun createStackFrames(frameProxy: StackFrameProxyImpl, debugProcess: DebugProcessImpl, location: Location): List<XStackFrame> {
-        if (!location.isInKotlinSources()) {
+    override fun createStackFrames(descriptor: StackFrameDescriptorImpl): List<XStackFrame> {
+        val location = descriptor.location
+        if (location == null || !location.isInKotlinSources()) {
             return emptyList()
         }
-
+        val frameProxy = descriptor.frameProxy
         // Don't provide inline stack trace for coroutine frames yet
-        val coroutineFrame = stackFrameInterceptor?.createStackFrame(frameProxy, debugProcess, location)
+        val coroutineFrame = stackFrameInterceptor?.createStackFrame(frameProxy, descriptor.debugProcess as DebugProcessImpl, location)
         if (coroutineFrame != null) {
             return listOf(coroutineFrame)
         }
 
         if (Registry.get("debugger.kotlin.inline.stack.trace.enabled").asBoolean()) {
-            val inlineStackTrace = InlineStackTraceCalculator.calculateInlineStackTrace(frameProxy)
+            val inlineStackTrace = InlineStackTraceCalculator.calculateInlineStackTrace(descriptor)
             if (inlineStackTrace.isNotEmpty()) {
                 return inlineStackTrace
             }
         }
 
         val visibleVariables = InlineStackTraceCalculator.calculateVisibleVariables(frameProxy)
-        return listOf(KotlinStackFrame(frameProxy, visibleVariables))
+        return listOf(KotlinStackFrame(descriptor, visibleVariables))
     }
 
     override fun getSourcePosition(location: Location?): SourcePosition? {
@@ -147,6 +150,10 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             throw NoDataException.INSTANCE
         }
 
+        PositionManagerImpl.adjustPositionForConditionalReturn(debugProcess, location, psiFile, sourceLineNumber)?.let {
+            return it
+        }
+
         val sourcePosition = createSourcePosition(location, psiFile, sourceLineNumber)
             ?: SourcePosition.createFromLine(psiFile, sourceLineNumber)
 
@@ -175,7 +182,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 		if (!location.hasVisibleInlineLambdasOnLines(lines)) {
 			return KotlinSourcePositionWithEntireLineHighlighted(sourcePosition)
 		}
-		return sourcePosition
+
+        return sourcePosition
     }
 
     private fun createSourcePosition(location: Location, file: KtFile, sourceLineNumber: Int): SourcePosition? {

@@ -31,6 +31,6 @@ class GitCheckoutCommand(text: String, line: Int) : AbstractCommand(text, line, 
     val dataContext = DataManager.getInstance().getDataContext(focusedComponent)
     val gitRepository = GitBranchUtil.guessRepositoryForOperation(context.project, dataContext)
     brancher.checkoutNewBranchStartingFrom(branchName, branchName, true, mutableListOf(gitRepository), Runnable { actionCallback.setDone() })
-    return actionCallback.toPromise();
+    return actionCallback.toPromise()
   }
 }

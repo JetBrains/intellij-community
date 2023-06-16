@@ -45,9 +45,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.TitlePanel;
@@ -59,7 +59,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.actions.CommandQueueListener;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
@@ -72,6 +71,7 @@ import com.jetbrains.python.debugger.PyStackFrame;
 import com.jetbrains.python.debugger.PyStackFrameInfo;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -84,6 +84,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -123,19 +124,38 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
    */
   private @Nullable TargetEnvironment myTargetEnvironment;
 
+  /**
+   * Context psi file for Python Console Editor. Needs for static code completion.
+   */
+  private final PsiFile myHistoryPsiFile = new PyExpressionCodeFragmentImpl(getProject(), "dummy.py", "", true);
+
+  public PsiFile getHistoryPsiFile() {
+    return myHistoryPsiFile;
+  }
+
+  @NotNull
+  private static Helper createHelper(@NotNull Project project, String title) {
+    return new Helper(project, Objects.requireNonNull(PsiUtilCore.getVirtualFile(new PyExpressionCodeFragmentImpl(project, title + ".py", "", true))));
+  }
+
 
   /**
    * @param testMode this console will be used to display test output and should support TC messages
    */
   public PythonConsoleView(final Project project, final String title, @Nullable final Sdk sdk, final boolean testMode) {
-    super(project, title, PythonLanguage.getInstance());
+    super(createHelper(project, title));
+    if (PsiUtilCore.getPsiFile(project, getVirtualFile()) instanceof PyExpressionCodeFragmentImpl codeFragment) {
+      codeFragment.setContext(myHistoryPsiFile);
+    }
     myTestMode = testMode;
     isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
     VirtualFile virtualFile = getVirtualFile();
     PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, PySdkUtil.getLanguageLevelForSdk(sdk));
     virtualFile.putUserData(CONSOLE_KEY, true);
-    // Mark editor as console one, to prevent autopopup completion
-    getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
+    // Mark editor as console one, to prevent autopopup completion if runtime completion is enabled
+    if (PyConsoleOptions.getInstance(getProject()).isAutoCompletionEnabled()) {
+      getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
+    }
     getHistoryViewer().putUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW, true);
     getHistoryViewer().putUserData(COUNTER_LINE_NUMBER, new HashMap<>());
     super.setPrompt(null);

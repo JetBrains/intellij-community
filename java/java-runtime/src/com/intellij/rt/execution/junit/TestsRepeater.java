@@ -36,7 +36,7 @@ public final class TestsRepeater {
             return -1;
           }
           if (count == -3 && result == 0) {
-            return -1;
+            return 0;
           }
         }
       }

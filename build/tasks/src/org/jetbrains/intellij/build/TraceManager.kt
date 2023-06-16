@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build
@@ -24,22 +24,23 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
-object TraceManager {
-  internal val tracer: Tracer
+var traceManagerInitializer: () -> Tracer = {
+  @Suppress("OPT_IN_USAGE")
+  val tracerProvider = SdkTracerProvider.builder()
+    .addSpanProcessor(BatchSpanProcessor(coroutineScope = GlobalScope, spanExporters = TracerProviderManager.spanExporterProvider()))
+    .setResource(Resource.create(Attributes.of(ResourceAttributes.SERVICE_NAME, "builder")))
+    .build()
+  val openTelemetry = OpenTelemetrySdk.builder()
+    .setTracerProvider(tracerProvider)
+    .build()
+  val tracer = openTelemetry.getTracer("build-script")
+  TracerProviderManager.tracerProvider = tracerProvider
+  BuildDependenciesDownloader.TRACER = tracer
+  tracer
+}
 
-  init {
-    @Suppress("OPT_IN_USAGE")
-    val tracerProvider = SdkTracerProvider.builder()
-      .addSpanProcessor(BatchSpanProcessor(mainScope = GlobalScope, spanExporters = TracerProviderManager.spanExporterProvider()))
-      .setResource(Resource.create(Attributes.of(ResourceAttributes.SERVICE_NAME, "builder")))
-      .build()
-    val openTelemetry = OpenTelemetrySdk.builder()
-      .setTracerProvider(tracerProvider)
-      .build()
-    tracer = openTelemetry.getTracer("build-script")
-    TracerProviderManager.tracerProvider = tracerProvider
-    BuildDependenciesDownloader.TRACER = tracer
-  }
+object TraceManager {
+  internal val tracer: Tracer = traceManagerInitializer()
 
   @JvmStatic
   fun spanBuilder(spanName: String): SpanBuilder = tracer.spanBuilder(spanName)

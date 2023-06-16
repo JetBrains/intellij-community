@@ -139,9 +139,7 @@ class ToolWindowPane internal constructor(
     buttonManager.addToToolWindowPane(this)
     add(layeredPane, DEFAULT_LAYER, -1)
     focusTraversalPolicy = LayoutFocusTraversalPolicy()
-    if (Registry.`is`("ide.new.tool.window.dnd")) {
-      ToolWindowDragHelper(parentDisposable, this).start()
-    }
+    ToolWindowDragHelper(parentDisposable, this).start()
     if (Registry.`is`("ide.allow.split.and.reorder.in.tool.window")) {
       ToolWindowInnerDragHelper(parentDisposable, this).start()
     }

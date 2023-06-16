@@ -8,4 +8,8 @@ private class ExtensionClassShouldNotBeOpenErrorMessageProvider : ErrorMessagePr
   override fun provideErrorMessage(): String {
     return DevKitKotlinBundle.message("inspection.extension.class.should.not.be.open.text")
   }
+
+  override fun isApplicableForKotlin(): Boolean {
+    return true
+  }
 }

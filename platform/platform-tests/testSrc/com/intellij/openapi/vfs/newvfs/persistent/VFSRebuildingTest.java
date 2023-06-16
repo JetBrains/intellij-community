@@ -238,7 +238,6 @@ public class VFSRebuildingTest {
 
 
   @Test
-  @Ignore("Currently it is not true (but it should be): removing of 'attributes_enums.dat' is still unrecognized")
   public void VFS_isRebuild_IfAnyStorageFileRemoved() throws Exception {
     //skip IN_MEMORY impl, since it is not really persistent
     //skip OVER_LOCK_FREE_FILE_CACHE impl if !LOCK_FREE_VFS_ENABLED (will fail)
@@ -285,8 +284,8 @@ public class VFSRebuildingTest {
         }
       }
 
-      //Files currently ignored by
-      //  attributes_enums.dat
+      //FIXME Files currently ignored by 'attributes_enums.dat'
+      filesNotLeadingToVFSRebuild.remove("attributes_enums.dat");
       assertTrue(
         "VFS[" + storageKind + "] is not rebuild even though " + filesNotLeadingToVFSRebuild + " were deleted",
         filesNotLeadingToVFSRebuild.isEmpty()

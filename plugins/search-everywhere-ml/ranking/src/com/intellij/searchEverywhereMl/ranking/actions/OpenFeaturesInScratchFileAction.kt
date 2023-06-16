@@ -8,6 +8,7 @@ import com.intellij.ide.scratch.ScratchFileCreationHelper
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.json.JsonFileType
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -20,6 +21,11 @@ import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMlRankingService
 import com.intellij.searchEverywhereMl.ranking.SearchEverywhereRankingDiffCalculator
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereContributorFeaturesProvider
 
+/**
+ * This action will open a scratch file with a feature dump.
+ * To use it, you must have Search Everywhere opened, then use the shortcut associated with this action
+ * (Shift+Ctrl+Alt+1 on Windows, Shift+Option+Command+1 on MacOS).
+ */
 class OpenFeaturesInScratchFileAction : AnAction() {
   companion object {
     private const val SHOULD_ORDER_BY_ML_KEY = "shouldOrderByMl"
@@ -40,6 +46,9 @@ class OpenFeaturesInScratchFileAction : AnAction() {
   }
 
   private fun shouldActionBeEnabled(e: AnActionEvent): Boolean {
+    // Disable in Search, as otherwise we cannot run it because the session is over. See IDEA-321125
+    if (e.place == ActionPlaces.ACTION_SEARCH) return false
+
     val seManager = SearchEverywhereManager.getInstance(e.project)
     val session = SearchEverywhereMlRankingService.getService()?.getCurrentSession()
 

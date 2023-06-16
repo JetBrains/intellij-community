@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.animation
 
+import com.intellij.openapi.Disposable
 import java.awt.AlphaComposite
 import java.awt.Component
 import java.awt.Graphics
@@ -34,6 +35,8 @@ class AlphaAnimationContext(private val base: AlphaComposite, val consumer: Cons
         component?.isVisible = visible
       }
     }
+
+  val disposable: Disposable get() = animator.disposable
 
   fun paint(g: Graphics, paint: Runnable) {
     when {

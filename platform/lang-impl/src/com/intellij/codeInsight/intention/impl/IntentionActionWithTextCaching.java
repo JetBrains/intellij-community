@@ -41,11 +41,15 @@ public class IntentionActionWithTextCaching
   private final IntentionAction myAction;
   private final @NlsContexts.PopupTitle String myDisplayName;
   private final Icon myIcon;
+  @Nullable
+  private final String myToolId;
 
   IntentionActionWithTextCaching(@NotNull IntentionAction action,
                                  @NlsContexts.PopupTitle String displayName,
                                  @Nullable Icon icon,
+                                 @Nullable String toolId,
                                  @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
+    myToolId = toolId;
     myIcon = icon;
     myText = action.getText();
     // needed for checking errors in user written actions
@@ -164,6 +168,11 @@ public class IntentionActionWithTextCaching
     if (this == o) return true;
     if (!(o instanceof IntentionActionWithTextCaching other)) return false;
     return getActionClass(this) == getActionClass(other) && this.getText().equals(other.getText());
+  }
+
+  @Nullable
+  public String getToolId() {
+    return myToolId;
   }
 
   private static Class<? extends IntentionAction> getActionClass(IntentionActionWithTextCaching o1) {

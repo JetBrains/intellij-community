@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.CeProcessCanceledException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.concurrent.CancellationException;
 import java.util.function.BiConsumer;
 
 /**
@@ -253,6 +255,9 @@ public final class QueueProcessor<T> {
     }
     catch (ProcessCanceledException e) {
       throw e;
+    }
+    catch (CancellationException e) {
+      throw new CeProcessCanceledException(e);
     }
     catch (Throwable e) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {

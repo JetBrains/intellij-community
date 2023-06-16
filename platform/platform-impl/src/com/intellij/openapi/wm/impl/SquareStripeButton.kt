@@ -55,8 +55,9 @@ internal abstract class AbstractSquareStripeButton(action: AnAction, presentatio
   }
 }
 
-internal open class SquareStripeButton(action: SquareAnActionButton, val toolWindow: ToolWindowImpl) :
-  AbstractSquareStripeButton(action, createPresentation(toolWindow)) {
+internal open class SquareStripeButton(action: SquareAnActionButton, val toolWindow: ToolWindowImpl, presentation: Presentation) :
+  AbstractSquareStripeButton(action, presentation) {
+  constructor(action: SquareAnActionButton, toolWindow: ToolWindowImpl) : this(action, toolWindow, createPresentation(toolWindow))
   constructor(toolWindow: ToolWindowImpl) : this(SquareAnActionButton(toolWindow), toolWindow)
   companion object {
     fun createMoveGroup(): ToolWindowMoveAction.Group = ToolWindowMoveAction.Group()

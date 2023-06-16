@@ -240,7 +240,7 @@ private suspend fun reportPluginErrors() {
     return
   }
 
-  withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+  withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
     val title = IdeBundle.message("title.plugin.error")
     val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
     @Suppress("DEPRECATION")

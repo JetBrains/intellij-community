@@ -258,7 +258,7 @@ object ProjectUtil {
       return null
     }
     StartupManager.getInstance(project).runAfterOpened {
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed) {
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), project.disposed) {
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)
         toolWindow?.activate(null)
       }
@@ -411,6 +411,7 @@ object ProjectUtil {
     return mode
   }
 
+  @ScheduledForRemoval
   @Deprecated("Use {@link #isSameProject(Path, Project)} ",
               ReplaceWith("projectFilePath != null && isSameProject(Path.of(projectFilePath), project)",
                           "com.intellij.ide.impl.ProjectUtil.isSameProject", "java.nio.file.Path"))
@@ -590,7 +591,7 @@ object ProjectUtil {
   @JvmStatic
   @RequiresEdt
   fun openOrCreateProject(name: String, file: Path): Project? {
-    return withModalProgressBlocking(ModalTaskOwner.guess(), "") {
+    return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
       openOrCreateProjectInner(name, file)
     }
   }
@@ -701,12 +702,12 @@ object ProjectUtil {
 @Internal
 @ScheduledForRemoval
 @Deprecated(
-  "Use withModalProgressBlocking on EDT with proper owner and title, " +
+  "Use runWithModalProgressBlocking on EDT with proper owner and title, " +
   "or runBlockingCancellable(+withBackgroundProgress with proper title) on BGT"
 )
 fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
   if (ApplicationManager.getApplication().isDispatchThread) {
-    return withModalProgressBlocking(ModalTaskOwner.guess(), "", TaskCancellation.cancellable(), task)
+    return runWithModalProgressBlocking(ModalTaskOwner.guess(), "", TaskCancellation.cancellable(), task)
   }
   else {
     return runBlockingMaybeCancellable(task)
@@ -721,6 +722,7 @@ fun Project.executeOnPooledThread(task: Runnable) {
   coroutineScope.launch { blockingContext { task.run() } }
 }
 
+@ScheduledForRemoval
 @Internal
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun <T> Project.computeOnPooledThread(task: Callable<T>): CompletableFuture<T> {

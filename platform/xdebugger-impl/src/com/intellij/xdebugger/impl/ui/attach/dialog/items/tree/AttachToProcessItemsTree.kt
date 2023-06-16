@@ -13,6 +13,7 @@ import com.intellij.util.application
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachItemsInfo
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.*
@@ -155,21 +156,36 @@ internal class AttachTreeModel(private val rootNode: AttachTreeNodeWrapper, priv
 
 }
 
-private suspend fun prepareTreeElements(
+internal suspend fun buildTree(
   attachItemsInfo: AttachItemsInfo,
-  columnsLayout: AttachDialogColumnsLayout,
-  filters: AttachToProcessElementsFilters): List<AttachTreeNodeWrapper> {
+  dialogState: AttachDialogState,
+  columnsLayout: AttachDialogColumnsLayout
+): AttachToProcessItemsListBase {
+  val filters = AttachToProcessElementsFilters(dialogState.selectedDebuggersFilter)
+  val rootNode = AttachTreeNodeWrapper(AttachTreeRootNode(), filters, columnsLayout, -1)
 
-  val elements = attachItemsInfo.processItems
-  val pidToElement = elements.map {
-    AttachDialogProcessNode(it, filters, columnsLayout)
-  }.associateBy { it.item.processInfo.pid }
-  val builtNodes = mutableMapOf<Int, AttachTreeNodeWrapper>()
+  val recentItemNodes = prepareRecentItemNodes(attachItemsInfo, filters, columnsLayout)
+  for (node in recentItemNodes) {
+    rootNode.addChild(node)
+  }
 
+  val processItemNodes = prepareProcessItemNodes(attachItemsInfo, columnsLayout, filters)
+  for (node in processItemNodes) {
+    rootNode.addChild(node)
+  }
+
+  return AttachToProcessItemsTree(rootNode, columnsLayout, dialogState, filters)
+}
+
+private fun prepareRecentItemNodes(
+  attachItemsInfo: AttachItemsInfo,
+  filters: AttachToProcessElementsFilters,
+  columnsLayout: AttachDialogColumnsLayout
+): List<AttachTreeNodeWrapper> {
   val topLevelNodes = mutableListOf<AttachTreeNodeWrapper>()
 
   val recentItems = attachItemsInfo.recentItems
-  if (recentItems.any()) {
+  if (recentItems.isNotEmpty()) {
     val recentItemNodes = recentItems.map { AttachDialogProcessNode(it, filters, columnsLayout) }
     val recentNode = AttachDialogGroupNode(
       XDebuggerBundle.message("xdebugger.attach.dialog.recently.attached.message"),
@@ -186,69 +202,71 @@ private suspend fun prepareTreeElements(
           listOf(recentNode)), filters, columnsLayout))
   }
 
-  for (item in pidToElement) {
+  return topLevelNodes
+}
+
+private suspend fun prepareProcessItemNodes(
+  attachItemsInfo: AttachItemsInfo,
+  columnsLayout: AttachDialogColumnsLayout,
+  filters: AttachToProcessElementsFilters
+): List<AttachTreeNodeWrapper> {
+  val topLevelNodes = mutableListOf<AttachTreeNodeWrapper>()
+
+  val processItems = attachItemsInfo.processItems.associateBy {
     coroutineContext.ensureActive()
-    val pid = item.key
-    if (builtNodes.containsKey(pid)) {
+    it.processInfo.pid
+  }
+  val builtElements = mutableMapOf<Int, AttachTreeNodeWrapper>()
+
+  for (entry in processItems) {
+    coroutineContext.ensureActive()
+    if (entry.key in builtElements) {
       continue
     }
 
-    val visitedPids = mutableSetOf(pid)
+    val visitedPids = mutableSetOf<Int>()
 
-    val attachTreeProcessNode = item.value
-    val treeElement = AttachTreeNodeWrapper(attachTreeProcessNode, filters, columnsLayout)
+    var lastTreeElement: AttachTreeNodeWrapper? = null
+    var currentItem: AttachDialogProcessItem? = entry.value
 
-    builtNodes[pid] = treeElement
+    while (currentItem != null) {
+      val node = AttachDialogProcessNode(currentItem, filters, columnsLayout)
+      val treeElement = AttachTreeNodeWrapper(node, filters, columnsLayout)
+      if (lastTreeElement != null) {
+        treeElement.addChild(lastTreeElement)
+      }
+      lastTreeElement = treeElement
 
-    var currentElement = attachTreeProcessNode
-    var currentTreeElement = treeElement
-    while (attachTreeProcessNode.item.processInfo.parentPid > 0) {
-      coroutineContext.ensureActive()
-      val parentPid = attachTreeProcessNode.item.processInfo.parentPid
+      val processInfo = currentItem.processInfo
+      val pid = processInfo.pid
 
-      if (visitedPids.contains(parentPid)) {
-        logger.warn("Processes [${visitedPids.joinToString(", ")}] form a circle!")
+      builtElements[pid] = treeElement
+      visitedPids += pid
+
+      val parentPid = processInfo.parentPid
+      if (parentPid <= 0) {
         topLevelNodes.add(treeElement)
         break
       }
 
-      val nextElement = builtNodes[parentPid]
-      if (nextElement != null) {
-        nextElement.addChild(currentTreeElement)
+      if (parentPid in visitedPids) {
+        logger.warn("Processes [${visitedPids.joinToString()}] form a cycle!")
+        topLevelNodes.add(treeElement)
         break
       }
 
-      val parentElement = pidToElement[parentPid]
-      if (parentElement == null) {
-        topLevelNodes.add(currentTreeElement)
+      val builtTreeElement = builtElements[parentPid]
+      if (builtTreeElement != null) {
+        builtTreeElement.addChild(treeElement)
         break
       }
-      val parentTreeElement = AttachTreeNodeWrapper(parentElement, filters, columnsLayout)
-      builtNodes[parentPid] = parentTreeElement
-      visitedPids.add(parentPid)
 
-      parentTreeElement.addChild(currentTreeElement)
-      currentElement = parentElement
-      currentTreeElement = parentTreeElement
-    }
-
-    if (currentElement.item.processInfo.parentPid <= 0) {
-      topLevelNodes.add(currentTreeElement)
+      coroutineContext.ensureActive()
+      currentItem = processItems[parentPid]
     }
   }
 
   return topLevelNodes
-}
-
-internal suspend fun buildTree(
-  attachItemsInfo: AttachItemsInfo,
-  dialogState: AttachDialogState,
-  columnsLayout: AttachDialogColumnsLayout): AttachToProcessItemsListBase {
-  val filters = AttachToProcessElementsFilters(dialogState.selectedDebuggersFilter)
-  val topLevelElements = prepareTreeElements(attachItemsInfo, columnsLayout, filters)
-  val rootNode = AttachTreeNodeWrapper(AttachTreeRootNode(), filters, columnsLayout, -1)
-  topLevelElements.forEach { rootNode.addChild(it) }
-  return AttachToProcessItemsTree(rootNode, columnsLayout, dialogState, filters)
 }
 
 internal fun ListSelectionModel.selectNext() {

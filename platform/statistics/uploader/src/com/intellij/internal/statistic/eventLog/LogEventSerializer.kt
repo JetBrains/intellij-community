@@ -234,6 +234,7 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent>() {
           return value.doubleValue()
         }
       }
+      is BooleanNode -> value.booleanValue()
       else -> value
     }
   }

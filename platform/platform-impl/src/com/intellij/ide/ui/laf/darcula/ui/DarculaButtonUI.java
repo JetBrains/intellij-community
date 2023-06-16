@@ -19,6 +19,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -88,6 +89,15 @@ public class DarculaButtonUI extends BasicButtonUI {
     return c instanceof AbstractButton button && button.getClientProperty("gotItButton.contrast") == Boolean.TRUE;
   }
 
+  public static @Nullable Insets getCustomButtonInsets(Component c) {
+    if (!(c instanceof AbstractButton b)) return null;
+
+    Object maybeInsets = b.getClientProperty("customButtonInsets");
+    if (!(maybeInsets instanceof Insets)) return null;
+
+    return ((Insets)maybeInsets);
+  }
+
   @Override
   public void installDefaults(AbstractButton b) {
     super.installDefaults(b);
@@ -117,7 +127,7 @@ public class DarculaButtonUI extends BasicButtonUI {
       return SegmentedActionToolbarComponent.Companion.paintButtonDecorations(g, c, getBackground(c, r));
     }
 
-    JBInsets.removeFrom(r, isSmallVariant(c) ? c.getInsets() : JBUI.insets(1));
+    JBInsets.removeFrom(r, isSmallVariant(c) || isGotItButton(c) ? c.getInsets() : JBUI.insets(1));
 
     if (UIUtil.isHelpButton(c)) {
       g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd()));

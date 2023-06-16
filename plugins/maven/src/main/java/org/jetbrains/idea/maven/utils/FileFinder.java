@@ -1,12 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 
 import java.util.ArrayList;
@@ -20,6 +22,12 @@ public final class FileFinder {
   public static List<VirtualFile> findPomFiles(VirtualFile[] roots,
                                                boolean lookForNested,
                                                @NotNull MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+    return findPomFiles(roots, lookForNested, indicator.getIndicator());
+  }
+
+  public static List<VirtualFile> findPomFiles(VirtualFile[] roots,
+                                               boolean lookForNested,
+                                               @Nullable ProgressIndicator indicator) throws MavenProcessCanceledException {
     List<Pair<VirtualFile, VirtualFile>> result = new ArrayList<>();
     // TODO locate pom files using maven embedder?
     for (VirtualFile f : roots) {
@@ -27,8 +35,10 @@ public final class FileFinder {
         @Override
         public boolean visitFile(@NotNull VirtualFile f) {
           try {
-            indicator.checkCanceled();
-            indicator.setText2(f.getPresentableUrl());
+            if (null != indicator) {
+              indicator.checkCanceled();
+              indicator.setText2(f.getPresentableUrl());
+            }
 
             if (f.isDirectory()) {
               if (lookForNested) {
@@ -47,9 +57,6 @@ public final class FileFinder {
           catch (InvalidVirtualFileAccessException e) {
             // we are accessing VFS without read action here so such exception may occasionally occur
             MavenLog.LOG.info(e);
-          }
-          catch (MavenProcessCanceledException e) {
-            throw new VisitorException(e);
           }
           return true;
         }

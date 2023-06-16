@@ -6,5 +6,5 @@ import javax.swing.JComponent
 
 @ApiStatus.Experimental
 abstract class CustomComponentEvaluator(name: String) : XFullValueEvaluator() {
-  open fun createComponent(fullValue: String?) : JComponent? =  null;
+  open fun createComponent(fullValue: String?) : JComponent? =  null
 }

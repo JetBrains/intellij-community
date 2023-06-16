@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
@@ -55,6 +56,7 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
     }
 
     private fun KtAnalysisSession.matchesEqualsMethodSignature(function: KtFunctionSymbol): Boolean {
+        if (function.modality == Modality.ABSTRACT) return false
         if (function.name != EQUALS) return false
         if (function.typeParameters.isNotEmpty()) return false
         val param = function.valueParameters.singleOrNull() ?: return false
@@ -66,6 +68,7 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
     }
 
     private fun KtAnalysisSession.matchesHashCodeMethodSignature(function: KtFunctionSymbol): Boolean {
+        if (function.modality == Modality.ABSTRACT) return false
         if (function.name != HASH_CODE) return false
         if (function.typeParameters.isNotEmpty()) return false
         if (function.valueParameters.isNotEmpty()) return false
@@ -341,12 +344,10 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                 Pair(
                     classOrObjectMemberDeclarations.singleOrNull {
                         val function = it.getSymbol() as? KtFunctionSymbol ?: return@singleOrNull false
-                        if (function.name != EQUALS) return@singleOrNull false
                         matchesEqualsMethodSignature(function)
                     } as? KtNamedFunction,
                     classOrObjectMemberDeclarations.singleOrNull {
                         val function = it.getSymbol() as? KtFunctionSymbol ?: return@singleOrNull false
-                        if (function.name != HASH_CODE) return@singleOrNull false
                         matchesHashCodeMethodSignature(function)
                     } as? KtNamedFunction,
                 )

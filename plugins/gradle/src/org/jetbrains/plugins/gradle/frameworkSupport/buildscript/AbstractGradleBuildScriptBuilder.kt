@@ -194,4 +194,30 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
       call("useJUnitPlatform")
     }
   }
+
+  override fun targetCompatibility(level: String) = apply {
+    if (gradleVersion.baseVersion < GradleVersion.version("8.2")) {
+      withPostfix {
+        assign("targetCompatibility", level)
+      }
+    }
+    else {
+      withJava {
+        assign("targetCompatibility", level)
+      }
+    }
+  }
+
+  override fun sourceCompatibility(level: String) = apply {
+    if (gradleVersion.baseVersion < GradleVersion.version("8.2")) {
+      withPostfix {
+        assign("sourceCompatibility", level)
+      }
+    }
+    else {
+      withJava {
+        assign("sourceCompatibility", level)
+      }
+    }
+  }
 }

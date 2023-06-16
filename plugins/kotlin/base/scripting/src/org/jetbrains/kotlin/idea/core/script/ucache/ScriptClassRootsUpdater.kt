@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -33,6 +34,8 @@ import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
+import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
+import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -85,7 +88,7 @@ abstract class ScriptClassRootsUpdater(
             }
         })
 
-        ensureUpdateScheduled()
+        performUpdate(synchronous = false)
     }
 
     val classpathRoots: ScriptClassRootsCache
@@ -107,7 +110,7 @@ abstract class ScriptClassRootsUpdater(
      */
     fun invalidate(synchronous: Boolean = false) {
         lock.withLock {
-            checkInTransaction()
+            checkHasTransactionToHappen()
             invalidated = true
             if (synchronous) {
                 syncUpdateRequired = true
@@ -119,12 +122,19 @@ abstract class ScriptClassRootsUpdater(
         update { invalidate() }
     }
 
-    fun isInTransaction(): Boolean {
+    /**
+     * Indicates if there is an update to happen.
+     * This method considers both scheduled async and ongoing sync translations.
+     *
+     * @return true if there is scheduled async or ongoing synchronous transaction.
+     * @see performUpdate
+     */
+    fun isTransactionAboutToHappen(): Boolean {
         return concurrentUpdates.get() > 0
     }
 
-    fun checkInTransaction() {
-        check(isInTransaction())
+    fun checkHasTransactionToHappen() {
+        check(isTransactionAboutToHappen())
     }
 
     inline fun <T> update(body: () -> T): T {
@@ -159,31 +169,36 @@ abstract class ScriptClassRootsUpdater(
 
     private fun scheduleUpdateIfInvalid() {
         lock.withLock {
-            if (!invalidated) return
+            invalidated.ifFalse { return }
             invalidated = false
 
-            if (syncUpdateRequired || isUnitTestMode()) {
-                concurrentUpdates.incrementAndGet()
-                syncUpdateRequired = false
-                updateSynchronously()
-            } else {
-                ensureUpdateScheduled()
+            val isSync = (syncUpdateRequired || isUnitTestMode()).also {
+                it.ifTrue { syncUpdateRequired = false }
             }
+            performUpdate(synchronous = isSync)
         }
     }
 
     private var scheduledUpdate: BackgroundTaskUtil.BackgroundTask<*>? = null
 
-    private fun ensureUpdateScheduled() {
+    private fun performUpdate(synchronous: Boolean = false) {
         val disposable = KotlinPluginDisposable.getInstance(project)
+        if (disposable.disposed) return
+
+        beginUpdating()
+        when {
+            synchronous -> updateSynchronously()
+            else -> ensureUpdateScheduled(disposable)
+        }
+    }
+
+
+    private fun ensureUpdateScheduled(parentDisposable: Disposable) {
         lock.withLock {
             scheduledUpdate?.cancel()
 
-            if (!disposable.disposed) {
-                concurrentUpdates.incrementAndGet()
-                scheduledUpdate = BackgroundTaskUtil.submitTask(disposable) {
-                    doUpdate()
-                }
+            scheduledUpdate = BackgroundTaskUtil.submitTask(parentDisposable) {
+                doUpdate()
             }
         }
     }
@@ -235,7 +250,7 @@ abstract class ScriptClassRootsUpdater(
                 }
 
             if (updates.hasNewRoots) {
-                runInEdt(ModalityState.NON_MODAL) {
+                runInEdt(ModalityState.nonModal()) {
                     runWriteAction {
                         if (project.isDisposed) return@runWriteAction
                         ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
@@ -283,7 +298,7 @@ abstract class ScriptClassRootsUpdater(
         builderSnapshot.syncScriptEntities(project, filesToAddOrUpdate, filesToRemove) // time-consuming call
         val replacement = builderSnapshot.getStorageReplacement()
 
-        runInEdt(ModalityState.NON_MODAL) {
+        runInEdt(ModalityState.nonModal()) {
             val replaced = runWriteAction {
                 if (project.isDisposed) false
                 else WorkspaceModel.getInstance(project).replaceProjectModel(replacement)
@@ -315,7 +330,7 @@ abstract class ScriptClassRootsUpdater(
             val new = old.withUpdatedSdks(actualSdks)
         } while (!cache.compareAndSet(old, new))
 
-        ensureUpdateScheduled()
+        performUpdate(synchronous = false)
     }
 
     private fun updateHighlighting(project: Project, filter: (VirtualFile) -> Boolean) {

@@ -336,7 +336,7 @@ object Switcher : BaseSwitcherAction(null) {
       myPopup.showCenteredInCurrentWindow(project)
 
       if (Registry.`is`("highlighting.passes.cache")) {
-        HighlightingPassesCache.getInstance(project).schedule(getNotOpenedRecentFiles());
+        HighlightingPassesCache.getInstance(project).schedule(getNotOpenedRecentFiles())
       }
     }
     private fun getNotOpenedRecentFiles(): List<VirtualFile> {

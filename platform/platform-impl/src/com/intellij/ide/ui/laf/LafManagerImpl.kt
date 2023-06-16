@@ -69,8 +69,6 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.*
 import com.intellij.util.ui.LafIconLookup.getIcon
 import com.intellij.util.ui.LafIconLookup.getSelectedIcon
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -100,7 +98,10 @@ private const val ELEMENT_PREFERRED_DARK_LAF: @NonNls String = "preferred-dark-l
 private const val ATTRIBUTE_AUTODETECT: @NonNls String = "autodetect"
 private const val ATTRIBUTE_CLASS_NAME: @NonNls String = "class-name"
 private const val ATTRIBUTE_THEME_NAME: @NonNls String = "themeId"
-private const val ATTRIBUTE_LAF_TO_PREVIOUS_SCHEME: @NonNls String = "laf-to-previous-scheme"
+private const val ELEMENT_LAFS_TO_PREVIOUS_SCHEMES: @NonNls String = "lafs-to-previous-schemes"
+private const val ELEMENT_LAF_TO_SCHEME: @NonNls String = "laf-to-scheme"
+private const val ATTRIBUTE_LAF: @NonNls String = "laf"
+private const val ATTRIBUTE_SCHEME: @NonNls String = "scheme"
 private const val HIGH_CONTRAST_THEME_ID = "JetBrainsHighContrastTheme"
 private const val DARCULA_EDITOR_THEME_KEY = "Darcula.SavedEditorTheme"
 private const val DEFAULT_EDITOR_THEME_KEY = "Default.SavedEditorTheme"
@@ -397,8 +398,13 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     preferredLightLaf = loadLafState(element, ELEMENT_PREFERRED_LIGHT_LAF)
     preferredDarkLaf = loadLafState(element, ELEMENT_PREFERRED_DARK_LAF)
 
-    val storedLafToScheme: Map<String, String> = Json.decodeFromString(element.getAttributeValue(ATTRIBUTE_LAF_TO_PREVIOUS_SCHEME, "{}"))
-    lafToPreviousScheme.putAll(storedLafToScheme)
+    val lafsToSchemesElement = element.getChild(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
+    if (lafsToSchemesElement != null) {
+      val lafToSchemes = lafsToSchemesElement.getChildren(ELEMENT_LAF_TO_SCHEME)
+      for (lafToScheme in lafToSchemes) {
+        lafToPreviousScheme.put(lafToScheme.getAttributeValue(ATTRIBUTE_LAF), lafToScheme.getAttributeValue(ATTRIBUTE_SCHEME))
+      }
+    }
 
     if (autodetect) {
       orCreateLafDetector
@@ -470,7 +476,15 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     if (preferredDarkLaf != null && preferredDarkLaf !== getDefaultDarkLaf()) {
       getLafState(element, ELEMENT_PREFERRED_DARK_LAF, preferredDarkLaf)
     }
-    element.setAttribute(ATTRIBUTE_LAF_TO_PREVIOUS_SCHEME, Json.encodeToString(lafToPreviousScheme))
+
+    val lafsToSchemes = Element(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
+    for ((laf, scheme) in lafToPreviousScheme) {
+      val lafToScheme = Element(ELEMENT_LAF_TO_SCHEME)
+      lafToScheme.setAttribute(ATTRIBUTE_LAF, laf)
+      lafToScheme.setAttribute(ATTRIBUTE_SCHEME, scheme)
+      lafsToSchemes.addContent(lafToScheme)
+    }
+    element.addContent(lafsToSchemes)
     return element
   }
 
@@ -609,6 +623,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private fun doSetLaF(lookAndFeelInfo: LookAndFeelInfo, installEditorScheme: Boolean): Boolean {
     val defaults = UIManager.getDefaults()
     defaults.clear()
+    IdeaLaf.fillFallbackDefaults(defaults)
     defaults.putAll(ourDefaults)
     if (!isFirstSetup) {
       colorPatcherProvider = null
@@ -617,7 +632,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
     // set L&F
     val lafClassName = lookAndFeelInfo.className
-    val previousScheme = getPreviousSchemeForLaF(lookAndFeelInfo)
     if (DarculaLookAndFeelInfo.CLASS_NAME == lafClassName) {
       val laf = DarculaLaf()
       try {
@@ -673,7 +687,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     }
     if (lookAndFeelInfo is UIThemeBasedLookAndFeelInfo) {
       try {
-        lookAndFeelInfo.installTheme(UIManager.getLookAndFeelDefaults(), !installEditorScheme || previousScheme != null)
+        lookAndFeelInfo.installTheme(UIManager.getLookAndFeelDefaults(), !installEditorScheme)
 
         //IntelliJ Light is the only theme which is, in fact, a LaF.
         if (lookAndFeelInfo.name != "IntelliJ Light") {
@@ -690,13 +704,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
         return true
       }
     }
-
-    if (installEditorScheme) {
-      if (previousScheme != null) {
-        EditorColorsManager.getInstance().globalScheme = previousScheme
-      }
-    }
-
     if (SystemInfoRt.isMac) {
       installMacOSXFonts(UIManager.getLookAndFeelDefaults())
     }
@@ -822,13 +829,17 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       }
     }
 
-    if (myCurrentLaf?.let { getPreviousSchemeForLaF(it) } != null) {
-      return
+    val editorColorManager = EditorColorsManager.getInstance()
+    val current = editorColorManager.globalScheme
+    if (myCurrentLaf != null) {
+      val previousSchemeForLaf = getPreviousSchemeForLaf(myCurrentLaf!!)
+      if (previousSchemeForLaf != null) {
+        (editorColorManager as EditorColorsManagerImpl).setGlobalScheme(previousSchemeForLaf, processChangeSynchronously)
+        return
+      }
     }
 
     val dark = StartupUiUtil.isUnderDarcula
-    val editorColorManager = EditorColorsManager.getInstance()
-    val current = editorColorManager.globalScheme
     val wasUITheme = oldLaf is UIThemeBasedLookAndFeelInfo
     if (dark != ColorUtil.isDark(current.defaultBackground) || wasUITheme) {
       var targetScheme: String? = if (dark) DarculaLaf.NAME else EditorColorsScheme.DEFAULT_SCHEME_NAME
@@ -1012,7 +1023,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     preferredLightLaf = value
   }
 
-  private fun getPreviousSchemeForLaF(lookAndFeelInfo: LookAndFeelInfo): EditorColorsScheme? {
+  override fun getPreviousSchemeForLaf(lookAndFeelInfo: LookAndFeelInfo): EditorColorsScheme? {
     val schemeName = lafToPreviousScheme[lookAndFeelInfo.name] ?: return null
     return EditorColorsManager.getInstance().getScheme(schemeName)
   }

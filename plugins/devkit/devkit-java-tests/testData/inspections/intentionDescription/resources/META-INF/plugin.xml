@@ -11,6 +11,10 @@
       <className>MyIntentionActionWithoutBeforeAfter</className>
     </intentionAction>
     <intentionAction>
+      <className>MyIntentionActionOptionalBeforeAfter</className>
+      <skipBeforeAfter>true</skipBeforeAfter>
+    </intentionAction>
+    <intentionAction>
       <className>MyQuickFixIntentionAction</className>
     </intentionAction>
   </extensions>

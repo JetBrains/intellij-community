@@ -339,7 +339,7 @@ public final class JBCefCookieManager {
    *
    * @deprecated use {@link #deleteCookies(String, String)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean deleteCookies(@Nullable String url,
                                @Nullable String cookieName,
                                @Nullable Integer maxTimeToWait)

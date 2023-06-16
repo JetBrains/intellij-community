@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.HelpID;
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -45,8 +46,6 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
-
-import static org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties.COND_RET_CODE;
 
 /**
  * Base class for java line-connected breakpoints (line, method, field)
@@ -115,7 +114,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
     PsiElement startMethod = DebuggerUtilsEx.getContainingMethod(pos);
     List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(pos, true);
-    PsiKeyword condRet = findSingleConditionalReturn(project, document, position.getLine());
+    PsiElement condRet = findSingleConditionalReturn(project, document, position.getLine());
 
     if ((lambdas.isEmpty() || (lambdas.contains(startMethod) && lambdas.size() == 1)) && condRet == null) {
       return Collections.emptyList();
@@ -124,7 +123,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     List<JavaBreakpointVariant> res = new SmartList<>();
 
     boolean baseMethodWasAdded = false;
-    boolean anyLambdaWasAdded = false;
+    int lambdaCount = 0;
     if (!(startMethod instanceof PsiLambdaExpression)) {
       baseMethodWasAdded = true;
       res.add(new LineJavaBreakpointVariant(position, startMethod, -1));
@@ -141,7 +140,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
             res.add(0, new LineJavaBreakpointVariant(elementPosition, lambda, ordinal++));
           }
           else {
-            anyLambdaWasAdded = true;
+            lambdaCount++;
             res.add(new LambdaJavaBreakpointVariant(elementPosition, lambda, ordinal++));
           }
         }
@@ -149,64 +148,80 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     }
     assert baseMethodWasAdded;
 
-    if (anyLambdaWasAdded) {
-      res.add(new JavaBreakpointVariant(position)); //all
+    if (lambdaCount > 0) {
+      res.add(new JavaBreakpointVariant(position, lambdaCount)); //all
     }
 
     if (condRet != null) {
       PsiElement method = DebuggerUtilsEx.getContainingMethod(condRet);
-      int ordinal = method instanceof PsiLambdaExpression
-                    ? Math.toIntExact(lambdas.stream().takeWhile(l -> l != method).count())
-                    : -1;
+      int ordinal = lambdas.indexOf(method);
       res.add(new ConditionalReturnJavaBreakpointVariant(position, condRet, ordinal)); //conditional return
     }
 
-    assert anyLambdaWasAdded || condRet != null;
+    assert lambdaCount > 0 || condRet != null;
 
     return res;
   }
 
-  public static @Nullable PsiKeyword findSingleConditionalReturn(@Nullable SourcePosition pos) {
+  /**
+   * @param pos specifies the line in the file where {@code return} is looked for
+   */
+  public static @Nullable PsiElement findSingleConditionalReturn(@Nullable SourcePosition pos) {
     if (pos == null) return null;
-    Project project = pos.getFile().getProject();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(pos.getFile());
-    if (document == null) return null;
-    return findSingleConditionalReturn(project, document, pos.getLine());
+    return findSingleConditionalReturn(pos.getFile(), pos.getLine());
   }
 
-  public static @Nullable PsiKeyword findSingleConditionalReturn(@NotNull Project project, @NotNull Document document, int line) {
+  public static @Nullable PsiElement findSingleConditionalReturn(@NotNull PsiFile file, int line) {
+    Project project = file.getProject();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document == null) return null;
+    return findSingleConditionalReturn(project, document, line);
+  }
+
+  protected static @Nullable PsiElement findSingleConditionalReturn(@NotNull Project project, @NotNull Document document, int line) {
     if (!DocumentUtil.isValidLine(line, document)) return null;
-    TextRange curLineRange = DocumentUtil.getLineTextRange(document, line);
-    class CondRetFinder implements Processor<PsiElement> {
-      @Nullable PsiKeyword conditionalReturn = null;
+
+    class RetFinder implements Processor<PsiElement> {
+      // Our ultimate goal is to find the single return statement which is executed conditionally to break on it.
+      // However, in most cases it's enough to just check that return is not the first on the line
+      // (code like `workHard(); return result();` is quite rare,
+      // also note that putting breakpoint on such return would not lead to catastrophic circumstances).
+      // We ignore multiple returns because it's not easy to map them in source code to multiple return instructions in bytecode.
+
+      boolean somethingBeforeReturn = false;
+      @Nullable PsiElement singleReturn = null;
 
       @Override
       public boolean process(PsiElement element) {
-        if (element instanceof PsiKeyword retKeyword && element.getText().equals(PsiKeyword.RETURN)) {
-          if (conditionalReturn != null) {
-            // it's not easy to map multiple returns in source code to multiple returns in bytecode
-            conditionalReturn = null;
+        if (isReturnKeyword(element)) {
+          if (singleReturn != null) {
+            singleReturn = null;
             return false;
           }
 
-          PsiElement cur = element;
-          while (cur != null && cur.getTextOffset() >= curLineRange.getStartOffset()) {
-            PsiElement parent = cur.getParent();
-            if (parent instanceof PsiIfStatement ifStmt &&
-                     (cur == ifStmt.getThenBranch() || cur == ifStmt.getElseBranch())) {
-              conditionalReturn = retKeyword;
-            }
-
-            cur = parent;
+          if (!somethingBeforeReturn) {
+            assert singleReturn == null;
+            return false;
           }
+
+          singleReturn = element;
+        }
+
+        if (!(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
+          somethingBeforeReturn = true;
         }
 
         return true;
       }
     }
-    CondRetFinder finder = new CondRetFinder();
+    RetFinder finder = new RetFinder();
     new XDebuggerUtilImpl().iterateLine(project, document, line, finder);
-    return finder.conditionalReturn;
+    return finder.singleReturn;
+  }
+
+  public static boolean isReturnKeyword(@NotNull PsiElement element) {
+    // Don't check for PsiKeyword to cover many languages at once.
+    return element instanceof LeafElement && element.getText().equals("return");
   }
 
   public boolean matchesPosition(@NotNull LineBreakpoint<?> breakpoint, @NotNull SourcePosition position) {
@@ -238,12 +253,13 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     return DebuggerUtilsEx.getContainingMethod(position);
   }
 
-  public static Stream<Location> collectInlineReturnLocations(@NotNull Method method, int lineNumber) {
+  protected static Stream<Location> collectInlineConditionalReturnLocations(@NotNull Method method, int lineNumber) {
     assert lineNumber > 0;
     class Visitor extends MethodVisitor implements MethodBytecodeUtil.InstructionOffsetReader {
       final SmartList<Integer> returnOffsets = new SmartList<>();
       private int bytecodeOffset = -1;
       private boolean lineMatched;
+      private boolean lastAddedReturnIsLastInstruction;
 
       protected Visitor() {
         super(Opcodes.API_VERSION);
@@ -261,20 +277,41 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
       @Override
       public void visitInsn(int opcode) {
+        lastAddedReturnIsLastInstruction = false;
         if (lineMatched && Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
           assert bytecodeOffset >= 0;
           returnOffsets.add(bytecodeOffset);
+          lastAddedReturnIsLastInstruction = true;
         }
       }
     }
     Visitor visitor = new Visitor();
     MethodBytecodeUtil.visit(method, visitor, true);
+    if (visitor.lastAddedReturnIsLastInstruction && visitor.returnOffsets.size() >= 2) {
+      // Return at the end of the method is likely to be implicitly generated,
+      // it is not the conditional return we were looking for, drop it.
+      visitor.returnOffsets.remove(visitor.returnOffsets.size() - 1);
+    }
     return visitor.returnOffsets.stream().map(offs -> method.locationOfCodeIndex(offs));
   }
 
   public class JavaBreakpointVariant extends XLineBreakpointAllVariant {
-    public JavaBreakpointVariant(@NotNull XSourcePosition position) {
+    private final int lambdaCount;
+
+    public JavaBreakpointVariant(@NotNull XSourcePosition position, int lambdaCount) {
       super(position);
+      this.lambdaCount = lambdaCount;
+    }
+
+    public JavaBreakpointVariant(@NotNull XSourcePosition position) {
+      this(position, -1);
+    }
+
+    @Override
+    public @NotNull String getText() {
+      return lambdaCount >= 0
+             ? JavaDebuggerBundle.message("breakpoint.variant.text.line.and.lambda", lambdaCount)
+             : JavaDebuggerBundle.message("breakpoint.variant.text.line.and.lambda.uknown.count");
     }
   }
 
@@ -321,7 +358,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
   public class LineJavaBreakpointVariant extends ExactJavaBreakpointVariant {
     public LineJavaBreakpointVariant(@NotNull XSourcePosition position, @Nullable PsiElement element, int lambdaOrdinal) {
-      super(position, element, lambdaOrdinal);
+      super(position, element, JavaLineBreakpointProperties.encodeInlinePosition(lambdaOrdinal, false));
     }
 
     @NotNull
@@ -338,7 +375,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
   public class LambdaJavaBreakpointVariant extends ExactJavaBreakpointVariant {
     public LambdaJavaBreakpointVariant(@NotNull XSourcePosition position, @NotNull PsiElement element, int lambdaOrdinal) {
-      super(position, element, lambdaOrdinal);
+      super(position, element, JavaLineBreakpointProperties.encodeInlinePosition(lambdaOrdinal, false));
     }
 
     @Override
@@ -348,8 +385,8 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   }
 
   public class ConditionalReturnJavaBreakpointVariant extends ExactJavaBreakpointVariant {
-    public ConditionalReturnJavaBreakpointVariant(@NotNull XSourcePosition position, PsiKeyword element, int lambdaOrdinal) {
-      super(position, element, COND_RET_CODE - lambdaOrdinal - 1);
+    public ConditionalReturnJavaBreakpointVariant(@NotNull XSourcePosition position, PsiElement element, int lambdaOrdinal) {
+      super(position, element, JavaLineBreakpointProperties.encodeInlinePosition(lambdaOrdinal, true));
     }
 
     @Override
@@ -392,9 +429,9 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     return ReadAction.compute(() -> {
       SourcePosition linePosition = createLineSourcePosition((XLineBreakpointImpl)breakpoint);
       if (linePosition != null) {
-        if (condRet) {
-          // Ignore lambda ordinal, return element should be unique on the line.
-          return XSourcePositionImpl.createByElement(findSingleConditionalReturn(linePosition));
+        PsiElement theReturn = condRet ? findSingleConditionalReturn(linePosition) : null;
+        if (theReturn != null) {
+          return XSourcePositionImpl.createByElement(theReturn);
         } else {
           return DebuggerUtilsEx.toXSourcePosition(new PositionManagerImpl.JavaSourcePosition(linePosition, lambdaOrdinal));
         }
@@ -429,12 +466,13 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   @Override
   public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
     return canPutAtElement(file, line, project, (element, document) -> {
+      if (DumbService.isDumb(project)) { // always allow line breakpoints in dumb mode
+        return true;
+      }
+
       if (element instanceof PsiField) {
         PsiExpression initializer = ((PsiField)element).getInitializer();
         if (initializer != null && !PsiTypes.nullType().equals(initializer.getType())) {
-          if (DumbService.isDumb(project)) {
-            return true;
-          }
           Object value = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper().computeConstantExpression(initializer);
           return value == null;
         }

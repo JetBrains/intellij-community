@@ -5,6 +5,7 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
@@ -565,6 +566,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     if (clickedComponent != null && isComponentDraggable(clickedComponent)) {
       val decorator = InternalDecoratorImpl.findNearestDecorator(clickedComponent)
       if (decorator != null &&
+          isHeaderDraggingEnabled() &&
           (decorator.toolWindow.anchor != BOTTOM ||
            decorator.locationOnScreen.y < point.screenPoint.y - ToolWindowPane.headerResizeArea))
         return decorator.toolWindow
@@ -576,6 +578,8 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
       else -> null
     }
   }
+
+  private fun isHeaderDraggingEnabled(): Boolean = AdvancedSettings.getBoolean("ide.tool.window.header.dnd")
 
   private fun getPaneContentScreenBounds(pane: ToolWindowPane): Rectangle {
     val location = pane.locationOnScreen

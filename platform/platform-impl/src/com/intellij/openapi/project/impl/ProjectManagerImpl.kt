@@ -104,7 +104,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     internal suspend fun dispatchEarlyNotifications() {
       val notificationManager = NotificationsManager.getNotificationsManager() as NotificationsManagerImpl
-      withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+      withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         notificationManager.dispatchEarlyNotifications()
       }
     }

@@ -124,7 +124,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   public static <T, E extends Throwable> T computeCancellable(
     @RequiresReadLock ThrowableComputable<T, E> computable
   ) throws E, CannotReadException {
-    return ApplicationManager.getApplication().getService(ReadActionSupport.class).computeCancellable(computable);
+    return ApplicationManager.getApplication().getService(ReadWriteActionSupport.class).computeCancellable(computable);
   }
 
   public static final class CannotReadException extends ProcessCanceledException {

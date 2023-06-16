@@ -24,7 +24,7 @@ buildscript {
     }
 }
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(8)
 }
 
 // VERSION: 1.7.255-SNAPSHOT

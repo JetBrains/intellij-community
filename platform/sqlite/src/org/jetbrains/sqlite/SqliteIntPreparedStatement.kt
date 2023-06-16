@@ -1,26 +1,30 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.sqlite
 
-class SqliteIntPreparedStatement internal constructor(private val connection: SqliteConnection, private val sql: String) : SqliteStatement {
-  private val pointer: SafeStatementPointer
+class SqliteIntPreparedStatement internal constructor(private val connection: SqliteConnection,
+                                                      private val sql: String) : SqliteStatement {
+  private var pointer: SafeStatementPointer?
 
   private var batchPosition = 0
   private var batch: IntArray
-
-  var isClosed = false
-    private set
 
   private val columnCount: Int
   private val paramCount: Int
   private var batchQueryCount: Int
 
   init {
-    val db = connection.db
-    synchronized(db) {
-      pointer = db.prepareForStatement(sql.encodeToByteArray())
+    lateinit var pointer: SafeStatementPointer
+    var columnCount = 0
+    var paramCount = 0
+    connection.useDb { db ->
+      pointer = db.addStatement(SafeStatementPointer(connection = connection, pointer = db.prepare_utf8(sql.encodeToByteArray())))
       columnCount = db.column_count(pointer.pointer)
       paramCount = db.bind_parameter_count(pointer.pointer)
     }
+
+    this.pointer = pointer
+    this.columnCount = columnCount
+    this.paramCount = paramCount
 
     require(paramCount > 0)
 
@@ -31,18 +35,14 @@ class SqliteIntPreparedStatement internal constructor(private val connection: Sq
   }
 
   override fun close() {
-    internalClose()
-    isClosed = true
-  }
-
-  private fun internalClose() {
-    val pointer = pointer.takeIf { !it.isClosed } ?: return
-    check(!connection.isClosed) { "Connection is closed" }
-
-    batchPosition = 0
-    val status = pointer.close()
-    if (status != SqliteCodes.SQLITE_OK && status != SqliteCodes.SQLITE_MISUSE) {
-      throw connection.db.newException(status)
+    connection.useDb { db ->
+      val pointer = pointer ?: return
+      this.pointer = null
+      batchPosition = 0
+      val status = pointer.close()
+      if (status != SqliteCodes.SQLITE_OK && status != SqliteCodes.SQLITE_MISUSE) {
+        throw db.newException(status)
+      }
     }
   }
 
@@ -65,8 +65,8 @@ class SqliteIntPreparedStatement internal constructor(private val connection: Sq
     }
 
     try {
-      val db = connection.db
-      synchronized(db) {
+      connection.useDb { db ->
+        val pointer = pointer ?: throw IllegalStateException("The statement pointer is closed")
         pointer.ensureOpen()
         for (batchIndex in 0 until batchQueryCount) {
           db.reset(pointer.pointer)

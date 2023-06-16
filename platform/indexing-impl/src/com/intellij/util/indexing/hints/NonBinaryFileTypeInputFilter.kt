@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 class NonBinaryFileTypeInputFilter(private val acceptInput: FileBasedIndex.InputFilter) : BaseFileTypeInputFilter() {
   override fun acceptFileType(fileType: FileType): ThreeState {
-    return if (fileType.isBinary) ThreeState.NO else ThreeState.UNSURE;
+    return if (fileType.isBinary) ThreeState.NO else ThreeState.UNSURE
   }
 
   override fun slowPathIfFileTypeHintUnsure(file: IndexedFile): Boolean {

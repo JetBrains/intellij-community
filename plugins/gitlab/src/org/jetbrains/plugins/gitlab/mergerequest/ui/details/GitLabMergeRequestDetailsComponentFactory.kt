@@ -65,7 +65,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
               PopupHandler.installPopupMenu(this, actionGroup, ActionPlaces.POPUP)
               DataManager.registerDataProvider(this) { dataId ->
                 when {
-                  GitLabMergeRequestsActionKeys.MERGE_REQUEST.`is`(dataId) -> detailsVm.detailsInfoVm.mergeRequest
+                  GitLabMergeRequestViewModel.DATA_KEY.`is`(dataId) -> detailsVm
                   GitLabMergeRequestChangesViewModel.DATA_KEY.`is`(dataId) -> detailsVm.changesVm
                   else -> null
                 }
@@ -85,7 +85,6 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
     val cs = this
-    val detailsInfoVm = detailsVm.detailsInfoVm
     val detailsReviewFlowVm = detailsVm.detailsReviewFlowVm
     val branchesVm = detailsVm.branchesVm
     val statusVm = detailsVm.statusVm
@@ -117,11 +116,11 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       isOpaque = true
       background = UIUtil.getListBackground()
 
-      add(CodeReviewDetailsTitleComponentFactory.create(cs, detailsInfoVm, GitLabBundle.message("open.on.gitlab.tooltip"), actionGroup,
+      add(CodeReviewDetailsTitleComponentFactory.create(cs, detailsVm, GitLabBundle.message("open.on.gitlab.tooltip"), actionGroup,
                                                         htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
-      add(CodeReviewDetailsDescriptionComponentFactory.create(cs, detailsInfoVm, actionGroup,
-                                                              showTimelineAction = { _ -> detailsInfoVm.showTimeline() },
+      add(CodeReviewDetailsDescriptionComponentFactory.create(cs, detailsVm, actionGroup,
+                                                              showTimelineAction = { _ -> detailsVm.showTimeline() },
                                                               htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.DESCRIPTION_GAPS))
       add(commitsAndBranches,

@@ -4,7 +4,7 @@ package com.intellij.completion.ml.sorting
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.ranker.ExperimentModelProvider
 import com.intellij.completion.ml.ranker.ExperimentModelProvider.Companion.match
-import com.intellij.completion.ml.ranker.local.MLCompletionLocalModelsUtil
+import com.intellij.completion.ml.ranker.local.MLCompletionLocalModelsLoader
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import com.intellij.internal.ml.completion.RankingModelProvider
@@ -18,9 +18,11 @@ import org.jetbrains.annotations.TestOnly
 object RankingSupport {
   private val LOG = logger<RankingSupport>()
   private var enabledInTests: Boolean = false
+  private val localDebugModelLoader = MLCompletionLocalModelsLoader("completion.ml.path.to.zip.model")
 
   fun getRankingModel(language: Language): RankingModelWrapper? {
-    MLCompletionLocalModelsUtil.getModel(language.id)?.let { return LanguageRankingModel(it, DecoratingItemsPolicy.DISABLED) }
+    tryLoadLocalDebugModel(language)?.let { return it }
+
     val provider = findProviderSafe(language)
     return if (provider != null && shouldSortByML(language, provider)) tryGetModel(provider) else null
   }
@@ -71,6 +73,12 @@ object RankingSupport {
     }
 
     return shouldSort
+  }
+
+  private fun tryLoadLocalDebugModel(language: Language): LanguageRankingModel? {
+    return localDebugModelLoader.getModel(language.id)?.let {
+      return LanguageRankingModel(it, DecoratingItemsPolicy.DISABLED)
+    }
   }
 
   @TestOnly
