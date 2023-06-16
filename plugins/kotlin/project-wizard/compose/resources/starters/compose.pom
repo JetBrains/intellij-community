@@ -10,7 +10,6 @@
     <gradle.version>7.5.1</gradle.version>
     <kotlin.version>1.8.20</kotlin.version>
     <compose.version>1.4.0</compose.version>
-    <agp.version>7.3.0</agp.version>
   </properties>
 
   <dependencyManagement>
