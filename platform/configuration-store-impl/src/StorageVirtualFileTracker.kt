@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.configurationStore
@@ -10,7 +10,6 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
@@ -20,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap
 @Service(Service.Level.APP)
 internal class StorageVirtualFileTracker {
   private val filePathToStorage = ConcurrentHashMap<String, TrackedStorage>()
+
   @Volatile
   private var hasDirectoryBasedStorages = false
 
@@ -42,8 +42,8 @@ internal class StorageVirtualFileTracker {
     filePathToStorage.values.removeIf(filter)
   }
 
-  fun prepare(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
-    var storageEvents: LinkedHashMap<IComponentStore, LinkedHashSet<StateStorage>>? = null
+  fun schedule(events: List<VFileEvent>) {
+    var projectToChanges: MutableMap<Project, MutableMap<IComponentStore, MutableSet<StateStorage>>>? = null
     eventLoop@ for (event in events) {
       var storage: StateStorage?
       if (event is VFilePropertyChangeEvent && VirtualFile.PROP_NAME == event.propertyName) {
@@ -104,34 +104,29 @@ internal class StorageVirtualFileTracker {
 
       if (isFireStorageFileChangedEvent(event)) {
         val componentManager = storage.storageManager.componentManager!!
-        if (storageEvents == null) {
-          storageEvents = LinkedHashMap()
+        if (projectToChanges == null) {
+          projectToChanges = LinkedHashMap()
         }
-        storageEvents.computeIfAbsent(componentManager.stateStore) { LinkedHashSet() }.add(storage)
+
+        val project: Project = when (componentManager) {
+          is Project -> componentManager
+          is Module -> componentManager.project
+          else -> continue
+        }
+
+        projectToChanges
+          .computeIfAbsent(project) { LinkedHashMap() }
+          .computeIfAbsent(componentManager.stateStore) { LinkedHashSet() }
+          .add(storage)
       }
     }
 
-    if (storageEvents == null) {
-      return null
+    if (projectToChanges == null) {
+      return
     }
 
-    return object : AsyncFileListener.ChangeApplier {
-      override fun afterVfsChange() {
-        val projectToChanges = HashMap<Project, MutableMap<IComponentStore, Set<StateStorage>>>()
-        for ((store, storages) in storageEvents) {
-          val project: Project = when (val componentManager = store.storageManager.componentManager) {
-            is Project -> componentManager
-            is Module -> componentManager.project
-            else -> continue
-          }
-          val changes = projectToChanges.getOrPut(project) { LinkedHashMap() }
-          changes[store] = storages
-        }
-
-        projectToChanges.forEach { (project, batchStorageEvents) ->
-          StoreReloadManager.getInstance(project).storageFilesBatchProcessing(batchStorageEvents)
-        }
-      }
+    for ((project, batchStorageEvents) in projectToChanges) {
+      StoreReloadManager.getInstance(project).storageFilesBatchProcessing(batchStorageEvents)
     }
   }
 }
