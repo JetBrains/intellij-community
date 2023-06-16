@@ -57,9 +57,7 @@ interface MavenAsyncProjectsManager {
   @ApiStatus.Internal
   suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
   @ApiStatus.Internal
-  fun importMavenProjectsSync(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
-  @ApiStatus.Internal
-  fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider, projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
+  fun importMavenProjectsSync(projectsToImport: Map<MavenProject, MavenProjectChanges>, modelsProvider: IdeModifiableModelsProvider?): List<Module>
 
   suspend fun downloadArtifacts(projects: Collection<MavenProject>,
                                 artifacts: Collection<MavenArtifact>?,
@@ -99,36 +97,29 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   override fun importMavenProjectsSync() {
-    importMavenProjectsSync(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject))
+    prepareImporter(null, emptyMap(), false).importMavenProjectsBlocking()
   }
 
-  private fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider): List<Module> {
-    return prepareImporter(modelsProvider, emptyMap(), false).importMavenProjectsBlocking()
-  }
-
-  override fun importMavenProjectsSync(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
-    return importMavenProjectsSync(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject), projectsToImport)
-  }
-
-  override fun importMavenProjectsSync(modelsProvider: IdeModifiableModelsProvider, projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
+  override fun importMavenProjectsSync(projectsToImport: Map<MavenProject, MavenProjectChanges>,
+                                       modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     return prepareImporter(modelsProvider, projectsToImport, false).importMavenProjectsBlocking()
   }
 
   private suspend fun doImportMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
                                             importModuleGroupsRequired: Boolean,
                                             modelsProvider: IdeModifiableModelsProvider?): List<Module> {
-    val finalModelsProvider = modelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
-    return prepareImporter(finalModelsProvider, projectsToImport, importModuleGroupsRequired).importMavenProjects()
+    return prepareImporter(modelsProvider, projectsToImport, importModuleGroupsRequired).importMavenProjects()
   }
 
-  private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider,
+  private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider?,
                               projectsToImport: Map<MavenProject, MavenProjectChanges>,
                               importModuleGroupsRequired: Boolean): MavenProjectsManagerImporter {
     if (projectsToImport.any { it.key == null }) {
       throw IllegalArgumentException("Null key in projectsToImport")
     }
+    val finalModelsProvider = modelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
     return MavenProjectsManagerImporter(
-      modelsProvider,
+      finalModelsProvider,
       projectsToImport,
       importModuleGroupsRequired
     )
