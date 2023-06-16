@@ -16,14 +16,10 @@ class EntityCodeGenTest : CodeGenerationTestBase() {
     myFixture.copyDirectoryToProject("before", "")
   }
 
-  fun testEmpty() {
-    TestCase.assertTrue(true)
+  fun testSimpleCase() {
+    //doTest()
   }
 
-  //fun testSimpleCase() {
-  //  doTest()
-  //}
-  //
   //fun testFinalProperty() {
   //  doTest()
   //}
