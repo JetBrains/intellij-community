@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
@@ -361,15 +362,19 @@ class GitStageLineStatusTracker(
     }
 
     private fun paintStageLines(g: Graphics2D, editor: Editor, block: List<ChangedLines<StageLineFlags>>) {
+      val isNewUi = ExperimentalUI.isNewUI()
+
       val borderColor = LineStatusMarkerDrawUtil.getGutterBorderColor(editor)
 
       val area = LineStatusMarkerDrawUtil.getGutterArea(editor)
       val x = area.first
       val endX = area.second
-      val midX = if (ExperimentalUI.isNewUI()) (endX + x) / 2 else (endX + x + 3) / 2
+      val midX = if (isNewUi) (endX + x) / 2 else (endX + x + 3) / 2
 
       val y = block.first().y1
       val endY = block.last().y2
+
+      val hoveredLine = (editor as EditorEx).gutterComponentEx.hoveredFreeMarkersLine
 
       for (change in block) {
         if (change.y1 != change.y2 &&
@@ -378,16 +383,11 @@ class GitStageLineStatusTracker(
           val end = change.y2
           val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
 
-          if (change.flags.isStaged) {
-            if (ExperimentalUI.isNewUI()) {
-              g.paintHalfRoundedRect(gutterColor, x, start + 1, midX, end - 1, endX - x)
-            }
-            else {
-              LineStatusMarkerDrawUtil.paintRect(g, gutterColor, null, x, start, midX, end)
-            }
+          if (isNewUi && LineStatusMarkerDrawUtil.isRangeHovered(editor, hoveredLine, x, start, end)) {
+            g.paintUnStagedChange(change, gutterColor, x - 1, endX + 1, midX, start, end)
           }
           else {
-            LineStatusMarkerDrawUtil.paintRect(g, gutterColor, null, x, start, endX, end)
+            g.paintUnStagedChange(change, gutterColor, x, endX, midX, start, end)
           }
         }
       }
@@ -400,12 +400,20 @@ class GitStageLineStatusTracker(
             val end = change.y2
             val stagedBorderColor = LineStatusMarkerDrawUtil.getIgnoredGutterBorderColor(change.type, editor)
 
-            LineStatusMarkerDrawUtil.paintRect(g, null, stagedBorderColor, x, start, endX, end)
+            if (isNewUi && LineStatusMarkerDrawUtil.isRangeHovered(editor, hoveredLine, x, start, end)) {
+              LineStatusMarkerDrawUtil.paintRect(g, null, stagedBorderColor, x - 1, start, endX + 1, end)
+            } else {
+              LineStatusMarkerDrawUtil.paintRect(g, null, stagedBorderColor, x, start, endX, end)
+            }
           }
         }
       }
       else if (y != endY) {
-        LineStatusMarkerDrawUtil.paintRect(g, null, borderColor, x, y, endX, endY)
+        if (isNewUi && LineStatusMarkerDrawUtil.isRangeHovered(editor, hoveredLine, x, y, endY)) {
+          LineStatusMarkerDrawUtil.paintRect(g, null, borderColor, x - 1, y, endX + 1, endY)
+        } else {
+          LineStatusMarkerDrawUtil.paintRect(g, null, borderColor, x, y, endX, endY)
+        }
       }
 
       for (change in block) {
@@ -424,6 +432,22 @@ class GitStageLineStatusTracker(
             LineStatusMarkerDrawUtil.paintTriangle(g, editor, gutterColor, borderColor, x, endX, start)
           }
         }
+      }
+    }
+
+    private fun Graphics2D.paintUnStagedChange(change: ChangedLines<StageLineFlags>, color: Color?,
+                                               x: Int, endX: Int, midX: Int,
+                                               start: Int, end: Int) {
+      if (change.flags.isStaged) {
+        if (ExperimentalUI.isNewUI()) {
+          paintHalfRoundedRect(color, x, start + 1, midX, end - 1, endX - x)
+        }
+        else {
+          LineStatusMarkerDrawUtil.paintRect(this, color, null, x, start, midX, end)
+        }
+      }
+      else {
+        LineStatusMarkerDrawUtil.paintRect(this, color, null, x, start, endX, end)
       }
     }
 
