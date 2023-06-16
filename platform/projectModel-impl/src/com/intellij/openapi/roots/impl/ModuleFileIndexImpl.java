@@ -1,23 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
-import com.intellij.workspaceModel.core.fileIndex.impl.ModuleContentOrSourceRootData;
-import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData;
-import com.intellij.workspaceModel.core.fileIndex.impl.ModuleSourceRootData;
+import com.intellij.workspaceModel.core.fileIndex.impl.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * This is an internal class, {@link ModuleFileIndex} must be used instead.
@@ -35,8 +40,24 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
   @Override
   public boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
-    Set<VirtualFile> contentRoots = getModuleRootsToIterate();
-    for (VirtualFile contentRoot : contentRoots) {
+    Collection<VirtualFile> roots = ReadAction.nonBlocking(() -> {
+      Project project = myModule.getProject();
+      if (project.isDisposed()) return null;
+      WorkspaceFileIndexEx index = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
+      Collection<VirtualFile> files = new HashSet<>();
+      index.visitFileSets(new WorkspaceFileSetVisitor() {
+        @Override
+        public void visitIncludedRoot(@NotNull WorkspaceFileSet fileSet) {
+          if (fileSet instanceof WorkspaceFileSetWithCustomData<?> && isInContent((WorkspaceFileSetWithCustomData<?>)fileSet)) {
+            files.add(fileSet.getRoot());
+          }
+        }
+      });
+      return files;
+    }).executeSynchronously();
+    Collection<VirtualFile> highestRoots = selectRootItems(roots, root -> root.getPath());
+
+    for (VirtualFile contentRoot : highestRoots) {
       if (!iterateContentUnderDirectory(contentRoot, processor, filter)) {
         return false;
       }
@@ -44,32 +65,33 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     return true;
   }
 
-  public @NotNull Set<VirtualFile> getModuleRootsToIterate() {
-    return ReadAction.compute(() -> {
-      if (myModule.isDisposed()) {
-        return Collections.emptySet();
-      }
+  private static <T> Collection<T> selectRootItems(Collection<T> items, Function<T, String> toPath) {//todo[lene] remove copy-paste
+    if (items.size() < 2) {
+      return items;
+    }
 
-      Set<VirtualFile> result = new LinkedHashSet<>();
-      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(myModule);
-      ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(myModule.getProject());
-      for (VirtualFile[] roots : Arrays.asList(moduleRootManager.getContentRoots(), moduleRootManager.getSourceRoots())) {
-        for (VirtualFile root : roots) {
-          if (!projectFileIndex.isInProject(root)) continue;
-
-          VirtualFile parent = root.getParent();
-          if (parent != null) {
-            Module parentModule = projectFileIndex.getModuleForFile(parent, false);
-            if (myModule.equals(parentModule)) {
-              // inner content - skip it
-              continue;
-            }
+    TreeMap<String, T> pathMap = new TreeMap<>(OSAgnosticPathUtil.COMPARATOR);
+    for (T item : items) {
+      String path = FileUtil.toSystemIndependentName(toPath.apply(item));
+      if (!isIncluded(pathMap, path)) {
+        pathMap.put(path, item);
+        while (true) {
+          String excludedPath = pathMap.higherKey(path);
+          if (excludedPath != null && OSAgnosticPathUtil.startsWith(excludedPath, path)) {
+            pathMap.remove(excludedPath);
           }
-          result.add(root);
+          else {
+            break;
+          }
         }
       }
-      return result;
-    });
+    }
+    return pathMap.values();
+  }
+
+  private static boolean isIncluded(NavigableMap<String, ?> existingFiles, String path) {
+    String suggestedCoveringRoot = existingFiles.floorKey(path);
+    return suggestedCoveringRoot != null && OSAgnosticPathUtil.startsWith(path, suggestedCoveringRoot);
   }
 
   @Override
