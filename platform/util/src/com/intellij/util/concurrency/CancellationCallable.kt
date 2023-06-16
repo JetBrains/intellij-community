@@ -12,8 +12,14 @@ import java.util.concurrent.Callable
  *
  * @see CancellationRunnable
  */
-internal class CancellationCallable<V>(private val myJob: CompletableJob, private val myCallable: Callable<out V>) : Callable<V> {
+internal class CancellationCallable<V>(
+  private val myJob: CompletableJob,
+  private val myCallable: Callable<out V>,
+  ) : Callable<V> {
+
   override fun call(): V {
-    return runAsCoroutine(myJob) { myCallable.call() }
+    return runAsCoroutine(myJob) {
+      myCallable.call()
+    }
   }
 }

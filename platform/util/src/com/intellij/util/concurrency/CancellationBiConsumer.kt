@@ -4,8 +4,13 @@ package com.intellij.util.concurrency
 import kotlinx.coroutines.CompletableJob
 import java.util.function.BiConsumer
 
-internal class CancellationBiConsumer<T, U>(private val myJob: CompletableJob, private val myRunnable: BiConsumer<T, U>) : BiConsumer<T, U> {
+internal class CancellationBiConsumer<T, U>(
+  private val myJob: CompletableJob,
+  private val myRunnable: BiConsumer<T, U>,
+  ) : BiConsumer<T, U> {
   override fun accept(t: T, u: U) {
-    runAsCoroutine(myJob) { myRunnable.accept(t, u) }
+    runAsCoroutine(myJob) {
+      myRunnable.accept(t, u)
+    }
   }
 }

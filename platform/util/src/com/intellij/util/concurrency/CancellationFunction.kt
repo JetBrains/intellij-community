@@ -6,10 +6,15 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
 @ApiStatus.Internal
-class CancellationFunction<T, U> internal constructor(private val myJob: CompletableJob,
-                                                      private val myFunction: Function<T, U>) : Function<T, U> {
+class CancellationFunction<T, U> internal constructor(
+  private val myJob: CompletableJob,
+  private val myFunction: Function<T, U>,
+  ) : Function<T, U> {
+
   override fun apply(t: T): U {
-    return runAsCoroutine(myJob) { myFunction.apply(t) }
+    return runAsCoroutine(myJob) {
+      myFunction.apply(t)
+    }
   }
 
   override fun toString(): String {
