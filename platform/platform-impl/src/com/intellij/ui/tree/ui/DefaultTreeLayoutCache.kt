@@ -766,11 +766,39 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     }
 
     private fun checkRows() {
-      for (i in 0 until rows.size) {
-        if (rows[i].row != i) {
-          messages += "Row inconsistency: row $i contains ${rows[i].path} which is supposed to be at ${rows[i].row}"
+      val root = this@DefaultTreeLayoutCache.root
+      if (root == null) {
+        if (rows.size != 0) {
+          messages += "The tree is empty, but there are ${rows.size} visible rows"
         }
+        return
       }
+      val size = checkRowsCounting(0, root)
+      if (size != rows.size) {
+        messages += "Visiting all visible nodes yields $size rows, but there are ${rows.size}"
+      }
+    }
+
+    private fun checkRowsCounting(expectedRow: Int, node: Node): Int {
+      var row = expectedRow
+      if (node.row != -1 && rows.getOrNull(node.row) != node) {
+        messages += "Row inconsistency: node ${node.path} should be at ${node.row} which contains ${rows.getOrNull(node.row)?.path}"
+      }
+      else if (node.row != -1 && node.row != row) {
+        messages += "Row inconsistency: node ${node.path} should be at ${row}, but is at ${node.row}"
+      }
+      var count = if (node.row == -1) 0 else 1 // This may be the invisible root, but it may still have visible children!
+      row += count
+      val children = node.children
+      if (children == null || !node.isChildrenVisible) {
+        return count
+      }
+      for (child in children) {
+        val visibleSubtreeSize = checkRowsCounting(row, child)
+        count += visibleSubtreeSize
+        row += visibleSubtreeSize
+      }
+      return count
     }
 
     private fun checkEmptyTree() {
