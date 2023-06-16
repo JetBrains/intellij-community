@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.kotlin.idea.k2.navigation.AbstractKotlinNavigationToLibrarySourceTest
+import org.jetbrains.kotlin.idea.k2.navigation.AbstractResolveExtensionGeneratedSourcesFilterTest
 import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
 import org.jetbrains.kotlin.testGenerator.model.model
 import org.jetbrains.kotlin.testGenerator.model.testClass
@@ -11,6 +12,10 @@ internal fun MutableTWorkspace.generateK2NavigationTests() {
     testGroup("navigation/tests", testDataPath = "testData") {
         testClass<AbstractKotlinNavigationToLibrarySourceTest> {
             model("navigationToLibrarySourcePolicy")
+        }
+
+        testClass<AbstractResolveExtensionGeneratedSourcesFilterTest> {
+            model("resolveExtensionGeneratedSourcesFilter")
         }
     }
 }
