@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.HelpID;
@@ -466,12 +466,13 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   @Override
   public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
     return canPutAtElement(file, line, project, (element, document) -> {
+      if (DumbService.isDumb(project)) { // always allow line breakpoints in dumb mode
+        return true;
+      }
+
       if (element instanceof PsiField) {
         PsiExpression initializer = ((PsiField)element).getInitializer();
         if (initializer != null && !PsiTypes.nullType().equals(initializer.getType())) {
-          if (DumbService.isDumb(project)) {
-            return true;
-          }
           Object value = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper().computeConstantExpression(initializer);
           return value == null;
         }
