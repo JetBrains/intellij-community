@@ -35,6 +35,9 @@ interface GitLabDiscussion {
   suspend fun addNote(body: String)
 }
 
+val GitLabMergeRequestDiscussion.firstNote: Flow<GitLabMergeRequestNote?>
+  get() = notes.map(List<GitLabMergeRequestNote>::firstOrNull).distinctUntilChangedBy { it?.id }
+
 interface GitLabMergeRequestDiscussion : GitLabDiscussion {
   override val notes: Flow<List<GitLabMergeRequestNote>>
 }
@@ -66,7 +69,7 @@ class LoadedGitLabDiscussion(
   private val operationsGuard = Mutex()
 
   private val noteEvents = MutableSharedFlow<GitLabNoteEvent<GitLabNoteDTO>>()
-  private val loadedNotes = dataState.transformLatest {discussionData ->
+  private val loadedNotes = dataState.transformLatest { discussionData ->
     coroutineScope {
       val notesData = discussionData.notes.toMutableList()
 

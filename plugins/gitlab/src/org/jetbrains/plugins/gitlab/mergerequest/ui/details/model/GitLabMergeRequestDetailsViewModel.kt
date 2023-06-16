@@ -65,7 +65,7 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
   override val detailsReviewFlowVm = GitLabMergeRequestReviewFlowViewModelImpl(project, cs, currentUser, projectData, mergeRequest)
   override val branchesVm = GitLabMergeRequestBranchesViewModel(project, cs, mergeRequest, projectData.projectMapping.remote.repository)
   override val statusVm = GitLabMergeRequestStatusViewModel(mergeRequest, projectData.projectMapping.repository.serverPath)
-  override val changesVm = GitLabMergeRequestChangesViewModelImpl(cs, mergeRequest.changes)
+  override val changesVm = GitLabMergeRequestChangesViewModelImpl(cs, mergeRequest)
 
   override fun refreshData() {
     cs.launch {
