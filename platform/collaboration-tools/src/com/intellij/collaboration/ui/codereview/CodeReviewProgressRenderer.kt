@@ -7,29 +7,40 @@ import com.intellij.ui.CellRendererPanel
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.util.ui.JBUI
 import icons.CollaborationToolsIcons
-import java.awt.BorderLayout
+import net.miginfocom.layout.AC
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import java.awt.Component
+import java.awt.Dimension
 import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
+import kotlin.math.max
 
 internal class CodeReviewProgressRenderer(
   private val renderer: ColoredTreeCellRenderer,
   private val codeReviewProgressStateProvider: (ChangesBrowserNode<*>) -> NodeCodeReviewProgressState
 ) : CellRendererPanel(), TreeCellRenderer {
 
-  private val iconLabel = JLabel().apply { border = JBUI.Borders.empty(0, TEXT_ICON_GAP, 0, ICON_BORDER) }
+  private val iconLabel = JLabel().apply {
+    border = JBUI.Borders.empty(0, TEXT_ICON_GAP, 0, ICON_BORDER)
+  }
 
   init {
     buildLayout()
   }
 
   private fun buildLayout() {
-    layout = BorderLayout()
+    layout = MigLayout(LC().gridGap("0", "0")
+                         .insets("0", "0", "0", "0")
+                         .fill()).apply {
+      columnConstraints = AC().gap("push")
+    }
 
-    add(renderer, BorderLayout.CENTER)
-    add(iconLabel, BorderLayout.EAST)
+    add(renderer, CC().minWidth("0"))
+    add(iconLabel)
   }
 
   override fun getTreeCellRendererComponent(
@@ -47,8 +58,16 @@ internal class CodeReviewProgressRenderer(
     isSelected = selected
 
     renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
-    iconLabel.icon = getIcon(value)
-    iconLabel.text = getText(value)
+    val icon = getIcon(value)
+    iconLabel.icon = icon
+    val text = getText(value)
+    iconLabel.text = text
+    val fm = iconLabel.getFontMetrics(iconLabel.font)
+
+    val width = (icon?.iconWidth ?: 0) + iconLabel.iconTextGap + fm.charWidth('8') * (text?.length ?: 0) +
+                iconLabel.insets.left + iconLabel.insets.right
+    val height = max(icon?.iconHeight ?: 0, fm.height)
+    iconLabel.minimumSize = Dimension(width, height)
 
     return this
   }
