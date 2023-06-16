@@ -18,6 +18,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.SingleTaskController;
@@ -523,7 +524,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     private void scheduleReindex() {
       int unindexedCommits = myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get();
       if (mySingleTaskController.isClosed()) {
-        LOG.debug("Reindexing of " + myRoot.getName() +  " is not scheduled since dispose has already started. " +
+        LOG.debug("Reindexing of " + myRoot.getName() + " is not scheduled since dispose has already started. " +
                   unindexedCommits + " unindexed commits left.");
         return;
       }
@@ -552,7 +553,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       IntCollectionUtil.processBatches(commits, BATCH_SIZE, batch -> {
         indicator.checkCanceled();
 
-        List<String> hashes = IntCollectionUtil.map2List(batch, value -> myStorage.getCommitId(value).getHash().asString());
+        Map<@NotNull Integer, @NotNull CommitId> ids = myStorage.getCommitIds(batch);
+        List<String> hashes = ContainerUtil.map(ids.values(), value -> value.getHash().asString());
         myIndexers.get(myRoot).readFullDetails(myRoot, hashes, myPathsEncoder, detail -> {
           indicator.checkCanceled();
           storeDetail(detail, mutator);
