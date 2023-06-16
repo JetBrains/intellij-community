@@ -67,8 +67,8 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
     return mySupportedJavaVersions.min() <= javaVersion
   }
 
-  fun isUnsupported(gradleVersion: GradleVersion): Boolean {
-    return gradleVersion < minimalSupportedGradleVersion
+  fun isSupportedByIdea(gradleVersion: GradleVersion): Boolean {
+    return minimalSupportedGradleVersion <= gradleVersion
   }
 
   fun isDeprecated(gradleVersion: GradleVersion): Boolean {
