@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlo
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.hash.ContentHashEnumerator;
@@ -187,6 +186,7 @@ final class PersistentFSConnector {
     final Path corruptionMarkerFile = persistentFSPaths.getCorruptionMarkerFile();
     try {
       if (Files.exists(corruptionMarkerFile)) {
+        // TODO on vfs corruption vfslog must be erased because enumerators are lost (force compaction to erase everything)
         final List<String> corruptionCause = Files.readAllLines(corruptionMarkerFile, UTF_8);
         throw new VFSNeedsRebuildException(SCHEDULED_REBUILD, "Corruption marker file found\n\tcontent: " + corruptionCause);
       }
