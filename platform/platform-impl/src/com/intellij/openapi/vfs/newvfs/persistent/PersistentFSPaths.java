@@ -25,6 +25,10 @@ public final class PersistentFSPaths {
     return storagesDir.resolve("corruption.marker");
   }
 
+  public @NotNull Path getStoragesReplacementMarkerFile() {
+    return storagesDir.resolve("replace-storages.marker");
+  }
+
   //@NotNull File getVfsEnumBaseFile() {
   //  return new File(new File(myCachesDir), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
   //}

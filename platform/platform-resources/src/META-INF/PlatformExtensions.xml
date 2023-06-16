@@ -1443,6 +1443,8 @@
     <projectService serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
                     serviceImplementation="com.intellij.internal.performanceTests.DummyProjectInitializationDiagnosticService"/>
 
+    <applicationService serviceImplementation="com.intellij.ide.actions.cache.RecoverVfsFromLogService"/>
+
     <!-- Minimap -->
     <registryKey key="editor.minimap.enabled" defaultValue="false" description="Enables Minimap"/>
     <editorFactoryListener implementation="com.intellij.ide.minimap.MinimapEditorFactoryListener"/>

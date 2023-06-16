@@ -117,7 +117,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     myIdToDirCache.clear();
     myVfsData = new VfsData(app);
     LOG.assertTrue(!myConnected.get());
-    initVfsLog();
     doConnect();
     PersistentFsConnectionListener.EP_NAME.getExtensionList().forEach(PersistentFsConnectionListener::connectionOpen);
   }
@@ -141,6 +140,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void doConnect() {
     if (myConnected.compareAndSet(false, true)) {
       Activity activity = StartUpMeasurer.startActivity("connect FSRecords", ActivityCategory.DEFAULT);
+      if (VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
+        try {
+          if (VfsRecoveryUtils.INSTANCE.applyStoragesReplacementIfMarkerExists(Path.of(FSRecords.getCachesDir()))) {
+            LOG.info("FSRecords storages replacement was applied");
+          }
+        } catch (Throwable e) {
+          LOG.error("FSRecords storages replacement has failed", e);
+        }
+      }
+      initVfsLog();
       FSRecords.connect(myVfsLog.getConnectionInterceptors());
       activity.end();
     }
