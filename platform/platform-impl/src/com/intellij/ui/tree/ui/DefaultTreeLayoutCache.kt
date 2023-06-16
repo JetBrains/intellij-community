@@ -198,10 +198,10 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       }
     }
     treeSelectionModel?.resetRowSelection()
+    checkInvariants(debugLocation)
     if (insertedChildIndexes.size == 1 && changedNode.visibleChildCount == 1) {
       autoExpandHandler(changedNode.getChildAt(0).path)
     }
-    checkInvariants(debugLocation)
   }
 
   override fun treeNodesRemoved(e: TreeModelEvent?) {
