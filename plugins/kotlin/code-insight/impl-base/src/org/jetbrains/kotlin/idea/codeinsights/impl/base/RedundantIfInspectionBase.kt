@@ -63,7 +63,12 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
 
             val isChainedIf = expression.getPrevSiblingIgnoringWhitespaceAndComments() is KtIfExpression ||
                     expression.parent.let { it is KtContainerNodeForControlStructureBody && it.expression == expression }
-            val highlightType = if (ignoreChainedIf && isChainedIf) INFORMATION else GENERIC_ERROR_OR_WARNING
+
+            val hasConditionWithFloatingPointType = expression.hasConditionWithFloatingPointType()
+
+            val highlightType =
+                if (ignoreChainedIf && isChainedIf || hasConditionWithFloatingPointType) INFORMATION
+                else GENERIC_ERROR_OR_WARNING
 
             holder.registerProblemWithoutOfflineInformation(
                 expression,
@@ -71,7 +76,7 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                 isOnTheFly,
                 highlightType,
                 expression.ifKeyword.textRangeInParent,
-                RemoveRedundantIf(redundancyType, branchType, returnAfterIf)
+                RemoveRedundantIf(redundancyType, branchType, returnAfterIf, hasConditionWithFloatingPointType)
             )
         }
     }
@@ -82,6 +87,17 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
      * Called from read action and from modal window, so it's safe to use resolve here.
      */
     abstract fun isBooleanExpression(expression: KtExpression): Boolean
+
+    abstract fun KtIfExpression.hasConditionWithFloatingPointType(): Boolean
+
+    protected fun KtIfExpression.inequalityCondition(): KtBinaryExpression? {
+        return (condition as? KtBinaryExpression)
+            ?.takeIf { it.left != null && it.right != null }
+            ?.takeIf {
+                val operation = it.operationToken
+                operation == KtTokens.LT || operation == KtTokens.LTEQ || operation == KtTokens.GT || operation == KtTokens.GTEQ
+            }
+    }
 
     private sealed class BranchType {
         object Simple : BranchType()
@@ -157,10 +173,14 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
         private val redundancyType: RedundancyType,
         private val branchType: BranchType,
         returnAfterIf: KtExpression?,
+        private val mayChangeSemantics: Boolean,
     ) : LocalQuickFix {
         val returnExpressionAfterIf: SmartPsiElementPointer<KtExpression>? = returnAfterIf?.let(SmartPointerManager::createPointer)
 
-        override fun getName() = KotlinBundle.message("remove.redundant.if.text")
+        override fun getName() =
+            if (mayChangeSemantics) KotlinBundle.message("remove.redundant.if.may.change.semantics.with.floating.point.types")
+            else KotlinBundle.message("remove.redundant.if.text")
+
         override fun getFamilyName() = name
 
         override fun startInWriteAction(): Boolean = false
