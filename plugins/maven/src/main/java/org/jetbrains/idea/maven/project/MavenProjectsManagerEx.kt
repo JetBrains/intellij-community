@@ -82,7 +82,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                                             previewModuleToDelete: Module?,
                                                             modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     doAddManagedFilesWithProfiles(files, profiles, previewModuleToDelete)
-    return updateAllMavenProjects(MavenImportSpec(false, true, false))
+    return updateAllMavenProjects(MavenImportSpec(false, true, false), modelsProvider)
   }
 
   override suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
