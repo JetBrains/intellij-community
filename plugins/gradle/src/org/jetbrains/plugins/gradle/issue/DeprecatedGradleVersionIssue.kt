@@ -11,6 +11,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuickFix
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleUtil
 
@@ -22,6 +23,7 @@ class DeprecatedGradleVersionIssue(gradleVersion: GradleVersion, projectPath: St
   override fun getNavigatable(project: Project): Navigatable? = null
 
   init {
+    val minimalRecommendedVersion: GradleVersion = GradleJvmSupportMatrix.getInstance().minimalRecommendedGradleVersion
     require(gradleVersion < minimalRecommendedVersion)
     val issueDescription = StringBuilder()
 
@@ -52,13 +54,5 @@ class DeprecatedGradleVersionIssue(gradleVersion: GradleVersion, projectPath: St
     }
 
     description = issueDescription.toString()
-  }
-
-  companion object {
-    private val minimalRecommendedVersion: GradleVersion = GradleVersion.version("3.0")
-    @JvmStatic
-    fun isDeprecated(gradleVersion: GradleVersion): Boolean {
-      return gradleVersion < minimalRecommendedVersion
-    }
   }
 }

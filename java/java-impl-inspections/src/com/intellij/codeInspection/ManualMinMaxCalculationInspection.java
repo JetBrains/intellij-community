@@ -103,8 +103,7 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
     return null;
   }
 
-  private static final class ReplaceWithMinMaxFix implements LocalQuickFix {
-
+  private static final class ReplaceWithMinMaxFix extends PsiUpdateModCommandQuickFix {
     private final boolean myUseMathMin;
 
     @Contract(pure = true)
@@ -120,8 +119,7 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final CommentTracker ct = new CommentTracker();
       if (element instanceof PsiConditionalExpression) {
         ConditionalModel model = ConditionalModel.from((PsiConditionalExpression)element);

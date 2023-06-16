@@ -4,7 +4,7 @@ package com.intellij.openapi.wm
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 
-const val WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID = "root"
+const val WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID: String = "root"
 
 interface WindowInfo {
   val id: String?

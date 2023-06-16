@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.dsl
 
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.util.text.StringUtil
 import training.ui.LearningUiManager
 import training.util.replaceSpacesWithNonBreakSpace
@@ -26,6 +28,13 @@ interface LearningDslBase {
 
   /** Show an [icon] inside lesson step message */
   fun icon(icon: Icon): String {
+    val index = LearningUiManager.getIconIndex(icon)
+    return "<icon_idx>$index</icon_idx>"
+  }
+
+  /** Show an icon from action widh [actionId] ID inside lesson step message */
+  fun actionIcon(actionId: String): String {
+    val icon = ActionManager.getInstance().getAction(actionId)?.templatePresentation?.icon ?: AllIcons.Toolbar.Unknown
     val index = LearningUiManager.getIconIndex(icon)
     return "<icon_idx>$index</icon_idx>"
   }

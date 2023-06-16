@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary

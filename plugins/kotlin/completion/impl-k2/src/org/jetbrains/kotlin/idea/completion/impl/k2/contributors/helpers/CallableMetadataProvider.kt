@@ -13,13 +13,20 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
+import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 
 internal object CallableMetadataProvider {
 
     class CallableMetadata(
         val kind: CallableKind,
         /**
-         * The index of the matched receiver. This number makes completion prefer candidates that are available from the innermost receiver
+         * In case of the local callable, the index of local scope in scope tower.
+         * In case of the global or static imported callable, the index of non-local scope in scope tower.
+         *
+         * Otherwise, the index of the matched receiver.
+         *
+         * This number makes completion prefer candidates that are available from the innermost receiver
          * when all other things are equal. Explicit receiver is pushed to the end because if explicit receiver does not match, the entry
          * would not have showed up in the first place.
          *
@@ -37,13 +44,8 @@ internal object CallableMetadataProvider {
          * }
          * ```
          */
-        val receiverIndex: Int?
-    ) {
-        companion object {
-            val local = CallableMetadata(CallableKind.Local, null)
-            val globalOrStatic = CallableMetadata(CallableKind.GlobalOrStatic, null)
-        }
-    }
+        val scopeIndex: Int?
+    )
 
     sealed class CallableKind(private val index: Int) : Comparable<CallableKind> {
         object Local : CallableKind(0) // local non_extension
@@ -60,47 +62,53 @@ internal object CallableMetadataProvider {
 
     fun KtAnalysisSession.getCallableMetadata(
         context: WeighingContext,
-        symbol: KtSymbol,
-        substitutor: KtSubstitutor
+        signature: KtCallableSignature<*>,
+        symbolOrigin: CompletionSymbolOrigin,
     ): CallableMetadata? {
-        if (symbol !is KtCallableSymbol) return null
+        val symbol = signature.symbol
         if (symbol is KtSyntheticJavaPropertySymbol) {
-            return getCallableMetadata(context, symbol.javaGetterSymbol, substitutor)
+            return getCallableMetadata(context, symbol.javaGetterSymbol.asSignature(), symbolOrigin)
         }
         val overriddenSymbols = symbol.getDirectlyOverriddenSymbols()
         if (overriddenSymbols.isNotEmpty()) {
             val weights = overriddenSymbols
-                .mapNotNull { callableWeightByReceiver(it, context, substitutor, returnCastRequiredOnReceiverMismatch = false) }
+                .mapNotNull { callableWeightByReceiver(it.asSignature(), context, returnCastRequiredOnReceiverMismatch = false) }
                 .takeUnless { it.isEmpty() }
-                ?: symbol.getAllOverriddenSymbols().map { callableWeightBasic(context, it, substitutor) }
+                ?: symbol.getAllOverriddenSymbols().map { callableWeightBasic(context, it.asSignature(), symbolOrigin) }
 
             return weights.minByOrNull { it.kind }
         }
-        return callableWeightBasic(context, symbol, substitutor)
+        return callableWeightBasic(context, signature, symbolOrigin)
     }
 
     private fun KtAnalysisSession.callableWeightBasic(
         context: WeighingContext,
-        symbol: KtCallableSymbol,
-        substitutor: KtSubstitutor
-    ): CallableMetadata = when (symbol.symbolKind) {
-        KtSymbolKind.TOP_LEVEL,
-        KtSymbolKind.CLASS_MEMBER -> callableWeightByReceiver(symbol, context, substitutor, returnCastRequiredOnReceiverMismatch = true)
-        KtSymbolKind.LOCAL -> CallableMetadata.local
-        else -> null
-    } ?: CallableMetadata.globalOrStatic
+        signature: KtCallableSignature<*>,
+        symbolOrigin: CompletionSymbolOrigin,
+    ): CallableMetadata {
+        val scopeIndex = (symbolOrigin as? CompletionSymbolOrigin.Scope)?.kind?.indexInTower
+
+        return when (signature.symbol.symbolKind) {
+            KtSymbolKind.TOP_LEVEL,
+            KtSymbolKind.CLASS_MEMBER -> callableWeightByReceiver(signature, context, returnCastRequiredOnReceiverMismatch = true)
+
+            KtSymbolKind.LOCAL -> CallableMetadata(CallableKind.Local, scopeIndex)
+            else -> null
+        } ?: CallableMetadata(CallableKind.GlobalOrStatic, scopeIndex)
+    }
 
     private fun KtAnalysisSession.callableWeightByReceiver(
-        symbol: KtCallableSymbol,
+        signature: KtCallableSignature<*>,
         context: WeighingContext,
-        substitutor: KtSubstitutor,
         returnCastRequiredOnReceiverMismatch: Boolean
     ): CallableMetadata? {
+        val symbol = signature.symbol
+
         val actualExplicitReceiverType = context.explicitReceiver?.let {
             getReferencedClassTypeInCallableReferenceExpression(it) ?: it.getKtType()
         }
         val actualImplicitReceiverTypes = context.implicitReceiver.map { it.type }
-        val expectedExtensionReceiverType = symbol.receiverType?.let { substitutor.substitute(it) }
+        val expectedExtensionReceiverType = signature.receiverType
 
         if (expectedExtensionReceiverType == null) {
             val expectedReceiver = symbol.originalContainingClassForOverride ?: return null
@@ -136,7 +144,7 @@ internal object CallableMetadataProvider {
 
         // In Fir, a local function takes its containing function's dispatch receiver as its dispatch receiver. But we don't consider a
         // local function as a class member. Hence, here we return null so that it's handled by other logic.
-        if (symbol.callableIdIfNonLocal == null) return null
+        if (signature.callableIdIfNonLocal == null) return null
 
         val expectedDispatchReceiverType = (symbol as? KtCallableSymbol)?.getDispatchReceiverType()
         val weightBasedOnDispatchReceiver = expectedDispatchReceiverType?.let { receiverType ->

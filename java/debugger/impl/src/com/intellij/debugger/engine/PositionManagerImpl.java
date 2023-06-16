@@ -11,6 +11,7 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,14 +31,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.sun.jdi.AbsentInformationException;
-import com.sun.jdi.Location;
-import com.sun.jdi.Method;
-import com.sun.jdi.ReferenceType;
+import com.sun.jdi.*;
 import com.sun.jdi.request.ClassPrepareRequest;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -181,7 +180,33 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
         lambdaOrdinal = lambdasList.indexOf(method);
       }
     }
+
+    SourcePosition condRetPos = adjustPositionForConditionalReturn(myDebugProcess, location, psiFile, lineNumber);
+    if (condRetPos != null) {
+      sourcePosition = condRetPos;
+    }
+
     return new JavaSourcePosition(sourcePosition, location.declaringType(), method, lambdaOrdinal);
+  }
+
+  @Nullable
+  public static SourcePosition adjustPositionForConditionalReturn(DebugProcess debugProcess, Location location, PsiFile file, int lineNumber) {
+    if (debugProcess.getVirtualMachineProxy().canGetBytecodes()) {
+      PsiElement ret = JavaLineBreakpointType.findSingleConditionalReturn(file, lineNumber);
+      if (ret != null) {
+        byte[] bytecodes = DebuggerUtilsEx.getMethod(location).bytecodes();
+        int bytecodeOffs = Math.toIntExact(location.codeIndex());
+        // Implicit return instruction at the end of bytecode should not be treated as conditional return.
+        // (Note that we also relay on the fact that all return instructions have no operands.)
+        if (0 <= bytecodeOffs && bytecodeOffs < bytecodes.length - 1) {
+          int opcode = bytecodes[bytecodeOffs] & 0xFF;
+          if (Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
+            return SourcePosition.createFromOffset(file, ret.getTextOffset());
+          }
+        }
+      }
+    }
+    return null;
   }
 
   public static class JavaSourcePosition extends RemappedSourcePosition {
@@ -274,7 +299,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
   }
 
-  private static Set<PsiClass> getLineClasses(final PsiFile file, int lineNumber) {
+  protected static Set<PsiClass> getLineClasses(final PsiFile file, int lineNumber) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     Set<PsiClass> res = new HashSet<>();

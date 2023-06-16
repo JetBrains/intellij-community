@@ -53,12 +53,19 @@ class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootE
 }
 
 /**
+ * Implement this interface in custom data stored in [WorkspaceFileSet] to associate it with [Module] instance.
+ * This information will be used by [com.intellij.openapi.roots.ProjectFileIndex.getModuleForFile] method.
+ */
+interface ModuleRelatedRootData: WorkspaceFileSetData {
+  val module: Module
+}
+
+/**
  * Implement this interface in custom data stored in [WorkspaceFileSet] to associate it with [Module] instance and specify 'content root' for it.
  * This information will be used by [com.intellij.openapi.roots.ProjectFileIndex.getModuleForFile]
  * and [com.intellij.openapi.roots.ProjectFileIndex.getContentRootForFile] methods.
  */
-interface ModuleContentOrSourceRootData: WorkspaceFileSetData {
-  val module: Module
+interface ModuleContentOrSourceRootData: ModuleRelatedRootData {
   val customContentRoot: VirtualFile?
 }
 

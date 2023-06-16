@@ -47,8 +47,8 @@ class LanguageLevelModuleExtensionBridge private constructor(private val module:
     throw UnsupportedOperationException("This method must not be called for extensions backed by workspace model")
   }
 
-  override fun commit() = Unit
-  override fun dispose() = Unit
+  override fun commit() {}
+  override fun dispose() {}
 
   class Factory : ModuleExtensionBridgeFactory<LanguageLevelModuleExtensionBridge> {
     override fun createExtension(module: ModuleBridge,

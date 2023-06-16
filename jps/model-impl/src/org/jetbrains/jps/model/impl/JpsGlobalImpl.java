@@ -32,14 +32,14 @@ public final class JpsGlobalImpl extends JpsRootElementBase<JpsGlobalImpl> imple
   private final JpsLibraryCollectionImpl myLibraryCollection;
   private JpsPathMapper myPathMapper = JpsPathMapper.IDENTITY;
 
-  public JpsGlobalImpl(@NotNull JpsModel model, JpsEventDispatcher eventDispatcher) {
-    super(model, eventDispatcher);
+  public JpsGlobalImpl(@NotNull JpsModel model) {
+    super(model);
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
     myContainer.setChild(JpsFileTypesConfigurationImpl.ROLE, new JpsFileTypesConfigurationImpl());
   }
 
-  public JpsGlobalImpl(JpsGlobalImpl original, JpsModel model, JpsEventDispatcher eventDispatcher) {
-    super(original, model, eventDispatcher);
+  public JpsGlobalImpl(JpsGlobalImpl original, JpsModel model) {
+    super(original, model);
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.getChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
   }
 

@@ -213,6 +213,11 @@ public class OutOfBlockModificationTestGenerated extends AbstractOutOfBlockModif
         runTest("testData/codeInsight/outOfBlock/InGlobalPropertyWithGetter.kt");
     }
 
+    @TestMetadata("InIfCondition.kt")
+    public void testInIfCondition() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/InIfCondition.kt");
+    }
+
     @TestMetadata("InKDocComment.kt")
     public void testInKDocComment() throws Exception {
         runTest("testData/codeInsight/outOfBlock/InKDocComment.kt");

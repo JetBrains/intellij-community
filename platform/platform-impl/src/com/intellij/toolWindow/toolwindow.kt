@@ -66,7 +66,7 @@ fun getStripeTitleSupplier(id: String, project: Project, pluginDescriptor: Plugi
 
     @Suppress("HardCodedStringLiteral", "UnnecessaryVariable")
     val fallback = id
-    val label = BundleBase.messageOrDefault(bundle, key, fallback)
+    val label = BundleBase.messageOrDefault(bundle = bundle, key = key, defaultValue = fallback)!!
     return Supplier { label }
   }
   catch (e: MissingResourceException) {

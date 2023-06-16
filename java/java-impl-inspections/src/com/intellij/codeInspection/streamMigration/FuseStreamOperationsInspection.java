@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.*;
@@ -171,7 +171,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     return newTerminal;
   }
 
-  private static class FuseStreamOperationsFix implements LocalQuickFix {
+  private static class FuseStreamOperationsFix extends PsiUpdateModCommandQuickFix {
     private final String myFusedSteps;
     private final boolean myStrictMode;
 
@@ -195,8 +195,8 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression chain = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiMethodCallExpression chain = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (chain == null) return;
       CollectTerminal terminal = extractTerminal(chain);
       if (terminal == null) return;

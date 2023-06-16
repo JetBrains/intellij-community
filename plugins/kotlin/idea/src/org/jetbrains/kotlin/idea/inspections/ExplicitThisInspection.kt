@@ -78,8 +78,7 @@ class ExplicitThisInspection : AbstractKotlinInspection() {
             val expressionFactory = scope.getFactoryForImplicitReceiverWithSubtypeOf(receiverType) ?: return false
 
             val label = thisExpression.getLabelName() ?: ""
-            if (!expressionFactory.matchesLabel(label)) return false
-            return true
+            return expressionFactory.matchesLabel(label)
         }
 
         private fun VariableDescriptor.canInvoke(): Boolean {

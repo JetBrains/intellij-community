@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom;
 
-import com.intellij.navigation.NavigationRequest;
-import com.intellij.navigation.NavigationService;
+import com.intellij.platform.backend.navigation.NavigationRequest;
+import com.intellij.platform.backend.navigation.NavigationRequests;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus.Experimental;
@@ -21,7 +22,7 @@ public interface Navigatable {
   /**
    * Computes and returns the data necessary for the navigation.
    * Actual navigation is performed by the platform, which means {@link #navigate} is not called
-   * unless the returned request is {@link NavigationService#rawNavigationRequest raw}.
+   * unless the returned request is {@link NavigationRequests#rawNavigationRequest raw}.
    *
    * @return navigation request, or {@code null} if navigation cannot be performed for any reason
    */
@@ -29,7 +30,7 @@ public interface Navigatable {
   @RequiresReadLock
   @RequiresBackgroundThread
   default @Nullable NavigationRequest navigationRequest() {
-    return NavigationService.getInstance().rawNavigationRequest(this);
+    return NavigationRequests.getInstance().rawNavigationRequest(this);
   }
 
   /**
@@ -38,7 +39,12 @@ public interface Navigatable {
    *
    * @param requestFocus {@code true} if focus requesting is necessary
    */
-  void navigate(boolean requestFocus);
+  default void navigate(boolean requestFocus) {
+    throw new IncorrectOperationException(
+      "Must not call `navigate(boolean)` if `canNavigate()` returns `false`, " +
+      "or `navigate(boolean)` should be overridden if `canNavigate()` can return `true`."
+    );
+  }
 
   /**
    * Indicates whether this instance supports navigation of any kind.
@@ -50,7 +56,9 @@ public interface Navigatable {
    *
    * @return {@code false} if navigation is not possible for any reason.
    */
-  boolean canNavigate();
+  default boolean canNavigate() {
+    return false;
+  }
 
   /**
    * Indicates whether this instance supports navigation to source (that means some kind of editor).
@@ -62,5 +70,7 @@ public interface Navigatable {
    *
    * @return {@code false} if navigation to source is not possible for any reason.
    */
-  boolean canNavigateToSource();
+  default boolean canNavigateToSource() {
+    return false;
+  }
 }

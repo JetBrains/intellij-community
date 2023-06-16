@@ -371,7 +371,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         val fragment = KtPsiFactory(project).createExpressionCodeFragment(expression, context)
         project.executeWriteCommand("add imports and qualifiers") {
             fragment.addImportsFromString(imports.joinToString(separator = KtCodeFragment.IMPORT_SEPARATOR) { "import $it" })
-            AddFullQualifierIntention.addQualifiersRecursively(fragment)
+            AddFullQualifierIntention.Holder.addQualifiersRecursively(fragment)
         }
 
         return fragment.getContentElement()

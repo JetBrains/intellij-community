@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.visible.filters
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.text.CharFilter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
@@ -133,7 +134,7 @@ object VcsLogFilterObject {
   @JvmStatic
   fun fromHash(text: String): VcsLogHashFilter? {
     val hashes = mutableListOf<String>()
-    for (word in StringUtil.split(text, " ")) {
+    for (word in StringUtil.split(text, CharFilter.WHITESPACE_FILTER, true, true)) {
       if (!VcsLogUtil.HASH_REGEX.matcher(word).matches()) {
         return null
       }

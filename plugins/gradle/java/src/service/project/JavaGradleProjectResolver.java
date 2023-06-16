@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Consumer;
@@ -46,14 +45,11 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.AnnotationProcessingData;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
+import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -189,31 +185,16 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
                                     @NotNull Consumer<String> initScriptConsumer,
                                     @NotNull Map<String, String> parameters) {
 
-    boolean testsWillBeExecuted = Boolean.parseBoolean(parameters.get(TEST_EXECUTION_EXPECTED_KEY));
-    boolean testLauncherWillBeUsed = Boolean.parseBoolean(parameters.get(TEST_LAUNCHER_WILL_BE_USED_KEY));
-    if (testsWillBeExecuted && !testLauncherWillBeUsed) {
-      String name = "/org/jetbrains/plugins/gradle/java/addTestListener.groovy";
-      try (Reader reader = new InputStreamReader(getClass().getResourceAsStream(name), StandardCharsets.UTF_8)) {
-        initScriptConsumer.consume(StreamUtil.readText(reader));
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
+    var isRunAsTest = Boolean.parseBoolean(parameters.get(IS_RUN_AS_TEST_KEY));
+    var isBuiltInTestEventsUsed = Boolean.parseBoolean(parameters.get(IS_BUILT_IN_TEST_EVENTS_USED_KEY));
+    var jvmParametersSetup = parameters.get(GradleProjectResolverExtension.JVM_PARAMETERS_SETUP_KEY);
+    if (isRunAsTest) {
+      var initScript = isBuiltInTestEventsUsed
+                       ? GradleInitScriptUtil.loadFileComparisonTestLoggerInitScript()
+                       : GradleInitScriptUtil.loadIjTestLoggerInitScript();
+      initScriptConsumer.consume(initScript);
     }
-
-    String jvmParametersSetup = parameters.get(GradleProjectResolverExtension.JVM_PARAMETERS_SETUP_KEY);
     enhanceTaskProcessing(taskNames, jvmParametersSetup, initScriptConsumer);
-  }
-
-  private String loadTestEventListenerDefinition() {
-    String name = "/org/jetbrains/plugins/gradle/IJTestLogger.groovy";
-    try (Reader reader = new InputStreamReader(getClass().getResourceAsStream(name), StandardCharsets.UTF_8)) {
-      return StreamUtil.readText(reader);
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
-    return "";
   }
 
   @Override
@@ -245,9 +226,6 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
       final String script = StringUtil.join(lines, System.lineSeparator());
       initScriptConsumer.consume(script);
     }
-
-    final String testEventListenerDefinition = loadTestEventListenerDefinition();
-    initScriptConsumer.consume(testEventListenerDefinition);
   }
 
   @NotNull

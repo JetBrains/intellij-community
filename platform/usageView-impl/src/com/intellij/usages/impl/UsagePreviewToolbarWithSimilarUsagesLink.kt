@@ -4,7 +4,8 @@ package com.intellij.usages.impl
 import com.intellij.find.findUsages.similarity.SimilarUsagesComponent
 import com.intellij.find.findUsages.similarity.SimilarUsagesToolbar
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.AnActionLink
@@ -68,7 +69,8 @@ class UsagePreviewToolbarWithSimilarUsagesLink(previewPanel: UsagePreviewPanel,
       previewPanel.releaseEditor()
       val firstSelectedInfo = ContainerUtil.getFirstItem(infos)!!
       logLinkToSimilarUsagesLinkFromUsagePreviewClicked(firstSelectedInfo.project, myUsageView)
-      val similarUsagesComponent = SimilarUsagesComponent(myUsageView, firstSelectedInfo, previewPanel)
+      val similarUsagesComponent = SimilarUsagesComponent(myUsageView, firstSelectedInfo)
+      Disposer.register(previewPanel, similarUsagesComponent)
       previewPanel.add(SimilarUsagesToolbar(similarUsagesComponent,
                                             UsageViewBundle.message("0.similar.usages",
                                                                     onlyValidUsages.size - 1), null,

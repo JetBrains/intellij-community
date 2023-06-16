@@ -6,6 +6,8 @@ import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
@@ -21,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -169,6 +172,13 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     override fun createChangeOverrideActions(target: JvmModifiersOwner, shouldBePresent: Boolean): List<IntentionAction> {
         val kModifierOwner = target.toKtElement<KtModifierListOwner>() ?: return emptyList()
         return createChangeModifierActions(kModifierOwner, KtTokens.OVERRIDE_KEYWORD, shouldBePresent)
+    }
+
+    override fun createRemoveAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
+        val declaration = target.safeAs<KtLightElement<*, *>>()?.kotlinOrigin.safeAs<KtModifierListOwner>()?.takeIf {
+            it.language == KotlinLanguage.INSTANCE
+        } ?: return emptyList()
+        return listOf(RemoveAnnotationAction(declaration, request))
     }
 
     override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
@@ -416,6 +426,121 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         }
     }
 
+    override fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
+                                                        attributeIndex: Int,
+                                                        request: AnnotationAttributeRequest,
+                                                        @IntentionName text: String,
+                                                        @IntentionFamilyName familyName: String): List<IntentionAction> {
+        val annotationEntry = annotation.safeAs<KtLightElement<*, *>>()?.kotlinOrigin.safeAs<KtAnnotationEntry>().takeIf {
+            it?.language == KotlinLanguage.INSTANCE
+        } ?: return emptyList()
+        return listOf(ChangeAnnotationAction(annotationEntry, attributeIndex, request, text, familyName))
+    }
+
+    private class ChangeAnnotationAction(
+        annotationEntry: KtAnnotationEntry,
+        private val attributeIndex: Int,
+        private val request: AnnotationAttributeRequest,
+        @IntentionName private val text: String,
+        @IntentionFamilyName private val familyName: String
+    ) : IntentionAction {
+
+        private val pointer: SmartPsiElementPointer<KtAnnotationEntry>
+        private val qualifiedName: String
+
+        override fun startInWriteAction(): Boolean = true
+
+        override fun getFamilyName(): String = familyName
+
+        override fun getText(): String = text
+
+        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = pointer.element != null
+
+        override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+            invokeImpl(PsiTreeUtil.findSameElementInCopy(pointer.element, file), project)
+            return IntentionPreviewInfo.DIFF
+        }
+
+        override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
+            val annotationEntry = pointer.element ?: return
+            invokeImpl(annotationEntry, project)
+        }
+
+        private fun invokeImpl(annotationEntry: KtAnnotationEntry, project: Project) {
+            val facade = JavaPsiFacade.getInstance(annotationEntry.project)
+            val isKotlinAnnotation = facade.findClass(qualifiedName, annotationEntry.resolveScope)?.language == KotlinLanguage.INSTANCE
+            val dummyAnnotationRequest = annotationRequest(qualifiedName, request)
+            val psiFactory = KtPsiFactory(project)
+            val annotationText = '@' + renderAnnotation(dummyAnnotationRequest, psiFactory) { isKotlinAnnotation }
+            val dummyArgumentList = psiFactory.createAnnotationEntry(annotationText).valueArgumentList!!
+            val argumentList = annotationEntry.valueArgumentList
+            if (argumentList == null) {
+                annotationEntry.add(dummyArgumentList)
+            }
+            else {
+                val dummyArgument = dummyArgumentList.arguments[0]
+                val attribute = findAttribute(annotationEntry, request.name, attributeIndex)
+                if (attribute != null) {
+                    argumentList.addArgumentBefore(dummyArgument, attribute.value)
+                    argumentList.removeArgument(attribute.index + 1)
+                }
+                else {
+                    argumentList.addArgument(dummyArgument)
+                }
+            }
+            ShortenReferences.DEFAULT.process(annotationEntry)
+        }
+
+        private fun findAttribute(annotationEntry: KtAnnotationEntry, name: String, index: Int): IndexedValue<KtValueArgument>? {
+            val arguments = annotationEntry.valueArgumentList?.arguments ?: return null
+            arguments.withIndex().find { (_, argument) ->
+                argument.getArgumentName()?.asName?.identifier == name
+            }?.let {
+                return it
+            }
+            val valueArgument = arguments.getOrNull(index) ?: return null
+            return IndexedValue(index, valueArgument)
+        }
+
+        init {
+            pointer = annotationEntry.createSmartPointer()
+            qualifiedName = annotationEntry.toLightAnnotation()?.qualifiedName ?: throw IllegalStateException("r")
+        }
+    }
+
+    private class RemoveAnnotationAction(target: KtModifierListOwner, val request: AnnotationRequest) : IntentionAction {
+
+        private val pointer = target.createSmartPointer()
+
+        override fun startInWriteAction(): Boolean = true
+
+        override fun getText(): String {
+            val shortName = StringUtilRt.getShortName(request.qualifiedName)
+            return QuickFixBundle.message("remove.annotation.fix.text", shortName)
+        }
+
+        override fun getFamilyName(): String = QuickFixBundle.message("remove.annotation.fix.family")
+
+        override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = pointer.element != null
+
+        override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+            PsiTreeUtil.findSameElementInCopy(pointer.element, file)?.removeAnnotation()
+            return IntentionPreviewInfo.DIFF
+        }
+
+        override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+            pointer.element?.removeAnnotation()
+        }
+
+        private fun KtModifierListOwner.removeAnnotation() {
+            val annotationName = FqName(request.qualifiedName)
+            val annotation = this.findAnnotation(annotationName)
+            annotation?.delete() ?: return
+            val importList = (this.containingFile as? KtFile)?.importList
+            importList?.imports?.find { it.importedFqName == annotationName }?.delete()
+        }
+    }
+
     override fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> {
         return when (val kotlinOrigin = (target as? KtLightElement<*, *>)?.kotlinOrigin) {
             is KtNamedFunction -> listOfNotNull(ChangeMethodParameters.create(kotlinOrigin, request))
@@ -451,6 +576,10 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
     }
 
     override fun createChangeTypeActions(target: JvmParameter, request: ChangeTypeRequest): List<IntentionAction> {
+        val ktCallableDeclaration = (target as? KtLightElement<*, *>)?.kotlinOrigin as? KtCallableDeclaration ?: return emptyList()
+        return listOfNotNull(ChangeType(ktCallableDeclaration, request))
+    }
+    override fun createChangeTypeActions(target: JvmField, request: ChangeTypeRequest): List<IntentionAction> {
         val ktCallableDeclaration = (target as? KtLightElement<*, *>)?.kotlinOrigin as? KtCallableDeclaration ?: return emptyList()
         return listOfNotNull(ChangeType(ktCallableDeclaration, request))
     }
@@ -501,7 +630,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         private fun KtCallableDeclaration.typeName(): String? {
             val typeReference = this.typeReference
             if (typeReference != null) return typeReference.typeElement?.text
-            if (this !is KtNamedFunction) return null
+            if ((this !is KtNamedFunction) && (this !is KtProperty)) return null
             val descriptor = this.resolveToDescriptorIfAny() as? CallableDescriptor ?: return null
             val returnType = descriptor.returnType ?: return null
             return IdeDescriptorRenderers.SOURCE_CODE.renderType(returnType)
@@ -554,11 +683,7 @@ internal fun addAnnotationEntry(
     val psiFactory = KtPsiFactory(target.project)
     // could be generated via descriptor when KT-30478 is fixed
     val annotationText = '@' + annotationUseSiteTargetPrefix + renderAnnotation(target, request, psiFactory)
-    val annotationEntry = psiFactory.createAnnotationEntry(annotationText)
-    target.findAnnotation(FqName(request.qualifiedName))?.let {
-        return it.replace(annotationEntry) as KtAnnotationEntry
-    }
-    return target.addAnnotationEntry(annotationEntry)
+    return target.addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))
 }
 
 private fun renderAnnotation(target: PsiElement, request: AnnotationRequest, psiFactory: KtPsiFactory): String {

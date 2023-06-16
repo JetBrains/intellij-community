@@ -2,18 +2,23 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.pullrequest.comment.GHMarkdownToHtmlConverter
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeApplier
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
-import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
 
 
-class GHPRReviewCommentComponentFactory(private val project: Project) {
+class GHPRReviewCommentComponentFactory(
+  private val project: Project,
+  private val htmlImageLoader: AsyncHtmlImageLoader
+) {
   private val markdownConverter = GHMarkdownToHtmlConverter(project)
 
   fun createCommentComponent(commentBody: String, maxTextWidth: Int): JComponent {
@@ -45,7 +50,9 @@ class GHPRReviewCommentComponentFactory(private val project: Project) {
   }
 
   private fun createCommentPane(htmlBody: String, maxTextWidth: Int): JComponent =
-    HtmlEditorPane(htmlBody).let {
+    SimpleHtmlPane(customImageLoader = htmlImageLoader).apply {
+      setHtmlBody(htmlBody)
+    }.let {
       CollaborationToolsUIUtil.wrapWithLimitedSize(it, maxWidth = maxTextWidth)
     }
 
@@ -99,7 +106,7 @@ class GHPRReviewCommentComponentFactory(private val project: Project) {
       }
       indexes.add(comment.length)
 
-      return indexes.zipWithNext() { start, end -> start..end }
+      return indexes.zipWithNext { start, end -> start..end }
     }
   }
 }

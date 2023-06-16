@@ -108,16 +108,17 @@ internal class ConvertForEachToForLoopIntention
     }
 
     override fun apply(element: KtCallExpression, context: Context, project: Project, editor: Editor?) {
-        val dotQualifiedExpression = element.parent as? KtDotQualifiedExpression
-        val receiverExpression = dotQualifiedExpression?.receiverExpression
-        val targetExpression = dotQualifiedExpression ?: element
+        val qualifiedExpression = element.getQualifiedExpressionForSelector()
+        val receiverExpression = qualifiedExpression?.receiverExpression
+        val targetExpression = qualifiedExpression ?: element
         val commentSaver = CommentSaver(targetExpression)
 
         val lambda = element.getSingleLambdaArgument() ?: return
         val isForEachIndexed =  element.getCallNameExpression()?.getReferencedName() == FOR_EACH_INDEXED_NAME.asString()
         val loop = generateLoop(receiverExpression, lambda, isForEachIndexed, context) ?: return
-        val result = targetExpression.replace(loop) as KtForExpression
-        result.loopParameter?.let { editor?.caretModel?.moveToOffset(it.startOffset) }
+        val result = targetExpression.replace(loop)
+        val forExpression = result as? KtForExpression ?: result.collectDescendantsOfType<KtForExpression>().first()
+        forExpression.loopParameter?.let { editor?.caretModel?.moveToOffset(it.startOffset) }
 
         commentSaver.restore(result)
     }
@@ -127,7 +128,7 @@ internal class ConvertForEachToForLoopIntention
         lambda: KtLambdaExpression,
         isForEachIndexed: Boolean,
         context: Context
-    ): KtForExpression? {
+    ): KtExpression? {
         val factory = KtPsiFactory(lambda)
         val body = lambda.bodyExpression ?: return null
 
@@ -147,7 +148,7 @@ internal class ConvertForEachToForLoopIntention
         }
 
         val parameters = lambda.valueParameters
-        return if (isForEachIndexed) {
+        val loop = if (isForEachIndexed) {
             val loopRangeWithIndex = if (loopRange is KtThisExpression && loopRange.labelQualifier == null) {
                 factory.createExpression("withIndex()")
             } else {
@@ -167,6 +168,12 @@ internal class ConvertForEachToForLoopIntention
                 loopRange,
                 body.allChildren
             )
-        } as? KtForExpression
+        }
+
+        return if (loopRange.getQualifiedExpressionForReceiver() is KtSafeQualifiedExpression) {
+            factory.createExpressionByPattern("if ($0 != null) { $1 }", loopRange, loop)
+        } else {
+            loop
+        }
     }
 }

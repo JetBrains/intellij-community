@@ -13,6 +13,8 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil.disableSlowCompletionElements
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
@@ -74,36 +76,47 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
   }
 
   companion object {
-    private val FIXTURE_BUILDER = GradleTestFixtureBuilder.buildFile("GradleHighlightingPerformanceTest") {
-      addBuildScriptRepository("mavenCentral()")
-      addBuildScriptClasspath("io.github.http-builder-ng:http-builder-ng-apache:1.0.3")
-      addImport("groovyx.net.http.HttpBuilder")
-      call("tasks.create", "bitbucketJenkinsTest") {
-        call("doLast") {
-          property("bitbucket", call("HttpBuilder.configure") {
-            assign("request.uri", "https://127.0.0.1")
-            call("request.auth.basic", "", "")
-          })
-          call("bitbucket.post") {
-            assign("request.uri.path", "/rest/api/")
-            assign("request.contentType", "a.json")
+
+    private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleHighlightingPerformanceTest") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("GradleHighlightingPerformanceTest")
+      }
+      withBuildFile(gradleVersion) {
+        addBuildScriptRepository("mavenCentral()")
+        addBuildScriptClasspath("io.github.http-builder-ng:http-builder-ng-apache:1.0.3")
+        addImport("groovyx.net.http.HttpBuilder")
+        call("tasks.create", "bitbucketJenkinsTest") {
+          call("doLast") {
+            property("bitbucket", call("HttpBuilder.configure") {
+              assign("request.uri", "https://127.0.0.1")
+              call("request.auth.basic", "", "")
+            })
+            call("bitbucket.post") {
+              assign("request.uri.path", "/rest/api/")
+              assign("request.contentType", "a.json")
+            }
           }
         }
       }
     }
 
-    private val COMPLETION_FIXTURE = GradleTestFixtureBuilder.buildFile("GradleCompletionPerformanceTest") {
-      withPrefix {
-        call("plugins") {
-          call("id", string("java"))
-          call("id", string("groovy"))
-          call("id", string("scala"))
-        }
+    private val COMPLETION_FIXTURE = GradleTestFixtureBuilder.create("GradleCompletionPerformanceTest") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("GradleCompletionPerformanceTest")
       }
-      addRepository("mavenCentral()")
-      withPostfix {
-        call("dependencies") {
+      withBuildFile(gradleVersion) {
+        withPrefix {
+          call("plugins") {
+            call("id", string("java"))
+            call("id", string("groovy"))
+            call("id", string("scala"))
+          }
+        }
+        addRepository("mavenCentral()")
+        withPostfix {
+          call("dependencies") {
 
+          }
         }
       }
     }

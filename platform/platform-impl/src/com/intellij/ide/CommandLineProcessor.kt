@@ -4,6 +4,7 @@ package com.intellij.ide
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.CommandLineProcessorResult.Companion.createError
 import com.intellij.ide.actions.ShowLogAction
+import com.intellij.ide.bootstrap.findStarter
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEdit
@@ -13,7 +14,6 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.CommandLineArgs
-import com.intellij.idea.findStarter
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -58,7 +58,7 @@ object CommandLineProcessor {
   val OK_FUTURE: Deferred<CliResult> = CompletableDeferred(value = CliResult.OK)
 
   @ApiStatus.Internal
-  const val SCHEME_INTERNAL = "!!!internal!!!"
+  const val SCHEME_INTERNAL: String = "!!!internal!!!"
 
   @VisibleForTesting
   @ApiStatus.Internal

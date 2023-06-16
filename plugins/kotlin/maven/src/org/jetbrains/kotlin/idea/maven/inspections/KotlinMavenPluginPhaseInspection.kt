@@ -85,11 +85,10 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
                                 it.groupId.stringValue == "org.apache.maven.plugins" &&
                                         it.artifactId.stringValue == "maven-compiler-plugin"
                             }
-
                             if (existingJavac == null
                                 || !pom.isPluginAfter(existingJavac, kotlinPlugin)
-                                || pom.isExecutionEnabled(javacPlugin, "default-compile")
-                                || pom.isExecutionEnabled(javacPlugin, "default-testCompile")
+                                || pom.findExecution(javacPlugin, "default-compile")?.phase != "none"
+                                || pom.findExecution(javacPlugin, "default-testCompile")?.phase != "none"
                                 || pom.isPluginExecutionMissing(javacPlugin, "default-compile", "compile")
                                 || pom.isPluginExecutionMissing(javacPlugin, "default-testCompile", "testCompile")
                             ) {

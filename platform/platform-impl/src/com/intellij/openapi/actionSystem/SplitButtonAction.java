@@ -39,6 +39,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
   public SplitButtonAction(@NotNull ActionGroup actionGroup) {
     myActionGroup = actionGroup;
     setPopup(true);
+    getTemplatePresentation().copyFrom(actionGroup.getTemplatePresentation());
   }
 
   public @NotNull ActionGroup getActionGroup() {

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 interface RunConfigurationTaskState {
   companion object {
     @JvmStatic
-    val KEY = Key.create<RunConfigurationTaskState>("RunConfigurationTaskState")
+    val KEY: Key<RunConfigurationTaskState> = Key.create("RunConfigurationTaskState")
   }
 
   @Throws(ExecutionException::class)

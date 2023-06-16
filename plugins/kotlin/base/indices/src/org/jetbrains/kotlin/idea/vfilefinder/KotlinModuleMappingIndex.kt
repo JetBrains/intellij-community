@@ -3,9 +3,11 @@
 package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.util.indexing.*
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
+import org.jetbrains.kotlin.idea.KotlinModuleFileType
 import org.jetbrains.kotlin.load.kotlin.loadModuleMapping
 import org.jetbrains.kotlin.metadata.jvm.deserialization.ModuleMapping
 import org.jetbrains.kotlin.metadata.jvm.deserialization.PackageParts
@@ -13,6 +15,7 @@ import org.jetbrains.kotlin.serialization.deserialization.DeserializationConfigu
 import java.io.DataInput
 import java.io.DataOutput
 
+internal const val MAPPING_FILE_DOT_FILE_EXTENSION = ".${ModuleMapping.MAPPING_FILE_EXT}"
 class KotlinModuleMappingIndex internal constructor() : FileBasedIndexExtension<String, PackageParts>() {
     companion object {
         val NAME: ID<String, PackageParts> = ID.create(KotlinModuleMappingIndex::class.java.canonicalName)
@@ -54,9 +57,7 @@ class KotlinModuleMappingIndex internal constructor() : FileBasedIndexExtension<
 
     override fun getValueExternalizer() = VALUE_EXTERNALIZER
 
-    override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { file ->
-        file.extension == ModuleMapping.MAPPING_FILE_EXT
-    }
+    override fun getInputFilter(): FileBasedIndex.InputFilter = FileTypeInputFilterPredicate(KotlinModuleFileType.INSTANCE)
 
     override fun getVersion(): Int = 5
 

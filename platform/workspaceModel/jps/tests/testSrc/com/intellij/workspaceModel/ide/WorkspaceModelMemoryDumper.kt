@@ -7,8 +7,6 @@ import com.intellij.testFramework.TestApplicationManager
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
-import com.intellij.workspaceModel.ide.impl.jps.serialization.TestErrorReporter
-import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
@@ -34,7 +32,7 @@ private suspend fun loadProject(): Pair<JpsProjectSerializers, EntityStorage> {
   val builder = MutableEntityStorage.create()
   val virtualFileManager = VirtualFileUrlManagerImpl()
   val projectDir = File(PathManager.getHomePath()).asConfigLocation(virtualFileManager)
-  val context = SerializationContextForTests(virtualFileManager, CachingJpsFileContentReader(projectDir)) 
+  val context = SerializationContextForTests(virtualFileManager, CachingJpsFileContentReader(projectDir))
   val serializers = JpsProjectEntitiesLoader.loadProject(projectDir, builder, builder, Paths.get("/tmp"), TestErrorReporter,
                                                          context = context)
   return Pair(serializers, builder.toSnapshot())

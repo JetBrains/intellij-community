@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -100,7 +100,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     FileUtil.ensureExists(myDir);
 
 
-    myProgressIndicator = new MavenProgressIndicator(myProject, new EmptyProgressIndicator(ModalityState.NON_MODAL), null);
+    myProgressIndicator = new MavenProgressIndicator(myProject, new EmptyProgressIndicator(ModalityState.nonModal()), null);
 
     MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspaceSettings());
 
@@ -192,7 +192,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
       () -> MavenServerManager.getInstance().shutdown(true),
       () -> tearDownEmbedders(),
       () -> checkAllMavenConnectorsDisposed(),
-      () -> MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS),
       () -> myProject = null,
       () -> {
         Project defaultProject = ProjectManager.getInstance().getDefaultProject();
@@ -518,18 +517,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
       VirtualFile f = myProjectRoot.findChild("profiles.xml");
       if (f != null) f.delete(this);
     });
-  }
-
-  protected void createStdProjectFolders() {
-    createStdProjectFolders("");
-  }
-
-  protected void createStdProjectFolders(String subdir) {
-    if (!subdir.isEmpty()) subdir += "/";
-    createProjectSubDirs(subdir + "src/main/java",
-                         subdir + "src/main/resources",
-                         subdir + "src/test/java",
-                         subdir + "src/test/resources");
   }
 
   protected void createProjectSubDirs(String... relativePaths) {

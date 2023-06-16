@@ -200,7 +200,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return button;
   }
 
-  private static Rectangle getArrowButtonRect(JButton button) {
+  static Rectangle getArrowButtonRect(AbstractButton button) {
     Rectangle result = new Rectangle(button.getSize());
     JBInsets.removeFrom(result, JBUI.insets(1, 0, 1, 1));
     int bw = BW.get();

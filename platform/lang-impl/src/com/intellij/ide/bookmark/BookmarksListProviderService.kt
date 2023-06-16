@@ -17,7 +17,7 @@ class BookmarksListProviderService(project: Project) {
   }
 
   companion object {
-    fun findProvider(project: Project, predicate: (BookmarksListProvider) -> Boolean) = getProviders(project).find(predicate)
+    fun findProvider(project: Project, predicate: (BookmarksListProvider) -> Boolean): BookmarksListProvider? = getProviders(project).find(predicate)
     fun getProviders(project: Project): List<BookmarksListProvider> {
       if (project.isDisposed) return emptyList()
       val reference = project.getService(BookmarksListProviderService::class.java)?.reference ?: return emptyList()

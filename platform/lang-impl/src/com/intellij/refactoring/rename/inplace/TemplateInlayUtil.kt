@@ -34,6 +34,7 @@ import com.intellij.refactoring.rename.impl.isEmpty
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
@@ -352,8 +353,8 @@ object TemplateInlayUtil {
         commentsStringsOccurrences?.let {
           row {
             checkBox(RefactoringBundle.message("comments.and.strings"))
+              .selected(it)
               .applyToComponent {
-                isSelected = it
                 addActionListener {
                   commentsStringsOccurrences = isSelected
                   optionsListener(TextOptions(commentStringOccurrences = commentsStringsOccurrences, textOccurrences = textOccurrences))
@@ -366,8 +367,8 @@ object TemplateInlayUtil {
         textOccurrences?.let {
           row {
             val cb = checkBox(RefactoringBundle.message("text.occurrences"))
+              .selected(it)
               .applyToComponent {
-                isSelected = it
                 addActionListener {
                   textOccurrences = isSelected
                   optionsListener(TextOptions(commentStringOccurrences = commentsStringsOccurrences, textOccurrences = textOccurrences))

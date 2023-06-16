@@ -263,9 +263,8 @@ object KotlinCliCompilerFacade {
         return classLoader.loadClass(compilerClass.java.name)
     }
 
-    @Synchronized
-    private fun createCompilerClassLoader(): ClassLoader {
-        val artifacts = listOf(
+    fun getTestArtifactsNeededForCLICompiler(): List<File> {
+        return listOf(
             TestKotlinArtifacts.kotlinStdlib,
             TestKotlinArtifacts.kotlinStdlibJdk7,
             TestKotlinArtifacts.kotlinStdlibJdk8,
@@ -280,6 +279,11 @@ object KotlinCliCompilerFacade {
             TestKotlinArtifacts.kotlinDaemon,
             TestKotlinArtifacts.jetbrainsAnnotations,
         )
+    }
+
+    @Synchronized
+    private fun createCompilerClassLoader(): ClassLoader {
+        val artifacts = getTestArtifactsNeededForCLICompiler()
 
         // enable old backend support in compiler
         val tempDirWithOldBackedMarker = createTempDirectory()

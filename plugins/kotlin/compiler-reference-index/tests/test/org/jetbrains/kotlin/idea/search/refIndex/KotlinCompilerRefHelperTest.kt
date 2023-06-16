@@ -7,7 +7,16 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.testFramework.SkipSlowTestLocally
 
 @SkipSlowTestLocally
-class KotlinCompilerRefHelperTest : CompilerReferencesTestBase() {
+open class KotlinCompilerRefHelperTest : CompilerReferencesTestBase() {
+    protected open val isFir: Boolean = false
+
+    override fun setUp() {
+        super.setUp()
+        if (isFir) {
+            project.enableK2Compiler()
+        }
+    }
+
     fun `test dirty scope`() {
         installCompiler()
         val javaFile = myFixture.addFileToProject(

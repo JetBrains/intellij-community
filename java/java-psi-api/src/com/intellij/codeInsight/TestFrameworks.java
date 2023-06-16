@@ -14,6 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -67,16 +68,22 @@ public abstract class TestFrameworks {
 
   private static Set<TestFramework> computeFrameworks(PsiElement psiClass) {
     Set<TestFramework> frameworks = new LinkedHashSet<>();
+    Set<String> frameworkNames = new HashSet<>();
     for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
+      String frameworkName = framework.getName();
+      if (frameworkNames.contains(frameworkName)) continue;
       if (framework.isTestClass(psiClass)) {
         frameworks.add(framework);
+        frameworkNames.add(frameworkName);
       }
     }
 
     for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
-      if (frameworks.contains(framework)) continue;
+      String frameworkName = framework.getName();
+      if (frameworkNames.contains(frameworkName)) continue;
       if (framework.findSetUpMethod(psiClass) != null || framework.findTearDownMethod(psiClass) != null) {
         frameworks.add(framework);
+        frameworkNames.add(frameworkName);
       }
     }
     return frameworks;

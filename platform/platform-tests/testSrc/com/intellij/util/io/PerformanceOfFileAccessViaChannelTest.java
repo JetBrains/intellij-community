@@ -29,6 +29,7 @@ public class PerformanceOfFileAccessViaChannelTest extends PerformanceOfFileAcce
 
   /** Write/read each file more than once -- to be sure :) */
   private static final int TWICE = 2;
+  private static final boolean USE_IDEMPOTENT_OPS = Boolean.getBoolean("PerformanceOfFileAccessViaChannelTest.USE_IDEMPOTENT_OPS");
 
 
   private final OpenChannelsCache cache = new OpenChannelsCache(32);
@@ -216,17 +217,31 @@ public class PerformanceOfFileAccessViaChannelTest extends PerformanceOfFileAcce
   private int writeBlockAtOffset(final File file,
                                  final long blockOffset,
                                  final ByteBuffer blockToWrite) throws IOException {
-    return cache.useChannel(file.toPath(), channel -> {
-      return channel.write(blockToWrite, blockOffset);
-    }, false);
+    if (USE_IDEMPOTENT_OPS) {
+      return cache.executeIdempotentOp(file.toPath(), channel -> {
+        return channel.write(blockToWrite, blockOffset);
+      }, false);
+    }
+    else {
+      return cache.executeOp(file.toPath(), channel -> {
+        return channel.write(blockToWrite, blockOffset);
+      }, false);
+    }
   }
 
   private int readBlockAtOffset(final File file,
                                 final long blockOffset,
                                 final ByteBuffer blockToRead) throws IOException {
-    return cache.useChannel(file.toPath(), channel -> {
-      return channel.read(blockToRead, blockOffset);
-    }, false);
+    if (USE_IDEMPOTENT_OPS) {
+      return cache.executeIdempotentOp(file.toPath(), channel -> {
+        return channel.read(blockToRead, blockOffset);
+      }, false);
+    }
+    else {
+      return cache.executeOp(file.toPath(), channel -> {
+        return channel.read(blockToRead, blockOffset);
+      }, false);
+    }
   }
 
 

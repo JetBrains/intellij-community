@@ -25,8 +25,8 @@ internal class RunConfigurableTreeRenderer(private val runManager: RunManagerImp
     var isShared: Boolean? = null
     val name = getUserObjectName(userObject)
     val isDumb = DumbService.isDumb(runManager.project)
-    when {
-      userObject is ConfigurationType -> {
+    when (userObject) {
+      is ConfigurationType -> {
         val simpleTextAttributes = when {
           (value.parent as DefaultMutableTreeNode).isRoot -> SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
           isDumb && !ConfigurationTypeUtil.isEditableInDumbMode(userObject) -> SimpleTextAttributes.GRAYED_ATTRIBUTES
@@ -35,12 +35,12 @@ internal class RunConfigurableTreeRenderer(private val runManager: RunManagerImp
         append(name, simpleTextAttributes)
         icon = userObject.icon
       }
-      userObject is String -> {
+      is String -> {
         // folder
         append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
         icon = AllIcons.Nodes.Folder
       }
-      userObject is ConfigurationFactory -> {
+      is ConfigurationFactory -> {
         append(name,
                if (isDumb && !userObject.isEditableInDumbMode) SimpleTextAttributes.GRAYED_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES)
         icon = userObject.icon

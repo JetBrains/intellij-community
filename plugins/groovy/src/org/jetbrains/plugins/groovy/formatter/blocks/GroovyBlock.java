@@ -127,7 +127,7 @@ public class GroovyBlock implements Block, ASTBlock {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
     if (psiParent instanceof GrSwitchElement) {
-      new ChildAttributes(Indent.getNoneIndent(), null);
+      return new ChildAttributes(Indent.getNoneIndent(), null);
     }
     if (psiParent instanceof GrCaseSection) {
       return new ChildAttributes(GroovyIndentProcessor.getSwitchCaseIndent(getContext().getSettings()), null);

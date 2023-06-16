@@ -56,6 +56,14 @@ class ExecutorAction private constructor(val origin: AnAction,
           override fun getChildren(e: AnActionEvent?): Array<AnAction> {
             return super.getChildren(e?.let { wrapEvent(e, order)})
           }
+
+          override fun equals(other: Any?): Boolean {
+            return other is ActionGroupWrapper && delegate == other.delegate
+          }
+
+          override fun hashCode(): Int {
+            return createAction.hashCode()
+          }
         })
       }
       return result

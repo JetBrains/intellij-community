@@ -10,7 +10,10 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
-import com.intellij.notification.*;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -22,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -349,25 +353,27 @@ public final class PluginInstallOperation {
     }
 
     if (!prepareDependencies(pluginNode, depends, "plugin.manager.dependencies.detected.title",
-                             "plugin.manager.dependencies.detected.message")) {
+                             "plugin.manager.dependencies.detected.message", false)) {
       return false;
     }
 
     return !Registry.is("ide.plugins.suggest.install.optional.dependencies") ||
            prepareDependencies(pluginNode, optionalDeps, "plugin.manager.optional.dependencies.detected.title",
-                               "plugin.manager.optional.dependencies.detected.message");
+                               "plugin.manager.optional.dependencies.detected.message", true);
   }
 
   private boolean prepareDependencies(@NotNull IdeaPluginDescriptor pluginNode,
                                       @NotNull List<PluginNode> dependencies,
                                       @NotNull @NonNls String titleKey,
-                                      @NotNull @NonNls String messageKey) {
+                                      @NotNull @NonNls String messageKey,
+                                      boolean askConfirmation) {
     if (dependencies.isEmpty()) {
       return true;
     }
 
     try {
-      final boolean[] result = new boolean[1];
+      Ref<Boolean> result = new Ref<>(false);
+
       ApplicationManager.getApplication().invokeAndWait(() -> {
         synchronized (ourInstallLock) {
           InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
@@ -388,29 +394,37 @@ public final class PluginInstallOperation {
           }
 
           if (dependenciesToShow.isEmpty()) {
-            result[0] = true;
+            result.set(true);
             return;
           }
 
-          String deps = getPluginsText(dependencies);
-          int dialogResult =
-            Messages.showYesNoDialog(IdeBundle.message(messageKey, pluginNode.getName(), deps),
-                                     IdeBundle.message(titleKey),
-                                     IdeBundle.message("plugins.configurable.install"),
-                                     Messages.getCancelButton(),
-                                     Messages.getWarningIcon());
-
-          result[0] = dialogResult == Messages.YES;
-          if (result[0]) {
+          if (!askConfirmation) {
             for (PluginId dependency : dependenciesToShow) {
               createInstallCallback(dependency);
+            }
+            result.set(true);
+          }
+          else {
+            String deps = getPluginsText(dependencies);
+            int dialogResult =
+              Messages.showYesNoDialog(IdeBundle.message(messageKey, pluginNode.getName(), deps),
+                                       IdeBundle.message(titleKey),
+                                       IdeBundle.message("plugins.configurable.install"),
+                                       Messages.getCancelButton(),
+                                       Messages.getWarningIcon());
+
+            result.set(dialogResult == Messages.YES);
+            if (result.get()) {
+              for (PluginId dependency : dependenciesToShow) {
+                createInstallCallback(dependency);
+              }
             }
           }
         }
       }, ModalityState.any());
 
       return dependencies.isEmpty() ||
-             result[0] && prepareToInstall(dependencies);
+             result.get() && prepareToInstall(dependencies);
     }
     catch (Exception e) {
       return false;

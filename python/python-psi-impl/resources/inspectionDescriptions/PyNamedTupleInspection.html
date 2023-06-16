@@ -3,7 +3,7 @@
 <p>Reports invalid definition of a
   <a href="https://docs.python.org/3/library/typing.html#typing.NamedTuple">typing.NamedTuple</a>.</p>
 <p><b>Example:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
 import typing
 
 
@@ -11,9 +11,9 @@ class FullName(typing.NamedTuple):
     first: str
     last: str = ""
     middle: str
-</pre>
+</code></pre>
 <p>As a fix, place the field with the default value after the fields without default values:</p>
-<pre style="font-family: monospace">
+<pre><code>
 import typing
 
 
@@ -21,6 +21,6 @@ class FullName(typing.NamedTuple):
     first: str
     middle: str
     last: str = ""
-</pre>
+</code></pre>
 </body>
 </html>

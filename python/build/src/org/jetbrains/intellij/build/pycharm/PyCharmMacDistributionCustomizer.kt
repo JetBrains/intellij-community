@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
 import org.jetbrains.intellij.build.ApplicationInfoProperties
@@ -6,7 +6,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import java.nio.file.Path
 
-open class PyCharmMacDistributionCustomizer(extraExecutables: List<String> = emptyList()) : MacDistributionCustomizer(extraExecutables = extraExecutables) {
+open class PyCharmMacDistributionCustomizer : MacDistributionCustomizer() {
   override fun copyAdditionalFiles(context: BuildContext, targetDirectory: Path) {
     super.copyAdditionalFiles(context, targetDirectory)
     PyCharmBuildUtils.copySkeletons(context, targetDirectory, "skeletons-mac*.zip")

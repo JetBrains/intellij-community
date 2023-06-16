@@ -50,7 +50,7 @@ public final class TextMateEditorUtils {
 
   @Nullable
   public static TextMateBracePair getHighlightingPairForLeftChar(char c, @Nullable TextMateScope currentScope) {
-    if (!TextMateService.getInstance().getPreferencesRegistry().isPossibleLeftHighlightingBrace(c)) {
+    if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleLeftHighlightingBrace(c)) {
       return null;
     }
     Set<TextMateBracePair> pairs = getAllPairsForMatcher(currentScope);
@@ -64,7 +64,7 @@ public final class TextMateEditorUtils {
 
   @Nullable
   public static TextMateBracePair getHighlightingPairForRightChar(char c, @Nullable TextMateScope currentSelector) {
-    if (!TextMateService.getInstance().getPreferencesRegistry().isPossibleRightHighlightingBrace(c)) {
+    if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleRightHighlightingBrace(c)) {
       return null;
     }
     Set<TextMateBracePair> pairs = getAllPairsForMatcher(currentSelector);
@@ -78,7 +78,7 @@ public final class TextMateEditorUtils {
 
   @Nullable
   public static TextMateBracePair getSmartTypingPairForLeftChar(char c, @Nullable TextMateScope currentScope) {
-    if (!TextMateService.getInstance().getPreferencesRegistry().isPossibleLeftSmartTypingBrace(c)) {
+    if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleLeftSmartTypingBrace(c)) {
       return null;
     }
     Set<TextMateBracePair> pairs = getSmartTypingPairs(currentScope);
@@ -92,7 +92,7 @@ public final class TextMateEditorUtils {
 
   @Nullable
   public static TextMateBracePair getSmartTypingPairForRightChar(char c, @Nullable TextMateScope currentSelector) {
-    if (!TextMateService.getInstance().getPreferencesRegistry().isPossibleRightSmartTypingBrace(c)) {
+    if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleRightSmartTypingBrace(c)) {
       return null;
     }
     Set<TextMateBracePair> pairs = getSmartTypingPairs(currentSelector);
@@ -107,7 +107,7 @@ public final class TextMateEditorUtils {
   private static Set<TextMateBracePair> getAllPairsForMatcher(@Nullable TextMateScope selector) {
     Set<TextMateBracePair> result = new HashSet<>();
     if (selector != null) {
-      List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferencesRegistry().getPreferences(selector);
+      List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferenceRegistry().getPreferences(selector);
       for (Preferences preferences : preferencesForSelector) {
         final Set<TextMateBracePair> highlightingPairs = preferences.getHighlightingPairs();
         if (highlightingPairs != null) {
@@ -133,7 +133,7 @@ public final class TextMateEditorUtils {
 
   private static Set<TextMateBracePair> getSmartTypingPairs(@Nullable TextMateScope currentScope) {
     if (currentScope != null) {
-      List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferencesRegistry().getPreferences(currentScope);
+      List<Preferences> preferencesForSelector = TextMateService.getInstance().getPreferenceRegistry().getPreferences(currentScope);
       for (Preferences preferences : preferencesForSelector) {
         final Set<TextMateBracePair> smartTypingPairs = preferences.getSmartTypingPairs();
         if (smartTypingPairs != null) {

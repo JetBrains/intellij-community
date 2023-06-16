@@ -175,7 +175,7 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
     companion object {
         private const val SDK_NAME = "defaultSdk"
 
-        val IDE_WIZARD_TEST_SERVICES_MANAGER = ServicesManager(
+        fun createWizardTestServiceManager() = ServicesManager(
             IdeaServices.PROJECT_INDEPENDENT + Services.IDEA_INDEPENDENT_SERVICES
         ) { services ->
             services.firstIsInstanceOrNull<TestWizardService>()

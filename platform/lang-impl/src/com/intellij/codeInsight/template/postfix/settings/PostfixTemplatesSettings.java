@@ -13,8 +13,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.Factory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import org.jdom.Element;
@@ -28,7 +26,6 @@ import java.util.Set;
 
 @State(name = "PostfixTemplatesSettings", storages = @Storage("postfixTemplates.xml"), category = SettingsCategory.CODE)
 public class PostfixTemplatesSettings implements PersistentStateComponent<Element> {
-  public static final Factory<Set<String>> SET_FACTORY = () -> new HashSet<>();
   private Map<String, Set<String>> myProviderToDisabledTemplates = new HashMap<>();
   /**
    * @deprecated use myProviderToDisabledTemplates
@@ -50,7 +47,7 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
   }
 
   public void disableTemplate(@NotNull PostfixTemplate template, @NotNull String providerId) {
-    Set<String> state = ContainerUtil.getOrCreate(myProviderToDisabledTemplates, providerId, SET_FACTORY);
+    Set<String> state = myProviderToDisabledTemplates.computeIfAbsent(providerId, __ -> new HashSet<>());
     state.add(template.getId());
   }
 

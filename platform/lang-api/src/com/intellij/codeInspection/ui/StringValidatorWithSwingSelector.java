@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public interface StringValidatorWithSwingSelector extends StringValidator {
   /**
    * Displays Swing UI (dialog) that prompts for a new item. 
-   * 
+   * Could be run in DumbMode or with a default project
    * @param project project whose context the dialog is displayed in
    * @return a new item selected by user; null if user dismisses the prompt
    */

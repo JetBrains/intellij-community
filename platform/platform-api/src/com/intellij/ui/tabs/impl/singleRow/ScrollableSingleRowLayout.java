@@ -6,16 +6,16 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
 
 
 public class ScrollableSingleRowLayout extends SingleRowLayout {
   public static final int DEADZONE_FOR_DECLARE_TAB_HIDDEN = 10;
   private int myScrollOffset = 0;
-  private boolean myScrollSelectionInViewPending = false;
   private final boolean myWithScrollBar;
 
   public ScrollableSingleRowLayout(final JBTabsImpl tabs) {
@@ -35,15 +35,12 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   @Override
   public void scroll(int units) {
     myScrollOffset += units;
-    clampScrollOffsetToBounds(myLastSingRowLayout);
+    clampScrollOffsetToBounds(lastSingRowLayout);
   }
 
   @Override
   protected boolean checkLayoutLabels(SingleRowPassInfo data) {
-    if (myScrollSelectionInViewPending) {
-      return true;
-    }
-    return super.checkLayoutLabels(data);
+    return true;
   }
 
   private void clampScrollOffsetToBounds(@Nullable SingleRowPassInfo data) {
@@ -55,6 +52,9 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     }
     else {
       int max = data.requiredLength - data.toFitLength + getMoreRectAxisSize();
+      Insets actionInsets = myTabs.getActionsInsets();
+      max += myTabs.isHorizontalTabs() ? actionInsets.left + actionInsets.right
+                                       : actionInsets.top + actionInsets.bottom;
       if (!ExperimentalUI.isNewUI() && getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
         max += data.entryPointAxisSize;
       }
@@ -62,24 +62,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     }
   }
 
-  @Override
-  public void scrollSelectionInView() {
-    myScrollSelectionInViewPending = true;
-  }
-
-  @Override
-  public int getScrollUnitIncrement() {
-    if (myLastSingRowLayout != null) {
-      final List<TabInfo> visibleInfos = myLastSingRowLayout.myVisibleInfos;
-      if (visibleInfos.size() > 0) {
-        final TabInfo info = visibleInfos.get(0);
-        return getStrategy().getScrollUnitIncrement(myTabs.myInfo2Label.get(info));
-      }
-    }
-    return 0;
-  }
-
-  private void doScrollSelectionInView(SingleRowPassInfo passInfo) {
+  private void doScrollToSelectedTab(SingleRowPassInfo passInfo) {
     if (myTabs.isMouseInsideTabsArea()) {
       return;
     }
@@ -92,11 +75,16 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
         }
         else {
           int maxLength = passInfo.toFitLength - getMoreRectAxisSize();
+          Insets actionInsets = myTabs.getActionsInsets();
+          if (myTabs.getEntryPointPreferredSize().width == 0) {
+            maxLength -= myTabs.isHorizontalTabs() ? actionInsets.left + actionInsets.right
+                                                   : actionInsets.top + actionInsets.bottom;
+          }
           if (!ExperimentalUI.isNewUI() && getStrategy() instanceof SingleRowLayoutStrategy.Vertical) {
             maxLength -= passInfo.entryPointAxisSize;
           }
           if (offset + length > maxLength) {
-            // left side should be always visible
+            // a left side should always be visible
             if (length < maxLength) {
               scroll(offset + length - maxLength);
             }
@@ -115,11 +103,8 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   protected void recomputeToLayout(SingleRowPassInfo data) {
     calculateRequiredLength(data);
     clampScrollOffsetToBounds(data);
-    if (myScrollSelectionInViewPending || myLastSingRowLayout == null || !data.layoutSize.equals(myLastSingRowLayout.layoutSize)) {
-      myScrollSelectionInViewPending = false;
-      doScrollSelectionInView(data);
-      clampScrollOffsetToBounds(data);
-    }
+    doScrollToSelectedTab(data);
+    clampScrollOffsetToBounds(data);
   }
 
   @Override
@@ -142,7 +127,8 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
         if (getStrategy().drawPartialOverflowTabs()) {
           int clippedLength = ExperimentalUI.isNewUI() && myTabs.getTabsPosition().isSide()
                               ? length : data.toFitLength - data.position - moreRectSize;
-          super.applyTabLayout(data, label, clippedLength);
+          final Rectangle rec = getStrategy().getLayoutRect(data, data.position, clippedLength);
+          myTabs.layout(label, rec);
         }
         label.setAlignmentToCenter(false);
         return false;
@@ -152,12 +138,13 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   }
 
   @Override
-  public boolean isTabHidden(TabInfo tabInfo) {
-    final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
-    final Rectangle bounds = label.getBounds();
-    return getStrategy().getMinPosition(bounds) < -DEADZONE_FOR_DECLARE_TAB_HIDDEN
-           || bounds.width < label.getPreferredSize().width - DEADZONE_FOR_DECLARE_TAB_HIDDEN
-           || bounds.height < label.getPreferredSize().height - DEADZONE_FOR_DECLARE_TAB_HIDDEN;
+  public boolean isTabHidden(@NotNull TabInfo info) {
+    TabLabel label = myTabs.getInfoToLabel().get(info);
+    Rectangle bounds = label.getBounds();
+    int deadzone = JBUI.scale(DEADZONE_FOR_DECLARE_TAB_HIDDEN);
+    return getStrategy().getMinPosition(bounds) < -deadzone
+           || bounds.width < label.getPreferredSize().width - deadzone
+           || bounds.height < label.getPreferredSize().height - deadzone;
   }
 
   @Nullable
@@ -166,7 +153,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     int i = data.toLayout.size() - 1;
     while (i >= 0) {
       TabInfo info = data.toLayout.get(i);
-      TabLabel label = myTabs.myInfo2Label.get(info);
+      TabLabel label = myTabs.getInfoToLabel().get(info);
       if (!label.getBounds().isEmpty()) {
         return label;
       }
@@ -180,6 +167,11 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
       return 0;
     }
     return getStrategy().getMoreRectAxisSize();
+  }
+
+  @Override
+  public boolean isScrollable() {
+    return true;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.psi.javadoc.*;
@@ -390,6 +390,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
 
   public void visitSnippetAttributeList(@NotNull PsiSnippetAttributeList attributeList) {
     visitElement(attributeList);
+  }
+
+  public void visitSnippetAttributeValue(@NotNull PsiSnippetAttributeValue attributeValue) {
+    visitElement(attributeValue);
   }
 
   public void visitSnippetDocTagBody(@NotNull PsiSnippetDocTagBody body) {

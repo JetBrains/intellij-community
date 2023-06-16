@@ -1,7 +1,0 @@
-pluginManagement {
-    repositories {
-        {{kotlin_plugin_repositories}}
-    }
-}
-rootProject.name = 'multimod-hmpp'
-include ':top-mpp', ':bottom-mpp', ':mpp-additional', ':api-jvm', ':plain-jvm'

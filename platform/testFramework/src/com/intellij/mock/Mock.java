@@ -17,6 +17,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtilRt;
+import kotlin.coroutines.Continuation;
 import kotlinx.coroutines.flow.StateFlow;
 import kotlinx.coroutines.flow.StateFlowKt;
 import org.jdom.Element;
@@ -248,6 +249,11 @@ public final class Mock {
     }
 
     @Override
+    public boolean closeFileWithChecks(@NotNull VirtualFile file, @NotNull EditorWindow window) {
+      return true;
+    }
+
+    @Override
     public Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
       return null;
     }
@@ -327,7 +333,15 @@ public final class Mock {
 
     @Override
     public @NotNull FileEditorComposite openFile(@NotNull VirtualFile file, @Nullable EditorWindow window, @NotNull FileEditorOpenOptions options) {
-      return FileEditorComposite.Companion.fromPair(new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY));
+      return FileEditorComposite.Companion.fromPair(new kotlin.Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY));
+    }
+
+    @Nullable
+    @Override
+    public Object openFile(@NotNull VirtualFile file,
+                           @NotNull FileEditorOpenOptions options,
+                           @NotNull Continuation<? super FileEditorComposite> $completion) {
+      return FileEditorComposite.Companion.fromPair(new kotlin.Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY));
     }
   }
 

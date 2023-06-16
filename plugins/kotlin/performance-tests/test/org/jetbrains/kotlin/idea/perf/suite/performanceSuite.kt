@@ -248,7 +248,7 @@ class PerformanceSuite {
         }
 
         fun measureHighlight(fixture: Fixture, vararg name: String): List<List<HighlightInfo>?> {
-            return measure<List<HighlightInfo>?>(combineNameWithSimpleFileName("highlighting", fixture, *name)) {
+            return measure(combineNameWithSimpleFileName("highlighting", fixture, *name)) {
                 before = {
                     fixture.openInEditor()
                 }

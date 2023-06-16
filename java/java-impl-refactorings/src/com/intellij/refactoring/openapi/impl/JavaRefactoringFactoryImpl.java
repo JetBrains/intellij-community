@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.openapi.impl;
 
 import com.intellij.openapi.command.CommandProcessor;
@@ -145,17 +145,6 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
                                                                                       PsiClass targetClass,
                                                                                       String factoryName) {
     return new ReplaceConstructorWithFactoryRefactoringImpl(myProject, originalClass, targetClass, factoryName);
-  }
-
-  @Override
-  public TypeCookRefactoring createTypeCook(PsiElement[] elements,
-                                            boolean dropObsoleteCasts,
-                                            boolean leaveObjectsRaw,
-                                            boolean preserveRawArrays,
-                                            boolean exhaustive,
-                                            boolean cookObjects,
-                                            boolean cookToWildcards) {
-    return new TypeCookRefactoringImpl(myProject, elements, dropObsoleteCasts, leaveObjectsRaw, preserveRawArrays, exhaustive, cookObjects, cookToWildcards);
   }
 
   @Override

@@ -301,6 +301,11 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
             runTest("testData/shortenRefs/type/ClassSameNameAsPackage.kt");
         }
 
+        @TestMetadata("ClassSameNameAsPackageWithSpace.kt")
+        public void testClassSameNameAsPackageWithSpace() throws Exception {
+            runTest("testData/shortenRefs/type/ClassSameNameAsPackageWithSpace.kt");
+        }
+
         @TestMetadata("delegationSpecifier.kt")
         public void testDelegationSpecifier() throws Exception {
             runTest("testData/shortenRefs/type/delegationSpecifier.kt");

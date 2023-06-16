@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
@@ -24,10 +24,18 @@ interface StatisticsEventLogWriter : Disposable {
 }
 
 class StatisticsEventLogFileWriter(private val recorderId: String,
+                                   private val loggerProvider: StatisticsEventLoggerProvider,
                                    maxFileSizeInBytes: Int,
                                    isEap: Boolean,
                                    prefix: String) : StatisticsEventLogWriter {
   private var logger: EventLogFileWriter? = null
+    get() {
+      return if (loggerProvider.isRecordEnabled()) field else null
+    }
+    set(value) {
+      field?.close()
+      field = value
+    }
 
   init {
     try {
@@ -37,7 +45,8 @@ class StatisticsEventLogFileWriter(private val recorderId: String,
       val fileEventLoggerLogger = EventLogFileWriter(dir, maxFileSizeInBytes, logFilePathProvider)
       logger = fileEventLoggerLogger
       if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
-        AppExecutorUtil.getAppScheduledExecutorService().schedule({ fileEventLoggerLogger.flush() }, 10, TimeUnit.SECONDS)
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(
+          { (if (loggerProvider.isRecordEnabled()) fileEventLoggerLogger.flush ())  }, 10, TimeUnit.SECONDS)
       }
     }
     catch (e: IOException) {
@@ -72,7 +81,7 @@ class StatisticsEventLogFileWriter(private val recorderId: String,
 
   override fun dispose() {
     val closeFuture = AppExecutorUtil.getAppExecutorService().submit {
-      logger?.close()
+      logger = null
     }
     Runtime.getRuntime().addShutdownHook(Thread {
       closeFuture.get(500, TimeUnit.MILLISECONDS)

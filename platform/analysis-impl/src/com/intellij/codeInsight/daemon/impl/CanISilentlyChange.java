@@ -13,8 +13,27 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Sometimes we need to know if we can silently change the file, without user's explicit permission.
+ * By convention, permission is required for:<pre>
+ * - never touched files,
+ * - files under explicit write permission version control (such as Perforce, which asks "do you want to edit this file"),
+ * - files in the middle of cut-n-paste operation.
+ * </pre>
+ * <p/>
+ * To determine this, we need to compute several things, in two stages.
+ * Some things require EDT for computation, e.g. {@link CanISilentlyChange#thisFile(PsiFileSystemItem)}, to query this file "undo" status.
+ * Some things, on the other hand, are quite expensive to compute in EDT and thus require BGT, e.g. {@link SilentChangeVetoer#extensionsAllowToChangeFileSilently(Project, VirtualFile)}
+ * The complete algorithm is the following:<pre>
+ * (in BGT) {@code val extensionsAllowToChangeFileSilently = SilentChangeVetoer.extensionsAllowToChangeFileSilently(project, virtualFile);}
+ * (in BGT) {@code val isFileInContent = ModuleUtilCore.projectContainsFile(project, virtualFile, false);}
+ * (in EDT) {@code val result = CanISilentlyChange.thisFile(psiFile);}
+ * (in any thread) {@code boolean canSilentlyChange = result.canIReally(isFileInContent, extensionsAllowToChangeFileSilently);}
+ * </pre>
+ */
 final class CanISilentlyChange {
   private static boolean canUndo(@NotNull VirtualFile virtualFile, @NotNull Project project) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(virtualFile);
     if (editors.length == 0) {
       return false;
@@ -31,11 +50,12 @@ final class CanISilentlyChange {
 
   enum Result {
     UH_HUH, UH_UH, ONLY_WHEN_IN_CONTENT;
-    boolean canIReally(boolean isInContent) {
+    // can call from any thread
+    boolean canIReally(boolean isInContent, @NotNull ThreeState extensionsAllowToChangeFileSilently) {
       return switch (this) {
-        case UH_HUH -> true;
+        case UH_HUH -> extensionsAllowToChangeFileSilently != ThreeState.NO;
         case UH_UH -> false;
-        case ONLY_WHEN_IN_CONTENT -> isInContent;
+        case ONLY_WHEN_IN_CONTENT -> extensionsAllowToChangeFileSilently != ThreeState.NO && isInContent;
       };
     }
   }
@@ -54,16 +74,6 @@ final class CanISilentlyChange {
     if (ScratchUtil.isScratch(virtualFile)) {
       return canUndo(virtualFile, project) ? Result.UH_HUH : Result.UH_UH;
     }
-    for (SilentChangeVetoer extension : SilentChangeVetoer.EP_NAME.getExtensionList()) {
-      ThreeState result = extension.canChangeFileSilently(project, virtualFile);
-      if (result == ThreeState.YES) {
-        return Result.ONLY_WHEN_IN_CONTENT;
-      }
-      if (result == ThreeState.NO) {
-        return Result.UH_UH;
-      }
-    }
-
     return canUndo(virtualFile, project) ? Result.ONLY_WHEN_IN_CONTENT : Result.UH_UH;
   }
 }

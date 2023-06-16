@@ -154,18 +154,10 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
       PsiElement previousElement = getPreviousElement(editor, element);
       labelElement = PsiTreeUtil.getNonStrictParentOfType(previousElement, PsiCaseLabelElement.class);
     }
-    while (labelElement != null) {
-      PsiElement parent = labelElement.getParent();
-      if (parent instanceof PsiCaseLabelElement label) {
-        labelElement = label;
-      }
-      else if (parent instanceof PsiDeconstructionList) {
-        labelElement = (PsiCaseLabelElement)parent.getParent();
-      } else {
-        break;
-      }
-    }
-    return labelElement;
+    PsiElement caseLabel = PsiTreeUtil.findFirstParent(labelElement, parent ->
+      parent instanceof PsiCaseLabelElement && parent.getParent() instanceof PsiCaseLabelElementList
+    );
+    return (PsiCaseLabelElement)caseLabel;
   }
 
   @Contract("null,_ -> false")

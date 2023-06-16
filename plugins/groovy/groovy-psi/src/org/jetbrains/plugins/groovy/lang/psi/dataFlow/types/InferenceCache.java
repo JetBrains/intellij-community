@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -41,7 +41,7 @@ final class InferenceCache {
   private final Lazy<List<DefinitionMap>> myDefinitionMaps;
 
   private final AtomicReference<Int2ObjectMap<DFAType>>[] myVarTypes;
-  private final Set<Instruction> myTooComplexInstructions = ContainerUtil.newConcurrentSet();
+  private final Set<Instruction> myTooComplexInstructions = ConcurrentCollectionFactory.createConcurrentSet();
   /**
    * Instructions outside any cycle. The control flow graph does not have backward edges on these instructions, so it is safe
    * to assume that DFA visits them <b>only once<b/>.

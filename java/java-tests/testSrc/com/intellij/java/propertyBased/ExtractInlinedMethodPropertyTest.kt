@@ -16,6 +16,8 @@ import com.intellij.refactoring.inline.InlineMethodHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.propertyBased.MadTestingUtil
+import com.intellij.testFramework.propertyBased.RandomActivityInterceptor
+import com.intellij.ui.UiInterceptors
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
@@ -40,6 +42,7 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
   }
 
   private fun inlineExtractMethodCompilation(javaFiles: Generator<PsiJavaFile>) = ImperativeCommand { env ->
+    UiInterceptors.register(RandomActivityInterceptor(env, testRootDisposable))
     val file = env.generateValue(javaFiles, null)
 
     env.logMessage("Open file in editor: ${file.virtualFile.path}")

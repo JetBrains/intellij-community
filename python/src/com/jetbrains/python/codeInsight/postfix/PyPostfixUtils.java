@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.postfix;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,24 +43,28 @@ public final class PyPostfixUtils {
   };
 
 
-  public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset(final Condition<PsiElement> additionalFilter) {
+  public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset(final Condition<? super PsiElement> additionalFilter) {
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int newOffset) {
-        PsiElement elementAtCaret = PsiUtilCore.getElementAtOffset(context.getContainingFile(), newOffset - 1);
-        final List<PsiElement> expressions = new ArrayList<>();
-        while (elementAtCaret != null) {
-          if (elementAtCaret instanceof PyStatement || elementAtCaret instanceof PyFile) {
-            break;
-          }
-          if (elementAtCaret instanceof PyExpression) {
-            expressions.add(elementAtCaret);
-          }
-          elementAtCaret = elementAtCaret.getParent();
-        }
-        return expressions;
+        return getAllExpressionsAtOffset(context.getContainingFile(), newOffset - 1);
       }
     };
+  }
+
+  public static @NotNull List<PsiElement> getAllExpressionsAtOffset(PsiFile file, int offset) {
+    PsiElement elementAtCaret = PsiUtilCore.getElementAtOffset(file, offset);
+    final List<PsiElement> expressions = new ArrayList<>();
+    while (elementAtCaret != null) {
+      if (elementAtCaret instanceof PyStatement || elementAtCaret instanceof PyFile) {
+        break;
+      }
+      if (elementAtCaret instanceof PyExpression) {
+        expressions.add(elementAtCaret);
+      }
+      elementAtCaret = elementAtCaret.getParent();
+    }
+    return expressions;
   }
 
   public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset() {

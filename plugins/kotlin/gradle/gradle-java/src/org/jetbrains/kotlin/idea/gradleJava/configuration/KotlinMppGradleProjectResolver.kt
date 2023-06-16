@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
-import com.intellij.notification.*
+import com.intellij.build.events.MessageEvent
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.*
@@ -10,9 +10,12 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.util.Key
+import com.intellij.util.PlatformUtils
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.gradle.configuration.*
+import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.*
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.gradleTooling.*
@@ -75,7 +78,7 @@ open class KotlinMppGradleProjectResolver : AbstractProjectResolverExtension() {
         val context = moduleDataNode.kotlinMppGradleProjectResolverContext
             ?: return super.populateModuleContentRoots(gradleModule, moduleDataNode)
 
-        reportMultiplatformNotifications(context.mppModel, resolverCtx)
+        reportMultiplatformNotifications(resolverCtx)
         context.populateContentRoots()
         populateExternalSystemRunTasks(gradleModule, moduleDataNode, resolverCtx)
     }
@@ -150,6 +153,15 @@ open class KotlinMppGradleProjectResolver : AbstractProjectResolverExtension() {
         ): KotlinSourceSetInfo? {
             return doCreateSourceSetInfo(model, compilation, gradleModule, resolverCtx)
         }
+    }
+}
+
+internal fun reportMultiplatformNotifications(resolverCtx: ProjectResolverContext) {
+    if (!resolverCtx.isResolveModulePerSourceSet && !KotlinPlatformUtils.isAndroidStudio && !PlatformUtils.isMobileIde() &&
+        !PlatformUtils.isAppCode()
+    ) {
+        notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(resolverCtx.projectPath)
+        resolverCtx.report(MessageEvent.Kind.WARNING, ResolveModulesPerSourceSetInMppBuildIssue())
     }
 }
 

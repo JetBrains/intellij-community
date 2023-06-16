@@ -27,7 +27,7 @@ private class OpenEditorsContextProvider : WorkingContextProvider() {
     val fileEditorManager = getFileEditorManager(project)
     if (fileEditorManager != null) {
       runBlockingModalWithRawProgressReporter(project, TaskBundle.message("open.editors.and.positions")) {
-        fileEditorManager.mainSplitters.restoreEditors(state = EditorSplitterState(element), onStartup = false)
+        fileEditorManager.mainSplitters.restoreEditors(state = EditorSplitterState(element))
       }
     }
     val dockState = element.getChild("state")

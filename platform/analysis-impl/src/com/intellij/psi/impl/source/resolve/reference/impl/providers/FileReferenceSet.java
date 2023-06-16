@@ -577,8 +577,10 @@ public class FileReferenceSet implements FileReferenceSetParameters {
           if (root == null) {
             LOG.error("Helper " + helper + " produced a null root for " + file);
           }
+          else {
+            result.add(root);
+          }
         }
-        result.addAll(roots);
       }
     }
     return new ArrayList<>(result);

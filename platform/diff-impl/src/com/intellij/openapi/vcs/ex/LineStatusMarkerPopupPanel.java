@@ -202,6 +202,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     field.addSettingsProvider(uEditor -> {
       uEditor.setVerticalScrollbarVisible(true);
       uEditor.setHorizontalScrollbarVisible(true);
+      uEditor.getSettings().setUseSoftWraps(false);
 
       uEditor.setRendererMode(true);
       uEditor.setBorder(null);

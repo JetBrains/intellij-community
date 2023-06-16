@@ -95,7 +95,7 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
     val testSchemeSize = ValidationTestRulesPersistedStorage.getTestStorage(recorderId, true)?.size() ?: 0
     val text = if (testSchemeSize < 100) testSchemeSize.toString() else "99+"
     val sizeCountIcon = TextIcon(text, JBColor.DARK_GRAY, UIUtil.getLabelBackground(), 1)
-    sizeCountIcon.setFont(Font(StartupUiUtil.getLabelFont().name, Font.BOLD, JBUIScale.scale(9)))
+    sizeCountIcon.setFont(Font(StartupUiUtil.labelFont.name, Font.BOLD, JBUIScale.scale(9)))
     sizeCountIcon.setInsets(1, 1, 0, 0)
     ICON.setIcon(sizeCountIcon, 1, JBUIScale.scale(10), JBUIScale.scale(10))
     e.presentation.icon = ICON

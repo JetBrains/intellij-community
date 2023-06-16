@@ -2,14 +2,20 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.replaceService
+import junit.framework.TestCase
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager.Companion.getInstance
-import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 import org.junit.Test
 import java.io.File
@@ -52,10 +58,11 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     MavenOpenProjectProvider().linkToExistingProject(p2Root, myProject)
     waitForLinkingCompleted()
     assertModules("project1", "m1", "project2", "m2")
-    assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
+    val allConnectors = MavenServerManager.getInstance().allConnectors
+    assertEquals(1, allConnectors.size)
 
     assertUnorderedElementsAreEqual(
-      MavenServerManager.getInstance().allConnectors.first().multimoduleDirectories.map {
+      allConnectors.first().multimoduleDirectories.map {
         FileUtil.getRelativePath(myDir, File(it))
       },
       listOf("project", "anotherProject")
@@ -242,6 +249,41 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     createProjectSubFile(".mvn/jvm.config", "-Xms800m")
     importProject()
     assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
+  }
+
+  @Test
+  fun testShouldPassValidConfigurationOfGlobalSettingsToConnector() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project1</artifactId>" +
+                     "<version>1</version>");
+    createProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
+                         "distributionUrl=" + MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toUri().toASCIIString());
+    val settingsRef = Ref<MavenEmbedderSettings>()
+    ApplicationManager.getApplication().replaceService(MavenServerManager.MavenServerConnectorFactory::class.java,
+                                                       object : MavenServerManager.MavenServerConnectorFactory {
+                                                         override fun create(project: Project,
+                                                                             jdk: Sdk,
+                                                                             vmOptions: String,
+                                                                             debugPort: Int?,
+                                                                             mavenDistribution: MavenDistribution,
+                                                                             multimoduleDirectory: String): MavenServerConnector {
+                                                           return object : MavenServerConnectorImpl(project, jdk, vmOptions, null,
+                                                                                                    mavenDistribution,
+                                                                                                    multimoduleDirectory) {
+                                                             override fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
+                                                               settingsRef.set(settings);
+                                                               throw UnsupportedOperationException();
+                                                             }
+                                                           }
+                                                         }
+
+                                                       }, testRootDisposable)
+    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().mavenHome = MavenServerManager.WRAPPED_MAVEN;
+    assertThrows(UnsupportedOperationException::class.java) {
+      MavenServerManager.getInstance().createEmbedder(myProject, true, myProjectRoot.path).embedder
+    }
+    TestCase.assertNotNull(settingsRef.get())
+    TestCase.assertNull(settingsRef.get().settings.globalSettingsPath)
   }
 
 

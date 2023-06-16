@@ -85,7 +85,7 @@ private class JarSdkConfigurator(val extraJars: List<String>) : UnknownSdkFixCon
 private val LOG = logger<JdkAuto>()
 
 class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
-  override fun supportsResolution(sdkTypeId: SdkTypeId) = notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType().value(sdkTypeId)
+  override fun supportsResolution(sdkTypeId: SdkTypeId): Boolean = notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType().value(sdkTypeId)
 
   override fun createResolver(project: Project?, indicator: ProgressIndicator): UnknownSdkLookup? {
     if (!Registry.`is`("jdk.auto.setup")) return null

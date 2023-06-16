@@ -11,19 +11,17 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class JavaPsiBundle extends DynamicBundle {
-  @NonNls public static final String BUNDLE = "messages.JavaPsiBundle";
-  public static final JavaPsiBundle INSTANCE = new JavaPsiBundle();
+public final class JavaPsiBundle {
+  public static final @NonNls String BUNDLE = "messages.JavaPsiBundle";
+  public static final DynamicBundle INSTANCE = new DynamicBundle(JavaPsiBundle.class, BUNDLE);
 
-  private JavaPsiBundle() { super(BUNDLE); }
+  private JavaPsiBundle() { }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 
@@ -35,10 +33,10 @@ public final class JavaPsiBundle extends DynamicBundle {
    * @param modifier modifier string constant
    * @return modifier to display to the user. 
    * Note that it's not localized in the usual sense: modifiers returned from this method are kept in English,
-   * regardless of the active language pack. It's believed that this way it's more clear. 
+   * regardless of the active language pack.
+   * It's believed that this way it's clearer.
    */
-  @NotNull
-  public static @NlsSafe String visibilityPresentation(@NotNull @PsiModifier.ModifierConstant String modifier) {
+  public static @NotNull @NlsSafe String visibilityPresentation(@NotNull @PsiModifier.ModifierConstant String modifier) {
     return modifier.equals(PsiModifier.PACKAGE_LOCAL) ? "package-private" : modifier;
   }
 }

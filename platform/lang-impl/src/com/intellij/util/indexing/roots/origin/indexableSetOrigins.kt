@@ -26,9 +26,13 @@ internal data class IndexableSetContributorOriginImpl(override val indexableSetC
 
 internal data class ProjectFileOrDirOriginImpl(override val fileOrDir: VirtualFile) : ProjectFileOrDirOrigin
 
+internal data class ModuleAwareContentEntityOriginImpl(override val module: Module,
+                                                       override val reference: EntityReference<*>,
+                                                       override val roots: Collection<VirtualFile>) : ModuleAwareContentEntityOrigin
+
+internal data class GenericContentEntityOriginImpl(override val reference: EntityReference<*>,
+                                                   override val roots: Collection<VirtualFile>) : GenericContentEntityOrigin
+
 internal data class ExternalEntityOriginImpl(override val reference: EntityReference<*>,
                                              override val roots: Collection<VirtualFile>,
                                              override val sourceRoots: Collection<VirtualFile>) : ExternalEntityOrigin
-
-internal data class ContentModuleUnawareEntityOriginImpl(override val reference: EntityReference<*>,
-                                                         override val roots: Collection<VirtualFile>) : ContentModuleUnawareEntityOrigin

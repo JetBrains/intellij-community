@@ -7,6 +7,9 @@ import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.Set;
+
 public class EmptyIndex implements VcsLogModifiableIndex {
   @Override
   public void scheduleIndex(boolean full) {
@@ -34,6 +37,11 @@ public class EmptyIndex implements VcsLogModifiableIndex {
   @Override
   public @Nullable IndexDataGetter getDataGetter() {
     return null;
+  }
+
+  @Override
+  public @NotNull Set<VirtualFile> getIndexingRoots() {
+    return Collections.emptySet();
   }
 
   @Override

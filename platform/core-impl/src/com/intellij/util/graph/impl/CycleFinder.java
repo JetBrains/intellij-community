@@ -1,7 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.graph.impl;
 
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
@@ -18,30 +17,26 @@ public class CycleFinder<Node> {
     myGraph = graph;
   }
 
-  @NotNull
-  public Set<List<Node>> getNodeCycles(@NotNull Node node) {
+  public @NotNull Set<List<Node>> getNodeCycles(@NotNull Node node) {
     final Set<List<Node>> result = new HashSet<>();
 
     final Graph<Node> graphWithoutNode = new Graph<Node>() {
-      @NotNull
       @Override
-      public Collection<Node> getNodes() {
+      public @NotNull Collection<Node> getNodes() {
         final Collection<Node> nodes = myGraph.getNodes();
         nodes.remove(node);
         return nodes;
       }
 
-      @NotNull
       @Override
-      public Iterator<Node> getIn(final Node n) {
+      public @NotNull Iterator<Node> getIn(final Node n) {
         final Set<Node> nodes = ContainerUtil.newHashSet(myGraph.getIn(n));
         nodes.remove(node);
         return nodes.iterator();
       }
 
-      @NotNull
       @Override
-      public Iterator<Node> getOut(final Node n) {
+      public @NotNull Iterator<Node> getOut(final Node n) {
         final Set<Node> nodes = ContainerUtil.newHashSet(myGraph.getOut(n));
         nodes.remove(node);
         return nodes.iterator();
@@ -53,7 +48,7 @@ public class CycleFinder<Node> {
     final Set<Node> retainNodes = new HashSet<>(inNodes);
     retainNodes.retainAll(outNodes);
     for (Node node1 : retainNodes) {
-      result.add(ContainerUtil.newArrayList(node1, node));
+      result.add(new ArrayList<>(Arrays.asList(node1, node)));
     }
     inNodes.removeAll(retainNodes);
     outNodes.removeAll(retainNodes);

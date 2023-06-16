@@ -38,14 +38,17 @@ class PartialBodyResolveFilter(
         elementsToResolve.forEach { assert(declaration.isAncestor(it)) }
         assert(!KtPsiUtil.isLocal(declaration)) { "Should never be invoked on local declaration otherwise we may miss some local declarations with type Nothing" }
 
-        declaration.forEachDescendantOfType<KtCallableDeclaration> { declaration ->
-            if (declaration.typeReference.containsProbablyNothing()) {
-                val name = declaration.name
-                if (name != null) {
-                    if (declaration is KtNamedFunction) {
-                        contextNothingFunctionNames.add(name)
-                    } else {
-                        contextNothingVariableNames.add(name)
+        val isCompiled = declaration.containingKtFile.isCompiled
+        if (!isCompiled) {
+            declaration.forEachDescendantOfType<KtCallableDeclaration> { declaration ->
+                if (declaration.typeReference.containsProbablyNothing()) {
+                    val name = declaration.name
+                    if (name != null) {
+                        if (declaration is KtNamedFunction) {
+                            contextNothingFunctionNames.add(name)
+                        } else {
+                            contextNothingVariableNames.add(name)
+                        }
                     }
                 }
             }
@@ -54,7 +57,10 @@ class PartialBodyResolveFilter(
         elementsToResolve.forEach {
             statementMarks.mark(it, if (forCompletion) MarkLevel.NEED_COMPLETION else MarkLevel.NEED_REFERENCE_RESOLVE)
         }
-        declaration.forTopLevelBlocksInside { processBlock(it) }
+
+        if (!isCompiled) {
+            declaration.forTopLevelBlocksInside { processBlock(it) }
+        }
     }
 
     //TODO: do..while is special case

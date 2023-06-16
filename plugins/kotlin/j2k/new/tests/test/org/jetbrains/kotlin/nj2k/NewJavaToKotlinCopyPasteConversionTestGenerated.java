@@ -203,6 +203,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
         runTest("testData/copyPaste/OpenPublicFunctionToTopLevel.java");
     }
 
+    @TestMetadata("PrivateFunctionToOpenClass.java")
+    public void testPrivateFunctionToOpenClass() throws Exception {
+        runTest("testData/copyPaste/PrivateFunctionToOpenClass.java");
+    }
+
     @TestMetadata("PrivateFunctionToTopLevel.java")
     public void testPrivateFunctionToTopLevel() throws Exception {
         runTest("testData/copyPaste/PrivateFunctionToTopLevel.java");

@@ -15,7 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.pattern;
 
-import com.intellij.codeInsight.intention.AddAnnotationFixWithoutArg;
+import com.intellij.codeInsight.intention.AddAnnotationFixWithoutArgFix;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -216,20 +216,20 @@ public class PatternValidator extends LocalInspectionTool {
         }
         final PsiModifierListOwner owner = ObjectUtils.tryCast(e, PsiModifierListOwner.class);
         List<LocalQuickFix> fixes = new SmartList<>();
-        if (holder.isOnTheFly()) {
-          if (owner != null && PsiUtilEx.isLanguageAnnotationTarget(owner)) {
-            PsiAnnotation[] resolvedAnnos =
-              AnnotationUtilEx.getAnnotationFrom(owner, configuration.getAdvancedConfiguration().getPatternAnnotationPair(), true);
-            if (resolvedAnnos.length == 2 &&
-                annotations.length == 2 &&
-                Comparing.strEqual(resolvedAnnos[1].getQualifiedName(), annotations[1].getQualifiedName())) {
-              // both target and source annotated indirectly with the same anno
-              return;
-            }
+        if (owner != null && PsiUtilEx.isLanguageAnnotationTarget(owner)) {
+          PsiAnnotation[] resolvedAnnos =
+            AnnotationUtilEx.getAnnotationFrom(owner, configuration.getAdvancedConfiguration().getPatternAnnotationPair(), true);
+          if (resolvedAnnos.length == 2 &&
+              annotations.length == 2 &&
+              Comparing.strEqual(resolvedAnnos[1].getQualifiedName(), annotations[1].getQualifiedName())) {
+            // both target and source annotated indirectly with the same anno
+            return;
           }
+        }
+        if (holder.isOnTheFly()) {
           final String classname = configuration.getAdvancedConfiguration().getSubstAnnotationPair().first;
-          if (owner != null && AddAnnotationFixWithoutArg.isApplicable(owner, classname)) {
-            fixes.add(new AddAnnotationFixWithoutArg(classname, owner));
+          if (owner != null && AddAnnotationFixWithoutArgFix.isApplicable(owner, classname)) {
+            fixes.add(new AddAnnotationFixWithoutArgFix(classname, owner));
           } else {
             fixes.add(new IntroduceVariableFix(false));
           }

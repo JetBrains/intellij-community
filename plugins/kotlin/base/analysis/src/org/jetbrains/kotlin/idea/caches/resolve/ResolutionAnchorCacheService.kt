@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
@@ -51,9 +51,9 @@ class ResolutionAnchorCacheServiceImpl(
         get() =
             CachedValuesManager.getManager(project).getCachedValue(project) {
                 CachedValueProvider.Result.create(
-                    mapResolutionAnchorForLibraries(),
-                    ModuleModificationTracker.getInstance(project),
-                    LibraryModificationTracker.getInstance(project)
+                  mapResolutionAnchorForLibraries(),
+                  ModuleModificationTracker.getInstance(project),
+                  JavaLibraryModificationTracker.getInstance(project)
                 )
             }
 
@@ -61,24 +61,39 @@ class ResolutionAnchorCacheServiceImpl(
         get() =
             CachedValuesManager.getManager(project).getCachedValue(project) {
                 CachedValueProvider.Result.create(
-                    ContainerUtil.createConcurrentWeakMap(),
-                    ModuleModificationTracker.getInstance(project),
-                    LibraryModificationTracker.getInstance(project)
+                  ContainerUtil.createConcurrentWeakMap(),
+                  ModuleModificationTracker.getInstance(project),
+                  JavaLibraryModificationTracker.getInstance(project)
                 )
             }
 
     override fun getDependencyResolutionAnchors(libraryInfo: LibraryInfo): Set<ModuleSourceInfo> {
-        return resolutionAnchorDependenciesCache.getOrPut(libraryInfo) {
-            val allTransitiveLibraryDependencies = with(LibraryDependenciesCache.getInstance(project)) {
-                val directDependenciesOnLibraries = getLibraryDependencies(libraryInfo).libraries
-                directDependenciesOnLibraries.closure { libraryDependency ->
-                    checkCanceled()
-                    getLibraryDependencies(libraryDependency).libraries
-                }
-            }
-
-            allTransitiveLibraryDependencies.mapNotNullTo(mutableSetOf()) { resolutionAnchorsForLibraries[it] }
+        resolutionAnchorDependenciesCache[libraryInfo]?.let {
+            return it
         }
+
+        val allTransitiveLibraryDependencies = with(LibraryDependenciesCache.getInstance(project)) {
+            val directDependenciesOnLibraries = getLibraryDependencies(libraryInfo).libraries
+            directDependenciesOnLibraries.closure { libraryDependency ->
+                checkCanceled()
+                getLibraryDependencies(libraryDependency).libraries
+            }
+        }
+
+        val dependencyResolutionAnchors = allTransitiveLibraryDependencies.mapNotNullTo(mutableSetOf()) { resolutionAnchorsForLibraries[it] }
+        resolutionAnchorDependenciesCache.putIfAbsent(libraryInfo, dependencyResolutionAnchors)?.let {
+            // if value is already provided by the cache - no reasons for this thread to fill other values
+            return it
+        }
+        val platform = libraryInfo.platform
+        for (transitiveLibraryDependency in allTransitiveLibraryDependencies) {
+            // it's safe to use same dependencyResolutionAnchors for the same platform libraries
+            if (transitiveLibraryDependency.platform == platform) {
+                resolutionAnchorDependenciesCache.putIfAbsent(transitiveLibraryDependency, dependencyResolutionAnchors)
+            }
+        }
+
+        return dependencyResolutionAnchors
     }
 
     private fun associateModulesByNames(): Map<String, ModuleInfo> {

@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -20,7 +21,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -33,6 +33,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -40,9 +41,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenuContributor {
   private static final Logger LOG = Logger.getInstance(DoNotShowInspectionIntentionMenuContributor.class);
@@ -80,7 +81,7 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
                                                                        @NotNull PsiElement psiElement,
                                                                        int offset,
                                                                        @NotNull ShowIntentionsPass.IntentionsInfo outIntentions) {
-    if (!psiElement.isPhysical()) {
+    if (!psiElement.isPhysical() && !PlatformUtils.isFleetBackend()) {
       VirtualFile virtualFile = hostFile.getVirtualFile();
       String text = hostFile.getText();
       LOG.error("not physical: '" + psiElement.getText() + "' @" + offset + " " +psiElement.getTextRange() +
@@ -92,12 +93,13 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
       return;
     }
 
-    Collection<ProjectType> projectTypes = ProjectTypeService.getProjectTypes(project);
+    Set<String> projectTypes = ProjectTypeService.getProjectTypeIds(project);
+    boolean isTests = ApplicationManager.getApplication().isUnitTestMode();
 
     List<LocalInspectionToolWrapper> intentionTools = new ArrayList<>();
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     for (InspectionToolWrapper<?,?> toolWrapper : profile.getInspectionTools(hostFile)) {
-      if (!toolWrapper.isApplicable(projectTypes)) continue;
+      if (!isTests && !toolWrapper.isApplicable(projectTypes)) continue;
 
       if (toolWrapper instanceof GlobalInspectionToolWrapper) {
         toolWrapper = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();

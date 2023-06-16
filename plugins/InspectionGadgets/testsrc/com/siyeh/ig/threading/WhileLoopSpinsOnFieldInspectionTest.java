@@ -1,21 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -24,13 +13,39 @@ import org.jetbrains.annotations.Nullable;
 public class WhileLoopSpinsOnFieldInspectionTest extends LightJavaInspectionTestCase {
 
   public void testWhileLoopSpinsOnField() {
-    doTest();
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, this::doTest);
   }
 
+  public void testMultiFileFix() {
+    myFixture.addFileToProject("F1.java", """
+      public class F1 {
+          boolean f;
+      }
+      """);
+    doTest();
+    IntentionAction action = myFixture.findSingleIntention("Make 'f' volatile and add Thread.onSpinWait()");
+    var text = myFixture.getIntentionPreviewText(action);
+    assertEquals("""
+      class F2 extends F1 {
+          void test() {
+              while (f) {
+                  Thread.onSpinWait();
+                         
+              }
+          }
+      }
+                         
+      ----------
+      public class F1 {
+          volatile boolean f;
+      }
+      """, text);
+  }
+  
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   @Nullable

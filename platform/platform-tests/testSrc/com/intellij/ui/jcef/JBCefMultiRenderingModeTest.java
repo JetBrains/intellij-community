@@ -42,7 +42,6 @@ public class JBCefMultiRenderingModeTest {
   public void test() {
     show(JBCefBrowser.createBuilder().setOffScreenRendering(false).setUrl("chrome:version").build());
     show(JBCefBrowser.createBuilder().setOffScreenRendering(true).setUrl("chrome:version").build());
-    Disposer.dispose(JBCefApp.getInstance().getDisposable());
   }
 
   private static void show(@NotNull JBCefBrowser browser) {

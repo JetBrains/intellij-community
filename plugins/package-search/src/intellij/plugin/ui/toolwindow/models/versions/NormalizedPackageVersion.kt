@@ -89,8 +89,7 @@ sealed class NormalizedPackageVersion<T : PackageVersion> : Comparable<Normalize
             if (nonSemanticSuffix.isNullOrBlank()) return false
             val normalizedSuffix = nonSemanticSuffix.trim().lowercase()
             val hasGitHashLength = normalizedSuffix.length in 7..10 || normalizedSuffix.length == 40
-            if (hasGitHashLength && normalizedSuffix.all { it.isDigit() || it in HEX_CHARS || !it.isLetter() }) return false
-            return true
+            return !(hasGitHashLength && normalizedSuffix.all { it.isDigit() || it in HEX_CHARS || !it.isLetter() })
         }
 
         override fun equals(other: Any?): Boolean {

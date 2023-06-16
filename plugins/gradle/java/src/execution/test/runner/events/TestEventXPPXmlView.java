@@ -28,6 +28,7 @@ public class TestEventXPPXmlView implements TestEventXmlView {
   private String myEventTestResultExpected;
   private String myEventTestResultActual;
   private String myEventTestResultFailureType;
+  private String myEventTestResultExceptionName;
   private String myEventTestResultStackTrace;
   private String myEventTestResultErrorMsg;
   private String myEventTestResultEndTime;
@@ -87,6 +88,8 @@ public class TestEventXPPXmlView implements TestEventXmlView {
                     myEventTestResultActual = parser.getValue();                     //queryXml("/ijLog/event/test/result/actual");
                   } else if ("failureType".equals(parser.getNodeName())){
                     myEventTestResultFailureType = parser.getValue();                //queryXml("/ijLog/event/test/result/failureType");
+                  } else if ("exceptionName".equals(parser.getNodeName())){
+                    myEventTestResultExceptionName = parser.getValue();              //queryXml("/ijLog/event/test/result/exceptionName");
                   } else if ("stackTrace".equals(parser.getNodeName())){
                     myEventTestResultStackTrace = parser.getValue();                 //queryXml("/ijLog/event/test/result/stackTrace");
                   } else if ("errorMsg".equals(parser.getNodeName())){
@@ -213,6 +216,12 @@ public class TestEventXPPXmlView implements TestEventXmlView {
   @Override
   public String getEventTestResultFailureType() {
     return myEventTestResultFailureType == null ? "" : myEventTestResultFailureType;
+  }
+
+  @NotNull
+  @Override
+  public String getEventTestResultExceptionName() {
+    return myEventTestResultExceptionName == null ? "" : myEventTestResultExceptionName;
   }
 
   @NotNull

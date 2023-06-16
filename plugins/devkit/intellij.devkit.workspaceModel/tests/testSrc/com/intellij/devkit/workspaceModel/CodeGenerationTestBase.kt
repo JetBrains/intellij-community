@@ -11,18 +11,17 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.VfsTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -33,8 +32,16 @@ import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import java.nio.file.Path
 
 abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() {
+  protected val INDENT_SIZE = 2
+  protected val TAB_SIZE = 2
+  protected val CONTINUATION_INDENT_SIZE = 2
+
   override fun setUp() {
     super.setUp()
+    // Load codegen jar on warm-up phase
+    runBlocking {
+      CodegenJarLoader.getInstance(project).getClassLoader()
+    }
     val settings = EditorSettingsExternalizable.getInstance()
     val oldTrailingSpacesValue = settings.stripTrailingSpaces
     settings.stripTrailingSpaces = EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE
@@ -53,9 +60,9 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
     kotlinCommonSettings.RIGHT_MARGIN = 140
     codeStyleSettings.getCustomSettings(KotlinCodeStyleSettings::class.java).LINE_BREAK_AFTER_MULTILINE_WHEN_ENTRY = false
     val indentOptions = codeStyleSettings.getIndentOptions(KotlinFileType.INSTANCE)
-    indentOptions.INDENT_SIZE = 2
-    indentOptions.TAB_SIZE = 2
-    indentOptions.CONTINUATION_INDENT_SIZE = 2
+    indentOptions.INDENT_SIZE = INDENT_SIZE
+    indentOptions.TAB_SIZE = TAB_SIZE
+    indentOptions.CONTINUATION_INDENT_SIZE = CONTINUATION_INDENT_SIZE
     CodeStyle.setTemporarySettings(project, codeStyleSettings)
     disposeOnTearDown(Disposable {
       settings.stripTrailingSpaces = oldTrailingSpacesValue
@@ -111,16 +118,15 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
   protected fun generateCode(relativePathToEntitiesDirectory: String, keepUnknownFields: Boolean = false): Pair<VirtualFile, VirtualFile> {
     val srcRoot = myFixture.findFileInTempDir(relativePathToEntitiesDirectory)
     val genRoot = myFixture.tempDirFixture.findOrCreateDir("gen/$relativePathToEntitiesDirectory")
-    val keepUnknownFieldsValue = Registry.get("workspace.model.generator.keep.unknown.fields")
-    keepUnknownFieldsValue.setValue(keepUnknownFields)
+    System.setProperty("workspace.model.generator.keep.unknown.fields", keepUnknownFields.toString())
     try {
-      runWriteActionAndWait {
+      runBlocking {
         CodeWriter.generate(project, module, srcRoot) { genRoot }
         FileDocumentManager.getInstance().saveAllDocuments()
       }
     }
     finally {
-      keepUnknownFieldsValue.setValue(false)
+      System.setProperty("workspace.model.generator.keep.unknown.fields", "false")
     }
     return srcRoot to genRoot
   }

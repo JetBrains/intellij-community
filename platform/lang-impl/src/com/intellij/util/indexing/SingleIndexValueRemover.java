@@ -19,7 +19,6 @@ class SingleIndexValueRemover {
   private final VirtualFile file;
   private final int inputId;
   private final @Nullable String fileInfo;
-  private final @Nullable String filePath;
   private final boolean isWritingValuesSeparately;
   long evaluatingValueRemoverTime;
 
@@ -33,7 +32,6 @@ class SingleIndexValueRemover {
     this.file = file;
     this.inputId = inputId;
     this.fileInfo = FileBasedIndexImpl.getFileInfoLogString(inputId, file, fileContent);
-    this.filePath = file == null ? (fileContent == null ? null : fileContent.getFile().getPath()) : file.getPath();
     this.isWritingValuesSeparately = isWritingValuesSeparately;
   }
 

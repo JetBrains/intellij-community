@@ -85,11 +85,11 @@ data class OpenProjectTask internal constructor(
     fun build(): OpenProjectTask = OpenProjectTask()
   }
 
-  fun withForceOpenInNewFrame(forceOpenInNewFrame: Boolean) = copy(forceOpenInNewFrame = forceOpenInNewFrame)
-  fun withProjectToClose(projectToClose: Project?) = copy(projectToClose = projectToClose)
-  fun asNewProject() = copy(isNewProject = true, useDefaultProjectAsTemplate = true)
-  fun withProject(project: Project?) = copy(project = project)
-  fun withProjectName(projectName: String?) = copy(projectName = projectName)
+  fun withForceOpenInNewFrame(forceOpenInNewFrame: Boolean): OpenProjectTask = copy(forceOpenInNewFrame = forceOpenInNewFrame)
+  fun withProjectToClose(projectToClose: Project?): OpenProjectTask = copy(projectToClose = projectToClose)
+  fun asNewProject(): OpenProjectTask = copy(isNewProject = true, useDefaultProjectAsTemplate = true)
+  fun withProject(project: Project?): OpenProjectTask = copy(project = project)
+  fun withProjectName(projectName: String?): OpenProjectTask = copy(projectName = projectName)
 }
 
 class OpenProjectTaskBuilder internal constructor() {

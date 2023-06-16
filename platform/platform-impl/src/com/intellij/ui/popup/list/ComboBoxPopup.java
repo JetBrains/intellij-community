@@ -18,6 +18,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,7 +152,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     list.setSelectionForeground(UIManager.getColor("ComboBox.selectionForeground"));
     list.setSelectionBackground(UIManager.getColor("ComboBox.selectionBackground"));
     list.setBorder(null);
-    list.setFocusable(false);
+    list.setFocusable(ScreenReader.isActive());
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     final var renderer = ((MyBasePopupState<?>)myStep).myGetRenderer.get();

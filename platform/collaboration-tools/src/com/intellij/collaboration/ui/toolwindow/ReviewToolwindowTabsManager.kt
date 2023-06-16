@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 /**
  * Manages review toolwindow tabs and their content.
@@ -30,17 +31,19 @@ fun <T : ReviewTab, C : ReviewToolwindowProjectContext> manageReviewToolwindowTa
   toolwindow: ToolWindow,
   reviewToolwindowViewModel: ReviewToolwindowViewModel<C>,
   reviewTabsController: ReviewTabsController<T>,
-  tabComponentFactory: ReviewTabsComponentFactory<T, C>
+  tabComponentFactory: ReviewTabsComponentFactory<T, C>,
+  tabTitle: @Nls String
 ) {
-  ReviewToolwindowTabsManager(cs, toolwindow, reviewToolwindowViewModel, reviewTabsController, tabComponentFactory)
+  ReviewToolwindowTabsManager(cs, toolwindow, reviewToolwindowViewModel, reviewTabsController, tabComponentFactory, tabTitle)
 }
 
 private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowProjectContext>(
   parentCs: CoroutineScope,
-  private val toolwindow: ToolWindow,
+  toolwindow: ToolWindow,
   private val reviewToolwindowViewModel: ReviewToolwindowViewModel<C>,
   private val reviewTabsController: ReviewTabsController<T>,
-  private val tabComponentFactory: ReviewTabsComponentFactory<T, C>
+  private val tabComponentFactory: ReviewTabsComponentFactory<T, C>,
+  private val tabTitle: @Nls String
 ) {
   private val contentManager = toolwindow.contentManager
   private val projectContext = reviewToolwindowViewModel.projectContext
@@ -171,7 +174,7 @@ private class ReviewToolwindowTabsManager<T : ReviewTab, C : ReviewToolwindowPro
 
   private fun createDisposableContent(modifier: (Content, CoroutineScope) -> Unit): Content {
     val factory = ContentFactory.getInstance()
-    return factory.createContent(null, null, false).apply {
+    return factory.createContent(null, tabTitle, false).apply {
       val disposable = Disposer.newDisposable()
       setDisposer(disposable)
       modifier(this, disposable.disposingMainScope())

@@ -103,7 +103,6 @@ fun testDefaultLayout(isNewUi: Boolean, project: Project) {
   }
 
   val todoInfo = manager.getEntry("TODO")!!.readOnlyWindowInfo
-  assertThat(todoInfo.isShowStripeButton).isEqualTo(!isNewUi)
   // order allocation logic is the same for old and new ui, but by default not all tool windows are shown in a new UI,
   // so, button for T O D O is not created by default, therefore order is not set
   assertThat(todoInfo.order).let { if (isNewUi) it.isEqualTo(-1) else it.isNotEqualTo(-1) }

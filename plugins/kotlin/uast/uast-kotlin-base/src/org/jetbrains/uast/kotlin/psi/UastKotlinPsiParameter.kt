@@ -2,7 +2,7 @@
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.lang.Language
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -73,7 +73,7 @@ class UastKotlinPsiParameter(
             containingElement: UElement,
             index: Int
         ): PsiParameter {
-            val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
+            val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
             val psiParent = containingElement.getParentOfType<UDeclaration>()?.javaPsi ?: parent
             return UastKotlinPsiParameter(
                 service,

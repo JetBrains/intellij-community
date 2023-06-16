@@ -15,24 +15,20 @@
  */
 package com.siyeh.ipp.comment;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class MoveCommentToSeparateLineIntention extends Intention {
+public class MoveCommentToSeparateLineIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -40,7 +36,7 @@ public class MoveCommentToSeparateLineIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  public @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("move.comment.to.separate.line.intention.name");
   }
 
@@ -51,7 +47,7 @@ public class MoveCommentToSeparateLineIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void processIntention(@NotNull ActionContext context, @NotNull EditorUpdater updater, @NotNull PsiElement element) {
     final PsiComment comment = (PsiComment)element;
     final PsiWhiteSpace whitespace;
     while (true) {
@@ -64,11 +60,7 @@ public class MoveCommentToSeparateLineIntention extends Intention {
     }
     final PsiElement anchor = element;
 
-    final Project project = comment.getProject();
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(comment.getContainingFile());
-    if (document == null) {
-      return;
-    }
+    final Document document = comment.getContainingFile().getViewProvider().getDocument();
     final String newline;
     if (whitespace == null) {
       newline = "\n";
@@ -85,15 +77,6 @@ public class MoveCommentToSeparateLineIntention extends Intention {
     final int offset = anchor.getTextRange().getStartOffset();
     document.insertString(offset, newline);
     document.insertString(offset, comment.getText());
-    scrollToVisible(project, offset);
-  }
-
-  private static void scrollToVisible(Project project, int offset) {
-    final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (editor == null) {
-      return;
-    }
-    final LogicalPosition position = editor.offsetToLogicalPosition(offset);
-    editor.getScrollingModel().scrollTo(position, ScrollType.MAKE_VISIBLE);
+    updater.moveTo(offset);
   }
 }

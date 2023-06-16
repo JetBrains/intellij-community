@@ -66,6 +66,7 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
   fun `test annotation`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.lang.SafeVarargs;
       class Annotation {
         @<error descr="Usage of API documented as @since 1.7+">SafeVarargs</error>
         public final void a(java.util.List<String>... ls) {}
@@ -100,7 +101,21 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
     """.trimIndent())
   }
 
-  fun `test minimum since no higlighting`() {
+  fun `test no highlighting in javadoc`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_7)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class Javadoc {
+        /**
+         * {@link java.util.function.Predicate}
+         */
+        void test() {
+          return;
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test minimum since no highlighting`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_8)
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import java.util.stream.IntStream;

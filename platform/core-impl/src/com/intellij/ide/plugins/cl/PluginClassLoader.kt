@@ -35,8 +35,18 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
+/**
+ * Implements filtering for a plugin class loader.
+ * This is needed to distinguish classes from different modules when they are packed to a single JAR file.
+ */
 @ApiStatus.Internal
 interface ResolveScopeManager {
+  /**
+   * Returns
+   * * `null` if the class loader should try loading the class from its own classpath first;
+   * * `""` if the class loader should skip searching for `name` in its own classpath and try loading it from the parent classloaders;
+   * * non-empty string describing an error if the class must not be requested from this class loader; an error will be thrown.
+   */
   fun isDefinitelyAlienClass(name: String, packagePrefix: String, force: Boolean): String?
 }
 
@@ -48,7 +58,6 @@ private val EMPTY_CLASS_LOADER_ARRAY = arrayOfNulls<ClassLoader>(0)
 private val KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = computeKotlinStdlibClassesUsedInSignatures()
 
 private var logStream: Writer? = null
-private val instanceIdProducer = AtomicInteger()
 private val parentListCacheIdCounter = AtomicInteger()
 
 @ApiStatus.Internal
@@ -72,8 +81,7 @@ class PluginClassLoader(classPath: ClassPath,
   private val edtTime = AtomicLong()
   private val backgroundTime = AtomicLong()
   private val loadedClassCounter = AtomicInteger()
-  private val instanceId = instanceIdProducer.incrementAndGet()
-  private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + CoroutineName("${pluginId.idString}@$instanceId"))
+  private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + CoroutineName(pluginId.idString))
   private val _resolveScopeManager = resolveScopeManager ?: defaultResolveScopeManager
 
   companion object {
@@ -132,8 +140,6 @@ class PluginClassLoader(classPath: ClassPath,
 
     throw IllegalStateException("Unexpected state: $state")
   }
-
-  override fun getInstanceId(): Int = instanceId
 
   override fun getEdtTime(): Long = edtTime.get()
 
@@ -469,7 +475,6 @@ ${if (exception == null) "" else exception.message}""")
     return "${javaClass.simpleName}(" +
            "plugin=$pluginDescriptor, " +
            "packagePrefix=$packagePrefix, " +
-           "instanceId=$instanceId, " +
            "state=${if (state == PluginAwareClassLoader.ACTIVE) "active" else "unload in progress"}" +
            ")"
   }
@@ -502,7 +507,7 @@ private class DeepEnumeration(private val list: List<Enumeration<URL>>) : Enumer
 }
 
 private fun computeKotlinStdlibClassesUsedInSignatures(): Set<String> {
-  val result = HashSet(mutableListOf(
+  val result = mutableListOf(
     "kotlin.Function",
     "kotlin.sequences.Sequence",
     "kotlin.ranges.IntRange",
@@ -542,7 +547,7 @@ private fun computeKotlinStdlibClassesUsedInSignatures(): Set<String> {
     "kotlin.jvm.internal.Lambda",
     // coroutine dump is supported by core class loader
     "kotlin.coroutines.jvm.internal.DebugProbesKt",
-  ))
+  )
   System.getProperty("idea.kotlin.classes.used.in.signatures")?.let {
     result.addAll(it.splitToSequence(',').map(String::trim))
   }

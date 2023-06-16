@@ -19,7 +19,6 @@
     <projectService serviceImplementation="com.intellij.configurationScript.ConfigurationFileManager"/>
 
     <runConfigurationTemplateProvider implementation="com.intellij.configurationScript.providers.MyRunConfigurationTemplateProvider"/>
-    <updateSettingsProvider implementation="com.intellij.configurationScript.providers.MyUpdateSettingsProvider"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
                         serviceImplementation="com.intellij.configurationScript.providers.ConfigurationScriptProjectStoreFactory"

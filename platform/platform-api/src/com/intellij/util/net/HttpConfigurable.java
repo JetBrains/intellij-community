@@ -125,12 +125,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     commonProxy.setCustomAuth(name, new IdeaWideAuthenticator(this));
   }
 
-  /** @deprecated use {@link #initializeComponent()} */
-  @Deprecated(forRemoval = true)
-  public void initComponent() {
-    initializeComponent();
-  }
-
   public @NotNull ProxySelector getOnlyBySettingsSelector() {
     return mySelector;
   }
@@ -348,7 +342,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
                                      IdeBundle.message("dialog.title.proxy.setup"), Messages.getWarningIcon());
           editConfigurable(frame.getComponent());
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     }
   }
 

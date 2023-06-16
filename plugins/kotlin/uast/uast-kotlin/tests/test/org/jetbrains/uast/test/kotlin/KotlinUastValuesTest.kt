@@ -2,7 +2,7 @@
 package org.jetbrains.uast.test.kotlin
 
 import org.jetbrains.uast.UFile
-import org.jetbrains.uast.test.common.ValuesTestBase
+import com.intellij.platform.uast.testFramework.common.ValuesTestBase
 import org.junit.Test
 
 class KotlinUastValuesTest : AbstractKotlinValuesTest(), ValuesTestBase {

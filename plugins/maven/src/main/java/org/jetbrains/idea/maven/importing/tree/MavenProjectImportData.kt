@@ -52,7 +52,11 @@ class MavenProjectImportData(val mavenProject: MavenProject,
   }
 }
 
-class SplittedMainAndTestModules(val mainData: ModuleData, val testData: ModuleData)
+class SplittedMainAndTestModules(val mainData: ModuleData, val testData: ModuleData) {
+  override fun toString(): String {
+    return "SplittedMainAndTestModules(mainData=$mainData, testData=$testData)"
+  }
+}
 
 class MavenModuleImportDataWithDependencies @JvmOverloads constructor(val moduleImportData: MavenProjectImportData,
                                                                       val mainDependencies: List<MavenImportDependency<*>>,

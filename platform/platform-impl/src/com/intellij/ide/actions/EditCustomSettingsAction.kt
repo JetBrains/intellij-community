@@ -44,7 +44,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
   protected open fun charset(): Charset = StandardCharsets.UTF_8
   protected open fun prepareDocument(document: Document?) { }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = (e.project != null || WelcomeFrame.getInstance() != null) && file() != null
@@ -160,7 +160,7 @@ class EditCustomPropertiesAction : EditCustomSettingsAction() {
   }
 }
 
-class EditCustomVmOptionsAction : EditCustomSettingsAction() {
+open class EditCustomVmOptionsAction : EditCustomSettingsAction() {
   companion object {
     @JvmField val JRE_PATH_KEY: Key<String> = Key.create("JRE_PATH_KEY")
     private val file: Lazy<Path?> = lazy { VMOptions.getUserOptionsFile() }

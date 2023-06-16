@@ -19,12 +19,12 @@ class ProprietaryBuildTools(
   val signTool: SignTool,
 
   /**
-   * This tool is used to scramble the main product JAR file if {@link ProductProperties#scrambleMainJar} is {@code true}
+   * This tool is used to scramble the main product JAR file if [ProductProperties.scrambleMainJar] is `true`
    */
   val scrambleTool: ScrambleTool?,
 
   /**
-   * Describes address and credentials of Mac machine which is used to sign and build *.dmg installer for macOS. If {@code null} only *.sit
+   * Describes address and credentials of Mac machine which is used to sign and build *.dmg installer for macOS. If `null` only *.sit
    * archive will be built.
    */
   val macHostProperties: MacHostProperties?,

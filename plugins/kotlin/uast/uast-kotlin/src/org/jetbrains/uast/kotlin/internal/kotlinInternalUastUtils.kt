@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.descriptors.impl.EnumEntrySyntheticClassDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.core.unwrapIfFakeOverride
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaPackageFragment
 import org.jetbrains.kotlin.load.java.sam.SamAdapterDescriptor
@@ -43,6 +42,7 @@ import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.*
 import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstructor
@@ -256,7 +256,18 @@ internal fun KtElement.analyze(): BindingContext {
 
 internal fun KtExpression.getExpectedType(): KotlinType? = analyze()[BindingContext.EXPECTED_EXPRESSION_TYPE, this]
 
-internal fun KtTypeReference.getType(): KotlinType? = analyze()[BindingContext.TYPE, this]
+internal fun KtTypeReference.getType(): KotlinType? =
+    analyze()[BindingContext.TYPE, this]
+        ?: getTypeAsTypeArgument()
+
+private fun KtTypeReference.getTypeAsTypeArgument(): KotlinType? {
+    val call = getParentOfType<KtCallElement>(strict = true) ?: return null
+    val resolvedCall = call.getResolvedCall(analyze()) ?: return null
+    val typeProjection = call.typeArguments.find { it.typeReference == this } ?: return null
+    val index = call.typeArguments.indexOf(typeProjection)
+    val paramDescriptor = resolvedCall.candidateDescriptor.typeParameters.find { it.index == index } ?: return null
+    return resolvedCall.typeArguments[paramDescriptor]
+}
 
 internal fun KtCallableDeclaration.getReturnType(): KotlinType? =
     (analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, this] as? CallableDescriptor)?.returnType
@@ -375,6 +386,10 @@ internal fun resolveToPsiMethod(
         }
         else -> null
     }
+}
+
+private fun <T : DeclarationDescriptor> T.unwrapIfFakeOverride(): T {
+    return if (this is CallableMemberDescriptor) DescriptorUtils.unwrapFakeOverride(this) else this
 }
 
 internal fun resolveToClassIfConstructorCallImpl(ktCallElement: KtCallElement, source: UElement): PsiElement? =

@@ -4,7 +4,6 @@ package com.intellij.codeInspection.java18api;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
@@ -127,13 +126,13 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
                                QuickFixBundle.message("java.8.map.api.inspection.description", fix.myMethodName), fix);
       }
 
-      private boolean hasMapUsages(@NotNull MapLoopCondition condition, @Nullable PsiExpression value) {
+      private static boolean hasMapUsages(@NotNull MapLoopCondition condition, @Nullable PsiExpression value) {
         return !VariableAccessUtils.getVariableReferences(condition.getMap(), value).stream()
           .map(ExpressionUtils::getCallForQualifier)
           .allMatch(call -> condition.isValueAccess(call));
       }
 
-      private boolean isUsedAsReference(@NotNull PsiElement value, @NotNull MapLoopCondition condition) {
+      private static boolean isUsedAsReference(@NotNull PsiElement value, @NotNull MapLoopCondition condition) {
         return !VariableAccessUtils.getVariableReferences(condition.getIterParam(), value).stream()
           .map(ExpressionUtils::getCallForQualifier)
           .allMatch(KEY_VALUE_GET_METHODS);
@@ -271,7 +270,7 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
     return StringUtil.toLowerCase(nameCandidate);
   }
 
-  private static class ReplaceWithSingleMapOperation implements LocalQuickFix {
+  private static class ReplaceWithSingleMapOperation extends PsiUpdateModCommandQuickFix {
     private final String myMethodName;
     private final SmartPsiElementPointer<PsiMethodCallExpression> myCallPointer;
     private final SmartPsiElementPointer<PsiExpression> myValuePointer;
@@ -286,34 +285,23 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
     }
 
     @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      PsiMethodCallExpression call = myCallPointer.getElement();
-      PsiExpression value = myValuePointer.getElement();
-      PsiElement result = myResultPointer.getElement();
-      if (call == null || value == null || result == null) return null;
-      return new ReplaceWithSingleMapOperation(myMethodName, PsiTreeUtil.findSameElementInCopy(call, target),
-                                               PsiTreeUtil.findSameElementInCopy(value, target), 
-                                               PsiTreeUtil.findSameElementInCopy(result, target));
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement outerElement = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiIfStatement.class,
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiElement outerElement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class,
                                                             PsiConditionalExpression.class, PsiForeachStatement.class);
       if (outerElement == null) return;
       MapCondition condition = outerElement instanceof PsiForeachStatement ?
                                MapLoopCondition.create((PsiForeachStatement)outerElement) :
                                fromConditional(outerElement, true);
       if(condition == null) return;
-      PsiMethodCallExpression call = myCallPointer.getElement();
+      PsiMethodCallExpression call = updater.getWritable(myCallPointer.getElement());
       if (call == null) return;
       PsiExpressionList argsList = call.getArgumentList();
       PsiExpression[] args = argsList.getExpressions();
       if(args.length == 0) return;
       if ((myMethodName.equals("merge") || myMethodName.equals("replaceAll")) && args.length != 2) return;
-      PsiExpression value = myValuePointer.getElement();
+      PsiExpression value = updater.getWritable(myValuePointer.getElement());
       if (value == null) return;
-      PsiElement result = myResultPointer.getElement();
+      PsiElement result = updater.getWritable(myResultPointer.getElement());
       if(result == null) return;
 
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

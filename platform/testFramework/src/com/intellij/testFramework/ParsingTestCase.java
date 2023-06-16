@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -62,10 +62,10 @@ import java.util.*;
 
 /** @noinspection JUnitTestCaseWithNonTrivialConstructors*/
 public abstract class ParsingTestCase extends UsefulTestCase {
-  private PluginDescriptor myPluginDescriptor;
+  private PluginDescriptor pluginDescriptor;
 
-  private MockApplication myApp;
-  protected MockProjectEx myProject;
+  private MockApplication app;
+  protected MockProjectEx project;
 
   protected String myFilePrefix = "";
   protected String myFileExt;
@@ -91,15 +91,18 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
   @NotNull
   protected MockApplication getApplication() {
-    return myApp;
+    return app;
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
+    // This makes sure that tasks launched in the shared project are properly cancelled,
+    // so they don't leak into the mock app of ParsingTestCase.
+    LightPlatformTestCase.closeAndDeleteProject();
     MockApplication app = MockApplication.setUp(getTestRootDisposable());
-    myApp = app;
+    this.app = app;
     MutablePicoContainer appContainer = app.getPicoContainer();
     ComponentAdapter component = appContainer.getComponentAdapter(ProgressManager.class.getName());
     if (component == null) {
@@ -107,8 +110,8 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     }
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
 
-    myProject = new MockProjectEx(getTestRootDisposable());
-    myPsiManager = new MockPsiManager(myProject);
+    project = new MockProjectEx(getTestRootDisposable());
+    myPsiManager = new MockPsiManager(project);
     myFileFactory = new PsiFileFactoryImpl(myPsiManager);
     appContainer.registerComponentInstance(MessageBus.class, app.getMessageBus());
     appContainer.registerComponentInstance(SchemeManagerFactory.class, new MockSchemeManagerFactory());
@@ -121,11 +124,11 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     app.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     app.registerService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
     app.registerService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
-    myProject.registerService(PsiDocumentManager.class, new MockPsiDocumentManager());
-    myProject.registerService(PsiManager.class, myPsiManager);
-    myProject.registerService(TreeAspect.class, new TreeAspect());
-    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myProject)));
-    myProject.registerService(StartupManager.class, new StartupManagerImpl(myProject, myProject.getCoroutineScope()));
+    project.registerService(PsiDocumentManager.class, new MockPsiDocumentManager());
+    project.registerService(PsiManager.class, myPsiManager);
+    project.registerService(TreeAspect.class, new TreeAspect());
+    project.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(project, new PsiCachedValuesFactory(project)));
+    project.registerService(StartupManager.class, new StartupManagerImpl(project, project.getCoroutineScope()));
     registerExtensionPoint(app.getExtensionArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
     registerExtensionPoint(app.getExtensionArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
 
@@ -140,7 +143,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     }
 
     // That's for reparse routines
-    myProject.registerService(PomModel.class, new PomModelImpl(myProject));
+    project.registerService(PomModel.class, new PomModelImpl(project));
     Registry.markAsLoaded();
   }
 
@@ -166,7 +169,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     myLanguage = definition.getFileNodeType().getLanguage();
     myFileExt = extension;
     registerParserDefinition(definition);
-    myApp.registerService(FileTypeManager.class, new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
+    app.registerService(FileTypeManager.class, new MockFileTypeManager(new MockLanguageFileType(myLanguage, myFileExt)));
   }
 
   protected final <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T extension) {
@@ -175,7 +178,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   }
 
   protected final <T> void registerExtensions(@NotNull ExtensionPointName<T> name, @NotNull Class<T> extensionClass, @NotNull List<? extends T> extensions) {
-    ExtensionsAreaImpl area = myApp.getExtensionArea();
+    ExtensionsAreaImpl area = app.getExtensionArea();
     ExtensionPoint<T> point = area.getExtensionPointIfRegistered(name.getName());
     if (point == null) {
       point = registerExtensionPoint(area, name, extensionClass);
@@ -189,7 +192,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   }
 
   protected final <T> void addExplicitExtension(@NotNull LanguageExtension<T> collector, @NotNull Language language, @NotNull T object) {
-    ExtensionsAreaImpl area = myApp.getExtensionArea();
+    ExtensionsAreaImpl area = app.getExtensionArea();
     PluginDescriptor pluginDescriptor = getPluginDescriptor();
     if (!area.hasExtensionPoint(collector.getName())) {
       area.registerFakeBeanPoint(collector.getName(), pluginDescriptor);
@@ -200,7 +203,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   }
 
   protected final <T> void registerExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<T> aClass) {
-    registerExtensionPoint(myApp.getExtensionArea(), extensionPointName, aClass);
+    registerExtensionPoint(app.getExtensionArea(), extensionPointName, aClass);
   }
 
   protected <T> ExtensionPointImpl<T> registerExtensionPoint(@NotNull ExtensionsAreaImpl extensionArea,
@@ -219,17 +222,17 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   @NotNull
   // easy debug of not disposed extension
   private PluginDescriptor getPluginDescriptor() {
-    PluginDescriptor pluginDescriptor = myPluginDescriptor;
+    PluginDescriptor pluginDescriptor = this.pluginDescriptor;
     if (pluginDescriptor == null) {
       pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId(getClass().getName() + "." + getName()), ParsingTestCase.class.getClassLoader());
-      myPluginDescriptor = pluginDescriptor;
+      this.pluginDescriptor = pluginDescriptor;
     }
     return pluginDescriptor;
   }
 
   @NotNull
   public MockProjectEx getProject() {
-    return myProject;
+    return project;
   }
 
   public MockPsiManager getPsiManager() {
@@ -239,7 +242,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   @Override
   protected void tearDown() throws Exception {
     myFile = null;
-    myProject = null;
+    project = null;
     myPsiManager = null;
     myFileFactory = null;
     super.tearDown();
@@ -519,11 +522,11 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   }
 
   public void registerMockInjectedLanguageManager() {
-    registerExtensionPoint(myProject.getExtensionArea(), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
+    registerExtensionPoint(project.getExtensionArea(), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
 
-    registerExtensionPoint(myApp.getExtensionArea(), LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
-    myProject.registerService(DumbService.class, new MockDumbService(myProject));
+    registerExtensionPoint(app.getExtensionArea(), LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
+    project.registerService(DumbService.class, new MockDumbService(project));
     getApplication().registerService(EditorWindowTracker.class, new EditorWindowTrackerImpl());
-    myProject.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(myProject));
+    project.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(project));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.html
 
 import com.intellij.diagnostic.runActivity
@@ -8,9 +8,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -85,11 +85,11 @@ object GlobalStyleSheetHolder {
         updateRequests
           .debounce(5.milliseconds)
           .collectLatest {
-            val componentManager = ApplicationManager.getApplication() as ComponentManagerEx
-            listOf(
-              componentManager.getServiceAsync(EditorColorsManager::class.java),
-              componentManager.getServiceAsync(FontFamilyService::class.java),
-            ).awaitAll()
+            val app = ApplicationManager.getApplication()
+            coroutineScope {
+              async { app.serviceAsync<EditorColorsManager>() }
+              async { app.serviceAsync<FontFamilyService>() }
+            }
             withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
               updateGlobalStyleSheet()
             }

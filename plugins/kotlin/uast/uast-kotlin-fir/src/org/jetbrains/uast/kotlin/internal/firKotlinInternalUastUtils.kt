@@ -10,11 +10,11 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.getModule
 import org.jetbrains.kotlin.analysis.api.lifetime.KtAlwaysAccessibleLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.analysis.providers.DecompiledPsiDeclarationProvider.findPsi
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
@@ -92,7 +92,7 @@ internal fun KtAnalysisSession.toPsiMethod(
         is KtFunction -> {
             // For JVM-invisible methods, such as @JvmSynthetic, LC conversion returns nothing, so fake it
             fun handleLocalOrSynthetic(source: KtFunction): PsiMethod? {
-                val ktModule = source.getKtModule(context.project)
+                val ktModule = getModule(source)
                 if (ktModule !is KtSourceModule) return null
                 return getContainingLightClass(source)?.let { UastFakeSourceLightMethod(source, it) }
             }
@@ -258,6 +258,15 @@ internal fun KtAnalysisSession.receiverType(
     )
 }
 
+internal fun KtAnalysisSession.isInheritedGenericType(ktType: KtType?): Boolean {
+    if (ktType == null) return false
+    return ktType is KtTypeParameterType &&
+        // explicitly nullable, e.g., T?
+        !ktType.isMarkedNullable &&
+        // non-null upper bound, e.g., T : Any
+        nullability(ktType) != KtTypeNullability.NON_NULLABLE
+}
+
 internal fun KtAnalysisSession.nullability(ktType: KtType?): KtTypeNullability? {
     if (ktType == null) return null
     if (ktType is KtErrorType) return null
@@ -267,17 +276,8 @@ internal fun KtAnalysisSession.nullability(ktType: KtType?): KtTypeNullability? 
         KtTypeNullability.NON_NULLABLE
 }
 
-internal fun KtAnalysisSession.nullability(ktCallableDeclaration: KtCallableDeclaration): KtTypeNullability? {
-    val ktType = (ktCallableDeclaration.getSymbol() as? KtCallableSymbol)?.returnType
-    return nullability(ktType)
-}
-
-internal fun KtAnalysisSession.nullability(ktDeclaration: KtDeclaration): KtTypeNullability? {
-    return nullability(ktDeclaration.getReturnKtType())
-}
-
-internal fun KtAnalysisSession.nullability(ktExpression: KtExpression): KtTypeNullability? {
-    return nullability(ktExpression.getKtType())
+internal fun KtAnalysisSession.getKtType(ktCallableDeclaration: KtCallableDeclaration): KtType? {
+    return (ktCallableDeclaration.getSymbol() as? KtCallableSymbol)?.returnType
 }
 
 /**

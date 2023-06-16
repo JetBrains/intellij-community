@@ -1,3 +1,1 @@
-public final [BODY_RESOLVE] var listOfStrings: R|ft<kotlin/collections/MutableList<kotlin/String!>, kotlin/collections/List<kotlin/String!>?>|
-    public [RAW_FIR] get(): R|ft<kotlin/collections/MutableList<kotlin/String!>, kotlin/collections/List<kotlin/String!>?>|
-    public [RAW_FIR] set([RAW_FIR] value: R|ft<kotlin/collections/MutableList<kotlin/String!>, kotlin/collections/List<kotlin/String!>?>|): R|kotlin/Unit|
+public final [ResolvedTo(BODY_RESOLVE)] var listOfStrings: R|ft<kotlin/collections/MutableList<kotlin/String!>, kotlin/collections/List<kotlin/String!>?>|

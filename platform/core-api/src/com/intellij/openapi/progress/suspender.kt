@@ -40,6 +40,8 @@ fun coroutineSuspender(active: Boolean = true): CoroutineSuspender = CoroutineSu
 @ApiStatus.NonExtendable
 interface CoroutineSuspender : CoroutineContext {
 
+  fun isPaused(): Boolean
+
   fun pause()
 
   fun resume()
@@ -67,6 +69,10 @@ internal class CoroutineSuspenderElement(active: Boolean)
   private val myState: AtomicReference<CoroutineSuspenderState> = AtomicReference(
     if (active) CoroutineSuspenderState.Active else EMPTY_PAUSED_STATE
   )
+
+  override fun isPaused(): Boolean {
+    return myState.get() is CoroutineSuspenderState.Paused
+  }
 
   override fun pause() {
     myState.compareAndSet(CoroutineSuspenderState.Active, EMPTY_PAUSED_STATE)

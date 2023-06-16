@@ -21,7 +21,7 @@ internal fun navBarItemBackground(selected: Boolean, focused: Boolean): Color {
 }
 
 internal fun  navBarItemForeground(selected: Boolean, focused: Boolean, inactive: Boolean): Color? {
-  return if (StartupUiUtil.isUnderDarcula()) {
+  return if (StartupUiUtil.isUnderDarcula) {
     if (inactive) {
       Gray._140
     }
@@ -48,7 +48,7 @@ internal fun defaultNavBarItemForeground(selected: Boolean, focused: Boolean, in
 
 internal fun navBarItemFont(): Font? {
   if (!ExperimentalUI.isNewUI() && UISettings.getInstance().useSmallLabelsOnTabs) {
-    return RelativeFont.SMALL.derive(StartupUiUtil.getLabelFont())
+    return RelativeFont.SMALL.derive(StartupUiUtil.labelFont)
   }
   return JBUI.CurrentTheme.StatusBar.font()
 }

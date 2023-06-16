@@ -201,6 +201,12 @@ class KotlinCompilerIde(
           // Because the file to compile may be contained in a "common" multiplatform module, an `expect` declaration doesn't necessarily
           // have an obvious associated `actual` symbol. `shouldStubOrphanedExpectSymbols` generates stubs for such `expect` declarations.
           shouldStubOrphanedExpectSymbols = true,
+
+          // Likewise, the file to compile may be contained in a "platform" multiplatform module, where the `actual` declaration is
+          // referenced in the symbol table automatically, but not its `expect` counterpart, because it isn't contained in the files to
+          // compile. `shouldReferenceUndiscoveredExpectSymbols` references such `expect` symbols in the symbol table so that they can
+          // subsequently be stubbed.
+          shouldReferenceUndiscoveredExpectSymbols = true,
         )
 
         return JvmIrCodegenFactory(

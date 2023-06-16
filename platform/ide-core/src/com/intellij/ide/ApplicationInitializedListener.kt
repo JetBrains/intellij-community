@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import com.intellij.openapi.progress.blockingContext
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
@@ -17,7 +18,7 @@ interface ApplicationInitializedListener {
    * Invoked when all application level components are initialized.
    * Write actions and time-consuming activities are not recommended because directly affects application start time.
    */
-  suspend fun execute(asyncScope: CoroutineScope) {
+  suspend fun execute(asyncScope: CoroutineScope): Unit = blockingContext {
     @Suppress("DEPRECATION")
     componentsInitialized()
   }

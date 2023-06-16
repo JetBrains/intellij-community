@@ -12,7 +12,7 @@ class PluginLoadingError internal constructor(val plugin: IdeaPluginDescriptor,
                                               val isNotifyUser: Boolean,
                                               @JvmField val disabledDependency: PluginId? = null) {
   companion object {
-    internal val DISABLED = Supplier { "" }
+    internal val DISABLED: Supplier<String> = Supplier { "" }
 
     private fun formatErrorMessage(descriptor: IdeaPluginDescriptor, message: String): @NonNls String {
       val builder = StringBuilder()
@@ -42,7 +42,7 @@ class PluginLoadingError internal constructor(val plugin: IdeaPluginDescriptor,
   internal val isDisabledError: Boolean
     get() = shortMessageSupplier === DISABLED
 
-  override fun toString() = internalMessage
+  override fun toString(): @NonNls String = internalMessage
 
   val internalMessage: @NonNls String
     get() = formatErrorMessage(plugin, (detailedMessageSupplier ?: shortMessageSupplier).get())

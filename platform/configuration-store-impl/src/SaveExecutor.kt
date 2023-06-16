@@ -3,15 +3,13 @@
 
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.progress.ProcessCanceledException
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 internal interface SaveExecutor {
   /**
@@ -22,16 +20,17 @@ internal interface SaveExecutor {
 
 @ApiStatus.Internal
 open class SaveSessionProducerManager : SaveExecutor {
-  private val producers = LinkedHashMap<StateStorage, SaveSessionProducer>()
+  private val producers = Collections.synchronizedMap(LinkedHashMap<StateStorage, SaveSessionProducer>())
 
-  // actually, all storages for component store shares the same value, but for flexibility and to simplify code, just compute on the fly
+  // actually, all storages for component store share the same value, but for flexibility and to simplify code, just compute on the fly
   private var isVfsRequired = false
 
   fun getProducer(storage: StateStorage): SaveSessionProducer? {
     var producer = producers.get(storage)
     if (producer == null) {
       producer = storage.createSaveSessionProducer() ?: return null
-      producers.put(storage, producer)
+      val prev = producers.put(storage, producer)
+      check(prev == null)
       if (storage.isUseVfsForWrite) {
         isVfsRequired = true
       }
@@ -39,48 +38,44 @@ open class SaveSessionProducerManager : SaveExecutor {
     return producer
   }
 
-  private inline fun processSaveSessions(processor: (SaveSession) -> Unit): Boolean {
+  internal fun collectSaveSessions(result: MutableCollection<SaveSession>) {
     if (producers.isEmpty()) {
-      return false
+      return
     }
 
-    var isChanged = false
     for (session in producers.values) {
-      processor(session.createSaveSession() ?: continue)
-      isChanged = true
+      result.add(session.createSaveSession() ?: continue)
     }
-    return isChanged
-  }
-
-  fun collectSaveSessions(result: MutableList<SaveSession>) {
-    processSaveSessions(result::add)
   }
 
   override suspend fun save(): SaveResult {
+    if (producers.isEmpty()) {
+      return SaveResult.EMPTY
+    }
+
     val saveSessions = ArrayList<SaveSession>()
-    collectSaveSessions(saveSessions)
+    for (session in producers.values) {
+      saveSessions.add(session.createSaveSession() ?: continue)
+    }
+
     if (saveSessions.isEmpty()) {
       return SaveResult.EMPTY
     }
 
-    val task = {
-      val result = SaveResult()
-      saveSessions(saveSessions, result)
-      result
-    }
-
+    val result = SaveResult()
     if (isVfsRequired) {
-      return withContext(Dispatchers.EDT) {
-        runWriteAction(task)
+      writeAction {
+        saveSessions(saveSessions, result)
       }
     }
     else {
-      return task()
+      saveSessions(saveSessions, result)
     }
+    return result
   }
 }
 
-internal fun saveSessions(saveSessions: List<SaveSession>, result: SaveResult) {
+internal fun saveSessions(saveSessions: Collection<SaveSession>, result: SaveResult) {
   for (saveSession in saveSessions) {
     executeSave(saveSession, result)
   }

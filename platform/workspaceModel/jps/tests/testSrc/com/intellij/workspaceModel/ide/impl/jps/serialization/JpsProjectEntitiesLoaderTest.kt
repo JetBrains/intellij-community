@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
+import com.intellij.platform.workspaceModel.storage.tests.checkConsistency
 import com.intellij.project.stateStore
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.io.write
@@ -15,7 +16,6 @@ import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.checkConsistency
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
@@ -92,8 +92,10 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals(ModuleDependencyItem.ModuleSourceDependency, mainModule.dependencies[1])
     assertEquals("log4j", (mainModule.dependencies[2] as ModuleDependencyItem.Exportable.LibraryDependency).library.name)
     assertFalse((mainModule.dependencies[2] as ModuleDependencyItem.Exportable.LibraryDependency).exported)
-    assertEquals(ModuleDependencyItem.DependencyScope.COMPILE, (mainModule.dependencies[2] as ModuleDependencyItem.Exportable.LibraryDependency).scope)
-    assertEquals(ModuleDependencyItem.DependencyScope.TEST, (mainModule.dependencies[3] as ModuleDependencyItem.Exportable.LibraryDependency).scope)
+    assertEquals(ModuleDependencyItem.DependencyScope.COMPILE,
+                 (mainModule.dependencies[2] as ModuleDependencyItem.Exportable.LibraryDependency).scope)
+    assertEquals(ModuleDependencyItem.DependencyScope.TEST,
+                 (mainModule.dependencies[3] as ModuleDependencyItem.Exportable.LibraryDependency).scope)
     assertTrue((mainModule.dependencies[4] as ModuleDependencyItem.Exportable.LibraryDependency).exported)
     assertEquals("util", (mainModule.dependencies[5] as ModuleDependencyItem.Exportable.ModuleDependency).module.name)
 
@@ -179,12 +181,14 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals("jar.jar", archiveRoot.fileName)
     val archiveChildren = archiveRoot.children.toList()
     assertEquals(3, archiveChildren.size)
-    assertEquals(artifacts[0], archiveChildren.filterIsInstance<ArtifactOutputPackagingElementEntity>().single().artifact!!.resolve(storage))
+    assertEquals(artifacts[0],
+                 archiveChildren.filterIsInstance<ArtifactOutputPackagingElementEntity>().single().artifact!!.resolve(storage))
   }
 
   @Test
   fun `test custom packaging elements`() {
-    val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel/jps/tests/testData/serialization/customPackagingElements/javaeeSampleProject.ipr")
+    val projectDir = PathManagerEx.findFileUnderCommunityHome(
+      "platform/workspaceModel/jps/tests/testData/serialization/customPackagingElements/javaeeSampleProject.ipr")
     val storage = loadProject(projectDir)
     val artifacts = storage.entities(ArtifactEntity::class.java).sortedBy { it.name }.toList()
     assertEquals(6, artifacts.size)
@@ -197,7 +201,8 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
   }
 
   fun `test custom source root`() {
-    val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel/jps/tests/testData/serialization/customSourceRoot/customSourceRoot.ipr")
+    val projectDir = PathManagerEx.findFileUnderCommunityHome(
+      "platform/workspaceModel/jps/tests/testData/serialization/customSourceRoot/customSourceRoot.ipr")
     val storage = loadProject(projectDir)
     val module = assertOneElement(storage.entities(ModuleEntity::class.java).toList())
     val sourceRoot = assertOneElement(module.sourceRoots.toList())

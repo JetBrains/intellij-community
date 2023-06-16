@@ -221,7 +221,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     };
     myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myList.setBorder(BorderFactory.createEmptyBorder());
-    new ListSpeedSearch<>(myList, JCheckBox::getText);
+    ListSpeedSearch.installOn(myList, JCheckBox::getText);
   }
 
   @NotNull

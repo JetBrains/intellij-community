@@ -69,6 +69,7 @@ class EqualsWithItself {
 
   void test(String arg) {
     org.junit.jupiter.api.Assertions.<warning descr="'assertEquals()' called on itself">assertEquals</warning>(arg, arg);
+    org.testng.Assert.<warning descr="'assertEquals()' called on itself">assertEquals</warning>(arg, arg);
     org.junit.jupiter.api.Assertions.<warning descr="'assertNotEquals()' called on itself">assertNotEquals</warning>(arg, arg);
     org.junit.Assert.<warning descr="'assertSame()' called on itself">assertSame</warning>(arg, arg);
     org.assertj.core.api.Assertions.assertThat(arg).<warning descr="'isEqualTo()' called on itself">isEqualTo</warning>(arg);

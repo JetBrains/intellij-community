@@ -53,7 +53,7 @@ val ModuleSubType.isNativeDesktop: Boolean
 
 
 fun ModuleType.correspondingStdlib(): StdlibType? = when (this) {
-    ModuleType.jvm -> StdlibType.StdlibJdk8
+    ModuleType.jvm -> StdlibType.Stdlib
     ModuleType.js -> StdlibType.StdlibJs
     ModuleType.wasm -> StdlibType.StdlibWasm
     ModuleType.native -> null

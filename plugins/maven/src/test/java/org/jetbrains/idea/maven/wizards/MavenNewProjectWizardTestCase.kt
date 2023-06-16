@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.wizards
 import com.intellij.ide.projectWizard.NewProjectWizard
 import com.intellij.ide.projectWizard.NewProjectWizardTestCase
 import com.intellij.ide.wizard.Step
+import com.intellij.maven.testFramework.utils.importMavenProjectsSync
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -78,10 +79,7 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
     val manager = MavenProjectsManager.getInstance(project)
     if (!MavenUtil.isLinearImportEnabled()) {
       manager.waitForImportCompletion()
-      ApplicationManager.getApplication().invokeAndWait {
-        manager.scheduleImportInTests(listOf(file))
-        manager.importProjects()
-      }
+      importMavenProjectsSync(manager, listOf(file))
     }
     val promise = manager.waitForImportCompletion()
     PlatformTestUtil.waitForPromise(promise)
@@ -96,7 +94,7 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
   fun <R> withWizard(action: () -> R, configure: Step.() -> Unit): R {
     Disposer.newDisposable().use { disposable ->
       val factory = object : NewProjectWizardFactory {
-        override fun create(project: Project?, modulesProvider: ModulesProvider): NewProjectWizard {
+        override fun create(project: Project?, modulesProvider: ModulesProvider, defaultPath: String?): NewProjectWizard {
           return object : NewProjectWizard(project, modulesProvider, null) {
             override fun showAndGet(): Boolean {
               while (true) {

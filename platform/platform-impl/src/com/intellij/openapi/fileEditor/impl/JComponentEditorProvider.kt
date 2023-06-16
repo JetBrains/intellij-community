@@ -40,11 +40,11 @@ class JComponentEditorProvider : FileEditorProvider, DumbAware {
     }
   }
 
-  override fun accept(project: Project, file: VirtualFile) = isJComponentFile(file)
+  override fun accept(project: Project, file: VirtualFile): Boolean = isJComponentFile(file)
 
-  override fun getEditorTypeId() = "jcomponent-editor"
+  override fun getEditorTypeId(): String = "jcomponent-editor"
 
-  override fun getPolicy() = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+  override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 
   companion object {
     private val JCOMPONENT_KEY: Key<JComponent> = Key.create("jcomponent.editor.jcomponent")

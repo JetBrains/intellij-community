@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -13,15 +13,15 @@ import javax.swing.JComponent
 
 internal class TestCoroutineProgressAction : AnAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     try {
-      runBlockingModal(ModalTaskOwner.guess(), "Synchronous never-ending modal progress") {
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "Synchronous never-ending modal progress") {
         awaitCancellation()
       }
     }
-    catch (ignored: CancellationException) {
+    catch (ignored: ProcessCanceledException) {
 
     }
 
@@ -58,17 +58,37 @@ internal class TestCoroutineProgressAction : AnAction() {
         }
         row {
           button("Cancellable Synchronous Modal Progress") {
-            runBlockingModal(project, "Cancellable synchronous modal progress") {
+            runWithModalProgressBlocking(project, "Cancellable synchronous modal progress") {
               doStuff()
             }
           }
           button("Non-Cancellable Synchronous Modal Progress") {
-            runBlockingModal(
+            runWithModalProgressBlocking(
               ModalTaskOwner.project(project),
               "Non-cancellable synchronous modal progress",
               TaskCancellation.nonCancellable(),
             ) {
               doStuff()
+            }
+          }
+        }
+        row {
+          button("Delayed Completion BG Progress") {
+            cs.launch {
+              withBackgroundProgress(project, "Delayed completion BG progress") {
+                withContext(NonCancellable) {
+                  stage(parallel = true)
+                }
+              }
+            }
+          }
+          button("Delayed Completion Modal Progress") {
+            cs.launch {
+              withModalProgress(project, "Delayed completion modal progress") {
+                withContext(NonCancellable) {
+                  stage(parallel = true)
+                }
+              }
             }
           }
         }

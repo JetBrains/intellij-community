@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.OpenProjectTaskBuilder
@@ -23,10 +24,12 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.readText
-import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
-import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
+import com.intellij.workspaceModel.ide.UnloadedModulesNameHolder
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.storage.EntityStorageSerializer
 import com.intellij.workspaceModel.storage.EntityStorageSnapshot
@@ -93,7 +96,8 @@ class DelayedProjectSynchronizerTest {
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val serializers = JpsProjectModelSynchronizer.getInstance(project).getSerializers()
     val unloadedEntitiesStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
-    serializers.checkConsistency(getJpsProjectConfigLocation(project)!!, storage, unloadedEntitiesStorage, VirtualFileUrlManager.getInstance(project))
+    serializers.checkConsistency(getJpsProjectConfigLocation(project)!!, storage, unloadedEntitiesStorage,
+                                 VirtualFileUrlManager.getInstance(project))
   }
 
   @Test
@@ -157,7 +161,8 @@ class DelayedProjectSynchronizerTest {
     val unloadedEntitiesBuilder = MutableEntityStorage.create()
     val orphanage = MutableEntityStorage.create()
     val configLocation = toConfigLocation(projectData.projectDir.toPath(), virtualFileManager)
-    val serializers = loadProject(configLocation, originalBuilder, orphanage, virtualFileManager, emptySet(), unloadedEntitiesBuilder,
+    val serializers = loadProject(configLocation, originalBuilder, orphanage, virtualFileManager, UnloadedModulesNameHolder.DUMMY,
+                                  unloadedEntitiesBuilder,
                                   fileInDirectorySourceNames) as JpsProjectSerializersImpl
     val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), orphanage.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(),
                                               serializers,
@@ -189,11 +194,13 @@ class DelayedProjectSynchronizerTest {
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(projectModel.project)
     externalStorageConfigurationManager.isEnabled = true
     val originalBuilder = MutableEntityStorage.create()
-    loadProject(toConfigLocation(projectDir.toPath(), virtualFileManager), originalBuilder, originalBuilder, virtualFileManager, externalStorageConfigurationManager = externalStorageConfigurationManager)
+    loadProject(toConfigLocation(projectDir.toPath(), virtualFileManager), originalBuilder, originalBuilder, virtualFileManager,
+                externalStorageConfigurationManager = externalStorageConfigurationManager)
 
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(originalBuilder)
     val builderForAnotherProject = MutableEntityStorage.create()
-    loadProject(toConfigLocation(projectDir.toPath(), virtualFileManager), builderForAnotherProject, builderForAnotherProject, virtualFileManager,
+    loadProject(toConfigLocation(projectDir.toPath(), virtualFileManager), builderForAnotherProject, builderForAnotherProject,
+                virtualFileManager,
                 externalStorageConfigurationManager = externalStorageConfigurationManager,
                 fileInDirectorySourceNames = fileInDirectorySourceNames)
 

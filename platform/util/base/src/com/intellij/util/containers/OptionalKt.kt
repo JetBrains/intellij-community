@@ -18,12 +18,6 @@ internal class OptionalKt<out T : Any?> private constructor(
     return !isPresent
   }
 
-  inline fun ifPresent(action: (T) -> Unit) {
-    if (isPresent()) {
-      action(get())
-    }
-  }
-
   fun get(): T {
     @Suppress("UNCHECKED_CAST")
     if (isPresent) {
@@ -32,16 +26,9 @@ internal class OptionalKt<out T : Any?> private constructor(
     throw NoSuchElementException("No value present")
   }
 
-  fun getOrNull(): T? {
-    if (isPresent) {
-      return get()
-    }
-    return null
-  }
-
   companion object {
 
-    val EMPTY = OptionalKt<Nothing>(false, null)
+    val EMPTY: OptionalKt<Nothing> = OptionalKt(false, null)
 
     fun <T> of(value: T): OptionalKt<T> {
       return OptionalKt(true, value)
@@ -52,6 +39,10 @@ internal class OptionalKt<out T : Any?> private constructor(
         return of(transform(get()))
       }
       return EMPTY
+    }
+
+    fun <T> OptionalKt<T>.getOrNull(): T? {
+      return getOrDefault(null)
     }
 
     fun <T> OptionalKt<T>.getOrDefault(defaultValue: T): T {

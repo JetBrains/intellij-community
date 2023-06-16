@@ -14,16 +14,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
-    <orderEntry type="module-library">
-      <library name="XmlBeans" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.apache.xmlbeans:xmlbeans:4.0.0" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlbeans/xmlbeans/4.0.0/xmlbeans-4.0.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.resources" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" exported="" />

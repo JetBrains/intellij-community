@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import training.dsl.LessonUtil
 import training.learn.CourseManager
 import training.learn.LessonsBundle
+import training.learn.course.IftModule
 import training.learn.course.LearningCourseBase
 import training.learn.course.LearningModule
 import training.learn.course.LessonType
@@ -30,7 +31,7 @@ import training.learn.lesson.general.navigation.FindInFilesLesson
 import training.learn.lesson.general.refactorings.ExtractVariableFromBubbleLesson
 
 class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
-  override fun modules() = onboardingTour() + stableModules() + CourseManager.instance.findCommonModules("Git")
+  override fun modules(): List<IftModule> = onboardingTour() + stableModules() + CourseManager.instance.findCommonModules("Git")
 
   private val disableOnboardingLesson get() = ApplicationNamesInfo.getInstance().fullProductNameWithEdition.equals("IDEA Edu")
 

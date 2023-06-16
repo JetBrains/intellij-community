@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -67,7 +67,7 @@ public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspe
 
   @NotNull
   private static LocalQuickFix createRemoveParameterFix() {
-    return new LocalQuickFix() {
+    return new PsiUpdateModCommandQuickFix() {
       @Nls
       @NotNull
       @Override
@@ -76,9 +76,8 @@ public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspe
       }
 
       @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        PsiElement parent = descriptor.getPsiElement().getParent();
-        parent.delete();
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+        element.getParent().delete();
       }
     };
   }

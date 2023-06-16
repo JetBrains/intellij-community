@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.testGenerator.model
 
+import kotlin.reflect.KClass
+
 interface TSuite {
     val abstractTestClass: Class<*>
     val generatedClassName: String
@@ -27,6 +29,14 @@ inline fun <reified T: Any> MutableTGroup.testClass(
     block: MutableTSuite.() -> Unit
 ) {
     suites += TSuiteImpl(T::class.java, generatedClassName).apply(block)
+}
+
+fun MutableTGroup.testClass(
+    clazz: KClass<*>,
+    generatedClassName: String = getDefaultSuiteTestClassName(clazz.java),
+    block: MutableTSuite.() -> Unit
+) {
+    suites += TSuiteImpl(clazz.java, generatedClassName).apply(block)
 }
 
 @PublishedApi

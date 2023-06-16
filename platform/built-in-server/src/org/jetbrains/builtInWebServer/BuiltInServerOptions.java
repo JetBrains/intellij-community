@@ -15,7 +15,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
-import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.BuiltInServerBundle;
 import org.jetbrains.ide.BuiltInServerManager;
@@ -50,7 +49,7 @@ public final class BuiltInServerOptions implements PersistentStateComponent<Buil
     @Override
     public Collection<? extends Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
       if (category == DebuggerSettingsCategory.GENERAL) {
-        return Collections.singletonList(SimpleConfigurable.create("builtInServer", XmlBundle
+        return Collections.singletonList(SimpleConfigurable.create("builtInServer", BuiltInServerBundle
           .message("setting.builtin.server.category.label"), BuiltInServerConfigurableUi.class, () -> getInstance()));
       }
       return Collections.emptyList();

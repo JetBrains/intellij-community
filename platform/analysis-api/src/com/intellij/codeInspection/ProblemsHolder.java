@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.BundleBase;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -16,6 +17,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.CheckReturnValue;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -213,5 +216,107 @@ public class ProblemsHolder {
   @NotNull
   public final Project getProject() {
     return myManager.getProject();
+  }
+
+  /**
+   * Creates a builder to report a problem. Make sure to call {@link ProblemBuilder#register()} afterwards 
+   * @param psiElement element to anchor the problem
+   * @param descriptionTemplate problem description template
+   * @return the builder that allows adding more information and eventually register the problem
+   */
+  @Contract(pure = true)
+  public @NotNull ProblemBuilder problem(@NotNull PsiElement psiElement, @InspectionMessage @NotNull String descriptionTemplate) {
+    return new ProblemBuilder(psiElement, descriptionTemplate);
+  }
+
+  /**
+   * The builder to create a problem report
+   */
+  @SuppressWarnings("UnstableApiUsage")
+  public final class ProblemBuilder {
+    private final @InspectionMessage @NotNull String myDescriptionTemplate;
+    private final @NotNull PsiElement myPsiElement;
+    private @NotNull ProblemHighlightType myHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+    private @Nullable TextRange myRange;
+    private final @NotNull List<LocalQuickFix> myFixes = new ArrayList<>();
+
+    private ProblemBuilder(@NotNull PsiElement element, @InspectionMessage @NotNull String template) {
+      myPsiElement = element;
+      myDescriptionTemplate = template;
+    }
+
+    /**
+     * @param problemHighlightType desired highlighting type
+     * @return this builder
+     */
+    @Contract(value = "_ -> this", mutates = "this")
+    @CheckReturnValue
+    public ProblemBuilder highlight(ProblemHighlightType problemHighlightType) {
+      myHighlightType = problemHighlightType;
+      return this;
+    }
+
+    /**
+     * @param rangeInElement desired highlighting range within the element
+     * @return this builder
+     */
+    @Contract(value = "_ -> this", mutates = "this")
+    @CheckReturnValue
+    public ProblemBuilder range(@NotNull TextRange rangeInElement) {
+      myRange = rangeInElement;
+      return this;
+    }
+
+    /**
+     * @param fix a new fix to add to the problem
+     * @return this builder
+     */
+    @Contract(value = "_ -> this", mutates = "this")
+    @CheckReturnValue
+    public ProblemBuilder fix(@NotNull LocalQuickFix fix) {
+      myFixes.add(fix);
+      return this;
+    }
+
+    /**
+     * @param action a new fix to add to the problem
+     * @return this builder
+     */
+    @Contract(value = "_ -> this", mutates = "this")
+    @CheckReturnValue
+    public ProblemBuilder fix(@NotNull ModCommandAction action) {
+      myFixes.add(action.asQuickFix());
+      return this;
+    }
+
+    /**
+     * @param fix a new fix to add to the problem; does nothing if it's null
+     * @return this builder
+     */
+    @Contract(value = "_ -> this", mutates = "this")
+    @CheckReturnValue
+    public ProblemBuilder maybeFix(@Nullable LocalQuickFix fix) {
+      if (fix != null) {
+        myFixes.add(fix);
+      }
+      return this;
+    }
+
+    /**
+     * @param action a new fix to add to the problem; does nothing if it's null
+     * @return this builder
+     */
+    @Contract(value = "_ -> this", mutates = "this")
+    @CheckReturnValue
+    public ProblemBuilder maybeFix(@Nullable ModCommandAction action) {
+      if (action != null) {
+        myFixes.add(action.asQuickFix());
+      }
+      return this;
+    }
+
+    public void register() {
+      registerProblem(myPsiElement, myDescriptionTemplate, myHighlightType, myRange, myFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+    }
   }
 }

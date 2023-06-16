@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.jvmcompat;
+package org.jetbrains.plugins.gradle.jvmcompat
 
 import com.intellij.ReviseWhenPortedToJDK
 import java.io.BufferedInputStream
@@ -13,19 +13,21 @@ import javax.xml.stream.XMLInputFactory
 fun main(args: Array<String>) {
   assert(args.size == 3) { "Should be 3 files: Path to JSON, path to result file dir, path to ApplicationInfo.xml" }
   val applicationVersion = readAppVersion(Paths.get(args[2]))
-  generateJvmSupportMatrices(Paths.get(args[0]), Paths.get(args[1]), applicationVersion);
+  generateJvmSupportMatrices(Paths.get(args[0]), Paths.get(args[1]), applicationVersion)
 }
 
 fun generateJvmSupportMatrices(json: Path, kt: Path, applicationVersion: String, copyrightComment: String? = null) {
 
   val jsonData = json.toFile().readText(Charsets.UTF_8)
-  val parser = CompatibilityDataParser(applicationVersion)
-  val parsedData = parser.parseJson(jsonData) ?: throw IllegalStateException("Cannot get compatibility data")
+  val parsedData = GradleCompatibilityDataParser
+    .parseVersionedJson(jsonData, applicationVersion) ?: throw IllegalStateException("Cannot get compatibility data")
 
-  if (copyrightComment != null && copyrightComment.indexOf('\n') != -1) throw IllegalArgumentException("Copyright should be in single line")
+  if (copyrightComment != null && copyrightComment.indexOf('\n') != -1) {
+    throw IllegalArgumentException("Copyright should be in single line")
+  }
   val classFileData = ClassFileData(copyrightComment ?: createCopyrightComment(), parsedData)
 
-  val fileData = getGeneratedString(classFileData);
+  val fileData = getGeneratedString(classFileData)
   kt.toFile().writeText(fileData, Charsets.UTF_8)
 }
 
@@ -34,13 +36,13 @@ fun createCopyrightComment(): String {
 }
 
 internal class ClassFileData(val copyrightComment: String,
-                             val parsedData: CompatibilityData)
+                             val parsedData: GradleCompatibilityState)
 
 fun readAppVersion(appInfoPath: Path): String {
   val xmlInputFactory: XMLInputFactory = XMLInputFactory.newInstance()
   BufferedInputStream(FileInputStream(appInfoPath.toFile())).use { bis ->
     val reader = xmlInputFactory.createXMLEventReader(bis)
-    val startDocument = reader.nextEvent();
+    val startDocument = reader.nextEvent()
     assert(startDocument.isStartDocument)
     if (reader.hasNext()) {
       val startElement = reader.nextEvent()
@@ -103,14 +105,14 @@ internal fun getGeneratedString(data: ClassFileData): String {
 package org.jetbrains.plugins.gradle.jvmcompat;
 
 import com.intellij.openapi.application.ApplicationInfo
-import org.jetbrains.plugins.gradle.jvmcompat.CompatibilityData
+import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilityState
 
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate Gradle Compatibility Matrix" configuration instead
  */
  
-internal val DEFAULT_DATA = CompatibilityData(
+internal val DEFAULT_DATA = GradleCompatibilityState(
   listOf(
     ${data.parsedData.versionMappings.printAsListData(4, VersionMapping::toConstructor)}
   ),

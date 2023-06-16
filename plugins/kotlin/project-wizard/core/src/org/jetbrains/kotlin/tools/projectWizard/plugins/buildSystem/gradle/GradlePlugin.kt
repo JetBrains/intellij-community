@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle
 
 
 import kotlinx.collections.immutable.toPersistentList
+import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
@@ -161,13 +162,42 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
 
                 val repositories = getPluginRepositoriesWithDefaultOnes().map { PluginManagementRepositoryIR(RepositoryIR(it)) }
 
+                val plugins = mutableListOf<BuildSystemPluginIR>()
+
+                val minGradleFoojayVersion =
+                    GradleVersion.version(Versions.GRADLE_PLUGINS.MIN_GRADLE_FOOJAY_VERSION.text)
+                val currentGradleVersion = GradleVersion.version(gradleVersion.settingValue.text)
+                val foojayCanBeAdded = currentGradleVersion >= minGradleFoojayVersion
+
+                if (foojayCanBeAdded) { // Check if foojay needs to be added
+                    var foojayNeedsToBeAdded = false
+                    val buildFiles = buildFiles.propertyValue
+
+                    val platformTypes = buildFiles.flatMap { it.irs }
+                        .filterIsInstance<KotlinBuildSystemPluginIR>()
+                        .map { it.type }.toSet()
+
+                    if (platformTypes.contains(KotlinBuildSystemPluginIR.Type.jvm)) {
+                        foojayNeedsToBeAdded = true
+                    } else if (platformTypes.contains(KotlinBuildSystemPluginIR.Type.multiplatform)) {
+                        foojayNeedsToBeAdded = buildFiles.flatMap { it.modules.modules }
+                            .flatMap { it.sourcesets }
+                            .any { it is MultiplatformSourcesetIR && it.targetName == "jvm" }
+                    }
+
+                    if (foojayNeedsToBeAdded) {
+                        plugins.add(FoojayPluginIR(Versions.GRADLE_PLUGINS.FOOJAY_VERSION))
+                    }
+                }
+
                 val settingsGradleIR = SettingsGradleFileIR(
                     StructurePlugin.name.settingValue,
                     allModulesPaths.map { path -> path.joinToString(separator = "") { ":$it" } },
                     buildPersistenceList {
                         +repositories
                         +settingsGradleFileIRs.propertyValue
-                    }
+                    },
+                    plugins
                 )
                 val buildFileText = createBuildFile().printBuildFile { settingsGradleIR.render(this) }
                 service<FileSystemWizardService>().createFile(

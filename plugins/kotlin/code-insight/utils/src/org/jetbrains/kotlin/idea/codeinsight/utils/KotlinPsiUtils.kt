@@ -355,3 +355,6 @@ fun KtElement.isReferenceToBuiltInEnumFunction(): Boolean {
         else -> false
     }
 }
+
+fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD)
+fun KtClass.isInheritable(): Boolean = isOpen() || isAbstract() || isSealed()

@@ -79,6 +79,7 @@ public abstract class SearchQueryParser {
     public final Set<String> tags = new HashSet<>();
     public final Set<String> repositories = new HashSet<>();
     public String sortBy;
+    public boolean suggested;
 
     public Marketplace(@NotNull String query) {
       parse(query);
@@ -111,6 +112,16 @@ public abstract class SearchQueryParser {
         else {
           addToSearchQuery(name);
         }
+      }
+    }
+
+    @Override
+    protected void addToSearchQuery(@NotNull String query) {
+      if (query.equals(SearchWords.SUGGESTED.getValue())) {
+        suggested = true;
+      }
+      else {
+        super.addToSearchQuery(query);
       }
     }
 

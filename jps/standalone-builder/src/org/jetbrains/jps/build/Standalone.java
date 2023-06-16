@@ -7,6 +7,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ParameterizedRunnable;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
@@ -138,15 +139,17 @@ public class Standalone {
     return consoleMessageHandler.hasErrors() ? 1 : 0;
   }
 
-  public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, boolean forceBuild, Set<String> modulesSet,
-                              final boolean allModules, List<String> artifactsList, final boolean includeTests,
-                              final MessageHandler messageHandler) throws Exception {
+  public static void runBuild(@NotNull JpsModelLoader loader, @NotNull File dataStorageRoot, boolean forceBuild,
+                              @NotNull Set<String> modulesSet, boolean allModules,
+                              @NotNull List<String> artifactsList, boolean includeTests,
+                              @NotNull MessageHandler messageHandler) throws Exception {
     runBuild(loader, dataStorageRoot, forceBuild, modulesSet, allModules, artifactsList, false, includeTests, messageHandler);
   }
 
-  public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, boolean forceBuild, Set<String> modulesSet,
-                              final boolean allModules, List<String> artifactsList, boolean allArtifacts, final boolean includeTests,
-                              final MessageHandler messageHandler) throws Exception {
+  public static void runBuild(@NotNull JpsModelLoader loader, @NotNull File dataStorageRoot, boolean forceBuild,
+                              @NotNull Set<String> modulesSet, boolean allModules, 
+                              @NotNull List<String> artifactsList, boolean allArtifacts, 
+                              boolean includeTests, @NotNull MessageHandler messageHandler) throws Exception {
     List<TargetTypeBuildScope> scopes = new ArrayList<>();
     for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
       if (includeTests || !type.isTests()) {
@@ -174,14 +177,14 @@ public class Standalone {
     runBuild(loader, dataStorageRoot, messageHandler, scopes, true);
   }
 
-  public static void runBuild(JpsModelLoader loader, File dataStorageRoot, MessageHandler messageHandler, List<TargetTypeBuildScope> scopes,
-                              boolean includeDependenciesToScope) throws Exception {
+  public static void runBuild(@NotNull JpsModelLoader loader, @NotNull File dataStorageRoot, @NotNull MessageHandler messageHandler, 
+                              @NotNull List<TargetTypeBuildScope> scopes, boolean includeDependenciesToScope) throws Exception {
     runBuild(loader, dataStorageRoot, Collections.emptyMap(), messageHandler, scopes, includeDependenciesToScope);
   }
 
-  public static void runBuild(JpsModelLoader loader, File dataStorageRoot,
-                              Map<String, String> buildParameters,
-                              MessageHandler messageHandler, List<TargetTypeBuildScope> scopes,
+  public static void runBuild(@NotNull JpsModelLoader loader, @NotNull File dataStorageRoot,
+                              @NotNull Map<String, String> buildParameters,
+                              @NotNull MessageHandler messageHandler, @NotNull List<TargetTypeBuildScope> scopes,
                               boolean includeDependenciesToScope) throws Exception {
     final LowMemoryWatcherManager memWatcher = new LowMemoryWatcherManager(SharedThreadPool.getInstance());
     final BuildRunner buildRunner = new BuildRunner(loader);

@@ -1,0 +1,10 @@
+// "Make 'foo' 'final'" "true"
+// COMPILER_ARGUMENTS: -XXLanguage:-ProhibitOpenValDeferredInitialization
+open class Foo {
+    val foo: Int
+        get() = field
+
+    init {
+        foo = 2
+    }
+}

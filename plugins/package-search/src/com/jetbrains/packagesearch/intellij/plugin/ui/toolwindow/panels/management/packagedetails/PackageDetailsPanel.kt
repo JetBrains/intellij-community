@@ -31,6 +31,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.idea.packagesearch.SortMetric
 import java.awt.CardLayout
 import java.awt.Point
 import javax.swing.JPanel
@@ -85,6 +86,7 @@ internal class PackageDetailsPanel(
         val repositoriesDeclarationsByModule: Map<PackageSearchModule, List<RepositoryModel>>,
         val targetModules: TargetModules,
         val onlyStable: Boolean,
+        val sortMetric: SortMetric,
         val invokeLaterScope: CoroutineScope,
         val allKnownRepositories: List<RepositoryModel>
     )

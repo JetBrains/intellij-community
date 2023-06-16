@@ -5,9 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analysis.project.structure.allDirectDependencies
 import org.jetbrains.kotlin.analysis.providers.KotlinResolutionScopeProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfoForOutsider
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleDependencyCollector
 import org.jetbrains.kotlin.idea.base.projectStructure.collectDependencies
 import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceIn
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.util.minus
+import org.jetbrains.kotlin.idea.base.util.not
 
 internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Project) : KotlinResolutionScopeProvider() {
     override fun getResolutionScope(module: KtModule): GlobalSearchScope {
@@ -24,7 +25,14 @@ internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Pr
                 @OptIn(Frontend10ApiUsage::class)
                 val moduleInfo = module.moduleInfo as ModuleSourceInfo
                 val includeTests = moduleInfo is ModuleTestSourceInfo
-                return excludeIgnoredModulesByKotlinProjectModel(moduleInfo, module, includeTests)
+                val scope = excludeIgnoredModulesByKotlinProjectModel(moduleInfo, module, includeTests)
+                return if (module is KtSourceModuleByModuleInfoForOutsider) {
+                    GlobalSearchScope.fileScope(module.project, module.fakeVirtualFile)
+                        .uniteWith(scope)
+                        .intersectWith(GlobalSearchScope.fileScope(module.project, module.originalVirtualFile).not())
+                } else {
+                    scope
+                }
             }
 
             else -> {
@@ -47,10 +55,9 @@ internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Pr
         module: KtSourceModule,
         includeTests: Boolean
     ): GlobalSearchScope {
-        val ignored = moduleInfo.collectDependencies(
-            project.getService(ProjectStructureProvider::class.java),
-            ModuleDependencyCollector.CollectionMode.COLLECT_IGNORED
-        ).map { it.contentScope }
+        val ignored = moduleInfo
+            .collectDependencies(ModuleDependencyCollector.CollectionMode.COLLECT_IGNORED)
+            .map { it.contentScope }
 
         val searchScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module.ideaModule, includeTests)
         if (ignored.isEmpty()) return searchScope

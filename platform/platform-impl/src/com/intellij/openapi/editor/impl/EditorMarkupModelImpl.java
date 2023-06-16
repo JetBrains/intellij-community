@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -52,6 +53,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
@@ -70,6 +72,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Queue;
@@ -118,7 +121,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private final @NotNull EditorImpl myEditor;
   // null renderer means we should not show a traffic light icon
   private @Nullable ErrorStripeRenderer myErrorStripeRenderer;
-  private final MergingUpdateQueue myStatusUpdates;
+  private final CheckedDisposable resourcesDisposable = Disposer.newCheckedDisposable();
+  private final MergingUpdateQueue myStatusUpdates =
+    new MergingUpdateQueue(getClass().getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable);
+  // query daemon status in BGT (because it's rather expensive and PSI-related) and then update the icon in EDT later
+  private final MergingUpdateQueue myTrafficLightIconUpdates =
+    new MergingUpdateQueue(getClass().getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable, null, Alarm.ThreadToUse.POOLED_THREAD);
   private final ErrorStripeMarkersModel myErrorStripeMarkersModel;
 
   private boolean dimensionsAreValid;
@@ -136,25 +144,24 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private int myRowAdjuster;
   private int myWheelAccumulator;
   private int myLastVisualLine;
-  private WeakReference<LightweightHint> myCurrentHint;
+  private Reference<LightweightHint> myCurrentHint;
   private int myCurrentHintAnchorY;
   private boolean myKeepHint;
 
   private final ActionToolbarImpl statusToolbar;
-  private boolean showToolbar;
-  private boolean trafficLightVisible;
+  private boolean showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget();
+  private boolean trafficLightVisible = true;
   private final ComponentListener toolbarComponentListener;
   private Rectangle cachedToolbarBounds = new Rectangle();
-  private final JLabel smallIconLabel;
+  private final JLabel smallIconLabel = new JLabel();
   @NotNull
-  private AnalyzerStatus analyzerStatus = AnalyzerStatus.getEMPTY();
+  private volatile AnalyzerStatus analyzerStatus = AnalyzerStatus.getEMPTY();
   private boolean hasAnalyzed;
   private boolean isAnalyzing;
   private boolean showNavigation;
   private boolean reportErrorStripeInconsistency = true;
   @NotNull
   private final TrafficLightPopup myTrafficLightPopup;
-  private final Disposable resourcesDisposable = Disposer.newDisposable();
   private final Alarm statusTimer = new Alarm(resourcesDisposable);
   private final Map<InspectionWidgetActionProvider, AnAction> extensionActions = new HashMap<>();
 
@@ -165,8 +172,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
 
     myTrafficLightPopup = new TrafficLightPopup(editor, new CompactViewAction());
-    showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget();
-    trafficLightVisible = true;
 
     AnAction nextErrorAction = createAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatchesSmall);
     AnAction prevErrorAction = createAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatchesSmall);
@@ -187,7 +192,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
-
       @Override
       public void addNotify() {
         setTargetComponent(editor.getContentComponent());
@@ -281,7 +285,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     toolbar.addComponentListener(toolbarComponentListener);
     toolbar.setBorder(JBUI.Borders.empty(2));
 
-    smallIconLabel = new JLabel();
     smallIconLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {
@@ -331,9 +334,13 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         updateTrafficLightVisibility();
       }
     });
-    myStatusUpdates = new MergingUpdateQueue(getClass().getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable);
 
     myErrorStripeMarkersModel = new ErrorStripeMarkersModel(myEditor, resourcesDisposable);
+  }
+
+  @Override
+  public String toString() {
+    return "EditorMarkupModel for "+myEditor;
   }
 
   @Override
@@ -473,17 +480,22 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   public void repaintTrafficLightIcon() {
     if (myErrorStripeRenderer == null) return;
 
-    myStatusUpdates.queue(Update.create("icon", () -> {
-      if (myErrorStripeRenderer != null) {
-        AnalyzerStatus newStatus = myErrorStripeRenderer.getStatus();
+    myTrafficLightIconUpdates.queue(Update.create("traffic light icon", () -> {
+      ErrorStripeRenderer errorStripeRenderer = myErrorStripeRenderer;
+      if (errorStripeRenderer != null) {
+        AnalyzerStatus newStatus = ReadAction.compute(() -> errorStripeRenderer.getStatus());
         if (!newStatus.equalsTo(analyzerStatus)) {
-          changeStatus(newStatus);
+          ApplicationManager.getApplication().invokeLater(() -> changeStatus(newStatus));
         }
       }
     }));
   }
 
   private void changeStatus(@NotNull AnalyzerStatus newStatus) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!isErrorStripeVisible() || resourcesDisposable.isDisposed()) {
+      return;
+    }
     statusTimer.cancelAllRequests();
 
     AnalyzingType analyzingType = newStatus.getAnalyzingType();
@@ -515,6 +527,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     ActivityTracker.getInstance().inc();
   }
 
+  // Used in Rider please do not drop it
   public void forcingUpdateStatusToolbar() {
     myStatusUpdates.queue(Update.create("forcingUpdate", () -> {
       statusToolbar.updateActionsImmediately();
@@ -551,8 +564,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     SwingUtilities.convertPointToScreen(location, component);
     return new Rectangle(location, hint.getSize());
   }
-
+  // true if tooltip shown
   private boolean showToolTipByMouseMove(@NotNull MouseEvent e) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LightweightHint currentHint = getCurrentHint();
     if (currentHint != null && (myKeepHint || myMouseMovementTracker.isMovingTowards(e, getBoundsOnScreen(currentHint)))) {
       return true;
@@ -576,11 +590,16 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
 
     Set<RangeHighlighter> highlighters = getNearestHighlighters(e.getY() + 1);
-    if (highlighters.isEmpty()) return false;
+    if (highlighters.isEmpty()) {
+      return false;
+    }
 
-    int y = e.getY();
+    int y;
     RangeHighlighter nearest = getNearestRangeHighlighter(e);
-    if (nearest != null) {
+    if (nearest == null) {
+      y = e.getY();
+    }
+    else {
       ProperTextRange range = offsetsToYPositions(nearest.getStartOffset(), nearest.getEndOffset());
       int eachStartY = range.getStartOffset();
       int eachEndY = range.getEndOffset();
@@ -589,16 +608,19 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     if (currentHint != null && y == myCurrentHintAnchorY) {
       return true;
     }
-    TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
-    if (bigRenderer != null) {
-      LightweightHint hint = showTooltip(bigRenderer, createHint(e.getComponent(), new Point(0, y+1)).setForcePopup(true));
-      myCurrentHint = new WeakReference<>(hint);
-      myCurrentHintAnchorY = y;
-      myKeepHint = false;
-      myMouseMovementTracker.reset();
-      return true;
-    }
-    return false;
+    ReadAction.nonBlocking(()->myTooltipRendererProvider.calcTooltipRenderer(highlighters))
+      .expireWhen(() -> myEditor.isDisposed())
+      .finishOnUiThread(ModalityState.nonModal(), bigRenderer -> {
+        if (bigRenderer != null) {
+          LightweightHint hint = showTooltip(bigRenderer, createHint(e.getComponent(), new Point(0, y+1)).setForcePopup(true));
+          myCurrentHint = new WeakReference<>(hint);
+          myCurrentHintAnchorY = y;
+          myKeepHint = false;
+          myMouseMovementTracker.reset();
+        }
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
+    return true;
   }
 
   @NotNull
@@ -1238,7 +1260,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       showToolTipByMouseMove(e);
     }
 
-    private void cancelMyToolTips(MouseEvent e, boolean checkIfShouldSurvive) {
+    private void cancelMyToolTips(@NotNull MouseEvent e, boolean checkIfShouldSurvive) {
       hideMyEditorPreviewHint();
       TooltipController tooltipController = TooltipController.getInstance();
       if (!checkIfShouldSurvive || !tooltipController.shouldSurvive(e)) {
@@ -1338,6 +1360,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private static final class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
     @Override
     public TooltipRenderer calcTooltipRenderer(@NotNull Collection<? extends RangeHighlighter> highlighters) {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
       LineTooltipRenderer bigRenderer = null;
       //do not show the same tooltip twice
       Set<String> tooltips = null;

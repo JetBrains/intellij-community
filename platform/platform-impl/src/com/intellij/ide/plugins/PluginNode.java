@@ -12,10 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public final class PluginNode implements IdeaPluginDescriptor {
 
@@ -68,6 +65,10 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private List<String> screenShots;
   private String externalPluginIdForScreenShots;
   private String mySuggestedCommercialIde = null;
+  private Collection<String> mySuggestedFeatures;
+  private boolean myConverted;
+
+  private Collection<String> dependencyNames;
 
   /**
    * @deprecated Use {@link #PluginNode(PluginId)}
@@ -586,6 +587,30 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setSuggestedCommercialIde(String commercialIdeCode) {
     mySuggestedCommercialIde = commercialIdeCode;
+  }
+
+  public Collection<String> getSuggestedFeatures() {
+    return mySuggestedFeatures;
+  }
+
+  public void setSuggestedFeatures(@NotNull Collection<String> features) {
+    mySuggestedFeatures = features;
+  }
+
+  public @Nullable Collection<String> getDependencyNames() {
+    return dependencyNames;
+  }
+
+  public void setDependencyNames(@Nullable Collection<String> dependencyNames) {
+    this.dependencyNames = dependencyNames;
+  }
+
+  public boolean isConverted() {
+    return myConverted;
+  }
+
+  public void setConverted(boolean converted) {
+    myConverted = converted;
   }
 
   @Override

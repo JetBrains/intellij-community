@@ -8,8 +8,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
 
 public final class UnknownConfigurationType extends SimpleConfigurationType {
-  @NotNull
-  private static final UnknownConfigurationType INSTANCE = new UnknownConfigurationType();
+  private static final @NotNull UnknownConfigurationType INSTANCE = new UnknownConfigurationType();
 
   private static final String NAME = "Unknown";
 
@@ -18,21 +17,18 @@ public final class UnknownConfigurationType extends SimpleConfigurationType {
           NotNullLazyValue.createValue(() -> AllIcons.Actions.Help));
   }
 
-  @NotNull
-  public static UnknownConfigurationType getInstance() {
+  public static @NotNull UnknownConfigurationType getInstance() {
     return INSTANCE;
   }
 
-  @NotNull
   @Override
-  public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+  public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
     return new UnknownRunConfiguration(this, project);
   }
 
-  @NotNull
   @Override
-  public RunConfigurationSingletonPolicy getSingletonPolicy() {
-    // in any case you cannot run UnknownConfigurationType
+  public @NotNull RunConfigurationSingletonPolicy getSingletonPolicy() {
+    // in any case, you cannot run UnknownConfigurationType
     return RunConfigurationSingletonPolicy.SINGLE_INSTANCE_ONLY;
   }
 

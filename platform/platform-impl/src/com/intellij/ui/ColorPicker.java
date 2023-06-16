@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.colorpicker.*;
 import com.intellij.ui.picker.ColorListener;
+import com.intellij.ui.picker.ColorPickerPopupCloseListener;
 import com.intellij.ui.picker.ColorPipette;
 import com.intellij.ui.picker.ColorPipetteBase;
 import com.intellij.ui.picker.MacColorPipette;
@@ -397,31 +398,79 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     return null;
   }
 
+  /**
+   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
+   */
+  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @Nullable Editor editor, @NotNull ColorListener listener) {
     showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), currentColor != null && currentColor.getAlpha() != 255);
   }
 
+  /**
+   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
+   */
+  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @Nullable Editor editor, @NotNull ColorListener listener, boolean showAlpha) {
     showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), showAlpha);
   }
 
+  /**
+   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
+   */
+  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @Nullable Editor editor, @NotNull ColorListener listener, boolean showAlpha, boolean showAlphaAsPercent) {
     showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), showAlpha, showAlphaAsPercent);
   }
 
+  /**
+   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
+   */
+  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener) {
     showColorPickerPopup(project, currentColor, listener, null);
   }
 
+  /**
+   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
+   */
+  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @NotNull ColorListener listener, @Nullable RelativePoint location) {
     showColorPickerPopup(project, currentColor, listener, location, false);
   }
 
+  /**
+   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
+   */
+  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable final Project project, @Nullable Color currentColor, @NotNull final ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
     showColorPickerPopup(project, currentColor, listener, location, showAlpha, false);
   }
 
+  /**
+   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
+   */
+  @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable final Project project, @Nullable Color currentColor, @NotNull final ColorListener listener, @Nullable RelativePoint location, boolean showAlpha, boolean showAlphaAsPercent) {
+    showColorPickerPopup(project, currentColor, listener, location, showAlpha, showAlphaAsPercent, null);
+  }
+
+  static void showColorPickerPopup(@Nullable final Project project,
+                                   @Nullable Color currentColor,
+                                   @Nullable final Editor editor,
+                                   @NotNull final ColorListener listener,
+                                   boolean showAlpha,
+                                   boolean showAlphaAsPercent,
+                                   @Nullable final ColorPickerPopupCloseListener popupCloseListener) {
+    showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), showAlpha, showAlphaAsPercent, popupCloseListener);
+  }
+
+  static void showColorPickerPopup(@Nullable final Project project,
+                                   @Nullable Color currentColor,
+                                   @NotNull final ColorListener listener,
+                                   @Nullable RelativePoint location,
+                                   boolean showAlpha,
+                                   boolean showAlphaAsPercent,
+                                   @Nullable final ColorPickerPopupCloseListener popupCloseListener) {
     if( !isEnoughSpaceToShowPopup() || !Registry.is("ide.new.color.picker")) {
       Color color = showDialog(IdeFocusManager.getGlobalInstance().getFocusOwner(), IdeBundle.message("dialog.title.choose.color"),
                                currentColor, showAlpha, null, showAlphaAsPercent);
@@ -484,7 +533,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       .focusWhenDisplay(true)
       .setFocusCycleRoot(true)
       .addKeyAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelPopup(ref))
-      .addKeyAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), applyColor(ref));
+      .addKeyAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), applyColor(ref))
+      .setPopupCloseListener(popupCloseListener);
     LightCalloutPopup popup = builder.build();
     ref.set(popup);
 

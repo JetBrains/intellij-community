@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.roots.ContentIteratorEx
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
@@ -64,9 +63,14 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   fun getDirectoriesByPackageName(packageName: String, scope: GlobalSearchScope): Query<VirtualFile>
 
   /**
-   * Initialize the index data if it isn't done yet.
+   * Initialize the index data. The index must not be accessed before this function is called.
    */
-  suspend fun ensureInitialized()
+  suspend fun initialize()
+
+  /**
+   * A blocking variant of [initialize]. It's temporary extracted to be used in CodeServer until suspending read actions are supported in it.
+   */
+  fun initializeBlocking()
 
   /**
    * There may be thousands of file sets in index, so visiting them all is generally discouraged.
@@ -76,11 +80,6 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   
   @TestOnly
   fun reset()
-
-  companion object {
-    @JvmField
-    val IS_ENABLED: Boolean = Registry.`is`("platform.projectModel.workspace.model.file.index", true)
-  }
 }
 
 /**

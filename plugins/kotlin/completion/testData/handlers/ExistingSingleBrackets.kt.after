@@ -13,3 +13,4 @@ class A {
 fun testMy() {
     A.testOther(<caret>)
 }
+// AUTOCOMPLETE_SETTING: true

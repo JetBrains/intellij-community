@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -29,30 +29,18 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    PsiElement element = file.findElementAt(offset);
-    while (true) {
-      if (element == null || element instanceof PsiFile) {
-        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.ENCAPSULATE_FIELDS);
-        return;
-      }
-      if (element instanceof PsiField field) {
-        if (field.getContainingClass() == null) {
-          String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("the.field.should.be.declared.in.a.class"));
-          CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.ENCAPSULATE_FIELDS);
-          return;
-        }
-        invoke(project, new PsiElement[]{element}, dataContext);
-        return;
-      }
-      if (element instanceof PsiClass) {
-        invoke(project, new PsiElement[]{element}, dataContext);
-        return;
-      }
-      element = element.getParent();
+    List<PsiElement> elements =
+      CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, null,
+                                                                e -> e instanceof PsiField field && field.getContainingClass() != null ||
+                                                                     e instanceof PsiClass);
+    if (elements.isEmpty()) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.class"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.ENCAPSULATE_FIELDS);
+      return;
     }
+
+    invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
   }
 
   /**
@@ -119,12 +107,8 @@ public class EncapsulateFieldsHandler implements PreviewableRefactoringActionHan
     dialog.show();
   }
 
-  protected EncapsulateFieldsDialog createDialog(Project project, PsiClass aClass, HashSet<PsiField> preselectedFields) {
-    return new EncapsulateFieldsDialog(
-      project,
-      aClass,
-      preselectedFields,
-      new JavaEncapsulateFieldHelper());
+  protected static EncapsulateFieldsDialog createDialog(Project project, PsiClass aClass, HashSet<PsiField> preselectedFields) {
+    return new EncapsulateFieldsDialog(project, aClass, preselectedFields, new JavaEncapsulateFieldHelper());
   }
 
   @Override

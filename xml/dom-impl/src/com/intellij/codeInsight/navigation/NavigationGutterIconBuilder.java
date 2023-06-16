@@ -3,6 +3,7 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
+import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * DOM-specific builder for {@link GutterIconRenderer}
@@ -66,6 +68,7 @@ public class NavigationGutterIconBuilder<T> {
   };
   protected static final NotNullFunction<PsiElement, Collection<? extends GotoRelatedItem>> PSI_GOTO_RELATED_ITEM_PROVIDER =
     dom -> List.of(new GotoRelatedItem(dom, InspectionsBundle.message("xml.goto.group")));
+  private @NotNull Supplier<? extends PsiTargetPresentationRenderer<PsiElement>> myTargetRenderer;
 
   protected NavigationGutterIconBuilder(@NotNull final Icon icon, @NotNull NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> converter) {
     this(icon, converter, null);
@@ -187,6 +190,11 @@ public class NavigationGutterIconBuilder<T> {
     return this;
   }
 
+  public @NotNull NavigationGutterIconBuilder<T> setTargetRenderer(@NotNull Supplier<? extends PsiTargetPresentationRenderer<PsiElement>> cellRendererProvider) {
+    myTargetRenderer = cellRendererProvider;
+    return this;
+  }
+
   /**
    * @deprecated Use {{@link #createGutterIcon(AnnotationHolder, PsiElement)}} instead
    */
@@ -293,7 +301,10 @@ public class NavigationGutterIconBuilder<T> {
 
     Computable<PsiElementListCellRenderer<?>> renderer =
       myCellRenderer == null ? DefaultPsiElementCellRenderer::new : myCellRenderer;
-    return createGutterIconRenderer(pointers, renderer, empty, navigationHandler);
+    NavigationGutterIconRenderer gutterIconRenderer = createGutterIconRenderer(pointers, renderer, empty, navigationHandler);
+    gutterIconRenderer.setProject(project);
+    gutterIconRenderer.setTargetRenderer(myTargetRenderer);
+    return gutterIconRenderer;
   }
 
   @NotNull

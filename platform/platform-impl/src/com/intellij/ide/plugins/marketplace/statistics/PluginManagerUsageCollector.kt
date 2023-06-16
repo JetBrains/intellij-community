@@ -24,7 +24,7 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = EVENT_GROUP
 
   companion object {
-    private val EVENT_GROUP = EventLogGroup("plugin.manager", 5)
+    private val EVENT_GROUP = EventLogGroup("plugin.manager", 6)
     private val PLUGINS_GROUP_TYPE = EventFields.Enum<PluginsGroupType>("group")
     private val ENABLE_DISABLE_ACTION = EventFields.Enum<PluginEnabledState>("enabled_state")
     private val ACCEPTANCE_RESULT = EventFields.Enum<DialogAcceptanceResultEnum>("acceptance_result")
@@ -52,7 +52,7 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
     private val PLUGIN_REMOVED = EVENT_GROUP.registerEvent("plugin.was.removed", EventFields.PluginInfo)
 
     @JvmStatic
-    fun pluginCardOpened(descriptor: IdeaPluginDescriptor, group: PluginsGroup?) = group?.let {
+    fun pluginCardOpened(descriptor: IdeaPluginDescriptor, group: PluginsGroup?): Unit? = group?.let {
       PLUGIN_CARD_OPENED.log(getPluginInfoByDescriptor(descriptor), it.type, it.getPluginIndex(descriptor.pluginId))
     }
 
@@ -79,7 +79,7 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    fun pluginRemoved(pluginId: PluginId) = PLUGIN_REMOVED.getIfInitializedOrNull()?.log(getPluginInfoById(pluginId))
+    fun pluginRemoved(pluginId: PluginId): Unit? = PLUGIN_REMOVED.getIfInitializedOrNull()?.log(getPluginInfoById(pluginId))
 
     @JvmStatic
     fun pluginInstallationStarted(
@@ -92,14 +92,14 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    fun pluginInstallationFinished(descriptor: IdeaPluginDescriptor) = getPluginInfoByDescriptor(descriptor).let {
+    fun pluginInstallationFinished(descriptor: IdeaPluginDescriptor): Unit? = getPluginInfoByDescriptor(descriptor).let {
       PLUGIN_INSTALLATION_FINISHED.getIfInitializedOrNull()?.log(it)
     }
 
-    fun signatureCheckResult(descriptor: IdeaPluginDescriptor, result: SignatureVerificationResult) =
+    fun signatureCheckResult(descriptor: IdeaPluginDescriptor, result: SignatureVerificationResult): Unit? =
       PLUGIN_SIGNATURE_CHECK_RESULT.getIfInitializedOrNull()?.log(getPluginInfoByDescriptor(descriptor), result)
 
-    fun signatureWarningShown(descriptor: IdeaPluginDescriptor, result: DialogAcceptanceResultEnum) =
+    fun signatureWarningShown(descriptor: IdeaPluginDescriptor, result: DialogAcceptanceResultEnum): Unit? =
       PLUGIN_SIGNATURE_WARNING.getIfInitializedOrNull()?.log(getPluginInfoByDescriptor(descriptor), result)
   }
 

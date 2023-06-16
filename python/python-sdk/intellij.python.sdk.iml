@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.remote.core" />
+    <orderEntry type="library" name="commons-collections" level="project" />
   </component>
 </module>

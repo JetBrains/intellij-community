@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -39,6 +24,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
 public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
                                Member extends PsiElement,
@@ -107,7 +95,7 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
 
   @Override
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     myDelegate.checkSourceClassConflicts(myPushDownData, conflicts);
     final UsageInfo[] usagesIn = refUsages.get();
     if (usagesIn.length == 0) {
@@ -129,7 +117,7 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
               delegate.checkTargetClassConflicts(element, myPushDownData, conflicts, null);
             }
             else {
-              conflicts.putValue(element, "Not supported source/target pair detected");
+              conflicts.putValue(element, RefactoringBundle.message("dialog.message.not.supported.source.target.pair.detected"));
             }
           }
         }
@@ -188,7 +176,7 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
 
   @NotNull
   @Override
-  protected @NlsContexts.DialogTitle String getCommandName() {
+  protected @DialogTitle String getCommandName() {
     return RefactoringBundle.message("push.members.down.title");
   }
 

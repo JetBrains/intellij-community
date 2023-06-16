@@ -5,6 +5,7 @@ import com.intellij.util.containers.Interner;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,8 +13,8 @@ import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <p/>
@@ -27,10 +28,10 @@ import java.util.Map;
  */
 public class TextMateSyntaxTable {
   private static final LoggerRt LOG = LoggerRt.getInstance(TextMateSyntaxTable.class);
-  private final Map<CharSequence, SyntaxNodeDescriptor> rulesMap = new HashMap<>();
-  private Object2IntMap<String> ruleIds;
+  private final Map<CharSequence, SyntaxNodeDescriptor> rulesMap = new ConcurrentHashMap<>();
+  private Object2IntMap<String> ruleIds; // guarded by this
 
-  public void compact() {
+  public synchronized void compact() {
     ruleIds = null;
   }
 
@@ -171,7 +172,7 @@ public class TextMateSyntaxTable {
     }
   }
 
-  private int getRuleId(@NotNull String ruleName) {
+  private synchronized int getRuleId(@NotNull String ruleName) {
     if (ruleIds == null) {
       ruleIds = new Object2IntOpenHashMap<>();
     }

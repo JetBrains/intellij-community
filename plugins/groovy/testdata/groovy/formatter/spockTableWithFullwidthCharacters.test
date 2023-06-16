@@ -7,6 +7,9 @@ class HelloSpockSpec extends spock.lang.Specification {
     "杰克瑞奇" | 5
     "杰克瑞奇" | 4
     "理查德"   | 6
+    "あいう"   | 3
+    "アイウ"   | 3
+    "ｱｲｳｴｵ"    | 5
   }
 }
 -----
@@ -19,5 +22,8 @@ class HelloSpockSpec extends spock.lang.Specification {
     "杰克瑞奇" | 5
     "杰克瑞奇" | 4
     "理查德"   | 6
+    "あいう"   | 3
+    "アイウ"   | 3
+    "ｱｲｳｴｵ"    | 5
   }
 }

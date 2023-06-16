@@ -28,9 +28,11 @@ import org.jetbrains.annotations.NotNull;
 public final class SlowOperations {
   private static final Logger LOG = Logger.getInstance(SlowOperations.class);
 
+  public static final String ERROR_MESSAGE = "Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.";
+
   public static final String ACTION_UPDATE = "action.update";     // action update in menus, toolbars and popups
   public static final String ACTION_PERFORM = "action.perform";   // user triggered actions
-  public static final String RENDERING = "rendering";             // UI rendering
+  public static final String KNOWN_ISSUE = "known-issues";        // known YT issue
   public static final String GENERIC = "generic";                 // generic activity
 
   public static final String FORCE_ASSERT = "  force assert  ";   // assertion is thrown even if disabled
@@ -58,7 +60,7 @@ public final class SlowOperations {
    * To temporarily mute the assertion in cases when it's difficult to rework the code timely,
    * the computation can be wrapped in a named section {@link #startSection}.
    * The assertion inside named sections is turned on/off separately via Registry keys {@code ide.slow.operations.assertion.<sectionName>}
-   * (sections {@link #GENERIC}, {@link #ACTION_PERFORM}, {@link #RENDERING}, ...).
+   * (sections {@link #GENERIC}, {@link #ACTION_PERFORM}, ...).
    * <p/>
    * Action Subsystem<br><br>
    * <l>
@@ -124,7 +126,7 @@ public final class SlowOperations {
     if (ThrowableInterner.intern(throwable) != throwable) {
       return;
     }
-    LOG.error("Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.");
+    LOG.error(ERROR_MESSAGE);
   }
 
   private static void reportNonCancellableSectionInFastTrack() {
@@ -193,6 +195,12 @@ public final class SlowOperations {
     try (AccessToken ignore = startSection(GENERIC)) {
       runnable.run();
     }
+  }
+
+  /** @noinspection unused */
+  @ApiStatus.Internal
+  public static @NotNull AccessToken knownIssue(@NotNull @NonNls String ytIssueId) {
+    return startSection(KNOWN_ISSUE);
   }
 
   /**

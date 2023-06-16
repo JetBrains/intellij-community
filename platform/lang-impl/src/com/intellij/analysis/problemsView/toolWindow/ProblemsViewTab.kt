@@ -10,4 +10,16 @@ interface ProblemsViewTab {
 
   @NonNls
   fun getTabId(): String
+
+  fun orientationChangedTo(vertical: Boolean) {
+  }
+
+  fun selectionChangedTo(selected: Boolean) {
+  }
+
+  fun visibilityChangedTo(visible: Boolean) {
+  }
+
+  val isCloseable: Boolean
+    get() = false
 }

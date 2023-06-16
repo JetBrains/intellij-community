@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.storage.EntityStorage
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 /**
  * Plugins aren't supposed to use this interface directly, the cache is loaded and saved automatically by [WorkspaceModel].
@@ -18,6 +19,7 @@ interface WorkspaceModelCache {
   /**
    * Save workspace model caches
    */
+  @TestOnly
   fun saveCacheNow()
 
   companion object {

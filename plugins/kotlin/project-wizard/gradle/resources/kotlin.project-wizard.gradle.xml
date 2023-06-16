@@ -11,6 +11,10 @@
                  description="New Wasm Project Wizard is enabled"
                  defaultValue="false"
                  restartRequired="true"/>
+    <registryKey key="kotlin.js.wizard"
+                 description="Deprecated Kotlin/JS templates are enabled"
+                 defaultValue="false"
+                 restartRequired="true"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">

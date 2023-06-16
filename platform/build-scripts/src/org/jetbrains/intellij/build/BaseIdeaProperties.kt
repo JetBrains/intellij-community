@@ -5,8 +5,8 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.*
 import org.jetbrains.intellij.build.impl.LibraryPackMode
+import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.impl.PlatformLayout
-import org.jetbrains.intellij.build.impl.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import java.nio.file.Files
 import java.nio.file.Path
@@ -17,8 +17,6 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   "lib/idea_rt.jar" to "1.7",
   "lib/forms_rt.jar" to "1.7",
   "lib/annotations.jar" to "1.7",
-  // JAR contains class files for Java 1.8 and 11 (several modules packed into it)
-  "lib/util.jar!/com/intellij/serialization/" to "1.8",
   "lib/util_rt.jar" to "1.7",
   "lib/util-8.jar" to "1.8",
   "lib/external-system-rt.jar" to "1.7",
@@ -60,7 +58,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.maven",
   "intellij.maven.model",
   "intellij.maven.server",
-  "intellij.packageSearch",
   "intellij.gradle",
   "intellij.gradle.dependencyUpdater",
   "intellij.android.gradle.dsl",
@@ -71,6 +68,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.vcs.svn",
   "intellij.vcs.hg",
   "intellij.vcs.github",
+  "intellij.vcs.gitlab",
   "intellij.groovy",
   "intellij.junit",
   "intellij.testng",
@@ -87,7 +85,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.eclipse",
   "intellij.platform.langInjection",
   "intellij.java.debugger.streams",
-  "intellij.android.smali",
   "intellij.completionMlRanking",
   "intellij.completionMlRankingModels",
   "intellij.statsCollector",
@@ -96,7 +93,6 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.webp",
   "intellij.grazie",
   "intellij.featuresTrainer",
-  "intellij.lombok",
   "intellij.searchEverywhereMl",
   "intellij.platform.tracing.ide",
   "intellij.toml",
@@ -105,6 +101,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.keymap.visualStudio",
   "intellij.keymap.netbeans",
   "intellij.performanceTesting",
+  "intellij.turboComplete",
 )
 
 val CE_CLASS_VERSIONS: PersistentMap<String, String> = BASE_CLASS_VERSIONS.putAll(persistentHashMapOf(
@@ -149,7 +146,8 @@ abstract class BaseIdeaProperties : ProductProperties() {
         "intellij.platform.testFramework.common",
         "intellij.platform.testFramework.junit5",
         "intellij.platform.testFramework",
-        "intellij.platform.uast.tests",
+        "intellij.platform.debugger.testFramework",
+        "intellij.platform.uast.testFramework",
         "intellij.tools.testsBootstrap",
       )) {
         if (!productLayout.productApiModules.contains(moduleName) && !productLayout.productImplementationModules.contains(moduleName)) {
@@ -172,8 +170,10 @@ abstract class BaseIdeaProperties : ProductProperties() {
       // this library is placed into subdirectory of the 'lib' directory in Android plugin layout, so we need to exclude it from the platform layout explicitly
       layout.withoutProjectLibrary("layoutlib")
 
-      layout.withoutProjectLibrary("qodana-sarif")
       layout.withoutProjectLibrary("jetbrains.qodana.publisher")
+      layout.withoutProjectLibrary("jetbrains.qodana.sarif.converter")
+      layout.withoutProjectLibrary("jetbrains.qodana.web.ui")
+      layout.withoutProjectLibrary("qodana-sarif")
       // todo it is a quick fix - fix the root cause
       layout.withoutProjectLibrary("assertJ")
       layout.withoutProjectLibrary("hamcrest")

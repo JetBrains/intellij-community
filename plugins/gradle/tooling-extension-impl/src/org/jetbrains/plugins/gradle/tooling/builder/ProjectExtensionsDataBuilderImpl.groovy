@@ -38,10 +38,13 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible, true, extractStringList(it, "getDeclarationAlternatives")))
     }
 
-    def convention = project.convention
-    convention.plugins.each { key, value ->
-      result.conventions.add(new DefaultGradleConvention(key, getType(value)))
+    if (GradleVersion.current().baseVersion < GradleVersion.version("8.2")){
+      def convention = project.convention
+      convention.plugins.each { key, value ->
+        result.conventions.add(new DefaultGradleConvention(key, getType(value)))
+      }
     }
+
     def extensions = project.extensions
     extensions.extraProperties.properties.each { name, value ->
       if(name == 'extraModelBuilder' || name.contains('.')) return

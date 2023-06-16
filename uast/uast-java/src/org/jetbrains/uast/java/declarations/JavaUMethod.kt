@@ -5,8 +5,6 @@ package org.jetbrains.uast.java
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor
-import com.intellij.util.asSafely
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.convertOrReport
@@ -19,7 +17,7 @@ open class JavaUMethod(
 ) : JavaAbstractUElement(uastParent), UMethod, JavaUElementWithComments, UAnchorOwner, PsiMethod by javaPsi {
 
   @Suppress("OverridingDeprecatedMember")
-  override val psi
+  override val psi: PsiMethod
     get() = javaPsi
 
   override val sourcePsi: PsiElement?
@@ -99,7 +97,7 @@ class JavaUAnnotationMethod(
 ) : JavaUMethod(javaPsi, containingElement), UAnnotationMethod, UDeclarationEx {
 
   @Suppress("OverridingDeprecatedMember")
-  override val psi
+  override val psi: PsiAnnotationMethod
     get() = javaPsi
 
   override val uastDefaultValue: UExpression? by lazyPub {

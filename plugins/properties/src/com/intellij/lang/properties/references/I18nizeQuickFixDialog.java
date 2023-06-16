@@ -17,6 +17,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -539,13 +540,19 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     saveLastSelectedFile();
     Collection<PropertiesFile> propertiesFiles = getAllPropertiesFiles();
 
-    ThrowableComputable<HashMap<PropertiesFile, IProperty>, RuntimeException> existingPropertiesGenerator =
-      () -> findExistingProperties(propertiesFiles);
-    HashMap<PropertiesFile, IProperty> existingProperties = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.compute(existingPropertiesGenerator),
-      PropertiesBundle.message("i18nize.dialog.searching.for.already.existing.properties"),
-      true, myProject
-    );
+    HashMap<PropertiesFile, IProperty> existingProperties;
+    try {
+      ThrowableComputable<HashMap<PropertiesFile, IProperty>, RuntimeException> existingPropertiesGenerator =
+        () -> findExistingProperties(propertiesFiles);
+      existingProperties = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> ReadAction.compute(existingPropertiesGenerator),
+        PropertiesBundle.message("i18nize.dialog.searching.for.already.existing.properties"),
+        true, myProject
+      );
+    } catch (ProcessCanceledException e) {
+      super.doOKAction();
+      return;
+    }
 
     for (PropertiesFile propertiesFile : propertiesFiles) {
       IProperty existingProperty = existingProperties.get(propertiesFile);

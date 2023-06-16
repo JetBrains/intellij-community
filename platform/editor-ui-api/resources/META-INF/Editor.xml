@@ -8,8 +8,7 @@
     </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="com.intellij.ide.ui.UISettings" preload="true"/>
-    <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings"/>
+    <applicationService serviceImplementation="com.intellij.ide.ui.UISettings"/>
 
     <projectService
       serviceInterface="com.intellij.openapi.vcs.FileStatusManager"

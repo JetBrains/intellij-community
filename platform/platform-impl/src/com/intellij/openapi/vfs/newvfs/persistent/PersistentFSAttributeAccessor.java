@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
@@ -8,12 +8,14 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferRead
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
 import com.intellij.util.io.DataInputOutputUtil;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-final class PersistentFSAttributeAccessor {
+@ApiStatus.Internal
+public final class PersistentFSAttributeAccessor {
 
   @NotNull
   private final PersistentFSConnection connection;
@@ -34,6 +36,13 @@ final class PersistentFSAttributeAccessor {
   public AttributeInputStream readAttribute(final int fileId,
                                             final @NotNull FileAttribute attribute) throws IOException {
     final AttributeInputStream attributeStream = attributesStorage.readAttribute(connection, fileId, attribute);
+    return validateAttributeVersion(attribute, attributeStream);
+  }
+
+  @ApiStatus.Internal
+  @Nullable
+  public static AttributeInputStream validateAttributeVersion(final @NotNull FileAttribute attribute,
+                                                              final AttributeInputStream attributeStream) {
     if (attributeStream != null && attribute.isVersioned()) {
       try {
         final int actualVersion = DataInputOutputUtil.readINT(attributeStream);
@@ -50,7 +59,7 @@ final class PersistentFSAttributeAccessor {
 
   //======== RC: methods to access attributesStorage raw byteBuffer, if storage supports it
 
-  protected boolean supportsRawAccess() {
+  boolean supportsRawAccess() {
     return attributesStorage instanceof AttributesStorageOverBlobStorage;
   }
 
@@ -61,11 +70,10 @@ final class PersistentFSAttributeAccessor {
    *
    * @return null if an appropriate attribute record does not exist
    */
-  protected <R> @Nullable R readAttributeRaw(final int fileId,
-                                             final @NotNull FileAttribute attribute,
-                                             final ByteBufferReader<R> reader) throws IOException {
-    if (attributesStorage instanceof AttributesStorageOverBlobStorage) {
-      final AttributesStorageOverBlobStorage storage = (AttributesStorageOverBlobStorage)attributesStorage;
+  <R> @Nullable R readAttributeRaw(final int fileId,
+                                   final @NotNull FileAttribute attribute,
+                                   final ByteBufferReader<R> reader) throws IOException {
+    if (attributesStorage instanceof AttributesStorageOverBlobStorage storage) {
       return storage.readAttributeRaw(connection, fileId, attribute, buffer -> {
         if (attribute.isVersioned()) {
           final int actualVersion = DataInputOutputUtil.readINT(buffer);
@@ -84,8 +92,7 @@ final class PersistentFSAttributeAccessor {
   public void writeAttributeRaw(final int fileId,
                                 final @NotNull FileAttribute attribute,
                                 final ByteBufferWriter writer) {
-    if (attributesStorage instanceof AttributesStorageOverBlobStorage) {
-      final AttributesStorageOverBlobStorage storage = (AttributesStorageOverBlobStorage)attributesStorage;
+    if (attributesStorage instanceof AttributesStorageOverBlobStorage storage) {
       throw new UnsupportedOperationException("Method not implemented yet");
       //TODO RC: drill hole for storage.writeAttributeRaw(connection, fileId, attribute, writer)
       //return storage.writeAttribute(connection, fileId, attribute, buffer -> {
@@ -108,6 +115,8 @@ final class PersistentFSAttributeAccessor {
   @NotNull
   public AttributeOutputStream writeAttribute(final int fileId,
                                               final @NotNull FileAttribute attribute) {
+    //TODO RC: we need to check fileId here, and throw exception if it is not valid
+    //         (fileId will be checked on stream.close(), but in general it is better to do it earlier)
     final AttributeOutputStream attributeStream = attributesStorage.writeAttribute(connection, fileId, attribute);
     if (attribute.isVersioned()) {
       try {

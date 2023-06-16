@@ -145,6 +145,9 @@ public class MavenIndices implements Disposable {
 
   @NotNull
   public MavenIndexHolder getIndexHolder() {
+    if(isDisposed) {
+      throw new AlreadyDisposedException("Index was already disposed");
+    }
     return myIndexHolder;
   }
 

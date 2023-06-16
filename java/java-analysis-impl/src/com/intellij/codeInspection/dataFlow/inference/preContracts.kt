@@ -19,8 +19,8 @@ interface PreContract {
 }
 
 internal data class KnownContract(val contract: StandardMethodContract) : PreContract {
-  override fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock) = listOf(contract)
-  override fun negate() = negateContract(contract)?.let(::KnownContract)
+  override fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock): List<StandardMethodContract> = listOf(contract)
+  override fun negate(): KnownContract? = negateContract(contract)?.let(::KnownContract)
 }
 
 internal data class DelegationContract(internal val expression: ExpressionRange, internal val negated: Boolean) : PreContract {
@@ -166,7 +166,7 @@ internal data class SideEffectFilter(internal val expressionsToCheck: List<Expre
 }
 
 internal data class NegatingContract(internal val negated: PreContract) : PreContract {
-  override fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock) = negated.toContracts(method, body).mapNotNull(::negateContract)
+  override fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock): List<StandardMethodContract> = negated.toContracts(method, body).mapNotNull(::negateContract)
 }
 
 private fun negateContract(c: StandardMethodContract): StandardMethodContract? {
@@ -177,7 +177,7 @@ private fun negateContract(c: StandardMethodContract): StandardMethodContract? {
 
 @Suppress("EqualsOrHashCode")
 internal data class MethodCallContract(internal val call: ExpressionRange, internal val states: List<List<StandardMethodContract.ValueConstraint>>) : PreContract {
-  override fun hashCode() = call.hashCode() * 31 + states.flatten().map { it.ordinal }.hashCode()
+  override fun hashCode(): Int = call.hashCode() * 31 + states.flatten().map { it.ordinal }.hashCode()
 
   override fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock): List<StandardMethodContract> {
     val target = call.restoreExpression<PsiMethodCallExpression>(body()).resolveMethod()

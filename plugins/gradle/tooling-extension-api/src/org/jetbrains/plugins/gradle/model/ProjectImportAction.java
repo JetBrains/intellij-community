@@ -19,6 +19,7 @@ import org.gradle.tooling.model.build.JavaEnvironment;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +133,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     assert myGradleBuild != null;
     assert myModelConverter != null;
     //We only need these later, but need to fetch them before fetching other models because of https://github.com/gradle/gradle/issues/20008
-    final Set<GradleBuild> nestedBuilds = getNestedBuilds(myGradleBuild);
+    final Set<GradleBuild> nestedBuilds = getNestedBuilds(myGradleBuild, controller);
     final MyBuildController wrappedController = new MyBuildController(controller, myGradleBuild);
     fetchProjectBuildModels(wrappedController, isProjectsLoadedAction, myGradleBuild);
     addBuildModels(wrappedController, myAllModels, myGradleBuild, isProjectsLoadedAction);
@@ -161,6 +162,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   }
 
   private static void setupIncludedBuildsHierarchy(List<Build> builds, Set<GradleBuild> gradleBuilds) {
+    Set<Build> updatedBuilds = new HashSet<>();
     Map<File, Build> rootDirsToBuilds = new HashMap<>();
     for (Build build : builds) {
       rootDirsToBuilds.put(build.getBuildIdentifier().getRootDir(), build);
@@ -174,7 +176,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
       for (GradleBuild includedGradleBuild : gradleBuild.getIncludedBuilds()) {
         Build buildToUpdate = rootDirsToBuilds.get(includedGradleBuild.getBuildIdentifier().getRootDir());
-        if (buildToUpdate instanceof DefaultBuild) {
+        if (buildToUpdate instanceof DefaultBuild && updatedBuilds.add(buildToUpdate)) {
           ((DefaultBuild)buildToUpdate).setParentBuildIdentifier(
             new DefaultBuildIdentifier(gradleBuild.getBuildIdentifier().getRootDir()));
         }
@@ -218,7 +220,13 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     void accept(@NotNull GradleBuild build);
   }
 
-  private Set<GradleBuild> getNestedBuilds(@NotNull GradleBuild rootBuild) {
+  private Set<GradleBuild> getNestedBuilds(@NotNull GradleBuild rootBuild, BuildController controller) {
+    BuildEnvironment environment = controller.getModel(BuildEnvironment.class);
+    GradleVersion envGradleVersion = null;
+    if (environment != null) {
+      // call to GradleVersion.current() will load version class from client classloader and return TAPI version number
+      envGradleVersion = GradleVersion.version(environment.getGradle().getGradleVersion());
+    }
     if (!myIsCompositeBuildsSupported) {
       return Collections.emptySet();
     }
@@ -226,16 +234,35 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     Set<GradleBuild> nestedBuilds = new LinkedHashSet<>();
     String rootBuildPath = rootBuild.getBuildIdentifier().getRootDir().getPath();
     processedBuildsPaths.add(rootBuildPath);
-    Queue<GradleBuild> queue = new ArrayDeque<>(rootBuild.getIncludedBuilds());
+    Queue<GradleBuild> queue = new ArrayDeque<>(getEditableBuilds(rootBuild, envGradleVersion));
     while (!queue.isEmpty()) {
       GradleBuild includedBuild = queue.remove();
       String includedBuildPath = includedBuild.getBuildIdentifier().getRootDir().getPath();
       if (processedBuildsPaths.add(includedBuildPath)) {
         nestedBuilds.add(includedBuild);
-        queue.addAll(includedBuild.getIncludedBuilds());
+        queue.addAll(getEditableBuilds(includedBuild, envGradleVersion));
       }
     }
     return nestedBuilds;
+  }
+
+  /**
+   * Get nested builds to be imported by IDEA
+   * @param build parent build
+   * @return builds to be imported by IDEA. Before Gradle 8.0 - included builds, 8.0 and later - included and buildSrc builds
+   */
+  private static DomainObjectSet<? extends GradleBuild> getEditableBuilds(@NotNull GradleBuild rootBuild,
+                                                                          @Nullable GradleVersion version) {
+    if (version != null && version.compareTo(GradleVersion.version("8.0")) >= 0) {
+      DomainObjectSet<? extends GradleBuild> builds = rootBuild.getEditableBuilds();
+      if (builds.isEmpty()) {
+        return rootBuild.getIncludedBuilds();
+      } else {
+        return builds;
+      }
+    } else {
+      return rootBuild.getIncludedBuilds();
+    }
   }
 
   private void fetchProjectBuildModels(BuildController controller, final boolean isProjectsLoadedAction, GradleBuild build) {
@@ -480,6 +507,14 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     @NotNull
     public List<Build> getIncludedBuilds() {
       return includedBuilds;
+    }
+
+    @NotNull
+    public List<Build> getAllBuilds() {
+      List<Build> result = new ArrayList<>();
+      result.add(getMainBuild());
+      result.addAll(includedBuilds);
+      return result;
     }
 
     @Nullable

@@ -16,6 +16,7 @@ import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -32,7 +33,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.util.Function;
-import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -139,15 +140,17 @@ public class TestPackage extends TestObject {
 
   @Nullable
   private TestClassFilter computeFilter(JUnitConfiguration.Data data) throws CantRunException {
-    final TestClassFilter classFilter;
     try {
-      classFilter =
-        DumbService.getInstance(getConfiguration().getProject()).computeWithAlternativeResolveEnabled(() -> getClassFilter(data));
-      LOG.assertTrue(classFilter.getBase() != null);
-      return classFilter;
-    }
-    catch (JUnitUtil.NoJUnitException e) {
-      return null;
+      return DumbService.getInstance(getConfiguration().getProject()).computeWithAlternativeResolveEnabled(() -> {
+        try {
+          TestClassFilter classFilter = getClassFilter(data);
+          LOG.assertTrue(classFilter.getBase() != null);
+          return classFilter;
+        }
+        catch (JUnitUtil.NoJUnitException e) {
+          return null;
+        }
+      });
     }
     catch (IndexNotReadyException e) {
       throw new CantRunException(JUnitBundle.message("running.tests.disabled.during.index.update.error.message"));
@@ -192,34 +195,12 @@ public class TestPackage extends TestObject {
   protected void collectClassesRecursively(TestClassFilter classFilter,
                                            Condition<? super PsiClass> acceptClassCondition,
                                            Set<Location<?>> classes) throws CantRunException {
-    PsiPackage aPackage = getPackage();
     GlobalSearchScope scope = GlobalSearchScope.projectScope(getConfiguration().getProject()).intersectWith(classFilter.getScope());
-    collectClassesRecursively(aPackage, scope, acceptClassCondition, classes);
-  }
-
-  private static void collectClassesRecursively(PsiPackage aPackage,
-                                                GlobalSearchScope scope,
-                                                Condition<? super PsiClass> acceptAsTest,
-                                                Set<Location<?>> classes) {
-    PsiPackage[] psiPackages = ReadAction.compute(() -> aPackage.getSubPackages(scope));
-    for (PsiPackage psiPackage : psiPackages) {
-      collectClassesRecursively(psiPackage, scope, acceptAsTest, classes);
-    }
-    PsiClass[] psiClasses = ReadAction.compute(() -> aPackage.getClasses(scope));
-    for (PsiClass aClass : psiClasses) {
-      collectInnerClasses(aClass, acceptAsTest, classes);
-    }
-  }
-
-  protected static void collectInnerClasses(PsiClass aClass, Condition<? super PsiClass> acceptAsTest, Set<Location<?>> classes) {
-    if (Registry.is("junit4.accept.inner.classes", true)) {
-      classes.addAll(ReadAction.compute(() -> JBTreeTraverser.of(PsiClass::getInnerClasses)
-        .withRoot(aClass).filter(acceptAsTest).map(psiClass -> PsiLocation.fromPsiElement(psiClass))
-        .toList()));
-    }
-    else if (acceptAsTest.value(aClass)) {
-      classes.add(PsiLocation.fromPsiElement(aClass));
-    }
+    List<PsiClass> allClasses = ContainerUtil.filter(
+      PackageUtil.getClasses(getPackage(), Registry.is("junit4.accept.inner.classes", true), scope),
+      classFilter::isAccepted
+    );
+    classes.addAll(ContainerUtil.map(allClasses, PsiLocation::fromPsiElement));
   }
 
   @Override
@@ -280,7 +261,7 @@ public class TestPackage extends TestObject {
   @Override
   public String suggestActionName() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
-    return data.getPackageName().trim().length() > 0
+    return !data.getPackageName().trim().isEmpty()
            ? ExecutionBundle.message("test.in.scope.presentable.text", data.getPackageName())
            : TestRunnerBundle.message("all.tests.scope.presentable.text");
   }

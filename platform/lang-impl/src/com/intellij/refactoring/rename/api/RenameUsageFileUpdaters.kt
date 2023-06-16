@@ -6,7 +6,7 @@ package com.intellij.refactoring.rename.api
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage.FileUpdater
 import com.intellij.refactoring.rename.impl.PsiRenameUsageRangeUpdater
 
-internal val idFileRangeUpdater = fileRangeUpdater { it }
+internal val idFileRangeUpdater: FileUpdater = fileRangeUpdater { it }
 
 internal typealias UsageTextByName = (newName: String) -> String?
 

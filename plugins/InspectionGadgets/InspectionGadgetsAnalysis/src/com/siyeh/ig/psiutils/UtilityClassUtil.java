@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class UtilityClassUtil {
@@ -36,10 +37,10 @@ public final class UtilityClassUtil {
   }
 
   public static boolean isUtilityClass(@NotNull PsiClass aClass) {
-    return isUtilityClass(aClass, true);
+    return isUtilityClass(aClass, true, false);
   }
 
-  public static boolean isUtilityClass(@NotNull PsiClass aClass, boolean fullCheck) {
+  public static boolean isUtilityClass(@NotNull PsiClass aClass, boolean fullCheck, boolean ignoreMainMethod) {
     if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType() || aClass.isRecord()) {
       return false;
     }
@@ -54,7 +55,7 @@ public final class UtilityClassUtil {
     if (implementsList != null && implementsList.getReferencedTypes().length > 0) {
       return false;
     }
-    final int staticMethodCount = countStaticMethods(aClass.getMethods());
+    final int staticMethodCount = countStaticMethods(aClass.getMethods(), ignoreMainMethod);
     if (staticMethodCount < 0) {
       return false;
     }
@@ -93,9 +94,9 @@ public final class UtilityClassUtil {
   /**
    * @return -1 if an instance method was found, else the number of non-private static methods in the specified array.
    */
-  private static int countStaticMethods(PsiMethod[] methods) {
+  private static int countStaticMethods(PsiMethod[] methods, boolean ignoreMainMethod) {
     int staticCount = 0;
-    for (final PsiMethod method : methods) {
+    for (PsiMethod method : methods) {
       if (method.isConstructor()) {
         continue;
       }
@@ -103,6 +104,9 @@ public final class UtilityClassUtil {
         return -1;
       }
       if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        continue;
+      }
+      if (ignoreMainMethod && method.getName().equals("main") && PsiMethodUtil.isMainMethod(method)) {
         continue;
       }
       staticCount++;

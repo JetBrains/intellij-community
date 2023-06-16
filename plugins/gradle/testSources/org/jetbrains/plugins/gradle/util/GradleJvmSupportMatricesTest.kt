@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.util
 
 import org.gradle.util.GradleVersion
-import org.junit.jupiter.api.Assertions.*
 
 class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
 
@@ -19,10 +18,10 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertTrue(isSupported("0.9.2", 8))
     assertTrue(isSupported("3.0", 8))
     assertTrue(isSupported("4.0", 8))
-    assertFalse(isSupported("5.1", 8))
-    assertFalse(isSupported("5.4.1", 8))
-    assertFalse(isSupported("6.0", 8))
-    assertFalse(isSupported("7.1", 8))
+    assertTrue(isSupported("5.1", 8))
+    assertTrue(isSupported("5.4.1", 8))
+    assertTrue(isSupported("6.0", 8))
+    assertTrue(isSupported("7.1", 8))
     assertTrue(isSupported("7.2", 8))
     assertTrue(isSupported("7.5", 8))
 
@@ -102,8 +101,8 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertEquals(7, suggestOldestCompatibleJavaVersion("2.0"))
     assertEquals(7, suggestOldestCompatibleJavaVersion("3.0"))
     assertEquals(8, suggestOldestCompatibleJavaVersion("5.0"))
-    assertEquals(9, suggestOldestCompatibleJavaVersion("5.1"))
-    assertEquals(9, suggestOldestCompatibleJavaVersion("7.1"))
+    assertEquals(8, suggestOldestCompatibleJavaVersion("5.1"))
+    assertEquals(8, suggestOldestCompatibleJavaVersion("7.1"))
     assertEquals(8, suggestOldestCompatibleJavaVersion("7.2"))
     assertEquals(8, suggestOldestCompatibleJavaVersion("7.5"))
     assertEquals(8, suggestOldestCompatibleJavaVersion("7.6"))

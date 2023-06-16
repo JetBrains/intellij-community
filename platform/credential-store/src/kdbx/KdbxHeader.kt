@@ -21,12 +21,7 @@ import com.intellij.credentialStore.generateBytes
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.io.DigestUtil
 import org.bouncycastle.crypto.engines.AESEngine
-import org.bouncycastle.crypto.io.CipherInputStream
-import org.bouncycastle.crypto.io.CipherOutputStream
-import org.bouncycastle.crypto.modes.CBCBlockCipher
-import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher
 import org.bouncycastle.crypto.params.KeyParameter
-import org.bouncycastle.crypto.params.ParametersWithIV
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -35,10 +30,16 @@ import java.security.DigestOutputStream
 import java.security.SecureRandom
 import java.util.*
 import java.util.zip.GZIPOutputStream
+import javax.crypto.Cipher
+import javax.crypto.CipherInputStream
+import javax.crypto.CipherOutputStream
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
+
 
 /**
  * This class represents the header portion of a KeePass KDBX file or stream. The header is received in
- * plain text and describes the encryption and compression of the remainder of the file.
+ * plain text and describes the encryption and compression of the file remainder.
  * It is a factory for encryption and decryption streams and contains a hash of its own serialization.
  * While KDBX streams are Little-Endian, data is passed to and from this class in standard Java byte order.
  * @author jo
@@ -54,14 +55,12 @@ private const val SIG2 = 0xB54BFB67.toInt()
 
 private const val FILE_VERSION_32 = 0x00030001
 
-internal fun createProtectedStreamKey(random: SecureRandom) = random.generateBytes(32)
-
 private object HeaderType {
   const val END: Byte = 0
   const val COMMENT: Byte = 1
   const val CIPHER_ID: Byte = 2
   const val COMPRESSION_FLAGS: Byte = 3
-  const val MASTER_SEED: Byte = 4
+  const val MAIN_SEED: Byte = 4
   const val TRANSFORM_SEED: Byte = 5
   const val TRANSFORM_ROUNDS: Byte = 6
   const val ENCRYPTION_IV: Byte = 7
@@ -78,19 +77,21 @@ private fun verifyFileVersion(input: LittleEndianDataInputStream): Boolean {
   return input.readInt() and FILE_VERSION_CRITICAL_MASK <= FILE_VERSION_32 and FILE_VERSION_CRITICAL_MASK
 }
 
+// todo use kdbx 4 - https://palant.info/2023/03/29/documenting-keepass-kdbx4-file-format/
 internal class KdbxHeader() {
   constructor(inputStream: InputStream) : this() {
     readKdbxHeader(inputStream)
   }
 
   constructor(random: SecureRandom) : this() {
-    masterSeed = random.generateBytes(32)
+    mainSeed = random.generateBytes(32)
     transformSeed = random.generateBytes(32)
     encryptionIv = random.generateBytes(16)
-    protectedStreamKey = createProtectedStreamKey(random)
+    // 64 bytes for ChaCha20
+    protectedStreamKey = random.generateBytes(64)
   }
   /**
-   * The ordinal 0 represents uncompressed and 1 GZip compressed
+   * Ordinal 0 represents uncompressed and 1 GZip compressed
    */
   enum class CompressionFlags {
     NONE, GZIP
@@ -100,7 +101,7 @@ internal class KdbxHeader() {
    * The ordinals represent various types of encryption that may be applied to fields within the unencrypted data
    */
   enum class ProtectedStreamAlgorithm {
-    NONE, ARC_FOUR, SALSA_20
+    NONE, ARC_FOUR, SALSA_20, CHA_CHA
   }
 
   // the cipher in use
@@ -110,13 +111,15 @@ internal class KdbxHeader() {
   var compressionFlags = CompressionFlags.GZIP
     private set
 
-  private var masterSeed: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
+  private var mainSeed: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
   private var transformSeed: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
   private var transformRounds: Long = 6000
   private var encryptionIv: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
   var protectedStreamKey: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
     private set
-  private var protectedStreamAlgorithm = ProtectedStreamAlgorithm.SALSA_20
+
+  var protectedStreamAlgorithm: ProtectedStreamAlgorithm = ProtectedStreamAlgorithm.CHA_CHA
+    private set
 
   /* these bytes appear in cipher text immediately following the header */
   var streamStartBytes = ByteArray(32)
@@ -126,12 +129,13 @@ internal class KdbxHeader() {
   var headerHash: ByteArray? = null
 
   /**
-   * Create a decrypted input stream using supplied digest and this header
-   * apply decryption to the passed encrypted input stream
+   * Create a decrypted input stream using supplied digest and this header.
+   * Apply decryption to the passed encrypted input stream
    */
   fun createDecryptedStream(digest: ByteArray, inputStream: InputStream): InputStream {
-    val finalKeyDigest = getFinalKeyDigest(digest, masterSeed, transformSeed, transformRounds)
-    return getDecryptedInputStream(inputStream, finalKeyDigest, encryptionIv)
+    val finalKeyDigest = getFinalKeyDigest(digest, mainSeed, transformSeed, transformRounds)
+    val cipher = createChipper(forEncryption = false, keyData = finalKeyDigest, ivData = encryptionIv)
+    return CipherInputStream(inputStream, cipher)
   }
 
   /**
@@ -139,10 +143,14 @@ internal class KdbxHeader() {
    * and use the supplied output stream to write encrypted data.
    */
   fun createEncryptedStream(digest: ByteArray, outputStream: OutputStream): OutputStream {
-    val finalKeyDigest = getFinalKeyDigest(digest, masterSeed, transformSeed, transformRounds)
-    var out = getEncryptedOutputStream(outputStream, finalKeyDigest, encryptionIv)
-    out.write(streamStartBytes)
-    out = HashedBlockOutputStream(out)
+    val finalKeyDigest = getFinalKeyDigest(key = digest,
+                                           mainSeed = mainSeed,
+                                           transformSeed = transformSeed,
+                                           transformRounds = transformRounds)
+    val cipher = createChipper(forEncryption = true, keyData = finalKeyDigest, ivData = encryptionIv)
+    val cipherOutputStream = CipherOutputStream(outputStream, cipher)
+    cipherOutputStream.write(streamStartBytes)
+    val out = HashedBlockOutputStream(cipherOutputStream)
     return when (compressionFlags) {
       CompressionFlags.GZIP -> GZIPOutputStream(out, HashedBlockOutputStream.BLOCK_SIZE)
       else -> out
@@ -188,7 +196,7 @@ internal class KdbxHeader() {
         HeaderType.COMPRESSION_FLAGS -> {
           compressionFlags = CompressionFlags.values()[readIntHeaderData(input)]
         }
-        HeaderType.MASTER_SEED -> masterSeed = readHeaderData(input)
+        HeaderType.MAIN_SEED -> mainSeed = readHeaderData(input)
         HeaderType.TRANSFORM_SEED -> transformSeed = readHeaderData(input)
         HeaderType.TRANSFORM_ROUNDS -> transformRounds = readLongHeaderData(input)
         HeaderType.ENCRYPTION_IV -> encryptionIv = readHeaderData(input)
@@ -202,7 +210,7 @@ internal class KdbxHeader() {
       }
     }
 
-    // consume length etc. following END flag
+    // consume length etc. following an END flag
     readHeaderData(input)
 
     headerHash = digest.digest()
@@ -235,9 +243,9 @@ internal class KdbxHeader() {
     output.writeShort(4)
     output.writeInt(compressionFlags.ordinal)
 
-    output.writeByte(HeaderType.MASTER_SEED.toInt())
-    output.writeShort(masterSeed.size)
-    output.write(masterSeed)
+    output.writeByte(HeaderType.MAIN_SEED.toInt())
+    output.writeShort(mainSeed.size)
+    output.write(mainSeed)
 
     output.writeByte(HeaderType.TRANSFORM_SEED.toInt())
     output.writeShort(transformSeed.size)
@@ -260,7 +268,7 @@ internal class KdbxHeader() {
     output.write(streamStartBytes)
 
     output.writeByte(HeaderType.INNER_RANDOM_STREAM_ID.toInt())
-    output.writeShort(4)
+    output.writeShort(Int.SIZE_BYTES)
     output.writeInt(protectedStreamAlgorithm.ordinal)
 
     output.writeByte(HeaderType.END.toInt())
@@ -270,7 +278,7 @@ internal class KdbxHeader() {
   }
 }
 
-private fun getFinalKeyDigest(key: ByteArray, masterSeed: ByteArray, transformSeed: ByteArray, transformRounds: Long): ByteArray {
+private fun getFinalKeyDigest(key: ByteArray, mainSeed: ByteArray, transformSeed: ByteArray, transformRounds: Long): ByteArray {
   val engine = AESEngine()
   engine.init(true, KeyParameter(transformSeed))
 
@@ -286,27 +294,19 @@ private fun getFinalKeyDigest(key: ByteArray, masterSeed: ByteArray, transformSe
 
   val md = DigestUtil.sha256()
   val transformedKeyDigest = md.digest(transformedKey)
-  md.update(masterSeed)
+  md.update(mainSeed)
   return md.digest(transformedKeyDigest)
 }
 
-/**
- * Create a decrypted input stream from an encrypted one
- */
-private fun getDecryptedInputStream(encryptedInputStream: InputStream, keyData: ByteArray, ivData: ByteArray): InputStream {
-  val keyAndIV = ParametersWithIV(KeyParameter(keyData), ivData)
-  val cipher = PaddedBufferedBlockCipher(CBCBlockCipher(AESEngine()))
-  cipher.init(false, keyAndIV)
-  return CipherInputStream(encryptedInputStream, cipher)
-}
-
-/**
- * Create an encrypted output stream from an unencrypted output stream
- */
-private fun getEncryptedOutputStream(decryptedOutputStream: OutputStream, keyData: ByteArray, ivData: ByteArray): OutputStream {
-  val cipher = PaddedBufferedBlockCipher(CBCBlockCipher(AESEngine()))
-  cipher.init(true, ParametersWithIV(KeyParameter(keyData), ivData))
-  return CipherOutputStream(decryptedOutputStream, cipher)
+private fun createChipper(forEncryption: Boolean, ivData: ByteArray, keyData: ByteArray): Cipher {
+  val iv = IvParameterSpec(ivData)
+  val secretKey = SecretKeySpec(keyData, 0, keyData.size, "AES")
+  // https://stackoverflow.com/a/29234136
+  // https://crypto.stackexchange.com/a/9044
+  // Java only provides PKCS#5 padding, but it is the same as PKCS#7 padding
+  val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+  cipher.init(if (forEncryption) Cipher.ENCRYPT_MODE else Cipher.DECRYPT_MODE, secretKey, iv)
+  return cipher
 }
 
 private fun readIntHeaderData(input: LittleEndianDataInputStream): Int {

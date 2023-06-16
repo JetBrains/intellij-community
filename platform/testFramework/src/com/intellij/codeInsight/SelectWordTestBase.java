@@ -2,12 +2,12 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.UnSelectWordHandler;
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -21,7 +21,9 @@ public abstract class SelectWordTestBase extends LightPlatformCodeInsightTestCas
   protected void doTest(@NonNls String ext, boolean unselect, boolean defaultFolding) {
     @NonNls final String path = "/codeInsight/selectWordAction/" + getTestName(true);
     configureByFile(path + "/before." + ext);
-    if (defaultFolding) CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
+    if (defaultFolding) {
+      EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
+    }
     int i = 1;
     while (true) {
       final String fileName = "/after" + i + "." + ext;

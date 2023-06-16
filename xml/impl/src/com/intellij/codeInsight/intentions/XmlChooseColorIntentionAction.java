@@ -28,7 +28,7 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.ui.ColorChooser;
+import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
@@ -81,7 +81,7 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
     catch (NumberFormatException e) {
       oldColor = JBColor.GRAY;
     }
-    Color color = ColorChooser.chooseColor(element.getProject(), editorComponent, caption, oldColor, true);
+    Color color = ColorChooserService.getInstance().showDialog(element.getProject(), editorComponent, caption, oldColor, true);
     if (color == null) return;
     if (!Comparing.equal(color, oldColor)) {
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;

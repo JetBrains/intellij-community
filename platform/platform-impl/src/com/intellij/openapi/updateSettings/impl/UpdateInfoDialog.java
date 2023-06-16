@@ -203,7 +203,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
       return;  // update cancelled
     }
 
-    new Task.Backgroundable(null, IdeBundle.message("update.preparing"), true, PerformInBackgroundOption.DEAF) {
+    new Task.Backgroundable(myProject, IdeBundle.message("update.preparing"), true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         String[] command;
@@ -229,7 +229,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
             .createNotification(title, message, NotificationType.ERROR)
             .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.downloading.patch.open"), () -> BrowserUtil.browse(downloadUrl)))
             .setDisplayId("ide.patch.download.failed")
-            .notify(null);
+            .notify(myProject);
 
           return;
         }
@@ -249,7 +249,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
               .createNotification(title, message, NotificationType.INFORMATION)
               .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.ready.restart"), () -> restartLaterAndRunCommand(command)))
               .setDisplayId("ide.update.suggest.restart")
-              .notify(null);
+              .notify(myProject);
           }
         }
         else {

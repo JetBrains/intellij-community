@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.model.Pointer
-import com.intellij.model.presentation.SymbolPresentation
 import com.intellij.model.search.SearchRequest
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.api.ReplaceTextTarget
@@ -29,14 +29,10 @@ class GradleSubprojectSymbol(
   override val projectName: String get() = qualifiedNameParts.last()
   override val qualifiedName: String get() = qualifiedNameString(qualifiedNameParts)
 
-  private val myPresentation = SymbolPresentation.create(
-    GradleIcons.Gradle,
-    projectName,
-    GradleBundle.message("gradle.project.0", projectName),
-    GradleBundle.message("gradle.project.0", qualifiedName)
-  )
-
-  override fun getSymbolPresentation(): SymbolPresentation = myPresentation
+  override fun presentation(): TargetPresentation = TargetPresentation
+    .builder(GradleBundle.message("gradle.project.0", qualifiedName))
+    .icon(GradleIcons.Gradle)
+    .presentation()
 
   override fun externalProject(rootProject: ExternalProject): ExternalProject? {
     return qualifiedNameParts.fold<String, ExternalProject?>(rootProject) { extProject, name ->
@@ -71,9 +67,7 @@ class GradleSubprojectSymbol(
 
     other as GradleSubprojectSymbol
 
-    if (qualifiedNameParts != other.qualifiedNameParts) return false
-
-    return true
+    return qualifiedNameParts == other.qualifiedNameParts
   }
 
   override fun hashCode(): Int {

@@ -15,8 +15,8 @@
  */
 package com.intellij.ui.content;
 
-import com.intellij.ui.IconReplacer;
 import com.intellij.ui.RetrievableIcon;
+import com.intellij.ui.icons.IconReplacer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

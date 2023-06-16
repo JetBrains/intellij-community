@@ -7,12 +7,20 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsConfiguration
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 
 private class AndroidPluginIncompatibilityCheckerStartupActivity : ProjectActivity {
+    init {
+      if (KotlinPlatformUtils.isAndroidStudio) {
+          throw ExtensionNotApplicableException.create()
+      }
+    }
+
     override suspend fun execute(project: Project) {
         NotificationsConfiguration.getNotificationsConfiguration()
             .register(

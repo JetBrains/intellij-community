@@ -17,7 +17,7 @@ import java.util.Objects;
 import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
 
 public class VmOptionsEditor extends JPanel implements FragmentWrapper, Expandable {
-  static final Key<JavaRunConfigurationBase> SETTINGS_KEY = Key.create("JavaRunConfigurationSettings");
+  public static final Key<JavaRunConfigurationBase> SETTINGS_KEY = Key.create("JavaRunConfigurationSettings");
   private final LanguageTextField myEditor;
   private LanguageTextField myPopupEditor;
   private final ExpandableEditorSupport mySupport;

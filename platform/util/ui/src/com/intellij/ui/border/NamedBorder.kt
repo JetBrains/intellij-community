@@ -11,6 +11,7 @@ import javax.swing.border.Border
 interface NamedBorder : Border {
 
   val name: String
+  val original: Border
 
 }
 
@@ -22,7 +23,7 @@ fun Border.withName(name: String): NamedBorder = NamedBorderImpl(name, this)
 
 private class NamedBorderImpl(
   override val name: String,
-  private val original: Border
+  override val original: Border
 ) : NamedBorder {
 
   override fun paintBorder(c: Component?, g: Graphics?, x: Int, y: Int, width: Int, height: Int) {

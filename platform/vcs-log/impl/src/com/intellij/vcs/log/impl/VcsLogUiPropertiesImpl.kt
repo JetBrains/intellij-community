@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.vcs.log.graph.PermanentGraph
@@ -86,6 +87,11 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
   override fun addChangeListener(listener: PropertiesChangeListener) {
     eventDispatcher.addListener(listener)
     appSettings.addChangeListener(listener)
+  }
+
+  override fun addChangeListener(listener: PropertiesChangeListener, parent: Disposable) {
+    eventDispatcher.addListener(listener, parent)
+    appSettings.addChangeListener(listener, parent)
   }
 
   override fun removeChangeListener(listener: PropertiesChangeListener) {

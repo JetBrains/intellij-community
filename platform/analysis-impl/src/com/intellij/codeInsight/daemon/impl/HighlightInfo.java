@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -15,7 +15,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -96,13 +96,18 @@ public class HighlightInfo implements Segment {
    * Find the quickfix (among ones added by {@link #registerFix}) selected by returning non-null value from the {@code predicate}
    * and return that value, or null if the quickfix was not found.
    */
-  synchronized
   public <T> T findRegisteredQuickFix(@NotNull BiFunction<? super @NotNull IntentionActionDescriptor, ? super @NotNull TextRange, ? extends @Nullable T> predicate) {
     Set<IntentionActionDescriptor> processed = new HashSet<>();
+    List<Pair<IntentionActionDescriptor, RangeMarker>> markers;
+    List<Pair<IntentionActionDescriptor, TextRange>> ranges;
+    synchronized (this) {
+      markers = quickFixActionMarkers;
+      ranges = quickFixActionRanges;
+    }
     // prefer range markers as having more actual offsets
-    T result = find(quickFixActionMarkers, processed, predicate);
+    T result = find(markers, processed, predicate);
     if (result != null) return result;
-    return find(quickFixActionRanges, processed, predicate);
+    return find(ranges, processed, predicate);
   }
 
   @Nullable
@@ -151,7 +156,7 @@ public class HighlightInfo implements Segment {
 
   @Nullable("null means it the same as highlighter")
   private RangeMarker fixMarker;
-  volatile RangeHighlighterEx highlighter; // modified in EDT only
+  volatile RangeHighlighterEx highlighter;
   @Nullable
   final PsiElement psiElement;
   /**
@@ -176,9 +181,9 @@ public class HighlightInfo implements Segment {
                           @Nullable Boolean needsUpdateOnTyping,
                           boolean isFileLevelAnnotation,
                           int navigationShift,
-                          ProblemGroup problemGroup,
+                          @Nullable ProblemGroup problemGroup,
                           @Nullable String inspectionToolId,
-                          GutterMark gutterIconRenderer,
+                          @Nullable GutterMark gutterIconRenderer,
                           int group,
                           @Nullable PsiReference unresolvedReference,
                           @Nullable PsiElement psiElement) {
@@ -283,31 +288,41 @@ public class HighlightInfo implements Segment {
   public @Tooltip String getToolTip() {
     String toolTip = this.toolTip;
     String description = this.description;
-    if (toolTip == null || description == null || !toolTip.contains(DESCRIPTION_PLACEHOLDER)) return toolTip;
-    String decoded = StringUtil.replace(toolTip, DESCRIPTION_PLACEHOLDER, XmlStringUtil.escapeString(description));
-    return XmlStringUtil.wrapInHtml(decoded);
+
+    if (toolTip == null) return null;
+
+    String wrapped = XmlStringUtil.wrapInHtml(toolTip);
+    if (description == null || !wrapped.contains(DESCRIPTION_PLACEHOLDER)) {
+      return wrapped;
+    }
+
+    String decoded = StringUtil.replace(wrapped, DESCRIPTION_PLACEHOLDER, XmlStringUtil.escapeString(description));
+    return decoded;
   }
 
   /**
    * Encodes \p tooltip so that substrings equal to a \p description
    * are replaced with the special placeholder to reduce size of the
-   * tooltip. If encoding takes place, <html></html> tags are
-   * stripped of the tooltip.
+   * tooltip. <html></html> tags are stripped of the tooltip.
    *
    * @param tooltip     - html text
    * @param description - plain text (not escaped)
    * @return encoded tooltip (stripped html text with one or more placeholder characters)
    * or tooltip without changes.
    */
-  private static @Tooltip String encodeTooltip(@Tooltip String tooltip, @DetailedDescription String description) {
-    if (tooltip == null || description == null || description.isEmpty()) return tooltip;
+  @Nullable
+  private static @Tooltip String encodeTooltip(@Nullable @Tooltip String tooltip, @Nullable @DetailedDescription String description) {
+    if (tooltip == null) return null;
 
-    String encoded = StringUtil.replace(tooltip, XmlStringUtil.escapeString(description), DESCRIPTION_PLACEHOLDER);
-    if (Strings.areSameInstance(encoded, tooltip)) {
-      return tooltip;
+    String stripped = XmlStringUtil.stripHtml(tooltip);
+    if (description == null || description.isEmpty()) return stripped;
+
+    String encoded = StringUtil.replace(stripped, XmlStringUtil.escapeString(description), DESCRIPTION_PLACEHOLDER);
+    if (Strings.areSameInstance(encoded, stripped)) {
+      return stripped;
     }
     if (encoded.equals(DESCRIPTION_PLACEHOLDER)) encoded = DESCRIPTION_PLACEHOLDER;
-    return XmlStringUtil.stripHtml(encoded);
+    return encoded;
   }
 
   public @DetailedDescription String getDescription() {
@@ -353,11 +368,7 @@ public class HighlightInfo implements Segment {
     return highlighter;
   }
 
-  /**
-   * Modified only in EDT.
-   */
   public void setHighlighter(@Nullable RangeHighlighterEx highlighter) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     this.highlighter = highlighter;
   }
 
@@ -568,6 +579,16 @@ public class HighlightInfo implements Segment {
                         @Nullable TextRange fixRange,
                         @Nullable HighlightDisplayKey key);
 
+    @NotNull
+    @ApiStatus.Experimental
+    default Builder registerFix(@NotNull ModCommandAction action,
+                        @Nullable List<? extends IntentionAction> options,
+                        @Nullable @Nls String displayName,
+                        @Nullable TextRange fixRange,
+                        @Nullable HighlightDisplayKey key) {
+      return registerFix(action.asIntention(), options, displayName, fixRange, key);
+    }
+
     @Nullable("null means filtered out")
     HighlightInfo create();
 
@@ -683,7 +704,7 @@ public class HighlightInfo implements Segment {
   public static class IntentionActionDescriptor {
     private final IntentionAction myAction;
     volatile List<? extends IntentionAction> myOptions;
-    volatile HighlightDisplayKey myKey;
+    final @Nullable HighlightDisplayKey myKey;
     private final ProblemGroup myProblemGroup;
     private final HighlightSeverity mySeverity;
     private final @Nls String myDisplayName;
@@ -734,12 +755,11 @@ public class HighlightInfo implements Segment {
     boolean canCleanup(@NotNull PsiElement element) {
       if (myCanCleanup == null) {
         InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
-        HighlightDisplayKey key = myKey;
-        if (key == null) {
+        if (myKey == null) {
           myCanCleanup = false;
         }
         else {
-          InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(key.toString(), element);
+          InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(myKey.toString(), element);
           myCanCleanup = toolWrapper != null && toolWrapper.isCleanupTool();
         }
       }
@@ -842,7 +862,6 @@ public class HighlightInfo implements Segment {
       if (options == null) {
         myOptions = options = newOptions;
       }
-      myKey = null;
       return options;
     }
 
@@ -853,8 +872,7 @@ public class HighlightInfo implements Segment {
 
     @Override
     public String toString() {
-      String text = getAction().getText();
-      return "IntentionActionDescriptor: " + (text.isEmpty() ? IntentionActionDelegate.unwrap(getAction()).getClass() : text + " (" + IntentionActionDelegate.unwrap(getAction()).getClass() + ")");
+      return "IntentionActionDescriptor: " + IntentionActionDelegate.unwrap(getAction()).getClass();
     }
 
     @Nullable
@@ -865,6 +883,11 @@ public class HighlightInfo implements Segment {
     @Override
     public boolean equals(Object obj) {
       return obj instanceof IntentionActionDescriptor && myAction.equals(((IntentionActionDescriptor)obj).myAction);
+    }
+
+    @Nullable
+    public String getToolId() {
+      return myKey != null ? myKey.getID() : null;
     }
   }
 
@@ -1001,30 +1024,33 @@ public class HighlightInfo implements Segment {
   }
   @NotNull
   private static RangeMarker getOrCreate(@NotNull Document document,
-                                         @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache,
+                                         @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
                                          long textRange) {
-    return ranges2markersCache.computeIfAbsent(textRange, __ -> document.createRangeMarker(TextRangeScalarUtil.startOffset(textRange),
+    return range2markerCache.computeIfAbsent(textRange, __ -> document.createRangeMarker(TextRangeScalarUtil.startOffset(textRange),
                                                                                            TextRangeScalarUtil.endOffset(textRange)));
   }
 
   // convert ranges to markers: from quickFixRanges -> quickFixMarkers and fixRange -> fixMarker
   // TODO rework to lock-free
   synchronized void updateQuickFixFields(@NotNull Document document,
-                            @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache,
-                            long finalHighlighterRange) {
+                                         @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
+                                         long finalHighlighterRange) {
     if (quickFixActionMarkers != null && quickFixActionRanges != null && quickFixActionRanges.size() == quickFixActionMarkers.size() +1) {
       // markers already created, make quickFixRanges <-> quickFixMarkers consistent by adding new marker to the quickFixMarkers if necessary
       Pair<IntentionActionDescriptor, TextRange> last = ContainerUtil.getLastItem(quickFixActionRanges);
       Segment textRange = last.getSecond();
-      RangeMarker marker = getOrCreate(document, ranges2markersCache, TextRangeScalarUtil.toScalarRange(textRange));
-      quickFixActionMarkers.add(Pair.create(last.getFirst(), marker));
+      if (textRange.getEndOffset() <= document.getTextLength()) {
+        RangeMarker marker = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(textRange));
+        quickFixActionMarkers.add(Pair.create(last.getFirst(), marker));
+      }
       return;
     }
     if (quickFixActionRanges != null && quickFixActionMarkers == null) {
       List<Pair<IntentionActionDescriptor, RangeMarker>> list = new ArrayList<>(quickFixActionRanges.size());
       for (Pair<IntentionActionDescriptor, TextRange> pair : quickFixActionRanges) {
         TextRange textRange = pair.second;
-        RangeMarker marker = getOrCreate(document, ranges2markersCache, TextRangeScalarUtil.toScalarRange(textRange));
+        if (textRange.getEndOffset() > document.getTextLength()) continue;
+        RangeMarker marker = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(textRange));
         list.add(Pair.create(pair.first, marker));
       }
       quickFixActionMarkers = ContainerUtil.createLockFreeCopyOnWriteList(list);
@@ -1032,8 +1058,8 @@ public class HighlightInfo implements Segment {
     if (fixRange == finalHighlighterRange) {
       fixMarker = null; // null means it the same as highlighter's range
     }
-    else {
-      fixMarker = getOrCreate(document, ranges2markersCache, fixRange);
+    else if (TextRangeScalarUtil.endOffset(fixRange) <= document.getTextLength()) {
+      fixMarker = getOrCreate(document, range2markerCache, fixRange);
     }
   }
 

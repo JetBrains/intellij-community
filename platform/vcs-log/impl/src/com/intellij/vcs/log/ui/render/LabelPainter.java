@@ -45,6 +45,7 @@ public class LabelPainter {
 
   private final @NotNull JComponent myComponent;
   private final @NotNull LabelIconCache myIconCache;
+  private final @NotNull UpdateScaleHelper myUpdateScaleHelper = new UpdateScaleHelper();
 
   protected @NotNull List<Pair<String, LabelIcon>> myLabels = new ArrayList<>();
   private int myHeight = JBUIScale.scale(22);
@@ -52,7 +53,6 @@ public class LabelPainter {
   protected @NotNull Color myBackground = UIUtil.getTableBackground();
   private @Nullable Color myGreyBackground = null;
   private @NotNull Color myForeground = UIUtil.getTableForeground();
-  private UpdateScaleHelper myUpdateScaleHelper = new UpdateScaleHelper();
 
   private boolean myCompact;
   private boolean myLeftAligned;

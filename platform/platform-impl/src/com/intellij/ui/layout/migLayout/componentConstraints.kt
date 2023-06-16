@@ -10,10 +10,12 @@ import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.ConstraintParser
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.swing.*
 import javax.swing.text.JTextComponent
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal fun overrideFlags(cc: CC, flags: Array<out CCFlags>) {
   for (flag in flags) {
@@ -37,13 +39,15 @@ internal fun overrideFlags(cc: CC, flags: Array<out CCFlags>) {
   }
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal class DefaultComponentConstraintCreator(private val spacing: SpacingConfiguration) {
   private val shortTextSizeSpec = ConstraintParser.parseBoundSize("${spacing.shortTextWidth}px!", false, true)
   private val mediumTextSizeSpec = ConstraintParser.parseBoundSize("${spacing.shortTextWidth}px::${spacing.maxShortTextWidth}px", false, true)
 
   val vertical1pxGap: BoundSize = ConstraintParser.parseBoundSize("${JBUI.scale(1)}px!", true, false)
 
-  val horizontalUnitSizeGap = gapToBoundSize(spacing.unitSize, true)
+  val horizontalUnitSizeGap: BoundSize = gapToBoundSize(spacing.unitSize, true)
 
   fun addGrowIfNeeded(cc: CC, component: Component, spacing: SpacingConfiguration) {
     when {

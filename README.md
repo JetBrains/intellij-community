@@ -29,7 +29,7 @@ run one of the `getPlugins` scripts located in the `<IDEA_HOME>` directory. Thes
 _**Note:**_ Always `git checkout` the `intellij-community` and `android` Git repositories to the same branches/tags. 
 
 ## Building IntelliJ Community Edition
-Version 2022.1 or newer of IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate Edition is required to build and develop
+Version 2023.1.1 or newer of IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate Edition is required to build and develop
 for the IntelliJ Platform.
 
 ### Opening the IntelliJ Source Code for Build
@@ -45,6 +45,11 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
 3. Make sure you have at least 8GB of RAM on your computer. With the bare minimum of RAM, disable "Compile independent modules in parallel"
    option in [the compiler settings](https://www.jetbrains.com/help/idea/specifying-compilation-settings.html). With notably more memory
    available, increase "User-local build process heap size" to 3000 - that will greatly reduce compilation time.
+
+Note that it is important to use the variant of JetBrains Runtime **without JCEF**.
+So, if for some reason `jbr-17` SDK points to an installation of JetBrains Runtime with JCEF, you need to change it: 
+ensure that IntelliJ IDEA is running in internal mode (by adding `idea.is.internal=true` to `idea.properties` file), navigate to `jbr-17` 
+item in Project Structure | SDKs, click on 'Browse' button, choose 'Download...' item and select version 17 and vendor 'JetBrains Runtime'.
 
 ### Building the IntelliJ Application Source Code
 To build IntelliJ IDEA Community Edition from source, choose **Build | Build Project** from the main menu.

@@ -4,6 +4,8 @@
     <extensionPoint name="dumbServiceInitializationCondition" interface="com.intellij.openapi.project.DumbServiceInitializationCondition" dynamic="true"/>
     <extensionPoint name="fileBasedIndexInfrastructureExtension" interface="com.intellij.util.indexing.FileBasedIndexInfrastructureExtension" dynamic="true"/>
     <extensionPoint name="projectIndexingHistoryListener" interface="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryListener" dynamic="true"/>
+    <extensionPoint name="projectIndexingActivityHistoryListener"
+                    interface="com.intellij.util.indexing.diagnostic.ProjectIndexingActivityHistoryListener" dynamic="true"/>
     <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexableSetContributor" dynamic="true"/>
     <extensionPoint name="indexableFilesContributor" interface="com.intellij.util.indexing.roots.IndexableFilesContributor" dynamic="true"/>
     <extensionPoint name="stubIndex" interface="com.intellij.psi.stubs.StubIndexExtension" dynamic="true"/>
@@ -22,5 +24,15 @@
     <extensionPoint name="findModelExtension" interface="com.intellij.find.FindModelExtension" dynamic="true"/>
     <extensionPoint name="codeUsageScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileBasedIndex implementation="com.intellij.psi.stubs.StubUpdatingIndex"/>
+
+    <fileBasedIndexLayout id="in-memory"
+                          presentableNameKey="in.memory.storage.presentable.name"
+                          bundleName="messages.LangBundle"
+                          providerClass="com.intellij.util.indexing.impl.storage.InMemoryStorageLayoutProvider"
+                          version="0"/>
+  </extensions>
 
 </idea-plugin>

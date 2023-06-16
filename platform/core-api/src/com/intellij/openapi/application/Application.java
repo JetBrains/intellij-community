@@ -8,6 +8,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -52,10 +54,23 @@ import java.util.concurrent.Future;
  * See also <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>.
  */
 public interface Application extends ComponentManager {
-  @ApiStatus.Obsolete
-  void invokeLaterOnWriteThread(@NotNull Runnable action);
 
   /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This method is obsolete because there will be no such thing as <i>write thread</i>,
+   * and any thread will be able to hold the write lock.
+   * For more info follow <a href="https://youtrack.jetbrains.com/issue/IJPL-53">IJPL-53</a>.
+   * </p>
+   */
+  @ApiStatus.Obsolete
+  default void invokeLaterOnWriteThread(@NotNull Runnable action) {
+    invokeLater(action, getDefaultModalityState());
+  }
+
+  /**
+   * See <b>obsolescence notice</b> on {@link #invokeLaterOnWriteThread(Runnable)}.
+   * <p>
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
    * when IDE is in the specified modality state (or a state with less modal dialogs open).
    *
@@ -63,9 +78,13 @@ public interface Application extends ComponentManager {
    * @param modal  the state in which action will be executed
    */
   @ApiStatus.Obsolete
-  void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal);
+  default void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal) {
+    invokeLater(action, modal, getDisposed());
+  }
 
   /**
+   * See <b>obsolescence notice</b> on {@link #invokeLaterOnWriteThread(Runnable)}.
+   * <p>
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
    * when IDE is in the specified modality state (or a state with less modal dialogs open)
    * - unless the expiration condition is fulfilled.
@@ -75,7 +94,9 @@ public interface Application extends ComponentManager {
    * @param expired condition to check before execution.
    */
   @ApiStatus.Obsolete
-  void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired);
+  default void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired) {
+    invokeLater(action, modal, expired);
+  }
 
   /**
    * Runs the specified read action. Can be called from any thread. The action is executed immediately
@@ -85,7 +106,9 @@ public interface Application extends ComponentManager {
    *
    * @param action the action to run.
    * @see CoroutinesKt#readAction
+   * @see CoroutinesKt#readActionBlocking
    */
+  @RequiresBlockingContext
   void runReadAction(@NotNull Runnable action);
 
   /**
@@ -97,8 +120,11 @@ public interface Application extends ComponentManager {
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
+   * @see CoroutinesKt#readAction
+   * @see CoroutinesKt#readActionBlocking
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  @RequiresBlockingContext
   <T> T runReadAction(@NotNull Computable<T> computation);
 
   /**
@@ -111,8 +137,11 @@ public interface Application extends ComponentManager {
    * @param computation the computation to perform.
    * @return the result returned by the computation.
    * @throws E re-frown from ThrowableComputable
+   * @see CoroutinesKt#readAction
+   * @see CoroutinesKt#readActionBlocking
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  @RequiresBlockingContext
   <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
@@ -122,7 +151,9 @@ public interface Application extends ComponentManager {
    * See also {@link WriteAction#run} for a more lambda-friendly version.
    *
    * @param action the action to run
+   * @see CoroutinesKt#writeAction
    */
+  @RequiresBlockingContext
   void runWriteAction(@NotNull Runnable action);
 
   /**
@@ -134,8 +165,10 @@ public interface Application extends ComponentManager {
    *
    * @param computation the computation to run
    * @return the result returned by the computation.
+   * @see CoroutinesKt#writeAction
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  @RequiresBlockingContext
   <T> T runWriteAction(@NotNull Computable<T> computation);
 
   /**
@@ -148,8 +181,10 @@ public interface Application extends ComponentManager {
    * @param computation the computation to run
    * @return the result returned by the computation.
    * @throws E re-frown from ThrowableComputable
+   * @see CoroutinesKt#writeAction
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  @RequiresBlockingContext
   <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
@@ -178,34 +213,34 @@ public interface Application extends ComponentManager {
   }
 
   /**
-   * Asserts whether read access is allowed.
+   * Asserts that read access is allowed.
    */
   void assertReadAccessAllowed();
 
   /**
-   * Asserts whether write access is allowed.
+   * Asserts that write access is allowed.
    */
   void assertWriteAccessAllowed();
 
   /**
-   * Asserts whether read access is not allowed.
+   * Asserts that read access is not allowed.
    */
   @ApiStatus.Experimental
   void assertReadAccessNotAllowed();
 
   /**
-   * Asserts whether the method is being called from the event dispatch thread.
+   * Asserts that the method is being called from the event dispatch thread.
    */
   void assertIsDispatchThread();
 
   /**
-   * Asserts whether the method is being called from any thread outside EDT.
+   * Asserts that the method is being called from any thread outside EDT.
    */
   @ApiStatus.Experimental
   void assertIsNonDispatchThread();
 
   /**
-   * Asserts whether the method is being called from under the write-intent lock.
+   * Asserts that the method is being called from under the write-intent lock.
    */
   @ApiStatus.Experimental
   void assertWriteIntentLockAcquired();
@@ -236,6 +271,10 @@ public interface Application extends ComponentManager {
    */
   void exit();
 
+  default void exit(boolean force, boolean exitConfirmed, boolean restart, int exitCode) {
+    exit();
+  }
+
   default void exit(boolean force, boolean exitConfirmed, boolean restart) {
     exit();
   }
@@ -263,8 +302,8 @@ public interface Application extends ComponentManager {
   /**
    * Checks if the current thread is the event dispatch thread and has IW lock acquired.
    *
-   * @see #isWriteIntentLockAcquired()
    * @return {@code true} if the current thread is the Swing dispatch thread with IW lock, {@code false} otherwise.
+   * @see #isWriteIntentLockAcquired()
    */
   @Contract(pure = true)
   boolean isDispatchThread();
@@ -288,6 +327,7 @@ public interface Application extends ComponentManager {
    *
    * @param runnable the runnable to execute.
    */
+  @RequiresBlockingContext
   void invokeLater(@NotNull Runnable runnable);
 
   /**
@@ -301,7 +341,9 @@ public interface Application extends ComponentManager {
    *
    * @param runnable the runnable to execute.
    * @param expired  condition to check before execution.
+   * @see CoroutinesKt#getEDT
    */
+  @RequiresBlockingContext
   void invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired);
 
   /**
@@ -314,7 +356,9 @@ public interface Application extends ComponentManager {
    *
    * @param runnable the runnable to execute.
    * @param state    the state in which the runnable will be executed.
+   * @see CoroutinesKt#getEDT
    */
+  @RequiresBlockingContext
   void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state);
 
   /**
@@ -329,7 +373,9 @@ public interface Application extends ComponentManager {
    * @param runnable the runnable to execute.
    * @param state    the state in which the runnable will be executed.
    * @param expired  condition to check before execution.
+   * @see CoroutinesKt#getEDT
    */
+  @RequiresBlockingContext
   void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired);
 
   /**
@@ -347,19 +393,28 @@ public interface Application extends ComponentManager {
    * @param runnable      the runnable to execute.
    * @param modalityState the state in which the runnable will be executed.
    * @throws ProcessCanceledException when the current thread is interrupted
+   * @see CoroutinesKt#getEDT
    */
+  @RequiresBlockingContext
   void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) throws ProcessCanceledException;
 
   /**
    * Same as {@link #invokeAndWait(Runnable, ModalityState)}, using {@link ModalityState#defaultModalityState()}.
+   * @see CoroutinesKt#getEDT
    */
+  @RequiresBlockingContext
   void invokeAndWait(@NotNull Runnable runnable) throws ProcessCanceledException;
 
   /**
    * Please use {@link ModalityState#current()} instead.
    *
    * @return the current modality state.
+   * @deprecated for attention
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  @RequiresEdt
+  @ApiStatus.Internal
   @NotNull ModalityState getCurrentModalityState();
 
   /**
@@ -367,6 +422,7 @@ public interface Application extends ComponentManager {
    *
    * @return the modality state for the dialog to which the specified component belongs.
    */
+  @RequiresEdt
   @NotNull ModalityState getModalityStateForComponent(@NotNull Component c);
 
   /**
@@ -374,20 +430,28 @@ public interface Application extends ComponentManager {
    *
    * @return the modality state for the current thread.
    */
+  @RequiresBlockingContext
   @NotNull ModalityState getDefaultModalityState();
 
   /**
-   * Please use {@link ModalityState#NON_MODAL} instead.
+   * Please use {@link ModalityState#nonModal()} instead.
    *
    * @return the modality state for no modal dialogs.
+   * @deprecated for attention
    */
+  @Deprecated
+  @ApiStatus.Internal
   @NotNull ModalityState getNoneModalityState();
 
   /**
    * Please use {@link ModalityState#any()} instead, and only if you absolutely must, after carefully reading its documentation.
    *
    * @return modality state which is always applicable
+   * @deprecated for attention
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  @ApiStatus.Internal
   @NotNull ModalityState getAnyModalityState();
 
   /**
@@ -452,6 +516,7 @@ public interface Application extends ComponentManager {
    * @param action to be executed
    * @return future result
    */
+  @RequiresBlockingContext
   @NotNull Future<?> executeOnPooledThread(@NotNull Runnable action);
 
   /**
@@ -467,6 +532,7 @@ public interface Application extends ComponentManager {
    * @param action to be executed
    * @return future result
    */
+  @RequiresBlockingContext
   @NotNull <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action);
 
   /**
@@ -497,12 +563,8 @@ public interface Application extends ComponentManager {
 
   boolean isEAP();
 
-  @ApiStatus.Internal
-  default void withoutImplicitRead(@NotNull Runnable runnable) {
-    runnable.run();
-  }
-
   //<editor-fold desc="Deprecated stuff">
+
   /**
    * @deprecated this scope will die only with the application => plugin coroutines which use it will leak on unloading.
    * Instead, use <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#service-scopes">service constructor injection</a>.
@@ -541,6 +603,7 @@ public interface Application extends ComponentManager {
   @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> marker);
 
   /** @deprecated Internal API */
+  @ApiStatus.ScheduledForRemoval
   @ApiStatus.Internal
   @Deprecated
   @SuppressWarnings({"override", "DeprecatedIsStillUsed"})

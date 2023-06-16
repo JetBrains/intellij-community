@@ -54,7 +54,6 @@ public interface FilePropertyPusher<T> {
   ExtensionPointName<FilePropertyPusher<?>> EP_NAME = ExtensionPointName.create("com.intellij.filePropertyPusher");
 
   default void initExtra(@NotNull Project project) {
-    project.getMessageBus();
   }
 
   default void afterRootsChanged(@NotNull Project project) {}

@@ -9,9 +9,12 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.JavaProjectRootsUtil
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.ProjectRootManager
@@ -127,6 +130,20 @@ fun LibraryEx.updateEx(block: (LibraryEx.ModifiableModelEx) -> Unit) {
 
 private val KOTLIN_AWARE_SOURCE_ROOT_TYPES: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
     JavaModuleSourceRootTypes.SOURCES + ALL_KOTLIN_SOURCE_ROOT_TYPES
+
+fun Project.getKotlinAwareDestinationSourceRoots(): List<VirtualFile> {
+    return ModuleManager.getInstance(this).modules.flatMap { it.collectKotlinAwareDestinationSourceRoots() }
+}
+
+fun Module.collectKotlinAwareDestinationSourceRoots(): List<VirtualFile> {
+    return rootManager
+        .contentEntries
+        .asSequence()
+        .flatMap { it.getSourceFolders(KOTLIN_AWARE_SOURCE_ROOT_TYPES).asSequence() }
+        .filterNot { JavaProjectRootsUtil.isForGeneratedSources(it) }
+        .mapNotNull { it.file }
+        .toList()
+}
 
 fun PsiElement.isUnderKotlinSourceRootTypes(): Boolean {
     val ktFile = this.containingFile.safeAs<KtFile>() ?: return false

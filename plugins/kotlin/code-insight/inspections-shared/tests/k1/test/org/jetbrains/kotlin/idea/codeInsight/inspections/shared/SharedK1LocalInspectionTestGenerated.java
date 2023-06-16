@@ -96,6 +96,94 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve")
+    public static class JavaIoSerializableObjectMustHaveReadResolve extends AbstractSharedK1LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("doesntImplementSerializable_negative.kt")
+        public void testDoesntImplementSerializable_negative() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/doesntImplementSerializable_negative.kt");
+        }
+
+        @TestMetadata("implementsSerializableTransitive_positive.kt")
+        public void testImplementsSerializableTransitive_positive() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/implementsSerializableTransitive_positive.kt");
+        }
+
+        @TestMetadata("objectLiteral_negative.kt")
+        public void testObjectLiteral_negative() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/objectLiteral_negative.kt");
+        }
+
+        @TestMetadata("readResolveHasParams_positive.kt")
+        public void testReadResolveHasParams_positive() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/readResolveHasParams_positive.kt");
+        }
+
+        @TestMetadata("readResolveInSuper_implicitPublic_negative.kt")
+        public void testReadResolveInSuper_implicitPublic_negative() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/readResolveInSuper_implicitPublic_negative.kt");
+        }
+
+        @TestMetadata("readResolveInSuper_internal_positive.kt")
+        public void testReadResolveInSuper_internal_positive() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/readResolveInSuper_internal_positive.kt");
+        }
+
+        @TestMetadata("readResolveInSuper_private_positive.kt")
+        public void testReadResolveInSuper_private_positive() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/readResolveInSuper_private_positive.kt");
+        }
+
+        @TestMetadata("readResolveInSuper_protected_negative.kt")
+        public void testReadResolveInSuper_protected_negative() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/readResolveInSuper_protected_negative.kt");
+        }
+
+        @TestMetadata("readResolveInSuper_public_negative.kt")
+        public void testReadResolveInSuper_public_negative() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/readResolveInSuper_public_negative.kt");
+        }
+
+        @TestMetadata("readResolveIsInternal_positive.kt")
+        public void testReadResolveIsInternal_positive() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/readResolveIsInternal_positive.kt");
+        }
+
+        @TestMetadata("readResolveIsPrivate_negative.kt")
+        public void testReadResolveIsPrivate_negative() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/readResolveIsPrivate_negative.kt");
+        }
+
+        @TestMetadata("readResolveReturnsNotAny_positive.kt")
+        public void testReadResolveReturnsNotAny_positive() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/readResolveReturnsNotAny_positive.kt");
+        }
+
+        @TestMetadata("simpleDataObject_negative.kt")
+        public void testSimpleDataObject_negative() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/simpleDataObject_negative.kt");
+        }
+
+        @TestMetadata("simpleDataObject_positive.kt")
+        public void testSimpleDataObject_positive() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/simpleDataObject_positive.kt");
+        }
+
+        @TestMetadata("simple_negative.kt")
+        public void testSimple_negative() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/simple_negative.kt");
+        }
+
+        @TestMetadata("simple_positive.kt")
+        public void testSimple_positive() throws Exception {
+            runTest("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve/simple_positive.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantConstructorKeyword")
     public static class RedundantConstructorKeyword extends AbstractSharedK1LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -254,6 +342,11 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("inAnonymousFunction.kt")
         public void testInAnonymousFunction() throws Exception {
             runTest("../testData/inspectionsLocal/redundantReturnLabel/inAnonymousFunction.kt");
+        }
+
+        @TestMetadata("inAnonymousFunction2.kt")
+        public void testInAnonymousFunction2() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantReturnLabel/inAnonymousFunction2.kt");
         }
 
         @TestMetadata("inFunction.kt")
@@ -513,6 +606,11 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("namedArgument.kt")
         public void testNamedArgument() throws Exception {
             runTest("../testData/inspectionsLocal/redundantValueArgument/namedArgument.kt");
+        }
+
+        @TestMetadata("overridden.kt")
+        public void testOverridden() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantValueArgument/overridden.kt");
         }
 
         @TestMetadata("secondArgument.kt")

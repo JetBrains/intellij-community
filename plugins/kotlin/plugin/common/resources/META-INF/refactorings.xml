@@ -1,4 +1,11 @@
 <idea-plugin>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.renameHandler"
+            interface="com.intellij.refactoring.rename.RenameHandler"
+            dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <vetoRenameCondition implementation="org.jetbrains.kotlin.idea.refactoring.KotlinVetoRenameCondition"/>
 
@@ -24,6 +31,22 @@
                                order="first"/>
     <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinTypeParameterProcessor"
                                id="KotlinTypeParameter"/>
+
+    <refactoring.moveMemberHandler
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.java.MoveKotlinMemberHandler"/>
+    <refactoring.moveInnerHandler
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.java.MoveKotlinInnerHandler"/>
+    <refactoring.moveInnerClassUsagesHandler
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.refactoring.move.java.MoveJavaInnerClassKotlinUsagesHandler"/>
+    <refactoring.moveClassHandler
+            order="first"
+            implementation="org.jetbrains.kotlin.idea.refactoring.move.java.MoveKotlinClassHandler"/>
+    <refactoring.moveClassHandler
+            order="first"
+            implementation="org.jetbrains.kotlin.idea.refactoring.move.java.MoveKotlinAliasClassHandler"/>
 
   </extensions>
 

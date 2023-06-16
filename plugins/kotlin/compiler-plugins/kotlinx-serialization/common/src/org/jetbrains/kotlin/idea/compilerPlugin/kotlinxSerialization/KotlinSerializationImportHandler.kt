@@ -18,17 +18,22 @@ object KotlinSerializationImportHandler {
         return path.endsWith(KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)
     }
 
-    fun modifyCompilerArguments(facet: KotlinFacet, buildSystemPluginJar: String) {
+    fun modifyCompilerArguments(
+        facet: KotlinFacet,
+        pluginJarsRegex: List<Regex>
+    ) {
         val facetSettings = facet.configuration.settings
         val commonArguments = facetSettings.compilerArguments ?: CommonCompilerArguments.DummyImpl()
 
         var pluginWasEnabled = false
-        val oldPluginClasspaths = (commonArguments.pluginClasspaths ?: emptyArray()).filterTo(mutableListOf()) {
-            val lastIndexOfFile = it.lastIndexOfAny(charArrayOf('/', File.separatorChar))
+        val oldPluginClasspaths = (commonArguments.pluginClasspaths ?: emptyArray()).filterTo(mutableListOf()) { jarPath ->
+            val lastIndexOfFile = jarPath.lastIndexOfAny(charArrayOf('/', File.separatorChar))
             if (lastIndexOfFile < 0) {
                 return@filterTo true
             }
-            val match = it.drop(lastIndexOfFile + 1).matches("$buildSystemPluginJar-.*\\.jar".toRegex())
+
+            val jarFileName = jarPath.drop(lastIndexOfFile + 1)
+            val match = pluginJarsRegex.any { jarFileName.matches(it) }
             if (match) pluginWasEnabled = true
             !match
         }

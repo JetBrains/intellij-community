@@ -78,9 +78,9 @@ public final class ClassPath {
   public interface ClassDataConsumer {
     boolean isByteBufferSupported(String name);
 
-    Class<?> consumeClassData(String name, byte[] data, Loader loader) throws IOException;
+    Class<?> consumeClassData(String name, byte[] data) throws IOException;
 
-    Class<?> consumeClassData(String name, ByteBuffer data, Loader loader) throws IOException;
+    Class<?> consumeClassData(String name, ByteBuffer data) throws IOException;
   }
 
   public ClassPath(@NotNull Collection<Path> files,
@@ -104,6 +104,11 @@ public final class ClassPath {
 
   synchronized List<Path> getFiles() {
     return Arrays.asList(files);
+  }
+
+  synchronized void reset(Collection<Path> newClassPath) {
+    reset();
+    files = newClassPath.toArray(new Path[]{});
   }
 
   public synchronized void reset() {
@@ -148,12 +153,12 @@ public final class ClassPath {
 
   /** Adding URLs to classpath at runtime could lead to hard-to-debug errors */
   // use only after approval
-  public synchronized void addFiles(@NotNull List<Path> newList) {
+  public synchronized void addFiles(@NotNull Collection<Path> newList) {
     if (newList.isEmpty()) {
       return;
     }
     else if (newList.size() == 1) {
-      addFile(newList.get(0));
+      addFile(newList instanceof List ? ((List<Path>)newList).get(0) : newList.iterator().next());
       return;
     }
 
@@ -334,7 +339,10 @@ public final class ClassPath {
         return null;
       }
 
-      Path path = files[searchOffset++];
+      // https://youtrack.jetbrains.com/issue/IDEA-314175
+      // some environments (e.g., Bazel tests) put relative jar paths on the Java classpath,
+      // because relative paths are useful for hermeticity.
+      Path path = files[searchOffset++].toAbsolutePath();
       try {
         Loader loader = createLoader(path);
         if (loader != null) {
@@ -565,10 +573,10 @@ public final class ClassPath {
     }
 
     @Override
-    public Class<?> consumeClassData(String name, byte[] data, Loader loader) throws IOException {
+    public Class<?> consumeClassData(String name, byte[] data) throws IOException {
       long start = startTiming();
       try {
-        return classDataConsumer.consumeClassData(name, data, loader);
+        return classDataConsumer.consumeClassData(name, data);
       }
       finally {
         record(start);
@@ -576,10 +584,10 @@ public final class ClassPath {
     }
 
     @Override
-    public Class<?> consumeClassData(String name, ByteBuffer data, Loader loader) throws IOException {
+    public Class<?> consumeClassData(String name, ByteBuffer data) throws IOException {
       long start = startTiming();
       try {
-        return classDataConsumer.consumeClassData(name, data, loader);
+        return classDataConsumer.consumeClassData(name, data);
       }
       finally {
         record(start);
@@ -598,6 +606,7 @@ public final class ClassPath {
 
     private static void record(long start) {
       if (start != -1) {
+        //noinspection ThreadLocalSetWithNull
         doingClassDefineTiming.set(null);
         classDefineTotalTime.addAndGet(System.nanoTime() - start);
       }
@@ -626,6 +635,7 @@ public final class ClassPath {
         return;
       }
 
+      //noinspection ThreadLocalSetWithNull
       doingTiming.set(null);
 
       long time = System.nanoTime() - start;

@@ -48,11 +48,11 @@ class NotificationGroupManagerImpl private constructor() : NotificationGroupMana
 
   override fun getNotificationGroup(groupId: String): NotificationGroup? = registeredGroups[groupId]
 
-  override fun isGroupRegistered(groupId: String) = registeredGroups.containsKey(groupId)
+  override fun isGroupRegistered(groupId: String): Boolean = registeredGroups.containsKey(groupId)
 
-  override fun getRegisteredNotificationGroups() = registeredGroups.values
+  override fun getRegisteredNotificationGroups(): MutableCollection<NotificationGroup> = registeredGroups.values
 
-  override fun isRegisteredNotificationId(notificationId: String) = registeredNotificationIds.value.contains(notificationId)
+  override fun isRegisteredNotificationId(notificationId: String): Boolean = registeredNotificationIds.value.contains(notificationId)
 }
 
 private fun computeGroups(): MutableMap<String, NotificationGroup> {

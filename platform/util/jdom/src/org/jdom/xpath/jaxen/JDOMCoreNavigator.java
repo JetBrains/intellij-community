@@ -291,7 +291,7 @@ class JDOMCoreNavigator extends DefaultNavigator {
   }
 
   @Override
-  public final Iterator<?> getParentAxisIterator(Object contextNode) throws UnsupportedAxisException {
+  public final Iterator<?> getParentAxisIterator(Object contextNode) {
 
     Parent p = null;
     if (contextNode instanceof Content) {

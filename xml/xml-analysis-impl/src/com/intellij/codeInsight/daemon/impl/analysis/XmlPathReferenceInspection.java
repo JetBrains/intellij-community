@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.openapi.paths.PathReferenceManagerImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
@@ -85,7 +86,7 @@ public class XmlPathReferenceInspection extends XmlSuppressableInspectionTool {
   @NotNull
   private Collection<PsiReference> getUnresolvedReferencesToAnnotate(PsiReference[] references) {
     Map<TextRange, PsiReference> unresolvedReferences = new HashMap<>();
-    for (PsiReference reference : references) {
+    for (PsiReference reference : ContainerUtil.concat(references, PathReferenceManagerImpl::remergeWrappedReferences)) {
       if (!XmlHighlightVisitor.isUrlReference(reference) || !needToCheckRef(reference)) {
         continue;
       }

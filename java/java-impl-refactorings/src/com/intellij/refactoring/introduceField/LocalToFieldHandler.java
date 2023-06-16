@@ -86,7 +86,7 @@ public abstract class LocalToFieldHandler {
       final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, firstClass);
       String title = myIsConstant ? JavaRefactoringBundle.message("local.to.field.popup.title.choose.class.to.introduce.constant")
                                   : JavaRefactoringBundle.message("local.to.field.popup.title.choose.class.to.introduce.field");
-      new PsiTargetNavigator().selection(preselection).createPopup(classes.toArray(PsiClass.EMPTY_ARRAY),
+      new PsiTargetNavigator<>(classes.toArray(PsiClass.EMPTY_ARRAY)).selection(preselection).createPopup(myProject,
                                                 title, new PsiElementProcessor<>() {
           @Override
           public boolean execute(@NotNull PsiClass aClass) {

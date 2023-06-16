@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -6,11 +6,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiLiteralUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceConcatenationWithFormatStringIntention extends MutablyNamedIntention {
+public class ReplaceConcatenationWithFormatStringIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -67,7 +68,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends MutablyNamedI
   }
 
   @Override
-  protected String getTextForElement(PsiElement element) {
+  protected String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message(HighlightingFeature.TEXT_BLOCKS.isAvailable(element)
                                             ? "replace.concatenation.with.format.string.intention.name.formatted"
                                             : "replace.concatenation.with.format.string.intention.name");
@@ -128,8 +129,8 @@ public class ReplaceConcatenationWithFormatStringIntention extends MutablyNamedI
                                          String formatString,
                                          boolean insertNewline,
                                          StringBuilder newExpression) {
-    final boolean textBlocks = Arrays.stream(expression.getOperands())
-      .anyMatch(operand -> operand instanceof PsiLiteralExpression && ((PsiLiteralExpression)operand).isTextBlock());
+    final boolean textBlocks = ContainerUtil.exists(expression.getOperands(), 
+                                                    operand -> operand instanceof PsiLiteralExpression literal && literal.isTextBlock());
     if (textBlocks) {
       newExpression.append("\"\"\"\n");
       formatString = Arrays.stream(formatString.split("\n"))

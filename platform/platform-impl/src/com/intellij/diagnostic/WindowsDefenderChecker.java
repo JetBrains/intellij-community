@@ -111,7 +111,7 @@ public class WindowsDefenderChecker {
       for (var i = 0; i < avResult.getResultCount(); i++) {
         var name = avResult.getValue(AntivirusProduct.DisplayName, i);
         if (LOG.isDebugEnabled()) LOG.debug("DisplayName[" + i + "]: " + name + " (" + name.getClass().getName() + ')');
-        if (name instanceof String s && s.contains("Windows Defender")) {
+        if (name instanceof String s && (s.contains("Windows Defender") || s.contains("Microsoft Defender"))) {
           var state = avResult.getValue(AntivirusProduct.ProductState, i);
           if (LOG.isDebugEnabled()) LOG.debug("ProductState: " + state + " (" + state.getClass().getName() + ')');
           var enabled = state instanceof Integer intState && (intState.intValue() & 0x1000) != 0;
@@ -129,15 +129,15 @@ public class WindowsDefenderChecker {
       return Boolean.TRUE.equals(rtProtection);
     }
     catch (COMException e) {
-      if (e.matchesErrorCode(Wbemcli.WBEM_E_INVALID_NAMESPACE)) return false;  // Windows Defender not installed
-      var message = "WMI Windows Defender check failed";
+      if (e.matchesErrorCode(Wbemcli.WBEM_E_INVALID_NAMESPACE)) return false;  // Microsoft Defender not installed
+      var message = "WMI Microsoft Defender check failed";
       var hresult = e.getHresult();
       if (hresult != null) message += " [0x" + Integer.toHexString(hresult.intValue()) + ']';
       LOG.warn(message, e);
       return null;
     }
     catch (Exception e) {
-      LOG.warn("WMI Windows Defender check failed", e);
+      LOG.warn("WMI Microsoft Defender check failed", e);
       return null;
     }
   }

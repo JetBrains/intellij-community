@@ -31,19 +31,6 @@ import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 fun KtElement.getResolutionFacade(): ResolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(this)
 
 /**
- * For local declarations is equivalent to unsafeResolveToDescriptor(bodyResolveMode)
- *
- * But for non-local declarations it ignores bodyResolveMode and uses LazyDeclarationResolver directly
- */
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-    message = "This function has unclear semantics. Please use either unsafeResolveToDescriptor or resolveToDescriptorIfAny instead",
-    replaceWith = ReplaceWith("unsafeResolveToDescriptor")
-)
-fun KtDeclaration.resolveToDescriptor(bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL): DeclarationDescriptor =
-    getResolutionFacade().resolveToDescriptor(this, bodyResolveMode)
-
-/**
  * This function throws exception when resolveToDescriptorIfAny returns null, otherwise works equivalently.
  *
  * **Please, use overload with providing resolutionFacade for stable results of subsequent calls**
@@ -221,15 +208,6 @@ fun ResolutionFacade.resolveImportReference(
         packageFragmentForVisibilityCheck = null
     )?.getContributedDescriptors() ?: emptyList()
 }
-
-@Suppress("DEPRECATION")
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "This method is going to be removed in 1.3.0 release",
-    ReplaceWith("analyzeWithAllCompilerChecks().bindingContext"),
-    DeprecationLevel.ERROR
-)
-fun KtElement.analyzeFully(): BindingContext = analyzeWithAllCompilerChecks().bindingContext
 
 fun KtReferenceExpression.resolveMainReference(): PsiElement? =
     try {

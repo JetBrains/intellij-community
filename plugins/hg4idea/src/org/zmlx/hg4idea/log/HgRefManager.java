@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.log;
 
 import com.intellij.openapi.project.Project;
@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.ui.JBColor.namedColor;
+import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class HgRefManager implements VcsLogRefManager {
@@ -150,15 +151,18 @@ public class HgRefManager implements VcsLogRefManager {
       }
     }
 
-    List<RefGroup> result = new ArrayList<>();
-    SimpleRefGroup.buildGroups(groupedRefs, compact, showTagNames, result);
-    RefGroup firstGroup = getFirstItem(result);
+    List<RefGroup> refGroups = SimpleRefGroup.buildGroups(emptyList(), groupedRefs, compact, showTagNames);
+    if (headAndTip.isEmpty()) return refGroups;
+
+    RefGroup firstGroup = getFirstItem(refGroups);
     if (firstGroup != null) {
       firstGroup.getRefs().addAll(0, headAndTip);
+      return refGroups;
     }
-    else {
-      result.add(new SimpleRefGroup("", headAndTip));
-    }
+
+    List<RefGroup> result = new ArrayList<>();
+    result.add(new SimpleRefGroup("", headAndTip));
+    result.addAll(refGroups);
 
     return result;
   }

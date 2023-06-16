@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
-import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.WelcomeScreenCloneCollector
@@ -61,9 +60,6 @@ internal object RecentProjectPanelComponentFactory {
         WelcomeScreenCloneCollector.cloneCanceled()
       }
     })
-
-    // Run detectors that will add projects to the RecentProjectsManagerBase
-    ProjectDetector.runDetectors {}
 
     val updateQueue = MergingUpdateQueue("Welcome screen UI updater", UPDATE_INTERVAL, true, null,
                                          parentDisposable, tree, Alarm.ThreadToUse.SWING_THREAD)

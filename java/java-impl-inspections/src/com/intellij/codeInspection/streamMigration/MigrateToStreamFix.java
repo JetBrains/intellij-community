@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.StreamSource;
 import com.intellij.java.JavaBundle;
@@ -14,13 +13,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-class MigrateToStreamFix implements LocalQuickFix {
+class MigrateToStreamFix extends PsiUpdateModCommandQuickFix {
   private final BaseStreamApiMigration myMigration;
 
   protected MigrateToStreamFix(BaseStreamApiMigration migration) {
@@ -41,14 +39,8 @@ class MigrateToStreamFix implements LocalQuickFix {
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    // Has non-trivial fields but safe
-    return this;
-  }
-
-  @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiLoopStatement loopStatement = tryCast(descriptor.getPsiElement(), PsiLoopStatement.class);
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    PsiLoopStatement loopStatement = tryCast(element, PsiLoopStatement.class);
     if (loopStatement == null) return;
     StreamSource source = StreamSource.tryCreate(loopStatement);
     PsiStatement body = loopStatement.getBody();

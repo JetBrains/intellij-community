@@ -43,10 +43,15 @@ object KotlinLineMarkerOptions {
     val dslOption =
         GutterIconDescriptor.Option("kotlin.dsl", KotlinBundle.message("highlighter.name.dsl.markers"), KotlinIcons.DSL_MARKER_ANNOTATION)
 
+    val recursiveOption =
+        GutterIconDescriptor.Option("kotlin.recursive", 
+                                    KotlinBundle.message("highlighter.tool.tip.text.recursive.call"), 
+                                    AllIcons.Gutter.RecursiveMethod)
+
     val options = arrayOf(
         overriddenOption, implementedOption,
         overridingOption, implementingOption,
         actualOption, expectOption,
-        dslOption
+        dslOption, recursiveOption
     )
 }

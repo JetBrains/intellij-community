@@ -18,7 +18,7 @@ public class CreateNullBranchFixTest extends IGQuickFixesTestCase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
-    builder.setLanguageLevel(LanguageLevel.JDK_17_PREVIEW);
+    builder.setLanguageLevel(LanguageLevel.JDK_20_PREVIEW);
   }
 
   public void testNoDefault() {
@@ -45,8 +45,8 @@ public class CreateNullBranchFixTest extends IGQuickFixesTestCase {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
   }
 
-  public void testUnconditionalPatternAlreadyExists() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
+  public void testUnconditionalPatternExists() {
+    doTest(InspectionGadgetsBundle.message("create.null.branch.fix.family.name"));
   }
 
   public void testUnconditionalPatternNotExist() {

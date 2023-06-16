@@ -3,24 +3,18 @@
 package org.jetbrains.kotlin.idea.completion.test.weighers
 
 import com.intellij.codeInsight.completion.CompletionType
-import org.jetbrains.kotlin.idea.completion.test.configureWithExtraFile
+import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.junit.Assert
-import java.io.File
 
 abstract class AbstractCompletionWeigherTest(val completionType: CompletionType, val relativeTestDataPath: String) :
     KotlinLightCodeInsightFixtureTestCase() {
 
-    protected open fun handleTestPath(path: String): File = File(path)
-
     fun doTest(path: String) {
-        val actualTestFile = handleTestPath(dataFilePath(fileName()))
-        myFixture.configureWithExtraFile(
-            actualTestFile.toRelativeString(File(testDataPath)),
-            ".Data", ".Data1", ".Data2", ".Data3", ".Data4", ".Data5", ".Data6"
-        )
+        val fileSuffixes = arrayOf(".Data", ".Data1", ".Data2", ".Data3", ".Data4", ".Data5", ".Data6")
+        myFixture.configureByFilesWithSuffixes(dataFile(), testDataDirectory, *fileSuffixes)
 
         val text = myFixture.editor.document.text
 

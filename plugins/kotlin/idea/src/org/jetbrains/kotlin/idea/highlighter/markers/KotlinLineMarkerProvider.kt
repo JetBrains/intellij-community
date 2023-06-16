@@ -194,8 +194,6 @@ private fun isImplementsAndNotOverrides(
 ): Boolean = descriptor.modality != Modality.ABSTRACT && overriddenMembers.all { it.modality == Modality.ABSTRACT }
 
 private fun collectSuperDeclarationMarkers(declaration: KtDeclaration, result: LineMarkerInfos) {
-    if (!(KotlinLineMarkerOptions.implementingOption.isEnabled || KotlinLineMarkerOptions.overridingOption.isEnabled)) return
-
     assert(declaration is KtNamedFunction || declaration is KtProperty || declaration is KtParameter)
     declaration as KtNamedDeclaration // implied by assert
 
@@ -212,6 +210,8 @@ private fun collectSuperDeclarationMarkers(declaration: KtDeclaration, result: L
     // clearing the whole BindingTrace.
 
     val gutter = if (implements) KotlinLineMarkerOptions.implementingOption else KotlinLineMarkerOptions.overridingOption
+    if (!gutter.isEnabled) return
+
     val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
         anchor,
         anchor.textRange,
@@ -233,18 +233,17 @@ private fun collectSuperDeclarationMarkers(declaration: KtDeclaration, result: L
 }
 
 private fun collectInheritedClassMarker(element: KtClass, result: LineMarkerInfos) {
-    if (!(KotlinLineMarkerOptions.implementedOption.isEnabled || KotlinLineMarkerOptions.overriddenOption.isEnabled)) return
-
     if (!element.isInheritable()) {
         return
     }
+    val gutter = if (element.isInterface()) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
+    if (!gutter.isEnabled) return
 
     val lightClass = element.toLightClass() ?: element.toFakeLightClass()
 
     if (ClassInheritorsSearch.search(lightClass, false).findFirst() == null) return
 
     val anchor = element.nameIdentifier ?: element
-    val gutter = if (element.isInterface()) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
     val icon = gutter.icon ?: return
     val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
         anchor,
@@ -287,6 +286,7 @@ private fun collectOverriddenPropertyAccessors(
 
         val anchor = (property as? PsiNameIdentifierOwner)?.nameIdentifier ?: property
         val gutter = if (isImplemented(property)) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
+        if (!gutter.isEnabled) continue
         val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
             anchor,
             anchor.textRange,
@@ -404,6 +404,7 @@ private fun collectOverriddenFunctions(functions: Collection<KtNamedFunction>, r
 
         val anchor = function.nameAnchor()
         val gutter = if (isImplemented(function)) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
+        if (!gutter.isEnabled) continue
         val lineMarkerInfo = LineMarkerInfo(
             anchor,
             anchor.textRange,

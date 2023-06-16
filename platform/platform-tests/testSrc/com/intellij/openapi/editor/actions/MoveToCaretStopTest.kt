@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions
 
 import com.intellij.openapi.Disposable
@@ -19,8 +19,8 @@ class MoveToCaretStopTest : BasePlatformTestCase() {
 
     override fun compare(o1: Int, o2: Int): Int {
       return when (this) {
-        FORWARD -> Integer.compare(o1, o2)
-        BACKWARD -> Integer.compare(o2, o1)
+        FORWARD -> o1.compareTo(o2)
+        BACKWARD -> o2.compareTo(o1)
       }
     }
   }
@@ -445,7 +445,7 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
 
     private fun CharSequence.offsets(direction: Direction): IntProgression =
       when (direction) {
-        FORWARD -> 0 until length
+        FORWARD -> indices
         BACKWARD -> length downTo 1
       }
 

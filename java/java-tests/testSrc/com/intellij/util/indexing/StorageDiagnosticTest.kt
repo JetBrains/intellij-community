@@ -14,10 +14,10 @@ import kotlin.io.path.pathString
 
 class StorageDiagnosticTest {
   @get: Rule
-  val tempDir = TempDirectory()
+  val tempDir: TempDirectory = TempDirectory()
 
   @get: Rule
-  val app = ApplicationRule()
+  val app: ApplicationRule = ApplicationRule()
 
   @Test
   fun `test dump persistent map stats`() {

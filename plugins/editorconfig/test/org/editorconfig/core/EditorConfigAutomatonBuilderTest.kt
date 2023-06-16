@@ -1,55 +1,98 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.core
 
-import junit.framework.TestCase.assertEquals
-import org.junit.Test
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import dk.brics.automaton.Automaton
+import org.editorconfig.language.psi.EditorConfigSection
+import org.junit.Assert
 
-class EditorConfigAutomatonBuilderTest {
-  @Test
-  fun `test getGlob on simple text`() {
-    val source = "hello?*[abc]"
-    val actual = EditorConfigAutomatonBuilder.sanitizeGlob(source, "C:/folder")
-    val expected = ".*/hello.[^/]*[abc]"
-    assertEquals(expected, actual)
+class EditorConfigAutomatonBuilderTest : BasePlatformTestCase() {
+  private fun automatonFor(glob: String): Automaton {
+    val file = myFixture.configureByText(".editorconfig", "[$glob]")
+    val section = PsiTreeUtil.findChildOfType(file, EditorConfigSection::class.java)!!
+    return EditorConfigAutomatonBuilder.globToAutomaton(section.header.pattern, "/")
   }
 
-  @Test
-  fun `test getGlob on char negation`() {
-    val source = "abc[!abc]"
-    val actual = EditorConfigAutomatonBuilder.sanitizeGlob(source, "C:/folder")
-    val expected = ".*/abc[^abc]"
-    assertEquals(expected, actual)
+  fun `test simple`() {
+    automatonFor("hello?*[abc]").run {
+      assertAccepts("Star can match empty string", "/helloxa")
+      assertRejects("Automaton is expecting absolute paths", "helloxa")
+      assertAccepts("/some/sort/of/a/folder/hello0123456789c")
+      assertRejects("Question mark requires a single character", "/helloa")
+    }
   }
 
-  @Test
-  fun `test getGlob on pattern enumeration`() {
-    val source = "*.{cs,vb}"
-    val actual = EditorConfigAutomatonBuilder.sanitizeGlob(source, "C:/folder")
-    val expected = ".*/[^/]*\\.(cs|vb)"
-    assertEquals(expected, actual)
+  fun `test char class negation`() {
+    automatonFor("abc[!abc]").run {
+      assertAccepts("/abcd")
+      assertRejects("/abc")
+      assertRejects("/")
+      assertRejects("/abcc")
+    }
   }
 
-  @Test
-  fun `test getGlob on global pattern enumeration`() {
-    val source = "{*.cs,*.vb}"
-    val actual = EditorConfigAutomatonBuilder.sanitizeGlob(source, "C:/folder")
-    val expected = ".*/([^/]*\\.cs|[^/]*\\.vb)"
-    assertEquals(expected, actual)
+  fun `test enumeration pattern`() {
+    automatonFor("{*.cs,*.vb}").run {
+      assertAccepts("/a.cs")
+      assertAccepts("/b.cs")
+      assertRejects("/")
+      assertRejects("/abc")
+      assertAccepts("/will/match/in/any/folder/c.vb")
+    }
   }
 
-  @Test
-  fun `test getGlob on pattern with separator`() {
-    val source = "/abc/*.txt"
-    val actual = EditorConfigAutomatonBuilder.sanitizeGlob(source, "C:/folder")
-    val expected = "C\\:/folder/abc/[^/]*\\.txt"
-    assertEquals(expected, actual)
+  fun `test prefixed enumeration pattern`() {
+    val automaton = automatonFor("*.{cs,vb}")
+    Assert.assertEquals(automaton, automatonFor("{*.cs,*.vb}"))
   }
 
-  @Test
-  fun testHeaderTrimming() {
-    val text = "[foo]"
-    val newText = text.substring(1, text.length - 1)
-    val expected = "foo"
-    assertEquals(expected, newText)
+  fun `test nested enumeration pattern`() {
+    automatonFor("*.{{c,h},{cpp,hpp}}").run {
+      assertAccepts("/a.c")
+      assertAccepts("/a.h")
+      assertAccepts("/a.cpp")
+      assertAccepts("/a.hpp")
+      assertRejects("/a.{c,h}")
+    }
+  }
+
+  fun `test leading spaces inside enumeration patterns are not ignored`() {
+    automatonFor("{a, b}").run {
+      assertAccepts("/a")
+      assertAccepts("/ b")
+      assertRejects("/b")
+    }
+  }
+
+  fun `test spaces in the middle of an enumerated pattern are not ignored`() {
+    automatonFor("{a,b c}").run {
+      assertAccepts("/b c")
+      assertRejects("/bc")
+    }
+  }
+
+  fun `test any-path pattern together with enumeration pattern`() {
+    automatonFor("/a/**/{*.c,*.h}").run {
+      assertAccepts("/a/b.c")
+      assertAccepts("/a/b/c/d/e.c")
+      assertRejects("/ab.c")
+      assertRejects("/b/c.c")
+    }
+  }
+
+  fun `_test interval pattern`() {
+    automatonFor("{*.c,{1..20}}").run {
+      assertAccepts("/foo.c")
+      assertAccepts("/5")
+      assertRejects("/25")
+    }
+  }
+
+  companion object {
+    fun Automaton.assertAccepts(string: String) = Assert.assertTrue(this.run(string))
+    fun Automaton.assertAccepts(msg: String, string: String) = Assert.assertTrue(msg, this.run(string))
+    fun Automaton.assertRejects(string: String) = Assert.assertFalse(this.run(string))
+    fun Automaton.assertRejects(msg: String, string: String) = Assert.assertFalse(msg, this.run(string))
   }
 }

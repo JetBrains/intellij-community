@@ -388,7 +388,7 @@ public class GitLogParser<R extends GitLogRecord> {
     }
 
     public void parseLine(@NotNull CharSequence line) {
-      if (line.length() == 0) return;
+      if (line.isEmpty()) return;
 
       List<String> match = parsePathsLine(line);
 
@@ -502,7 +502,7 @@ public class GitLogParser<R extends GitLogRecord> {
     }
 
     public boolean isEmpty() {
-      return myResult.isEmpty() && myCurrentItem.length() == 0;
+      return myResult.isEmpty() && myCurrentItem.isEmpty();
     }
   }
 }

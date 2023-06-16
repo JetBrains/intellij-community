@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.injection;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -13,6 +13,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -52,6 +53,21 @@ public abstract class InjectedLanguageManager {
 
   @NotNull
   public abstract String getUnescapedText(@NotNull PsiElement injectedNode);
+
+  /**
+   * @param injectedFile injected file
+   * @param injectedOffset offset inside the injected file (e.g., caret position from the editor)
+   * @return the corresponding unescaped offset which matches the result of {@link #getUnescapedText(PsiElement)}
+   */
+  @Contract(pure = true)
+  public int mapInjectedOffsetToUnescaped(@NotNull PsiFile injectedFile, int injectedOffset) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Contract(pure = true)
+  public int mapUnescapedOffsetToInjected(@NotNull PsiFile injectedFile, int offset) {
+    throw new UnsupportedOperationException();
+  }
 
   @NotNull
   public abstract List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit);

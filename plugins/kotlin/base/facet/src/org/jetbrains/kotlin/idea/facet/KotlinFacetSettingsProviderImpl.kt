@@ -53,7 +53,7 @@ class KotlinFacetSettingsProviderImpl(project: Project) :
     override fun beforeChanged(event: VersionedStorageChange) {
         val moduleChanges = event.getChanges(ModuleEntity::class.java)
         val facetChanges = event.getChanges(FacetEntity::class.java)
-        if (moduleChanges.isEmpty() && facetChanges.isEmpty()) return
+        if (moduleChanges.none() && facetChanges.none()) return
 
         val storageBefore = event.storageBefore
         val storageAfter = event.storageAfter

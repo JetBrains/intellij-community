@@ -8,9 +8,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 private class OnDemandDependencyFeatureCollector : AppLifecycleListener {
-
   init {
-    if (!IdeaPluginDescriptorImpl.isOnDemandEnabled) {
+    if (!isOnDemandPluginEnabled) {
       throw ExtensionNotApplicableException.create()
     }
   }
@@ -20,8 +19,8 @@ private class OnDemandDependencyFeatureCollector : AppLifecycleListener {
 
     PluginManagerCore.getPluginSet()
       .allPlugins // todo assert dependencySupport is in the main descriptors only
-      .filter { it.pluginClassLoader == null }
-      .filter { it.isOnDemand }
+      .asSequence()
+      .filter { it.pluginClassLoader == null && it.isOnDemand }
       .associateWith { it.epNameToExtensions?.get(DependencySupportBean.EP_NAME.name) ?: emptyList() }
       .forEach { (pluginDescriptor, extensionDescriptors) ->
         val pluginData = PluginData(pluginDescriptor)

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.base.analysis
 
 import com.intellij.ProjectTopics
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.assertReadAccessAllowed
 import com.intellij.openapi.application.runReadAction
@@ -45,7 +46,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private class LibraryDependencyCandidatesAndSdkInfos(
     val libraryDependencyCandidates: MutableSet<LibraryDependencyCandidate> = linkedSetOf(),
-    val sdkInfos: MutableSet<SdkInfo> = linkedSetOf()
+    val sdkInfos: MutableSet<SdkInfo> = LinkedHashSet(1)
 ) {
     operator fun plusAssign(other: LibraryDependencyCandidatesAndSdkInfos) {
         libraryDependencyCandidates += other.libraryDependencyCandidates
@@ -183,9 +184,9 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     private fun getLibraryUsageIndex(): LibraryUsageIndex =
         CachedValuesManager.getManager(project).getCachedValue(project) {
             CachedValueProvider.Result(
-                LibraryUsageIndex(),
-                ModuleModificationTracker.getInstance(project),
-                LibraryModificationTracker.getInstance(project)
+              LibraryUsageIndex(),
+              ModuleModificationTracker.getInstance(project),
+              JavaLibraryModificationTracker.getInstance(project)
             )
         }!!
 
@@ -489,7 +490,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         override fun beforeChanged(event: VersionedStorageChange) {
             val storageBefore = event.storageBefore
-            val changes = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
+            val changes = event.getChanges(ModuleEntity::class.java)
+            if (changes.none()) return
 
             val outdatedModules = mutableSetOf<Module>()
             for (change in changes) {

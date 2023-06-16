@@ -267,10 +267,6 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
 
     void apply(@NotNull Project project, @NotNull PsiMethodCallExpression call, @NotNull C context);
 
-    default boolean isAvailable(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
-      return extractContext(project, call) != null;
-    }
-
     @NotNull
     CallMatcher getMatcher();
 
@@ -368,8 +364,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
   }
 
-  static class OptionalSimplificationFix implements LocalQuickFix {
-    @SafeFieldForPreview
+  static class OptionalSimplificationFix extends PsiUpdateModCommandQuickFix {
     private final @NotNull ChainSimplificationCase<?> myInspection;
     private final @IntentionFamilyName String myName;
     private final @InspectionMessage String myDescription;
@@ -389,9 +384,8 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class, false);
-      //PsiMethodCallExpression call = tryCast(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);
       handleSimplification(myInspection, project, call);
     }
 

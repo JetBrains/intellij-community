@@ -9,12 +9,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-final class ProblemsViewBundle extends DynamicBundle {
+final class ProblemsViewBundle {
   private static final @NonNls String BUNDLE = "messages.ProblemsViewBundle";
-  private static final ProblemsViewBundle INSTANCE = new ProblemsViewBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(ProblemsViewBundle.class, BUNDLE);
 
   private ProblemsViewBundle() {
-    super(BUNDLE);
   }
 
   public static @Nls @NotNull String message(

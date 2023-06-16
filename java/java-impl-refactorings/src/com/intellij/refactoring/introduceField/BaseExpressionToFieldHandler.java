@@ -127,7 +127,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       else {
         title = JavaRefactoringBundle.message("popup.title.choose.class.to.introduce.field");
       }
-      new PsiTargetNavigator().selection(selection).createPopup(classes.toArray(PsiClass.EMPTY_ARRAY),
+      new PsiTargetNavigator<>(classes.toArray(PsiClass.EMPTY_ARRAY)).selection(selection).createPopup(project,
                                                 title,
                                                 new PsiElementProcessor<>() {
                                           @Override

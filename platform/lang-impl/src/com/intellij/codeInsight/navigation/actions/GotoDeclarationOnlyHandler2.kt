@@ -4,7 +4,6 @@ package com.intellij.codeInsight.navigation.actions
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.CtrlMouseData
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
@@ -25,12 +24,6 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
   private fun gotoDeclaration(project: Project, editor: Editor, file: PsiFile, offset: Int): GTDActionData? {
     return fromGTDProviders(project, editor, offset)
            ?: gotoDeclaration(file, offset)
-  }
-
-  @Suppress("DEPRECATION")
-  @Deprecated("Unused in v2 implementation")
-  fun getCtrlMouseInfo(editor: Editor, file: PsiFile, offset: Int): CtrlMouseInfo? {
-    return gotoDeclaration(file.project, editor, file, offset)?.ctrlMouseInfo()
   }
 
   fun getCtrlMouseData(editor: Editor, file: PsiFile, offset: Int): CtrlMouseData? {

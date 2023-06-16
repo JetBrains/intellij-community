@@ -2,7 +2,10 @@
 
 package org.jetbrains.uast.kotlin.internal
 
+import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiModifierListOwner
+import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -63,5 +66,13 @@ class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
                     resolveToDeclarationImpl(ktExpression, resolvedCall.candidateDescriptor)?.let { yield(it) }
                 }
         }
+    }
+
+    override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
+        return ktElement.actionUnderSafeAnalyzeBlock({ ktElement.toLightAnnotation() }, { null })
+    }
+
+    override fun getPsiAnnotations(psiElement: PsiModifierListOwner): Array<PsiAnnotation> {
+        return psiElement.actionUnderSafeAnalyzeBlock({ psiElement.annotations }, { emptyArray() })
     }
 }

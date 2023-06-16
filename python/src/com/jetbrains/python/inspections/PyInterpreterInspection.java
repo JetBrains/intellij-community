@@ -51,6 +51,7 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension;
 import com.jetbrains.python.ui.PyUiUtil;
 import kotlin.Pair;
+import kotlin.sequences.SequencesKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -333,7 +334,7 @@ public final class PyInterpreterInspection extends PyInspection {
        */
       @Override
       public void beforeChanged(@NotNull VersionedStorageChange event) {
-        for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
+        for (EntityChange<ModuleEntity> change : SequencesKt.asIterable(event.getChanges(ModuleEntity.class))) {
           ModuleEntity entity = change.getOldEntity();
           if (entity != null) {
             var module = ModuleEntityUtils.findModule(entity, event.getStorageBefore());

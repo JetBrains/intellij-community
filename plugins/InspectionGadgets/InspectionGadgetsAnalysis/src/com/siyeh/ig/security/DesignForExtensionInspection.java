@@ -16,6 +16,7 @@
 
 package com.siyeh.ig.security;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -39,7 +40,7 @@ public class DesignForExtensionInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiMethod method = (PsiMethod)infos[0];
     if (MethodUtils.isOverridden(method)) {
       return null;

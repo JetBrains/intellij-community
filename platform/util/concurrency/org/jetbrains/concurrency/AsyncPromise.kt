@@ -1,44 +1,41 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.concurrency
 
+import com.intellij.concurrency.captureThreadContext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ExceptionUtilRt
 import com.intellij.util.Function
+import com.intellij.util.concurrency.captureBiConsumerThreadContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.concurrency.Promise.State
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.BiConsumer
 import java.util.function.Consumer
 
-open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
+open class AsyncPromise<T> private constructor(internal val f: CompletableFuture<T>,
                                                private val hasErrorHandler: AtomicBoolean,
                                                addExceptionHandler: Boolean) : CancellablePromise<T>, CompletablePromise<T> {
   companion object {
+    private val LOG = Logger.getInstance(AsyncPromise::class.java)
+
     @Internal
     @JvmField
-    val CANCELED = object: CancellationException() {
+    val CANCELED: CancellationException = object: CancellationException() {
       override fun fillInStackTrace(): Throwable = this
     }
   }
 
-  internal val f: CompletableFuture<T>
-
   constructor() : this(CompletableFuture(), AtomicBoolean(), addExceptionHandler = false)
 
   init {
-    // cannot be performed outside AsyncPromise constructor because this instance `hasErrorHandler` must be checked
-    this.f = when {
-      addExceptionHandler -> {
-        f.exceptionally { originalError ->
-          val error = (originalError as? CompletionException)?.cause ?: originalError
-          if (shouldLogErrors()) {
-            Logger.getInstance(AsyncPromise::class.java).errorIfNotMessage((error as? CompletionException)?.cause ?: error)
-          }
-
-          throw error
+    if (addExceptionHandler) {
+      f.handle { value, error ->
+        if (error != null && shouldLogErrors()) {
+          LOG.errorIfNotMessage((error as? CompletionException)?.cause ?: error)
         }
+        value
       }
-      else -> f
     }
   }
 
@@ -80,12 +77,8 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
   }
 
   override fun onSuccess(handler: Consumer<in T>): AsyncPromise<T> {
-    return AsyncPromise(f.whenComplete { value, error ->
-      if (error != null) {
-        throw error
-      }
-
-      if (!isHandlerObsolete(handler)) {
+    return AsyncPromise(whenComplete { value, error ->
+      if (error == null && !isHandlerObsolete(handler)) {
         handler.accept(value)
       }
     }, hasErrorHandler, addExceptionHandler = true)
@@ -93,21 +86,37 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
 
   override fun onError(rejected: Consumer<in Throwable>): AsyncPromise<T> {
     hasErrorHandler.set(true)
-    return AsyncPromise(f.whenComplete { _, exception ->
-      if (exception != null) {
-        if (!isHandlerObsolete(rejected)) {
-          rejected.accept((exception as? CompletionException)?.cause ?: exception)
-        }
+    return AsyncPromise(whenComplete { _, error ->
+      if (error != null && !isHandlerObsolete(rejected)) {
+        rejected.accept((error as? CompletionException)?.cause ?: error)
       }
     }, hasErrorHandler, addExceptionHandler = false)
   }
 
   override fun onProcessed(processed: Consumer<in T?>): AsyncPromise<T> {
-    return AsyncPromise(f.whenComplete { value, _ ->
+    return AsyncPromise(whenComplete { value, _ ->
       if (!isHandlerObsolete(processed)) {
         processed.accept(value)
       }
     }, hasErrorHandler, addExceptionHandler = true)
+  }
+
+  private fun whenComplete(action: BiConsumer<T, Throwable?>): CompletableFuture<T> {
+    val result = CompletableFuture<T>()
+    val captured = captureBiConsumerThreadContext(action)
+    f.handle { value, error ->
+      try {
+        captured.accept(value, error)
+        if (error != null) result.completeExceptionally(error)
+        else result.complete(value)
+      }
+      catch (e: Throwable) {
+        if (error != null) e.addSuppressed(error)
+        result.completeExceptionally(e)
+      }
+      value
+    }
+    return result
   }
 
   @Throws(TimeoutException::class)
@@ -124,7 +133,8 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
   }
 
   override fun <SUB_RESULT : Any?> then(done: Function<in T, out SUB_RESULT>): Promise<SUB_RESULT> {
-    return AsyncPromise(f.thenApply { done.`fun`(it) }, hasErrorHandler, addExceptionHandler = true)
+    val newDone = captureThreadContext(java.util.function.Function<T, SUB_RESULT> { arg -> done.`fun`(arg) })
+    return AsyncPromise(f.thenApply { t -> newDone.apply(t) }, hasErrorHandler, addExceptionHandler = true)
   }
 
   override fun <SUB_RESULT : Any?> thenAsync(doneF: Function<in T, out Promise<SUB_RESULT>>): Promise<SUB_RESULT> {
@@ -157,14 +167,14 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     }
 
     if (shouldLogErrors()) {
-      Logger.getInstance(AsyncPromise::class.java).errorIfNotMessage(error)
+      LOG.errorIfNotMessage(error)
     }
     return true
   }
 
-  protected open fun shouldLogErrors() = !hasErrorHandler.get()
+  protected open fun shouldLogErrors(): Boolean = !hasErrorHandler.get()
 
-  fun setError(error: String) = setError(createError(error))
+  fun setError(error: String): Boolean = setError(createError(error))
 }
 
 inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {

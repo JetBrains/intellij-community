@@ -41,7 +41,7 @@ class RegExpSampleTree(val doubleClickConsumer: (RegExpSample) -> Unit) {
       isEditable = false
       selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
 
-      val speedSearch = TreeSpeedSearch(
+      val speedSearch = TreeSpeedSearch.installOn(
         this,
         false,
         Function { treePath: TreePath ->

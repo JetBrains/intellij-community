@@ -17,7 +17,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> {
+/**
+ * @deprecated Use {@link PyTypeVarType} and {@link PyTypeVarTypeImpl}  instead.
+ * See <a href="https://youtrack.jetbrains.com/issue/PY-59241">PY-59241</a> for the reasoning and transition plan.
+ */
+@Deprecated
+public class PyGenericType implements PyTypeVarType {
   @NotNull private final String myName;
   @Nullable private final PyType myBound;
   private final boolean myIsDefinition;
@@ -126,8 +131,8 @@ public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> 
     return "PyGenericType: " + (scopeName != null ? scopeName + ":" : "") + getName();
   }
 
-  @Nullable
-  public PyType getBound() {
+  @Override
+  public @Nullable PyType getBound() {
     return myBound;
   }
 
@@ -136,8 +141,8 @@ public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> 
     return myIsDefinition;
   }
 
-  @Nullable
-  public PyQualifiedNameOwner getScopeOwner() {
+  @Override
+  public @Nullable PyQualifiedNameOwner getScopeOwner() {
     return myScopeOwner;
   }
 

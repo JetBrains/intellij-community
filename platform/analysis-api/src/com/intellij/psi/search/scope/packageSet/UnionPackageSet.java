@@ -31,14 +31,6 @@ public class UnionPackageSet extends CompoundPackageSet {
     return sets.length == 1 ? sets[0] : new UnionPackageSet(sets);
   }
 
-  /**
-   * @deprecated use {@link #create(PackageSet...)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public UnionPackageSet(@NotNull PackageSet set1, @NotNull PackageSet set2) {
-    super(set1, set2);
-  }
-
   private UnionPackageSet(PackageSet @NotNull ... sets) {
     super(sets);
   }

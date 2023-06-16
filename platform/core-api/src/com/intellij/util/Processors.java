@@ -22,7 +22,7 @@ public final class Processors {
 
   @NotNull
   public static <T> Processor<T> cancelableCollectProcessor(@NotNull Collection<T> collection) {
-    return new CommonProcessors.CollectProcessor<T>(collection){
+    return new CommonProcessors.CollectProcessor<T>(collection) {
       @Override
       public boolean process(T t) {
         ProgressManager.checkCanceled();

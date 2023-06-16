@@ -119,6 +119,13 @@ public final class GraphicsUtil {
     return ourSafelyGetGraphicsMethod.isAvailable() ? (Graphics)ourSafelyGetGraphicsMethod.invoke(null, c) : c.getGraphics();
   }
 
+  /**
+   * Put context hint that instructs using specified aliasing for a given component.
+   * It's preferred over using {@link #setupAntialiasing(Graphics)}, as it will allow to compute {@link JComponent#getPreferredSize()}
+   * without using {@link JComponent#getGraphics()} (see {@link #safelyGetGraphics(Component)} on why it shall be avoided).
+   * <p>
+   * NB: {@link JComponent#paint(Graphics)} should be using {@link sun.swing.SwingUtilities2#drawString} to make use of this component hint.
+   */
   public static void setAntialiasingType(@NotNull JComponent component, @Nullable Object type) {
     AATextInfo.putClientProperty(type, component);
   }
@@ -127,7 +134,8 @@ public final class GraphicsUtil {
     return AATextInfo.create(hint, UIUtil.getLcdContrastValue());
   }
 
-  public static boolean isProjectorEnvironment() {
-    return GraphicsEnvironment.getLocalGraphicsEnvironment().getClass().getSimpleName().equals("PGraphicsEnvironment");
+  public static boolean isRemoteEnvironment() {
+    String geClassName = GraphicsEnvironment.getLocalGraphicsEnvironment().getClass().getSimpleName();
+    return geClassName.equals("PGraphicsEnvironment") || geClassName.equals("IdeGraphicsEnvironment");
   }
 }

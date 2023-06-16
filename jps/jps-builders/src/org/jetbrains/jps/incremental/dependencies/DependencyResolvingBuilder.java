@@ -6,6 +6,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.platform.jps.model.resolver.JpsDependencyResolverConfiguration;
+import com.intellij.platform.jps.model.resolver.JpsDependencyResolverConfigurationService;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
@@ -48,12 +51,17 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.zip.ZipFile;
 
 /**
  * Downloads missing Maven repository libraries on which a module depends. IDE should download them automatically when the project is opened,
@@ -73,10 +81,13 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   public static final String RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.max.attempts";
   public static final String RESOLUTION_RETRY_DELAY_MS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.delay.ms";
   public static final String RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.backoff.limit.ms";
-  public static final String RESOLUTION_VERIFICATION_ENABLED_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.verification.enabled";
-  public static final String RESOLUTION_VERIFICATION_SHA256SUM_REQUIRED_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.verification.sha256sum.required";
-  public static final String RESOLUTION_USE_REPO_ID_FROM_LIB_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.use.repo.id.from.library";
-  public static final String RESOLUTION_REPO_ID_FROM_LIB_REQUIRED_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.repo.id.from.library.required";
+  public static final String RESOLUTION_SHA256_CHECKSUM_IGNORE_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.sha256.checksum.ignored";
+  public static final String RESOLUTION_BIND_REPOSITORY_IGNORE_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.bind.repository.ignored";
+  public static final String RESOLUTION_RETRY_DOWNLOAD_CORRUPTED_ZIP_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.download.corrupted.zip";
+  public static final String RESOLUTION_RETRY_DOWNLOAD_CORRUPTED_ZIP_LEGACY_PROPERTY = "org.jetbrains.idea.maven.aether.strictValidation"; // TODO remove, preserved for backward compatibility.
+  public static final String RESOLUTION_REPORT_CORRUPTED_ZIP_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.report.corrupted.zip";
+  public static final String RESOLUTION_REPORT_INVALID_SHA256_CHECKSUM_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.report.invalid.sha256.checksum";
+  public static final String RESOLUTION_CORRUPTED_ARTIFACTS_REPORTS_DIRECTORY_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.corrupted.artifacts.directory";
 
   public DependencyResolvingBuilder() {
     super(BuilderCategory.INITIAL);
@@ -94,7 +105,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
 
   @Override
   public void buildStarted(CompileContext context) {
-    ResourceGuard.init(context);
+    JpsLibraryResolveGuard.init(context);
   }
 
   @Override
@@ -148,15 +159,19 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
                                          BuildTargetChunk currentTargets) throws Exception {
     Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs = getRepositoryLibraries(modules);
     if (!libs.isEmpty()) {
-      final ArtifactRepositoryManager repoManager = getRepositoryManager(context);
-      final boolean enableVerification = SystemProperties.getBooleanProperty(RESOLUTION_VERIFICATION_ENABLED_PROPERTY, false);
-      final boolean sha256sumRequired = SystemProperties.getBooleanProperty(RESOLUTION_VERIFICATION_SHA256SUM_REQUIRED_PROPERTY, false);
-      final boolean useRepoIdFromLibraryDescriptor = SystemProperties.getBooleanProperty(RESOLUTION_USE_REPO_ID_FROM_LIB_PROPERTY, false);
-      final boolean repoIdInLibraryDescriptorRequired = SystemProperties.getBooleanProperty(RESOLUTION_REPO_ID_FROM_LIB_REQUIRED_PROPERTY, false);
+      JpsDependencyResolverConfiguration resolverConfiguration = JpsDependencyResolverConfigurationService
+        .getInstance()
+        .getOrCreateDependencyResolverConfiguration(context.getProjectDescriptor().getProject());
+
+      boolean ignoreChecksums = SystemProperties.getBooleanProperty(RESOLUTION_SHA256_CHECKSUM_IGNORE_PROPERTY, false);
+      boolean ignoreBindRepository = SystemProperties.getBooleanProperty(RESOLUTION_BIND_REPOSITORY_IGNORE_PROPERTY, false);
+
+      boolean verifySha256Checksums = !ignoreChecksums && resolverConfiguration.isSha256ChecksumVerificationEnabled();
+      boolean useBindRepositories = !ignoreBindRepository && resolverConfiguration.isBindRepositoryEnabled();
+
       resolveMissingDependencies(libs, lib -> {
         try {
-          resolveMissingDependency(context, currentTargets, lib, repoManager, enableVerification, sha256sumRequired,
-                                   useRepoIdFromLibraryDescriptor, repoIdInLibraryDescriptorRequired);
+          resolveMissingDependency(context, currentTargets, lib, verifySha256Checksums, useBindRepositories);
         }
         catch (Exception e) {
           throw new RuntimeException(e);
@@ -187,35 +202,19 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
 
   private static void resolveMissingDependency(CompileContext context, BuildTargetChunk currentTargets,
                                                JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> lib,
-                                               ArtifactRepositoryManager globalRepoManager, boolean enableVerification,
-                                               boolean verificationSha256SumRequired,
-                                               boolean useRepoIdFromLibraryDescriptor,
-                                               boolean repoIdInLibraryDescriptorRequired) throws Exception {
+                                               boolean verifySha256Checksums,
+                                               boolean useBindRepositories) throws Exception {
     final JpsMavenRepositoryLibraryDescriptor descriptor = lib.getProperties().getData();
-    final ResourceGuard guard = ResourceGuard.get(context, descriptor);
-    if (guard.requestProcessing(context.getCancelStatus())) {
+    List<File> compiledRoots = lib.getFiles(JpsOrderRootType.COMPILED);
+    JpsLibraryResolveGuard.performUnderGuard(context, descriptor, compiledRoots, () -> {
       try {
-        final Collection<File> required = lib.getFiles(JpsOrderRootType.COMPILED);
-        List<File> compiledRoots = new ArrayList<>(required);
-        for (Iterator<File> it = required.iterator(); it.hasNext(); ) {
-          if (globalRepoManager.isValidArchive(it.next())) {
-            it.remove(); // leaving only non-existing stuff requiring synchronization
-          }
-        }
+        // list of missing roots needed to be resolved
+        List<File> required = ContainerUtil.filter(compiledRoots, root -> !verifyLibraryArtifact(context, lib.getName(), descriptor, root));
         if (!required.isEmpty()) {
           context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.resolving.0.library", lib.getName()), currentTargets));
-          ArtifactRepositoryManager effectiveRepoManager;
-          if (useRepoIdFromLibraryDescriptor) {
-            String repositoryId = descriptor.getJarRepositoryId();
-            if (repoIdInLibraryDescriptorRequired && repositoryId == null) {
-              throw new RuntimeException("Repository ID is not set for library: " + lib.getName());
-            }
-            effectiveRepoManager = getRepositoryManager(context, descriptor.getJarRepositoryId());
-          } else {
-            effectiveRepoManager = globalRepoManager;
-          }
-
           LOG.debug("Downloading missing files for " + lib.getName() + " library: " + required);
+
+          ArtifactRepositoryManager effectiveRepoManager = getRepositoryManager(context, descriptor, lib.getName(), useBindRepositories);
           final Collection<File> resolved = effectiveRepoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(),
                                                                                    descriptor.getVersion(),
                                                                                    descriptor.isIncludeTransitiveDependencies(), descriptor.getExcludedDependencies());
@@ -226,21 +225,12 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
             LOG.info("No artifacts were resolved for repository dependency " + descriptor.getMavenId());
           }
         }
-
-        if (enableVerification) {
-          List<String> problems = verifyResolvedArtifacts(descriptor, compiledRoots, verificationSha256SumRequired);
-          if (!problems.isEmpty()) {
-            throw new RuntimeException("Verification failed for '" + lib.getName()+ "': " + String.join(", ", problems));
-          }
-        }
+        verifyLibraryRootsChecksums(context, lib.getName(), descriptor, compiledRoots, verifySha256Checksums);
       }
       catch (TransferCancelledException e) {
         context.checkCanceled();
       }
-      finally {
-        guard.finish();
-      }
-    }
+    });
   }
 
   private static void syncPaths(final Collection<? extends File> required, @NotNull Collection<? extends File> resolved) throws Exception {
@@ -265,103 +255,313 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     }
   }
 
+  private static ArtifactRepositoryManager getRepositoryManager(@NotNull CompileContext context,
+                                                                @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                                                @NotNull String libraryName,
+                                                                boolean useBindRepositories) throws RemoteRepositoryNotFoundException {
+    if (!useBindRepositories) return getRepositoryManager(context);
+
+    String repositoryId = descriptor.getJarRepositoryId();
+    if (repositoryId == null) {
+      throw new RemoteRepositoryNotFoundException(JpsBuildBundle.message("build.message.error.bind.repository.missing", libraryName));
+    }
+    return getRepositoryManager(context, repositoryId);
+  }
+
   /**
-   * Verify resolved artifacts
-   * @param descriptor Library descriptor with verification settings
-   * @param verificationSha256SumRequired Interpret disabled SHA256 checksum as problem
-   * @return List of found problems (wrong or missing checksums)
+   * Checks whether artifact is existing and valid zip (if zip/jar). Removes invalid zip/jar if any.
+   *
+   * @param context Compile context.
+   * @param descriptor Library descriptor.
+   * @param artifact Artifact file.
+   * @return true if artifact exists and not corrupted, otherwise false.
    */
-  private static List<String> verifyResolvedArtifacts(@NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
-                                                      List<File> compiledRootsFiles,
-                                                      boolean verificationSha256SumRequired) {
-    boolean verifySha256Checksum = descriptor.isVerifySha256Checksum();
-    if (!verifySha256Checksum) {
-      return verificationSha256SumRequired ? Collections.singletonList("SHA256 checksum is required, but not enabled") : Collections.emptyList();
+  private static boolean verifyLibraryArtifact(@NotNull CompileContext context,
+                                               @NotNull String libraryName,
+                                               @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                               @NotNull File artifact) {
+    if (!artifact.exists()) return false;
+
+    boolean zipCheckEnabled = SystemProperties.getBooleanProperty(RESOLUTION_RETRY_DOWNLOAD_CORRUPTED_ZIP_PROPERTY, false) ||
+                              SystemProperties.getBooleanProperty(RESOLUTION_RETRY_DOWNLOAD_CORRUPTED_ZIP_LEGACY_PROPERTY, false);
+    if (zipCheckEnabled && (artifact.getName().endsWith(".jar") || artifact.getName().endsWith(".zip"))) {
+        long entriesCount = -1;
+        try (ZipFile zip = new ZipFile(artifact)) {
+          entriesCount = zip.size();
+        }
+        catch (IOException ignored) {
+        }
+
+        if (entriesCount <= 0) {
+          try {
+            Path compiledRootPath = artifact.toPath();
+            reportCorruptedArtifactZip(libraryName, descriptor, compiledRootPath);
+            context.processMessage(
+              new ProgressMessage(JpsBuildBundle.message("progress.message.removing.invalid.artifact", libraryName, artifact))
+            );
+            Files.deleteIfExists(compiledRootPath);
+            return false;
+          }
+          catch (IOException e) {
+            throw new RuntimeException("Failed to delete invalid zip: " + artifact, e);
+          }
+        }
+      }
+    return true;
+  }
+
+  private static void verifyLibraryRootsChecksums(@NotNull CompileContext context,
+                                                  @NotNull String libraryName,
+                                                  @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                                  @NotNull List<File> compiledRoots,
+                                                  boolean verifySha256Checksums) throws ArtifactVerificationException {
+    // don't verify checksums if this library doesn't have a fixed version
+    verifySha256Checksums = verifySha256Checksums && isLibraryVersionFixed(descriptor);
+
+    if (verifySha256Checksums && !isAllCompiledRootsVerificationPresent(descriptor, compiledRoots)) {
+      throw new ArtifactVerificationException(JpsBuildBundle.message("build.message.error.compile.roots.verification.mismatch",
+                                                                     libraryName));
     }
 
-    List<String> problems = new ArrayList<>();
-    List<ArtifactVerification> artifactsVerification = descriptor.getArtifactsVerification();
-    if (artifactsVerification.size() != compiledRootsFiles.size() &&
-        !"LATEST".equals(descriptor.getVersion()) &&
-        !"RELEASE".equals(descriptor.getVersion()) &&
-        !descriptor.getVersion().endsWith("-SNAPSHOT")) {
-      problems.add("artifacts verification entries number '" + artifactsVerification.size() +
-                   "' not equal to compiled roots number '" + compiledRootsFiles.size() + "' for " + descriptor.getMavenId());
-      return problems;
+    Map<String, ArtifactVerification> absolutePathToVerificationMetadata = descriptor.getArtifactsVerification()
+      .stream()
+      .collect(Collectors.toMap(it -> JpsPathUtil.urlToFile(it.getUrl()).getAbsolutePath(), it -> it));
+
+    for (File compiledRoot : compiledRoots) {
+      if (!compiledRoot.exists()) {
+        throw new ArtifactVerificationException(
+          JpsBuildBundle.message("build.message.error.missing.artifacts", libraryName, compiledRoot)
+        );
+      }
+
+      if (verifySha256Checksums) {
+        ArtifactVerification verification = absolutePathToVerificationMetadata.get(compiledRoot.getAbsolutePath());
+        checkSha256ChecksumValid(context, descriptor, libraryName, verification);
+      }
+    }
+  }
+
+
+  private static boolean isLibraryVersionFixed(@NotNull JpsMavenRepositoryLibraryDescriptor descriptor) {
+    return !"LATEST".equals(descriptor.getVersion())
+           && !"RELEASE".equals(descriptor.getVersion())
+           && !descriptor.getVersion().endsWith("-SNAPSHOT");
+  }
+
+  private static boolean isAllCompiledRootsVerificationPresent(@NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                                               @NotNull List<File> compiledRootsFiles) {
+    if (compiledRootsFiles.size() != descriptor.getArtifactsVerification().size()) {
+      return false;
     }
 
     Set<String> compiledRootsPaths = compiledRootsFiles.stream().map(File::getAbsolutePath).collect(Collectors.toSet());
-    Set<String> verifiableArtifactsPaths = artifactsVerification.stream()
+    Set<String> verifiableArtifactsPaths = descriptor.getArtifactsVerification().stream()
       .map(ArtifactVerification::getUrl)
       .map(it -> JpsPathUtil.urlToFile(it).getAbsolutePath())
       .collect(Collectors.toSet());
 
-
-    if (!verifiableArtifactsPaths.equals(compiledRootsPaths)) {
-      problems.add("artifacts verification paths does not match with compile roots paths'");
-      return problems;
-    }
-
-    for (var verification : artifactsVerification) {
-      Path artifact = JpsPathUtil.urlToFile(verification.getUrl()).toPath();
-      try {
-        String expectedSha256Sum = verification.getSha256sum();
-        String actualSha256Sum = JpsChecksumUtil.getSha256Checksum(artifact);
-        if (!Objects.equals(expectedSha256Sum, actualSha256Sum)) {
-          problems.add("bad checksum for " + artifact.getFileName() + ": expected " + expectedSha256Sum + ", actual " + actualSha256Sum);
-        }
-      }
-      catch (IOException e) {
-        problems.add("Unable to build checksum for " + artifact.getFileName() + ", cause: " + e.getMessage());
-      }
-    }
-    return problems;
+    return compiledRootsPaths.equals(verifiableArtifactsPaths);
   }
 
-  private static final class ResourceGuard {
-    private static final Key<ConcurrentMap<JpsMavenRepositoryLibraryDescriptor, ResourceGuard>> CONTEXT_KEY = GlobalContextKey.create("_artifact_repository_resolved_libraries_");
-    private static final byte INITIAL = 0;
-    private static final byte PROGRESS = 1;
-    private static final byte FINISHED = 2;
-    private byte myState = INITIAL;
-    private CanceledStatus myStatus;
 
-    private synchronized boolean requestProcessing(final CanceledStatus cancelStatus) {
-      myStatus = cancelStatus;
-      if (myState == INITIAL) {
-        myState = PROGRESS;
-        return true;
+  private static void checkSha256ChecksumValid(@NotNull CompileContext context,
+                                               @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                               @NotNull String libraryName,
+                                               @NotNull JpsMavenRepositoryLibraryDescriptor.ArtifactVerification verification)
+    throws ArtifactVerificationException {
+    Path path = JpsPathUtil.urlToFile(verification.getUrl()).toPath();
+
+    String actualSha256Sum;
+    try {
+      actualSha256Sum = JpsChecksumUtil.getSha256Checksum(path);
+    }
+    catch (IOException e) {
+      context.processMessage(CompilerMessage.createInternalBuilderError(getBuilderName(), e));
+      throw new RuntimeException(e);
+    }
+    String expectedSha256Sum = verification.getSha256sum();
+
+    if (!Objects.equals(expectedSha256Sum, actualSha256Sum)) {
+      reportInvalidArtifactChecksum(libraryName, descriptor, path, actualSha256Sum);
+      throw new ArtifactVerificationException(
+        JpsBuildBundle.message("build.message.error.invalid.sha256.checksum", libraryName, path, expectedSha256Sum, actualSha256Sum)
+      );
+    }
+  }
+
+  private static void reportCorruptedArtifactZip(@NotNull String libraryName,
+                                                 @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                                 @NotNull Path artifactFile) {
+    if (SystemProperties.getBooleanProperty(RESOLUTION_REPORT_CORRUPTED_ZIP_PROPERTY, false)) {
+      String sha256 = "null";
+      try {
+        // compute checksum to ensure the artifact is copied without errors
+        sha256 = JpsChecksumUtil.getSha256Checksum(artifactFile);
       }
-      while (myState == PROGRESS) {
-        if (cancelStatus.isCanceled()) {
-          break;
-        }
-        try {
-          this.wait(1000L);
-        }
-        catch (InterruptedException ignored) {
-        }
+      catch (IOException e) {
+        // TODO ensure no errors of this type and fail build if computation fails.
+        LOG.error("Failed to compute checksum for corrupted zip: " + artifactFile, e);
       }
-      return false;
+      reportBadArtifact(libraryName, descriptor, artifactFile, sha256, "corrupted_zip");
+    }
+  }
+
+  private static void reportInvalidArtifactChecksum(@NotNull String libraryName,
+                                                    @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                                    @NotNull Path artifactFile,
+                                                    @NotNull String sha256sum) {
+    if (SystemProperties.getBooleanProperty(RESOLUTION_REPORT_INVALID_SHA256_CHECKSUM_PROPERTY, false)) {
+      reportBadArtifact(libraryName, descriptor, artifactFile, sha256sum, "invalid_checksum");
+    }
+  }
+
+  private static void reportBadArtifact(@NotNull String libraryName,
+                                        @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                        @NotNull Path artifactFile,
+                                        @NotNull String sha256sum,
+                                        @NotNull String problemKind) {
+    String outputDirPath = System.getProperty(RESOLUTION_CORRUPTED_ARTIFACTS_REPORTS_DIRECTORY_PROPERTY, null);
+    if (outputDirPath == null) return;
+    Path outputDir = Path.of(outputDirPath);
+
+    Properties description = new Properties();
+    description.setProperty("libraryName", libraryName);
+    description.setProperty("mavenId", descriptor.getMavenId());
+    description.setProperty("problem", problemKind);
+    description.setProperty("sha256", sha256sum);
+
+    Path artifactCopy;
+    try {
+      Files.createDirectories(outputDir);
+
+      // Artifact foo-bar-1.0.jar will be copied to foo-bar-1.0_XXXXXXXXXXXXXXXXXXX.jar to prevent collisions
+      String artifactFileFullName = artifactFile.getFileName().toString();
+      artifactCopy = Files.createTempFile(outputDir,
+                                          FileUtilRt.getNameWithoutExtension(artifactFileFullName) + "_",
+                                          "." + FileUtilRt.getExtension(artifactFileFullName));
+      Path artifactCopyDescription = Files.createFile(outputDir.resolve(artifactCopy.getFileName() + ".properties"));
+
+      // Report minimal required information about bad artifact
+      try (OutputStream os = Files.newOutputStream(artifactCopyDescription)) {
+        description.store(os, null);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Failed to report bad artifact", e);
     }
 
-    private synchronized void finish() {
-      if (myState != FINISHED) {
-        myState = FINISHED;
-        this.notifyAll();
-      }
+    try {
+      Files.copy(artifactFile, artifactCopy, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+    }
+    catch (Exception e) {
+      // TODO ensure no errors of this type and fail build if copy fails.
+      LOG.error("Unable to copy bad artifact " + artifactFile + " to " + artifactCopy, e);
+    }
+  }
+
+  private static final class JpsLibraryResolveGuard {
+
+    private static final Key<ConcurrentHashMap<Object, Guard>> CONTEXT_KEY = GlobalContextKey.create("_dependency_resolving_builder_guards_");
+
+    @FunctionalInterface
+    private interface ThrowingRunnable {
+      void run() throws Exception;
     }
 
     private static void init(CompileContext context) {
       context.putUserData(CONTEXT_KEY, new ConcurrentHashMap<>());
     }
 
-    private static @NotNull ResourceGuard get(CompileContext context, JpsMavenRepositoryLibraryDescriptor descriptor) {
-      final ConcurrentMap<JpsMavenRepositoryLibraryDescriptor, ResourceGuard> map = context.getUserData(CONTEXT_KEY);
+    private static void performUnderGuard(@NotNull CompileContext context,
+                                          @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                          @NotNull List<File> roots,
+                                          @NotNull ThrowingRunnable action) throws Exception {
+      Stream<Guard> descriptorGuard = Stream.of(getDescriptorGuard(context, descriptor));
+      Stream<Guard> rootsGuards = roots.stream()
+        .map(rootFile -> Path.of(FileUtil.toCanonicalPath(rootFile.getAbsolutePath())))
+        // sort and filter equal guards to acquire locks always in similar order and prevent deadlocks
+        .sorted()
+        .distinct()
+        .map(rootAbsolutePath -> getRootGuard(context, rootAbsolutePath));
+
+      List<Guard> guards = Stream.concat(descriptorGuard, rootsGuards).collect(Collectors.toList());
+      int lockedGuardsCounter = 0;
+      try {
+        for (Guard guard : guards) {
+          if (!guard.requestProcessing(context.getCancelStatus())) {
+            return;
+          }
+          lockedGuardsCounter++;
+        }
+
+        action.run();
+      }
+      finally {
+        // release only guards we're holding; release in reversed order to prevent deadlocks
+        for (Guard guard : ContainerUtil.reverse(guards.subList(0, lockedGuardsCounter))) {
+          guard.finish();
+        }
+      }
+    }
+
+    private static Guard getDescriptorGuard(@NotNull CompileContext context, @NotNull JpsMavenRepositoryLibraryDescriptor descriptor) {
+      Map<Object, Guard> map = context.getUserData(CONTEXT_KEY);
       assert map != null;
-      final ResourceGuard g = new ResourceGuard();
-      final ResourceGuard existing = map.putIfAbsent(descriptor, g);
-      return existing != null? existing : g;
+      return map.computeIfAbsent(descriptor, (ignored) ->
+        new Guard(true) // descriptor must not be processed more than once
+      );
+    }
+
+    private static Guard getRootGuard(@NotNull CompileContext context, @NotNull Path rootPath) {
+      Map<Object, Guard> map = context.getUserData(CONTEXT_KEY);
+      assert map != null;
+      return map.computeIfAbsent(rootPath, (ignored) ->
+        new Guard(false) // root can be processed more than once (similar dependency root can be used in multiple libraries)
+      );
+    }
+
+    private static final class Guard {
+      private static final byte INITIAL = 0;
+      private static final byte PROGRESS = 1;
+      private static final byte FINISHED = 2;
+      private byte myState = INITIAL;
+      private final boolean mySingleProcessingGuard;
+
+      /**
+       * Create new guard.
+       * @param isSingleProcessingGuard If true and {@link Guard#requestProcessing(CanceledStatus)} will allow processing (return true)
+       *                                only once, otherwise multiple processing repeats is allowed.
+       */
+      private Guard(boolean isSingleProcessingGuard) {
+        mySingleProcessingGuard = isSingleProcessingGuard;
+      }
+
+      private synchronized boolean requestProcessing(CanceledStatus canceledStatus) {
+        if (canceledStatus.isCanceled()) return false;
+
+        if (myState == INITIAL) {
+          myState = PROGRESS;
+          return true;
+        }
+
+        // wait until another thread completes its work with the guarded object
+        while (myState == PROGRESS && !canceledStatus.isCanceled()) {
+          try {
+            wait(100L);
+          } catch (InterruptedException ignored) {
+          }
+        }
+
+        // allow processing only if not cancelled, and myState is reset from PROGRESS to INITIAL
+        return myState == INITIAL && !canceledStatus.isCanceled();
+      }
+
+      private synchronized void finish() {
+        if (myState != FINISHED) {
+          myState = mySingleProcessingGuard ? FINISHED : INITIAL;
+          notifyAll();
+        }
+      }
     }
   }
 
@@ -448,7 +648,9 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     }
     final ArtifactRepositoryManager namedManager = managers.getSecond().get(remoteRepositoryId);
     if (namedManager == null) {
-      throw new RemoteRepositoryNotFoundException(remoteRepositoryId);
+      throw new RemoteRepositoryNotFoundException(
+        JpsBuildBundle.message("build.message.error.bind.repository.id.not.found", remoteRepositoryId)
+      );
     }
     return namedManager;
   }
@@ -479,9 +681,15 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     return JpsBuildBundle.message("builder.name.maven.dependency.resolver");
   }
 
-  private static class RemoteRepositoryNotFoundException extends Exception {
-    private RemoteRepositoryNotFoundException(String remoteRepositoryId) {
-      super("Unable to find remote repository with id=" + remoteRepositoryId);
+  private static class ArtifactVerificationException extends ProjectBuildException {
+    ArtifactVerificationException(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
+      super(message);
+    }
+  }
+
+  private static class RemoteRepositoryNotFoundException extends ProjectBuildException {
+    RemoteRepositoryNotFoundException(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
+      super(message);
     }
   }
 }

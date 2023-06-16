@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
@@ -64,12 +65,14 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     PsiClass refParent = RefactoringChangeUtil.getThisClass(ref);
     final PsiType varType = variable.getType();
     initializer = CommonJavaRefactoringUtil.convertInitializerToNormalExpression(initializer, varType);
-    if (initializer instanceof PsiPolyadicExpression) {
-      final IElementType operationTokenType = ((PsiPolyadicExpression)initializer).getOperationTokenType();
+    if (initializer instanceof PsiPolyadicExpression concatenation && parent instanceof PsiPolyadicExpression parentConcatenation) {
+      final IElementType operationTokenType = concatenation.getOperationTokenType();
       if ((operationTokenType == JavaTokenType.PLUS || operationTokenType == JavaTokenType.MINUS) &&
-          parent instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)parent).getOperationTokenType() == JavaTokenType.PLUS) {
-        final PsiType type = ((PsiPolyadicExpression)parent).getType();
-        if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          parentConcatenation.getOperationTokenType() == JavaTokenType.PLUS) {
+        final PsiType type = parentConcatenation.getType();
+        if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING) &&
+            (!varType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
+             PsiPrecedenceUtil.areStringParenthesesNeeded(concatenation, parentConcatenation, ref))) {
           final PsiElementFactory factory = JavaPsiFacade.getElementFactory(initializer.getProject());
           initializer = factory.createExpressionFromText("(" + initializer.getText() + ")", initializer);
         }
@@ -123,9 +126,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     return expr;
   }
 
-  private static PsiMethod qualifyWithExplicitTypeArguments(PsiExpression initializer,
-                                                            PsiExpression expr,
-                                                            PsiType varType) {
+  private static PsiMethod qualifyWithExplicitTypeArguments(PsiExpression initializer, PsiExpression expr, PsiType varType) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(initializer.getProject());
     if (expr instanceof PsiCallExpression && ((PsiCallExpression)expr).getTypeArguments().length == 0) {
       final JavaResolveResult resolveResult = ((PsiCallExpression)initializer).resolveMethodGenerics();

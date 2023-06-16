@@ -26,7 +26,8 @@ class PyAddTargetBasedSdkDialog private constructor(private val project: Project
     title = PyBundle.message("python.sdk.add.python.interpreter.title")
 
     centerPanel = PyAddTargetBasedSdkPanel(project, module, existingSdks, targetEnvironmentConfiguration?.let { { it } },
-                                           config = PythonLanguageRuntimeConfiguration())
+                                           config = PythonLanguageRuntimeConfiguration(),
+                                           introspectable = null)
   }
 
   override fun createCenterPanel(): JComponent = centerPanel.createCenterPanel()

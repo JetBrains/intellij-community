@@ -1,0 +1,10 @@
+<idea-plugin>
+  <id>com.intellij.example</id>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.myEp" interface="java.util.Collection"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <myEp implementation="MyInspection"/>
+  </extensions>
+</idea-plugin>

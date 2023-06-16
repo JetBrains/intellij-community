@@ -19,7 +19,6 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -69,7 +68,6 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    if (infos[0] == null && !ApplicationManager.getApplication().isUnitTestMode()) return null;
     final boolean annotationWarning = infos[0] == Boolean.TRUE;
     return annotationWarning ? new MissingDeprecatedAnnotationFix() : new MissingDeprecatedTagFix();
   }
@@ -137,8 +135,8 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
       }
     }
 
-    private static void moveCaretAfter(PsiDocTag tag) {
-      if (IntentionPreviewUtils.isPreviewElement(tag)) {
+    private void moveCaretAfter(PsiDocTag tag) {
+      if (IntentionPreviewUtils.isPreviewElement(tag) || !isOnTheFly()) {
         return;
       }
       Editor editor = FileEditorManager.getInstance(tag.getProject()).getSelectedTextEditor();
@@ -176,7 +174,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
       super.visitModule(module);
       if (hasDeprecatedAnnotation(module)) {
         if (warnOnMissingJavadoc && !hasDeprecatedComment(module, true)) {
-          registerModuleError(module, isOnTheFly() ? Boolean.FALSE : null);
+          registerModuleError(module, Boolean.FALSE);
         }
       }
       else if (hasDeprecatedComment(module, false)) {
@@ -189,7 +187,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
       super.visitClass(aClass);
       if (hasDeprecatedAnnotation(aClass)) {
         if (warnOnMissingJavadoc && !hasDeprecatedComment(aClass, true)) {
-          registerClassError(aClass, isOnTheFly() ? Boolean.FALSE : null);
+          registerClassError(aClass, Boolean.FALSE);
         }
       }
       else if (hasDeprecatedComment(aClass, false)) {
@@ -211,7 +209,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
             }
             m = MethodUtils.getSuper(m);
           }
-          registerMethodError(method, isOnTheFly() ? Boolean.FALSE : null);
+          registerMethodError(method, Boolean.FALSE);
         }
       }
       else if (hasDeprecatedComment(method, false)) {
@@ -223,7 +221,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
     public void visitField(@NotNull PsiField field) {
       if (hasDeprecatedAnnotation(field)) {
         if (warnOnMissingJavadoc && !hasDeprecatedComment(field, true)) {
-          registerFieldError(field, isOnTheFly() ? Boolean.FALSE : null);
+          registerFieldError(field, Boolean.FALSE);
         }
       }
       else if (hasDeprecatedComment(field, false)) {

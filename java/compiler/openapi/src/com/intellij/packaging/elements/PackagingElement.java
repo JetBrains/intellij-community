@@ -9,8 +9,8 @@ import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.workspaceModel.storage.*;
-import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
 import com.intellij.workspaceModel.storage.bridgeEntities.CustomPackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
 import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -99,6 +98,10 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
     myProject = project;
     myElementsWithDiff = elementsWithDiff;
     myPackagingElementInitializer = initializer;
+  }
+
+  public void updateStorage(@NotNull VersionedEntityStorage storage) {
+    myStorage = storage;
   }
 
   public boolean hasStorage() {

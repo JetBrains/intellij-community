@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.WhitespacesBinders;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
@@ -161,6 +162,7 @@ public final class JavadocParser {
   private static void parseSnippetTagValue(PsiBuilder builder) {
     // we are right after @snippet
     PsiBuilder.Marker snippetValue = builder.mark();
+    snippetValue.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, WhitespacesBinders.GREEDY_RIGHT_BINDER);
 
     // recovery, when "foo" goes right after @snippet
     while (true) {
@@ -181,6 +183,7 @@ public final class JavadocParser {
         parseSnippetTagBody(builder);
       }
     } else {
+      JavaParserUtil.emptyElement(builder, JavaDocElementType.DOC_SNIPPET_ATTRIBUTE_LIST);
       IElementType current = getTokenType(builder);
       while (current != null && current != JavaDocTokenType.DOC_INLINE_TAG_END) {
         builder.advanceLexer();
@@ -192,6 +195,7 @@ public final class JavadocParser {
 
   private static void parseSnippetTagBody(PsiBuilder builder) {
     PsiBuilder.Marker body = builder.mark();
+    body.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, WhitespacesBinders.GREEDY_RIGHT_BINDER);
     assert getTokenType(builder) == JavaDocTokenType.DOC_TAG_VALUE_COLON;
     builder.advanceLexer();
     while (true) {
@@ -240,9 +244,9 @@ public final class JavadocParser {
         if(getTokenType(builder) == JavaDocTokenType.DOC_TAG_VALUE_QUOTE) {
           builder.advanceLexer();
         }
-        quotedValue.collapse(JavaDocTokenType.DOC_TAG_ATTRIBUTE_VALUE);
+        quotedValue.collapse(JavaDocElementType.DOC_SNIPPET_ATTRIBUTE_VALUE);
       } else if (afterEqToken == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
-        builder.remapCurrentToken(JavaDocTokenType.DOC_TAG_ATTRIBUTE_VALUE);
+        builder.remapCurrentToken(JavaDocElementType.DOC_SNIPPET_ATTRIBUTE_VALUE);
         builder.advanceLexer();
       }
     }

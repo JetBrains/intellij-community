@@ -2,7 +2,7 @@
 package org.jetbrains.uast.test.kotlin
 
 import org.jetbrains.uast.UFile
-import org.jetbrains.uast.test.common.CommentsTestBase
+import com.intellij.platform.uast.testFramework.common.CommentsTestBase
 import org.junit.Test
 
 

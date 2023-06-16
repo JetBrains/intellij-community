@@ -6,6 +6,8 @@
         <override-text place="Vcs.Toolbar.Widget"/>
       </action>
       <action id="LocalHistory.ShowSelectionHistory" class="com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction">
+        <synonym key="action.synonym.LocalHistory.ShowSelectionHistory.method.text"/>
+        <synonym key="action.synonym.LocalHistory.ShowSelectionHistory.class.text"/>
         <override-text place="GoToAction"/>
       </action>
       <action id="LocalHistory.PutLabel" class="com.intellij.history.integration.ui.actions.PutLabelAction"/>

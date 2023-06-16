@@ -2,7 +2,7 @@
 package com.intellij.feedback.new_ui.state
 
 import com.intellij.openapi.components.*
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ExperimentalUI
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -43,7 +43,7 @@ class NewUIInfoService : PersistentStateComponent<NewUIInfoState> {
 data class NewUIInfoState(
   var numberNotificationShowed: Int = 0,
   var feedbackSent: Boolean = false,
-  var enableNewUIDate: LocalDateTime? = if (Registry.get("ide.experimental.ui").asBoolean())
+  var enableNewUIDate: LocalDateTime? = if (ExperimentalUI.isNewUI())
     Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
   else null,
   var disableNewUIDate: LocalDateTime? = null

@@ -4,8 +4,6 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter
-import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -163,7 +161,11 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doOverrideDirectoryTest("getFooBar")
     }
 
-   open fun testJavaMethodWithPackageProtectedVisibility() {
+    open fun testJavaMethodWithPackageVisibilityFromOtherPackage() {
+        doMultiOverrideDirectoryTest()
+    }
+
+    open fun testJavaMethodWithPackageProtectedVisibility() {
         doOverrideDirectoryTest("getFooBar")
     }
 

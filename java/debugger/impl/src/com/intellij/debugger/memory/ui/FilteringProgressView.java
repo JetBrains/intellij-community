@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -99,16 +99,11 @@ class FilteringProgressView extends BorderLayoutPanel {
       return itemsInfo;
     }
 
-    switch (myCompletionReason) {
-      case ALL_CHECKED:
-        break;
-      case INTERRUPTED:
-        itemsInfo += " " + JavaDebuggerBundle.message("progress.suffix.filtering.has.been.interrupted");
-        break;
-      case LIMIT_REACHED:
-        itemsInfo += " " + JavaDebuggerBundle.message("progress.suffix.limit.has.been.reached");
-        break;
-    }
+    itemsInfo += switch (myCompletionReason) {
+      case ALL_CHECKED -> "";
+      case INTERRUPTED -> " " + JavaDebuggerBundle.message("progress.suffix.filtering.has.been.interrupted");
+      case LIMIT_REACHED -> " " + JavaDebuggerBundle.message("progress.suffix.limit.has.been.reached");
+    };
 
     if (myErrorCount != 0) {
       String errors = JavaDebuggerBundle.message("progress.text.errors.count", myErrorCount);

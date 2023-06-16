@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ether;
 
 import com.intellij.testFramework.PlatformTestUtil;
@@ -141,6 +141,13 @@ public class CommonTest extends IncrementalTestCase {
     doTestBuild(1).assertSuccessful();
   }
 
+  public void testSameClassesInDifferentModules() {
+    JpsModule moduleA = addModule("moduleA", "moduleA/src");
+    JpsModule moduleB = addModule("moduleB", "moduleB/src");
+    JpsModuleRootModificationUtil.addDependency(moduleB, moduleA); // ensure compilation sequence
+    doTestBuild(1).assertSuccessful();
+  }
+
   public void testCompileDependenciesOnMovedClassesInFirstRound() {
     doTest().assertSuccessful();
   }
@@ -168,12 +175,10 @@ public class CommonTest extends IncrementalTestCase {
     doTest();
   }
 
-  // Disabled because now several classes with the same qName in different modules are not supporter
-  //
-  //public void testConflictingClasses() {
-  //  JpsModule module1 = addModule("module1", "module1/src");
-  //  JpsModule module2 = addModule("module2", "module2/src");
-  //  JpsModuleRootModificationUtil.addDependency(module2, module1);
-  //  doTestBuild(1).assertSuccessful();
-  //}
+  public void testConflictingClasses() {
+    JpsModule module1 = addModule("module1", "module1/src");
+    JpsModule module2 = addModule("module2", "module2/src");
+    JpsModuleRootModificationUtil.addDependency(module2, module1);
+    doTestBuild(1).assertSuccessful();
+  }
 }

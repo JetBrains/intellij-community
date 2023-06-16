@@ -121,7 +121,7 @@
     </dependency>#end
     #if ($context.hasLanguage("kotlin"))<dependency>
       <groupId>org.jetbrains.kotlin</groupId>
-      <artifactId>kotlin-stdlib-jdk8</artifactId>
+      <artifactId>kotlin-stdlib</artifactId>
       <version>${context.asPlaceholder("kotlin.version")}</version>
     </dependency>#end
   </dependencies>

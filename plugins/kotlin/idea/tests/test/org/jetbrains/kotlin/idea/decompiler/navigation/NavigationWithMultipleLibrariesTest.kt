@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiNamedElement
 import com.intellij.testFramework.JavaModuleTestCase
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
@@ -143,7 +144,7 @@ private fun checkLibraryName(referenceTarget: PsiElement, expectedName: String) 
         else -> error("Couldn't get library name")
     }
 
-    Assert.assertEquals("Referenced code from unrelated library: ${referenceTarget.text}", expectedName, libraryName)
+    Assert.assertEquals("Referenced code from unrelated library: ${(referenceTarget as? PsiNamedElement)?.name ?: referenceTarget.text}", expectedName, libraryName)
 }
 
 private fun findSourceFile(module: Module): PsiFile {

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.execution.rmi.IdeaWatchdog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
@@ -26,9 +25,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
-public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer {
-  private volatile IdeaWatchdog myWatchdog;
-
+public class Maven30ServerImpl extends MavenServerBase {
   @Override
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
@@ -95,48 +92,5 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
     }
-  }
-
-  @Override
-  public MavenPullServerLogger createPullLogger(MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      MavenServerLoggerWrapper result = Maven3ServerGlobals.getLogger();
-      UnicastRemoteObject.exportObject(result, 0);
-      return result;
-    }
-    catch (RemoteException e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
-  public MavenPullDownloadListener createPullDownloadListener(MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      MavenServerDownloadListenerWrapper result = Maven3ServerGlobals.getDownloadListener();
-      UnicastRemoteObject.exportObject(result, 0);
-      return result;
-    }
-    catch (RemoteException e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
-  public boolean ping(MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-    if (null == myWatchdog) return false;
-    return myWatchdog.ping();
-  }
-
-  @Override
-  public synchronized void unreferenced() {
-    System.exit(0);
-  }
-
-  @Override
-  public void setWatchdog(@NotNull IdeaWatchdog watchdog) {
-    myWatchdog = watchdog;
   }
 }

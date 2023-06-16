@@ -183,15 +183,6 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return null;
   }
 
-  /**
-   * @deprecated use {@link LightQuickFixParameterizedTestCase}
-   * to get separate tests for all data files in testData directory.
-   */
-  @Deprecated(forRemoval = true)
-  protected void doAllTests() {
-    doAllTests(createWrapper());
-  }
-
   public static void doAllTests(QuickFixTestCase testCase) {
     final File[] files = getBeforeTestFiles(testCase);
 

@@ -28,6 +28,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import java.util.*
+import kotlin.math.ceil
+import kotlin.math.min
 
 class GCRootPathsTree(
   val analysisContext: AnalysisContext,
@@ -189,10 +191,10 @@ class GCRootPathsTree(
 
     // In regular nodes paths are grouped by class definition
     var edges: HashMap<Edge, RegularNode>? = null
-    var pathsCount = 0
-    var pathsSize = 0
-    var totalSizeInDwords = 0
-    val instances = IntOpenHashSet(1)
+    var pathsCount: Int = 0
+    var pathsSize: Int = 0
+    var totalSizeInDwords: Int = 0
+    val instances: IntOpenHashSet = IntOpenHashSet(1)
 
     override fun addEdge(objectId: Int,
                          objectSize: Int,
@@ -245,7 +247,7 @@ class GCRootPathsTree(
 
   class RootNode(private val classStore: ClassStore) : Node {
     // In root node each instance has a separate path
-    val edges = Int2ObjectOpenHashMap<Pair<RegularNode, Edge>>()
+    val edges: Int2ObjectOpenHashMap<Pair<RegularNode, Edge>> = Int2ObjectOpenHashMap<Pair<RegularNode, Edge>>()
 
     override fun addEdge(objectId: Int,
                          objectSize: Int,
@@ -304,9 +306,9 @@ class GCRootPathsTree(
       }
       val totalInstanceCount = calculateTotalInstanceCount()
 
-      val minimumObjectsForReport = Math.min(
+      val minimumObjectsForReport = min(
         treeDisplayOptions.minimumObjectCount,
-        (Math.ceil(totalInstanceCount / 100.0) * treeDisplayOptions.minimumObjectCountPercent).toInt())
+        (ceil(totalInstanceCount / 100.0) * treeDisplayOptions.minimumObjectCountPercent).toInt())
 
       // Show paths from roots that have at least minimumObjectCountPercent%, minimumObjectCount objects or size of all reported objects
       // in the subtree is more than minimumObjectSize.

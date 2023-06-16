@@ -209,12 +209,7 @@ class PackageIndexTest {
       it.addRoot(libraryClassesRoot, OrderRootType.CLASSES)
       it.addRoot(sourceRootDir, OrderRootType.SOURCES)
     }
-    if (WorkspaceFileIndexEx.IS_ENABLED) {
-      assertPackage("", sourceRootDir, libraryClassesRoot, moduleSourceRoot1, moduleSourceRoot2)
-    }
-    else {
-      assertPackage("", sourceRootDir, libraryClassesRoot, moduleSourceRoot2)
-    }
+    assertPackage("", sourceRootDir, libraryClassesRoot, moduleSourceRoot1, moduleSourceRoot2)
     assertPackage("pack", sourcePackDir)
   }
 

@@ -89,7 +89,9 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
 
     override fun setupAssets(project: Project) {
-      addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+      if (context.isCreatingNewProject) {
+        addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+      }
       if (parent.addSampleCode) {
         val sourcePath = createJavaSourcePath("src/main/groovy", parent.groupId, "Main.groovy")
         addTemplateAsset(sourcePath, "Groovy Sample Code", "PACKAGE_NAME" to parent.groupId)

@@ -93,17 +93,19 @@ public class SetInspectionOptionFix extends IntentionAndQuickFixAction implement
     VirtualFile vFile = file.getVirtualFile();
     Object oldValue = getOption(project, vFile);
     setOption(project, vFile, myValue);
-    UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
-      @Override
-      public void undo() {
-        setOption(project, vFile, oldValue);
-      }
+    if (oldValue != null) {
+      UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
+        @Override
+        public void undo() {
+          setOption(project, vFile, oldValue);
+        }
 
-      @Override
-      public void redo() {
-        setOption(project, vFile, myValue);
-      }
-    });
+        @Override
+        public void redo() {
+          setOption(project, vFile, myValue);
+        }
+      });
+    }
   }
 
   @Override

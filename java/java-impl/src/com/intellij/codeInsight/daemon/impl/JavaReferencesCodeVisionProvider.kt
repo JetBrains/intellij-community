@@ -13,17 +13,23 @@ import com.intellij.psi.PsiTypeParameter
 
 class JavaReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
   companion object{
-    const val ID = "java.references"
+    const val ID: String = "java.references"
   }
 
   override fun acceptsFile(file: PsiFile): Boolean = file.language == JavaLanguage.INSTANCE
 
   override fun acceptsElement(element: PsiElement): Boolean = element is PsiMember && element !is PsiTypeParameter
 
-  override fun getHint(element: PsiElement, file: PsiFile): String? {
+  override fun getVisionInfo(element: PsiElement, file: PsiFile): CodeVisionInfo? {
     val inspection = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(element)
-    if (inspection.isEntryPoint(element)) return null;
-    return JavaTelescope.usagesHint(element as PsiMember, file)
+    if (inspection.isEntryPoint(element)) return null
+    return JavaTelescope.usagesHint(element as PsiMember, file)?.let {
+      CodeVisionInfo(it.hint, it.count)
+    }
+  }
+
+  override fun getHint(element: PsiElement, file: PsiFile): String? {
+    return getVisionInfo(element, file)?.text
   }
 
   override fun logClickToFUS(element: PsiElement, hint: String) {

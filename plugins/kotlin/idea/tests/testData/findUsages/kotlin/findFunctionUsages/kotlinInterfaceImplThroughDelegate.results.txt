@@ -1,2 +1,2 @@
-[kotlinInterfaceImplThroughDelegate.0.kt] Function call 11 fun test(twdwi: InterfaceWithDelegatedWithImpl) = twdwi.foo()
+[kotlinInterfaceImplThroughDelegate.0.kt] Function call 12 fun test(twdwi: InterfaceWithDelegatedWithImpl) = twdwi.foo()
 [kotlinInterfaceImplThroughDelegate.1.java] Unclassified 7 some.foo();

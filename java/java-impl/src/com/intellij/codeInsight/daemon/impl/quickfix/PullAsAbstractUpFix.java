@@ -38,8 +38,10 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(PullAsAbstractUpFix.class);
@@ -82,7 +84,6 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final PsiClass containingClass = method.getContainingClass();
     LOG.assertTrue(containingClass != null);
 
-    PsiManager manager = containingClass.getManager();
     if (containingClass instanceof PsiAnonymousClass) {
       final PsiClassType baseClassType = ((PsiAnonymousClass)containingClass).getBaseClassType();
       final PsiClass baseClass = baseClassType.resolve();
@@ -91,11 +92,26 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
       }
     }
     else {
-      final LinkedHashSet<PsiClass> classesToPullUp = new LinkedHashSet<>();
-      collectClassesToPullUp(classesToPullUp, containingClass.getExtendsListTypes());
-      collectClassesToPullUp(classesToPullUp, containingClass.getImplementsListTypes());
+      AtomicBoolean noClassesFound = new AtomicBoolean(false);
+      PsiTargetNavigator<PsiClass> navigator = new PsiTargetNavigator<>(() -> {
+        final LinkedHashSet<PsiClass> classesToPullUp = new LinkedHashSet<>();
+        collectClassesToPullUp(classesToPullUp, containingClass.getExtendsListTypes());
+        collectClassesToPullUp(classesToPullUp, containingClass.getImplementsListTypes());
+        noClassesFound.set(classesToPullUp.isEmpty());
+        return new ArrayList<>(classesToPullUp);
+      });
+      PsiElementProcessor<PsiClass> processor = element -> {
+        pullUp(method, containingClass, element);
+        return false;
+      };
+      if (editor != null) {
+        navigator.navigate(editor, JavaBundle.message("choose.super.class.popup.title"), processor);
+      }
+      else {
+        navigator.performSilently(project, processor);
+      }
 
-      if (classesToPullUp.isEmpty()) {
+      if (noClassesFound.get()) {
         //check visibility
         var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
         var handler = supportProvider.getExtractInterfaceHandler();
@@ -103,21 +119,6 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
           throw new IllegalStateException("Handler is null, supportProvider class = " + supportProvider.getClass());
         }
         handler.invoke(project, new PsiElement[]{containingClass}, null);
-      }
-      else if (classesToPullUp.size() == 1) {
-        pullUp(method, containingClass, classesToPullUp.iterator().next());
-      }
-      else if (editor != null) {
-        new PsiTargetNavigator()
-          .selection(classesToPullUp.iterator().next())
-          .createPopup(classesToPullUp.toArray(PsiClass.EMPTY_ARRAY), JavaBundle.message("choose.super.class.popup.title"),
-                       new PsiElementProcessor<>() {
-                         @Override
-                         public boolean execute(@NotNull PsiClass aClass) {
-                           pullUp(method, containingClass, aClass);
-                           return false;
-                         }
-                       }).showInBestPositionFor(editor);
       }
     }
   }

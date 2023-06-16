@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.bitwise;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.project.Project;
@@ -28,7 +30,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -175,7 +176,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
       else if (child == untilTarget) {
         stop = false;
       }
-      else if (child instanceof PsiComment && result.length() > 0 || !stop) {
+      else if (child instanceof PsiComment && !result.isEmpty() || !stop) {
         result.append(ct.text(child));
       }
       else if (child instanceof PsiJavaToken && untilTarget == null) {
@@ -195,11 +196,11 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new PointlessBitwiseFix();
   }
 
-  private class PointlessBitwiseFix extends InspectionGadgetsFix {
+  private class PointlessBitwiseFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -209,8 +210,8 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiExpression expression = (PsiExpression)startElement;
       CommentTracker ct = new CommentTracker();
       final String newExpression = calculateReplacementExpression(expression, ct);
       if(!newExpression.isEmpty()) {
@@ -286,7 +287,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
       return false;
     }
 
-    private boolean areEquivalentModuloComplement(PsiExpression op1, PsiExpression op2) {
+    private static boolean areEquivalentModuloComplement(PsiExpression op1, PsiExpression op2) {
       return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(
         optionallyUnwrapComplement(op1), optionallyUnwrapComplement(op2));
     }

@@ -26,4 +26,11 @@ public class MavenServerConsoleEvent implements Serializable {
   public Throwable getThrowable() {
     return throwable;
   }
+
+  @Override
+  public String toString() {
+    return "MavenServerConsoleEvent{" +
+           "message='" + message +
+           '}';
+  }
 }

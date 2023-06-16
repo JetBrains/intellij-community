@@ -7,11 +7,11 @@ import com.intellij.codeInsight.PsiEquivalenceUtil
 import com.intellij.codeInsight.generation.GenerateMembersUtil
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
-import com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper
 import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl
 import com.intellij.psi.search.GlobalSearchScope
@@ -22,6 +22,7 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
+import com.intellij.refactoring.introduceField.ElementToWorkOn
 import com.intellij.util.CommonJavaRefactoringUtil
 
 object ExtractMethodHelper {
@@ -63,10 +64,21 @@ object ExtractMethodHelper {
     }
   }
 
-  fun findUsedTypeParameters(source: PsiTypeParameterList?, searchScope: List<PsiElement>): List<PsiTypeParameter> {
-    val typeParameterList = CommonJavaRefactoringUtil.createTypeParameterListWithUsedTypeParameters(
-      source, *searchScope.toTypedArray())
-    return typeParameterList?.typeParameters.orEmpty().toList()
+  fun findRequiredTypeParameters(targetContext: PsiClass?, searchScope: List<PsiElement>): List<PsiTypeParameter> {
+    fun findElementWithTypeParameter(element: PsiElement) = PsiTreeUtil.getContextOfType(element, PsiTypeParameterListOwner::class.java)
+    val availableTypeParameters = generateSequence (targetContext, ::findElementWithTypeParameter)
+      .flatMap { typeListOwner -> typeListOwner.typeParameterList?.typeParameters.orEmpty().toList() }
+      .toSet()
+    return findUsedTypeParameters(searchScope).filter { parameter -> parameter !in availableTypeParameters }
+  }
+
+  private fun findUsedTypeParameters(searchScope: List<PsiElement>): List<PsiTypeParameter> {
+    val usedTypeParameters = mutableSetOf<PsiTypeParameter>()
+    searchScope.forEach { element ->
+      CommonJavaRefactoringUtil.collectTypeParameters(usedTypeParameters, element)
+    }
+    CommonJavaRefactoringUtil.collectTypeParametersInDependencies(Conditions.alwaysTrue(), usedTypeParameters)
+    return usedTypeParameters.sortedBy { parameter -> parameter.textRange.startOffset }
   }
 
   fun inputParameterOf(externalReference: ExternalReference): InputParameter {
@@ -91,14 +103,6 @@ object ExtractMethodHelper {
       else -> parent
     }
     return physicalParent ?: throw IllegalArgumentException()
-  }
-
-  fun normalizedAnchor(anchor: PsiMember): PsiMember {
-    return if (anchor is PsiField) {
-      MultipleFieldDeclarationHelper.findLastFieldInGroup(anchor.node).psi as? PsiField ?: anchor
-    } else {
-      anchor
-    }
   }
 
   fun addNullabilityAnnotation(owner: PsiModifierListOwner, nullability: Nullability) {
@@ -248,23 +252,44 @@ object ExtractMethodHelper {
   }
 
   fun replacePsiRange(source: List<PsiElement>, target: List<PsiElement>): List<PsiElement> {
+    if (target.size > 1 && source.first().parent !is PsiCodeBlock) {
+      return replacePsiRange(source, wrapWithCodeBlock(target))
+    }
     val sourceAsExpression = source.singleOrNull() as? PsiExpression
     val targetAsExpression = target.singleOrNull() as? PsiExpression
     if (sourceAsExpression != null && targetAsExpression != null) {
-      val replacedExpression = IntroduceVariableUtil.replace(sourceAsExpression,
-                                                             targetAsExpression,
-                                                             sourceAsExpression.project)
+      val replacedExpression = IntroduceVariableUtil.replace(sourceAsExpression, targetAsExpression, sourceAsExpression.project)
       return listOf(replacedExpression)
     }
-
-    val normalizedTarget = if (target.size > 1 && source.first().parent !is PsiCodeBlock) {
-      wrapWithCodeBlock(target)
-    }
-    else {
-      target
-    }
-    val replacedElements = normalizedTarget.reversed().map { statement -> source.last().addSiblingAfter(statement) }.reversed()
-    source.first().parent.deleteChildRange(source.first(), source.last())
+    val psiRange = getPhysicalPsiRange(sourceAsExpression) ?: PsiRange(source.first().parent, source.first(), source.last())
+    val replacedElements = target.reversed().map { statement -> psiRange.lastChild.addSiblingAfter(statement) }.reversed()
+    psiRange.parent.deleteChildRange(psiRange.firstChild, psiRange.lastChild)
     return replacedElements
   }
+
+  fun replaceWithMethod(targetClass: PsiClass, elements: List<PsiElement>, preparedElements: ExtractedElements): ExtractedElements {
+    val callElements = preparedElements.callElements
+    if (callElements.isNotEmpty()) {
+      val addedMethod = ExtractMethodPipeline.addMethodInBestPlace(targetClass, elements.first(), preparedElements.method)
+      val replacedElements = replacePsiRange(elements, callElements)
+      return ExtractedElements(replacedElements, addedMethod)
+    } else {
+      val replacedRange = replacePsiRange(elements, listOf(preparedElements.method))
+      val replacedMethod = replacedRange.first() as PsiMethod
+      return ExtractedElements(emptyList(), replacedMethod)
+    }
+  }
+
+  private fun getPhysicalPsiRange(expression: PsiExpression?): PsiRange? {
+    val range: TextRange = expression?.getUserData(ElementToWorkOn.TEXT_RANGE)?.textRange ?: return null
+    val parent: PsiElement = expression.getUserData(ElementToWorkOn.PARENT) ?: return null
+    val rangeParent = PsiTreeUtil.findFirstParent(parent) { element -> range in element.textRange } ?: return null
+    if (rangeParent.textRange in range) return PsiRange(rangeParent.parent, rangeParent, rangeParent)
+    val children = rangeParent.children
+    val first = children.firstOrNull { child -> child.textRange in range } ?: return null
+    val last = children.lastOrNull { child -> child.textRange in range } ?: return null
+    return PsiRange(rangeParent, first, last)
+  }
+
+  private data class PsiRange(val parent: PsiElement, val firstChild: PsiElement, val lastChild: PsiElement)
 }

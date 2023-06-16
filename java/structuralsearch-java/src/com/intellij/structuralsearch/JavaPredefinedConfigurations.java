@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -411,22 +411,22 @@ final class JavaPredefinedConfigurations {
                                 "('CastType:*[regex( Base )]) '_Expr",
                                 getInterestingType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.boxing.in.declarations"), "boxing in declarations",
-                                "'_Type:Object|Integer|Boolean|Long|Character|Short|Byte 'Var = '_Value:[exprtype( int|boolean|long|char|short|byte )];",
+                                "'_Type:*Object 'Var = '_Value:[exprtype( int|boolean|long|char|short|byte )];",
                                 getInterestingType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.unboxing.in.declarations"), "unboxing in declarations",
-                                "'_Type:int|boolean|long|char|short|byte 'Var = '_Value:[exprtype( Integer|Boolean|Long|Character|Short|Byte )];",
+                                "'_Type:int|boolean|long|char|short|byte 'Var = '_Value:[exprtype( *Object )];",
                                 getInterestingType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.boxing.in.method.calls"), "boxing in method calls",
-                                "'_Instance?.'Call('_BeforeParam*,'_Param:[ exprtype( int|boolean|long|char|short|byte ) && formal( Object|Integer|Boolean|Long|Character|Short|Byte ) ],'_AfterParam*)",
+                                "'_Instance?.'Call('_BeforeParam*,'_Param:[ exprtype( int|boolean|long|char|short|byte ) && formal( *Object ) ],'_AfterParam*)",
                                 getInterestingType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.unboxing.in.method.calls"), "unboxing in method calls",
-                                "'_Instance?.'Call('_BeforeParam*,'_Param:[ formal( int|boolean|long|char|short|byte ) && exprtype( Integer|Boolean|Long|Character|Short|Byte ) ],'_AfterParam*)",
+                                "'_Instance?.'Call('_BeforeParam*,'_Param:[ formal( int|boolean|long|char|short|byte ) && exprtype( *Object ) ],'_AfterParam*)",
                                 getInterestingType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.any.boxing"), "boxed expressions",
-                                "'_expression:[ exprtype( int|boolean|long|char|short|byte ) && formal( Object|Integer|Boolean|Long|Character|Short|Byte ) ]",
+                                "'_expression:[ exprtype( int|boolean|long|char|short|byte ) && formal( *Object ) ]",
                                 getInterestingType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.any.unboxing"), "unboxed expressions",
-                                "'_expression:[ formal( int|boolean|long|char|short|byte ) && exprtype( Integer|Boolean|Long|Character|Short|Byte ) ]",
+                                "'_expression:[ formal( int|boolean|long|char|short|byte ) && exprtype( *Object ) ]",
                                 getInterestingType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.try.without.resources"),
                                 "try statements without resources and catch blocks",

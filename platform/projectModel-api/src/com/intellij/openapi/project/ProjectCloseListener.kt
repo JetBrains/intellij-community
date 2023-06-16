@@ -9,7 +9,7 @@ interface ProjectCloseListener {
   companion object {
     @Topic.AppLevel
     @JvmField
-    val TOPIC = Topic(ProjectCloseListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
+    val TOPIC: Topic<ProjectCloseListener> = Topic(ProjectCloseListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
   }
 
   /**

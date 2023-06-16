@@ -14,8 +14,6 @@ import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
-import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptsDependenciesClassFilesScope
-import org.jetbrains.kotlin.idea.core.script.ucache.getScriptDependenciesClassFilesScope
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.TargetPlatformVersion
@@ -75,9 +73,10 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
             get() {
                 // TODO: this is not very efficient because KotlinSourceFilterScope already checks if the files are in scripts classpath
                 val scriptKtFile = PsiManager.getInstance(project).findFile(scriptFile) as KtFile
+                val scriptVFile = scriptKtFile.virtualFile ?: scriptKtFile.viewProvider.virtualFile
                 return KotlinSourceFilterScope.libraryClasses(
-                    getScriptDependenciesClassFilesScope(project, scriptKtFile), project
-                )
+                    ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(scriptVFile), project
+ )
             }
     }
 
@@ -90,7 +89,8 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
 
         override val contentScope: GlobalSearchScope
             get() {
-                return KotlinSourceFilterScope.libraryClasses(getAllScriptsDependenciesClassFilesScope(project), project)
+                return KotlinSourceFilterScope.libraryClasses(
+                  ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFilesScope(), project)
             }
 
         companion object {

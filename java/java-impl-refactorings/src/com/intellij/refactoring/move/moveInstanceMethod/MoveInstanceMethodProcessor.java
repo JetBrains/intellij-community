@@ -35,6 +35,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   private static final Logger LOG = Logger.getInstance(MoveInstanceMethodProcessor.class);
 
@@ -89,13 +91,13 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     final Set<PsiMember> members = new HashSet<>();
     members.add(myMethod);
     if (myTargetVariable instanceof PsiField) members.add((PsiMember)myTargetVariable);
     if (!myTargetClass.isInterface()) {
-      RefactoringConflictsUtil.getInstance().analyzeAccessibilityConflictsAfterMemberMove(myTargetClass, myNewVisibility, members, conflicts
-      );
+      RefactoringConflictsUtil.getInstance()
+        .analyzeAccessibilityConflictsAfterMemberMove(myTargetClass, myNewVisibility, members, conflicts);
     }
     else {
       for (final UsageInfo usage : usages) {

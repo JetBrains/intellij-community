@@ -11,7 +11,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class GitCompareBranchesFilesManager(private val project: Project) : Disposable {
   private val openedFiles = ContainerUtil.createWeakValueMap<GitCompareBranchesVirtualFileSystem.ComplexPath, GitCompareBranchesFile>()
 

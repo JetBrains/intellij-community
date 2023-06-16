@@ -46,7 +46,7 @@ import java.awt.*;
 import java.util.ArrayList;
 
 public class InplaceChangeSignature implements DocumentListener {
-  public static final Key<InplaceChangeSignature> INPLACE_CHANGE_SIGNATURE = Key.create("EditorInplaceChangeSignature");
+  private static final Key<InplaceChangeSignature> INPLACE_CHANGE_SIGNATURE = Key.create("EditorInplaceChangeSignature");
   private ChangeInfo myCurrentInfo;
   private ChangeInfo myStableChange;
   private String myInitialSignature;

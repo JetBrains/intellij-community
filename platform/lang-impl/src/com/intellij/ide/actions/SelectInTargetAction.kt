@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.CompositeSelectInTarget
 import com.intellij.ide.SelectInContext
+import com.intellij.ide.SelectInManager
 import com.intellij.ide.SelectInTarget
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -41,9 +42,10 @@ private class SelectInTargetActionGroup(
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-    impl.target.getSubTargets(impl.selectInContext).withIndex().map {
-      createSelectInTargetAction(it.value, impl.selectInContext)
-    }.toTypedArray()
+    impl.target.getSubTargets(impl.selectInContext)
+      .sortedWith(SelectInManager.SelectInTargetComparator.INSTANCE)
+      .map { createSelectInTargetAction(it, impl.selectInContext) }
+      .toTypedArray()
 
 }
 
@@ -69,8 +71,10 @@ private class SelectInTargetActionImpl<T : SelectInTarget>(
 ) {
 
   fun doUpdate(e: AnActionEvent) {
-    e.presentation.text = getText()
-    e.presentation.icon = getIcon()
+    e.updateSession.compute(this, "getText() and getIcon()", ActionUpdateThread.EDT) {
+      e.presentation.text = getText()
+      e.presentation.icon = getIcon()
+    }
     e.presentation.isEnabled = isSelectable()
   }
 

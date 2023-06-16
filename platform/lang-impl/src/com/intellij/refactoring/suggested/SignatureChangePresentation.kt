@@ -36,7 +36,7 @@ class SignatureChangePresentation(
     UISettings.getPreferredFractionalMetricsValue()
   )
 
-  val requiredSize by lazy {
+  val requiredSize: Dimension by lazy {
     val oldSignatureSize = signatureDimensions(model.oldSignature, dummyFontRenderContext)
     val newSignatureSize = signatureDimensions(model.newSignature, dummyFontRenderContext)
     if (verticalMode) {

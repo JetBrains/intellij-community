@@ -80,7 +80,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     }
 
     @Override
-    public boolean canEat(final Update update) {
+    public boolean canEat(final @NotNull Update update) {
       return true;
     }
   };
@@ -156,7 +156,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
         breadcrumbs.removeMouseListener(mouseListener);
       });
     }
-    Disposer.register(this, new UiNotifyConnector(breadcrumbs, myQueue));
+    Disposer.register(this, UiNotifyConnector.installOn(breadcrumbs, myQueue));
     Disposer.register(this, myQueue);
 
     BreadcrumbsProvider.EP_NAME.addChangeListener(() -> updateCrumbsSync(), this);

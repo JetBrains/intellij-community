@@ -12,6 +12,7 @@ import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -25,7 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
 
@@ -47,17 +49,11 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
    */
   public int maxLevel = 2;
 
-
-  /**
-   * @noinspection PublicField, FieldMayBeFinal
-   */
-  public boolean useVar = false;
-
+  public boolean forceUseVar = false;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("useVar", InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.var.option")),
       number("maxLevel",
              InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.level.option"), 0, MAX_LEVEL),
       number("maxComponentCounts",
@@ -73,10 +69,11 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!HighlightingFeature.RECORD_PATTERNS_IN_FOR_EACH.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+    boolean useVar = IntroduceVariableBase.createVarType() || forceUseVar;
     return new JavaElementVisitor() {
       private final Options options = new Options(maxNotUsedComponentCounts,
                                                   Math.min(maxComponentCounts, MAX_COMPONENT_COUNTS),
-                                                  Math.min(maxLevel, MAX_LEVEL), useVar);
+                                                  Math.min(maxLevel, MAX_LEVEL), useVar, isOnTheFly);
 
       @Override
       public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
@@ -89,6 +86,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
       @Override
       public void visitForeachPatternStatement(@NotNull PsiForeachPatternStatement statement) {
         super.visitForeachPatternStatement(statement);
+        boolean showAsInfo = false;
         if (options.maxLevel <= 0) {
           return;
         }
@@ -106,7 +104,10 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
           DeconstructionContext currentContext = queueToProcess.poll();
           int level = currentContext.level;
           if (level >= options.maxLevel + 1) {
-            break;
+            if (!options.isOnTheFly) {
+              return;
+            }
+            showAsInfo = true;
           }
           PsiDeconstructionPattern currentDeconstruction = currentContext.pattern;
           PsiDeconstructionList list = currentDeconstruction.getDeconstructionList();
@@ -130,8 +131,11 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
               if (parameterClass == null) {
                 continue;
               }
+              ShowInfoFolder showInfoFolder = new ShowInfoFolder();
+              showInfoFolder.showInfo = showAsInfo;
               ComponentContext context =
-                new ComponentContext(level, variable, parameterClass, substitutor, currentContext.foreachPatternStatement, options);
+                new ComponentContext(level, variable, parameterClass, substitutor, currentContext.foreachPatternStatement, options,
+                                     showInfoFolder);
               processComponentContext(context, this::highlight);
             }
           }
@@ -140,6 +144,9 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
 
       private void highlight(@NotNull ComponentContext context,
                              @NotNull Map<String, List<PsiElement>> components) {
+        if (context.showInfoFolder.showInfo && !context.options.isOnTheFly) {
+          return;
+        }
         registerProblemForIdentifier(context.currentParameter, context, holder);
       }
 
@@ -152,9 +159,33 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
         }
         PsiIdentifier identifier = identifiers[0];
         LocalQuickFix localQuickFix = getLocalQuickFix(context);
-        holder.registerProblem(identifier,
-                               InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.message"),
-                               localQuickFix);
+        if (context.showInfoFolder.showInfo) {
+          holder.registerProblem(identifier,
+                                 InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.message"),
+                                 ProblemHighlightType.INFORMATION,
+                                 localQuickFix);
+        }
+        else {
+          List<LocalQuickFix> fixes = new ArrayList<>();
+          fixes.add(localQuickFix);
+          int length = context.recordClass.getRecordComponents().length;
+          if (length > 1) {
+            fixes.add(
+              new SetInspectionOptionFix(ForEachWithRecordPatternCanBeUsedInspection.this, "maxComponentCounts",
+                                         InspectionGadgetsBundle.message(
+                                           "inspection.enhanced.for.with.record.pattern.can.be.used.maximum.number.disabled", length), length - 1));
+          }
+          Integer level = context.level;
+          if (level != null && level > 0) {
+            fixes.add(
+              new SetInspectionOptionFix(ForEachWithRecordPatternCanBeUsedInspection.this, "maxLevel",
+                                         InspectionGadgetsBundle.message(
+                                           "inspection.enhanced.for.with.record.pattern.can.be.used.maximum.depth.disabled", level), level - 1));
+          }
+          holder.registerProblem(identifier,
+                                 InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.message"),
+                                 fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+        }
       }
 
       @NotNull
@@ -174,11 +205,17 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
     @Nullable Integer level = context.level;
     PsiClass recordClass = context.recordClass;
     PsiStatement scope = context.base.getBody();
-
-    if ((level != null && level > context.options.maxLevel) || !recordClass.isRecord() ||
-        recordClass.getRecordComponents().length == 0 ||
-        recordClass.getRecordComponents().length > context.options.maxComponentCount) {
+    boolean showAsInfo = false;
+    if (!recordClass.isRecord() ||
+        recordClass.getRecordComponents().length == 0) {
       return;
+    }
+    if ((level != null && level > context.options.maxLevel) ||
+        recordClass.getRecordComponents().length > context.options.maxComponentCount) {
+      if (!context.options.isOnTheFly) {
+        return;
+      }
+      showAsInfo = true;
     }
     List<? extends PsiElement> references = VariableAccessUtils.getVariableReferences(context.currentParameter, scope);
     Map<String, List<PsiElement>> components = processReferences(references, context);
@@ -187,8 +224,12 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
     }
     PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
     if (recordComponents.length - components.size() > context.options.maxNotUsedComponentCount) {
-      return;
+      if (!context.options.isOnTheFly) {
+        return;
+      }
+      showAsInfo = true;
     }
+    context.showInfoFolder.showInfo = context.showInfoFolder.showInfo || showAsInfo;
     processor.accept(context, components);
   }
 
@@ -219,7 +260,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
     if (parameterClass == null) {
       return null;
     }
-    return new ComponentContext(0, parameter, parameterClass, substitutor, statement, options);
+    return new ComponentContext(0, parameter, parameterClass, substitutor, statement, options, new ShowInfoFolder());
   }
 
   @NotNull
@@ -277,6 +318,13 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
     }
     PsiElement element = PsiUtil.skipParenthesizedExprUp(expectedCallExpression.getParent());
     if (element instanceof PsiVariable variable) {
+      PsiTypeElement variableTypeElement = variable.getTypeElement();
+      if (variableTypeElement == null) {
+        return expectedCallExpression;
+      }
+      if (!variableTypeElement.isInferredType() && context.options.useVar) {
+        return expectedCallExpression;
+      }
       PsiType componentType = context.classSubstitutor.substitute(component.getType());
       if (PsiTypesUtil.compareTypes(componentType, variable.getType(), false) && variable.getAnnotations().length == 0) {
         return variable;
@@ -322,7 +370,8 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
       if (foreachStatementBase == null || parameter == null) {
         return;
       }
-      Options options = new Options(maxNotUsedComponentCounts, maxComponentCounts, maxLevel, useVar);
+      Options options =
+        new Options(maxNotUsedComponentCounts, maxComponentCounts, maxLevel, IntroduceVariableBase.createVarType() || forceUseVar, true);
       PsiType parameterType = parameter.getType();
       PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
       if (parameterType instanceof PsiClassType referenceType) {
@@ -332,7 +381,8 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
       if (parameterClass == null) {
         return;
       }
-      ComponentContext componentContext = new ComponentContext(null, parameter, parameterClass, substitutor, foreachStatementBase, options);
+      ComponentContext componentContext =
+        new ComponentContext(null, parameter, parameterClass, substitutor, foreachStatementBase, options, new ShowInfoFolder());
       processComponentContext(componentContext, (currentContext, mapElements) -> {
         Map<String, List<String>> usedVariable = deleteVariablesAndMapToMethodCalls(mapElements, currentContext);
         PatternDefinition patternDefinition = createPatternDefinition(currentContext, usedVariable);
@@ -487,7 +537,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
   }
 
 
-  private record Options(int maxNotUsedComponentCount, int maxComponentCount, int maxLevel, boolean useVar) {
+  private record Options(int maxNotUsedComponentCount, int maxComponentCount, int maxLevel, boolean useVar, boolean isOnTheFly) {
   }
 
   private record ComponentContext(@Nullable Integer level,
@@ -496,7 +546,12 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
                                   @NotNull PsiClass recordClass,
                                   @NotNull PsiSubstitutor classSubstitutor,
                                   @NotNull PsiForeachStatementBase base,
-                                  @NotNull Options options) {
+                                  @NotNull Options options,
+                                  @NotNull ShowInfoFolder showInfoFolder) {
+  }
+
+  private static class ShowInfoFolder {
+    boolean showInfo;
   }
 }
 

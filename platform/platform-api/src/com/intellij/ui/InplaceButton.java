@@ -47,7 +47,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
 
   public InplaceButton(IconButton source, ActionListener listener, Consumer<? super MouseEvent> consumer, TimedDeadzone.Length mouseDeadzone) {
     myListener = listener;
-    myBehavior = new BaseButtonBehavior(this, mouseDeadzone) {
+    myBehavior = new BaseButtonBehavior(this, mouseDeadzone, null) {
       @Override
       protected void execute(MouseEvent e) {
         doClick(e);
@@ -65,6 +65,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
         }
       }
     };
+    myBehavior.setupListeners();
 
     setIcons(source);
 
@@ -117,10 +118,13 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
     }
     mySize = size;
 
+    Icon oldIcon = myIcon;
     myIcon = regular;
     myRegular = new CenteredIcon(regular, width, height);
     myHovered = new CenteredIcon(hovered, width, height);
     myInactive = new CenteredIcon(inactive, width, height);
+
+    firePropertyChange(AbstractButton.ICON_CHANGED_PROPERTY, oldIcon, regular);
   }
 
   @Override

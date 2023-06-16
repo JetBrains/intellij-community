@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.ui.actions
 
+import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -8,7 +9,7 @@ import com.intellij.openapi.project.DumbAware
 
 internal abstract class ChangePreviewLayoutAction(
   private val layout: TextEditorWithPreview.Layout
-): ToggleAction(layout.getName(), layout.getName(), layout.getIcon(null)), DumbAware {
+): ToggleAction(layout.getName(), layout.getName(), layout.getIcon(null)), DumbAware, LightEditCompatible {
   override fun isSelected(event: AnActionEvent): Boolean {
     val editor = MarkdownActionUtil.findSplitEditor(event)
     return editor?.layout == layout

@@ -32,12 +32,12 @@ import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testIntegration.JavaTestFramework;
+import com.intellij.testIntegration.JvmTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -136,7 +136,7 @@ public class CreateTestDialog extends DialogWrapper {
             String text = JavaBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
             myFixLibraryLabel.setText(text);
             myFixLibraryButton.setVisible(
-              descriptor instanceof JavaTestFramework && ((JavaTestFramework)descriptor).getFrameworkLibraryDescriptor() != null
+              descriptor instanceof JvmTestFramework && ((JvmTestFramework)descriptor).getFrameworkLibraryDescriptor() != null
               || descriptor.getLibraryPath() != null);
           }
         });
@@ -361,10 +361,9 @@ public class CreateTestDialog extends DialogWrapper {
     TestFramework defaultDescriptor = null;
 
     final DefaultComboBoxModel<TestFramework> model = (DefaultComboBoxModel<TestFramework>)myLibrariesCombo.getModel();
-
-    final List<TestFramework> descriptors = new SmartList<>(TestFramework.EXTENSION_NAME.getExtensionList());
-    descriptors.sort((d1, d2) -> Comparing.compare(d1.getName(), d2.getName()));
-
+    TreeSet<TestFramework> frameworkSet = new TreeSet<>((d1, d2) -> Comparing.compare(d1.getName(), d2.getName()));
+    frameworkSet.addAll(TestFramework.EXTENSION_NAME.getExtensionList());
+    List<TestFramework> descriptors = new ArrayList<>(frameworkSet);
     for (final TestFramework descriptor : descriptors) {
       model.addElement(descriptor);
       if (hasTestRoots && descriptor.isLibraryAttached(myTargetModule)) {

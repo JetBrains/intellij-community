@@ -6,26 +6,34 @@ import com.intellij.analysis.problemsView.ProblemsListener
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
-import com.intellij.openapi.editor.impl.DocumentMarkupModel.forDocument
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import java.lang.ref.WeakReference
+import com.intellij.util.ui.EdtInvocationManager
+import java.util.concurrent.ConcurrentHashMap
 
 internal class HighlightingWatcher(
   private val provider: ProblemsProvider,
   private val listener: ProblemsListener,
   private val file: VirtualFile,
+  document: Document,
   private val level: Int)
   : MarkupModelListener, Disposable {
 
-  private val problems = mutableMapOf<RangeHighlighterEx, Problem>()
-  private var reference: WeakReference<MarkupModelEx>? = null
+  private var disposed: Boolean = false
+  private val problems:MutableMap<RangeHighlighter, Problem> = ConcurrentHashMap()
 
   init {
-    ApplicationManager.getApplication().runReadAction { update() }
+    val markupModel = DocumentMarkupModel.forDocument(document, provider.project, true) as MarkupModelEx
+    markupModel.addMarkupModelListener(this, this)
+    val highlighters = markupModel.allHighlighters
+    highlighters.forEach { afterAdded(it as RangeHighlighterEx) }
+    Disposer.register(provider, this)
   }
 
   override fun dispose() {
@@ -34,54 +42,55 @@ internal class HighlightingWatcher(
       problems.clear()
       list
     }.forEach { listener.problemDisappeared(it) }
+    disposed = true
   }
 
   override fun afterAdded(highlighter: RangeHighlighterEx) {
-    getProblem(highlighter)?.let { listener.problemAppeared(it) }
+    val problem = getProblem(highlighter)
+    if (problem != null) {
+      EdtInvocationManager.invokeLaterIfNeeded {
+        if (!disposed) {
+          listener.problemAppeared(problem)
+        }
+      }
+    }
   }
 
   override fun beforeRemoved(highlighter: RangeHighlighterEx) {
-    getProblem(highlighter)?.let { listener.problemDisappeared(it) }
+    val problem = getProblem(highlighter)
+    if (problem != null) {
+      EdtInvocationManager.invokeLaterIfNeeded {
+        if (!disposed) {
+          listener.problemDisappeared(problem)
+        }
+      }
+    }
   }
 
   override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean, fontStyleOrColorChanged: Boolean) {
-    findProblem(highlighter)?.let { listener.problemUpdated(it) }
-  }
-
-  fun update() {
-    val model = reference?.get() ?: getMarkupModel() ?: return
-    val highlighters = arrayListOf<RangeHighlighterEx>()
-    model.processRangeHighlightersOverlappingWith(0, model.document.textLength) { highlighter: RangeHighlighterEx ->
-      highlighters.add(highlighter)
-      true
+    val problem = getProblem(highlighter)
+    if (problem != null) {
+      EdtInvocationManager.invokeLaterIfNeeded {
+        if (!disposed) {
+          listener.problemUpdated(problem)
+        }
+      }
     }
-    highlighters.forEach { afterAdded(it) }
   }
 
-  fun getProblems(): Collection<Problem> = synchronized(problems) { problems.values.toList() }
+  fun findProblem(highlighter: RangeHighlighter): Problem? = problems[highlighter]
 
-  fun findProblem(highlighter: RangeHighlighterEx): Problem? = synchronized(problems) { problems[highlighter] }
-
-  private fun getHighlightingProblem(highlighter: RangeHighlighterEx): HighlightingProblem
+  private fun getHighlightingProblem(highlighter: RangeHighlighter): HighlightingProblem
     = HighlightingProblem(provider, file, highlighter)
 
-  private fun getProblem(highlighter: RangeHighlighterEx): Problem? = when {
+  private fun getProblem(highlighter: RangeHighlighter): Problem? = when {
     !isValid(highlighter) -> null
-    else -> synchronized(problems) {
-      problems.computeIfAbsent(highlighter) { getHighlightingProblem(highlighter) }
-    }
+    else -> problems.computeIfAbsent(highlighter) { getHighlightingProblem(highlighter) }
   }
 
-  private fun isValid(highlighter: RangeHighlighterEx): Boolean {
+  private fun isValid(highlighter: RangeHighlighter): Boolean {
     val info = highlighter.errorStripeTooltip as? HighlightInfo ?: return false
     return info.description != null && info.severity.myVal >= level
   }
 
-  private fun getMarkupModel(): MarkupModelEx? {
-    val document = ProblemsView.getDocument(provider.project, file) ?: return null
-    val model = forDocument(document, provider.project, true) as? MarkupModelEx ?: return null
-    model.addMarkupModelListener(this, this)
-    reference = WeakReference(model)
-    return model
-  }
 }

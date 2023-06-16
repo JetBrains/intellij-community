@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -63,11 +66,11 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryConstructorFix();
   }
 
-  private static class UnnecessaryConstructorFix extends InspectionGadgetsFix {
+  private static class UnnecessaryConstructorFix extends PsiUpdateModCommandQuickFix {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -76,11 +79,10 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement nameIdentifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement nameIdentifier, @NotNull EditorUpdater updater) {
       final PsiElement constructor = nameIdentifier.getParent();
       assert constructor != null;
-      deleteElement(constructor);
+      constructor.delete();
     }
   }
 

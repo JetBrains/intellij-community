@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.application.options.schemes.SchemesCombo
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.AlignX
@@ -25,7 +26,7 @@ class CodeInspectionAdditionalUi {
     }
   }
   lateinit var link: ActionLink
-  val panel = panel {
+  val panel: DialogPanel = panel {
       row(InspectionsBundle.message("inspection.action.profile.label")) {
         cell(browseProfilesCombo)
           .align(AlignX.FILL)

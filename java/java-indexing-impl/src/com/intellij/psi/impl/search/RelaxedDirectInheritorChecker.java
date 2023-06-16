@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.project.Project;
@@ -15,13 +15,15 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 /**
  * To avoid expensive super type resolve, if there's only one suitable class with the required name in the project anyway
@@ -46,7 +48,7 @@ public final class RelaxedDirectInheritorChecker {
   private static ClassesAndAmbiguities getClassesAndTheirAmbiguities(@NotNull Project project, @NotNull String classShortName) {
     Map<String, Reference<ClassesAndAmbiguities>> cache = CachedValuesManager.getManager(project).getCachedValue(project, () ->
       CachedValueProvider.Result.create(new ConcurrentHashMap<>(), PsiModificationTracker.MODIFICATION_COUNT));
-    ClassesAndAmbiguities result = SoftReference.dereference(cache.get(classShortName));
+    ClassesAndAmbiguities result = dereference(cache.get(classShortName));
     if (result == null) {
       PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(classShortName, GlobalSearchScope.allScope(project));
       String ambiguity = null;

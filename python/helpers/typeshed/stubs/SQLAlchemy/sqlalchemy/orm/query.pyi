@@ -1,6 +1,7 @@
 from _typeshed import Self
 from collections.abc import Iterator
 from typing import Any, Generic, TypeVar
+from typing_extensions import Literal, TypeAlias
 
 from ..sql.annotation import SupportsCloneAnnotations
 from ..sql.base import Executable
@@ -12,6 +13,7 @@ from .util import aliased as aliased
 __all__ = ["Query", "QueryContext", "aliased"]
 
 _T = TypeVar("_T")
+_SynchronizeSessionArgument: TypeAlias = Literal[False, "evaluate", "fetch"]
 
 class Query(_SelectFromElements, SupportsCloneAnnotations, HasPrefixes, HasSuffixes, HasHints, Executable, Generic[_T]):
     logger: Any
@@ -100,8 +102,8 @@ class Query(_SelectFromElements, SupportsCloneAnnotations, HasPrefixes, HasSuffi
     def merge_result(self, iterator, load: bool = ...): ...
     def exists(self): ...
     def count(self) -> int: ...
-    def delete(self, synchronize_session: str = ...) -> int: ...
-    def update(self, values, synchronize_session: str = ..., update_args: Any | None = ...): ...
+    def delete(self, synchronize_session: _SynchronizeSessionArgument = ...) -> int: ...
+    def update(self, values, synchronize_session: _SynchronizeSessionArgument = ..., update_args: Any | None = ...): ...
 
 class FromStatement(GroupedElement, SelectBase, Executable):
     __visit_name__: str

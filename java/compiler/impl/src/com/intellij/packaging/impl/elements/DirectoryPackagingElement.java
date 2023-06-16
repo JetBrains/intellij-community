@@ -102,6 +102,7 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
       return (PackagingElementEntity)o.getOrAddEntity(diff, source, project);
     });
 
+    Objects.requireNonNull(this.myDirectoryName, "directoryName is not specified");
     var entity = ExtensionsKt.addDirectoryPackagingElementEntity(diff, this.myDirectoryName, children, source);
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;

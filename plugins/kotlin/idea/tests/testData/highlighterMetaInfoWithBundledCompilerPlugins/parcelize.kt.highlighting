@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xplugin=$TEST_DIR/parcelize_fake_plugin.jar
+// FILE: main.kt
+
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>import<!> android.os.<!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>Parcelable<!>
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>import<!> kotlinx.parcelize.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>Parcelize<!>
+
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Parcelize<!>
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>data<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>DataParcelable<!>(
+    val <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>foo<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>,
+    val <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>bar<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>String<!>?,
+) : <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>Parcelable<!>
+
+val <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>dataParcelableWrite<!> = <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>DataParcelable<!>::writeToParcel

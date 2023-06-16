@@ -41,7 +41,7 @@ class XmlElementStorageTest {
 
     override fun loadLocalData() = element
 
-    override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<MyXmlElementStorage>(states, this) {
+    override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSessionProducer<MyXmlElementStorage>(states, this) {
       override fun saveLocally(dataWriter: DataWriter?) {
         if (dataWriter == null) {
           savedElement = null

@@ -13,7 +13,6 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ClassLevelProjectModelExtension
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
@@ -25,7 +24,6 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -217,7 +215,6 @@ class ProjectFileIndexPerformanceTest {
 
   @Test
   fun `access to index after change`() {
-    assumeTrue(WorkspaceFileIndexEx.IS_ENABLED, "This test is expected to fail if the old implementation of DirectoryIndex is used")
     val newRoot = runWriteActionAndWait { ourProjectRoot.subdir("newContentRoot") }
     val module = ourProjectModel.moduleManager.findModuleByName("big")!!
     PlatformTestUtil.startPerformanceTest("Checking status of file after adding and removing content root", 5) {

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
-class StringAccessor extends ExternalStringAccessor<String> {
+public class StringAccessor extends ExternalStringAccessor<String> {
 
   StringAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);

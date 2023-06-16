@@ -22,7 +22,6 @@ internal class WinIntelliJLaf : IntelliJLaf() {
 
   override fun loadDefaults(defaults: UIDefaults) {
     super.loadDefaults(defaults)
-    defaults["ClassLoader"] = javaClass.classLoader
     defaults["Menu.arrowIcon"] = Win10MenuArrowIcon()
   }
 

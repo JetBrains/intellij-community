@@ -39,7 +39,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-
 public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   private static final String TEST_DATA_FOLDER = "/codeInsight/javadocIG/";
 
@@ -125,7 +124,40 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testEscapeHtmlInCode() { doTestClass(); }
   public void testEscapeAngleBracketsInCode() { doTestClass(); }
   public void testInlineTagSnippet() { doTestClass(); }
+  public void testInlineTagSnippetNoMarkup() { doTestClass(); }
   public void testInlineTagSnippetWithoutBody() { doTestClass(); }
+  public void testExternalSnippetRegion() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("Region");
+  }
+  public void testExternalSnippetRegionNoMarkup() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("RegionNoMarkup");
+  }
+  public void testExternalSnippetNoRegion() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("NoRegion");
+  }
+  public void testExternalSnippetMain() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("Main");
+  }
+  public void testExternalSnippetMultiTag() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("MultiTag");
+  }
+  public void testExternalSnippetTextFile() {
+      createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+      verifyJavadocFor("TextFile");
+  }
+  public void testExternalSnippetUnresolved() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("Unresolved");
+  }
+  public void testExternalSnippetMalformed() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("Malformed");
+  }
   public void testUnknownInlineTag() { doTestClass(); }
   public void testUnknownInlineMultilineTag() { doTestClass(); }
   public void testUnknownTag() { doTestMethod(); }

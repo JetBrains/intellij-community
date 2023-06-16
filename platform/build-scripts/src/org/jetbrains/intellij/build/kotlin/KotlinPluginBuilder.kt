@@ -8,12 +8,13 @@ import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
-import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.LibraryPackMode
+import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.consumeDataByPrefix
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
-
 import java.nio.file.Path
-import java.util.function.BiConsumer
 import java.util.regex.Pattern
 
 object KotlinPluginBuilder {
@@ -68,6 +69,8 @@ object KotlinPluginBuilder {
     "kotlin.jvm",
     "kotlin.compiler-reference-index",
     "kotlin.compiler-plugins.parcelize.common",
+    "kotlin.compiler-plugins.parcelize.k1",
+    "kotlin.compiler-plugins.parcelize.k2",
     "kotlin.compiler-plugins.parcelize.gradle",
     "kotlin.compiler-plugins.allopen.common",
     "kotlin.compiler-plugins.allopen.gradle",
@@ -85,7 +88,8 @@ object KotlinPluginBuilder {
     "kotlin.compiler-plugins.sam-with-receiver.common",
     "kotlin.compiler-plugins.sam-with-receiver.gradle",
     "kotlin.compiler-plugins.sam-with-receiver.maven",
-    "kotlin.compiler-plugins.assignment.common",
+    "kotlin.compiler-plugins.assignment.common-k1",
+    "kotlin.compiler-plugins.assignment.common-k2",
     "kotlin.compiler-plugins.assignment.gradle",
     "kotlin.compiler-plugins.assignment.maven",
     "kotlin.compiler-plugins.lombok.gradle",
@@ -184,7 +188,10 @@ object KotlinPluginBuilder {
     "kotlin.navigation",
     "kotlin.refactorings.common",
     "kotlin.refactorings.k2",
+    "kotlin.refactorings.move.k2",
     "kotlin.refactorings.rename.k2",
+    "kotlin.performanceExtendedPlugin",
+    "kotlin.bundled-compiler-plugins-support",
   )
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -222,6 +229,7 @@ object KotlinPluginBuilder {
     "kotlinc.noarg-compiler-plugin",
     "kotlinc.sam-with-receiver-compiler-plugin",
     "kotlinc.assignment-compiler-plugin",
+    "kotlinc.scripting-compiler-plugin",
     "kotlinc.kotlinx-serialization-compiler-plugin",
     "kotlinc.parcelize-compiler-plugin",
     "kotlinc.lombok-compiler-plugin",
@@ -233,11 +241,6 @@ object KotlinPluginBuilder {
       kind = KotlinPluginKind.valueOf(System.getProperty("kotlin.plugin.kind", "IJ")),
       ultimateSources = ultimateSources,
     )
-  }
-
-  // weird groovy bug - remove method once AppCodeProperties will be converted to kotlin
-  fun kotlinPluginAcKmm(): PluginLayout {
-    return kotlinPlugin(KotlinPluginKind.AC_KMM, KotlinUltimateSources.WITH_ULTIMATE_MODULES)
   }
 
   @JvmStatic
@@ -273,14 +276,14 @@ object KotlinPluginBuilder {
           "kotlin-ultimate.javascript.nodeJs",
           "kotlin-ultimate.ultimate-plugin",
           "kotlin-ultimate.ultimate-native",
-          "kotlin.performanceExtendedPlugin",
+          "kotlin-ultimate.profiler",
         ))
       }
 
       val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
       spec.withProjectLibrary(kotlincKotlinCompilerCommon, LibraryPackMode.STANDALONE_MERGED)
 
-      spec.withPatch(BiConsumer { patcher, context ->
+      spec.withPatch { patcher, context ->
         val library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)!!
         val jars = library.getFiles(JpsOrderRootType.COMPILED)
         if (jars.size != 1) {
@@ -290,7 +293,7 @@ object KotlinPluginBuilder {
         consumeDataByPrefix(jars[0].toPath(), "META-INF/extensions/") { name, data ->
           patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, name, data)
         }
-      })
+      }
 
       spec.withProjectLibrary("kotlinc.kotlin-compiler-fe10")
       spec.withProjectLibrary("kotlinc.kotlin-compiler-ir")
@@ -322,7 +325,9 @@ object KotlinPluginBuilder {
             val library = context.project.libraryCollection.libraries
               .firstOrNull { it.name.startsWith("kotlinc.kotlin-jps-plugin-classpath") && it.type is JpsRepositoryLibraryType }
 
-            val kotlinVersion = library?.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data?.version ?: KOTLIN_COOP_DEV_VERSION
+            val kotlinVersion = System.getProperty("force.override.kotlin.compiler.version")
+                                ?: library?.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data?.version
+                                ?: KOTLIN_COOP_DEV_VERSION
 
             val version = "${major}-${kotlinVersion}-${kind}${minor}"
             context.messages.info("version: $version")
@@ -367,9 +372,6 @@ object KotlinPluginBuilder {
               "<!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->",
               "<plugin id=\"com.intellij.modules.androidstudio\"/>"
             )
-          KotlinPluginKind.AC_KMM ->
-            replace(text, "<plugin id=\"com.intellij.java\"/>", "<plugin id=\"com.intellij.kotlinNative.platformDeps\"/>\n" +
-                                                                "<plugin id=\"com.intellij.modules.appcode\"/>")
           else -> throw IllegalStateException("Unknown kind = $kind")
         }
       }
@@ -415,10 +417,5 @@ object KotlinPluginBuilder {
 
   enum class KotlinPluginKind {
     IJ, AS, MI,
-
-    // AppCode KMM plugin
-    AC_KMM {
-      override fun toString() = "AC"
-    }
   }
 }

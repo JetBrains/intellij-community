@@ -4,12 +4,14 @@ package com.intellij.ide.ui.laf;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.ui.ComboBoxButtonUI;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.BasicOptionButtonUI;
 import com.intellij.ui.components.DarculaSearchFieldWithExtensionUI;
 import com.intellij.ui.components.DefaultLinkButtonUI;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -88,8 +90,19 @@ final class HeadlessLafManagerImpl extends LafManager {
   public void setPreferredLightLaf(UIManager.@NotNull LookAndFeelInfo value) { }
 
   @Override
+  public @Nullable EditorColorsScheme getPreviousSchemeForLaf(UIManager.@NotNull LookAndFeelInfo lookAndFeelInfo) {
+    return null;
+  }
+
+  @Override
   public void addLafManagerListener(@NotNull LafManagerListener listener) { }
 
   @Override
   public void removeLafManagerListener(@NotNull LafManagerListener listener) { }
+
+  @Override
+  public UIManager.LookAndFeelInfo getDefaultLightLaf() { return null; }
+
+  @Override
+  public UIManager.LookAndFeelInfo getDefaultDarkLaf() { return null; }
 }

@@ -25,5 +25,5 @@ public interface ProjectTypesProvider {
   /**
    * @return found project types
    */
-  Collection<ProjectType> inferProjectTypes(@NotNull Project project);
+  @NotNull Collection<ProjectType> inferProjectTypes(@NotNull Project project);
 }

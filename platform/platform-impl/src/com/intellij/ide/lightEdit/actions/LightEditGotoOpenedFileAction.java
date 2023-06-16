@@ -37,17 +37,29 @@ final class LightEditGotoOpenedFileAction extends FileChooserAction implements L
 
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(getSelectedNioPath(e.getProject()) != null);
+    Project project = e.getProject();
+    if (LightEdit.owns(project)) {
+      e.getPresentation().setEnabled(getSelectedNioPath(project) != null);
+    }
+    else {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 
   @Override
   protected void update(@NotNull FileSystemTree fileSystemTree, @NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(getSelectedFile(fileSystemTree, e.getProject()) != null);
+    Project project = e.getProject();
+    if (LightEdit.owns(project)) {
+      e.getPresentation().setEnabled(getSelectedFile(fileSystemTree, project) != null);
+    }
+    else {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 
   private static @Nullable Path getSelectedNioPath(@Nullable Project project) {
     VirtualFile file = getSelectedFile(project);
-    return file != null ? file.toNioPath() : null;
+    return file != null ? file.getFileSystem().getNioPath(file) : null;
   }
 
   private static @Nullable VirtualFile getSelectedFile(@NotNull FileSystemTree fileSystemTree, @Nullable Project project) {

@@ -11,10 +11,7 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.actionSystem.AbbreviationManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -294,5 +291,18 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Object> 
     String text = hit.trim();
     text = StringUtil.trimEnd(text, ":");
     return text;
+  }
+
+  public static class Factory implements SearchEverywhereContributorFactory<Object> {
+    @Override
+    public @NotNull SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
+      Project project = initEvent.getProject();
+      Component contextComponent = initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+      Consumer<? super String> setter = str -> {
+        SearchEverywhereManager manager = SearchEverywhereManager.getInstance(project);
+        if (manager.isShown()) manager.getCurrentlyShownUI().getSearchField().setText(str);
+      };
+      return new TopHitSEContributor(project, contextComponent, setter);
+    }
   }
 }

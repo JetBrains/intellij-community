@@ -78,7 +78,7 @@ final class StopBackgroundProcessesAction extends DumbAwareAction {
       .setTitle(handlerItems.size() == 1 ? ExecutionBundle.message("confirm.background.process.stop")
                                          : ExecutionBundle.message("stop.background.process"))
       .setNamerForFiltering(o -> o.displayName)
-      .setItemChoosenCallback(() -> {
+      .setItemChosenCallback(() -> {
         List valuesList = list.getSelectedValuesList();
         for (Object o : valuesList) {
           if (o instanceof StopAction.HandlerItem) ((StopAction.HandlerItem)o).stop();

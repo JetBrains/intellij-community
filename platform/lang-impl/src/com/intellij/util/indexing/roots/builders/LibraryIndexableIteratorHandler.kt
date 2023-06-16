@@ -44,7 +44,7 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
 
     val result = mutableListOf<IndexableFilesIterator>()
     val ids = mutableSetOf<LibraryOrigin>()
-    idsToIndex.forEach { id ->
+    idsToIndex.sortedBy { it.toString() }.forEach { id ->
       createLibraryIterator(id, rootMap[id]!!, entityStorage, project)?.also {
         if (ids.add(it.origin)) {
           result.add(it)

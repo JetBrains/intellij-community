@@ -57,9 +57,8 @@ public class FindInProjectManager {
     startFindInProject(findModel);
   }
 
-  @SuppressWarnings("WeakerAccess")
   protected void initModel(@NotNull FindModel findModel, @NotNull DataContext dataContext) {
-    FindInProjectUtil.setDirectoryName(findModel, dataContext);
+    FindInProjectUtil.setScope(myProject, findModel, dataContext);
 
     String text = PlatformDataKeys.PREDEFINED_TEXT.getData(dataContext);
     if (text != null) {

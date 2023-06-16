@@ -46,7 +46,7 @@ class ModuleTestPropertiesTest {
 
     val workspaceModel = WorkspaceModel.getInstance(projectModel.project)
 
-    UsefulTestCase.assertEmpty(workspaceModel.currentSnapshot.entities (TestModulePropertiesEntity::class.java).toList())
+    UsefulTestCase.assertEmpty(workspaceModel.currentSnapshot.entities(TestModulePropertiesEntity::class.java).toList())
 
     runWriteActionAndWait {
       workspaceModel.updateProjectModel { builder ->
@@ -57,7 +57,7 @@ class ModuleTestPropertiesTest {
       }
     }
 
-    UsefulTestCase.assertNotEmpty(workspaceModel.currentSnapshot.entities (TestModulePropertiesEntity::class.java).toList())
+    UsefulTestCase.assertNotEmpty(workspaceModel.currentSnapshot.entities(TestModulePropertiesEntity::class.java).toList())
 
     assertSame(mainModule, testModuleProperties.productionModule)
     assertEquals(mainModule.name, testModuleProperties.productionModuleName)
@@ -68,7 +68,8 @@ class ModuleTestPropertiesTest {
     val mainModuleName = "foo"
     val testModuleName = "foo.test"
 
-    val projectPath = File(PathManagerEx.getCommunityHomePath(), "platform/workspaceModel/jps/tests/testData/serialization/moduleTestProperties")
+    val projectPath = File(PathManagerEx.getCommunityHomePath(),
+                           "platform/workspaceModel/jps/tests/testData/serialization/moduleTestProperties")
     val virtualFileUrlManager = VirtualFileUrlManager.getInstance(projectModel.project)
     val storage = copyAndLoadProject(projectPath, virtualFileUrlManager).storage
 

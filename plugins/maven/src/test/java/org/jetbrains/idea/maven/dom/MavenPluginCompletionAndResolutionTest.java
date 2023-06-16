@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -952,11 +952,11 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                        """);
 
     if (mavenVersionIsOrMoreThan("3.9.0")) {
-      assertDocumentation(
-        "Type: <b>java.lang.String</b><br>Default Value: <b>1.7</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i><p>The -source argument for the Java compiler.</p>\n" +
-        "\n" +
-        "<b>NOTE: </b>Since 3.8.0 the default value has changed from 1.5 to 1.6.\n" +
-        "Since 3.9.0 the default value has changed from 1.6 to 1.7</i>");
+      assertDocumentation("""
+          Type: <b>java.lang.String</b><br>Default Value: <b>1.7</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i><p>The -source argument for the Java compiler.</p>
+
+          <b>NOTE: </b>Since 3.8.0 the default value has changed from 1.5 to 1.6.
+          Since 3.9.0 the default value has changed from 1.6 to 1.7</i>""");
     }
     else {
       assertDocumentation(

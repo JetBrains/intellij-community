@@ -36,6 +36,10 @@
     <xi:fallback/>
   </xi:include>
 
+  <xi:include href="/META-INF/PlatformWarmup.xml">
+    <xi:fallback/>
+  </xi:include>
+
   <xi:include href="/META-INF/IdeCore.xml"/>
   <xi:include href="/META-INF/PlatformExtensionPoints.xml"/>
   <xi:include href="/META-INF/Refactoring.xml"/>
@@ -43,6 +47,7 @@
 
   <xi:include href="/META-INF/PlatformExtensions.xml"/>
   <xi:include href="/META-INF/LangExtensions.xml"/>
+  <xi:include href="/META-INF/OTelExtensions.xml"/>
 
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
 

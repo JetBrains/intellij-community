@@ -12,8 +12,20 @@ import com.intellij.util.indexing.IndexableSetContributor
  */
 interface IndexableSetOrigin
 
-interface ModuleRootOrigin : IndexableSetOrigin {
+/**
+ * Marker interface for all origins of roots from project content
+ */
+interface ContentOrigin : IndexableSetOrigin
+
+/**
+ * Marker interface for all origins of roots from project content tied to certain module
+ */
+interface ModuleContentOrigin : ContentOrigin {
   val module: Module
+}
+
+interface ModuleRootOrigin : ModuleContentOrigin {
+  override val module: Module
   val roots: List<VirtualFile>
 }
 

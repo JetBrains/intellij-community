@@ -41,7 +41,9 @@ class CompletionStrategySerializer : JsonSerializer<CompletionStrategy> {
   override fun serialize(src: CompletionStrategy, typeOfSrc: Type, context: JsonSerializationContext): JsonObject {
     val jsonObject = JsonObject()
     jsonObject.addProperty("emulateUser", src.emulateUser)
-    jsonObject.addProperty("completionGolf", src.completionGolf?.name)
+    if (src.completionGolf != null) {
+      jsonObject.addProperty("completionGolf", src.completionGolf.name)
+    }
     jsonObject.addProperty("context", src.context.name)
     val prefixClassName = src.prefix.javaClass.name
     val prefixObject = JsonObject()

@@ -7,10 +7,10 @@ import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.model.Pointer
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.platform.documentation.DocumentationResult
-import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.DocumentationResult
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callabl
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KtSingleTypeParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -158,40 +159,43 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
     return null
 }
 
+context(KtAnalysisSession)
 private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
-    analyze(ktDeclaration) {
-        val containingSymbol = ktDeclaration.getSymbol().getContainingSymbol()
-        val fqName = (containingSymbol as? KtClassLikeSymbol)?.classIdIfNonLocal?.asFqNameString()
-            ?: (ktDeclaration.containingFile as? KtFile)?.packageFqName?.takeIf { !it.isRoot }?.asString()
-        val fqNameSection = fqName
-            ?.let {
-                @Nls val link = StringBuilder()
-                val highlighted =
-                    if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) KDocRenderer.highlight(it, ktDeclaration.project) { asClassName }
-                    else it
-                DocumentationManagerUtil.createHyperlink(link, it, highlighted, false, false)
-                HtmlChunk.fragment(
-                    HtmlChunk.icon("class", KotlinIcons.CLASS),
-                    HtmlChunk.nbsp(),
-                    HtmlChunk.raw(link.toString()),
-                    HtmlChunk.br()
-                )
-            } ?: HtmlChunk.empty()
-        val fileNameSection = ktDeclaration
-            .containingFile
-            ?.name
-            ?.takeIf { containingSymbol == null }
-            ?.let {
-                HtmlChunk.fragment(
-                    HtmlChunk.icon("file", KotlinIcons.FILE),
-                    HtmlChunk.nbsp(),
-                    HtmlChunk.text(it),
-                    HtmlChunk.br()
-                )
-            }
-            ?: HtmlChunk.empty()
-        return HtmlChunk.fragment(fqNameSection, fileNameSection)
-    }
+    val containingSymbol = ktDeclaration.getSymbol().getContainingSymbol()
+    val fqName = (containingSymbol as? KtClassLikeSymbol)?.classIdIfNonLocal?.asFqNameString()
+        ?: (ktDeclaration.containingFile as? KtFile)?.packageFqName?.takeIf { !it.isRoot }?.asString()
+
+    val fqNameSection = fqName?.let {
+        @Nls val link = StringBuilder()
+        val highlighted = if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) {
+            KDocRenderer.highlight(it, ktDeclaration.project) { asClassName }
+        } else {
+            it
+        }
+
+        DocumentationManagerUtil.createHyperlink(link, it, highlighted, false, false)
+        HtmlChunk.fragment(
+            HtmlChunk.icon("class", KotlinIcons.CLASS),
+            HtmlChunk.nbsp(),
+            HtmlChunk.raw(link.toString()),
+            HtmlChunk.br()
+        )
+    } ?: HtmlChunk.empty()
+
+    val fileNameSection = ktDeclaration.containingFile
+        ?.name
+        ?.takeIf { containingSymbol == null }
+        ?.let {
+            HtmlChunk.fragment(
+                HtmlChunk.icon("file", KotlinIcons.FILE),
+                HtmlChunk.nbsp(),
+                HtmlChunk.text(it),
+                HtmlChunk.br()
+            )
+        }
+        ?: HtmlChunk.empty()
+
+    return HtmlChunk.fragment(fqNameSection, fileNameSection)
 }
 
 private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
@@ -249,26 +253,47 @@ private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
     preBuild: KDocTemplate.() -> Unit = {}
 ) {
     analyze(declaration) {
-        val symbol = symbolFinder(declaration.getSymbol())
-        if (symbol is KtDeclarationSymbol) {
+        // it's not possible to create symbol for function type parameter, so we need to process this case separately
+        // see KTIJ-22404
+        if (declaration is KtParameter && declaration.isFunctionTypeParameter) {
+            val definition = renderFunctionTypeParameter(declaration) ?: return
+
             insert(KDocTemplate()) {
                 definition {
-                    append(HtmlEscapers.htmlEscaper().escape(symbol.render(KotlinDocumentationTarget.RENDERING_OPTIONS)))
+                    append(definition.escape())
                 }
-
-                if (!onlyDefinition) {
-                    description {
-                        renderKDoc(symbol, this)
-                    }
-                }
-                getContainerInfo(declaration).toString().takeIf { it.isNotBlank() }?.let { info ->
-                    containerInfo {
-                        append(info)
-                    }
-                }
-                preBuild()
             }
+            return
         }
+
+        val symbol = symbolFinder(declaration.getSymbol())
+        if (symbol !is KtDeclarationSymbol) return
+
+        insert(KDocTemplate()) {
+            definition {
+                append(symbol.render(KotlinDocumentationTarget.RENDERING_OPTIONS).escape())
+            }
+
+            if (!onlyDefinition) {
+                description {
+                    renderKDoc(symbol, this)
+                }
+            }
+            getContainerInfo(declaration).toString().takeIf { it.isNotBlank() }?.let { info ->
+                containerInfo {
+                    append(info)
+                }
+            }
+            preBuild()
+        }
+    }
+}
+
+context(KtAnalysisSession)
+private fun renderFunctionTypeParameter(parameter: KtParameter): String? = with(KotlinDocumentationTarget.RENDERING_OPTIONS) {
+    prettyPrint {
+        parameter.nameAsName?.let { name -> withSuffix(": ") { nameRenderer.renderName(name, symbol = null, printer = this) } }
+        parameter.typeReference?.getKtType()?.let { type -> typeRenderer.renderType(type, printer = this) }
     }
 }
 
@@ -286,8 +311,8 @@ private fun KtAnalysisSession.renderKDoc(
         declaration.getContainingClassOrObject().findKDoc()?.let {
             stringBuilder.renderKDoc(it.contentTag, it.sections)
         }
-    } else if (declaration is KtFunction && 
-        symbol is KtCallableSymbol && 
+    } else if (declaration is KtFunction &&
+        symbol is KtCallableSymbol &&
         symbol.getAllOverriddenSymbols().any { it.psi is PsiMethod }) {
         LightClassUtil.getLightClassMethod(declaration)?.let {
             stringBuilder.insert(KDocTemplate.DescriptionBodyTemplate.FromJava()) {
@@ -312,3 +337,5 @@ private fun KtAnalysisSession.findKDoc(symbol: KtSymbol): KDocContent? {
     }
     return null
 }
+
+private fun String.escape(): String = HtmlEscapers.htmlEscaper().escape(this)

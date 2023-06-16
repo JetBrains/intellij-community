@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -51,27 +53,36 @@ public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopu
     return getChanges().getList().size() > 1;
   }
 
-  @NotNull
-  private DefaultTreeModel buildTreeModel(@NotNull Project project,
-                                          @NotNull ChangesGroupingPolicyFactory grouping,
-                                          @NotNull List<? extends T> changes) {
-    MultiMap<ChangesBrowserNode.Tag, GenericChangesBrowserNode> groups = MultiMap.createLinked();
+  private class MyAsyncChangesTreeModel extends SimpleAsyncChangesTreeModel {
+    private final Project myProject;
+    private final List<? extends T> myChanges;
 
-    for (int i = 0; i < changes.size(); i++) {
-      PresentableChange change = getPresentation(changes.get(i));
-      if (change == null) continue;
-
-      FilePath filePath = change.getFilePath();
-      FileStatus fileStatus = change.getFileStatus();
-      ChangesBrowserNode.Tag tag = change.getTag();
-      groups.putValue(tag, new GenericChangesBrowserNode(filePath, fileStatus, i));
+    private MyAsyncChangesTreeModel(@NotNull Project project, @NotNull List<? extends T> changes) {
+      myProject = project;
+      myChanges = changes;
     }
 
-    MyTreeModelBuilder builder = new MyTreeModelBuilder(project, grouping);
-    for (ChangesBrowserNode.Tag tag : groups.keySet()) {
-      builder.setGenericNodes(groups.get(tag), tag);
+    @NotNull
+    @Override
+    public DefaultTreeModel buildTreeModelSync(@NotNull ChangesGroupingPolicyFactory grouping) {
+      MultiMap<ChangesBrowserNode.Tag, GenericChangesBrowserNode> groups = MultiMap.createLinked();
+
+      for (int i = 0; i < myChanges.size(); i++) {
+        PresentableChange change = getPresentation(myChanges.get(i));
+        if (change == null) continue;
+
+        FilePath filePath = change.getFilePath();
+        FileStatus fileStatus = change.getFileStatus();
+        ChangesBrowserNode.Tag tag = change.getTag();
+        groups.putValue(tag, new GenericChangesBrowserNode(filePath, fileStatus, i));
+      }
+
+      MyTreeModelBuilder builder = new MyTreeModelBuilder(myProject, grouping);
+      for (ChangesBrowserNode.Tag tag : groups.keySet()) {
+        builder.setGenericNodes(groups.get(tag), tag);
+      }
+      return builder.build();
     }
-    return builder.build();
   }
 
   protected abstract void onSelected(@NotNull T change);
@@ -97,6 +108,12 @@ public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopu
                 .setCancelKeyEnabled(true)
                 .setCancelOnClickOutside(true)
                 .setDimensionServiceKey(project, "Diff.GoToChangePopup", false)
+                .addListener(new JBPopupListener() {
+                  @Override
+                  public void onClosed(@NotNull LightweightWindowEvent event) {
+                    cb.shutdown();
+                  }
+                })
                 .createPopup());
 
     return popup.get();
@@ -106,36 +123,41 @@ public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopu
   // Helpers
   //
 
-  private class MyChangesBrowser extends ChangesBrowserBase {
+  private class MyChangesBrowser extends AsyncChangesBrowserBase {
     @NotNull private final Ref<? extends JBPopup> myRef;
     @NotNull private final ListSelection<? extends T> myChanges;
 
     MyChangesBrowser(@NotNull Project project, @NotNull Ref<? extends JBPopup> popupRef) {
       super(project, false, false);
+      hideViewerBorder();
+
       myRef = popupRef;
       myChanges = PresentableGoToChangePopupAction.this.getChanges();
       myViewer.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
       init();
 
-      myViewer.rebuildTree();
+      AsyncChangesTree viewer = getViewer();
+      viewer.requestRefresh();
 
       if (myChanges.getSelectedIndex() != -1) {
         UiNotifyConnector.doWhenFirstShown(this, () -> {
-          DefaultMutableTreeNode toSelect = TreeUtil.findNode(myViewer.getRoot(), node -> {
-            return node instanceof GenericChangesBrowserNode &&
-                   ((GenericChangesBrowserNode)node).getIndex() == myChanges.getSelectedIndex();
+          viewer.invokeAfterRefresh(() -> {
+            DefaultMutableTreeNode toSelect = TreeUtil.findNode(myViewer.getRoot(), node -> {
+              return node instanceof GenericChangesBrowserNode &&
+                     ((GenericChangesBrowserNode)node).getIndex() == myChanges.getSelectedIndex();
+            });
+            if (toSelect != null) {
+              TreeUtil.selectNode(myViewer, toSelect);
+            }
           });
-          if (toSelect != null) {
-            TreeUtil.selectNode(myViewer, toSelect);
-          }
         });
       }
     }
 
     @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel() {
-      return PresentableGoToChangePopupAction.this.buildTreeModel(myProject, getGrouping(), myChanges.getList());
+    protected AsyncChangesTreeModel getChangesTreeModel() {
+      return new MyAsyncChangesTreeModel(myProject, myChanges.getList());
     }
 
     @NotNull

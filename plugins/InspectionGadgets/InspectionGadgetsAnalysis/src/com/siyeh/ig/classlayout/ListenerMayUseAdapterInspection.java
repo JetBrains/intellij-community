@@ -1,22 +1,7 @@
-/*
- * Copyright 2009-2017 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -55,12 +40,12 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final String adapterName = (String)infos[1];
     return new ListenerMayUseAdapterFix(adapterName);
   }
 
-  private static class ListenerMayUseAdapterFix extends InspectionGadgetsFix {
+  private static class ListenerMayUseAdapterFix extends PsiUpdateModCommandQuickFix {
 
     private final String adapterName;
 
@@ -81,8 +66,8 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiJavaCodeReferenceElement element = (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiJavaCodeReferenceElement element = (PsiJavaCodeReferenceElement)startElement;
       final PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       if (aClass == null) {
         return;

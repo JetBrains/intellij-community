@@ -39,7 +39,7 @@
     </action>
     <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision"/>
 
-    <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup"/>
+    <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup" searchable="false"/>
     <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
     <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision"/>
     <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch"/>
@@ -344,7 +344,7 @@
     <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction"/>
     <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction"/>
     <action id="Git.Stage.Add.All" class="git4idea.index.actions.GitStageAllAction"/>
-    <action id="Git.Stage.Add.Tracked" class="git4idea.index.actions.GitStageTrackedAction"/>
+    <action id="Git.Stage.Add.Tracked" class="git4idea.index.actions.GitStageTrackedAction" icon="AllIcons.General.Add"/>
     <action id="Git.Stage.Show.Staged" class="git4idea.index.actions.GitShowStagedVersionAction"/>
     <action id="Git.Stage.Show.Local" class="git4idea.index.actions.GitShowLocalVersionAction"/>
     <action id="Git.Stage.Compare.Local.Staged" class="git4idea.index.actions.GitStageCompareLocalWithStagedAction"/>
@@ -366,6 +366,7 @@
     <group id="Git.Stage.Toolbar">
       <reference id="Diff.ShowDiff"/>
       <reference id="ChangesView.Refresh"/>
+      <reference id="Git.Stage.Add.Tracked"/>
       <reference id="Git.Stash.Silently"/>
       <group id="Git.Stage.Ui.Settings" icon="AllIcons.Actions.GroupBy" popup="true">
         <reference id="ChangesView.GroupBy"/>
@@ -460,9 +461,38 @@
       <add-to-group group-id="Vcs.Log.Internal"/>
     </group>
 
-    <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction" >
-      <add-to-group group-id="MainToolbarLeft"/>
-    </action>
+    <group id="MainToolbarVCSGroup">
+      <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction" />
+      <action id="main.toolbar.git.update.project" class="git4idea.ui.toolbar.GitToolbarUpdateProjectAction"
+              use-shortcut-of="Vcs.UpdateProject"/>
+      <action id="main.toolbar.git.push" class="git4idea.ui.toolbar.GitToolbarPushAction"
+              use-shortcut-of="Vcs.Push"/>
+      <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
+    </group>
+
+    <group id="GitMainToolbarQuickActions" searchable="false" popup="false">
+      <add-to-group group-id="MainToolbarQuickActions" relative-to-action="addQuickAction.Profile" anchor="after"/>
+      <separator key="MainToolbarQuickActions.vcs.separator"/>
+      <action id="addQuickAction.Git.Update" class="git4idea.ui.toolbar.UpdateQuickAction" icon="AllIcons.Actions.CheckOut"/>
+      <action id="addQuickAction.Git.Commit" class="git4idea.ui.toolbar.CommitQuickAction" icon="AllIcons.Vcs.CommitNode"/>
+      <action id="addQuickAction.Git.Push" class="git4idea.ui.toolbar.PushQuickAction" icon="AllIcons.Vcs.Push"/>
+      <action id="addQuickAction.Git.Diff" class="git4idea.ui.toolbar.DiffQuickAction" icon="AllIcons.Actions.Diff"/>
+      <action id="addQuickAction.Git.History" class="git4idea.ui.toolbar.HistoryQuickAction" icon="AllIcons.Vcs.History"/>
+      <action id="addQuickAction.Git.Rollback" class="git4idea.ui.toolbar.RollbackQuickAction" icon="AllIcons.Diff.Revert"/>
+    </group>
+
+    <group id="Git.Hosting.Open.In.Browser.Group" popup="false">
+      <add-to-group group-id="RevealGroup"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
+      <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
+      <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
+      <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="last"/>
+    </group>
+
+    <group id="Git.Hosting.Copy.Link.Group" popup="false">
+      <add-to-group group-id="CopyFileReference"/>
+      <add-to-group group-id="Copy.Paste.Special" relative-to-action="CopyReference" anchor="after"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -497,9 +527,6 @@
                               Otherwise only the affected files will be refreshed.
                               Affects only a subset of Git operations.
                               The option is needed to debug possible &quot;incomplete VFS refresh&quot; reports, if they appear."/>
-    <registryKey key="git.log.fix.merge.commits.parents.order" defaultValue="false" restartRequired="true"
-                 description="Find merge commits where a remote branch was merged into local before pushing
-                              and fix parents order for such commits in order to display them more naturally in the commits graph."/>
     <registryKey key="git.log.use.index.for.picked.commits.highlighting" defaultValue="true"
                  description="Find cherry-picked commits not only looking at patches using 'git cherry'
                               but also by matching commit author, author time and &quot;cherry picked from commit &lt;hash&gt;&quot; suffix."/>
@@ -545,10 +572,15 @@
                  description="Do not record stage operations in the undo stack of the document"/>
     <registryKey key="git.stage.navigate.to.index.file" defaultValue="false"
                  description="Navigate to the staging area content from diff instead of the local file" />
+    <registryKey key="git.stage.enable.commit.all" defaultValue="true"
+                 description="When no changes are staged, stage and commit all changes in the project"/>
     <registryKey key="git.branches.panel.persist.tree.state" defaultValue="true"
                  description="Persist branches panel tree state between restarts"/>
     <registryKey key="git.do.not.swap.merge.conflict.sides" defaultValue="false"
                  description="Do not inverse 'ours' and 'theirs' conflict sides during rebase"/>
+    <registryKey key="git.recent.checkout.branches.reflog.entries.max.count" defaultValue="5"
+                 restartRequired="true"
+                 description="Amount of entry to process from Git reflog to parse recently checkout branches"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
@@ -731,11 +763,14 @@
     <searchEverywhereContributor implementation="git4idea.search.GitSearchEverywhereContributor$Companion$Factory"/>
     <projectOriginInfoProvider implementation="git4idea.repo.GitProjectOriginInfoProvider"/>
 
-    <backgroundPostStartupActivity implementation="git4idea.repo.GitCommitTemplateTracker$GitCommitTemplateTrackerStartupActivity"/>
+    <postStartupActivity implementation="git4idea.repo.GitCommitTemplateTracker$GitCommitTemplateTrackerStartupActivity"/>
 
-    <vcs.delayedCommitMessageProvider implementation="git4idea.commit.GitDelayedCommitTemplateMessageProvider" order="first"/>
-    <vcs.commitMessageProvider implementation="git4idea.commit.GitCommitTemplateMessageProvider" order="first"/>
+    <vcs.commitMessageProvider implementation="git4idea.commit.GitTemplateCommitMessageProvider" order="first"/>
     <jbProtocolRevisionResolver implementation="git4idea.GitNavigateRevisionResolver"/>
+    <experimentalFeature id="git4idea.new.ui.main.toolbar.actions"
+                         percentOfUsers="50">
+      <description>Show "Push" and "Update project" actions on the main toolbar for newUI</description>
+    </experimentalFeature>
   </extensions>
 
   <extensionPoints>

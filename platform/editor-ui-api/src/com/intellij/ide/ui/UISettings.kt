@@ -1,13 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
-import com.intellij.openapi.components.SettingsCategory
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -35,22 +32,22 @@ private val LOG = logger<UISettings>()
 
 @State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], useLoadedStateAsExisting = false, category = SettingsCategory.UI)
 class UISettings @NonInjectable constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponentWithModificationTracker<UISettingsState> {
-  constructor() : this(ApplicationManager.getApplication().getService(NotRoamableUiSettings::class.java))
+  constructor() : this(ApplicationManager.getApplication().service<NotRoamableUiSettings>())
 
   private var state = UISettingsState()
 
   private val treeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
 
   var ideAAType: AntialiasingType
-    get() = notRoamableOptions.state.ideAAType
+    get() = notRoamableOptions.ideAAType
     set(value) {
-      notRoamableOptions.state.ideAAType = value
+      notRoamableOptions.ideAAType = value
     }
 
   var editorAAType: AntialiasingType
-    get() = notRoamableOptions.state.editorAAType
+    get() = notRoamableOptions.editorAAType
     set(value) {
-      notRoamableOptions.state.editorAAType = value
+      notRoamableOptions.editorAAType = value
     }
 
   val allowMergeButtons: Boolean
@@ -218,6 +215,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       uiDensity = if (value) UIDensity.COMPACT else UIDensity.DEFAULT
     }
 
+  var differentiateProjects: Boolean
+    get() = state.differentiateProjects
+    set(value) {
+      state.differentiateProjects = value
+    }
+
   var uiDensity: UIDensity
     get() = state.uiDensity
     set(value) {
@@ -310,9 +313,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var presentationModeIdeScale: Float
-    get() = notRoamableOptions.state.presentationModeIdeScale
+    get() = notRoamableOptions.presentationModeIdeScale
     set(value) {
-      notRoamableOptions.state.presentationModeIdeScale = value
+      notRoamableOptions.presentationModeIdeScale = value
     }
 
   var editorTabPlacement: Int
@@ -354,37 +357,41 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   var overrideLafFonts: Boolean
     get() = notRoamableOptions.state.overrideLafFonts
     set(value) {
-      notRoamableOptions.state.overrideLafFonts = value
+      notRoamableOptions.overrideLafFonts = value
     }
 
   var fontFace: @NlsSafe String?
-    get() = notRoamableOptions.state.fontFace
+    get() {
+      return notRoamableOptions.fontFace
+    }
     set(value) {
-      notRoamableOptions.state.fontFace = value
+      notRoamableOptions.fontFace = value
     }
 
   var fontSize: Int
-    get() = (notRoamableOptions.state.fontSize + 0.5).toInt()
+    get() {
+      return (notRoamableOptions.fontSize + 0.5).toInt()
+    }
     set(value) {
-      notRoamableOptions.state.fontSize = value.toFloat()
+      notRoamableOptions.fontSize = value.toFloat()
     }
 
   var fontSize2D: Float
-    get() = notRoamableOptions.state.fontSize
+    get() = notRoamableOptions.fontSize
     set(value) {
-      notRoamableOptions.state.fontSize = value
+      notRoamableOptions.fontSize = value
     }
 
   var fontScale: Float
-    get() = notRoamableOptions.state.fontScale
+    get() = notRoamableOptions.fontScale
     set(value) {
-      notRoamableOptions.state.fontScale = value
+      notRoamableOptions.fontScale = value
     }
 
   var ideScale: Float
-    get() = notRoamableOptions.state.ideScale
+    get() = notRoamableOptions.ideScale
     set(value) {
-      notRoamableOptions.state.ideScale = value
+      notRoamableOptions.ideScale = value
     }
 
   var showDirectoryForNonUniqueFilenames: Boolean
@@ -480,6 +487,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showVisualFormattingLayer = value
     }
 
+  var showBreakpointsOverLineNumbers: Boolean
+    get() = state.showBreakpointsOverLineNumbers
+    set(value) {
+      state.showBreakpointsOverLineNumbers = value
+    }
+
   companion object {
     init {
       if (JBUIScale.SCALE_VERBOSE) {
@@ -487,10 +500,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       }
     }
 
-    const val ANIMATION_DURATION = 300 // Milliseconds
+    const val ANIMATION_DURATION: Int = 300 // Milliseconds
 
     /** Not tabbed pane.  */
-    const val TABS_NONE = 0
+    const val TABS_NONE: Int = 0
 
     @Volatile
     private var cachedInstance: UISettings? = null
@@ -500,7 +513,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       var result = cachedInstance
       if (result == null) {
         LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred()
-        result = ApplicationManager.getApplication().getService(UISettings::class.java)!!
+        result = ApplicationManager.getApplication().service<UISettings>()
         cachedInstance = result
       }
       return result
@@ -622,7 +635,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     fun restoreFontSize(readSize: Float, readScale: Float?): Float {
       var size = readSize
       if (readScale == null || readScale <= 0) {
-        if (JBUIScale.SCALE_VERBOSE) LOG.info("Reset font to default")
+        if (JBUIScale.SCALE_VERBOSE) {
+          LOG.info("Reset font to default")
+        }
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
         if (!SystemInfoRt.isMac && JreHiDpiUtil.isJreHiDPIEnabled()) {
           size = UISettingsState.defFontSize
@@ -631,15 +646,17 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       else if (readScale != defFontScale) {
         size = (readSize / readScale) * defFontScale
       }
-      if (JBUIScale.SCALE_VERBOSE) LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
+      if (JBUIScale.SCALE_VERBOSE) {
+        LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
+      }
       return size
     }
 
-    const val MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY = "ide.win.frame.decoration"
+    const val MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY: String = "ide.win.frame.decoration"
 
     @JvmStatic
-    val mergeMainMenuWithWindowTitleOverrideValue = System.getProperty(MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY)?.toBoolean()
-    val isMergeMainMenuWithWindowTitleOverridden = mergeMainMenuWithWindowTitleOverrideValue != null
+    val mergeMainMenuWithWindowTitleOverrideValue: Boolean? = System.getProperty(MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY)?.toBoolean()
+    val isMergeMainMenuWithWindowTitleOverridden: Boolean = mergeMainMenuWithWindowTitleOverrideValue != null
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
@@ -678,13 +695,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   @Suppress("DEPRECATION")
   private fun updateDeprecatedProperties() {
-    OVERRIDE_NONIDEA_LAF_FONTS = overrideLafFonts
-    FONT_SIZE = fontSize
-    FONT_FACE = fontFace
     EDITOR_TAB_LIMIT = editorTabLimit
   }
 
-  override fun getState() = state
+  override fun getState(): UISettingsState = state
 
   override fun noStateLoaded() {
     super.noStateLoaded()
@@ -770,31 +784,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   //<editor-fold desc="Deprecated stuff.">
   @Suppress("PropertyName")
-  @Deprecated("Use fontFace", replaceWith = ReplaceWith("fontFace"))
-  @JvmField
-  @Transient
-  @ScheduledForRemoval
-  var FONT_FACE: String? = null
-
-  @Suppress("PropertyName")
-  @Deprecated("Use fontSize", replaceWith = ReplaceWith("fontSize"))
-  @JvmField
-  @Transient
-  @ScheduledForRemoval
-  var FONT_SIZE: Int? = 0
-
-  @Suppress("PropertyName", "SpellCheckingInspection")
-  @Deprecated("Use overrideLafFonts", replaceWith = ReplaceWith("overrideLafFonts"))
-  @JvmField
-  @Transient
-  @ScheduledForRemoval
-  var OVERRIDE_NONIDEA_LAF_FONTS = false
-
-  @Suppress("PropertyName")
   @Deprecated("Use editorTabLimit", replaceWith = ReplaceWith("editorTabLimit"))
   @JvmField
   @Transient
   @ScheduledForRemoval
-  var EDITOR_TAB_LIMIT = editorTabLimit
+  var EDITOR_TAB_LIMIT: Int = editorTabLimit
   //</editor-fold>
 }

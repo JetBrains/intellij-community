@@ -2,7 +2,7 @@ private var A.foo: Boolean
     get() {
         TODO("Not yet implemented")
     }
-    set() {}
+    set(value) {}
 
 // "Create extension property 'A.foo'" "true"
 class A(val n: Int)

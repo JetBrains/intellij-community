@@ -1,1 +1,1 @@
-constructor B(Int) has 5 usages that are not safe to delete.
+Constructor B(Int) has 5 usages that are not safe to delete.

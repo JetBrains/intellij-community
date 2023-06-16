@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -139,7 +139,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   @Override
   boolean isSpecificallyModified() {
     return myComponent != null && myComponent.myRCStorageUi != null && myComponent.myRCStorageUi.isModified() ||
-           myRunOnTargetPanel.isModified();
+           myRunOnTargetPanel.isModified() ||
+           getEditor().isSpecificallyModified();
   }
 
   @Override
@@ -199,12 +200,16 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     if (myComponent == null) return;
 
     ModalityState modalityState = ModalityState.stateForComponent(myComponent.myWholePanel);
-    if (modalityState == ModalityState.NON_MODAL) return;
+    if (modalityState == ModalityState.nonModal()) return;
 
     myValidationRequested = true;
     myValidationAlarm.cancelAllRequests();
     myValidationAlarm.addRequest(() -> {
       if (myComponent != null) {
+        if (!getEditor().isReadyForApply()) {
+          addValidationRequest();
+          return;
+        }
         try {
           RunnerAndConfigurationSettings snapshot = createSnapshot(false);
           snapshot.setName(getNameText());
@@ -239,6 +244,16 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       }
       if (RUN_ON_TARGET_NAME_KEY.is(dataId)) {
         return TargetEnvironmentConfigurations.getEffectiveTargetName(myRunOnTargetPanel.getDefaultTargetName(), myProject);
+      }
+      if (RunConfigurationSelector.KEY.is(dataId)) {
+        return new RunConfigurationSelector() {
+          @Override
+          public void select(@NotNull RunConfiguration configuration) {
+            RunDialog.editConfiguration(myProject,
+                                        new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), configuration),
+                                        ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", configuration.getName()));
+          }
+        };
       }
       return null;
     });

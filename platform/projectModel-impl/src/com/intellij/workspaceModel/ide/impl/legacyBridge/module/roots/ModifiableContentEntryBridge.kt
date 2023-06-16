@@ -103,14 +103,14 @@ internal class ModifiableContentEntryBridge(
     currentContentEntry.value.sourceRootEntities.forEach { sourceRoot -> diff.removeEntity(sourceRoot) }
   }
 
-  private fun addExcludeFolder(excludeUrl: VirtualFileUrl, projectSource: ProjectModelExternalSource?): ExcludeFolder {
+  private fun addExcludeFolder(excludeUrl: VirtualFileUrl, isAutomaticallyImported: Boolean): ExcludeFolder {
     if (!contentEntryUrl.isEqualOrParentOf(excludeUrl)) {
       error("Exclude folder $excludeUrl must be under content entry $contentEntryUrl")
     }
 
     if (excludeUrl !in currentContentEntry.value.entity.excludedUrls.map { it.url }) {
       updateContentEntry {
-        val source = if (projectSource == null) getInternalFileSource(entitySource) ?: entitySource else entitySource
+        val source = if (!isAutomaticallyImported) getInternalFileSource(entitySource) ?: entitySource else entitySource
         excludedUrls = excludedUrls + ExcludeUrlEntity(excludeUrl, source)
       }
     }
@@ -120,10 +120,11 @@ internal class ModifiableContentEntryBridge(
     } ?: error("Exclude folder $excludeUrl must be present after adding it to content entry $contentEntryUrl")
   }
 
-  override fun addExcludeFolder(file: VirtualFile): ExcludeFolder = addExcludeFolder(file.toVirtualFileUrl(virtualFileManager), null)
-  override fun addExcludeFolder(url: String): ExcludeFolder = addExcludeFolder(virtualFileManager.fromUrl(url), null)
-  override fun addExcludeFolder(url: String, source: ProjectModelExternalSource): ExcludeFolder {
-    return addExcludeFolder(virtualFileManager.fromUrl(url), source)
+  override fun addExcludeFolder(file: VirtualFile): ExcludeFolder = addExcludeFolder(file.toVirtualFileUrl(virtualFileManager), false)
+  override fun addExcludeFolder(url: String): ExcludeFolder = addExcludeFolder(virtualFileManager.fromUrl(url), false)
+
+  override fun addExcludeFolder(url: String, isAutomaticallyImported: Boolean): ExcludeFolder {
+    return addExcludeFolder(virtualFileManager.fromUrl(url), isAutomaticallyImported)
   }
 
   override fun removeExcludeFolder(excludeFolder: ExcludeFolder) {
@@ -214,9 +215,9 @@ internal class ModifiableContentEntryBridge(
 
   override fun <P : JpsElement> addSourceFolder(url: String,
                                                 type: JpsModuleSourceRootType<P>,
-                                                useSourceOfContentRoot: Boolean): SourceFolder {
+                                                isAutomaticallyImported: Boolean): SourceFolder {
     val contentRootSource = currentContentEntry.value.entity.entitySource
-    val source = if (useSourceOfContentRoot) contentRootSource else getInternalFileSource(contentRootSource) ?: contentRootSource
+    val source = if (isAutomaticallyImported) contentRootSource else getInternalFileSource(contentRootSource) ?: contentRootSource
     return addSourceFolder(virtualFileManager.fromUrl(url), type, type.createDefaultProperties(), source)
   }
 
@@ -229,6 +230,15 @@ internal class ModifiableContentEntryBridge(
   override fun <P : JpsElement> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
     val contentRootSource = currentContentEntry.value.entity.entitySource
     val source: EntitySource = getInternalFileSource(contentRootSource) ?: contentRootSource
+    return addSourceFolder(virtualFileManager.fromUrl(url), type, properties, source)
+  }
+
+  override fun <P : JpsElement> addSourceFolder(url: String,
+                                                type: JpsModuleSourceRootType<P>,
+                                                properties: P,
+                                                isAutomaticallyImported: Boolean): SourceFolder {
+    val contentRootSource = currentContentEntry.value.entity.entitySource
+    val source = if (isAutomaticallyImported) contentRootSource else getInternalFileSource(contentRootSource) ?: contentRootSource
     return addSourceFolder(virtualFileManager.fromUrl(url), type, properties, source)
   }
 

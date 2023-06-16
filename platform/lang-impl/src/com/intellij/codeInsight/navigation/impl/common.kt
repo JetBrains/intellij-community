@@ -5,10 +5,13 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+
+internal val LOG: Logger = Logger.getInstance("com.intellij.codeInsight.navigation.impl")
 
 internal fun <X : Any> processInjectionThenHost(file: PsiFile, offset: Int, function: (file: PsiFile, offset: Int) -> X?): X? {
   return function(file, offset)

@@ -57,6 +57,7 @@ data class Config private constructor(
 
   data class ReportGeneration internal constructor(
     val evaluationTitle: String,
+    val defaultMetrics: List<String>?,
     val sessionsFilters: List<SessionsFilter>,
     val comparisonFilters: List<CompareSessionsFilter>)
 
@@ -84,6 +85,7 @@ data class Config private constructor(
     var reorderingTitle: String = evaluationTitle
     var featuresForReordering = mutableListOf<String>()
     val filters: MutableMap<String, EvaluationFilter> = mutableMapOf()
+    var defaultMetrics: List<String>? = null
     private val sessionsFilters: MutableList<SessionsFilter> = mutableListOf()
     private val comparisonFilters: MutableList<CompareSessionsFilter> = mutableListOf()
 
@@ -109,6 +111,7 @@ data class Config private constructor(
       reorderingTitle = config.reorder.title
       featuresForReordering.addAll(config.reorder.features)
       evaluationTitle = config.reports.evaluationTitle
+      defaultMetrics = config.reports.defaultMetrics
       mergeFilters(config.reports.sessionsFilters)
       mergeComparisonFilters(config.reports.comparisonFilters)
     }
@@ -154,6 +157,7 @@ data class Config private constructor(
       ),
       ReportGeneration(
         evaluationTitle,
+        defaultMetrics,
         sessionsFilters,
         comparisonFilters
       )

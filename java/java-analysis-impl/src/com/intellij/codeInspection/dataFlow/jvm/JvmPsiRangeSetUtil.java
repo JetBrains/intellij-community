@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -34,13 +34,25 @@ public final class JvmPsiRangeSetUtil {
   private static final String JSR305_NONNEGATIVE = "javax.annotation.Nonnegative";
   private static final String VALIDATION_MIN = "javax.validation.constraints.Min";
   private static final String VALIDATION_MAX = "javax.validation.constraints.Max";
+  private static final String JAKARTA_VALIDATION_MIN = "jakarta.validation.constraints.Min";
+  private static final String JAKARTA_VALIDATION_MAX = "jakarta.validation.constraints.Max";
+  private static final String JAKARTA_VALIDATION_NEGATIVE = "jakarta.validation.constraints.Negative";
+  private static final String JAKARTA_VALIDATION_NEGATIVE_OR_ZERO = "jakarta.validation.constraints.NegativeOrZero";
+  private static final String JAKARTA_VALIDATION_POSITIVE = "jakarta.validation.constraints.Positive";
+  private static final String JAKARTA_VALIDATION_POSITIVE_OR_ZERO = "jakarta.validation.constraints.PositiveOrZero";
   private static final List<String> ANNOTATIONS = Arrays.asList(CHECKER_RANGE,
                                                                 CHECKER_GTE_NEGATIVE_ONE,
                                                                 CHECKER_NON_NEGATIVE,
                                                                 CHECKER_POSITIVE,
                                                                 JSR305_NONNEGATIVE,
                                                                 VALIDATION_MIN,
-                                                                VALIDATION_MAX);
+                                                                VALIDATION_MAX,
+                                                                JAKARTA_VALIDATION_MIN,
+                                                                JAKARTA_VALIDATION_MAX,
+                                                                JAKARTA_VALIDATION_NEGATIVE,
+                                                                JAKARTA_VALIDATION_NEGATIVE_OR_ZERO,
+                                                                JAKARTA_VALIDATION_POSITIVE,
+                                                                JAKARTA_VALIDATION_POSITIVE_OR_ZERO);
 
   private JvmPsiRangeSetUtil() {}
 
@@ -72,16 +84,36 @@ public final class JvmPsiRangeSetUtil {
           return LongRangeSet.range(from, to);
         }
       }
-      case VALIDATION_MIN -> {
+      case VALIDATION_MIN, JAKARTA_VALIDATION_MIN -> {
         Long minValue = AnnotationUtil.getLongAttributeValue(annotation, "value");
         if (minValue != null && annotation.findDeclaredAttributeValue("groups") == null) {
           return LongRangeSet.range(minValue, Long.MAX_VALUE);
         }
       }
-      case VALIDATION_MAX -> {
+      case VALIDATION_MAX, JAKARTA_VALIDATION_MAX -> {
         Long maxValue = AnnotationUtil.getLongAttributeValue(annotation, "value");
         if (maxValue != null && annotation.findDeclaredAttributeValue("groups") == null) {
           return LongRangeSet.range(Long.MIN_VALUE, maxValue);
+        }
+      }
+      case JAKARTA_VALIDATION_NEGATIVE -> {
+        if (annotation.findDeclaredAttributeValue("groups") == null) {
+          return LongRangeSet.range(Long.MIN_VALUE, -1);
+        }
+      }
+      case JAKARTA_VALIDATION_NEGATIVE_OR_ZERO -> {
+        if (annotation.findDeclaredAttributeValue("groups") == null) {
+          return LongRangeSet.range(Long.MIN_VALUE, 0);
+        }
+      }
+      case JAKARTA_VALIDATION_POSITIVE -> {
+        if (annotation.findDeclaredAttributeValue("groups") == null) {
+          return LongRangeSet.range(1, Long.MAX_VALUE);
+        }
+      }
+      case JAKARTA_VALIDATION_POSITIVE_OR_ZERO -> {
+        if (annotation.findDeclaredAttributeValue("groups") == null) {
+          return LongRangeSet.range(0, Long.MAX_VALUE);
         }
       }
       case CHECKER_GTE_NEGATIVE_ONE -> {

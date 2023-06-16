@@ -62,7 +62,7 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
   init {
     childComponent.apply {
       renderer = PySdkListCellRendererExt()
-      ComboboxSpeedSearch(this)
+      ComboboxSpeedSearch.installOn(this)
     }
     // prepare action listener
     val actionListener: ActionListener =
@@ -98,7 +98,7 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
           ActionListener {
             val dialog = ManualPathEntryDialog(project = null, platform = Platform.UNIX)
             if (dialog.showAndGet()) {
-              childComponent.selectedItem = createDetectedSdk(dialog.path, isLocal = false).apply { addSdkItemOnTop(this) }
+              childComponent.selectedItem = createDetectedSdk(dialog.path, targetEnvironmentConfiguration).apply { addSdkItemOnTop(this) }
             }
           }
         }

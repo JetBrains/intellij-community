@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
 import com.intellij.execution.ui.CommonParameterFragments
 import com.intellij.execution.ui.SettingsEditorFragment
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.LabeledComponent
@@ -16,7 +15,7 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import java.awt.BorderLayout
 import javax.swing.JComponent
 
-@Service
+
 abstract class PyCommonFragmentsBuilder {
   abstract fun <T : AbstractPythonRunConfiguration<*>> createEnvironmentFragments(fragments: MutableList<SettingsEditorFragment<T, *>>,
                                                                                   config: T)

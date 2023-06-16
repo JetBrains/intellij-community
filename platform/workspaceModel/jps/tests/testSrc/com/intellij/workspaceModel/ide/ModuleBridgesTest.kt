@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.ProjectTopics.PROJECT_ROOTS
-import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.logger
@@ -17,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.workspaceModel.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
+import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
@@ -68,7 +68,7 @@ class ModuleBridgesTest {
   @Rule
   @JvmField
   val projectModel = ProjectModelRule()
-  
+
   private lateinit var project: Project
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
@@ -122,7 +122,8 @@ class ModuleBridgesTest {
         rootModel.commit()
 
         assertArrayEquals(arrayOf(temp.toVirtualFileUrl(virtualFileManager).url), m.rootManager.contentRootUrls)
-      } finally {
+      }
+      finally {
         modulesModifiableModel.dispose()
       }
     }
@@ -147,7 +148,8 @@ class ModuleBridgesTest {
         }
       }
 
-      saveSettings(project)
+      project.stateStore.save()
+      project.stateStore.save()
 
       assertTrue(oldNameFile.exists())
       assertTrue(modulesXmlFile.readText().contains(oldNameFile.name))
@@ -179,7 +181,7 @@ class ModuleBridgesTest {
       assertEquals(newNameFile, File(moduleFilePath!!))
       assertTrue(module.getModuleNioFile().toString().endsWith(newNameFile.name))
 
-      saveSettings(project)
+      project.stateStore.save()
 
       assertFalse(modulesXmlFile.readText().contains(oldNameFile.name))
       assertFalse(oldNameFile.exists())
@@ -219,7 +221,7 @@ class ModuleBridgesTest {
     ModuleRootModificationUtil.addDependency(mavenModule, antModule)
     checkModuleDependency(mavenModuleName, antModuleName)
 
-    saveSettings(project)
+    project.stateStore.save()
     var fileText = modulesFile.readText()
     assertEquals(2, listOf(antModuleName, mavenModuleName).filter { fileText.contains(it) }.size)
 
@@ -230,7 +232,7 @@ class ModuleBridgesTest {
     projectModel.renameModule(antModule, gradleModuleName)
     checkModuleDependency(mavenModuleName, gradleModuleName)
 
-    saveSettings(project)
+    project.stateStore.save()
     fileText = modulesFile.readText()
     assertEquals(2, listOf(mavenModuleName, gradleModuleName).filter { fileText.contains(it) }.size)
 
@@ -286,17 +288,19 @@ class ModuleBridgesTest {
     val projectModel = WorkspaceModel.getInstance(project)
 
     project.messageBus.connect(disposableRule.disposable).subscribe(WorkspaceModelTopics.CHANGED,
-      object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChange) {
-          val moduleBridge = event.storageAfter.resolve(ModuleId("name"))!!.findModule(event.storageAfter)
-          assertNotNull(moduleBridge)
-        }
+                                                                    object : WorkspaceModelChangeListener {
+                                                                      override fun beforeChanged(event: VersionedStorageChange) {
+                                                                        val moduleBridge = event.storageAfter.resolve(
+                                                                          ModuleId("name"))!!.findModule(event.storageAfter)
+                                                                        assertNotNull(moduleBridge)
+                                                                      }
 
-        override fun changed(event: VersionedStorageChange) {
-          val moduleBridge = event.storageAfter.resolve(ModuleId("name"))!!.findModule(event.storageAfter)
-          assertNotNull(moduleBridge)
-        }
-      }
+                                                                      override fun changed(event: VersionedStorageChange) {
+                                                                        val moduleBridge = event.storageAfter.resolve(
+                                                                          ModuleId("name"))!!.findModule(event.storageAfter)
+                                                                        assertNotNull(moduleBridge)
+                                                                      }
+                                                                    }
     )
 
     projectModel.updateProjectModel {
@@ -401,13 +405,13 @@ class ModuleBridgesTest {
     val moduleManager = ModuleManager.getInstance(project)
     val module = runWriteActionAndWait { moduleManager.newModule(moduleFile.path, ModuleTypeId.JAVA_MODULE) }
 
-    saveSettings(project)
+    project.stateStore.save()
 
     assertNull(JDomSerializationUtil.findComponent(JDOMUtil.load(moduleFile), "XXX"))
 
     TestModuleComponent.getInstance(module).testString = "My String"
 
-    saveSettings(project, forceSavingAllSettings = true)
+    project.stateStore.save(forceSavingAllSettings = true)
 
     assertEquals(
       """  
@@ -424,7 +428,9 @@ class ModuleBridgesTest {
 
     val module = projectModel.createModule()
 
-    val modifiableModel = ApplicationManager.getApplication().runReadAction<ModifiableRootModel> { ModuleRootManager.getInstance(module).modifiableModel }
+    val modifiableModel = ApplicationManager.getApplication().runReadAction<ModifiableRootModel> {
+      ModuleRootManager.getInstance(module).modifiableModel
+    }
     val moduleExtension = modifiableModel.getModuleExtension(TestModuleExtension::class.java)
     moduleExtension.languageLevel = LanguageLevel.JDK_1_5
     runWriteActionAndWait { modifiableModel.commit() }
@@ -483,7 +489,8 @@ class ModuleBridgesTest {
     )
     builder.modifyEntity(moduleEntity) {
       dependencies = listOf(
-        ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.symbolicId, false, ModuleDependencyItem.DependencyScope.COMPILE)
+        ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.symbolicId, false,
+                                                          ModuleDependencyItem.DependencyScope.COMPILE)
       ).toMutableList()
     }
 
@@ -632,7 +639,7 @@ class ModuleBridgesTest {
       }
     }
 
-    saveSettings(project)
+    project.stateStore.save()
 
     val rootManagerComponent = JDomSerializationUtil.findComponent(JDOMUtil.load(moduleImlFile), "NewModuleRootManager")!!
     assertEquals("""
@@ -672,7 +679,7 @@ class ModuleBridgesTest {
       }
     }
 
-    saveSettings(project)
+    project.stateStore.save()
 
     withContext(Dispatchers.EDT) {
       assertTrue(moduleFile.readText().contains(antLibraryFolder))

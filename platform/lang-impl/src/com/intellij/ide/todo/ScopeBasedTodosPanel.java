@@ -3,14 +3,12 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,21 +18,20 @@ import java.awt.event.ActionListener;
 
 public class ScopeBasedTodosPanel extends TodoPanel {
 
-  private static final @NonNls String SELECTED_SCOPE = "TODO_SCOPE";
   private final Alarm myAlarm;
   private ScopeChooserCombo myScopes;
 
-  public ScopeBasedTodosPanel(@NotNull Project project,
+  public ScopeBasedTodosPanel(@NotNull TodoView todoView,
                               @NotNull TodoPanelSettings settings,
                               @NotNull Content content) {
-    super(project, settings, false, content);
+    super(todoView, settings, false, content);
 
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     myScopes.getChildComponent().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         rebuildWithAlarm(ScopeBasedTodosPanel.this.myAlarm);
-        PropertiesComponent.getInstance(myProject).setValue(SELECTED_SCOPE, myScopes.getSelectedScopeName(), null);
+        myTodoView.getState().selectedScope = myScopes.getSelectedScopeName();
       }
     });
     rebuildWithAlarm(myAlarm);
@@ -45,7 +42,7 @@ public class ScopeBasedTodosPanel extends TodoPanel {
     JPanel panel = new JPanel(new BorderLayout());
     final JComponent component = super.createCenterComponent();
     panel.add(component, BorderLayout.CENTER);
-    String preselect = PropertiesComponent.getInstance(myProject).getValue(SELECTED_SCOPE);
+    String preselect = myTodoView.getState().selectedScope;
     myScopes = new ScopeChooserCombo(myProject, false, true, preselect);
     Disposer.register(this, myScopes);
     

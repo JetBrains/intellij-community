@@ -28,7 +28,6 @@ import com.intellij.refactoring.listeners.RefactoringElementAdapter
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider
 import com.intellij.util.SingleAlarm
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.UIUtil
@@ -40,14 +39,12 @@ import java.util.concurrent.CancellationException
 import java.util.function.BiFunction
 import javax.swing.JComponent
 
-class EditorNotificationsImpl(private val project: Project) : EditorNotifications(), Disposable {
+class EditorNotificationsImpl(private val project: Project, private val coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
   private val updateAllAlarm = SingleAlarm(::doUpdateAllNotifications, 100, this)
 
   private val fileToUpdateNotificationJob = CollectionFactory.createConcurrentWeakMap<VirtualFile, Job>()
   private val fileEditorToMap =
     CollectionFactory.createConcurrentWeakMap<FileEditor, MutableMap<Class<out EditorNotificationProvider>, JComponent>>()
-
-  private val coroutineScope: CoroutineScope = project.coroutineScope.childScope()
 
   init {
     val connection = project.messageBus.connect()
@@ -59,7 +56,7 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
       override fun selectionChanged(event: FileEditorManagerEvent) {
         val file = event.newFile ?: return
         val editor = event.newEditor ?: return
-        if (editor.getUserData(PENDING_UPDATE) == java.lang.Boolean.TRUE) {
+        if (editor.getUserData(PENDING_UPDATE) == true) {
           editor.putUserData(PENDING_UPDATE, null)
           updateEditors(file, listOf(editor))
         }
@@ -160,7 +157,7 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
       editors = editors.filter { fileEditor ->
         val visible = UIUtil.isShowing(fileEditor.component)
         if (!visible) {
-          fileEditor.putUserData(PENDING_UPDATE, java.lang.Boolean.TRUE)
+          fileEditor.putUserData(PENDING_UPDATE, true)
         }
         visible
       }

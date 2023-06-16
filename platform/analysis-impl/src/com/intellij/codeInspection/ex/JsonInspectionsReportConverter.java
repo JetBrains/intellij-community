@@ -63,7 +63,8 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
   @NonNls private static final String HIGHLIGHTED_ELEMENT = "highlighted_element";
   @NonNls public static final String DUPLICATED_CODE = "DuplicatedCode";
   @NonNls public static final String DUPLICATED_CODE_AGGREGATE = DUPLICATED_CODE + InspectionsResultUtil.AGGREGATE;
-  @NonNls public static final String PHP_VULNERABLE_PATHS_AGGREGATE = "PhpVulnerablePathsInspection" + InspectionsResultUtil.AGGREGATE;
+  @NonNls public static final String PHP_VULNERABLE_PATHS = "PhpVulnerablePathsInspection";
+  @NonNls public static final String PHP_VULNERABLE_PATHS_AGGREGATE = PHP_VULNERABLE_PATHS + InspectionsResultUtil.AGGREGATE;
   @NonNls private static final String FRAMEWORK = "framework";
 
   @Override

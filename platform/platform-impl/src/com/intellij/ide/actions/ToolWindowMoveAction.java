@@ -49,19 +49,22 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
       };
     }
 
-    @NotNull
-    public static Anchor fromWindowInfo(@NotNull WindowInfo info) {
-      if (info.isSplit()) {
-        if (info.getAnchor() == ToolWindowAnchor.LEFT) return LeftBottom;
-        if (info.getAnchor() == ToolWindowAnchor.BOTTOM) return BottomRight;
-        if (info.getAnchor() == ToolWindowAnchor.RIGHT) return RightBottom;
-        if (info.getAnchor() == ToolWindowAnchor.TOP) return TopRight;
+    public static @NotNull Anchor fromWindowInfo(@NotNull WindowInfo info) {
+      return getAnchor(info.getAnchor(), info.isSplit());
+    }
+
+    public static @NotNull Anchor getAnchor(@NotNull ToolWindowAnchor anchor, boolean split) {
+      if (split) {
+        if (anchor == ToolWindowAnchor.LEFT) return LeftBottom;
+        if (anchor == ToolWindowAnchor.BOTTOM) return BottomRight;
+        if (anchor == ToolWindowAnchor.RIGHT) return RightBottom;
+        if (anchor == ToolWindowAnchor.TOP) return TopRight;
       }
 
-      if (info.getAnchor() == ToolWindowAnchor.LEFT) return LeftTop;
-      if (info.getAnchor() == ToolWindowAnchor.BOTTOM) return BottomLeft;
-      if (info.getAnchor() == ToolWindowAnchor.RIGHT) return RightTop;
-      /*if (info.getAnchor() == ToolWindowAnchor.TOP) */
+      if (anchor == ToolWindowAnchor.LEFT) return LeftTop;
+      if (anchor == ToolWindowAnchor.BOTTOM) return BottomLeft;
+      if (anchor == ToolWindowAnchor.RIGHT) return RightTop;
+      /*if (anchor == ToolWindowAnchor.TOP) */
       return TopLeft;
     }
 

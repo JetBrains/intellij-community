@@ -336,13 +336,12 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       if (myExpr != null && AbstractInplaceIntroducer.getActiveIntroducer(myEditor) == null) {
         IntroduceVariableBase.OccurrencesInfo occurrencesInfo = new IntroduceVariableBase.OccurrencesInfo(occurrences, false);
         LinkedHashMap<IntroduceVariableBase.JavaReplaceChoice, List<PsiExpression>> occurrencesMap = occurrencesInfo.buildOccurrencesMap(myExpr);
-        IntroduceVariableBase.createOccurrencesChooser(myEditor).showChooser(new Pass<>() {
-          @Override
-          public void pass(IntroduceVariableBase.JavaReplaceChoice choice) {
-            PsiExpression[] selectedOccurrences = choice.filter(occurrenceManager);
-            introduceParameter(method, methodToSearchFor, selectedOccurrences, choice);
-          }
-        }, occurrencesMap, RefactoringBundle.message("replace.multiple.occurrences.found"));
+        IntroduceVariableBase.createOccurrencesChooser(myEditor).showChooser(occurrencesMap,
+                                                                             RefactoringBundle.message("replace.multiple.occurrences.found"),
+                                                                             choice -> {
+                                                                               PsiExpression[] selectedOccurrences = choice.filter(occurrenceManager);
+                                                                               introduceParameter(method, methodToSearchFor, selectedOccurrences, choice);
+                                                                             });
       }
       else {
         introduceParameter(method, methodToSearchFor, occurrences, IntroduceVariableBase.JavaReplaceChoice.ALL);
@@ -528,7 +527,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
           LOG.assertTrue(returnType != null);
           final String title = RefactoringBundle.message("refactoring.introduce.parameter.interface.chooser.popup.title",
                                                              methodSignature, returnType.getPresentableText());
-          new PsiTargetNavigator().createPopup(psiClasses, title,
+          new PsiTargetNavigator<>(psiClasses).createPopup(project, title,
                                                new PsiElementProcessor<>() {
                                                  @Override
                                                  public boolean execute(@NotNull PsiClass psiClass) {

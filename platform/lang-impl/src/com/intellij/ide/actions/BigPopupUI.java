@@ -168,9 +168,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     topPanel.add(header, BorderLayout.NORTH);
     topPanel.add(mySearchField, BorderLayout.SOUTH);
 
-    WindowMoveListener moveListener = new WindowMoveListener(this);
-    topPanel.addMouseListener(moveListener);
-    topPanel.addMouseMotionListener(moveListener);
+    new WindowMoveListener(this).installTo(topPanel);
 
     addToTop(topPanel);
     addToCenter(suggestionsPanel);
@@ -246,9 +244,14 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     resultsScroll.setPreferredSize(JBUI.size(670, JBUI.CurrentTheme.BigPopup.maxListHeight()));
     pnl.add(resultsScroll, BorderLayout.CENTER);
 
+    return createFooterPanel(pnl);
+  }
+
+  @NotNull
+  protected JPanel createFooterPanel(@NotNull JPanel panel) {
     myHintLabel = createHint();
-    pnl.add(myHintLabel.getAdComponent(), BorderLayout.SOUTH);
-    return pnl;
+    panel.add(myHintLabel.getAdComponent(), BorderLayout.SOUTH);
+    return panel;
   }
 
   @NotNull

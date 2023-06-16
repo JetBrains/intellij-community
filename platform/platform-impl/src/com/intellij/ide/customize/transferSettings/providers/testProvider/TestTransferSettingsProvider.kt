@@ -8,9 +8,9 @@ import com.intellij.ide.customize.transferSettings.providers.TransferSettingsPro
 import java.util.*
 
 class TestTransferSettingsProvider : TransferSettingsProvider {
-  override val name = "Test"
+  override val name: String = "Test"
 
-  override fun isAvailable() = true
+  override fun isAvailable(): Boolean = true
 
   override fun getIdeVersions(skipIds: List<String>): List<BaseIdeVersion> {
     if (skipIds.isNotEmpty()) return emptyList()
@@ -24,5 +24,5 @@ class TestTransferSettingsProvider : TransferSettingsProvider {
     ), Date(), this))
   }
 
-  override fun getImportPerformer(ideVersion: IdeVersion) = DefaultImportPerformer()
+  override fun getImportPerformer(ideVersion: IdeVersion): DefaultImportPerformer = DefaultImportPerformer()
 }

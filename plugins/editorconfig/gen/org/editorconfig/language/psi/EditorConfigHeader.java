@@ -8,11 +8,8 @@ import org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement;
 
 public interface EditorConfigHeader extends EditorConfigHeaderElement {
 
-  @NotNull
-  List<EditorConfigPattern> getPatternList();
-
-  @NotNull
-  List<EditorConfigPatternEnumeration> getPatternEnumerationList();
+  @Nullable
+  EditorConfigPattern getPattern();
 
   boolean isValidGlob();
 

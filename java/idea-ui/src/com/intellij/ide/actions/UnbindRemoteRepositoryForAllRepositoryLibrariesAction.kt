@@ -4,10 +4,10 @@ package com.intellij.ide.actions
 import com.intellij.jarRepository.RepositoryLibrarySettings
 import com.intellij.jarRepository.RepositoryLibraryUtils
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 
-class UnbindRemoteRepositoryForAllRepositoryLibrariesAction : AnAction() {
+class UnbindRemoteRepositoryForAllRepositoryLibrariesAction : DumbAwareAction() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -17,6 +17,6 @@ class UnbindRemoteRepositoryForAllRepositoryLibrariesAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    RepositoryLibraryUtils.getInstance(project).unbindRemoteRepositoriesModal()
+    RepositoryLibraryUtils.getInstance(project).unbindRemoteRepositoriesBackground()
   }
 }

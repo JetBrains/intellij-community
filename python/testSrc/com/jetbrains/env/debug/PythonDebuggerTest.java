@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -776,7 +777,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron", "-python3.8"); // PY-38604
+        return ImmutableSet.of("-iron", "-python3.8", "-python3.9", "-python3.10", "-python3.11", "-python3.12"); // PY-38604
       }
     });
   }
@@ -934,7 +935,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testTypeHandler() {
-    runPythonTest(new PyDebuggerTask("/debug", "test_type_handler.py") {
+    runPythonTest(new PyDebuggerTaskTagAware("/debug", "test_type_handler.py") {
+
+      private final static String PYTHON2_TAG = "python2";
+
       @Override
       public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 11);
@@ -950,9 +954,19 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         eval("s5").hasValue("'\n'");
         eval("s6").hasValue("\"'foo'bar\nbaz\\\\\"");
         eval("s7").hasValue("'^\\\\w+$'");
-        eval("s8").hasValue("\"'459'\"");
-        eval("s9").hasValue("'459'");
-        eval("s10").hasValue("'❤'");
+        if (hasPython2Tag()) {
+          eval("s8").hasValue("u\"'459'\"");
+          eval("s9").hasValue("u'459'");
+          eval("s10").hasValue("u'❤'");
+        } else {
+          eval("s8").hasValue("\"'459'\"");
+          eval("s9").hasValue("'459'");
+          eval("s10").hasValue("'❤'");
+        }
+      }
+
+      private boolean hasPython2Tag() throws NullPointerException {
+        return hasTag(PYTHON2_TAG);
       }
     });
   }
@@ -1233,6 +1247,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
         waitForOutput("Subprocess exited with return code: 0");
       }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return ImmutableSet.of("-python3.11", "-python3.12", "-python2.7"); // PY-59675, PY-59951
+      }
     });
   }
 
@@ -1287,18 +1306,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         return Collections.singleton("-iron"); // PY-37791
       }
     });
-  }
-
-  private static class PyDebuggerTaskTagAware extends PyDebuggerTask {
-
-    private PyDebuggerTaskTagAware(@Nullable String relativeTestDataPath, String scriptName) {
-      super(relativeTestDataPath, scriptName);
-    }
-
-    public boolean hasTag(String tag) throws NullPointerException {
-      String env = Paths.get(myRunConfiguration.getSdkHome()).getParent().getParent().toString();
-      return ContainerUtil.exists(envTags.get(env), (t) -> t.startsWith(tag));
-    }
   }
 
   @Test
@@ -1700,5 +1707,17 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         return hasTag(PYTHON2_TAG);
       }
     });
+  }
+
+  private static class PyDebuggerTaskTagAware extends PyDebuggerTask {
+
+    private PyDebuggerTaskTagAware(@Nullable String relativeTestDataPath, String scriptName) {
+      super(relativeTestDataPath, scriptName);
+    }
+
+    public boolean hasTag(String tag) throws NullPointerException {
+      String env = Paths.get(myRunConfiguration.getSdkHome()).getParent().getParent().toString();
+      return ContainerUtil.exists(envTags.get(env), (t) -> t.startsWith(tag));
+    }
   }
 }

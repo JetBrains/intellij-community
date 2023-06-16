@@ -12,6 +12,8 @@ import com.intellij.ui.AppIcon
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.util.text.nullize
 import javax.swing.JCheckBox
@@ -64,9 +66,13 @@ fun askCredentials(project: Project?,
     val rememberCheckBox = RememberCheckBoxState.createCheckBox(toolTip = "The password will be stored between application sessions.")
 
     val panel = panel {
-      row { label(if (passwordFieldLabel.endsWith(":")) passwordFieldLabel else "$passwordFieldLabel:") }
-      row { passwordField() }
-      row { rememberCheckBox() }
+      row {
+        label(if (passwordFieldLabel.endsWith(":")) passwordFieldLabel else "$passwordFieldLabel:")
+      }
+      row {
+        cell(passwordField).resizableColumn().align(AlignX.FILL)
+      }
+      row { cell(rememberCheckBox) }
     }
 
     AppIcon.getInstance().requestAttention(project, true)

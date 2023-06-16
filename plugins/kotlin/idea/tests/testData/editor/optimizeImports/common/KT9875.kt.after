@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 package p
 
 import p.Outer.Inner1

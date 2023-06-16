@@ -3,15 +3,15 @@
 <p>Reports <a href="https://docs.python.org/2/reference/datamodel.html#new-style-and-classic-classes">
   classic style classes</a> usage. This inspection applies only to Python 2.
 <p><b>Example:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
 class A:
     pass
-</pre>
+</code></pre>
 <p>With quick-fixes provided by the IDE, this code fragment changes to:</p>
-<pre style="font-family: monospace">
+<pre><code>
 class A(object):
     def __init__(self):
         pass
-</pre>
+</code></pre>
 </body>
 </html>

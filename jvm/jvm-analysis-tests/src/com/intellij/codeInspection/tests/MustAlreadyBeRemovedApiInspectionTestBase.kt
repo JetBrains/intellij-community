@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
 abstract class MustAlreadyBeRemovedApiInspectionTestBase : JvmInspectionTestBase() {
-  override val inspection = MustAlreadyBeRemovedApiInspection().apply { currentVersion = "3.0" }
+  override val inspection: MustAlreadyBeRemovedApiInspection = MustAlreadyBeRemovedApiInspection()
 
   @Suppress("DuplicatedCode")
   override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(sdkLevel) {

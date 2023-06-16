@@ -283,6 +283,8 @@ public final class PushController implements Disposable {
   private <R extends Repository, S extends PushSource, T extends PushTarget> void loadCommits(@NotNull final MyRepoModel<R, S, T> model,
                                                                                               @NotNull final RepositoryNode node,
                                                                                               final boolean initial) {
+    if (myDialog.isDisposed()) return;
+
     node.cancelLoading();
     node.setEnabled(true);
 
@@ -432,7 +434,7 @@ public final class PushController implements Disposable {
       stepsIndicator.setText(handler.getPresentableName());
       PrePushHandler.Result prePushHandlerResult;
       try {
-        prePushHandlerResult = handler.handle(pushDetails, stepsIndicator);
+        prePushHandlerResult = handler.handle(myProject, pushDetails, stepsIndicator);
       }
       catch (Throwable e) {
         List<String> skippedHandlers = handlers.stream()

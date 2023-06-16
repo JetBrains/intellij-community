@@ -10,7 +10,7 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory
 
 class OpenMinimapSettingsAction : AnAction(MiniMessagesBundle.message("action.settings")) {
-  override fun isDumbAware() = true
+  override fun isDumbAware(): Boolean = true
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val groups = ShowSettingsUtilImpl.getConfigurableGroups(project, true).filter { it.configurables.isNotEmpty() }

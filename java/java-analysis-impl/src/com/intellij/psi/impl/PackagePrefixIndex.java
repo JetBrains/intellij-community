@@ -18,6 +18,7 @@ import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootPropertiesEntity;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -41,7 +42,7 @@ public class PackagePrefixIndex {
           map = myMap;
         }
         if (map != null) {
-          for (EntityChange<JavaSourceRootPropertiesEntity> change : event.getChanges(JavaSourceRootPropertiesEntity.class)) {
+          for (EntityChange<JavaSourceRootPropertiesEntity> change : SequencesKt.asIterable(event.getChanges(JavaSourceRootPropertiesEntity.class))) {
             JavaSourceRootPropertiesEntity oldEntity = change.getOldEntity();
             if (oldEntity != null) {
               updateMap(oldEntity, event.getStorageBefore(), (prefix, module) -> map.remove(prefix, module));

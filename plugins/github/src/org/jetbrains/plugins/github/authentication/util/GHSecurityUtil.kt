@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.authentication.util
 
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.Url
 import com.intellij.util.Urls.newUrl
@@ -14,7 +13,16 @@ object GHSecurityUtil {
   private const val GIST_SCOPE = "gist"
   private const val READ_ORG_SCOPE = "read:org"
   private const val WORKFLOW_SCOPE = "workflow"
-  val MASTER_SCOPES = listOf(REPO_SCOPE, GIST_SCOPE, READ_ORG_SCOPE, WORKFLOW_SCOPE)
+  private const val USER_READ_SCOPE = "read:user"
+  private const val USER_EMAIL_SCOPE = "user:email"
+  val MASTER_SCOPES = listOf(
+    REPO_SCOPE,
+    GIST_SCOPE,
+    READ_ORG_SCOPE,
+    WORKFLOW_SCOPE,
+    USER_READ_SCOPE,
+    USER_EMAIL_SCOPE
+  )
 
   @JvmStatic
   internal fun loadCurrentUserWithScopes(executor: GithubApiRequestExecutor,

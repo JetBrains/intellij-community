@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.NotRoamableUiSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,15 +32,12 @@ import static java.time.temporal.ChronoUnit.DAYS;
 
 /**
  * Temporary utility class for migration to the new UI.
- * Do not use this class for plugin development.
+ * This is not a public API. For plugin development use {@link NewUI#isEnabled()}
  *
  * @author Konstantin Bulenkov
  */
 @ApiStatus.Internal
 public abstract class ExperimentalUI {
-
-  private static final Logger LOG = Logger.getInstance(ExperimentalUI.class);
-
   public static final String KEY = "ide.experimental.ui";
 
   public static final String NEW_UI_USED_PROPERTY = "experimental.ui.used.once";
@@ -50,14 +47,30 @@ public abstract class ExperimentalUI {
   private static final String FIRST_PROMOTION_DATE_PROPERTY = "experimental.ui.first.promotion.localdate";
 
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
+  @Nullable
+  private static volatile Boolean newUiOneSessionOverrideForThinClient = null;
   private IconPathPatcher iconPathPatcher;
+
+  public static ExperimentalUI getInstance() {
+    return ApplicationManager.getApplication().getService(ExperimentalUI.class);
+  }
 
   @Contract(pure = true)
   public static boolean isNewUI() {
     // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
-    // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
+    // Please apply any modifications here and there synchronously. Or solve the dependency problem :)
+    Boolean override = newUiOneSessionOverrideForThinClient;
+    return override == null
+           ? EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY)
+           : override;
+  }
 
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported();
+  protected static boolean isNewUiOverriden() {
+    return newUiOneSessionOverrideForThinClient != null;
+  }
+
+  public static void overrideNewUiForOneSessionForThinClient(boolean newUi) {
+    newUiOneSessionOverrideForThinClient = newUi;
   }
 
   public static void setNewUI(boolean newUI) {
@@ -83,17 +96,10 @@ public abstract class ExperimentalUI {
       return (int)DAYS.between(firstDate, now);
     }
     catch (DateTimeParseException e) {
-      LOG.warn("Invalid stored date " + value);
+      Logger.getInstance(ExperimentalUI.class).warn("Invalid stored date " + value);
       propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, now.toString());
       return 0;
     }
-  }
-
-  public static boolean isSupported() {
-    // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
-    // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
-
-    return true;
   }
 
   public static boolean isNewNavbar() {
@@ -102,10 +108,6 @@ public abstract class ExperimentalUI {
 
   public static boolean isEditorTabsWithScrollBar() {
     return isNewUI() && Registry.is("ide.experimental.ui.editor.tabs.scrollbar");
-  }
-
-  public static ExperimentalUI getInstance() {
-    return ApplicationManager.getApplication().getService(ExperimentalUI.class);
   }
 
   @SuppressWarnings("unused")
@@ -204,23 +206,7 @@ public abstract class ExperimentalUI {
   private static void installInterFont() {
     if (UISettings.getInstance().getOverrideLafFonts()) {
       //todo[kb] add RunOnce
-      UISettings.getInstance().setOverrideLafFonts(false);
-    }
-  }
-
-  public static final class Icons {
-    public static final class Gutter {
-      public static final Icon Fold = loadIcon("expui/gutter/fold.svg");
-      public static final Icon FoldBottom = loadIcon("expui/gutter/foldBottom.svg");
-      public static final Icon Unfold = loadIcon("expui/gutter/unfold.svg");
-    }
-
-    public static final class General {
-      public static final Icon Search = loadIcon("expui/general/search.svg");
-    }
-
-    private static Icon loadIcon(String path) {
-      return IconLoader.getIcon(path, AllIcons.class.getClassLoader());
+      NotRoamableUiSettings.Companion.getInstance().setOverrideLafFonts(false);
     }
   }
 }

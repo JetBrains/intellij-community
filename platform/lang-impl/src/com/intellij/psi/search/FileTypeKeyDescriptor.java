@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -7,7 +7,9 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.indexing.SubstitutedFileType;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -63,26 +65,22 @@ final class FileTypeKeyDescriptor implements KeyDescriptor<FileType> {
   }
 
   private static final class OutDatedFileType implements FileType {
-    @NotNull
-    private final String myName;
+    private final @NotNull String myName;
 
     private OutDatedFileType(@NotNull String name) {myName = name;}
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 
-    @NotNull
     @Override
-    public String getDescription() {
+    public @NotNull String getDescription() {
       throw new UnsupportedOperationException();
     }
 
-    @NotNull
     @Override
-    public String getDefaultExtension() {
+    public @NotNull String getDefaultExtension() {
       throw new UnsupportedOperationException();
     }
 
@@ -101,9 +99,8 @@ final class FileTypeKeyDescriptor implements KeyDescriptor<FileType> {
       throw new UnsupportedOperationException();
     }
 
-    @Nullable
     @Override
-    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
+    public @Nullable String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
       throw new UnsupportedOperationException();
     }
   }

@@ -592,7 +592,7 @@ class EntityStorageSerializerImpl(
       registerSingletonSerializer(kryo) {
         val resolvedClass = typesResolver.resolveClass(objectClass.name, objectClass.pluginId)
         classCache.putIfAbsent(objectClass, resolvedClass.toClassId())
-        resolvedClass.kotlin.objectInstance!!
+        resolvedClass.getDeclaredField("INSTANCE").get(0)
       }
     }
 

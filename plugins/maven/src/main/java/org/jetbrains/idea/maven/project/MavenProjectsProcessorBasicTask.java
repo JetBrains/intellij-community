@@ -18,19 +18,11 @@ package org.jetbrains.idea.maven.project;
 public abstract class MavenProjectsProcessorBasicTask implements MavenProjectsProcessorTask {
   protected final MavenProject myMavenProject;
   protected final MavenProjectsTree myTree;
-  protected final MavenProjectResolver myResolver;
 
 
   public MavenProjectsProcessorBasicTask(MavenProject mavenProject, MavenProjectsTree tree) {
     myMavenProject = mavenProject;
     myTree = tree;
-    myResolver = new MavenProjectResolver(myTree);
-  }
-
-  public MavenProjectsProcessorBasicTask(MavenProject mavenProject, MavenProjectsTree tree, MavenProjectResolver resolver) {
-    myMavenProject = mavenProject;
-    myTree = tree;
-    myResolver = resolver;
   }
 
   @Override

@@ -22,7 +22,7 @@ internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
     override fun resolveSupertypes(expression: KtExpression, file: KtFile): Collection<PsiNamedElement> {
         allowAnalysisOnEdt {
             analyze(expression) {
-                val scope = file.getScopeContextForPosition(expression).scopes
+                val scope = file.getScopeContextForPosition(expression).getCompositeScope()
                 return scope.getClassifierSymbols()
                     .filterIsInstance<KtNamedClassOrObjectSymbol>()
                     .filter { shouldSuggest(it) }

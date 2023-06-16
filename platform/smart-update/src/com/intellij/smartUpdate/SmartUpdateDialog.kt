@@ -4,11 +4,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.selected
-import com.intellij.util.ui.JBFont
 
 class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
   init {
@@ -17,31 +14,17 @@ class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
   }
 
   override fun createCenterPanel(): DialogPanel {
-    val options = project.service<SmartUpdate>().state
-    val ideUpdateAvailable = IdeUpdateStep().isAvailable()
-    lateinit var updateCheckBox: JBCheckBox
+    val smartUpdate = project.service<SmartUpdate>()
+    val options = smartUpdate.state
     return panel {
-      row {
-        updateCheckBox = checkBox(SmartUpdateBundle.message("checkbox.update.ide")).bindSelected({ ideUpdateAvailable && options.updateIde },
-                                                              { if (ideUpdateAvailable) options.updateIde = it }).component
-        updateCheckBox.isEnabled = ideUpdateAvailable
-      }
-      indent {
+      for (step in smartUpdate.availableSteps()) {
+        val enabled = step.isEnabled(project)
         row {
-          label(IdeUpdateStep().getDescription()).component.font = JBFont.smallOrNewUiMedium()
+          checkBox(step.stepName).enabled(enabled).bindSelected(options.property(step.id))
         }
-        row {
-          val restartCheckBox = checkBox(SmartUpdateBundle.message("checkbox.switch.to.updated.ide.restart.required")).bindSelected(
-            { ideUpdateAvailable && options.updateIde && options.restartIde },
-            { if (ideUpdateAvailable && options.updateIde) options.restartIde = it }).component
-          updateCheckBox.addActionListener { restartCheckBox.isEnabled = updateCheckBox.isSelected }
+        step.getDetailsComponent(project)?.let {
+          indent { row { cell(it).enabled(enabled) } }
         }
-      }.enabledIf(updateCheckBox.selected)
-      row {
-        checkBox(SmartUpdateBundle.message("checkbox.update.project")).bindSelected(options::updateProject)
-      }
-      row {
-        checkBox(SmartUpdateBundle.message("checkbox.build.project")).bindSelected(options::buildProject)
       }
     }
   }

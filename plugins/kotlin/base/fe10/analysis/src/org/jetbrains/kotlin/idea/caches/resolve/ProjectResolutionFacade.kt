@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -24,7 +25,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
@@ -143,13 +143,13 @@ internal class ProjectResolutionFacade(
                 listOfNotNull(ScriptDependenciesInfo.ForProject.createIfRequired(project, resolvedModules))
 
         return IdeaResolverForProject(
-            resolverDebugName,
-            globalContext.withProject(project),
-            resolvedModulesWithDependencies,
-            syntheticFilesByModule,
-            delegateResolverForProject,
-            if (invalidateOnOOCB) KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker else LibraryModificationTracker.getInstance(project),
-            settings
+          resolverDebugName,
+          globalContext.withProject(project),
+          resolvedModulesWithDependencies,
+          syntheticFilesByModule,
+          delegateResolverForProject,
+          if (invalidateOnOOCB) KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker else JavaLibraryModificationTracker.getInstance(project),
+          settings
         )
     }
 
@@ -158,7 +158,8 @@ internal class ProjectResolutionFacade(
     internal fun resolverForElement(element: PsiElement): ResolverForModule {
         val moduleInfos = mutableSetOf<IdeaModuleInfo>()
 
-        for (result in ModuleInfoProvider.getInstance(element.project).collect(element)) {
+        val sequence = ModuleInfoProvider.getInstance(element.project).collect(element)
+        for (result in sequence) {
             val moduleInfo = result.getOrNull()
             if (moduleInfo != null) {
                 val resolver = cachedResolverForProject.tryGetResolverForModule(moduleInfo)

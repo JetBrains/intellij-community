@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unusedReturnValue;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -44,7 +44,8 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
     if (method.isConstructor() ||
         PsiTypes.voidType().equals(method.getReturnType()) ||
         VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(method.getModifierList()), myGlobal.highestModifier) < 0 ||
-        myGlobal.IGNORE_BUILDER_PATTERN && PropertyUtilBase.isSimplePropertySetter(method) ||
+        (myGlobal.IGNORE_BUILDER_PATTERN && (PropertyUtilBase.isSimplePropertySetter(method) ||
+        MethodUtils.isChainable(method))) ||
         method.hasModifierProperty(PsiModifier.NATIVE) ||
         MethodUtils.hasSuper(method) ||
         RefUtil.isImplicitRead(method) ||

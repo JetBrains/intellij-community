@@ -43,6 +43,6 @@ class ChangeOnClickPresentation(
   }
 
   companion object {
-    val ourMark = StateMark<State>("ChangeOnClick")
+    val ourMark: StateMark<State> = StateMark("ChangeOnClick")
   }
 }

@@ -56,6 +56,9 @@ public abstract class DiffContentFactory {
   @NotNull
   public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type);
 
+  /**
+   * @param respectLineSeparators Whether {@link DocumentContent#getLineSeparator()} shall be set from {@code text} or be left 'Undefined'.
+   */
   @NotNull
   public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type,
                                          boolean respectLineSeparators);
@@ -87,6 +90,10 @@ public abstract class DiffContentFactory {
   @NotNull
   public abstract DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable VirtualFile highlightFile);
 
+  /**
+   * @param referent content that should be used to infer highlighting and navigation from.
+   *                 Ex: to be used for 'Compare File with Clipboard' action, as clipboard lacks context naturally.
+   */
   @NotNull
   public abstract DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable DocumentContent referent);
 

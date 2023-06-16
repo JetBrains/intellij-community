@@ -21,7 +21,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.testFramework.JavaProjectTestCase;
 import org.jdom.Element;
 import org.jetbrains.idea.maven.config.MavenConfigSettings;
@@ -80,32 +79,6 @@ public class MavenRunConfigurationTest extends JavaProjectTestCase {
 
     assertEquals(s.myGeneralSettings, loaded.myGeneralSettings);
     assertEquals(s.myRunnerSettings, loaded.myRunnerSettings);
-  }
-
-  public void testMavenParametersEditing() throws ConfigurationException {
-    ImmutableMap<String, Boolean> profilesMap = ImmutableMap.<String, Boolean>builder()
-      .put("prof1", true)
-      .put("prof2", true)
-      .put("prof3", false)
-      .put("aaa", true)
-      .put("tomcat (local)", false)
-      .put("tomcat (local) ", true).build();
-
-    final MavenRunnerParameters params = new MavenRunnerParameters();
-    params.setProfilesMap(profilesMap);
-
-    MavenRunnerParametersConfigurable cfg = new MavenRunnerParametersConfigurable(getProject()) {
-      @Override
-      protected MavenRunnerParameters getParameters() {
-        return params;
-      }
-    };
-
-    cfg.reset();
-
-    cfg.apply();
-
-    assertEquals(profilesMap, cfg.getParameters().getProfilesMap());
   }
 
   public void testDefaultMavenRunConfigurationParameters() throws ExecutionException {

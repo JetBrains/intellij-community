@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.Disposable
@@ -20,7 +20,6 @@ import com.intellij.vcs.log.ui.VcsLogUiEx
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
-import java.util.*
 
 internal class VcsLogToolWindowTabsWatcher(private val project: Project,
                                            private val toolWindowId: String,
@@ -59,7 +58,7 @@ internal class VcsLogToolWindowTabsWatcher(private val project: Project,
         val closed = VcsLogContentUtil.closeLogTab(window.contentManager, tabId)
         LOG.assertTrue(closed, """
            Could not find content component for tab ${tabId}
-           Existing content: ${Arrays.toString(window.contentManager.contents)}
+           Existing content: ${window.contentManager.contents.contentToString()}
            Tabs to close: $tabIds
            """.trimIndent())
       }

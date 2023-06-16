@@ -18,7 +18,7 @@
     <file>Test.java</file>
     <line>2</line>
     <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unused declaration</problem_class>
-    <description>Parameter &lt;code&gt;b&lt;/code&gt; is not used in either this method or any of its derived methods</description>
+    <description>Parameter &lt;code&gt;b&lt;/code&gt; is not used</description>
     <highlighted_element>b</highlighted_element>
     <language>JAVA</language>
     <offset>26</offset>

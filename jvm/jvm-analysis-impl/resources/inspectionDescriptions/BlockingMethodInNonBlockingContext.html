@@ -3,7 +3,7 @@
 Reports thread-blocking method calls in code fragments where threads should not be blocked.
 
 <p><b>Example (Project Reactor):</b></p>
-<pre><code>
+<pre><code lang="java">
 Flux.just("1").flatMap(f -&gt; {
     Flux&lt;String&gt; just = loadUsersFromDatabase();
     just.toIterable(); // Error: blocking operator call in non-blocking scope
@@ -18,7 +18,7 @@ Flux.just("1").flatMap(f -&gt; {
 <br/>
 
 <p><b>Example (Kotlin Coroutines):</b></p>
-<pre><code>
+<pre><code lang="kotlin">
 suspend fun exampleFun() {
     Thread.sleep(100); // Error: blocking method call inside suspend function
 }

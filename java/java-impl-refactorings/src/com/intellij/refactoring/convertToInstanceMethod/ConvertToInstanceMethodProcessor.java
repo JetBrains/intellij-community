@@ -33,9 +33,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG =
-    Logger.getInstance(ConvertToInstanceMethodProcessor.class);
+  private static final Logger LOG = Logger.getInstance(ConvertToInstanceMethodProcessor.class);
   private PsiMethod myMethod;
   private @Nullable PsiParameter myTargetParameter;
   private PsiClass myTargetClass;
@@ -152,7 +153,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     final Set<PsiMember> methods = Collections.singleton(myMethod);
     //check that method to call would be still accessible from the call places
     RefactoringConflictsUtil.getInstance().analyzeAccessibilityConflictsAfterMemberMove(myTargetClass, myNewVisibility, methods, conflicts);

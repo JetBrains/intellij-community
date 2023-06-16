@@ -13,6 +13,7 @@ import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
+import com.jetbrains.python.debugger.pydev.tables.TableCommandParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +99,12 @@ public interface PyFrameAccessor {
   }
 
   @Nullable
-  String execTableCommand(String command, TableCommandType commandType) throws PyDebuggerException;
+  String execTableCommand(String command, TableCommandType commandType, @Nullable TableCommandParameters tableCommandParameters) throws PyDebuggerException;
+
+  /**
+   * @return result as a preview image packed into json array. Image can be compressed if necessary.
+   */
+  default String execImageCommand(String command) { return null; }
 
   @Nullable
   default XCompositeNode getCurrentRootNode() {

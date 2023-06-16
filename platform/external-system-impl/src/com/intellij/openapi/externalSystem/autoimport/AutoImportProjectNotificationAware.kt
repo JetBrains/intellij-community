@@ -1,16 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
 
 class AutoImportProjectNotificationAware(private val project: Project) : ExternalSystemProjectNotificationAware, Disposable {
-  private val projectsWithNotification = ContainerUtil.newConcurrentSet<ExternalSystemProjectId>()
+  private val projectsWithNotification = ConcurrentCollectionFactory.createConcurrentSet<ExternalSystemProjectId>()
 
   override fun notificationNotify(projectAware: ExternalSystemProjectAware) {
     val projectId = projectAware.projectId

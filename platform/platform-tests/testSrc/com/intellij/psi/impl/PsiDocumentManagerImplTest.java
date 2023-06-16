@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -472,13 +472,13 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
       LaterInvocator.enterModal(dialog);
     });
-    assertNotSame(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
+    assertNotSame(ModalityState.nonModal(), ModalityState.current());
 
     // may or may not be committed until exit modal dialog
     waitForCommits();
 
     LaterInvocator.leaveModal(dialog);
-    assertEquals(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
+    assertEquals(ModalityState.nonModal(), ModalityState.current());
 
     // must commit
     waitForCommits();
@@ -491,7 +491,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       LaterInvocator.enterModal(dialog);
       document.setText("yyy");
     });
-    assertNotSame(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
+    assertNotSame(ModalityState.nonModal(), ModalityState.current());
 
     // must commit
     waitForCommits();
@@ -537,7 +537,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
       LaterInvocator.enterModal(dialog);
     });
-    assertNotSame(ModalityState.NON_MODAL, ApplicationManager.getApplication().getCurrentModalityState());
+    assertNotSame(ModalityState.nonModal(), ModalityState.current());
 
 
     // may or may not commit in background by default when modality changed

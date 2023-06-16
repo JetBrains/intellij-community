@@ -17,10 +17,10 @@ import java.nio.file.Paths
 
 private const val invalidationMarkerFileName = "invalidation.marker"
 
-@Service
-class JBCefAppCache {
+@Service(Service.Level.APP)
+internal class JBCefAppCache {
   @get:NotNull
-  val path by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+  val path: Path by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
     prepareCachePath()
   }
 

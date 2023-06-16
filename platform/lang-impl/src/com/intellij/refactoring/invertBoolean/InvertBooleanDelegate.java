@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.lang.Language;
@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public abstract class InvertBooleanDelegate {
   public static final ExtensionPointName<InvertBooleanDelegate> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.invertBoolean");
@@ -108,5 +110,5 @@ public abstract class InvertBooleanDelegate {
   /**
    * Detect usages which can't be inverted
    */
-  public void findConflicts(UsageInfo[] usageInfos, MultiMap<PsiElement, String> conflicts) {}
+  public void findConflicts(UsageInfo[] usageInfos, MultiMap<PsiElement, @DialogMessage String> conflicts) {}
 }

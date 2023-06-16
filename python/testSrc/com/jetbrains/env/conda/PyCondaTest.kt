@@ -15,11 +15,11 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.target.conda.loadLocalPythonCondaPath
 import com.jetbrains.python.sdk.add.target.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
-import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.*
+import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.EmptyNamedEnv
+import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert
 import org.junit.Before
@@ -32,9 +32,9 @@ import org.junit.runners.Parameterized.Parameter
 import org.junit.runners.Parameterized.Parameters
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(Parameterized::class)
-@OptIn(ExperimentalCoroutinesApi::class)
 internal class PyCondaTest {
 
   private val languageLevel = LanguageLevel.PYTHON310
@@ -65,7 +65,7 @@ internal class PyCondaTest {
 
   @Test
   fun testBasePython(): Unit = runTest {
-    val baseConda = PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow()
+    val baseConda = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow()
       .first { (it.envIdentity as? PyCondaEnvIdentity.UnnamedEnv)?.isBase == true }
     val targetRequest = LocalTargetEnvironmentRequest()
     val commandLineBuilder = TargetedCommandLineBuilder(targetRequest)
@@ -86,11 +86,11 @@ internal class PyCondaTest {
   }
 
   @Test
-  fun testCondaCreateByYaml() = runTest {
+  fun testCondaCreateByYaml() = runTest(timeout = 60.seconds) {
     PyCondaEnv.createEnv(condaRule.condaCommand,
                          LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath)).mapFlat { it.getResultStdoutStr() }.getOrThrow()
-    val condaEnv = PyCondaEnv.getEnvs(
-      condaRule.condaCommand).getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == yamlRule.envName }
+    val condaEnv = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget)
+      .getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == yamlRule.envName }
 
     // Python version contains word "Python", LanguageLevel doesn't expect it
     val pythonVersion = getPythonVersion(condaEnv).trimStart { !it.isDigit() && it != '.' }
@@ -98,16 +98,17 @@ internal class PyCondaTest {
   }
 
   @Test
-  fun testCondaCreateEnv(): Unit = runTest {
+  fun testCondaCreateEnv(): Unit = runTest(timeout = 20.seconds) {
     val envName = "myNewEnvForTests"
     PyCondaEnv.createEnv(condaRule.condaCommand,
                          EmptyNamedEnv(LanguageLevel.PYTHON39, envName)).mapFlat { it.getResultStdout() }
-    PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == envName }
+    PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget)
+      .getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == envName }
   }
 
   @Test
   fun testCondaListEnvs(): Unit = runTest {
-    val condaEnvs = PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow()
+    val condaEnvs = PyCondaEnv.getEnvs(condaRule.commandExecutor, condaRule.condaPathOnTarget).getOrThrow()
     Assert.assertTrue("No environments returned", condaEnvs.isNotEmpty())
 
     var baseFound = false
@@ -125,7 +126,7 @@ internal class PyCondaTest {
         baseFound = true
       }
     }
-    Assert.assertTrue("No base conda found", baseFound);
+    Assert.assertTrue("No base conda found", baseFound)
   }
 
   private suspend fun getPythonVersion(condaEnv: PyCondaEnv): String {

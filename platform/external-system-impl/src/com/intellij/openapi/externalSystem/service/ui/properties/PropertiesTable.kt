@@ -5,13 +5,13 @@ import com.intellij.execution.util.ListTableWithButtons
 import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable.Property
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.util.lockOrSkip
 import com.intellij.openapi.observable.util.whenTableChanged
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.components.JBViewport
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.openapi.observable.util.lockOrSkip
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import java.util.concurrent.atomic.AtomicBoolean
@@ -52,7 +52,7 @@ class PropertiesTable : ListTableWithButtons<Property>() {
     val nameColumn = tableView.columnModel.getColumn(0)
     val descriptionColumn = tableView.columnModel.getColumn(1)
 
-    val search = TableSpeedSearch(tableView)
+    val search = TableSpeedSearch.installOn(tableView)
     nameColumn.cellRenderer = Renderer(search)
     descriptionColumn.cellRenderer = Renderer(search)
 

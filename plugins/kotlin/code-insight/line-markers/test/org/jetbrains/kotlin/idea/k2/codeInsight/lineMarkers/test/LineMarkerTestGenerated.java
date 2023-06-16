@@ -20,6 +20,11 @@ public abstract class LineMarkerTestGenerated extends AbstractLineMarkerTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/recursive")
     public static class Recursive extends AbstractLineMarkerTest {
+        @TestMetadata("backticksInName.kt")
+        public void testBackticksInName() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("callableReference.kt")
         public void testCallableReference() throws Exception {
             performTest();
@@ -265,6 +270,11 @@ public abstract class LineMarkerTestGenerated extends AbstractLineMarkerTest {
 
         @TestMetadata("Interface.kt")
         public void testInterface() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("InterfaceDisabledImplOption.kt")
+        public void testInterfaceDisabledImplOption() throws Exception {
             performTest();
         }
 

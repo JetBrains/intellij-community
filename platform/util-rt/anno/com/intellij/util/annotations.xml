@@ -9,15 +9,6 @@
   <item name="com.intellij.util.Function">
     <annotation name="java.lang.FunctionalInterface" />
   </item>
-  <item name="com.intellij.util.NotNullFunction">
-    <annotation name="java.lang.FunctionalInterface" />
-  </item>
-  <item name="com.intellij.util.NullableConsumer">
-    <annotation name="java.lang.FunctionalInterface" />
-  </item>
-  <item name="com.intellij.util.NullableFunction">
-    <annotation name="java.lang.FunctionalInterface" />
-  </item>
   <item name="com.intellij.util.ThrowableConsumer">
     <annotation name="java.lang.FunctionalInterface" />
   </item>

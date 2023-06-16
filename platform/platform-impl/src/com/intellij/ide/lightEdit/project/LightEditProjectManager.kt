@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.project
 
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.openapi.actionSystem.ActionManager
@@ -65,6 +66,7 @@ class LightEditProjectManager {
       }
       if (created) {
         fireProjectOpened(project!!)
+        RecentProjectsManagerBase.getInstanceEx().setProjectHidden(project!!, true)
         ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
           override fun projectClosed(project: Project) {
             if (project === projectImpl) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
 import com.intellij.icons.AllIcons
@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTIONS
@@ -20,6 +21,7 @@ import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTION_TOOLTIP
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
+import com.intellij.ui.util.width
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.scale
@@ -257,6 +259,11 @@ open class BasicOptionButtonUI : OptionButtonUI() {
             }
           }
         })
+        if (ExperimentalUI.isNewUI()) {
+          _optionButton?.let {
+            setMinimumSize(Dimension(it.width - it.insets.width, 0))
+          }
+        }
         show(showPopupBelowLocation)
       }
     }
@@ -370,7 +377,9 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
     override fun createContent(): JComponent = super.createContent().also {
       list.clearSelection() // prevents first action selection if all actions are disabled
-      list.border = JBUI.Borders.empty(2, 0)
+      if (!ExperimentalUI.isNewUI()) {
+        list.border = JBUI.Borders.empty(2, 0)
+      }
     }
 
     override fun getListElementRenderer(): PopupListElementRenderer<Any> = object : PopupListElementRenderer<Any>(this) {
@@ -401,7 +410,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.BGT
     }
 
     override fun actionPerformed(event: AnActionEvent) {
@@ -414,7 +423,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     @JvmStatic
     fun createUI(c: JComponent): BasicOptionButtonUI = BasicOptionButtonUI()
 
-    fun paintBackground(g: Graphics, c: JComponent) {
+    internal fun paintBackground(g: Graphics, c: JComponent) {
       if (c.isOpaque) {
         g.color = c.background
         g.fillRect(0, 0, c.width, c.height)

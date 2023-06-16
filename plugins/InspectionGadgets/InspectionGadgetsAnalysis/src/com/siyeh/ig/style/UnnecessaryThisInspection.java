@@ -16,8 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -56,11 +55,11 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryThisFix();
   }
 
-  private static class UnnecessaryThisFix extends InspectionGadgetsFix {
+  private static class UnnecessaryThisFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -69,8 +68,7 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement thisToken = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement thisToken, @NotNull EditorUpdater updater) {
       final PsiElement thisParenthesized = findBiggestParenthesizedExpr(thisToken);
       new CommentTracker().deleteAndRestoreComments(thisParenthesized);
     }

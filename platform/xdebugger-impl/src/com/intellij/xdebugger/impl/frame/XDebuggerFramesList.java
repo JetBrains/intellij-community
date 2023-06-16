@@ -21,6 +21,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.ui.*;
 import com.intellij.ui.hover.HoverListener;
+import com.intellij.ui.icons.IconReplacer;
 import com.intellij.ui.icons.ReplaceableIcon;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.render.RenderingUtil;
@@ -152,7 +153,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   @Nullable
   private Object getSlowData(@NotNull XStackFrame frame, @NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      return getFrameNavigatable(frame);
+      return getFrameNavigatable(frame, true);
     }
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return getFile(frame);
@@ -198,14 +199,14 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   @Override
   protected @Nullable Navigatable getSelectedFrameNavigatable() {
     XStackFrame frame = getSelectedFrame();
-    Navigatable navigatable = frame != null ? getFrameNavigatable(frame) : null;
+    Navigatable navigatable = frame != null ? getFrameNavigatable(frame, false) : null;
     if (navigatable instanceof OpenFileDescriptor) {
       ((OpenFileDescriptor)navigatable).setUsePreviewTab(true);
     }
     return navigatable != null ? wrapKeepEditorAreaFocusNavigatable(myProject, navigatable) : null;
   }
 
-  protected @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame) {
+  protected @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame, boolean isMainSourceKindPreferred) {
     XSourcePosition position = frame.getSourcePosition();
     return position != null ? position.createNavigatable(myProject) : null;
   }

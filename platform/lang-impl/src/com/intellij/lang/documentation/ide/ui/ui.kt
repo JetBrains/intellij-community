@@ -13,7 +13,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.platform.documentation.LinkData
+import com.intellij.platform.backend.documentation.LinkData
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLayeredPane
@@ -30,7 +30,7 @@ import javax.swing.JScrollPane
 internal const val DEFAULT_UI_RESPONSE_TIMEOUT: Long = 300
 
 @JvmField
-internal val FORCED_WIDTH = Key.create<Int>("WidthBasedLayout.width")
+internal val FORCED_WIDTH: Key<Int> = Key.create("WidthBasedLayout.width")
 
 internal typealias UISnapshot = () -> Unit
 

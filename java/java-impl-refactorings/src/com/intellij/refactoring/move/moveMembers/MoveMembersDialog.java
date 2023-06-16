@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.ide.util.ClassFilter;
@@ -78,13 +78,9 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     setTitle(MoveMembersImpl.getRefactoringName());
 
     mySourceClassName = mySourceClass.getQualifiedName();
+    ArrayList<MemberInfo> memberList = new ArrayList<>();
 
-    PsiField[] fields = mySourceClass.getFields();
-    PsiMethod[] methods = mySourceClass.getMethods();
-    PsiClass[] innerClasses = mySourceClass.getInnerClasses();
-    ArrayList<MemberInfo> memberList = new ArrayList<>(fields.length + methods.length);
-
-    for (PsiClass innerClass : innerClasses) {
+    for (PsiClass innerClass : mySourceClass.getInnerClasses()) {
       if (!innerClass.hasModifierProperty(PsiModifier.STATIC)) continue;
       MemberInfo info = new MemberInfo(innerClass);
       if (preselectMembers.contains(innerClass)) {
@@ -93,7 +89,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
       memberList.add(info);
     }
     boolean hasConstantFields = false;
-    for (PsiField field : fields) {
+    for (PsiField field : mySourceClass.getFields()) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) {
         MemberInfo info = new MemberInfo(field);
         if (preselectMembers.contains(field)) {
@@ -104,8 +100,8 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
       }
     }
     if (!hasConstantFields) myIntroduceEnumConstants.setVisible(false);
-    for (PsiMethod method : methods) {
-      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+    for (PsiMethod method : mySourceClass.getMethods()) {
+      if (method.hasModifierProperty(PsiModifier.STATIC) && !(method instanceof SyntheticElement)) {
         MemberInfo info = new MemberInfo(method);
         if (preselectMembers.contains(method)) {
           info.setChecked(true);
@@ -113,6 +109,15 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
         memberList.add(info);
       }
     }
+    for (PsiClassInitializer initializer : mySourceClass.getInitializers()) {
+      if (!initializer.hasModifierProperty(PsiModifier.STATIC)) continue;
+      MemberInfo info = new MemberInfo(initializer);
+      if (preselectMembers.contains(initializer)) {
+        info.setChecked(true);
+      }
+      memberList.add(info);
+    }
+
     myMemberInfos = memberList;
     String fqName = initialTargetClass != null && !sourceClass.equals(initialTargetClass) ? initialTargetClass.getQualifiedName() : "";
     myTfTargetClassName = new ReferenceEditorComboWithBrowseButton(new ChooseClassAction(), fqName, myProject, true, JavaCodeFragment.VisibilityChecker.PROJECT_SCOPE_VISIBLE, RECENTS_KEY);
@@ -417,8 +422,17 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
 
     @Override
     public boolean isMemberEnabled(MemberInfo member) {
-      if(myTargetClass != null && myTargetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
-        return !(member.getMember() instanceof PsiMethod);
+      if (myTargetClass != null) {
+        final PsiMember m = member.getMember();
+        if (m instanceof PsiClassInitializer) {
+          return !myTargetClass.isInterface();
+        }
+        else if (m instanceof PsiMethod) {
+          return !myTargetClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(myTargetClass);
+        }
+        else if (m instanceof PsiEnumConstant) {
+          return myTargetClass.isEnum();
+        }
       }
       return super.isMemberEnabled(member);
     }

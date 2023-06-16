@@ -15,7 +15,9 @@
  */
 package com.siyeh.ipp.initialization;
 
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
@@ -28,13 +30,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ig.psiutils.HighlightUtils;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class SplitDeclarationAndInitializationIntention extends Intention {
+public class SplitDeclarationAndInitializationIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -42,7 +44,7 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  public @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("split.declaration.and.initialization.intention.name");
   }
 
@@ -53,18 +55,16 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiField.class, false, PsiCodeBlock.class) != null &&
-           super.isAvailable(project, editor, element);
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    PsiElement element = findMatchingElement(context);
+    if (element == null) return null;
+    PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(context.findLeaf(), PsiCodeBlock.class);
+    if (codeBlock != null && PsiTreeUtil.isAncestor(element, codeBlock, true)) return null;
+    return Presentation.of(getTextForElement(element));
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
-    throw new UnsupportedOperationException("The only 'processIntention(Editor, PsiElement)' is allowed to be invoked.");
-  }
-
-  @Override
-  public void processIntention(Editor editor, @NotNull PsiElement element) {
+  public void processIntention(@NotNull ActionContext context, @NotNull EditorUpdater updater, @NotNull PsiElement element) {
     final PsiField field = (PsiField)element.getParent();
     final PsiExpression initializer = field.getInitializer();
     if (initializer == null) {
@@ -123,6 +123,6 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
     }
     initializer.delete();
     CodeStyleManager.getInstance(manager.getProject()).reformat(classInitializer);
-    HighlightUtils.highlightElement(addedElement, editor);
+    updater.highlight(addedElement, EditorColors.SEARCH_RESULT_ATTRIBUTES);
   }
 }

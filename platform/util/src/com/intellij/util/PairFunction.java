@@ -15,13 +15,22 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.ApiStatus;
+
+import java.util.function.BiFunction;
+
 /**
  * Deprecated. Please use {@link java.util.function.BiFunction} instead
  * @author max
  */
 @FunctionalInterface
-public interface PairFunction<Arg1, Arg2, ResultType> {
+@ApiStatus.Obsolete
+public interface PairFunction<Arg1, Arg2, ResultType> extends BiFunction<Arg1, Arg2, ResultType> {
 
   ResultType fun(Arg1 t, Arg2 v);
 
+  @Override
+  default ResultType apply(Arg1 t, Arg2 v) {
+    return fun(t, v);
+  }
 }

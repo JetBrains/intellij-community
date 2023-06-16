@@ -3,13 +3,13 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
-import com.intellij.navigation.*;
+import com.intellij.navigation.ColoredItemPresentation;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
@@ -22,6 +22,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.presentation.TargetPresentation;
+import com.intellij.platform.backend.presentation.TargetPresentationBuilder;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
@@ -29,14 +31,19 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.list.TargetPopup;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.*;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.TextWithIcon;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,12 +53,29 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * This class assumes a number of previously-working contracts (read action on EDT, model access on EDT),
+ * which we are trying to get rid of because they slow down the rendering and user action response time.
+ * <br/>
+ * The renderer itself must not compute any data. The renderer must use data computed on a background thread.
+ * The data must be computed before {@link #getListCellRendererComponent} is invoked. This data is <i>presentation</i>.
+ * {@link TargetPresentation} can be used with the {@link TargetPopup#createTargetPresentationRenderer corresponding renderer},
+ * or the presentation class/interface should be defined separately to allow customization on the presentation level (not on renderer level).
+ * This approach is used in {@link TargetPopup#createTargetPopup(String, List, List, Consumer)},
+ * other APIs/implementations are welcome to use the same approach as well.
+ * </p>
+ */
+@Obsolete
 @DirtyUI
 // extends ListCellRenderer<Object> because it can render strings too
 public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer<Object> {
@@ -122,7 +146,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       Color bgColor = UIUtil.getListBackground();
       Color color = list.getForeground();
 
-      PsiElement target = NavigationItemListCellRenderer.getPsiElement(value);
+      PsiElement target = PSIRenderingUtils.getPsiElement(value);
       VirtualFile vFile = PsiUtilCore.getVirtualFile(target);
       boolean isProblemFile = false;
       if (vFile != null) {
@@ -198,22 +222,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   @Nullable
   protected TextAttributes getNavigationItemAttributes(Object value) {
-    return getNavigationItemAttributesStatic(value);
-  }
-
-  private static @Nullable TextAttributes getNavigationItemAttributesStatic(Object value) {
-    TextAttributes attributes = null;
-
-    if (value instanceof NavigationItem) {
-      TextAttributesKey attributesKey = null;
-      final ItemPresentation presentation = ((NavigationItem)value).getPresentation();
-      if (presentation instanceof ColoredItemPresentation) attributesKey = ((ColoredItemPresentation) presentation).getTextAttributesKey();
-
-      if (attributesKey != null) {
-        attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
-      }
-    }
-    return attributes;
+    return PSIRenderingUtils.getNavigationItemAttributesStatic(value);
   }
 
   @Override
@@ -230,10 +239,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     removeAll();
     myRightComponentWidth = 0;
 
-    final TextWithIcon itemLocation;
-    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
-      itemLocation = getItemLocation(value);
-    }
+    TextWithIcon itemLocation = getItemLocation(value);
     final JLabel locationComponent;
     final JPanel spacer;
     if (itemLocation == null) {
@@ -254,11 +260,8 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       myRightComponentWidth += spacer.getPreferredSize().width;
     }
 
-    ListCellRenderer<Object> leftRenderer = new LeftRenderer(value == null ? new ItemMatchers(null, null) : getItemMatchers(list, value));
-    Component result;
-    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
-      result = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    }
+    ListCellRenderer<Object> leftRenderer = createLeftRenderer(list, value);
+    Component result = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     final Component leftCellRendererComponent = result;
     add(leftCellRendererComponent, LEFT);
     final Color bg = isSelected ? UIUtil.getListSelectionBackground(true) : leftCellRendererComponent.getBackground();
@@ -268,6 +271,11 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       spacer.setBackground(bg);
     }
     return this;
+  }
+
+  @NotNull
+  protected ColoredListCellRenderer<Object> createLeftRenderer(JList<?> list, Object value) {
+    return new LeftRenderer(value == null ? new ItemMatchers(null, null) : getItemMatchers(list, value));
   }
 
   @NotNull
@@ -430,7 +438,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return targetPresentation(
       element,
       renderingInfo,
-      PsiElementListCellRenderer::getNavigationItemAttributesStatic,
+      PSIRenderingUtils::getNavigationItemAttributesStatic,
       PsiElementListCellRenderer::getModuleTextWithIcon,
       () -> DEFAULT_ERROR_ATTRIBUTES
     );

@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import java.io.File
@@ -24,7 +25,10 @@ constructor(private val myProject: Project,
     val file = virtualFile
     if (file == null || !file.isValid) return null
 
-    val document = FileDocumentManager.getInstance().getDocument(file) // need to load decompiler text
+    val document = ProjectLocator.withPreferredProject(file, myProject).use {
+      // need to load decompiler text
+      FileDocumentManager.getInstance().getDocument(file)
+    }
     val line = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY)?.let { mapping ->
       val mappingLine = mapping.bytecodeToSource(myDocumentLine + 1) - 1
       if (mappingLine < 0) null else mappingLine
@@ -60,7 +64,7 @@ constructor(private val myProject: Project,
   }
 
   /**
-   * Calculates an offset, that matches given line and column of the document.
+   * Calculates an offset that matches the given line and column of the document.
    *
    * @param document [Document] instance
    * @param documentLine zero-based line of the document
@@ -72,7 +76,7 @@ constructor(private val myProject: Project,
     if (documentLine < 0 || document.lineCount <= documentLine) return null
     val lineStartOffset = document.getLineStartOffset(documentLine)
     val lineEndOffset = document.getLineEndOffset(documentLine)
-    val fixedColumn = Math.min(Math.max(documentColumn, 0), lineEndOffset - lineStartOffset)
+    val fixedColumn = documentColumn.coerceAtLeast(0).coerceAtMost(lineEndOffset - lineStartOffset)
     return lineStartOffset + fixedColumn
   }
 }

@@ -6,7 +6,6 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.MessageEventImpl
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.replaceService
@@ -58,8 +57,6 @@ abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
         @Test
         @TargetVersions("6.0.1+")
         fun testWorkspaceModelInSyncAfterImport() {
-            Registry.get("kotlin.scripts.as.entities").setValue(true)
-
             configureByFiles()
             importProject()
 
@@ -71,7 +68,6 @@ abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
             val ktsFile = KtsFixture(fileName).virtualFile
 
             val (managerClassFiles, managerSourceFiles) = getDependenciesFromManager(ktsFile)
-            val (sdkClasses, sdkSources) = getSdkDependencies(ktsFile)
 
             val entityStorage = WorkspaceModel.getInstance(myProject).currentSnapshot
             val scriptEntity = entityStorage.entities(KotlinScriptEntity::class.java).find { it.path.contains(fileName) }
@@ -80,21 +76,14 @@ abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
             val entityClassFiles = scriptEntity.listDependencies(myProject, KotlinScriptLibraryRootTypeId.COMPILED)
             val entitySourceFiles = scriptEntity.listDependencies(myProject, KotlinScriptLibraryRootTypeId.SOURCES)
 
-            assertEquals("Class dependencies for $fileName are not equivalent", entityClassFiles, managerClassFiles + sdkClasses)
-            assertEquals("Source dependencies for $fileName are not equivalent", entitySourceFiles, managerSourceFiles + sdkSources)
+            assertEquals("Class dependencies for $fileName are not equivalent", entityClassFiles, managerClassFiles)
+            assertEquals("Source dependencies for $fileName are not equivalent", entitySourceFiles, managerSourceFiles)
         }
 
         // classes, sources
         private fun getDependenciesFromManager(file: VirtualFile): Pair<Collection<VirtualFile>, Collection<VirtualFile>> {
             val managerClassFiles = scriptConfigurationManager.getScriptDependenciesClassFiles(file)
             val managerSourceFiles = scriptConfigurationManager.getScriptDependenciesSourceFiles(file)
-            return Pair(managerClassFiles, managerSourceFiles)
-        }
-
-        // classes, sources
-        private fun getSdkDependencies(file: VirtualFile): Pair<Collection<VirtualFile>, Collection<VirtualFile>> {
-            val managerClassFiles = scriptConfigurationManager.getScriptSdkDependenciesClassFiles(file)
-            val managerSourceFiles = scriptConfigurationManager.getScriptSdkDependenciesSourceFiles(file)
             return Pair(managerClassFiles, managerSourceFiles)
         }
     }

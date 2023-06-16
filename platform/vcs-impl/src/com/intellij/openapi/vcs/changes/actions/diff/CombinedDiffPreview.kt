@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor
 import com.intellij.openapi.vcs.changes.DiffRequestProcessorWithProducers
@@ -80,15 +79,15 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
       val changes = model.iterateSelectedOrAllChanges().toList()
       if (changes.isNotEmpty()) {
         model.refresh(true)
-        model.reset(prepareCombinedDiffModelRequests(project, changes))
+        model.setBlocks(prepareCombinedDiffModelRequests(project, changes))
       }
     }
   }
 
   open fun returnFocusToTree() = Unit
 
-  override fun isPreviewOnDoubleClickAllowed(): Boolean = isCombinedPreviewAllowed() && super.isPreviewOnDoubleClickAllowed()
-  override fun isPreviewOnEnterAllowed(): Boolean = isCombinedPreviewAllowed() && super.isPreviewOnEnterAllowed()
+  override fun isPreviewOnDoubleClickAllowed(): Boolean = CombinedDiffRegistry.isEnabled() && super.isPreviewOnDoubleClickAllowed()
+  override fun isPreviewOnEnterAllowed(): Boolean = CombinedDiffRegistry.isEnabled() && super.isPreviewOnEnterAllowed()
 
   protected abstract fun createModel(): CombinedDiffPreviewModel
 
@@ -104,14 +103,11 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
   internal fun getFileSize(): Int = model.requests.size
 
   protected val ChangesTree.id: @NonNls String get() = javaClass.name + "@" + Integer.toHexString(hashCode())
-
-  private fun isCombinedPreviewAllowed() = Registry.`is`("enable.combined.diff")
 }
 
 abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
-                                        requests: Map<CombinedBlockId, DiffRequestProducer>,
                                         parentDisposable: Disposable) :
-  CombinedDiffModelImpl(tree.project, requests, parentDisposable), DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
+  CombinedDiffModelImpl(tree.project, parentDisposable), DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
 
   var selected by Delegates.equalVetoingObservable<Wrapper?>(null) { change ->
     if (change != null) {
@@ -145,7 +141,7 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
   }
 
   override fun clear() {
-    init()
+    cleanBlocks()
   }
 
   override fun refresh(fromModelRefresh: Boolean) {
@@ -182,7 +178,7 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
 
   private fun scrollToChange(change: Wrapper) {
     context.getUserData(COMBINED_DIFF_VIEWER_KEY)
-      ?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), ScrollPolicy.DIFF_BLOCK, false)
+      ?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), false)
   }
 
   open fun selectChangeInTree(change: Wrapper) {

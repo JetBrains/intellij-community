@@ -201,6 +201,37 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
         public void testTopLevelTypeInSameFile() throws Exception {
             runTest("../idea/tests/testData/shortenRefsFir/quailfiers/TopLevelTypeInSameFile.kt");
         }
+
+        @TestMetadata("TwoVariablesInKtUseType.kt")
+        public void testTwoVariablesInKtUseType() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/quailfiers/TwoVariablesInKtUseType.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/shortenRefsFir/shortenAndImport")
+    public static class ShortenAndImport extends AbstractFirShortenRefsTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
+        }
+
+        @TestMetadata("TwoVariablesInKtUseType.kt")
+        public void testTwoVariablesInKtUseType() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/shortenAndImport/TwoVariablesInKtUseType.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/shortenRefsFir/starImport")
+    public static class StarImport extends AbstractFirShortenRefsTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
+        }
+
+        @TestMetadata("TwoVariablesInKtUseType.kt")
+        public void testTwoVariablesInKtUseType() throws Exception {
+            runTest("../idea/tests/testData/shortenRefsFir/starImport/TwoVariablesInKtUseType.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -151,6 +151,26 @@ public class IntroduceFieldInSameClassTest extends LightJavaCodeInsightTestCase 
     doTest(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
   }
 
+  public void testIncompleteInClassContext1(){
+    doTest(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
+  }
+
+  public void testIncompleteInClassContext2(){
+    doTest(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
+  }
+
+  public void testIncompleteInClassContext3(){
+    doTest(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
+  }
+
+  public void testIncompleteInClassContext4(){
+    doTest(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
+  }
+
+  public void testIncompleteInClassContext5(){
+    doTest(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
+  }
+
   public void testStaticFieldInInnerClass() {
     configureByFile("beforeStaticFieldInInnerClass.java");
     new MockIntroduceFieldHandler(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD, false) {

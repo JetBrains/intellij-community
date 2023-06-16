@@ -12,14 +12,14 @@ open class JComponentFileType(@JvmField @NonNls protected val name: String = "JC
                               @JvmField @NlsContexts.Label protected val description: String = "",
                               @JvmField protected val icon: Icon = AllIcons.FileTypes.Text) : FakeFileType() {
   companion object {
-    val INSTANCE = JComponentFileType()
+    val INSTANCE: JComponentFileType = JComponentFileType()
   }
 
-  override fun getName() = name
+  override fun getName(): String = name
 
-  override fun getDescription() = description
+  override fun getDescription(): String = description
 
-  override fun isMyFileType(file: VirtualFile) = JComponentEditorProvider.isJComponentFile(file)
+  override fun isMyFileType(file: VirtualFile): Boolean = JComponentEditorProvider.isJComponentFile(file)
 
   override fun getIcon(): Icon = icon
 }

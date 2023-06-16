@@ -619,7 +619,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     private final Substring myDescription;
 
     public SectionField(@Nullable Substring name, @Nullable Substring type, @Nullable Substring description) {
-      this(name == null ? Collections.emptyList() : Collections.singletonList(name), type, description);
+      this(ContainerUtil.createMaybeSingletonList(name), type, description);
     }
 
     public SectionField(@NotNull List<Substring> names, @Nullable Substring type, @Nullable Substring description) {

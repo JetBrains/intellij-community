@@ -66,7 +66,7 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
       allUnresolvedLinkedHashes.addAll(commit.getParents());
     }
     for (Commit commit : firstBlock) {
-      if (commit.getParents().size() != 0) {
+      if (!commit.getParents().isEmpty()) {
         allUnresolvedLinkedHashes.remove(commit.getId());
       }
     }
@@ -79,12 +79,12 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
     int lastIndex;
     for (lastIndex = 0; lastIndex < commits.size(); lastIndex++) {
       Commit commit = commits.get(lastIndex);
-      if (searchHashes.size() == 0) {
+      if (searchHashes.isEmpty()) {
         return lastIndex;
       }
       searchHashes.remove(commit.getId());
     }
-    if (searchHashes.size() != 0) {
+    if (!searchHashes.isEmpty()) {
       throw new VcsLogRefreshNotEnoughDataException();
     }
     return lastIndex;

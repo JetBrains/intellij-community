@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.target
 
 import com.intellij.CommonBundle
 import com.intellij.execution.target.IncompleteTargetEnvironmentConfiguration
+import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -13,6 +14,7 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.JBCardLayout
 import com.intellij.ui.components.JBList
@@ -48,7 +50,8 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
                                private val module: Module?,
                                private val existingSdks: List<Sdk>,
                                private val targetSupplier: Supplier<TargetEnvironmentConfiguration>?,
-                               private val config: PythonLanguageRuntimeConfiguration) {
+                               private val config: PythonLanguageRuntimeConfiguration,
+                               private val introspectable: LanguageRuntimeType.Introspectable?) {
   private val mainPanel: JPanel = JPanel(JBCardLayout())
 
   private var selectedPanel: PyAddSdkView? = null
@@ -83,7 +86,7 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
                                          context = context,
                                          targetSupplier = targetSupplier,
                                          config = config)
-    val systemWidePanel = PyAddSystemWideInterpreterPanel(project, module, existingSdks, context, targetEnvironmentConfiguration, config)
+    val systemWidePanel = PyAddSystemWideInterpreterPanel(project, module, existingSdks, context, targetSupplier, config)
     val condaPanel = createAnacondaPanel()
     return when {
       isUnderLocalTarget -> {
@@ -97,9 +100,15 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
           listOf(venvPanel, condaPanel, systemWidePanel, pipEnvPanel, poetryPanel) to venvPanel
         }
       }
-      targetEnvironmentConfiguration.isMutableTarget -> mutableListOf<PyAddSdkView>(venvPanel, systemWidePanel).apply {
-        // Conda not supported for SSH (which is mutable incomplete environment)
-        if (targetEnvironmentConfiguration !is IncompleteTargetEnvironmentConfiguration) add(condaPanel)
+      targetEnvironmentConfiguration.isMutableTarget -> buildList {
+        add(venvPanel)
+        add(systemWidePanel)
+        // Enable Conda for SSH in DataSpell while keeping it disabled in PyCharm and other IDEs.
+        // SSH target configuration at this wizard stage is characterized by implementing `IncompleteTargetEnvironmentConfiguration` marker
+        // interface.
+        if (Registry.`is`("enable.conda.on.targets") || targetEnvironmentConfiguration !is IncompleteTargetEnvironmentConfiguration) {
+          add(condaPanel)
+        }
       } to venvPanel
       else -> listOf(venvPanel, systemWidePanel, condaPanel) to systemWidePanel
     }
@@ -154,8 +163,8 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
     }
   }
 
-  private fun createAnacondaPanel(): PyAddSdkView = PyAddCondaPanelView(
-    PyAddCondaPanelModel(targetEnvironmentConfiguration, existingSdks, project!!))
+  private fun createAnacondaPanel(): PyAddSdkView =
+    PyAddCondaPanelView(PyAddCondaPanelModel(targetEnvironmentConfiguration, existingSdks, project!!, introspectable = introspectable))
 
   private fun createPipEnvPanel(newProjectPath: String?) = PyAddPipEnvPanel(project, module, existingSdks, newProjectPath, context)
 

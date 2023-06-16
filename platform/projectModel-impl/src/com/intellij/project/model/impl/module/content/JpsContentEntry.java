@@ -203,7 +203,7 @@ public class JpsContentEntry implements ContentEntry, Disposable {
   @Override
   public @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
                                                                       @NotNull JpsModuleSourceRootType<P> type,
-                                                                      boolean useSourceOfContentRoot) {
+                                                                      boolean isAutomaticallyImported) {
     return addSourceFolder(url, type, type.createDefaultProperties());
   }
 
@@ -214,6 +214,14 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     final JpsSourceFolder sourceFolder = new JpsSourceFolder(sourceRoot, this);
     mySourceFolders.add(sourceFolder);
     return sourceFolder;
+  }
+
+  @Override
+  public @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                                      @NotNull JpsModuleSourceRootType<P> type,
+                                                                      @NotNull P properties,
+                                                                      boolean isAutomaticallyImported) {
+    return addSourceFolder(url, type, properties);
   }
 
   @Override
@@ -261,7 +269,7 @@ public class JpsContentEntry implements ContentEntry, Disposable {
   }
 
   @Override
-  public ExcludeFolder addExcludeFolder(@NotNull String url, ProjectModelExternalSource source) {
+  public @NotNull ExcludeFolder addExcludeFolder(@NotNull String url, boolean isAutomaticallyImported) {
     return addExcludeFolder(url);
   }
 

@@ -66,7 +66,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   private JPanel myPanel;
   private JPanel myTreePanel;
-  private MultiLineLabel myPropertiesLabel;
+  protected MultiLineLabel myPropertiesLabel;
   private JPanel myPropertiesPanel;
   private JLabel myBottomLabel;
   private LibraryPropertiesEditor myPropertiesEditor;
@@ -162,7 +162,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myTree = new Tree(asyncTreeModel);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
-    new LibraryRootsTreeSpeedSearch(myTree);
+    LibraryRootsTreeSpeedSearch.installOn(myTree);
     myTree.setCellRenderer(new LibraryTreeRenderer());
     myTreePanel.setLayout(new BorderLayout());
 

@@ -21,10 +21,8 @@ interface GlobalLibraryTableBridge : LibraryTable {
   fun handleBeforeChangeEvents(event: VersionedStorageChange)
   fun handleChangedEvents(event: VersionedStorageChange)
   companion object {
-    @JvmStatic
     fun getInstance(): GlobalLibraryTableBridge = ApplicationManager.getApplication().service()
 
-    @JvmStatic
     fun isEnabled(): Boolean = Registry.`is`("workspace.model.global.library.bridge", true)
   }
 }

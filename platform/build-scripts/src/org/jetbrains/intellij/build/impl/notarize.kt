@@ -42,11 +42,10 @@ internal suspend fun notarize(sitFile: Path, context: BuildContext) {
     )
     val notaryApiClient = NotaryClientV2(credentials)
     val statusPollingConfiguration = StatusPollingConfiguration(
-      timeout = 3.hours,
+      timeout = 5.hours,
       pollingPeriod = 1.minutes,
       ignoreServerError = true,
       ignoreTimeoutExceptions = true,
-      retryDelayAfterFailure = 10.minutes,
     )
     val result = withContext(Dispatchers.IO) {
       // only .zip or .dmg files can be notarized
@@ -73,5 +72,6 @@ internal suspend fun notarize(sitFile: Path, context: BuildContext) {
         context.messages.error("Notarization of $sitFile failed, see logs above")
       }
     }
+    context.notifyArtifactBuilt(logFile)
   }
 }

@@ -18,7 +18,7 @@ class SwitchLabeledRuleCanBeCodeBlockTest : LightJavaCodeInsightFixtureTestCase(
     val inspection = SwitchLabeledRuleCanBeCodeBlockInspection()
     myFixture.enableInspections(inspection)
     val currentProfile = ProjectInspectionProfileManager.getInstance(project).currentProfile
-    currentProfile.setErrorLevel(HighlightDisplayKey.find(inspection.shortName), HighlightDisplayLevel.WARNING, project)
+    currentProfile.setErrorLevel(HighlightDisplayKey.find(inspection.shortName)!!, HighlightDisplayLevel.WARNING, project)
     myFixture.testHighlighting("${getTestName(false)}.java")
   }
 }

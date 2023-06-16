@@ -39,6 +39,8 @@ class HTML2FPDF(HTMLParser):
     table_row_height: int
     heading_level: Any
     heading_sizes: Any
+    heading_above: float
+    heading_below: float
     def __init__(
         self,
         pdf,

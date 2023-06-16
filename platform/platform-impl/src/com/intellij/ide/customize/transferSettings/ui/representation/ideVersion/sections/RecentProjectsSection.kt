@@ -43,5 +43,5 @@ class RecentProjectsSection(private val ideVersion: IdeVersion) : IdeRepresentat
   override val name: String
     get() = "Recent Projects"
 
-  override fun worthShowing() = ideVersion.settings.recentProjects.isNotEmpty()
+  override fun worthShowing(): Boolean = ideVersion.settings.recentProjects.isNotEmpty()
 }

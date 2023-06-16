@@ -81,6 +81,7 @@ public final class DateTimeFormatManager implements PersistentStateComponent<Ele
 
   public void setDateFormatPattern(@NotNull String pattern) {
     try {
+      //noinspection ResultOfObjectAllocationIgnored
       new SimpleDateFormat(pattern);
       myPattern = pattern;
     } catch (Exception ignored) {

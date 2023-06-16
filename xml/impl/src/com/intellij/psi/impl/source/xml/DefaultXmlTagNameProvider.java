@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -38,8 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
-
+final class DefaultXmlTagNameProvider implements XmlTagNameProvider {
   private static final Logger LOG = Logger.getInstance(DefaultXmlTagNameProvider.class);
 
   @Override
@@ -56,7 +54,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     XmlExtension xmlExtension = XmlExtension.getExtension(psiFile);
     List<XmlElementDescriptor> variants = TagNameVariantCollector.getTagDescriptors(tag, namespaces, null);
 
-    if (psiFile instanceof XmlFile && ((XmlFile) psiFile).getRootTag() == tag) {
+    if (psiFile instanceof XmlFile && ((XmlFile)psiFile).getRootTag() == tag) {
       addXmlProcessingInstructions(elements, tag);
       if (variants.isEmpty()) {
         getRootTagsVariants(tag, elements);
@@ -140,29 +138,29 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
             elements.add(LookupElementBuilder.create(s)
                            .withIcon(AllIcons.Nodes.Tag)
                            .withTypeText(ns).withInsertHandler(new XmlTagInsertHandler() {
-              @Override
-              public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
-                final Editor editor = context.getEditor();
-                final Document document = context.getDocument();
-                final int caretOffset = editor.getCaretModel().getOffset();
-                final RangeMarker caretMarker = document.createRangeMarker(caretOffset, caretOffset);
-                caretMarker.setGreedyToRight(true);
+                @Override
+                public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
+                  final Editor editor = context.getEditor();
+                  final Document document = context.getDocument();
+                  final int caretOffset = editor.getCaretModel().getOffset();
+                  final RangeMarker caretMarker = document.createRangeMarker(caretOffset, caretOffset);
+                  caretMarker.setGreedyToRight(true);
 
-                XmlFile psiFile = (XmlFile)context.getFile();
-                boolean incomplete = XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) == null &&
-                                     XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) == null;
-                XmlNamespaceHelper.getHelper(psiFile).insertNamespaceDeclaration(psiFile, editor, Collections.singleton(ns), null, null);
-                editor.getCaretModel().moveToOffset(caretMarker.getEndOffset());
+                  XmlFile psiFile = (XmlFile)context.getFile();
+                  boolean incomplete = XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) == null &&
+                                       XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) == null;
+                  XmlNamespaceHelper.getHelper(psiFile).insertNamespaceDeclaration(psiFile, editor, Collections.singleton(ns), null, null);
+                  editor.getCaretModel().moveToOffset(caretMarker.getEndOffset());
 
-                XmlTag rootTag = psiFile.getRootTag();
-                if (incomplete) {
-                  XmlToken token = XmlUtil.getTokenOfType(rootTag, XmlTokenType.XML_EMPTY_ELEMENT_END);
-                  if (token != null) token.delete(); // remove tag end added by smart attribute adder :(
-                  PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(document);
-                  super.handleInsert(context, item);
+                  XmlTag rootTag = psiFile.getRootTag();
+                  if (incomplete) {
+                    XmlToken token = XmlUtil.getTokenOfType(rootTag, XmlTokenType.XML_EMPTY_ELEMENT_END);
+                    if (token != null) token.delete(); // remove tag end added by smart attribute adder :(
+                    PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(document);
+                    super.handleInsert(context, item);
+                  }
                 }
-              }
-            }));
+              }));
           }
           return true;
         }

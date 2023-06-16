@@ -183,9 +183,7 @@ abstract class UastFakeSourceLightMethodBase<T: KtDeclaration>(
 
         other as UastFakeSourceLightMethodBase<*>
 
-        if (original != other.original) return false
-
-        return true
+        return original == other.original
     }
 
     override fun hashCode(): Int = original.hashCode()

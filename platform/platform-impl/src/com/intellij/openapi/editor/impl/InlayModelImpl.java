@@ -613,7 +613,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull InlineInlayImpl inlay, @NotNull @NonNls Object reason) {
+    void fireBeforeRemoved(@NotNull InlineInlayImpl inlay) {
       if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
         if (myMoveInProgress) {
           // delay notification about invalidated inlay - folding model is not consistent at this point
@@ -633,7 +633,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull BlockInlayImpl inlay, @NotNull @NonNls Object reason) {
+    void fireBeforeRemoved(@NotNull BlockInlayImpl inlay) {
       if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }
@@ -646,7 +646,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl inlay, @NotNull @NonNls Object reason) {
+    void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl inlay) {
       if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }

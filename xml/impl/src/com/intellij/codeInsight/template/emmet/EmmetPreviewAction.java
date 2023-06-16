@@ -20,13 +20,17 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
 import com.intellij.openapi.actionSystem.PopupAction;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,15 +41,21 @@ public class EmmetPreviewAction extends BaseCodeInsightAction implements DumbAwa
     return new CodeInsightActionHandler() {
       @Override
       public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-        String templateText = EmmetPreviewUtil.calculateTemplateText(editor, file, true);
-        if (StringUtil.isEmpty(templateText)) {
-          CommonRefactoringUtil.showErrorHint(project, editor, XmlBundle.message("cannot.show.preview.for.given.abbreviation"),
-                                              XmlBundle.message("emmet.preview"), null);
-          return;
-        }
+        PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
 
-        EmmetPreviewHint.createHint((EditorEx)editor, templateText, file.getFileType()).showHint();
-        EmmetPreviewUtil.addEmmetPreviewListeners(editor, file, true);
+        ReadAction.nonBlocking(() -> EmmetPreviewUtil.calculateTemplateText(editor, file, true))
+          .finishOnUiThread(ModalityState.any(), templateText -> {
+            if (StringUtil.isEmpty(templateText)) {
+              CommonRefactoringUtil.showErrorHint(project, editor, XmlBundle.message("cannot.show.preview.for.given.abbreviation"),
+                                                  XmlBundle.message("emmet.preview"), null);
+              return;
+            }
+
+            EmmetPreviewHint.createHint((EditorEx)editor, templateText, file.getFileType()).showHint();
+            EmmetPreviewUtil.addEmmetPreviewListeners(editor, file, true);
+          })
+          .expireWith(() -> editor.isDisposed())
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
 
       @Override
@@ -58,6 +68,7 @@ public class EmmetPreviewAction extends BaseCodeInsightAction implements DumbAwa
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return super.isValidForFile(project, editor, file) &&
-           ZenCodingTemplate.findApplicableDefaultGenerator(new CustomTemplateCallback(editor, file), false) instanceof XmlZenCodingGenerator;
+           ZenCodingTemplate.findApplicableDefaultGenerator(new CustomTemplateCallback(editor, file),
+                                                            false) instanceof XmlZenCodingGenerator;
   }
 }

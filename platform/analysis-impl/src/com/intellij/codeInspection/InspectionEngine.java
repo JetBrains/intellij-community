@@ -28,7 +28,6 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +41,8 @@ import java.util.stream.Collectors;
 
 public final class InspectionEngine {
   private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
-  private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES = ContainerUtil.newConcurrentSet();
+  private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES =
+    ConcurrentCollectionFactory.createConcurrentSet();
 
   private static boolean createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
                                                      @NotNull ProblemsHolder holder,
@@ -223,11 +223,11 @@ public final class InspectionEngine {
                                  @NotNull TextRange priorityRange,
                                  boolean isOnTheFly,
                                  @NotNull Consumer<? super LocalInspectionToolSession> runnable) {
-    LocalInspectionToolSession session = new LocalInspectionToolSession(file, priorityRange);
+    LocalInspectionToolSession session = new LocalInspectionToolSession(file, priorityRange, restrictRange);
     runnable.accept(session);
   }
 
-  private static final Set<String> ourToolsWithInformationProblems = ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.canonical());
+  private static final Set<String> ourToolsWithInformationProblems = ConcurrentCollectionFactory.createConcurrentSet();
 
   private static @NotNull Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                                                    @NotNull PsiFile file,

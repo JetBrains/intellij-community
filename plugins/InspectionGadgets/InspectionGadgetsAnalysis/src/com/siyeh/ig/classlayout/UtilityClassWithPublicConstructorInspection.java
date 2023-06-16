@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -11,7 +13,6 @@ import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +28,7 @@ public class UtilityClassWithPublicConstructorInspection
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiClass psiClass = (PsiClass)infos[0];
     final boolean hasInheritors = (Boolean)infos[1];
     if (psiClass.getConstructors().length > 1) {
@@ -39,7 +40,7 @@ public class UtilityClassWithPublicConstructorInspection
   }
 
   private static class UtilityClassWithPublicConstructorFix
-    extends InspectionGadgetsFix {
+    extends PsiUpdateModCommandQuickFix {
 
     private final boolean m_multipleConstructors;
     private final boolean m_hasInheritors;
@@ -67,8 +68,7 @@ public class UtilityClassWithPublicConstructorInspection
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement classNameIdentifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement classNameIdentifier, @NotNull EditorUpdater updater) {
       final PsiClass psiClass = (PsiClass)classNameIdentifier.getParent();
       if (psiClass == null) {
         return;

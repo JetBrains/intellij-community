@@ -5,7 +5,10 @@ package com.jetbrains.python.console
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.value.*
+import com.intellij.execution.target.value.TargetEnvironmentFunction
+import com.intellij.execution.target.value.TraceableTargetEnvironmentFunction
+import com.intellij.execution.target.value.andThenJoinToString
+import com.intellij.execution.target.value.toLinkedSetFunction
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -14,6 +17,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.remote.RemoteMappingsManager
+import com.intellij.remote.RemoteSdkProperties
 import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
 import com.jetbrains.python.console.completion.PydevConsoleElement
 import com.jetbrains.python.console.pydev.ConsoleCommunication
@@ -22,12 +27,30 @@ import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.run.PythonCommandLineState
-import com.jetbrains.python.run.target.getPathMapper
 import com.jetbrains.python.run.toStringLiteral
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import java.util.function.Function
+
+/**
+ * Creates [PyRemotePathMapper] for Python Console execution on a target.
+ *
+ * @param project the project Python Console is started for
+ * @param sdk Python SDK that Python Console is started with
+ * @param consoleSettings Python Console settings
+ * @param targetEnvironment the target environment to add upload volumes to the result path mapper
+ */
+fun createTargetEnvironmentPathMapper(project: Project,
+                                      sdk: Sdk,
+                                      consoleSettings: PyConsoleSettings,
+                                      targetEnvironment: TargetEnvironment): PyRemotePathMapper {
+  val pathMapper = getPathMapper(project, sdk, consoleSettings) ?: PyRemotePathMapper()
+  for (volume in targetEnvironment.uploadVolumes.values) {
+    pathMapper.addMapping(volume.localRoot.toString(), volume.targetRoot, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
+  }
+  return pathMapper
+}
 
 fun getPathMapper(project: Project,
                   sdk: Sdk?,
@@ -38,6 +61,25 @@ fun getPathMapper(project: Project,
     is PyRemoteSdkAdditionalDataBase -> getPathMapper(project, consoleSettings, sdkAdditionalData)
     else -> null
   }
+}
+
+private fun getPathMapper(project: Project, consoleSettings: PyConsoleSettings, data: PyTargetAwareAdditionalData): PyRemotePathMapper {
+  val remotePathMapper = appendBasicMappings(project, data)
+  consoleSettings.mappingSettings?.let { mappingSettings ->
+    remotePathMapper.addAll(mappingSettings.pathMappings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
+  }
+  return remotePathMapper
+}
+
+private fun appendBasicMappings(project: Project, data: RemoteSdkProperties): PyRemotePathMapper {
+  val pathMapper = PyRemotePathMapper()
+  PythonRemoteInterpreterManager.addHelpersMapping(data, pathMapper)
+  pathMapper.addAll(data.pathMappings.pathMappings, PyRemotePathMapper.PyPathMappingType.SYS_PATH)
+  val mappings = RemoteMappingsManager.getInstance(project).getForServer(PythonRemoteInterpreterManager.PYTHON_PREFIX, data.sdkId)
+  if (mappings != null) {
+    pathMapper.addAll(mappings.settings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
+  }
+  return pathMapper
 }
 
 fun getPathMapper(project: Project,
@@ -144,7 +186,7 @@ class ReplaceSubstringsFunction(private val s: String,
     return res
   }
 
-  override fun toString(): String = "ReplaceSubstringsFunction(s='$s', oldValues=${replaces.map{it.first}}, newValues=${replaces.map{it.second}})"
+  override fun toString(): String = "ReplaceSubstringsFunction(s='$s', oldValues=${replaces.map { it.first }}, newValues=${replaces.map { it.second }})"
 }
 
 fun addDefaultEnvironments(sdk: Sdk,
@@ -160,7 +202,7 @@ fun addDefaultEnvironments(sdk: Sdk,
  * @param envs    map of envs to add variable
  */
 private fun setCorrectStdOutEncoding(envs: Map<String, String>) {
-  val defaultCharset = PydevConsoleRunnerImpl.CONSOLE_CHARSET;
+  val defaultCharset = PydevConsoleRunnerImpl.CONSOLE_CHARSET
   val encoding = defaultCharset.name()
   PythonEnvUtil.setPythonIOEncoding(PythonEnvUtil.setPythonUnbuffered(envs), encoding)
 }
@@ -172,7 +214,7 @@ private fun setCorrectStdOutEncoding(envs: Map<String, String>) {
  * @param commandLine command line
  */
 fun setCorrectStdOutEncoding(commandLine: GeneralCommandLine) {
-  val defaultCharset = PydevConsoleRunnerImpl.CONSOLE_CHARSET;
+  val defaultCharset = PydevConsoleRunnerImpl.CONSOLE_CHARSET
   commandLine.charset = defaultCharset
   PythonEnvUtil.setPythonIOEncoding(commandLine.environment, defaultCharset.name())
 }

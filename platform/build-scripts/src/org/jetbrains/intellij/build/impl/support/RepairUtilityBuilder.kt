@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.impl.support
 
-import com.intellij.diagnostic.telemetry.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*

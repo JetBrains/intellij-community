@@ -1376,12 +1376,15 @@ class InternalDataViewerAction(InternalThreadCommand):
 # InternalDataViewerAction
 #=======================================================================================================================
 class InternalTableCommand(InternalThreadCommand):
-    def __init__(self, sequence, thread_id, frame_id, init_command, command_type):
+    def __init__(self, sequence, thread_id, frame_id, init_command, command_type,
+                 start_index, end_index):
         super().__init__(thread_id)
         self.sequence = sequence
         self.frame_id = frame_id
         self.init_command = init_command
         self.command_type = command_type
+        self.start_index = start_index
+        self.end_index = end_index
 
     def do_it(self, dbg):
         try:
@@ -1399,8 +1402,8 @@ class InternalTableCommand(InternalThreadCommand):
             dbg.writer.add_command(cmd)
 
     def exec_command(self, frame):
-        return exec_table_command(self.init_command, self.command_type, frame.f_globals,
-                                  frame.f_locals)
+        return exec_table_command(self.init_command, self.command_type, self.start_index, self.end_index,
+                                  frame.f_globals, frame.f_locals)
 
 
 #=======================================================================================================================

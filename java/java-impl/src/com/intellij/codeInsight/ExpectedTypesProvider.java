@@ -618,58 +618,39 @@ public final class ExpectedTypesProvider {
           }
         }
       }
-      result.addAll(processedExpressionTypes(labeledExpressionTypes, mustBeReference, statement));
-      result.addAll(processedPatternTypes(labeledPatternsTypes, statement));
+      result.addAll(findExpectedTypesForExpressions(labeledExpressionTypes, mustBeReference, statement));
+      result.addAll(findExpectedTypesForPatterns(labeledPatternsTypes, statement));
       return result;
     }
 
 
-    private static List<ExpectedTypeInfo> processedPatternTypes(@NotNull List<PsiType> expectedTypes, @NotNull PsiSwitchBlock statement) {
-      LinkedHashSet<PsiType> processedTypes = new LinkedHashSet<>();
-      for (PsiType type : expectedTypes) {
-        PsiClass currentClass = PsiUtil.resolveClassInClassTypeOnly(type);
-        if (currentClass == null) {
-          continue;
-        }
-        if (!(type instanceof PsiClassType classType)) {
-          continue;
-        }
-        PsiSubstitutor substitutor = classType.resolveGenerics().getSubstitutor();
-        LinkedHashSet<PsiType> allSuperClasses = new LinkedHashSet<>();
-        InheritanceUtil.processSuperTypes(classType, true, nextType -> {
-          PsiClass superClass = PsiUtil.resolveClassInClassTypeOnly(nextType);
-          if (superClass != null) {
-            PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, currentClass, substitutor);
-            PsiType substituted = superClassSubstitutor.substitute(nextType);
-            allSuperClasses.add(substituted);
-          }
+    @NotNull
+    private static List<ExpectedTypeInfo> findExpectedTypesForPatterns(@NotNull List<PsiType> expectedTypes,
+                                                                       @NotNull PsiSwitchBlock statement) {
+      PsiManager manager = statement.getManager();
+      if(manager == null) return Collections.emptyList();
+      PsiType lub = getLeastUpperBound(expectedTypes, manager);
+      if (lub == null) return Collections.emptyList();
+      return Collections.singletonList(createInfo(lub, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, lub, TailType.NONE));
+    }
 
-          return true;
-        });
-        if (processedTypes.isEmpty()) {
-          processedTypes = allSuperClasses;
-        }
-        else {
-          processedTypes.retainAll(allSuperClasses);
-        }
+    @Nullable
+    private static PsiType getLeastUpperBound(@NotNull List<PsiType> types, @NotNull PsiManager manager) {
+      if (types.isEmpty()) return null;
+      Iterator<PsiType> iterator = types.iterator();
+      PsiType accumulator = iterator.next();
+      while (iterator.hasNext()) {
+        PsiType type = iterator.next();
+        accumulator = GenericsUtil.getLeastUpperBound(accumulator, type, manager);
+        if (accumulator == null) return null;
       }
-
-      List<ExpectedTypeInfo> result = new ArrayList<>();
-      for (PsiType parent : processedTypes) {
-        result.add(createInfo(parent, ExpectedTypeInfo.TYPE_STRICTLY, parent, TailType.NONE));
-      }
-      //return Object if it is impossible to find common types
-      if (result.isEmpty() && !expectedTypes.isEmpty()) {
-        PsiClassType objectType = TypeUtils.getObjectType(statement);
-        result.add(createInfo(objectType, ExpectedTypeInfo.TYPE_STRICTLY, objectType, TailType.NONE));
-      }
-      return result;
+      return accumulator;
     }
 
     @NotNull
-    private static List<ExpectedTypeInfo> processedExpressionTypes(@NotNull List<PsiType> expectedTypes,
-                                                                   boolean mustBeReference,
-                                                                   @NotNull PsiSwitchBlock context) {
+    private static List<ExpectedTypeInfo> findExpectedTypesForExpressions(@NotNull List<PsiType> expectedTypes,
+                                                                          boolean mustBeReference,
+                                                                          @NotNull PsiSwitchBlock context) {
       List<ExpectedTypeInfo> result = new ArrayList<>();
       Set<PsiType> processedTypes = new HashSet<>();
       for (PsiType expectedType : expectedTypes) {
@@ -939,6 +920,13 @@ public final class ExpectedTypesProvider {
       if (myForCompletion && index == 0) {
         if (op == JavaTokenType.EQEQ || op == JavaTokenType.NE) {
           ContainerUtil.addIfNotNull(myResult, getEqualsType(anotherExpr));
+        }
+        if (op == JavaTokenType.LT || op == JavaTokenType.LE ||
+            op == JavaTokenType.GT || op == JavaTokenType.GE) {
+          PsiType anotherType = anotherExpr != null ? anotherExpr.getType() : null;
+          if (anotherType != null) {
+            myResult.add(createInfoImpl(PsiTypes.doubleType(), anotherType));
+          }
         }
         final MyParentVisitor visitor = new MyParentVisitor(expr, true, myClassProvider, myVoidable, myUsedAfter, myMaxCandidates);
         myExpr = (PsiExpression)myExpr.getParent();

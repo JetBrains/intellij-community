@@ -16,8 +16,8 @@
 class C {
   {
     int a = 0;
-      while (tru<caret>e) {
-          a++;
+      while (true) {
+ <caret>         a++;
           if (true) break;
       }
   }

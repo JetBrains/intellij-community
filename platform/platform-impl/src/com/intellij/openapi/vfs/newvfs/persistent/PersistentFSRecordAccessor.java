@@ -29,8 +29,6 @@ import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.FREE
 final class PersistentFSRecordAccessor {
   private static final Logger LOG = Logger.getInstance(PersistentFSRecordAccessor.class);
 
-  private static final int ALL_VALID_FLAGS = PersistentFS.Flags.MASK;
-
   @NotNull
   private final PersistentFSContentAccessor myPersistentFSContentAccessor;
   @NotNull
@@ -50,10 +48,7 @@ final class PersistentFSRecordAccessor {
     myFSConnection = connection;
   }
 
-  //RC: method name is a bit misleading, since really (in production) it doesn't add record to free-list
-  //    -- it does that only in unit-tests.
-  //    AFM: name like deleteRecord(id) would suit better
-  public void addToFreeRecordsList(int id) throws IOException {
+  public void markRecordAsDeleted(int id) throws IOException {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myNewFreeRecords.add(id);
     }
@@ -86,12 +81,13 @@ final class PersistentFSRecordAccessor {
     final IntList freeRecords = myFSConnection.getFreeRecords();
     for (int id = FSRecords.MIN_REGULAR_FILE_ID; id < recordCount; id++) {
       final int flags = myFSConnection.getRecords().getFlags(id);
-      LOG.assertTrue((flags & ~ALL_VALID_FLAGS) == 0, "Invalid flags: 0x" + Integer.toHexString(flags) + ", id: " + id);
+      LOG.assertTrue((flags & ~PersistentFS.Flags.getAllValidFlags()) == 0, "Invalid flags: 0x" + Integer.toHexString(flags) + ", id: " + id);
 
       final boolean recordInFreeList = freeRecords.contains(id);
       final boolean recordMarkedAsFree = hasDeletedFlag(flags);
       if (recordMarkedAsFree) {
-        LOG.assertTrue(recordInFreeList, "Record, marked free, not in free list: " + id);
+        //Record is marked free, but not in free list: it is OK, we fill freeList on VFS load only,
+        //  so records free-ed in current session are not in it
       }
       else {
         LOG.assertTrue(!recordInFreeList, "Record, not marked free, in free list: " + id);
@@ -126,21 +122,24 @@ final class PersistentFSRecordAccessor {
                                  @NotNull IntList usedAttributeRecordIds,
                                  @NotNull IntList validAttributeIds) throws IOException {
     PersistentFSConnection connection = myFSConnection;
-    int parentId = connection.getRecords().getParent(id);
+    PersistentFSRecordsStorage records = connection.getRecords();
+    int parentId = records.getParent(id);
     assert parentId >= 0 && parentId < totalRecordCount;
-    if (parentId > 0 && connection.getRecords().getParent(parentId) > 0) {
-      int parentFlags = connection.getRecords().getFlags(parentId);
+    if (parentId > 0 && records.getParent(parentId) > 0) {
+      int parentFlags = records.getFlags(parentId);
       assert !hasDeletedFlag(parentFlags) : parentId + ": " + Integer.toHexString(parentFlags);
       assert BitUtil.isSet(parentFlags, PersistentFS.Flags.IS_DIRECTORY) : parentId + ": " + Integer.toHexString(parentFlags);
     }
 
     CharSequence name = getName(id);
-    LOG.assertTrue(parentId == 0 || name.length() != 0, "File with empty name found under " + getName(parentId) + ", id=" + id);
+    if(parentId != 0 && name.isEmpty()) {
+      LOG.error("File[" + id + "] with empty name found under parent[" + parentId + "][name:" + getName(parentId) + "]");
+    }
 
     myPersistentFSContentAccessor.checkContentsStorageSanity(id);
     myPersistentFSAttributeAccessor.checkAttributesStorageSanity(id, usedAttributeRecordIds, validAttributeIds);
 
-    long length = connection.getRecords().getLength(id);
+    long length = records.getLength(id);
     assert length >= -1 : "Invalid file length found for " + name + ": " + length;
   }
 

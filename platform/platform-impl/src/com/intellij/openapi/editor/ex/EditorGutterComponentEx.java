@@ -81,8 +81,14 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract void setForceShowRightFreePaintersArea(boolean value);
 
+  /**
+   * Set the desired left area width or reset by passing <code>-1</code> value.
+   */
   public abstract void setLeftFreePaintersAreaWidth(int widthInPixels);
 
+  /**
+   * Set the desired right area width or reset by passing <code>-1</code> value.
+   */
   public abstract void setRightFreePaintersAreaWidth(int widthInPixels);
 
   public abstract void setInitialIconAreaWidth(int width);
@@ -90,6 +96,9 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public abstract @Nullable GutterMark getGutterRenderer(Point p);
 
   public abstract @Nullable Runnable setLoadingIconForCurrentGutterMark();
+
+  @ApiStatus.Internal
+  public abstract int getExtraLineMarkerFreePaintersAreaOffset();
 
   @ApiStatus.Internal
   public abstract boolean isInsideMarkerArea(@NotNull MouseEvent e);

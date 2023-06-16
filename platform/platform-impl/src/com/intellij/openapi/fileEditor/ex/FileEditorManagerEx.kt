@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.ex
 
 import com.intellij.ide.impl.DataValidators
@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.docking.DockContainer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -70,6 +71,15 @@ abstract class FileEditorManagerEx : FileEditorManager() {
    * @param file file to be closed. Cannot be null.
    */
   abstract fun closeFile(file: VirtualFile, window: EditorWindow)
+
+  /**
+   * Close editors for the file opened in a particular window.
+   * This method runs some checks before closing the window.
+   * E.g., confirmation dialog that can prevent the window from closing
+   * @param file file to be closed. Cannot be null.
+   * @return true if the window was closed; false otherwise
+   */
+  abstract fun closeFileWithChecks(file: VirtualFile, window: EditorWindow): Boolean
 
   abstract fun unsplitWindow()
 
@@ -163,6 +173,9 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   abstract fun openFile(file: VirtualFile,
                         window: EditorWindow?,
                         options: FileEditorOpenOptions = FileEditorOpenOptions()): FileEditorComposite
+
+  @Experimental
+  abstract suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions = FileEditorOpenOptions()): FileEditorComposite
 
   abstract fun isChanged(editor: EditorComposite): Boolean
 

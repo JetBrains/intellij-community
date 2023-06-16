@@ -74,7 +74,7 @@ internal class ProjectStoreTest {
       file.write(file.readText().replace("""<option name="AAvalue" value="foo" />""", """<option name="AAvalue" value="newValue" />"""))
 
       refreshProjectConfigDir(project)
-      StoreReloadManager.getInstance().reloadChangedStorageFiles()
+      StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
 
@@ -227,7 +227,7 @@ internal class ProjectStoreTest {
       val newProjectPath = tempDirManager.newPath()
       val newProject = projectManager.openProjectAsync(newProjectPath, OpenProjectTask { isNewProject = true; isRefreshVfsNeeded = false })!!
       newProject.useProjectAsync {
-        saveSettings(newProject, forceSavingAllSettings = true)
+        newProject.stateStore.save(forceSavingAllSettings = true)
         val miscXml = newProjectPath.resolve(".idea/misc.xml").readText()
         assertThat(miscXml).contains("AATestComponent")
         assertThat(miscXml).contains("""<option name="AAvalue" value="foo" />""")

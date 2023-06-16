@@ -1,9 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
+import com.intellij.openapi.application.impl.assertNotReferenced
 import com.intellij.openapi.application.impl.assertReferenced
-import com.intellij.openapi.progress.timeoutRunBlocking
-import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
@@ -163,16 +162,28 @@ class IntersectionScopeTest {
   }
 
   @Test
+  fun `attach to cancelled parent cancels child`() {
+    val parentJob: CompletableJob = SupervisorJob()
+    parentJob.cancel()
+    Assertions.assertTrue(parentJob.isCancelled)
+
+    val childJob: CompletableJob = SupervisorJob()
+    Assertions.assertFalse(childJob.isCancelled)
+
+    CoroutineScope(childJob).attachAsChildTo(CoroutineScope(parentJob))
+    Assertions.assertTrue(childJob.isCancelled)
+  }
+
+  @Test
   fun `completed child does not leak through parent`(): Unit = timeoutRunBlocking {
     val parentJob = Job()
-    val childJob = launch(start = CoroutineStart.UNDISPATCHED) {
-      attachAsChildTo(CoroutineScope(parentJob))
-      awaitCancellation()
-    }
+    val childJob = Job()
+    CoroutineScope(childJob).attachAsChildTo(CoroutineScope(parentJob))
     assertReferenced(parentJob, childJob)
+    val childHandleJob = parentJob.children.single()
     childJob.cancel()
-    parentJob.children.single().join() // wait for completion of job which waits for completion of the child
-    LeakHunter.checkLeak(parentJob, childJob::class.java)
+    childHandleJob.join()
+    assertNotReferenced(parentJob, childJob)
   }
 }
 
@@ -217,7 +228,7 @@ private fun CoroutineScope.parentJob(): Job? {
   return job().parent()
 }
 
-private fun Job.parent(): Job? {
+internal fun Job.parent(): Job? {
   @Suppress("DEPRECATION_ERROR", "INVISIBLE_MEMBER")
   @OptIn(InternalCoroutinesApi::class)
   return (this as JobSupport).parentHandle?.parent

@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.starters.shared.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.shared.LibraryInfo
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.util.NlsSafe
@@ -41,7 +41,7 @@ class LibraryDescriptionPanel : ScrollablePanel(VerticalLayout(DEFAULT_VGAP)) {
     this.border = JBUI.Borders.empty(DEFAULT_VGAP)
 
     val headerPanel = JPanel(BorderLayout())
-    descriptionHeader.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD)
+    descriptionHeader.font = StartupUiUtil.labelFont.deriveFont(Font.BOLD)
     descriptionHeader.border = JBUI.Borders.empty(DEFAULT_VGAP, 0)
 
     descriptionVersion.icon = AllIcons.General.BalloonWarning

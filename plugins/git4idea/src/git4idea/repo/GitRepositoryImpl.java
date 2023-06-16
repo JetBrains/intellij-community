@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,8 +8,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.VcsScopeKt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.vcs.log.Hash;
 import git4idea.GitDisposable;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
@@ -23,14 +25,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Objects;
+import java.util.*;
 
-import static com.intellij.diagnostic.telemetry.TraceKt.computeWithSpan;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
 import static com.intellij.util.ObjectUtils.notNull;
+import static git4idea.repo.GitRecentCheckoutBranches.collectRecentCheckoutBranches;
 
 public final class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   private static final Logger LOG = Logger.getInstance(GitRepositoryImpl.class);
@@ -45,6 +45,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
   @NotNull private final GitRepositoryIgnoredFilesHolder myIgnoredRepositoryFilesHolder;
 
   @NotNull private volatile GitRepoInfo myInfo;
+  @NotNull private volatile List<GitLocalBranch> myRecentCheckoutBranches = Collections.emptyList();
 
   /**
    * @param rootDir Root of the repository (parent directory of '.git' file/directory).
@@ -206,7 +207,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
   @NotNull
   public GitBranchesCollection getBranches() {
     GitRepoInfo info = myInfo;
-    return new GitBranchesCollection(info.getLocalBranchesWithHashes(), info.getRemoteBranchesWithHashes());
+    return new GitBranchesCollection(info.getLocalBranchesWithHashes(), info.getRemoteBranchesWithHashes(), myRecentCheckoutBranches);
   }
 
   @Override
@@ -247,7 +248,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
 
   @NotNull
   private GitRepoInfo readRepoInfo() {
-    return computeWithSpan(TraceManager.INSTANCE.getTracer("vcs"), "reading Git repo info", span -> {
+    return computeWithSpan(TelemetryTracer.getInstance().getTracer(VcsScopeKt.VcsScope), "reading Git repo info", span -> {
       span.setAttribute("repository", getShortRepositoryName(this));
 
       File configFile = myRepositoryFiles.getConfigFile();
@@ -261,8 +262,10 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
         config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
       GitHooksInfo hooksInfo = myReader.readHooksInfo();
       Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
+      Map<GitLocalBranch, Hash> localBranches = new HashMap<>(state.getLocalBranches());
+      myRecentCheckoutBranches = collectRecentCheckoutBranches(this, branch -> localBranches.containsKey(branch));
       return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), new LinkedHashSet<>(remotes),
-                             new HashMap<>(state.getLocalBranches()), new HashMap<>(state.getRemoteBranches()),
+                             localBranches, new HashMap<>(state.getRemoteBranches()),
                              new LinkedHashSet<>(trackInfos),
                              submodules, hooksInfo, isShallow);
     });

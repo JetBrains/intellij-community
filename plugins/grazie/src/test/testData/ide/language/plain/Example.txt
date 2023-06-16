@@ -4,3 +4,7 @@
 За весь вечер она <warning descr="ne_proronila_ni">не проронила и слово</warning>.
 Собрание состоится в <warning descr="RU_COMPOUNDS">конференц зале</warning>.
 <warning descr="WORD_REPEAT_RULE">Он он</warning> ошибка.
+
+Ignoring code-like constructs:
+Defined field String name = "John"
+System.out.println("Hello " + name)

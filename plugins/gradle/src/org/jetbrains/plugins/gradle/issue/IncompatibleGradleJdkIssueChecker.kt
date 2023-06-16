@@ -65,20 +65,15 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
       }
     }
 
-    var isJavaGroovyCompatibilityIssue = false
-    var isJavaByteCodeCompatibilityIssue = false
-    if (javaVersionUsed != null && gradleVersionUsed != null && !isSupported(gradleVersionUsed, javaVersionUsed)) {
-      isJavaGroovyCompatibilityIssue = isJavaGroovyCompatibilityIssue(rootCauseText)
-      isJavaByteCodeCompatibilityIssue = isJavaByteCodeCompatibilityIssue(rootCauseText)
-    }
+    val isUnsupportedJavaVersionForGradle =
+      javaVersionUsed != null && gradleVersionUsed != null && !isSupported(gradleVersionUsed, javaVersionUsed)
 
-    if (!isUnsupportedClassVersionErrorIssue &&
+    if (!isUnsupportedJavaVersionForGradle &&
+        !isUnsupportedClassVersionErrorIssue &&
         !isUnsupportedJavaRuntimeIssue &&
         !isRemovedUnsafeDefineClassMethodInJDK11Issue &&
         !unableToStartDaemonProcessForJDK11 &&
-        !unableToStartDaemonProcessForJDK9 &&
-        !isJavaGroovyCompatibilityIssue &&
-        !isJavaByteCodeCompatibilityIssue) {
+        !unableToStartDaemonProcessForJDK9) {
       return null
     }
 
@@ -101,7 +96,7 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
           .append("Unsupported Java. \n") // title
           .append("Your build is currently configured to use $incompatibleJavaVersion. You need to use at least Java 7.")
       }
-      isJavaGroovyCompatibilityIssue || isJavaByteCodeCompatibilityIssue -> {
+      isUnsupportedJavaVersionForGradle -> {
         issueDescription
           .append("Unsupported Java. \n") // title
           .append("Your build is currently configured to use Java $javaVersionUsed and Gradle ${gradleVersionUsed!!.version}.")
@@ -169,14 +164,6 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
     }
   }
 
-  private fun isJavaGroovyCompatibilityIssue(rootCauseText: String): Boolean {
-    return rootCauseText.startsWith("java.lang.NoClassDefFoundError: Could not initialize class org.codehaus.groovy.")
-  }
-
-  private fun isJavaByteCodeCompatibilityIssue(rootCauseText: String): Boolean {
-    return rootCauseText.contains("Unsupported class file major version")
-  }
-
   override fun consumeBuildOutputFailureMessage(message: String,
                                                 failureCause: String,
                                                 stacktrace: String?,
@@ -184,8 +171,7 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
                                                 parentEventId: Any,
                                                 messageConsumer: Consumer<in BuildEvent>): Boolean {
     // JDK compatibility issues should be handled by IncompatibleGradleJdkIssueChecker.check method based on exceptions come from Gradle TAPI
-    if (failureCause.startsWith("Could not create service of type ") && failureCause.contains(" using BuildScopeServices.")) return true
-    return false
+    return failureCause.startsWith("Could not create service of type ") && failureCause.contains(" using BuildScopeServices.")
   }
 
   companion object {

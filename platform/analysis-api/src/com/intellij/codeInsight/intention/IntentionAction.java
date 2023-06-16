@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -28,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * Can be {@link com.intellij.openapi.project.DumbAware}.
  */
-public interface IntentionAction extends FileModifier {
+public interface IntentionAction extends FileModifier, CommonIntentionAction {
 
   IntentionAction[] EMPTY_ARRAY = new IntentionAction[0];
 
@@ -41,19 +40,6 @@ public interface IntentionAction extends FileModifier {
   @IntentionName
   @NotNull
   String getText();
-
-  /**
-   * Returns the name of the family of intentions.
-   * It is used to externalize the "auto-show" state of intentions.
-   * When the user clicks on a light bulb in the intention list,
-   * all intentions with the same family name get enabled/disabled.
-   * The name is also shown in the Settings tree.
-   *
-   * @return the intention family name.
-   */
-  @NotNull
-  @IntentionFamilyName
-  String getFamilyName();
 
   /**
    * Checks whether this intention is available at the caret position in the file.

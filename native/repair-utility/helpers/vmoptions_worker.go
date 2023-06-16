@@ -118,6 +118,9 @@ func checkXmxVsXms(options MappedVmoptions) (err error) {
 	if xmxInBytes == -1 {
 		return errors.New("Couldn't convert -Xmx=" + options["-Xmx"] + " to bytes. ")
 	}
+	if len(options["-Xms"]) < 1 {
+		return errors.New("VM option 'Xms' is not set")
+	}
 	xmsInBytes := toBytes(options["-Xms"])
 	if xmsInBytes == -1 {
 		return errors.New("Couldn't convert -Xms=" + options["-Xms"] + " to bytes. ")

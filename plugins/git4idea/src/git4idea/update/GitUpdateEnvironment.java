@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.update.SequentialUpdatesContext;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.PostponableLogRefresher;
 import git4idea.branch.GitBranchPair;
@@ -29,7 +28,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import static git4idea.GitUtil.isUnderGit;
 import static java.util.Arrays.asList;
 
 @Service(Service.Level.PROJECT)
@@ -58,11 +56,6 @@ public final class GitUpdateEnvironment implements UpdateEnvironment {
 
   @Override
   public boolean validateOptions(Collection<FilePath> filePaths) {
-    for (FilePath p : filePaths) {
-      if (!isUnderGit(p)) {
-        return false;
-      }
-    }
     return true;
   }
 

@@ -140,7 +140,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   }
 
   public @Nullable TextAttributes getCustomSeverityTextAttributes(@NotNull TextAttributesKey key) {
-    final SeverityBasedTextAttributes attributes = myMap.get(key.getExternalName());
+    SeverityBasedTextAttributes attributes = myMap.get(key.getExternalName());
     return attributes != null ? attributes.getAttributes() : null;
   }
 

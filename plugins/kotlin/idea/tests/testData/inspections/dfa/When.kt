@@ -173,3 +173,11 @@ fun test3(i: Int): Int {
 
     return (r + l + l1 + l2).length
 }
+fun boxedLabel(v : Boolean){
+    // KTIJ-24926
+    val maybeInt: Int? = if (v) null else 42
+    when (42){
+        maybeInt -> println(<weak_warning descr="Value of 'v' is always false">v</weak_warning>)
+        else -> println(2)
+    }
+}

@@ -121,26 +121,27 @@ public abstract class IndexedContainer {
   public static IndexedContainer arrayContainerWithBound(@NotNull PsiArrayAccessExpression arrayAccessExpression,
                                                          @NotNull PsiExpression bound) {
     PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
-    if (arrayExpression instanceof PsiReferenceExpression reference &&
-        reference.resolve() instanceof PsiVariable arrayVariable) {
-      PsiExpression initializer = arrayVariable.getInitializer();
-      if (!(initializer instanceof PsiNewExpression newExpression)) {
-        return null;
-      }
-      PsiExpression[] dimensions = newExpression.getArrayDimensions();
-      if (dimensions.length != 1) {
-        return null;
-      }
-      PsiExpression dimension = dimensions[0];
-      PsiVariable dimensionVariable = ExpressionUtils.resolveVariable(dimension);
-      PsiVariable boundVariable = ExpressionUtils.resolveVariable(bound);
-      if (dimensionVariable == null || boundVariable == null || !dimensionVariable.isEquivalentTo(boundVariable)) {
-        return null;
-      }
-      if ((VariableAccessUtils.variableIsAssigned(dimensionVariable)) ||
-          (VariableAccessUtils.variableIsAssigned(arrayVariable))) {
-        return null;
-      }
+    if (!(arrayExpression instanceof PsiReferenceExpression reference) ||
+        !(reference.resolve() instanceof PsiVariable arrayVariable)) {
+      return null;
+    }
+    PsiExpression initializer = arrayVariable.getInitializer();
+    if (!(initializer instanceof PsiNewExpression newExpression)) {
+      return null;
+    }
+    PsiExpression[] dimensions = newExpression.getArrayDimensions();
+    if (dimensions.length != 1) {
+      return null;
+    }
+    PsiExpression dimension = dimensions[0];
+    PsiVariable dimensionVariable = ExpressionUtils.resolveVariable(dimension);
+    PsiVariable boundVariable = ExpressionUtils.resolveVariable(bound);
+    if (dimensionVariable == null || boundVariable == null || !dimensionVariable.isEquivalentTo(boundVariable)) {
+      return null;
+    }
+    if ((VariableAccessUtils.variableIsAssigned(dimensionVariable)) ||
+        (VariableAccessUtils.variableIsAssigned(arrayVariable))) {
+      return null;
     }
     return new ArrayIndexedContainer(arrayExpression);
   }

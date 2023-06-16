@@ -105,6 +105,11 @@ public final class GeneralCodeStylePropertyMapper extends AbstractCodeStylePrope
     }
 
     @Override
+    public String getPropertyName() {
+      return "end_of_line";
+    }
+
+    @Override
     protected boolean isEmpty(@NotNull String value) {
       return StringUtil.isEmpty(value);
     }

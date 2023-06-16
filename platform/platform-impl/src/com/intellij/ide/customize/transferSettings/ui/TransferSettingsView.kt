@@ -16,10 +16,10 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class TransferSettingsView(private val config: TransferSettingsConfiguration) {
-  val panel by lazy { initPanel() }
+  val panel: JPanel by lazy { initPanel() }
   val selectedIde: BaseIdeVersion? get() = leftPanel.list.selectedValue
 
-  val model = TransferSettingsModel(config)
+  val model: TransferSettingsModel = TransferSettingsModel(config)
 
   private val leftPanel = TransferSettingsLeftPanel(model.listModel)
   private val contentPanel = JPanel(MigLayout("ins 0, novisualpadding, fill"))

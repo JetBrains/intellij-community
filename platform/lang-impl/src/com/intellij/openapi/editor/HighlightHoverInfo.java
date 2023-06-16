@@ -32,18 +32,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.openapi.editor.EditorMouseHoverPopupManager.LOG;
 import static com.intellij.openapi.editor.EditorMouseHoverPopupManager.validatePopupSize;
 
-final class HighlightHoverInfo {
-
+record HighlightHoverInfo(@Tooltip @NotNull String tooltip, @Nullable TooltipAction tooltipAction) {
   private static final Key<Boolean> DISABLE_BINDING = Key.create("EditorMouseHoverPopupManager.disable.binding");
   private static final TooltipGroup EDITOR_INFO_GROUP = new TooltipGroup("EDITOR_INFO_GROUP", 0);
-
-  private final @Tooltip @NotNull String tooltip;
-  private final @Nullable TooltipAction tooltipAction;
-
-  private HighlightHoverInfo(@Tooltip @NotNull String tooltip, @Nullable TooltipAction tooltipAction) {
-    this.tooltip = tooltip;
-    this.tooltipAction = tooltipAction;
-  }
 
   @Nullable JComponent createHighlightInfoComponent(
     @NotNull Editor editor,

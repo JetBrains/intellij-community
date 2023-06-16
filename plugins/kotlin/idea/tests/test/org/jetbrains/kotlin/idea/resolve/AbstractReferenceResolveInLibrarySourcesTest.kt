@@ -36,7 +36,9 @@ abstract class AbstractReferenceResolveInLibrarySourcesTest : KotlinLightCodeIns
 
         fixture.configureByFile(fileName())
 
-        val expectedResolveData = AbstractReferenceResolveTest.readResolveData(fixture.file!!.text, 0)
+        val fileText = fixture.file!!.text
+        val expectedReferences = AbstractReferenceResolveTest.getExpectedReferences(fileText, 0, "REF")
+        val expectedResolveData = AbstractReferenceResolveTest.readResolveData(fileText, expectedReferences)
 
         val gotoData = NavigationTestUtils.invokeGotoImplementations(fixture.editor, fixture.file)!!
         Assert.assertEquals("Single target expected for original file", 1, gotoData.targets.size)
@@ -44,7 +46,7 @@ abstract class AbstractReferenceResolveInLibrarySourcesTest : KotlinLightCodeIns
         val testedPsiElement = gotoData.targets[0].navigationElement
         val testedElementFile = testedPsiElement.containingFile!!
 
-        val lineContext = InTextDirectivesUtils.findStringWithPrefixes(fixture.file!!.text, "CONTEXT:")
+        val lineContext = InTextDirectivesUtils.findStringWithPrefixes(fileText, "CONTEXT:")
             ?: throw AssertionFailedError("'CONTEXT: ' directive is expected to set up position in library file: ${testedElementFile.name}")
 
         val inContextOffset = lineContext.indexOf(REF_CARET_MARKER)

@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -32,6 +31,8 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
+
+import java.util.function.Consumer;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
@@ -168,7 +169,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   }
 
   @Override
-  protected void showScopeChooser(GrControlFlowOwner[] scopes, Pass<GrControlFlowOwner> callback, Editor editor) {
+  protected void showScopeChooser(GrControlFlowOwner[] scopes, Consumer<? super GrControlFlowOwner> callback, Editor editor) {
     //todo do nothing right now
   }
 

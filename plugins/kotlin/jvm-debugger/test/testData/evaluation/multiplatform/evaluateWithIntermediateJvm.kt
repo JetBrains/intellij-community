@@ -12,9 +12,9 @@ fun commonContext(){
 // EXPRESSION: debugMe(42)
 // RESULT: "JVM 42": Ljava/lang/String;
 
-// MODULE: jvm
+// MODULE: jvm(intermediateJvm)
 // FILE: jvm.kt
-// DEPENDS_ON: intermediateJvm
+
 actual fun debugMe(i: Int): String {
     return "JVM $i"
 }
@@ -22,7 +22,6 @@ fun main(){
     commonContext()
 }
 
-// MODULE: intermediateJvm
+// MODULE: intermediateJvm(common)
 // FILE: intermediate.kt
-// DEPENDS_ON: common
 // PLATFORM: jvm

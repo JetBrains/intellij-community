@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.storage
 /**
  * Represents a reference to an entity inside of [WorkspaceEntity].
  *
- * The reference can be obtained via [EntityStorage.createReference].
+ * The reference can be obtained via [WorkspaceEntity.createReference].
  *
  * The reference will return the same entity for the same storage, but the changes in storages should be tracked if the client want to
  *   use this reference between different storages. For example, if the referred entity was removed from the storage, this reference may

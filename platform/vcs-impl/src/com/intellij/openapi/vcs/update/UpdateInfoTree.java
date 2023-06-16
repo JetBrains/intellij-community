@@ -165,7 +165,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
     myTree.setCellRenderer(new UpdateTreeCellRenderer());
     TreeUtil.installActions(myTree);
-    new TreeSpeedSearch(myTree, true, path -> {
+    TreeSpeedSearch.installOn(myTree, true, path -> {
       Object last = path.getLastPathComponent();
       if (last instanceof AbstractTreeNode) {
         return ((AbstractTreeNode)last).getText();

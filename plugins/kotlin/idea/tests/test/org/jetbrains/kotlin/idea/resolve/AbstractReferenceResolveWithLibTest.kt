@@ -5,25 +5,29 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiDelegateReference
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.AstAccessControl.ALLOW_AST_ACCESS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.AstAccessControl.execute
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.MockLibraryFacility
-import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import java.io.File
 
 abstract class AbstractReferenceResolveWithLibTest : AbstractReferenceResolveTest() {
-    private companion object {
-        val MOCK_SOURCES_BASE = IDEA_TEST_DATA_DIR.resolve("resolve/referenceWithLib")
-    }
+    protected lateinit var mockLibraryFacility: MockLibraryFacility
+        private set
 
-    private lateinit var mockLibraryFacility: MockLibraryFacility
+    protected val testDirectoryPath: String
+        get() = KotlinTestUtils.getTestDataFileName(this::class.java, this.name)!!
+
+    protected open val attachLibrarySources: Boolean
+        get() = true
+
+    override fun fileName(): String {
+        return KotlinTestUtils.getTestDataFileName(this::class.java, this.name) + "/src/" + getTestName(true) + ".kt"
+    }
 
     override fun setUp() {
         super.setUp()
-        mockLibraryFacility = MockLibraryFacility(File(MOCK_SOURCES_BASE, getTestName(true) + "Src"), attachSources = false)
-        mockLibraryFacility.setUp(module)
+
+        val libraryDir = testDataDirectory.resolve(testDirectoryPath).resolve("lib")
+        mockLibraryFacility = MockLibraryFacility(libraryDir, attachLibrarySources).apply { setUp(module) }
     }
 
     override fun tearDown() {
@@ -51,5 +55,20 @@ abstract class AbstractReferenceResolveWithLibTest : AbstractReferenceResolveTes
                 return reference.toString()
             }
         }
+    }
+}
+
+abstract class AbstractReferenceResolveWithCompiledLibTest : AbstractReferenceResolveWithLibTest() {
+    override val attachLibrarySources: Boolean
+        get() = false
+
+    override fun getExpectedReferences(text: String, index: Int): List<String> {
+        // Check references to compiled elements first, then fallback to the shared 'REF' ones
+        val decompiledReferences = getExpectedReferences(text, index, "CLS_REF")
+        if (decompiledReferences.isNotEmpty()) {
+            return decompiledReferences
+        }
+
+        return super.getExpectedReferences(text, index)
     }
 }

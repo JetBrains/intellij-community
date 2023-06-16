@@ -3,11 +3,9 @@ package com.intellij.ide.ui.laf;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.ColoredSideBorder;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.TableActions;
 import com.intellij.ui.plaf.beg.*;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import kotlin.Pair;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +46,7 @@ public final class IdeaLaf extends MetalLookAndFeel {
 
   @SuppressWarnings("HardCodedStringLiteral")
   static void initIdeaDefaults(UIDefaults defaults) {
+    fillFallbackDefaults(defaults);
     defaults.put("Menu.maxGutterIconWidth", 18);
     defaults.put("MenuItem.maxGutterIconWidth", 18);
     // TODO[vova,anton] REMOVE!!! INVESTIGATE??? Borland???
@@ -70,7 +69,7 @@ public final class IdeaLaf extends MetalLookAndFeel {
     defaults.put("TableUI", BegTableUI.class.getName());
     defaults.put("TreeUI", BegTreeUI.class.getName());
 
-    defaults.put("TabbedPane.tabInsets", ExperimentalUI.isNewUI() ? JBUI.insets(0, 12) : new Insets(0, 4, 0, 4));
+    defaults.put("TabbedPane.tabInsets", new Insets(0, 4, 0, 4));
     defaults.put("ToolTip.background", TOOLTIP_BACKGROUND_COLOR);
     defaults.put("ToolTip.border", new ColoredSideBorder(Color.gray, Color.gray, Color.black, Color.black, 1));
     defaults.put("Tree.ancestorInputMap", null);
@@ -82,11 +81,6 @@ public final class IdeaLaf extends MetalLookAndFeel {
     defaults.put("OptionPane.informationIcon", AllIcons.General.InformationDialog);
     defaults.put("OptionPane.warningIcon", AllIcons.General.WarningDialog);
     defaults.put("OptionPane.questionIcon", AllIcons.General.QuestionDialog);
-    //defaults.put("Tree.openIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeOpen.gif"));
-    //defaults.put("Tree.closedIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeClosed.gif"));
-    //defaults.put("Tree.leafIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeLeaf.gif"));
-    //defaults.put("Tree.expandedIcon", WindowsTreeUI.ExpandedIcon.createExpandedIcon());
-    //defaults.put("Tree.collapsedIcon", WindowsTreeUI.CollapsedIcon.createCollapsedIcon());
     defaults.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] {
                        "ctrl C", "copy",
                        "ctrl V", "paste",
@@ -138,4 +132,16 @@ public final class IdeaLaf extends MetalLookAndFeel {
                            "F2", "startEditing"
          }));
   }
+
+  static void fillFallbackDefaults(UIDefaults defaults) {
+    // These icons are only needed to prevent Swing from trying to fetch defaults with AWT ImageFetcher threads (IDEA-322089),
+    // but might as well just put something sensibly-looking there, just in case they show up due to some bug:
+    defaults.put("Tree.openIcon", AllIcons.Nodes.Folder);
+    defaults.put("Tree.closedIcon", AllIcons.Nodes.Folder);
+    defaults.put("Tree.leafIcon", AllIcons.FileTypes.Any_type);
+    // These two are actually set by our themes, so we don't want to override them here:
+    //defaults.put("Tree.expandedIcon", AllIcons.Toolbar.Expand);
+    //defaults.put("Tree.collapsedIcon", AllIcons.Actions.ArrowExpand);
+  }
+
 }

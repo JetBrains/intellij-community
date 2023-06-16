@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
 /**
- * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 5 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements and pseudo-classes.
+ * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are6 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.
  * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -24,7 +24,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "pseudo-elements",
     "pseudo-classes",
     "functions",
-    "classes"
+    "classes",
+    "parts"
 })
 public class Css implements CssContributionsHost
 {
@@ -64,6 +65,13 @@ public class Css implements CssContributionsHost
     @JsonProperty("classes")
     @JsonPropertyDescription("CSS classes")
     private List<CssGenericItem> classes = new ArrayList<CssGenericItem>();
+    /**
+     * CSS parts
+     * 
+     */
+    @JsonProperty("parts")
+    @JsonPropertyDescription("CSS parts")
+    private List<CssGenericItem> parts = new ArrayList<CssGenericItem>();
     @JsonIgnore
     private Map<String, GenericCssContributions> additionalProperties = new HashMap<String, GenericCssContributions>();
 
@@ -155,6 +163,24 @@ public class Css implements CssContributionsHost
     @JsonProperty("classes")
     public void setClasses(List<CssGenericItem> classes) {
         this.classes = classes;
+    }
+
+    /**
+     * CSS parts
+     * 
+     */
+    @JsonProperty("parts")
+    public List<CssGenericItem> getParts() {
+        return parts;
+    }
+
+    /**
+     * CSS parts
+     * 
+     */
+    @JsonProperty("parts")
+    public void setParts(List<CssGenericItem> parts) {
+        this.parts = parts;
     }
 
     @JsonAnyGetter

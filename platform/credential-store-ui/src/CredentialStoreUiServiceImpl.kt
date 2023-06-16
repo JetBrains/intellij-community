@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
-import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
+import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
@@ -30,14 +30,14 @@ class CredentialStoreUiServiceImpl : CredentialStoreUiService {
     }
   }
 
-  override fun showChangeMasterPasswordDialog(contextComponent: Component?,
-                                              setNewMasterPassword: (current: CharArray, new: CharArray) -> Boolean): Boolean =
-    doShowChangeMasterPasswordDialog(contextComponent, setNewMasterPassword)
+  override fun showChangeMainPasswordDialog(contextComponent: Component?,
+                                            setNewMainPassword: (current: CharArray, new: CharArray) -> Boolean): Boolean =
+    doShowChangeMasterPasswordDialog(contextComponent, setNewMainPassword)
 
-  override fun showRequestMasterPasswordDialog(@DialogTitle title: String,
-                                               @DialogMessage topNote: String?,
-                                               contextComponent: Component?,
-                                               @DialogMessage ok: (value: ByteArray) -> String?): Boolean =
+  override fun showRequestMainPasswordDialog(@DialogTitle title: String,
+                                             @DialogMessage topNote: String?,
+                                             contextComponent: Component?,
+                                             @DialogMessage ok: (value: ByteArray) -> String?): Boolean =
     doShowRequestMasterPasswordDialog(title, topNote, contextComponent, ok)
 
   override fun showErrorMessage(parent: Component?, title: String, message: String) {
@@ -121,7 +121,7 @@ internal fun doShowChangeMasterPasswordDialog(contextComponent: Component?,
           return@dialog errors
         }
       }
-      catch (e: IncorrectMasterPasswordException) {
+      catch (e: IncorrectMainPasswordException) {
         errors.add(
           ValidationInfo(CredentialStoreBundle.message("kee.pass.validation.info.current.password.incorrect"), currentPasswordField))
         new?.fill(0.toChar())

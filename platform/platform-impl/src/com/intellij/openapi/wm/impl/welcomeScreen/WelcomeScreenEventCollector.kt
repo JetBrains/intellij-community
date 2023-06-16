@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.ConfigImportHelper
@@ -13,7 +14,7 @@ import javax.swing.UIManager
 class WelcomeScreenEventCollector : CounterUsagesCollector() {
   internal enum class TabType { TabNavProject, TabNavCustomize, TabNavPlugins, TabNavTutorials, TabNavOther }
 
-  override fun getGroup() = GROUP
+  override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
 
@@ -41,35 +42,35 @@ class WelcomeScreenEventCollector : CounterUsagesCollector() {
     private val keymapChanged = GROUP.registerEvent("keymap.changed", EventFields.StringValidatedByEnum("keymap_name", "keymaps"))
     private val pluginsModified = GROUP.registerEvent("plugins.modified")
 
-    internal val debuggerTabProcessesSearchUsed = GROUP.registerEvent("debugger.processes.search")
-    internal val debuggerAttachUsed = GROUP.registerEvent("debugger.attach")
+    internal val debuggerTabProcessesSearchUsed: EventId = GROUP.registerEvent("debugger.processes.search")
+    internal val debuggerAttachUsed: EventId = GROUP.registerEvent("debugger.attach")
 
     @JvmStatic
-    fun logWelcomeScreenShown() = shown.log(ConfigImportHelper.isFirstSession(), ConfigImportHelper.isConfigImported())
+    fun logWelcomeScreenShown(): Unit = shown.log(ConfigImportHelper.isFirstSession(), ConfigImportHelper.isConfigImported())
 
     @JvmStatic
-    fun logWelcomeScreenHide() = hide.log()
+    fun logWelcomeScreenHide(): Unit = hide.log()
 
     @JvmStatic
-    fun logTabSelected(selectedTab: WelcomeScreenTab) = tabSelected.log(
+    fun logTabSelected(selectedTab: WelcomeScreenTab): Unit = tabSelected.log(
       (selectedTab as? TabbedWelcomeScreen.DefaultWelcomeScreenTab)?.type ?: TabType.TabNavOther)
 
     @JvmStatic
-    fun logProjectSearchUsed() = projectSearchUsed.log()
+    fun logProjectSearchUsed(): Unit = projectSearchUsed.log()
 
-    fun logLafChanged(laf: UIManager.LookAndFeelInfo, osSync: Boolean) = lafChanged.log(laf.name, osSync)
+    fun logLafChanged(laf: UIManager.LookAndFeelInfo, osSync: Boolean): Unit = lafChanged.log(laf.name, osSync)
 
-    fun logIdeFontChanged(oldSize: Float, newSize: Float) = ideFontChanged.log(
+    fun logIdeFontChanged(oldSize: Float, newSize: Float): Unit = ideFontChanged.log(
       OLD_FONT_SIZE.with((oldSize + 0.5).toInt()), NEW_FONT_SIZE.with((newSize + 0.5).toInt()),
       OLD_FONT_SIZE_2D.with(oldSize), NEW_FONT_SIZE_2D.with(newSize))
 
-    fun logEditorFontChanged(oldSize: Float, newSize: Float) = editorFontChanged.log(
+    fun logEditorFontChanged(oldSize: Float, newSize: Float): Unit = editorFontChanged.log(
       OLD_FONT_SIZE.with((oldSize + 0.5).toInt()), NEW_FONT_SIZE.with((newSize + 0.5).toInt()),
       OLD_FONT_SIZE_2D.with(oldSize), NEW_FONT_SIZE_2D.with(newSize))
 
-    fun logColorBlindnessChanged(enabled: Boolean) = colorBlindnessChanged.log(enabled)
+    fun logColorBlindnessChanged(enabled: Boolean): Unit = colorBlindnessChanged.log(enabled)
 
-    fun logKeymapChanged(keymap: Keymap) = keymapChanged.log(keymap.name)
+    fun logKeymapChanged(keymap: Keymap): Unit = keymapChanged.log(keymap.name)
 
     @JvmStatic
     fun logPluginsModified(): Unit = pluginsModified.log()

@@ -11,7 +11,6 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.PopupFactoryImpl.ActionItem
 import com.intellij.ui.popup.list.PopupListElementRenderer
-import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
@@ -153,9 +152,8 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
           }
         }
       }
-      PopupImplUtil.setPopupToggleButton(popup, this)
       popup.setShowSubmenuOnHover(true)
-      popup.showUnderneathOf(event.inputEvent.component)
+      popup.showUnderneathOf(event.inputEvent!!.component)
       return popup
     }
   }

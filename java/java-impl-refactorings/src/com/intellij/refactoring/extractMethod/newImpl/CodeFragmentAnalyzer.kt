@@ -62,12 +62,14 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   fun findExternalReferences(): List<ExternalReference> {
     return ControlFlowUtil.getInputVariables(flow, flowRange.first, flowRange.last)
       .filterNot { variable -> variable in this }
-      .sortedWith( Comparator { v1: PsiVariable, v2: PsiVariable -> when {
-          v1.type is PsiEllipsisType -> 1
-          v2.type is PsiEllipsisType -> -1
-          else -> v1.textOffset - v2.textOffset
-      }})
       .map { variable -> ExternalReference(variable, findVariableReferences(variable)) }
+      .sortedBy { externalReference ->
+        if (externalReference.variable is PsiParameter) {
+          externalReference.variable.textRange.startOffset
+        } else {
+          externalReference.references.minOf { reference -> reference.textRange.startOffset }
+        }
+      }
   }
 
   fun findUsedVariablesAfter(): List<PsiVariable> {
@@ -124,7 +126,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
     val usedFields = ArrayList<MemberUsage>()
     val visitor = object : ClassMemberReferencesVisitor(targetClass) {
       override fun visitClassMemberReferenceElement(classMember: PsiMember, classMemberReference: PsiJavaCodeReferenceElement) {
-        val expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiReferenceExpression::class.java, false)
+        val expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiExpression::class.java, false)
         if (expression != null && !classMember.hasModifierProperty(PsiModifier.STATIC)) {
           usedFields += MemberUsage(classMember, expression)
         }
@@ -164,19 +166,15 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
   private fun findDefaultExits(): List<Int> {
     val lastInstruction = flow.instructions[flowRange.last - 1]
-    if (isInstructionReachable(flowRange.last - 1)) {
-      val defaultExits = when (lastInstruction) {
-        is ThrowToInstruction -> emptyList()
-        is GoToInstruction -> listOf(lastInstruction.offset)
-        is ConditionalThrowToInstruction -> listOf(flowRange.last)
-        is BranchingInstruction -> listOf(lastInstruction.offset, flowRange.last)
-        else -> listOf(flowRange.last)
-      }
-      return defaultExits.filterNot { it in flowRange.first until flowRange.last }
+    if (!isInstructionReachable(flowRange.last - 1)) return emptyList()
+    val defaultExits = when (lastInstruction) {
+      is ThrowToInstruction -> emptyList()
+      is GoToInstruction -> listOf(lastInstruction.offset)
+      is ConditionalThrowToInstruction -> listOf(flowRange.last)
+      is BranchingInstruction -> listOf(lastInstruction.offset, flowRange.last)
+      else -> listOf(flowRange.last)
     }
-    else {
-      return emptyList()
-    }
+    return defaultExits.filterNot { it in flowRange.first until flowRange.last }
   }
 
   private fun findExitPoints(): List<Int> {
@@ -250,8 +248,8 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
     fun inferNullability(place: PsiElement, probeExpression: String?): Nullability {
       if (probeExpression == null) return Nullability.UNKNOWN
       val factory = PsiElementFactory.getInstance(place.project)
-      val sourceClass = findClassMember(place)?.containingClass ?: return Nullability.UNKNOWN
-      val copyFile = sourceClass.containingFile.copy() as PsiFile
+      val context = PsiTreeUtil.getContextOfType(place, PsiClass::class.java) ?: return Nullability.UNKNOWN
+      val copyFile = context.containingFile.copy() as PsiFile
       val copyPlace = PsiTreeUtil.findSameElementInCopy(place, copyFile)
       val probeStatement = factory.createStatementFromText("return $probeExpression;", null)
 

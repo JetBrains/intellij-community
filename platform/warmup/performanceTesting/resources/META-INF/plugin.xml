@@ -1,0 +1,18 @@
+<idea-plugin implementation-detail="true" package="com.intellij.warmup">
+  <name>Performance Testing (Warmup)</name>
+  <id>com.jetbrains.warmup.performanceTesting</id>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[
+      Plugin extends the plugin Performance Testing and has commands which
+      call some related to warmup functionality.
+      ]]></description>
+
+  <dependencies>
+    <plugin id="com.jetbrains.performancePlugin"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.jetbrains.performancePlugin">
+    <commandProvider implementation="com.intellij.warmup.WarmupCommandProvider"/>
+  </extensions>
+</idea-plugin>

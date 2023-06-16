@@ -151,7 +151,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
         })
         .submit(AppExecutorUtil.getAppExecutorService());
     });
-    new ComboboxSpeedSearch(myPropertiesFile);
+    ComboboxSpeedSearch.installOn(myPropertiesFile);
     LabeledComponent<JComboBox<String>> component = new LabeledComponent<>();
     component.setText(JavaI18nBundle.message("property.file"));
     component.setComponent(myPropertiesFile);

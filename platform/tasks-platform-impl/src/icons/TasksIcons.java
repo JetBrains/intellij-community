@@ -14,6 +14,6 @@ public final class TasksIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, TasksIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Bug = load("icons/bug.svg", 1925783017, 0);
-  /** 16x16 */ public static final @NotNull Icon Exception = load("icons/exception.svg", 2109011466, 0);
+  /** 16x16 */ public static final @NotNull Icon Bug = load("icons/bug.svg", -2040440947, 0);
+  /** 16x16 */ public static final @NotNull Icon Exception = load("icons/exception.svg", -1996317447, 0);
 }

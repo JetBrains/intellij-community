@@ -1,27 +1,26 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 pub mod utils;
 
 #[cfg(test)]
 mod tests {
-    use std::fs::{File, create_dir_all};
-    use std::io::Write;
-    use std::path::PathBuf;
-    use log::info;
-    use rstest::*;
-    use crate::utils::*;
-
-    #[cfg(target_os = "linux")] use {
-        xplat_launcher::{is_control_group_matches_docker, is_docker_env_file_exist, is_docker_init_file_exist}
+    #[cfg(target_os = "linux")]
+    use {
+        std::fs::{create_dir_all, File},
+        std::io::Write,
+        std::path::PathBuf,
+        log::info,
+        xplat_launcher::docker::{is_control_group_matches_docker, is_docker_env_file_exist, is_docker_init_file_exist},
+        crate::utils::*
     };
 
-    #[cfg(target_os = "windows")] use {
-        xplat_launcher::is_service_present
-    };
+    #[cfg(target_os = "windows")]
+    use xplat_launcher::docker::is_service_present;
 
+    #[cfg(target_os = "linux")]
     const TEST_CLASS_DIR_NAME: &str = "DockerTestData";
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_docker_env_file_exist_file_exist() {
         let env = prepare_env();
@@ -31,7 +30,7 @@ mod tests {
         assert!(is_docker_env_file_exist(Some(home_dir)).unwrap());
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_docker_env_file_exist_file_not_exist() {
         let env = prepare_env();
@@ -41,7 +40,7 @@ mod tests {
         assert!(!is_docker_env_file_exist(Some(home_dir)).unwrap());
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_docker_env_file_exist_root_not_exist() {
         let env = prepare_env();
@@ -52,7 +51,7 @@ mod tests {
         );
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_docker_init_file_exist_file_exist() {
         let env = prepare_env();
@@ -62,7 +61,7 @@ mod tests {
         assert!(is_docker_init_file_exist(Some(home_dir)).unwrap());
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_docker_init_file_exist_file_not_exist() {
         let env = prepare_env();
@@ -72,7 +71,7 @@ mod tests {
         assert!(!is_docker_init_file_exist(Some(home_dir)).unwrap());
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_docker_init_file_exist_root_not_exist() {
         let env = prepare_env();
@@ -83,7 +82,7 @@ mod tests {
         );
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_control_group_matches_docker_contains_docker() {
         let env = prepare_env();
@@ -102,10 +101,10 @@ mod tests {
 
         create_cgroup_file(&cgroup_dir, content);
 
-        assert!(is_control_group_matches_docker(Some(cgroup_dir)));
+        assert!(is_control_group_matches_docker(Some(cgroup_dir)).unwrap());
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_control_group_matches_docker_does_not_contain_docker() {
         let env = prepare_env();
@@ -124,28 +123,28 @@ mod tests {
 
         create_cgroup_file(&cgroup_dir, cgroup_content);
 
-        assert!(!is_control_group_matches_docker(Some(cgroup_dir)));
+        assert!(!is_control_group_matches_docker(Some(cgroup_dir)).unwrap());
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "windows")]
     fn is_service_present_service_exist() {
-        assert!(is_service_present("Dnscache"));
+        assert!(is_service_present("Dnscache").unwrap());
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "windows")]
     fn is_service_present_service_not_exist() {
-        assert!(!is_service_present("ServiceDoesNotExist"));
+        assert!(!is_service_present("ServiceDoesNotExist").unwrap());
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "linux")]
     fn is_control_group_matches_docker_in_container() {
         // TODO: Start a real container from java image with a cgroup file and get result.
     }
 
-    #[rstest]
+    #[test]
     #[cfg(target_os = "windows")]
     fn is_service_present_in_container() {
         // TODO: Start a real container from win image with running 'cexecsvc' service running and get result.
@@ -156,20 +155,14 @@ mod tests {
      *    - Prepare temp directory to store temp files
      *    - Prepare common test environment
      */
+    #[cfg(target_os = "linux")]
     fn prepare_env() -> DockerTestEnvironment {
         info!("Prepare Docker test environment");
         info!("Preparing test environment");
-        let layout_spec = LayoutSpec {
-            launcher_location: LauncherLocation::MainBin,
-            java_type: JavaType::JBR
-        };
-
-        let environment = prepare_test_env(&layout_spec);
+        let environment = prepare_test_env(LauncherLocation::Standard);
 
         info!("Preparing temp directory");
-        let test_temp_directory = environment.test_root_dir.path().join(TEST_CLASS_DIR_NAME);
-        create_dir_all(&test_temp_directory)
-            .expect(&format!("Unable to create test class temp directory: {}", test_temp_directory.display()));
+        let test_temp_directory = environment.create_temp_dir(TEST_CLASS_DIR_NAME);
 
         return DockerTestEnvironment { test_temp_directory }
     }
@@ -177,6 +170,7 @@ mod tests {
     /**
      * Create a file with a provided name in a specified directory and validate creation result.
      */
+    #[cfg(target_os = "linux")]
     fn create_file_in_dir(path: &PathBuf, file_name: &str) -> File {
         if !path.exists() {
             create_dir_all(&path).expect(format!(
@@ -195,6 +189,7 @@ mod tests {
     /**
      * Create a cgroup file with a content in a specified directory.
      */
+    #[cfg(target_os = "linux")]
     fn create_cgroup_file(path: &PathBuf, content: &str) -> File {
         if !path.exists() {
             create_dir_all(&path).expect(format!(
@@ -220,6 +215,7 @@ mod tests {
     /**
      * Test environment for Docker tests.
      */
+    #[cfg(target_os = "linux")]
     struct DockerTestEnvironment {
         test_temp_directory: PathBuf,
     }

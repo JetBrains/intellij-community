@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.testFramework.SdkLeakTracker
@@ -25,10 +26,19 @@ abstract class GradleProjectBaseTestCase {
       "Gradle fixture isn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
     }
 
+  open fun setUp() = Unit
+
+  open fun tearDown() = Unit
+
+  open fun patchFixtureBuilder(fixtureBuilder: GradleTestFixtureBuilder): GradleTestFixtureBuilder = fixtureBuilder
+
   open fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
-    fixture = getOrCreateGradleTestFixture(gradleVersion, fixtureBuilder)
+    val patchedBuilder = patchFixtureBuilder(fixtureBuilder)
+    fixture = getOrCreateGradleTestFixture(gradleVersion, patchedBuilder)
+    setUp()
     runAll(
       { test() },
+      { tearDown() },
       { rollbackOrDestroyGradleTestFixture(gradleFixture) },
       { fixture = null }
     )
@@ -128,7 +138,7 @@ abstract class GradleProjectBaseTestCase {
 
     override fun tearDown() {
       runAll(
-        { sdkLeakTracker.checkForJdkTableLeaks() },
+        { invokeAndWaitIfNeeded { sdkLeakTracker.checkForJdkTableLeaks() } },
         { libraryLeakTracker.assertDisposed() },
         { virtualFilePointerTracker.assertPointersAreDisposed() },
         { bareFixture.tearDown() }

@@ -585,14 +585,6 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return myCancelButton;
   }
 
-  /**
-   * @deprecated unused
-   */
-  @Deprecated(forRemoval = true)
-  protected JButton getFinishButton() {
-    return new JButton();
-  }
-
   public Component getCurrentStepComponent() {
     return myCurrentStepComponent;
   }

@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeHighlighting.*
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.HighlightSeverity.*
 import com.intellij.openapi.editor.Document
@@ -24,9 +24,7 @@ class ScriptExternalHighlightingPass(
     private val file: KtFile,
     document: Document
 ) : TextEditorHighlightingPass(file.project, document), DumbAware {
-    override fun doCollectInformation(progress: ProgressIndicator) = Unit
-
-    override fun doApplyInformationToEditor() {
+    override fun doCollectInformation(progress: ProgressIndicator) {
         val document = document
 
         if (!file.isScript()) return
@@ -56,7 +54,11 @@ class ScriptExternalHighlightingPass(
             annotation.create()
         }
 
-        UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, file.textLength, infos, colorsScheme, id)
+        BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, file, myDocument, 0, file.textLength, infos, id)
+    }
+
+    override fun doApplyInformationToEditor() {
+
     }
 
     private fun computeOffsets(document: Document, position: SourceCode.Location): Pair<Int, Int> {

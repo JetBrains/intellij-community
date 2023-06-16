@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.RangeMarker;
@@ -16,8 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * The only mutating method is setText() which is extremely cheap.
  */
 public class EditorTextFieldRendererDocument extends UserDataHolderBase implements DocumentEx {
-  private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this) {
-  };
+  private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<>(this);
   private char[] myChars = ArrayUtilRt.EMPTY_CHAR_ARRAY;
   private String myString = "";
   private LineSet myLineSet = LineSet.createLineSet(myString);
@@ -47,9 +46,8 @@ public class EditorTextFieldRendererDocument extends UserDataHolderBase implemen
     return separatorLength;
   }
 
-  @NotNull
   @Override
-  public LineIterator createLineIterator() {
+  public @NotNull LineIterator createLineIterator() {
     return myLineSet.createIterator();
   }
 
@@ -76,9 +74,8 @@ public class EditorTextFieldRendererDocument extends UserDataHolderBase implemen
     return myRangeMarkers.processOverlappingWith(start, end, processor);
   }
 
-  @NotNull
   @Override
-  public CharSequence getImmutableCharSequence() {
+  public @NotNull CharSequence getImmutableCharSequence() {
     return myString;
   }
 
@@ -127,15 +124,13 @@ public class EditorTextFieldRendererDocument extends UserDataHolderBase implemen
     return 0;
   }
 
-  @NotNull
   @Override
-  public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
+  public @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  @NotNull
   @Override
-  public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
+  public @NotNull RangeMarker createGuardedBlock(int startOffset, int endOffset) {
     throw new UnsupportedOperationException("Not implemented");
   }
 }

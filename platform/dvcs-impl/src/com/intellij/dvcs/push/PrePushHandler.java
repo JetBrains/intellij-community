@@ -3,6 +3,7 @@ package com.intellij.dvcs.push;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -56,5 +57,17 @@ public interface PrePushHandler {
    */
   @CalledInAny
   @NotNull
-  Result handle(@NotNull List<PushInfo> pushDetails, @NotNull ProgressIndicator indicator);
+  default Result handle(@NotNull Project project, @NotNull List<PushInfo> pushDetails, @NotNull ProgressIndicator indicator) {
+    return handle(pushDetails, indicator);
+  }
+
+  /**
+   * @deprecated Use {@link #handle(Project, List, ProgressIndicator)} instead
+   */
+  @CalledInAny
+  @NotNull
+  @Deprecated
+  default Result handle(@NotNull List<PushInfo> pushDetails, @NotNull ProgressIndicator indicator) {
+    throw new UnsupportedOperationException("This method is deprecated. Use #handle(Project, List, ProgressIndicator) instead.");
+  }
 }

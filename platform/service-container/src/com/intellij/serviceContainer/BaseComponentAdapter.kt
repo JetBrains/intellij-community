@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.serviceContainer
@@ -9,7 +9,9 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import org.picocontainer.ComponentAdapter
@@ -106,11 +108,13 @@ internal sealed class BaseComponentAdapter(
         throw ProcessCanceledException(e)
       }
     }
+
     val result = deferred.getCompleted() as T
     if (activityCategory != null) {
       val end = StartUpMeasurer.getCurrentTime()
       if ((end - beforeLockTime) > 100) {
-        // do not report plugin id - not clear who calls us and how we should interpret this delay - total duration vs own duration is enough for plugin cost measurement
+        // Do not report plugin id, not clear who calls us and how we should interpret this delay.
+        // Total duration vs own duration is enough for plugin cost measurement.
         StartUpMeasurer.addCompletedActivity(
           beforeLockTime, end, implementationClassName,
           ActivityCategory.SERVICE_WAITING, /* pluginId = */ null
@@ -129,8 +133,8 @@ internal sealed class BaseComponentAdapter(
       PluginException("Cyclic service initialization: ${toString()}", pluginId)
     }
 
-    return Cancellation.computeInNonCancelableSection<T, RuntimeException> {
-      doCreateInstance(keyClass, componentManager, activityCategory)
+    return Cancellation.withCancelableSection().use {
+      doCreateInstance(keyClass = keyClass, componentManager = componentManager, activityCategory = activityCategory)
     }
   }
 
@@ -172,10 +176,10 @@ internal sealed class BaseComponentAdapter(
   }
 
   @Suppress("UNCHECKED_CAST")
-  suspend fun <T : Any> getInstanceAsync(componentManager: ComponentManagerImpl, keyClass: Class<T>?): Deferred<T> {
+  suspend fun <T : Any> getInstanceAsync(componentManager: ComponentManagerImpl, keyClass: Class<T>?): T {
     return withContext(NonCancellable) {
       if (!IS_DEFERRED_PREPARED.compareAndSet(this@BaseComponentAdapter, false, true)) {
-        return@withContext deferred as Deferred<T>
+        return@withContext (deferred as Deferred<T>).await()
       }
 
       createInstance(
@@ -183,12 +187,11 @@ internal sealed class BaseComponentAdapter(
         componentManager = componentManager,
         activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null,
       )
-      deferred as Deferred<T>
     }
   }
 
   /**
-   * Indicator must be always passed - if under progress, then ProcessCanceledException will be thrown instead of AlreadyDisposedException.
+   * Indicator must always be passed - if under progress, then ProcessCanceledException will be thrown instead of AlreadyDisposedException.
    */
   private fun checkContainerIsActive(componentManager: ComponentManagerImpl) {
     if (isUnderIndicatorOrJob()) {

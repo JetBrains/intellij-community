@@ -7,10 +7,13 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.MapDataContext
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.TestActionEvent
+import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 
 class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
+
   @Test
   fun testFilesSavedOnAction() {
     val projectPom = createProjectPom("<groupId>test</groupId>" +
@@ -35,7 +38,7 @@ class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
     AddFileAsMavenProjectAction().actionPerformed(event)
 
     val promise = myProjectsManager.waitForImportCompletion()
-    myProjectsManager.performScheduledImportInTests()
+    //myProjectsManager.performScheduledImportInTests()
     waitForImportCompletion()
     assertTrue("Import did not succeed", promise.isSucceeded)
     assertModules("project-new")

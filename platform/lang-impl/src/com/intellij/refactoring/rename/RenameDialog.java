@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.find.FindBundle;
@@ -20,10 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
@@ -290,7 +287,7 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
 
   @Nullable
   protected JComponent createSearchScopePanel() {
-    myScopeCombo = new ScopeChooserCombo(myProject, false, true, "Project Files");
+    myScopeCombo = new ScopeChooserCombo(myProject, false, true, ProjectScope.getProjectFilesScopeName());
     Disposer.register(myDisposable, myScopeCombo);
 
     // do not show scope chooser for local variables

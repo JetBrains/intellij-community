@@ -11,7 +11,7 @@ import java.awt.Rectangle
 
 internal class EditorTabPainterAdapter : TabPainterAdapter {
   private val magicOffset = 1
-  override val tabPainter = JBEditorTabPainter()
+  override val tabPainter: JBEditorTabPainter = JBEditorTabPainter()
 
   override fun paintBackground(label: TabLabel, g: Graphics, tabs: JBTabsImpl) {
     val info = label.info
@@ -41,6 +41,7 @@ internal class EditorTabPainterAdapter : TabPainterAdapter {
   private fun paintBorders(g: Graphics2D, label: TabLabel, tabs: JBTabsImpl) {
     val paintStandardBorder = !ExperimentalUI.isNewUI() && !tabs.isSingleRow
                               || (!tabs.position.isSide && Registry.`is`("ide.new.editor.tabs.vertical.borders"))
+                              || label.isForcePaintBorders
     val lastPinned = label.isLastPinned
     val nextToLastPinned = label.isNextToLastPinned
     val rect = Rectangle(0, 0, label.width, label.height)
@@ -50,8 +51,9 @@ internal class EditorTabPainterAdapter : TabPainterAdapter {
         tabPainter.paintLeftGap(tabs.position, g, rect, tabs.borderThickness)
       }
 
-      val paintBorderAfterPinnedTab = !ExperimentalUI.isNewUI() || !TabLayout.showPinnedTabsSeparately() // do not paint border between last tab and toolbars
-      if (bounds.x + bounds.width < tabs.width - magicOffset && (paintStandardBorder || (lastPinned && paintBorderAfterPinnedTab))) {
+      if (bounds.x + bounds.width < tabs.width - magicOffset
+          && (!label.isLastInRow || !ExperimentalUI.isNewUI())
+          && (paintStandardBorder || lastPinned)) {
         tabPainter.paintRightGap(tabs.position, g, rect, tabs.borderThickness)
       }
     }

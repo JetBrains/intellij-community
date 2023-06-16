@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
 import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
+import com.intellij.find.findInProject.FindInProjectState;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -50,7 +51,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
-import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -61,11 +61,10 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.*;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
+import com.intellij.ui.dsl.listCellRenderer.LcrUtilsKt;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.mac.touchbar.Touchbar;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.list.SelectablePanel;
-import com.intellij.ui.render.RendererPanelsUtilsKt;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
@@ -281,11 +280,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
           mySearchComponent.selectAll();
         }
       });
-      WindowMoveListener windowListener = new WindowMoveListener(this);
-      header.panel.addMouseListener(windowListener);
-      header.panel.addMouseMotionListener(windowListener);
-      addMouseListener(windowListener);
-      addMouseMotionListener(windowListener);
+      new WindowMoveListener(this)
+        .installTo(header.panel)
+        .installTo(this);
       Dimension panelSize = getPreferredSize();
       Dimension prev = DimensionService.getInstance().getSize(SERVICE_KEY, myProject);
       panelSize.width += JBUIScale.scale(24);//hidden 'loading' icon
@@ -296,27 +293,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       JRootPane root = ((RootPaneContainer)dialogWindow).getRootPane();
 
       IdeGlassPaneEx glass = (IdeGlassPaneEx)myDialog.getRootPane().getGlassPane();
-      WindowResizeListener resizeListener = new WindowResizeListener(
-        root,
-        JBUI.insets(4),
-        null) {
-        private Cursor myCursor;
-
-        @Override
-        protected void setCursor(@NotNull Component content, Cursor cursor) {
-          if (myCursor != cursor || myCursor != Cursor.getDefaultCursor()) {
-            glass.setCursor(cursor, this);
-            myCursor = cursor;
-
-            if (content instanceof JComponent) {
-              IdeGlassPaneImpl.savePreProcessedCursor((JComponent)content, content.getCursor());
-            }
-            super.setCursor(content, cursor);
-          }
-        }
-      };
-      glass.addMousePreprocessor(resizeListener, myDisposable);
-      glass.addMouseMotionPreprocessor(resizeListener, myDisposable);
+      new WindowResizeListenerEx(glass, root, JBUI.insets(4), null)
+        .install(myDisposable);
 
       DumbAwareAction.create(e -> closeImmediately())
         .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), root, myDisposable);
@@ -396,7 +374,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     FindSettings findSettings = FindSettings.getInstance();
     myScopeUI.applyTo(findSettings, mySelectedScope);
     myHelper.updateFindSettings();
-    applyTo(FindManager.getInstance(myProject).getFindInProjectModel());
+    FindModel model = FindManager.getInstance(myProject).getFindInProjectModel();
+    applyTo(model);
+    FindInProjectState.getInstance(myProject).save(model);
   }
 
   @NotNull
@@ -810,13 +790,13 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       UIUtil.setOpaqueRecursively(myScopeDetailsPanel, false);
       myResultsPreviewTable.setBackground(background);
       previewPanel.setBackground(background);
-      scopesPanel.setBorder(JBUI.Borders.empty(4, 20));
+      scopesPanel.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.FindPopup.scopesPanelInsets()));
       myScopeSelectionToolbar.setBorder(JBUI.Borders.empty());
 
       Insets textFieldBorderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
       //noinspection UseDPIAwareInsets
       myPreviewSplitter.setBlindZone(() -> new Insets(0, textFieldBorderInsets.left, 0, textFieldBorderInsets.right));
-      bottomPanel.setBorder(JBUI.Borders.empty(5, 18));
+      bottomPanel.setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.FindPopup.bottomPanelInsets()));
       bottomPanel.setBackground(JBUI.CurrentTheme.Advertiser.background());
       scrollPane.setBorder(JBUI.Borders.emptyBottom(4));
     } else {
@@ -1048,8 +1028,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
     header.fileMaskField.setEnabled(isThereFileFilter);
     FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
-    mySearchComponent.setText(findInProjectSettings.getMostRecentFindString());
-    myReplaceComponent.setText(findInProjectSettings.getMostRecentReplaceString());
+    String search = myModel.hasStringToFind() ? myModel.getStringToFind() : findInProjectSettings.getMostRecentFindString();
+    mySearchComponent.setText(search);
+    String replace = myModel.hasStringToFind() ? myModel.getStringToReplace() : findInProjectSettings.getMostRecentReplaceString();
+    myReplaceComponent.setText(replace);
     updateControls();
     updateScopeDetailsPanel();
 
@@ -1867,7 +1849,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
   }
 
   private class MyShowFilterPopupAction extends DumbAwareAction {
-    private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
     private final DefaultActionGroup mySwitchContextGroup;
 
     MyShowFilterPopupAction() {
@@ -1889,11 +1870,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) == null) return;
-      if (myPopupState.isRecentlyHidden()) return;
 
       ListPopup listPopup =
         JBPopupFactory.getInstance().createActionGroupPopup(null, mySwitchContextGroup, e.getDataContext(), false, null, 10);
-      myPopupState.prepareToShow(listPopup);
       listPopup.showUnderneathOf(myFilterContextButton);
     }
   }
@@ -1924,7 +1903,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       }
 
       @NotNull
-      private SimpleTextAttributes getAttributes(@NotNull TextChunk textChunk) {
+      private static SimpleTextAttributes getAttributes(@NotNull TextChunk textChunk) {
         SimpleTextAttributes at = textChunk.getSimpleAttributesIgnoreBackground();
         boolean highlighted = at.getFontStyle() == Font.BOLD;
         return highlighted
@@ -1961,7 +1940,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
         return false;
       }
 
-      private @Nullable String findPrevFile(@NotNull JTable table, int row, int column) {
+      private static @Nullable String findPrevFile(@NotNull JTable table, int row, int column) {
         if (row <= 0) return null;
         Object prev = table.getValueAt(row - 1, column);
         if (!(prev instanceof FindPopupItem)) {
@@ -1980,7 +1959,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     private UsageTableCellRenderer() {
       if (ExperimentalUI.isNewUI()) {
         PopupUtil.configListRendererFixedHeight(this);
-        RendererPanelsUtilsKt.resetHorizontalInsets(myUsageRenderer);
+        LcrUtilsKt.stripHorizontalInsets(myUsageRenderer);
         Insets ipad = myFileAndLineNumber.getIpad();
         //noinspection UseDPIAwareInsets
         myFileAndLineNumber.setIpad(new Insets(ipad.top, JBUI.scale(4), ipad.bottom, 0));

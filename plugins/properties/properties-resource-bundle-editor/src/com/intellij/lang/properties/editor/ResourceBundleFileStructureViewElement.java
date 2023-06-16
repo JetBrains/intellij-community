@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.properties.editor;
 
@@ -146,20 +146,5 @@ public final class ResourceBundleFileStructureViewElement implements StructureVi
         return AllIcons.FileTypes.Properties;
       }
     };
-  }
-
-  @Override
-  public void navigate(boolean requestFocus) {
-
-  }
-
-  @Override
-  public boolean canNavigate() {
-    return false;
-  }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return false;
   }
 }

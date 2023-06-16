@@ -9,8 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsLogBundle
@@ -31,6 +29,7 @@ import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.clickTreeRow
 import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import training.git.GitLessonsUtil.openGitWindow
 import training.git.GitLessonsUtil.resetGitLogWindow
 import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
 import training.ui.LearningUiUtil.findComponentWithTimeout
@@ -54,14 +53,9 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task("ActivateVersionControlToolWindow") {
-      text(GitLessonsBundle.message("git.project.history.open.git.window", action(it), icon(AllIcons.Toolwindows.ToolWindowChanges)))
-      text(GitLessonsBundle.message("git.open.tool.window.balloon", strong(GitBundle.message("git4idea.vcs.name"))),
-           LearningBalloonConfig(Balloon.Position.atRight, width = 0))
-      stateCheck {
-        val toolWindowManager = ToolWindowManager.getInstance(project)
-        toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
-      }
-      test { actions(it) }
+      openGitWindow(GitLessonsBundle.message("git.project.history.open.git.window", action(it),
+                                             icon(AllIcons.Toolwindows.ToolWindowChanges),
+                                             strong(GitBundle.message("git4idea.vcs.name"))))
     }
 
     resetGitLogWindow()

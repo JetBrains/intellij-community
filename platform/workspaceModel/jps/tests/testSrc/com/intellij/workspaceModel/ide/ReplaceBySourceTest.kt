@@ -20,6 +20,7 @@ class ReplaceBySourceTest {
   val projectModel = ProjectModelRule()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
+
   @Before
   fun setUp() {
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
@@ -35,8 +36,10 @@ class ReplaceBySourceTest {
       val contentRootEntity = storage.entities(ContentRootEntity::class.java).first()
       if (i == 1) {
         contentRootEntity.sourceRoots.forEach { expectedResult.add(it.url.toString()) }
-      } else {
-        Assert.assertArrayEquals(expectedResult.toTypedArray(), contentRootEntity.sourceRoots.map { it.url.toString() }.toList().toTypedArray())
+      }
+      else {
+        Assert.assertArrayEquals(expectedResult.toTypedArray(),
+                                 contentRootEntity.sourceRoots.map { it.url.toString() }.toList().toTypedArray())
       }
     }
   }

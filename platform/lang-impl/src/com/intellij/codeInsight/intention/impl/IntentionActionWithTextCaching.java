@@ -31,7 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-public class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTextCaching>, PossiblyDumbAware, ShortcutProvider, IntentionActionDelegate {
+public class IntentionActionWithTextCaching
+  implements Comparable<IntentionActionWithTextCaching>, PossiblyDumbAware, ShortcutProvider, IntentionActionDelegate {
   private static final Logger LOG = Logger.getInstance(IntentionActionWithTextCaching.class);
   private final List<IntentionAction> myOptionIntentions = new ArrayList<>();
   private final List<IntentionAction> myOptionErrorFixes = new ArrayList<>();
@@ -40,11 +41,15 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   private final IntentionAction myAction;
   private final @NlsContexts.PopupTitle String myDisplayName;
   private final Icon myIcon;
+  @Nullable
+  private final String myToolId;
 
   IntentionActionWithTextCaching(@NotNull IntentionAction action,
                                  @NlsContexts.PopupTitle String displayName,
                                  @Nullable Icon icon,
+                                 @Nullable String toolId,
                                  @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
+    myToolId = toolId;
     myIcon = icon;
     myText = action.getText();
     // needed for checking errors in user written actions
@@ -60,10 +65,12 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   void addIntention(@NotNull IntentionAction action) {
     myOptionIntentions.add(action);
   }
+
   void addErrorFix(@NotNull IntentionAction action) {
     myOptionErrorFixes.add(action);
   }
-  void addInspectionFix(@NotNull  IntentionAction action) {
+
+  void addInspectionFix(@NotNull IntentionAction action) {
     myOptionInspectionFixes.add(action);
   }
 
@@ -163,6 +170,11 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     return getActionClass(this) == getActionClass(other) && this.getText().equals(other.getText());
   }
 
+  @Nullable
+  public String getToolId() {
+    return myToolId;
+  }
+
   private static Class<? extends IntentionAction> getActionClass(IntentionActionWithTextCaching o1) {
     return IntentionActionDelegate.unwrap(o1.getAction()).getClass();
   }
@@ -178,7 +190,8 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     private final IntentionAction myAction;
     private final @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> myMarkInvoked;
 
-    MyIntentionAction(@NotNull IntentionAction action, @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
+    MyIntentionAction(@NotNull IntentionAction action,
+                      @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
       myAction = action;
       myMarkInvoked = markInvoked;
     }
@@ -195,7 +208,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
 
     @Override
     public String toString() {
-      return getDelegate()+" ("+getDelegate().getClass()+")";
+      return getDelegate() + " (" + getDelegate().getClass() + ")";
     }
 
     @Override

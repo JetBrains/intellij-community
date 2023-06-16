@@ -17,6 +17,7 @@ package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Defines a single pair of braces which need to be matched when editing code in a custom language.
@@ -26,7 +27,9 @@ import org.jetbrains.annotations.NonNls;
  */
 
 public class BracePair {
+  @NotNull
   private final IElementType myLeftBrace;
+  @NotNull
   private final IElementType myRightBrace;
   private final boolean myStructural;
 
@@ -37,7 +40,7 @@ public class BracePair {
    * @param rightBrace     the lexer token type for the right brace in the pair.
    * @param structural     if true, the brace is considered structural (see {@link #isStructural()} for details)
    */
-  public BracePair(final IElementType leftBrace, final IElementType rightBrace, final boolean structural) {
+  public BracePair(@NotNull IElementType leftBrace, @NotNull IElementType rightBrace, final boolean structural) {
     myLeftBrace = leftBrace;
     myRightBrace = rightBrace;
     myStructural = structural;
@@ -48,6 +51,7 @@ public class BracePair {
    *
    * @return token type
    */
+  @NotNull
   public IElementType getLeftBraceType() {
     return myLeftBrace;
   }
@@ -57,6 +61,7 @@ public class BracePair {
    *
    * @return token type
    */
+  @NotNull
   public IElementType getRightBraceType() {
     return myRightBrace;
   }

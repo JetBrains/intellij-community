@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.ide.actions.ImportProjectAction
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.maven.testFramework.MavenImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.xml.MavenBuildFileBuilder
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -27,7 +27,7 @@ import org.jetbrains.idea.maven.project.actions.AddManagedFilesAction
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager
 import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID
 
-abstract class MavenSetupProjectTestCase : MavenImportingTestCase() {
+abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() {
 
   override fun runInDispatchThread() = false
 
@@ -92,7 +92,7 @@ abstract class MavenSetupProjectTestCase : MavenImportingTestCase() {
   }
 
   private suspend fun waitForImportCompletion(project: Project) {
-    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+    withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     }
 
@@ -106,9 +106,9 @@ abstract class MavenSetupProjectTestCase : MavenImportingTestCase() {
       importFinishedContext.error?.let { throw it }
     }
     else {
-      withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
-        projectManager.waitForResolvingCompletion()
-        projectManager.performScheduledImportInTests()
+      withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+        projectManager.waitForReadingCompletion()
+        //projectManager.performScheduledImportInTests()
         projectManager.waitForImportCompletion()
       }
     }

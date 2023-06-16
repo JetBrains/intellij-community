@@ -39,7 +39,6 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   internal val artifactWithDiffs: MutableList<ArtifactBridge> = mutableListOf()
 
   init {
-    (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).setArtifactManager(this)
     DynamicArtifactExtensionsLoaderBridge(this).installListeners(this)
   }
 
@@ -317,7 +316,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
   @RequiresWriteLock
   fun dropMappings(selector: (ArtifactEntity) -> Boolean) {
-    // XXX @RequiresReadLock annotation doesn't work for kt now
+    // XXX @RequiresWriteLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     (project.workspaceModel as WorkspaceModelImpl).updateProjectModelSilent("Drop artifact mappings") {
       val map = it.mutableArtifactsMap

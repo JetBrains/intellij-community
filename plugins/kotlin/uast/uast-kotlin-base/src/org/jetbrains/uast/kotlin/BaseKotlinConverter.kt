@@ -2,7 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.annotations.ApiStatus
@@ -618,7 +618,7 @@ interface BaseKotlinConverter {
                             else -> UastBinaryExpressionWithTypeKind.InstanceCheck.INSTANCE
                         }
                         typeReference = condition.typeReference?.let {
-                            val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
+                            val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
                             KotlinUTypeReferenceExpression(it, this) { service.resolveToType(it, this, isBoxed = true) ?: UastErrorType }
                         }
                     }

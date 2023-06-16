@@ -192,12 +192,14 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
         additionalRootJava = file("AdditionalRoot.java", "class AdditionalRoot {}")
       }
     }
+    val additionalProjectRootsFile = additionalProjectRoots.file  // load VFS synchronously outside read action
+    val additionalRootsFile = additionalRoots.file                // load VFS synchronously outside read action
     val contributor = object : IndexableSetContributor() {
       override fun getAdditionalProjectRootsToIndex(project: Project): Set<VirtualFile> =
-        setOf(additionalProjectRoots.file)
+        setOf(additionalProjectRootsFile)
 
       override fun getAdditionalRootsToIndex(): Set<VirtualFile> =
-        setOf(additionalRoots.file)
+        setOf(additionalRootsFile)
     }
     maskIndexableSetContributors(contributor)
     assertIndexableFiles(additionalProjectRootJava.file, additionalRootJava.file)
@@ -263,14 +265,20 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
         }
       }
     }
-    val excludedFile = sourceFileExcludedByCondition.file //to avoid synchronous refresh outside EDT under read lock
+    val excludedFile = sourceFileExcludedByCondition.file              // load VFS synchronously outside read action
+    val sourcesDirFile = sourcesDir.file                               // load VFS synchronously outside read action
+    val moduleExcludedSourcesDirFile = moduleExcludedSourcesDir.file   // load VFS synchronously outside read action
+    val binariesDirFile = binariesDir.file                             // load VFS synchronously outside read action
+    val moduleExcludedBinariesDirFile = moduleExcludedBinariesDir.file // load VFS synchronously outside read action
+    val sourcesExcludedDirFile = sourcesExcludedDir.file               // load VFS synchronously outside read action
+    val binariesExcludedDirFile = binariesExcludedDir.file             // load VFS synchronously outside read action
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project): List<SyntheticLibrary> {
         return listOf(
           SyntheticLibrary.newImmutableLibrary(
-            listOf(sourcesDir.file, moduleExcludedSourcesDir.file),
-            listOf(binariesDir.file, moduleExcludedBinariesDir.file),
-            setOf(sourcesExcludedDir.file, binariesExcludedDir.file)
+            listOf(sourcesDirFile, moduleExcludedSourcesDirFile),
+            listOf(binariesDirFile, moduleExcludedBinariesDirFile),
+            setOf(sourcesExcludedDirFile, binariesExcludedDirFile)
           ) { file -> file == excludedFile }
         )
       }

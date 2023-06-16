@@ -4,7 +4,9 @@ import com.intellij.cce.core.*
 
 class CompletionGolfEmulation(private val settings: Settings = Settings(), private val expectedLine: String) {
   fun pickBestSuggestion(currentLine: String, lookup: Lookup, session: Session): Lookup {
-    val suggestions = lookup.suggestions.ofSource(settings.source).take(settings.topN).toMutableList()
+    val suggestions = lookup.suggestions.ofSource(settings.source)
+      .let { if (settings.topN > 0) it.take(settings.topN) else it }
+      .toMutableList()
     val normalizedExpectedLine = expectedLine.drop(currentLine.length)
 
     val line = checkForPerfectLine(normalizedExpectedLine, suggestions, lookup.prefix)
@@ -86,6 +88,9 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
    *  - TAB_NINE  - <a href="https://github.com/codota/tabnine-intellij">https://github.com/codota/tabnine-intellij</a>
    *  - INTELLIJ  - <a href="https://jetbrains.team/p/ccrm/code/fl-inference">https://jetbrains.team/p/ccrm/code/fl-inference</a>
    * @param topN Take only N top suggestions, applying after filtering by source
+   * @param isBenchmark Call completion once for each token.
+   * @param randomSeed Random seed for evaluation. Currently used to select token prefix in benchmark mode.
+   * @param suggestionsProvider Name of provider of suggestions (use DEFAULT for IDE completion)
    */
   data class Settings(
     val checkLine: Boolean = true,
@@ -93,13 +98,21 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
 
     val checkToken: Boolean = true,
     val source: SuggestionSource? = null,
-    var topN: Int = -1
-  )
+    var topN: Int = -1,
+
+    val isBenchmark: Boolean = false,
+    val randomSeed: Int = 0,
+    val suggestionsProvider: String = DEFAULT_PROVIDER
+  ) {
+    fun isDefaultProvider(): Boolean = suggestionsProvider == DEFAULT_PROVIDER
+  }
 
   companion object {
     fun createFromSettings(settings: Settings?, expectedLine: String): CompletionGolfEmulation {
       return CompletionGolfEmulation(settings ?: Settings(), expectedLine)
     }
+
+    private const val DEFAULT_PROVIDER: String = "DEFAULT"
   }
 }
 

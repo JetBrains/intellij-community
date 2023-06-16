@@ -21,18 +21,19 @@ import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import java.util.*
 
 internal class NonExistingWorkspaceRootsRegistry(private val project: Project, private val indexData: WorkspaceFileIndexDataImpl) {
   private val virtualFileManager = VirtualFileUrlManager.getInstance(project)
   /** access guarded by the global read/write locks; todo: replace by MostlySingularMultiMap to reduce memory usage  */
-  private val nonExistingFiles = MultiMap.create<VirtualFileUrl, Pair<EntityReference<WorkspaceEntity>, EntityStorageKind>>()
+  private val nonExistingFiles = MultiMap.create<VirtualFileUrl, NonExistingFileSetData>()
   
-  fun registerUrl(root: VirtualFileUrl, entity: WorkspaceEntity, storageKind: EntityStorageKind) {
-    registerUrl(root, entity.createReference(), storageKind)
+  fun registerUrl(root: VirtualFileUrl, entity: WorkspaceEntity, storageKind: EntityStorageKind, fileSetKind: NonExistingFileSetKind) {
+    registerUrl(root, entity.createReference(), storageKind, fileSetKind)
   }
 
-  fun registerUrl(root: VirtualFileUrl, reference: EntityReference<WorkspaceEntity>, storageKind: EntityStorageKind) {
-    nonExistingFiles.putValue(root, reference to storageKind)
+  fun registerUrl(root: VirtualFileUrl, reference: EntityReference<WorkspaceEntity>, storageKind: EntityStorageKind, fileSetKind: NonExistingFileSetKind) {
+    nonExistingFiles.putValue(root, NonExistingFileSetData(reference, storageKind, fileSetKind))
   }
 
   fun unregisterUrl(fileUrl: VirtualFileUrl, entity: WorkspaceEntity, storageKind: EntityStorageKind) {
@@ -50,6 +51,12 @@ internal class NonExistingWorkspaceRootsRegistry(private val project: Project, p
 
   fun removeUrl(url: VirtualFileUrl) {
     nonExistingFiles.remove(url)
+  }
+  
+  fun getFileSetKindsFor(url: VirtualFileUrl): Set<NonExistingFileSetKind> {
+    val data = nonExistingFiles.get(url)
+    if (data.isEmpty()) return emptySet()
+    return data.mapTo(EnumSet.noneOf(NonExistingFileSetKind::class.java)) { it.fileSetKind }
   }
 
   private inline fun <K, V> MultiMap<K, V>.removeValueIf(key: K, crossinline valuePredicate: (V) -> Boolean) {
@@ -153,10 +160,10 @@ internal class NonExistingWorkspaceRootsRegistry(private val project: Project, p
       }
     }
     var hasEntities = false
-    nonExistingFiles[url].forEach { (reference, kind) ->
-      if (kind == EntityStorageKind.MAIN) {
+    nonExistingFiles[url].forEach { data ->
+      if (data.storageKind == EntityStorageKind.MAIN) {
         hasEntities = true
-        entityChanges.addAffectedEntity(reference, allRootsWereRemoved)
+        entityChanges.addAffectedEntity(data.reference, allRootsWereRemoved)
       }
     }
     if (hasEntities) {
@@ -244,4 +251,35 @@ fun getOldAndNewUrls(event: VFileEvent): Pair<String, String> {
     is VFileMoveEvent -> VfsUtilCore.pathToUrl(event.oldPath) to VfsUtilCore.pathToUrl(event.newPath)
     else -> error("Unexpected event type: ${event.javaClass}")
   }
+}
+
+internal data class NonExistingFileSetData(
+  val reference: EntityReference<WorkspaceEntity>,
+  val storageKind: EntityStorageKind,
+  val fileSetKind: NonExistingFileSetKind
+)
+
+/**
+ * Describes kind of workspace file set associated with a non-existing file.
+ */
+enum class NonExistingFileSetKind {
+  /**
+   * File set of [content][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent]
+   */                                
+  INCLUDED_CONTENT,
+
+  /**
+   * File set of other kinds
+   */
+  INCLUDED_OTHER,
+
+  /**
+   * Root excluded from [content][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent]
+   */
+  EXCLUDED_FROM_CONTENT,
+
+  /**
+   * Root for files some of them are excluded by pattern, condition, etc.
+   */
+  EXCLUDED_OTHER
 }

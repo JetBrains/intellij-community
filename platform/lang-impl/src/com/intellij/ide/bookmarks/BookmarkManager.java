@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.ide.bookmark.BookmarkType;
@@ -42,7 +42,11 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * @deprecated Please use the new bookmarks manager {@link com.intellij.ide.bookmark.BookmarksManager}.
+ */
 @State(name = "BookmarkManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
+@Deprecated
 public final class BookmarkManager implements PersistentStateComponent<Element> {
   private record BookmarkInfo(Bookmark bookmark, int line, String text) {
   }
@@ -224,7 +228,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
         if (newList != null) {
           applyNewState(newList, true);
         }
-      }, ModalityState.NON_MODAL, myProject.getDisposed());
+      }, ModalityState.nonModal(), myProject.getDisposed());
     });
   }
 

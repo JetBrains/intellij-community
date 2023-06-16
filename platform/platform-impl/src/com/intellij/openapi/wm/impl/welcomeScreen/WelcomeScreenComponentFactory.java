@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.application.Topics;
@@ -11,6 +11,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -32,10 +33,7 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MouseEventAdapter;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -61,20 +59,24 @@ public final class WelcomeScreenComponentFactory {
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
 
     String welcomeScreenLogoUrl = appInfo.getApplicationSvgIconUrl();
-    if (welcomeScreenLogoUrl != null) {
-      Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader());
-      float scale = 28f / icon.getIconWidth();
-      Icon smallLogoIcon = IconUtil.scale(icon, null, scale);
-      JLabel logo = new JLabel(smallLogoIcon);
-      logo.setBorder(JBUI.Borders.empty(29, 0, 27, 0));
-      logo.setHorizontalAlignment(SwingConstants.CENTER);
-      panel.add(logo, BorderLayout.WEST);
-    }
+    Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader());
+    JLabel logo = new JLabel() {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        float scale = JBUIScale.scale(28f) / icon.getIconWidth();
+        Icon smallLogoIcon = IconUtil.scale(icon, null, scale);
+        setIcon(smallLogoIcon);
+      }
+    };
+    logo.setBorder(JBUI.Borders.empty(29, 0, 27, 0));
+    logo.setHorizontalAlignment(SwingConstants.CENTER);
+    panel.add(logo, BorderLayout.WEST);
 
     String applicationName = getAppName();
     JLabel appName = new JLabel(applicationName);
     appName.setForeground(JBColor.foreground());
-    appName.setFont(appName.getFont().deriveFont(Font.PLAIN));
+    appName.setFont(JBFont.create(appName.getFont().deriveFont(Font.PLAIN), false));
 
     ActionLink copyAbout = new ActionLink("", EmptyIcon.ICON_16, createCopyAboutAction());
     copyAbout.setHoveringIcon(AllIcons.Actions.Copy);
@@ -117,13 +119,10 @@ public final class WelcomeScreenComponentFactory {
 
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
 
-    String welcomeScreenLogoUrl = appInfo.getWelcomeScreenLogoUrl();
-    if (welcomeScreenLogoUrl != null) {
-      JLabel logo = new JLabel(IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader()));
-      logo.setBorder(JBUI.Borders.empty(30, 0, 10, 0));
-      logo.setHorizontalAlignment(SwingConstants.CENTER);
-      panel.add(logo, BorderLayout.NORTH);
-    }
+    JLabel logo = new JLabel(IconLoader.getIcon(appInfo.getApplicationSvgIconUrl(), WelcomeScreenComponentFactory.class.getClassLoader()));
+    logo.setBorder(JBUI.Borders.empty(30, 0, 10, 0));
+    logo.setHorizontalAlignment(SwingConstants.CENTER);
+    panel.add(logo, BorderLayout.NORTH);
 
     JLabel appName = new JLabel(getAppName());
     appName.setForeground(JBColor.foreground());
@@ -276,6 +275,11 @@ public final class WelcomeScreenComponentFactory {
     return panel.getComponent();
   }
 
+  /**
+   *
+   * @deprecated use {@link NotificationEventAction} instead
+   */
+  @Deprecated
   public static @NotNull JComponent createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
     SelectablePanel selectablePanel = new SelectablePanel();
     ActionLink actionLink = new ActionLink(linkText, getNotificationIcon(Collections.emptyList(), null), new DumbAwareAction() {
@@ -322,7 +326,7 @@ public final class WelcomeScreenComponentFactory {
 
   private static final BadgeIconSupplier NOTIFICATION_ICON = new BadgeIconSupplier(AllIcons.Toolwindows.Notifications);
 
-  private static Icon getNotificationIcon(List<NotificationType> notificationTypes, JComponent panel) {
+  static Icon getNotificationIcon(List<NotificationType> notificationTypes, JComponent panel) {
     if (ExperimentalUI.isNewUI()) {
       return IconUtil.resizeSquared(NOTIFICATION_ICON.getInfoIcon(!notificationTypes.isEmpty()), JBUIScale.scale(16));
     }
@@ -350,6 +354,35 @@ public final class WelcomeScreenComponentFactory {
     return title;
   }
 
+  public static @NotNull JComponent createNotificationToolbar(@NotNull Disposable parentDisposable) {
+    var horizontalGap = 4;
+
+    IdeMessagePanel panel = new IdeMessagePanel(null, MessagePool.getInstance());
+    Disposer.register(parentDisposable, panel);
+
+    DefaultActionGroup group = new DefaultActionGroup(panel.getAction(), new NotificationEventAction(parentDisposable));
+    ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(
+      "WelcomeScreen.NotificationPanel", group, true);
+    toolbar.setMinimumButtonSize(new JBDimension(26, 26));
+    toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.setActionButtonBorder(horizontalGap, 1);
+
+    JComponent result = toolbar.getComponent();
+    toolbar.setTargetComponent(result);
+    result.setOpaque(false);
+    if (ExperimentalUI.isNewUI()) {
+      result.setBorder(JBUI.Borders.empty(9, 0, 15, 24 - horizontalGap));
+    }
+    else {
+      result.setBorder(JBUI.Borders.empty(10, 0, 5, 8));
+    }
+    return result;
+  }
+
+  /**
+   * @deprecated Use {@link #createNotificationToolbar(Disposable)} instead
+   */
+  @Deprecated
   public static @NotNull JPanel createNotificationPanel(@NotNull Disposable parentDisposable) {
     JComponent errorsLink = createErrorsLink(parentDisposable);
     JComponent eventLink = createEventLink("", parentDisposable);

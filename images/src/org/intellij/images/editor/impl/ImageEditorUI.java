@@ -72,7 +72,6 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.ByteArrayInputStream;
 
 /**
  * Image editor UI
@@ -406,8 +405,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
       if (IfsUtil.isSVG(file)) {
         try {
-          return Math.max(1, SVGLoader.getMaxZoomFactor(file.getPath(), new ByteArrayInputStream(file.contentsToByteArray()),
-                                                        ScaleContext.create(editor.getComponent())));
+          return Math.max(1, SVGLoader.INSTANCE.getMaxZoomFactor(file.contentsToByteArray(), ScaleContext.create(editor.getComponent())));
         }
         catch (Throwable t) {
           Logger.getInstance(ImageEditorUI.class).warn(t);

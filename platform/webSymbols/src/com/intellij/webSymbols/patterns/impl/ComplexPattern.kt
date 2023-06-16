@@ -6,6 +6,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.impl.selectBest
@@ -38,7 +39,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> =
-    process(scopeStack, params) { patterns, newSymbolsResolver, isDeprecated,
+    process(scopeStack, params) { patterns, newSymbolsResolver, deprecation,
                                   isRequired, priority, proximity, repeats, unique ->
       performPatternMatch(params, start, end, patterns, repeats, unique, scopeStack, newSymbolsResolver)
         .let { matchResults ->
@@ -71,8 +72,8 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
             }, { false })
         }
         .let { matchResults ->
-          if (matchResults.isNotEmpty() && (isDeprecated == true || priority != null || proximity != null))
-            matchResults.map { it.applyToSegments(deprecated = isDeprecated, priority = priority, proximity = proximity) }
+          if (matchResults.isNotEmpty() && (deprecation != null || priority != null || proximity != null))
+            matchResults.map { it.applyToSegments(apiStatus = deprecation, priority = priority, proximity = proximity) }
           else matchResults
         }
         .let { matchResults ->
@@ -91,68 +92,51 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                                     params: CompletionParameters,
                                     start: Int,
                                     end: Int): CompletionResults =
-    process(scopeStack, params) { patterns, newSymbolsResolver, isDeprecated,
+    process(scopeStack, params) { patterns, newSymbolsResolver, deprecation,
                                   isRequired, priority, proximity, repeats, unique ->
       var staticPrefixes: Set<String> = emptySet()
+
       val runs = if (start == end) {
-        listOf(Triple(start, start, emptySet()))
+        listOf(CompletionResultRun(start, start, emptySet(), emptyList()))
       }
       else if (repeats && getStaticPrefixes().filter { it != "" }.toSet().also { staticPrefixes = it }.isNotEmpty()) {
-        repeatingPatternMatch(start, end, params, staticPrefixes, scopeStack, patterns, newSymbolsResolver, true)
-          .map { (lastMatchStart, matchSegments) ->
-            val prevNames = mutableSetOf<String>()
-            for (matchedSegment in matchSegments) {
-              if (matchedSegment.segments.none { it.problem.isCritical }) {
-                prevNames.add(params.name.substring(matchedSegment.start, matchedSegment.end))
-              }
-            }
-            matchSegments
-              .find { matchSegment ->
-                matchSegment.start <= params.position
-                && (params.position < matchSegment.end
-                    || (params.position == matchSegment.end
-                        && matchSegment.segments.any { it.problem.isCritical }))
-              }
-              ?.let {
-                prevNames.remove(params.name.substring(it.start, it.end))
-                Triple(it.start, it.end, prevNames.toSet())
-              }
-            ?: if (matchSegments.lastOrNull()?.segments?.any { it.problem.isCritical } == true)
-              Triple(lastMatchStart, end, prevNames.toSet())
-            else
-              Triple(end, end, prevNames.toSet())
+        repeatingPatternMatch(start, end, params, staticPrefixes, scopeStack, patterns, newSymbolsResolver, false)
+          .flatMap { (_, matchSegments) ->
+            buildCompletionResultRuns(matchSegments, params)
           }
       }
       else {
-        listOf(Triple(start, end, emptySet()))
+        listOf(CompletionResultRun(start, end, emptySet(), emptyList()))
       }
 
-      val patternsItems = runs.flatMap { (localStart, localEnd, prevNames) ->
-        patterns.flatMap { pattern ->
-          pattern.getCompletionResults(null, scopeStack, newSymbolsResolver, params, localStart, localEnd)
-            .items
-            .asSequence()
-            .let { items ->
-              if (repeats && unique && prevNames.isNotEmpty()) {
-                items.filter {
-                  !prevNames.contains(params.name.substring(localStart, min(max(it.offset, localStart), localEnd)) + it.name)
+      val patternsItems = runs.flatMap { (localStart, localEnd, prevNames, prevMatchScope) ->
+        val defaultSource = symbolsResolver?.delegate ?: scopeStack.peek() as? WebSymbol
+        withPrevMatchScope(scopeStack, prevMatchScope) {
+          patterns.flatMap { pattern ->
+            pattern.getCompletionResults(null, scopeStack, newSymbolsResolver, params, localStart, localEnd)
+              .items
+              .asSequence()
+              .let { items ->
+                if (repeats && unique && prevNames.isNotEmpty()) {
+                  items.filter {
+                    !prevNames.contains(params.name.substring(localStart, min(max(it.offset, localStart), localEnd)) + it.name)
+                  }
+                }
+                else items
+              }
+              .let { items ->
+                items.map { item ->
+                  item.with(
+                    priority = priority ?: item.priority,
+                    proximity = proximity?.let { (item.proximity ?: 0) + proximity } ?: item.proximity,
+                    deprecated = deprecation != null || item.deprecated,
+                    symbol = item.symbol ?: defaultSource,
+                    completeAfterChars = (if (repeats) getStaticPrefixes().mapNotNull { it.getOrNull(0) }.toSet() else emptySet())
+                                         + item.completeAfterChars
+                  )
                 }
               }
-              else items
-            }
-            .let { items ->
-              val defaultSource = symbolsResolver?.delegate ?: scopeStack.peek() as? WebSymbol
-              items.map { item ->
-                item.with(
-                  priority = priority ?: item.priority,
-                  proximity = proximity?.let { (item.proximity ?: 0) + proximity } ?: item.proximity,
-                  deprecated = isDeprecated == true || item.deprecated,
-                  symbol = item.symbol ?: defaultSource,
-                  completeAfterChars = (if (repeats) getStaticPrefixes().mapNotNull { it.getOrNull(0) }.toSet() else emptySet())
-                                       + item.completeAfterChars
-                )
-              }
-            }
+          }
         }
       }
       CompletionResults(patternsItems, isRequired)
@@ -162,7 +146,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                           params: MatchParameters,
                           action: (patterns: List<WebSymbolsPattern>,
                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
-                                   patternDeprecated: Boolean?,
+                                   patternDeprecation: WebSymbolApiStatus.Deprecated?,
                                    patternRequired: Boolean,
                                    patternPriority: WebSymbol.Priority?,
                                    patternProximity: Int?,
@@ -175,7 +159,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
       scopeStack.push(additionalScope)
     }
     try {
-      return action(patterns, options.symbolsResolver, options.isDeprecated, options.isRequired, options.priority,
+      return action(patterns, options.symbolsResolver, options.deprecation, options.isRequired, options.priority,
                     options.proximity, options.repeats, options.unique)
     }
     finally {
@@ -192,7 +176,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                                   repeats: Boolean,
                                   unique: Boolean,
                                   contextStack: Stack<WebSymbolsScope>,
-                                  newSymbolsresolver: WebSymbolsPatternSymbolsResolver?): List<MatchResult> {
+                                  newSymbolsResolver: WebSymbolsPatternSymbolsResolver?): List<MatchResult> {
     // shortcut
     if (start == end) {
       // This won't work for nested patterns, but at least allow for one level of empty
@@ -200,18 +184,18 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
       return patterns.asSequence()
         .filter { it is StaticPattern && it.content.isEmpty() }
         .flatMap {
-          it.match(null, contextStack, newSymbolsresolver, params, start, end)
+          it.match(null, contextStack, newSymbolsResolver, params, start, end)
         }
         .toList()
     }
     val staticPrefixes: Set<String> = getStaticPrefixes().filter { it != "" }.toSet()
     return if (repeats && staticPrefixes.isNotEmpty()) {
-      repeatingPatternMatch(start, end, params, staticPrefixes, contextStack, patterns, newSymbolsresolver, unique)
+      repeatingPatternMatch(start, end, params, staticPrefixes, contextStack, patterns, newSymbolsResolver, unique)
         .mapNotNull { it.second.reduceOrNull { a, b -> b.prefixedWith(a) } }
     }
     else {
       patterns.flatMap {
-        it.match(null, contextStack, newSymbolsresolver, params, start, end)
+        it.match(null, contextStack, newSymbolsResolver, params, start, end)
       }
     }
   }
@@ -352,6 +336,47 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     }
     return result
   }
+
+  private fun buildCompletionResultRuns(matchSegments: List<MatchResult>,
+                                        params: CompletionParameters): List<CompletionResultRun> {
+    val completionSegments = matchSegments
+      .filter { it.start <= params.position && params.position <= it.end }
+
+    fun Sequence<MatchResult>.buildPrevNames(): Set<String> =
+      filter { match -> match.segments.none { it.problem.isCritical } }
+        .map { params.name.substring(it.start, it.end) }
+        .toSet()
+
+    val result = SmartList<CompletionResultRun>()
+    completionSegments.forEach { completionSegment ->
+      result.add(CompletionResultRun(
+        completionSegment.start, completionSegment.end,
+        matchSegments.asSequence().takeWhile { it !== completionSegment }.buildPrevNames(),
+        matchSegments
+          .flatMap { it.segments.filter { segment -> segment.end <= completionSegment.start } },
+      ))
+      if (completionSegment.segments.none { it.problem.isCritical }
+          && params.position == completionSegment.end
+          && completionSegment === matchSegments.last()) {
+        result.add(
+          CompletionResultRun(
+            completionSegment.end, completionSegment.end,
+            matchSegments.asSequence().buildPrevNames(),
+            matchSegments
+              .flatMap { it.segments.filter { segment -> segment.end <= completionSegment.end } },
+          )
+        )
+      }
+    }
+    return result
+  }
+
+  private data class CompletionResultRun(
+    val start: Int,
+    val end: Int,
+    val prevNames: Set<String>,
+    val prevMatchScope: List<WebSymbolNameSegment>,
+  )
 
   override fun toString(): String =
     patterns.joinToString("\nor ")

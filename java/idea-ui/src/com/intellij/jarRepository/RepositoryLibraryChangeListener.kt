@@ -30,8 +30,8 @@ private class RepositoryLibraryChangeListener(private val project: Project) : Wo
 
     val settings = RepositoryLibrarySettings.getInstanceOrDefaults(project)
     val utils = RepositoryLibraryUtils.getInstance(project)
-    utils.computePropertiesForLibraries(libraries = changedLibraryEntities.filterNotNull().toSet(),
-                                        buildSha256Checksum = settings.isSha256ChecksumAutoBuildEnabled(),
-                                        guessAndBindRemoteRepository = settings.isJarRepositoryAutoBindEnabled())
+    utils.computeExtendedPropertiesFor(libraries = changedLibraryEntities.filterNotNull().toSet(),
+                                       buildSha256Checksum = settings.isSha256ChecksumAutoBuildEnabled(),
+                                       guessAndBindRemoteRepository = settings.isJarRepositoryAutoBindEnabled())
   }
 }

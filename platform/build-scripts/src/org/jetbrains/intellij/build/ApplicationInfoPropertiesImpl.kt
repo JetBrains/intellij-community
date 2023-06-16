@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.xml.dom.readXmlAsModel
@@ -48,6 +48,7 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
   override val svgRelativePath: String?
   override val svgProductIcons: List<String>
   override val patchesUrl: String?
+  override val launcherName: String
   private lateinit var context: BuildContext
 
   constructor(context: BuildContext) : this(context.project, context.productProperties, context.options) {
@@ -67,8 +68,8 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
     microVersion = versionTag.getAttributeValue("micro") ?: "0"
     patchVersion = versionTag.getAttributeValue("patch") ?: "0"
     fullVersionFormat = versionTag.getAttributeValue("full") ?: "{0}.{1}"
-    isEAP = versionTag.getAttributeValue("eap").toBoolean()
-    versionSuffix = versionTag.getAttributeValue("suffix") ?: (if (isEAP) "EAP" else null)
+    isEAP = (System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP) ?: versionTag.getAttributeValue("eap")).toBoolean()
+    versionSuffix = (System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX) ?: versionTag.getAttributeValue("suffix")) ?: (if (isEAP) "EAP" else null)
     minorVersionMainPart = minorVersion.takeWhile { it != '.' }
 
     val namesTag = root.getChild("names")!!
@@ -80,6 +81,7 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
     if (productCodeSeparator != -1) {
       productCode = buildNumber.substring(0, productCodeSeparator)
     }
+    @Suppress("DEPRECATION")
     if (productProperties.customProductCode != null) {
       productCode = productProperties.customProductCode
     }
@@ -111,6 +113,7 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
     productName = namesTag.getAttributeValue("fullname") ?: shortProductName
     edition = namesTag.getAttributeValue("edition")
     motto = namesTag.getAttributeValue("motto")
+    launcherName = namesTag.getAttributeValue("script")!!
 
     val companyTag = root.getChild("company")!!
     companyName = companyTag.getAttributeValue("name")!!
@@ -129,8 +132,6 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
 
   override val releaseVersionForLicensing: String
     get() = "${majorVersion}${minorVersionMainPart}00"
-  override val upperCaseProductName: String
-    get() = shortProductName.uppercase()
   override val fullVersion: String
     get() = MessageFormat.format(fullVersionFormat, majorVersion, minorVersion, microVersion, patchVersion)
   override val productNameWithEdition: String
@@ -138,13 +139,14 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
 
 
   override fun toString() = appInfoXml
+
   override val appInfoXml by lazy {
     check(this::context.isInitialized) {
       "buildContext property is not initialized, please use different constructor"
     }
     val appInfoXmlPath = findApplicationInfoInSources(context.project, context.productProperties)
-    val snapshotBuildNumber = readSnapshotBuildNumber(context.paths.communityHomeDirRoot)
-    check("$majorVersion$minorVersion".removePrefix("20") == snapshotBuildNumber.takeWhile { it != '.' }) {
+    val snapshotBuildNumber = readSnapshotBuildNumber(context.paths.communityHomeDirRoot).takeWhile { it != '.' }
+    check("$majorVersion$minorVersion".removePrefix("20").take(snapshotBuildNumber.count()) == snapshotBuildNumber) {
       "'major=$majorVersion' and 'minor=$minorVersion' attributes of '$appInfoXmlPath' don't match snapshot build number '$snapshotBuildNumber'"
     }
     val artifactsServer = context.proprietaryBuildTools.artifactsServer
@@ -156,7 +158,7 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
       }
     }
     val buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(context.options.buildDateInSeconds), ZoneOffset.UTC)
-    BuildUtils.replaceAll(
+    var patchedAppInfo = BuildUtils.replaceAll(
       text = Files.readString(appInfoXmlPath),
       replacements = mapOf(
         "BUILD_NUMBER" to "$productCode-${context.buildNumber}",
@@ -166,6 +168,15 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
       ),
       marker = "__"
     )
+    val isEapOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP)
+    if (isEapOverride != null) {
+      patchedAppInfo = patchedAppInfo.replace("eap=\".+\"".toRegex(), "eap=\"$isEapOverride\"")
+    }
+    val suffixOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX)
+    if (suffixOverride != null) {
+      patchedAppInfo = patchedAppInfo.replace("suffix=\".+\"".toRegex(), "eap=\"$suffixOverride\"")
+    }
+    return@lazy patchedAppInfo
   }
 }
 

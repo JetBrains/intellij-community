@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * A keyboard shortcut, which can consist of one or two individual key strokes.
+ * A keyboard shortcut, which can consist of one or two individual keystrokes.
  */
 public final class KeyboardShortcut extends Shortcut {
   private final KeyStroke myFirstKeyStroke;

@@ -48,7 +48,7 @@ final class EmptyStateProjectsPanel extends BorderLayoutPanel {
                           action -> ActionGroupPanelWrapper.wrapGroups(action, parentDisposable),
                           ProjectsTabFactory.PRIMARY_BUTTONS_NUM);
     ActionGroup main = new DefaultActionGroup(
-      ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null), LargeIconWithTextWrapper::wrapAsBigIconWithText));
+      ContainerUtil.map(mainAndMore.getFirst().getChildren(null), LargeIconWithTextWrapper::wrapAsBigIconWithText));
 
     ActionToolbarImpl actionsToolbar = createActionsToolbar(main);
     mainPanel.add(new Wrapper(new FlowLayout(), actionsToolbar.getComponent()));

@@ -174,7 +174,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     DefaultTreeModel model = new DefaultTreeModel(rootNode);
 
     final Tree optionsTree = new Tree(model);
-    TreeSpeedSearch speedSearch = new TreeSpeedSearch(
+    TreeSpeedSearch speedSearch = TreeSpeedSearch.installOn(
       optionsTree,
       true,
       path -> {

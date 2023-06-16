@@ -42,6 +42,8 @@ class InlayPresentationList(
   private var entries: Array<InlayPresentationEntry> = PresentationEntryBuilder(state).buildPresentationEntries()
   private var _partialWidthSums: IntArray? = null
   private var computedWidth: Int = NOT_COMPUTED
+  private var size: Float = Float.MAX_VALUE
+  private var fontName: String = ""
 
   private fun computePartialSums(fontMetricsStorage: InlayTextMetricsStorage): IntArray {
     var width = 0
@@ -133,7 +135,11 @@ class InlayPresentationList(
   }
 
   fun getWidthInPixels(textMetricsStorage: InlayTextMetricsStorage): Int {
-    if (computedWidth == NOT_COMPUTED) {
+    val metrics = textMetricsStorage.getFontMetrics(true)
+    val isActual = metrics.isActual(size, fontName)
+    if (!isActual || computedWidth == NOT_COMPUTED) {
+      size = metrics.font.size2D
+      fontName = metrics.font.family
       val width = entries.sumOf { it.computeWidth(textMetricsStorage) } + LEFT_MARGIN + RIGHT_MARGIN
       computedWidth = width
       return width

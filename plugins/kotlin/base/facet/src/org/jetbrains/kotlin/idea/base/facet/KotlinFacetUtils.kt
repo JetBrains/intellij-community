@@ -116,7 +116,7 @@ class ModulesByLinkedKeyCache(private val project: Project) : Disposable, Worksp
 
         val storageBefore = event.storageBefore
         val storageAfter = event.storageAfter
-        val changes = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
+        val changes = event.getChanges(ModuleEntity::class.java).also { if (it.none()) return }
 
         val stableNameProvider = StableModuleNameProvider.getInstance(project)
 
@@ -218,12 +218,6 @@ val Module.implementingModules: List<Module>
                 val thisModuleStableName = stableNameProvider.getStableModuleName(this)
                 val result = mutableSetOf<Module>()
                 moduleManager.modules.filterTo(result) { it.facetSettings?.dependsOnModuleNames?.contains(thisModuleStableName) == true }
-
-                // HACK: we do not import proper dependsOn for android source-sets in M3,
-                // so add all Android modules that M2-implemention would've added,
-                // to at least not make things worse.
-                // See KT-33809 for details
-                implementingModulesM2(moduleManager).forEach { if (it !in result && it.isAndroidModule()) result += it }
 
                 result.toList()
             }

@@ -2,6 +2,7 @@
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -207,11 +208,13 @@ public final class FileColorsModel implements Cloneable {
       return null;
     }
 
-    final FileColorConfiguration configuration = findConfiguration(file);
-    if (configuration != null && configuration.isValid(project)) {
-      return configuration.getColorID();
-    }
-    return null;
+    return ReadAction.compute(() -> {
+      final FileColorConfiguration configuration = findConfiguration(file);
+      if (configuration != null && configuration.isValid(project)) {
+        return configuration.getColorID();
+      }
+      return null;
+    });
   }
 
   @Nullable

@@ -3,8 +3,10 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -20,7 +22,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -33,10 +34,11 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * A rarely needed action that shows a popup with a path to a file (a list of parent directory names).
- * Clicking/hitting enter on a directory opens it in a system file manager.
+ * Clicking/hitting Enter on a directory opens it in a system file manager.
  *
  * @see RevealFileAction
  */
@@ -48,7 +50,7 @@ public class ShowFilePathAction extends DumbAwareAction {
     if (visible) {
       var file = getFile(e);
       e.getPresentation().setEnabled(file != null);
-      var isPopup = ActionPlaces.PROJECT_VIEW_POPUP.equals(e.getPlace()) || ActionPlaces.EDITOR_TAB_POPUP.equals(e.getPlace());
+      var isPopup = List.of(ActionPlaces.PROJECT_VIEW_POPUP, ActionPlaces.EDITOR_TAB_POPUP, ActionPlaces.BOOKMARKS_VIEW_POPUP).contains(e.getPlace());
       e.getPresentation().setText(ActionsBundle.message(isPopup ? "action.ShowFilePath.popup" : "action.ShowFilePath.text"));
     }
   }
@@ -104,7 +106,7 @@ public class ShowFilePathAction extends DumbAwareAction {
         if (vFile.isDirectory()) return AllIcons.Nodes.Folder;
         return FileTypeManager.getInstance().getFileTypeByFile(vFile).getIcon();
       }))
-      .finishOnUiThread(ModalityState.NON_MODAL, icons -> action.consume(createPopup(files, icons)))
+      .finishOnUiThread(ModalityState.nonModal(), icons -> action.accept(createPopup(files, icons)))
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
@@ -135,9 +137,6 @@ public class ShowFilePathAction extends DumbAwareAction {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link RevealFileAction#FILE_SELECTING_LISTENER} */
-  @Deprecated(forRemoval = true)
-  public static final NotificationListener FILE_SELECTING_LISTENER = RevealFileAction.FILE_SELECTING_LISTENER;
 
   /** @deprecated use {@link RevealFileAction#getFileManagerName} */
   @Deprecated(forRemoval = true)
@@ -149,12 +148,6 @@ public class ShowFilePathAction extends DumbAwareAction {
   @Deprecated(forRemoval = true)
   public static void openFile(@NotNull File file) {
     RevealFileAction.openFile(file);
-  }
-
-  /** @deprecated use {@link RevealFileAction#openDirectory}  */
-  @Deprecated(forRemoval = true)
-  public static void openDirectory(@NotNull File directory) {
-    RevealFileAction.openDirectory(directory);
   }
 
   /** @deprecated use {@link RevealFileAction#findLocalFile} */

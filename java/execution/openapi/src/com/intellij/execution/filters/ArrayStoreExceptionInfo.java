@@ -2,6 +2,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,11 +12,13 @@ public class ArrayStoreExceptionInfo extends ExceptionInfo {
   }
 
   @Override
-  PsiElement matchSpecificExceptionElement(@NotNull PsiElement e) {
+  ExceptionLineRefiner.RefinerMatchResult matchSpecificExceptionElement(@NotNull PsiElement current) {
+    PsiElement e = PsiTreeUtil.prevVisibleLeaf(current);
+    if (e == null) return null;
     if (e instanceof PsiJavaToken && e.textMatches("=") && e.getParent() instanceof PsiAssignmentExpression) {
       PsiExpression lExpression = ((PsiAssignmentExpression)e.getParent()).getLExpression();
       if (PsiUtil.skipParenthesizedExprDown(lExpression) instanceof PsiArrayAccessExpression) {
-        return e;
+        return onTheSameLineFor(current, e, false);
       }
     }
     return null;

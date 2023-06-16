@@ -12,16 +12,14 @@ import java.util.ResourceBundle;
 import java.util.function.Supplier;
 
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public final class CommonBundle extends DynamicBundle {
+public final class CommonBundle {
   private static final String BUNDLE = "messages.CommonBundle";
-  private static final CommonBundle INSTANCE = new CommonBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(CommonBundle.class, BUNDLE);
 
   private CommonBundle() {
-    super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     if (!INSTANCE.containsKey(key)) {
       return IdeDeprecatedMessagesBundle.message(key, params);
     }
@@ -51,8 +49,7 @@ public final class CommonBundle extends DynamicBundle {
    * @deprecated use {@link AbstractBundle#message(ResourceBundle, String, Object...)} instead
    */
   @Deprecated
-  @NotNull
-  public static @Nls String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
     return BundleBase.messageOrDefault(bundle, key, null, params);
   }
 
@@ -60,13 +57,11 @@ public final class CommonBundle extends DynamicBundle {
    * @deprecated use {@link AbstractBundle#messageOrNull(ResourceBundle, String, Object...)}
    */
   @Deprecated
-  @Nullable
-  public static @Nls String messageOfNull(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
+  public static @Nullable @Nls String messageOfNull(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
     return AbstractBundle.messageOrNull(bundle, key, params);
   }
 
-  @NotNull
-  public static @Button String getCancelButtonText() {
+  public static @NotNull @Button String getCancelButtonText() {
     return message("button.cancel");
   }
 

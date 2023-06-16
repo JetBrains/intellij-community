@@ -1,15 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.maven.testFramework.MavenImportingTestCase
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.junit.Assert
 import org.junit.Test
 
-class MavenModuleBuilderHelperTest : MavenImportingTestCase() {
+class MavenModuleBuilderHelperTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testGenerateFromArchetype() {

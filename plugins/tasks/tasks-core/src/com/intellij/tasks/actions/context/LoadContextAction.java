@@ -20,7 +20,6 @@ import com.intellij.tasks.context.LoadContextUndoableAction;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -50,7 +49,7 @@ public class LoadContextAction extends BaseTaskAction {
     final WorkingContextManager manager = WorkingContextManager.getInstance(project);
     List<ContextInfo> history = manager.getContextHistory();
     List<ContextHolder> infos =
-      new ArrayList<>(ContainerUtil.map2List(history, (Function<ContextInfo, ContextHolder>)info -> new ContextHolder() {
+      new ArrayList<>(ContainerUtil.map(history, info -> new ContextHolder() {
         @Override
         void load(final boolean clear) {
           LoadContextUndoableAction undoableAction = LoadContextUndoableAction.createAction(manager, clear, info.name);

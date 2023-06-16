@@ -1,8 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.util;
 
-import com.intellij.util.ImageLoader;
-import com.intellij.util.SVGLoader;
+import com.intellij.ui.svg.SvgKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,6 +9,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.ImageInputStream;
+import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -44,7 +44,7 @@ public final class ImageInfoReader {
 
   private static Info getSvgSize(byte[] data) {
     try {
-      ImageLoader.Dimension2DDouble size = SVGLoader.getDocumentSize(new ByteArrayInputStream(data), 1.0f);
+      Rectangle2D.Float size = SvgKt.getSvgDocumentSize(data);
       return new Info((int)Math.round(size.getWidth()), (int)Math.round(size.getHeight()), 32, true);
     }
     catch (Throwable e) {

@@ -2,14 +2,15 @@
 package com.intellij.vcs.log.data
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.diagnostic.telemetry.TraceManager
-import com.intellij.diagnostic.telemetry.computeWithSpan
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.impl.computeWithSpan
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.*
@@ -17,6 +18,7 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
 import org.jetbrains.annotations.CalledInAny
 import java.awt.EventQueue
+import java.util.function.Predicate
 
 /**
  * Provides capabilities to asynchronously calculate "contained in branches" information.
@@ -119,7 +121,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
   }
 
   @CalledInAny
-  fun getContainedInCurrentBranchCondition(root: VirtualFile) =
+  fun getContainedInCurrentBranchCondition(root: VirtualFile): Predicate<Int> =
     conditionsCache.getContainedInCurrentBranchCondition(root)
 
   @CalledInAny
@@ -144,7 +146,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
 
     @Throws(VcsException::class)
     fun getContainingBranches(): List<String> {
-      return computeWithSpan(TraceManager.getTracer("vcs"), "get containing branches") {
+      return computeWithSpan(TelemetryTracer.getInstance().getTracer(VcsScope), "get containing branches") {
         try {
           getContainingBranches(myProvider, myRoot, myHash)
         }

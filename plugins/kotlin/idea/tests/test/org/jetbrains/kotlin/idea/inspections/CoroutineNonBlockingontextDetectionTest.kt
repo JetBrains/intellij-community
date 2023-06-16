@@ -8,10 +8,10 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -26,20 +26,26 @@ private val ktProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDe
 }
 
 abstract class AbstractCoroutineNonBlockingContextDetectionTest(
-    private val considerUnknownAsBlocking: Boolean
+    private val considerUnknownAsBlocking: Boolean,
+    private val considerSuspendContextNonBlocking: Boolean,
 ) : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = ktProjectDescriptor
 
     override fun setUp() {
         super.setUp()
-        myFixture.enableInspections(BlockingMethodInNonBlockingContextInspection(considerUnknownAsBlocking))
+        myFixture.enableInspections(BlockingMethodInNonBlockingContextInspection(considerUnknownAsBlocking, considerSuspendContextNonBlocking))
+    }
+
+   protected fun doTest(fileName: String) {
+        myFixture.configureByFile(fileName)
+        myFixture.testHighlighting(true, false, false, fileName)
     }
 }
 
 @TestRoot("idea/tests")
 @TestMetadata("testData/inspections/blockingCallsDetection")
 @RunWith(JUnit38ClassRunner::class)
-class CoroutineNonBlockingContextDetectionTest : AbstractCoroutineNonBlockingContextDetectionTest(false) {
+class CoroutineNonBlockingContextDetectionTest : AbstractCoroutineNonBlockingContextDetectionTest(false, true) {
     fun testSimpleCoroutineScope() {
         doTest("InsideCoroutine.kt")
     }
@@ -56,38 +62,37 @@ class CoroutineNonBlockingContextDetectionTest : AbstractCoroutineNonBlockingCon
         doTest("DispatchersTypeCheck.kt")
     }
 
-    private fun doTest(fileName: String) {
-        myFixture.configureByFile(fileName)
-        myFixture.testHighlighting(true, false, false, fileName)
-    }
-
     fun testLambdaInSuspendDeclaration() {
-        myFixture.configureByFile("LambdaAssignmentCheck.kt")
-        myFixture.testHighlighting(true, false, false, "LambdaAssignmentCheck.kt")
+        doTest("LambdaAssignmentCheck.kt")
     }
 
     fun testFlowOn() {
-        myFixture.configureByFile("FlowOn.kt")
-        myFixture.testHighlighting(true, false, false, "FlowOn.kt")
+        doTest("FlowOn.kt")
     }
 }
 
 @TestRoot("idea/tests")
 @TestMetadata("testData/inspections/blockingCallsDetection")
 @RunWith(JUnit38ClassRunner::class)
-class CoroutineNonBlockingContextDetectionWithUnsureAsBlockingTest : AbstractCoroutineNonBlockingContextDetectionTest(true) {
+class CoroutineNonBlockingContextDetectionWithUnsureAsBlockingTest : AbstractCoroutineNonBlockingContextDetectionTest(true, false) {
     fun testCoroutineScope() {
-        myFixture.configureByFile("InsideCoroutineUnsure.kt")
-        myFixture.testHighlighting(true, false, false, "InsideCoroutineUnsure.kt")
+        doTest("InsideCoroutineUnsure.kt")
     }
 
     fun testLambdaInSuspendDeclaration() {
-        myFixture.configureByFile("LambdaAssignmentCheckUnsure.kt")
-        myFixture.testHighlighting(true, false, false, "LambdaAssignmentCheckUnsure.kt")
+        doTest("LambdaAssignmentCheckUnsure.kt")
     }
 
     fun testDispatchersTypeDetection() {
-        myFixture.configureByFile("DispatchersTypeCheckUnsure.kt")
-        myFixture.testHighlighting(true, false, false, "DispatchersTypeCheckUnsure.kt")
+        doTest("DispatchersTypeCheckUnsure.kt")
+    }
+}
+
+@TestRoot("idea/tests")
+@TestMetadata("testData/inspections/blockingCallsDetection")
+@RunWith(JUnit38ClassRunner::class)
+class CoroutineNonBlockingDetectionWithUnsureAsBlockingAndSuspendNonBlocking : AbstractCoroutineNonBlockingContextDetectionTest(true, true) {
+    fun testSimpleCoroutineScope() {
+        doTest("InsideCoroutine.kt")
     }
 }

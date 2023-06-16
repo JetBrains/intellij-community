@@ -35,5 +35,5 @@ internal fun ModifiableRootModel.addJUnit5Library() {
 }
 
 internal fun ModifiableRootModel.addAssertJLibrary() {
-  MavenDependencyUtil.addFromMaven(this, "org.assertj:assertj-core:3.11.1")
+  MavenDependencyUtil.addFromMaven(this, "org.assertj:assertj-core:3.24.2")
 }

@@ -69,7 +69,9 @@ public class ProjectInitializationDiagnosticServiceImpl implements ProjectInitia
 
     @Override
     public void activityFinished() {
-      activities.remove(code);
+      synchronized (LOCK) {
+        activities.remove(code);
+      }
     }
   }
 }

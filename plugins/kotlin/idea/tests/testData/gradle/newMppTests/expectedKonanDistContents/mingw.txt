@@ -1,8 +1,0 @@
-Kotlin/Native: platform.builtin
-Kotlin/Native: platform.gdiplus
-Kotlin/Native: platform.iconv
-Kotlin/Native: platform.opengl32
-Kotlin/Native: platform.posix
-Kotlin/Native: platform.windows
-Kotlin/Native: platform.winhttp
-Kotlin/Native: platform.zlib

@@ -1,4 +1,4 @@
-// "Create actual class for module testProjectName.mpp-bottom-actual.iosX64Main (Native)" "true"
+// "Add missing actual declarations" "true"
 // ACTION: Convert to secondary constructor
 // ACTION: Create subclass
 

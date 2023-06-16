@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
@@ -127,11 +128,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       successCallback.accept(data);
       return true;
     };
-    Project project = editor.getProject();
-    if (project == null) return;
-
-    GotoDeclarationAction
-      .chooseAmbiguousTarget(project, editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"), null);
+    GotoDeclarationAction.chooseAmbiguousTarget(editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"), null);
   }
 
   private static PsiElement getContainer(PsiElement refElement) {
@@ -182,8 +179,13 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     }
     PsiUtilCore.ensureValid(baseElement);
     PsiFile containingFile = baseElement.getContainingFile();
-    Editor editor = UtilKt.mockEditor(containingFile);
-    GotoData source = createDataForSource(Objects.requireNonNull(editor, "No document for " + containingFile), baseElement.getTextOffset(), baseElement);
+    //for compiled files a decompiled copy is analysed in the editor (see TextEditorBackgroundHighlighter.getPasses)
+    //but it's a non-physical copy with disabled events (see ClsFileImpl.getDecompiledPsiFile)
+    //which in turn means that no document can be found for such file - it's required to restore original file
+    //other non-physical copies should not be opened in the editor
+    PsiFile originalFile = containingFile.getOriginalFile();
+    Editor editor = UtilKt.mockEditor(originalFile);
+    GotoData source = createDataForSource(Objects.requireNonNull(editor, "No document for " + containingFile + "; original: " + originalFile), baseElement.getTextOffset(), baseElement);
     show(project, editor, containingFile, source, popup -> popup.show(new RelativePoint(e)));
   }
 
@@ -271,7 +273,11 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     FileIndexFacade index = FileIndexFacade.getInstance(project);
     return Comparator.comparing((PsiElement element) -> {
       PsiFile containingFile = element.getContainingFile();
-      return containingFile != null && index.isInContent(containingFile.getVirtualFile());
+      if (containingFile != null) {
+        VirtualFile virtualFile = containingFile.getVirtualFile();
+        if (virtualFile != null && index.isInContent(virtualFile)) return true;
+      }
+      return false;
     }).reversed();
   }
 

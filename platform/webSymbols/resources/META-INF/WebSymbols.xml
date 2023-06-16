@@ -16,6 +16,8 @@
       id="web-types"
       implementation="com.intellij.webSymbols.webTypes.WebTypesDocumentationCustomizer"/>
 
+    <platform.backend.documentation.targetProvider
+      implementation="com.intellij.webSymbols.documentation.WebSymbolDocumentationTargetProvider"/>
     <psi.declarationProvider implementation="com.intellij.webSymbols.declarations.impl.WebSymbolDeclarationProviderDelegate"/>
 
     <referencesSearch implementation="com.intellij.webSymbols.search.PsiSourcedWebSymbolReferenceSearcher"/>

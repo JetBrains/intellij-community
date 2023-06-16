@@ -6,7 +6,7 @@ import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
@@ -18,7 +18,7 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
   companion object {
     private val GROUP = EventLogGroup("ui.fonts", 6)
 
-    val FONT_NAME = EventFields.String(
+    val FONT_NAME: StringEventField = EventFields.String(
       "font_name", arrayListOf(
       "Monospaced", "Menlo", "DejaVu_Sans_Mono", ".SFNSText-Regular", "Fira_Code", "Lucida_Grande", "Source_Code_Pro", "Segoe_UI", "Ubuntu",
       ".SF_NS_Text", "Consolas", "Noto_Sans_Regular", "Microsoft_YaHei", "Fira_Code_Retina", "Cantarell_Regular", "Microsoft_YaHei_UI",
@@ -37,19 +37,19 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
       "Microsoft_Yahei_UI", "SansSerif", "Ubuntu_Light", "JetBrains_Mono", ".AppleSystemUIFont", ".SFNS-Regular", "Inter"
     ))
 
-    val FONT_SIZE = EventFields.Int("font_size")
-    val FONT_SIZE_2D = EventFields.Float("font_size_2d")
-    val LINE_SPACING = EventFields.Float("line_spacing")
+    val FONT_SIZE: IntEventField = EventFields.Int("font_size")
+    val FONT_SIZE_2D: FloatEventField = EventFields.Float("font_size_2d")
+    val LINE_SPACING: FloatEventField = EventFields.Float("line_spacing")
     private val FONT_SIZE_STRING = EventFields.String(
       "font_size", arrayListOf("X_SMALL", "X_LARGE", "XX_SMALL", "XX_LARGE", "SMALL", "MEDIUM", "LARGE")
     )
 
-    val UI_FONT = GROUP.registerEvent("UI", FONT_NAME, FONT_SIZE, FONT_SIZE_2D)
-    val PRESENTATION_MODE_FONT = GROUP.registerEvent("Presentation.mode", FONT_SIZE)
-    val EDITOR_FONT = GROUP.registerVarargEvent("Editor", FONT_NAME, FONT_SIZE, FONT_SIZE_2D, LINE_SPACING)
-    val IDE_EDITOR_FONT = GROUP.registerVarargEvent("IDE.editor", FONT_NAME, FONT_SIZE, FONT_SIZE_2D, LINE_SPACING)
-    val CONSOLE_FONT = GROUP.registerVarargEvent("Console", FONT_NAME, FONT_SIZE, FONT_SIZE_2D, LINE_SPACING)
-    val QUICK_DOC_FONT = GROUP.registerEvent("QuickDoc", FONT_SIZE_STRING)
+    val UI_FONT: EventId3<String?, Int, Float> = GROUP.registerEvent("UI", FONT_NAME, FONT_SIZE, FONT_SIZE_2D)
+    val PRESENTATION_MODE_FONT: EventId1<Int> = GROUP.registerEvent("Presentation.mode", FONT_SIZE)
+    val EDITOR_FONT: VarargEventId = GROUP.registerVarargEvent("Editor", FONT_NAME, FONT_SIZE, FONT_SIZE_2D, LINE_SPACING)
+    val IDE_EDITOR_FONT: VarargEventId = GROUP.registerVarargEvent("IDE.editor", FONT_NAME, FONT_SIZE, FONT_SIZE_2D, LINE_SPACING)
+    val CONSOLE_FONT: VarargEventId = GROUP.registerVarargEvent("Console", FONT_NAME, FONT_SIZE, FONT_SIZE_2D, LINE_SPACING)
+    val QUICK_DOC_FONT: EventId1<String?> = GROUP.registerEvent("QuickDoc", FONT_SIZE_STRING)
   }
 
   override fun getGroup(): EventLogGroup = GROUP

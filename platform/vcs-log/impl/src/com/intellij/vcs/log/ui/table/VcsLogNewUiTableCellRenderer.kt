@@ -1,26 +1,28 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table
 
+import com.intellij.ui.components.JBPanel
 import com.intellij.ui.dualView.TableCellRendererWrapper
 import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.popup.list.SelectablePanel.Companion.wrap
 import com.intellij.ui.popup.list.SelectablePanel.SelectionArcCorners
-import com.intellij.util.ui.JBDimension
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.vcs.log.ui.table.column.VcsLogColumn
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
-import java.awt.Dimension
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.JTable
 import javax.swing.table.TableCellRenderer
 
 @ApiStatus.Internal
 internal class VcsLogNewUiTableCellRenderer(
-  val delegate: TableCellRenderer,
+  private val column: VcsLogColumn<*>,
+  private val delegate: TableCellRenderer,
   private val hasMultiplePaths: () -> Boolean,
 ) : TableCellRenderer,
     VcsLogCellRenderer,
@@ -29,7 +31,7 @@ internal class VcsLogNewUiTableCellRenderer(
   private var isRight = false
   private var isLeft = false
   private var cachedRenderer: JComponent? = null
-  private var hasRootColumn: Boolean = false;
+  private var hasRootColumn: Boolean = false
 
   private lateinit var selectablePanel: SelectablePanel
 
@@ -41,11 +43,7 @@ internal class VcsLogNewUiTableCellRenderer(
                                              column: Int): Component {
     val columnRenderer = delegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column) as JComponent
 
-    // +1 – root column selection is not supported right now
-    val isLeftColumn = column == ROOT_COLUMN_INDEX + 1
-    val isRightColumn = column == table.columnCount - 1
-
-    updateSelectablePanelIfNeeded(isRightColumn, isLeftColumn, columnRenderer, hasMultiplePaths())
+    updateSelectablePanelIfNeeded(isRightColumn(column, table), isLeftColumn(column), columnRenderer, hasMultiplePaths())
 
     val isHovered = TableHoverListener.getHoveredRow(table) == row
 
@@ -55,15 +53,26 @@ internal class VcsLogNewUiTableCellRenderer(
       selectionArc = 0
       selectionArcCorners = SelectionArcCorners.ALL
 
-      if ((isLeft || isRight)) {
+      if (isLeft || isRight) {
         when {
           isSelected -> getSelectedRowType(table, row).tune(selectablePanel, isLeft, isRight, hasRootColumn)
           isHovered -> SelectedRowType.SINGLE.tune(selectablePanel, isLeft, isRight, hasRootColumn)
+          else -> {
+            selectionArc = ARC // Allow rounded hint
+            selectionArcCorners = SelectionArcCorners.NONE
+          }
         }
       }
     }
 
     return selectablePanel
+  }
+
+  private fun isRightColumn(column: Int, table: JTable) = column == table.columnCount - 1
+
+  private fun isLeftColumn(column: Int): Boolean {
+    // +1 – root column selection is not supported right now
+    return column == ROOT_COLUMN_INDEX + 1
   }
 
   override fun getBaseRenderer(): TableCellRenderer = delegate
@@ -81,7 +90,7 @@ internal class VcsLogNewUiTableCellRenderer(
     }
   }
 
-  private fun createWrappablePanel(renderer: JComponent, isLeft: Boolean = false, isRight: Boolean = false): BorderLayoutPanel {
+  private fun createWrappablePanel(renderer: JComponent, isLeft: Boolean, isRight: Boolean): BorderLayoutPanel {
     val panel = BorderLayoutPanel().addToCenter(renderer).andTransparent()
     if (isLeft) {
       panel.addToLeft(createEmptyPanel())
@@ -93,10 +102,43 @@ internal class VcsLogNewUiTableCellRenderer(
   }
 
   override fun getCellController(): VcsLogCellController? {
-    if (cachedRenderer != null && cachedRenderer is VcsLogCellRenderer) {
-      return (cachedRenderer as VcsLogCellRenderer).cellController
+    if (delegate is VcsLogCellRenderer) {
+      return (delegate as VcsLogCellRenderer).getCellController()
     }
     return null
+  }
+
+  override fun getPreferredWidth(): VcsLogCellRenderer.PreferredWidth? {
+    if (delegate !is VcsLogCellRenderer) return null
+    val delegateWidth = delegate.getPreferredWidth() ?: return null
+
+    return when (delegateWidth) {
+      is VcsLogCellRenderer.PreferredWidth.Fixed -> {
+        VcsLogCellRenderer.PreferredWidth.Fixed { table ->
+          val columnModelIndex = VcsLogColumnManager.getInstance().getModelIndex(column)
+          val columnViewIndex = table.convertColumnIndexToView(columnModelIndex)
+          val preferredWidth = delegateWidth.function(table)
+          getAdjustedWidth(table, columnViewIndex, preferredWidth)
+        }
+      }
+      is VcsLogCellRenderer.PreferredWidth.FromData -> {
+        VcsLogCellRenderer.PreferredWidth.FromData { table, value, row, column ->
+          val width = delegateWidth.function(table, value, row, column) ?: return@FromData null
+          getAdjustedWidth(table, column, width)
+        }
+      }
+    }
+  }
+
+  private fun getAdjustedWidth(table: JTable, columnViewIndex: Int, width: Int): Int {
+    var newWidth = width
+    if (isLeftColumn(columnViewIndex)) {
+      newWidth += additionalGap
+    }
+    if (isRightColumn(columnViewIndex, table)) {
+      newWidth += additionalGap
+    }
+    return newWidth
   }
 
   private fun getUnselectedBackground(table: JTable, row: Int, column: Int, hasFocus: Boolean): Color? {
@@ -136,19 +178,24 @@ internal class VcsLogNewUiTableCellRenderer(
   }
 
   companion object {
+    private val additionalGap
+      get() = 8
+
     private val INSETS
       get() = 4
 
     private val ARC
       get() = JBUI.CurrentTheme.Popup.Selection.ARC.get()
 
-    private fun createEmptyPanel(): JPanel = object : JPanel(null) {
-      init {
-        isOpaque = false
+    @JvmStatic
+    fun getAdditionalOffset(column: Int): Int {
+      if (column == ROOT_COLUMN_INDEX + 1) {
+        return JBUIScale.scale(additionalGap)
       }
-
-      override fun getPreferredSize(): Dimension = JBDimension(8, 0)
+      return 0
     }
+
+    private fun createEmptyPanel() = JBPanel<JBPanel<*>>(null).andTransparent().withPreferredSize(additionalGap, 0)
 
     private const val ROOT_COLUMN_INDEX = 0
   }
@@ -180,7 +227,8 @@ internal class VcsLogNewUiTableCellRenderer(
 
     MIDDLE {
       override fun SelectablePanel.tuneArcAndCorners(isLeft: Boolean, isRight: Boolean) {
-        selectionArc = 0
+        selectionArc = ARC // Allow rounded hint
+        selectionArcCorners = SelectionArcCorners.NONE
       }
     },
 

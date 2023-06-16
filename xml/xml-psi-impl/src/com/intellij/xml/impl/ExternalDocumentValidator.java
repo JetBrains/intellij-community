@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -26,7 +26,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.reference.SoftReference;
 import com.intellij.xml.actions.validate.ErrorReporter;
 import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import com.intellij.xml.util.XmlResourceResolver;
@@ -35,9 +34,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.SAXParseException;
 
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 /**
  * @author maxim
@@ -82,7 +84,7 @@ public class ExternalDocumentValidator {
     if (myFile == file &&
         myModificationStamp == file.getModificationStamp() &&
         !ValidateXmlActionHandler.isValidationDependentFilesOutOfDate((XmlFile)file) &&
-        SoftReference.dereference(myInfos)!=null // we have validated before
+        dereference(myInfos)!=null // we have validated before
         ) {
       addAllInfos(host,myInfos.get());
       return;
@@ -360,7 +362,7 @@ public class ExternalDocumentValidator {
     if (!profile.isToolEnabled(HighlightDisplayKey.find(INSPECTION_SHORT_NAME), containingFile)) return;
 
     SoftReference<ExternalDocumentValidator> validatorReference = project.getUserData(validatorInstanceKey);
-    ExternalDocumentValidator validator = SoftReference.dereference(validatorReference);
+    ExternalDocumentValidator validator = dereference(validatorReference);
 
     if(validator == null) {
       validator = new ExternalDocumentValidator();

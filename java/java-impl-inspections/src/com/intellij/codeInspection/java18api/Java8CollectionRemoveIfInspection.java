@@ -122,7 +122,7 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
     };
   }
 
-  private static class ReplaceWithRemoveIfQuickFix implements LocalQuickFix {
+  private static class ReplaceWithRemoveIfQuickFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -131,9 +131,8 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement().getParent();
-      if(!(element instanceof PsiLoopStatement loop)) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      if(!(element.getParent() instanceof PsiLoopStatement loop)) return;
       PsiStatement[] statements = ControlFlowUtils.unwrapBlock(loop.getBody());
       PsiIfStatement ifStatement = tryCast(ArrayUtil.getLastElement(statements), PsiIfStatement.class);
       if (ifStatement == null) return;

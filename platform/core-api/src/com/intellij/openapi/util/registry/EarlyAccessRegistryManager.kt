@@ -10,6 +10,8 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -18,74 +20,97 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
+private val LOG: Logger
+  get() = logger<EarlyAccessRegistryManager>()
+
+private val configFile: Path by lazy {
+  PathManager.getConfigDir().resolve(EarlyAccessRegistryManager.fileName)
+}
+
+private val lazyMap = SynchronizedClearableLazy {
+  val result = ConcurrentHashMap<String, String>()
+  val lines = try {
+    Files.lines(configFile)
+  }
+  catch (ignore: NoSuchFileException) {
+    return@SynchronizedClearableLazy result
+  }
+
+  lines.use { lineStream ->
+    val iterator = lineStream.iterator()
+    while (iterator.hasNext()) {
+      val key = iterator.next()
+      if (!iterator.hasNext()) {
+        break
+      }
+      result.put(key, iterator.next())
+    }
+  }
+  result
+}
+
+private val map: ConcurrentHashMap<String, String>?
+  get() {
+    if (lazyMap.isInitialized()) {
+      val map = lazyMap.value
+      return if (map.isEmpty()) null else map
+    }
+    else {
+      return null
+    }
+  }
+
 /**
- * Use only after consultation and approval - ask core team.
+ * Provides a configuration of internal settings which might be used before application has been loaded unless [Registry].
+ *
+ * Please avoid to use it, consult with someone from core team first.
  */
 @ApiStatus.Internal
-@ApiStatus.Experimental
 object EarlyAccessRegistryManager {
-  private val configFile: Path by lazy {
-    PathManager.getConfigDir().resolve("early-access-registry.txt")
-  }
-
-  private val lazyMap = lazy {
-    val result = ConcurrentHashMap<String, String>()
-    val lines = try {
-      Files.lines(configFile)
-    }
-    catch (ignore: NoSuchFileException) {
-      return@lazy result
-    }
-
-    lines.use { lineStream ->
-      val iterator = lineStream.iterator()
-      while (iterator.hasNext()) {
-        val key = iterator.next()
-        if (!iterator.hasNext()) {
-          break
-        }
-        result.put(key, iterator.next())
-      }
-    }
-    result
-  }
-
-  private val map: ConcurrentHashMap<String, String>?
-    get() {
-      if (lazyMap.isInitialized()) {
-        val map = lazyMap.value
-        return if (map.isEmpty()) null else map
-      }
-      else {
-        return null
-      }
-    }
-
-  private val LOG: Logger
-    get() = logger<EarlyAccessRegistryManager>()
+  @Suppress("ConstPropertyName")
+  const val fileName: String = "early-access-registry.txt"
 
   fun getBoolean(key: String): Boolean {
+    return getString(key).toBoolean()
+  }
+
+  fun getString(key: String): String? {
     if (key.isEmpty()) {
       LOG.error("Empty key")
-      return false
+      return null
     }
 
     val map = lazyMap.value
     if (!LoadingState.APP_STARTED.isOccurred) {
-      return getOrFromSystemProperty(map, key)
+      return getOrFromSystemProperty(map, key).nullize()
     }
 
     // see com.intellij.ide.plugins.PluginDescriptorLoader.loadForCoreEnv
     val registryManager = ApplicationManager.getApplication().serviceOrNull<RegistryManager>() ?: return getOrFromSystemProperty(map, key)
     // use RegistryManager to make sure that Registry is fully loaded
-    val value = registryManager.`is`(key)
-    // ensure that even if for some reason key was not early accessed, it is stored for early access on next start-up
-    map.putIfAbsent(key, value.toString())
-    return value
+    val value = try {
+      registryManager.stringValue(key)
+    }
+    catch (ignore: MissingResourceException) {
+      null
+    }
+
+    if (value == null) {
+      return null
+    }
+
+    // ensure that even if key was not early accessed for some reason, it is stored for early access on next start-up
+    map.putIfAbsent(key, value)
+    return value.takeIf { it.isNotEmpty() }
   }
 
-  private fun getOrFromSystemProperty(map: ConcurrentHashMap<String, String>, key: String): Boolean {
-    return java.lang.Boolean.parseBoolean(map.get(key) ?: System.getProperty(key))
+  fun getOrLoadMap(): Map<String, String> = lazyMap.value
+
+  fun setAndFlush(data: Map<String, String>) {
+    check(!LoadingState.COMPONENTS_REGISTERED.isOccurred)
+    val map = lazyMap.value
+    map.putAll(data)
+    saveConfigFile(map, configFile) { map.get(it) }
   }
 
   fun syncAndFlush() {
@@ -95,23 +120,13 @@ object EarlyAccessRegistryManager {
     val map = map ?: return
     val registryManager = ApplicationManager.getApplication().serviceIfCreated<RegistryManager>() ?: return
     try {
-      val lines = mutableListOf<String>()
-      for (key in map.keys.sorted()) {
+      saveConfigFile(map, configFile) {
         try {
-          val value = registryManager.get(key).asString()
-          lines.add(key)
-          lines.add(value)
+          registryManager.stringValue(it)
         }
         catch (ignore: MissingResourceException) {
+          null
         }
-      }
-
-      if (lines.isEmpty()) {
-        Files.deleteIfExists(configFile)
-      }
-      else {
-        Files.createDirectories(configFile.parent)
-        Files.write(configFile, lines, StandardCharsets.UTF_8)
       }
     }
     catch (e: Throwable) {
@@ -119,16 +134,43 @@ object EarlyAccessRegistryManager {
     }
   }
 
-  @Suppress("unused") // registered in an `*.xml` file
-  private class MyListener : RegistryValueListener {
-    override fun afterValueChanged(value: RegistryValue) {
-      val map = map ?: return
+  fun invalidate() {
+    check(!LoadingState.COMPONENTS_REGISTERED.isOccurred)
+    lazyMap.drop()
+  }
+}
 
-      // store only if presented - do not store alien keys
-      val key = value.key
-      if (map.containsKey(key)) {
-        map.put(key, value.asString())
-      }
+private class EarlyAccessRegistryManagerListener : RegistryValueListener {
+  override fun afterValueChanged(value: RegistryValue) {
+    val map = map ?: return
+
+    // store only if presented - do not store alien keys
+    val key = value.key
+    if (map.containsKey(key)) {
+      map.put(key, value.asString())
     }
+  }
+}
+
+private fun getOrFromSystemProperty(map: ConcurrentHashMap<String, String>, key: String): String? {
+  return map.get(key) ?: System.getProperty(key)
+}
+
+private inline fun saveConfigFile(map: ConcurrentHashMap<String, String>,
+                                  @Suppress("SameParameterValue") configFile: Path,
+                                  provider: (String) -> String?) {
+  val lines = mutableListOf<String>()
+  for (key in map.keys.sorted()) {
+    val value = provider(key) ?: continue
+    lines.add(key)
+    lines.add(value)
+  }
+
+  if (lines.isEmpty()) {
+    Files.deleteIfExists(configFile)
+  }
+  else {
+    Files.createDirectories(configFile.parent)
+    Files.write(configFile, lines, StandardCharsets.UTF_8)
   }
 }

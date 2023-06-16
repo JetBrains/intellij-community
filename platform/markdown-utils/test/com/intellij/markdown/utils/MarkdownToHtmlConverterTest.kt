@@ -2,6 +2,7 @@
 package com.intellij.markdown.utils
 
 import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
@@ -18,7 +19,7 @@ class MarkdownToHtmlConverterTest {
       val providers = super.createHtmlGeneratingProviders(linkMap, baseURI).toMutableMap()
       providers[MarkdownElementTypes.CODE_FENCE] = CodeFenceSyntaxHighlighterGeneratingProvider(
         object : HtmlSyntaxHighlighter {
-          override fun color(language: String?, rawContent: String): HtmlChunk {
+          override fun color(language: String?, rawContent: @NlsSafe String): HtmlChunk {
             return if (language == "empty")
               HtmlChunk.text(rawContent)
             else

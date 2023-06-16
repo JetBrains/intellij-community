@@ -194,7 +194,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void setWatchMethodReturnValuesEnabled(boolean enabled) {
-    ObjectUtils.consumeIfNotNull(myReturnValueWatcher, v -> v.setEnabled(enabled));
+    if (myReturnValueWatcher != null) {
+      myReturnValueWatcher.setEnabled(enabled);
+    }
   }
 
   public boolean canGetMethodReturnValue() {
@@ -410,7 +412,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       // suspend policy to match the suspend policy of the context:
       // if all threads were suspended, then during stepping all the threads must be suspended
-      // if only event thread were suspended, then only this particular thread must be suspended during stepping
+      // if only event thread was suspended, then only this particular thread must be suspended during stepping
       stepRequest.setSuspendPolicy(suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD
                                    ? EventRequest.SUSPEND_EVENT_THREAD
                                    : EventRequest.SUSPEND_ALL);
@@ -1873,8 +1875,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     public ResumeCommand(SuspendContextImpl suspendContext) {
       super(suspendContext);
-      final ThreadReferenceProxyImpl contextThread = getDebuggerContext().getThreadProxy();
-      myContextThread = contextThread != null ? contextThread : (suspendContext != null ? suspendContext.getThread() : null);
+      final ThreadReferenceProxyImpl thread = suspendContext != null ? suspendContext.getThread() : null;
+      myContextThread = thread != null ? thread : getDebuggerContext().getThreadProxy();
     }
 
     @Override
@@ -2012,12 +2014,20 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         thread.popFrames(myStackFrame);
         getSuspendManager().popFrame(suspendContext);
       }
-      catch (final EvaluateException e) {
-        DebuggerInvocationUtil.swingInvokeLater(myProject, () ->
-          Messages.showMessageDialog(myProject, JavaDebuggerBundle.message("error.pop.stackframe", e.getLocalizedMessage()),
-                                     XDebuggerBundle.message("xdebugger.reset.frame.title"), Messages.getErrorIcon()));
+      catch (NativeMethodException e) {
+        showError(JavaDebuggerBundle.message("error.native.method.exception"));
         LOG.info(e);
       }
+      catch (EvaluateException e) {
+        showError(JavaDebuggerBundle.message("error.pop.stackframe", e.getLocalizedMessage()));
+        LOG.info(e);
+      }
+    }
+
+    private void showError(@NlsContexts.DialogMessage String message) {
+      DebuggerInvocationUtil.swingInvokeLater(myProject, () ->
+        Messages.showMessageDialog(myProject, message,
+                                   XDebuggerBundle.message("xdebugger.reset.frame.title"), Messages.getErrorIcon()));
     }
   }
 
@@ -2308,7 +2318,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         breakpointManager.applyThreadFilter(DebugProcessImpl.this, null); // clear the filter on resume
-        ObjectUtils.consumeIfNotNull(myReturnValueWatcher, MethodReturnValueWatcher::clear);
+        if (myReturnValueWatcher != null) {
+          myReturnValueWatcher.clear();
+        }
         super.contextAction(suspendContext);
       }
 
@@ -2448,11 +2460,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void startWatchingMethodReturn(ThreadReferenceProxyImpl thread) {
-    ObjectUtils.consumeIfNotNull(myReturnValueWatcher, v -> v.enable(thread.getThreadReference()));
+    if (myReturnValueWatcher != null) {
+      myReturnValueWatcher.enable(thread.getThreadReference());
+    }
   }
 
   void stopWatchingMethodReturn() {
-    ObjectUtils.consumeIfNotNull(myReturnValueWatcher, MethodReturnValueWatcher::disable);
+    if (myReturnValueWatcher != null) {
+      myReturnValueWatcher.disable();
+    }
   }
 
   private record VirtualMachineData(VirtualMachineProxyImpl vm, RemoteConnection connection,

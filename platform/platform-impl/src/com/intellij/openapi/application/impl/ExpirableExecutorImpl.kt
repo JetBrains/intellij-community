@@ -3,7 +3,6 @@
 
 package com.intellij.openapi.application.impl
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ExpirableExecutor
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.application.constraints.Expiration
@@ -32,21 +31,9 @@ internal class ExpirableExecutorImpl private constructor(constraints: Array<Cont
                          expirationSet: Set<Expiration>): ExpirableExecutorImpl =
     ExpirableExecutorImpl(constraints, cancellationConditions, expirationSet, executor)
 
-  override fun dispatchLaterUnconstrained(runnable: Runnable) =
+  override fun dispatchLaterUnconstrained(runnable: Runnable): Unit =
     executor.execute(runnable)
 }
-
-@ScheduledForRemoval
-@Deprecated(message = "This constraint only holds inside a read action, " +
-                      "the executor cannot ever guarantee that it will hold at the moment of execution")
-fun ExpirableExecutor.withConstraint(constraint: ContextConstraint): ExpirableExecutor =
-  (this as ExpirableExecutorImpl).withConstraint(constraint)
-
-@ScheduledForRemoval
-@Deprecated(message = "This constraint only holds inside a read action, " +
-                      "the executor cannot ever guarantee that it will hold at the moment of execution")
-fun ExpirableExecutor.withConstraint(constraint: ContextConstraint, parentDisposable: Disposable): ExpirableExecutor =
-  (this as ExpirableExecutorImpl).withConstraint(constraint, parentDisposable)
 
 /**
  * A [context][CoroutineContext] to be used with the standard [launch], [async], [withContext] coroutine builders.

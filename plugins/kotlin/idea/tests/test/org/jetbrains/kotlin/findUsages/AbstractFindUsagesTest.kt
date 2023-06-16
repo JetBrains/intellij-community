@@ -22,10 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiMember
+import com.intellij.psi.*
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightProjectDescriptor
@@ -38,6 +35,9 @@ import com.intellij.usages.impl.rules.UsageTypeProvider
 import com.intellij.usages.rules.ImportFilteringRule
 import com.intellij.usages.rules.UsageGroupingRule
 import com.intellij.util.CommonProcessors
+import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -47,13 +47,18 @@ import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesO
 import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindMemberUsagesHandler
 import org.jetbrains.kotlin.idea.base.util.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.assertEqualsToFile
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.io.File
 
 
@@ -98,8 +103,12 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
     )
 
     companion object {
-        enum class FindUsageTestType {
-            DEFAULT, FIR, CRI
+        enum class FindUsageTestType(val isFir: Boolean, val isCri: Boolean) {
+            DEFAULT(isFir = false, isCri = false),
+            FIR(isFir = true, isCri = false),
+
+            CRI(isFir = false, isCri = true),
+            FIR_CRI(isFir = true, isCri = true),
         }
 
         fun <T : PsiElement> doFindUsageTest(
@@ -123,7 +132,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                 return
             }
 
-            if (testType == FindUsageTestType.CRI) {
+            if (testType.isCri) {
                 if (InTextDirectivesUtils.isDirectiveDefined(mainFileText, "// CRI_IGNORE")) {
                     println("test $mainFileName is ignored (${testType.name})")
                     return
@@ -187,7 +196,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                     newFileName to oldFileName
                 }.associate { it }
 
-                if (testType != FindUsageTestType.FIR) {
+                if (testType == FindUsageTestType.DEFAULT) {
                     (configurator.file as? KtFile)?.let { ktFile ->
                         val diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithAllCompilerChecks().bindingContext.diagnostics }
                         DirectiveBasedActionUtils.checkForUnexpectedWarnings(ktFile, diagnosticsProvider = diagnosticsProvider)
@@ -208,6 +217,26 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                     isFindFileUsages -> configurator.file
                     else -> configurator.elementAtCaret
                 }
+
+                val psiElementAsTitle = when(caretElement) {
+                    is KtClass, is KtProperty, is KtParameter ->
+                        KotlinFindUsagesSupport.tryRenderDeclarationCompactStyle(caretElement as KtDeclaration)
+                    is KtFunction -> caretElement.toLightMethods().firstOrNull()?.let { KotlinFindUsagesSupport.formatJavaOrLightMethod(it) }
+                    is PsiMethod ->
+                        if (caretElement.unwrapped is KtDeclaration) {
+                            KotlinFindUsagesSupport.formatJavaOrLightMethod(caretElement)
+                        } else {
+                            null
+                        }
+                    else -> null
+                }
+
+                val expectedPsiElementAsTitle = InTextDirectivesUtils.findStringWithPrefixes(mainFileText, "// PSI_ELEMENT_AS_TITLE:")
+                assertEqualsToFile(
+                  mainFile,
+                  mainFileText.replace("// PSI_ELEMENT_AS_TITLE: \"$expectedPsiElementAsTitle\"\n",
+                                       if (psiElementAsTitle != null) "// PSI_ELEMENT_AS_TITLE: \"$psiElementAsTitle\"\n" else "")
+                )
 
                 UsefulTestCase.assertInstanceOf(caretElement!!, caretElementClass)
 
@@ -283,6 +312,9 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
             filters.all { it.isVisible(usageAdapter) }
         }
 
+        val KtDeclaration.descriptor: DeclarationDescriptor?
+            get() = if (this is KtParameter) this.resolveToParameterDescriptorIfAny(BodyResolveMode.FULL) else this.resolveToDescriptorIfAny(BodyResolveMode.FULL)
+
         internal fun getUsageType(element: PsiElement?): UsageType? {
             if (element == null) return null
 
@@ -290,7 +322,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                 return UsageType.COMMENT_USAGE
             }
 
-            return UsageTypeProvider.EP_NAME.extensionList.mapNotNull { it.getUsageType(element) }.firstOrNull() ?: UsageType.UNCLASSIFIED
+            return UsageTypeProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getUsageType(element) } ?: UsageType.UNCLASSIFIED
         }
 
         internal fun <T> instantiateClasses(mainFileText: String, directive: String): Collection<T> {
@@ -382,12 +414,13 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
     val finalUsages = filteredUsages.map(convertToString).sorted()
 
     var results = File(rootPath, prefix + "results.txt")
-    if (testType == FindUsageTestType.FIR) {
+    if (testType.isFir) {
         val firResults = File(rootPath, prefix + "fir.results.txt")
         if (firResults.exists()) {
             results = firResults
         }
     }
+
     KotlinTestUtils.assertEqualsToFile(testType.name, results, finalUsages.joinToString("\n"))
 
     if (log != null  && !ignoreLog) {
@@ -448,7 +481,7 @@ internal fun findUsages(
         val processor = CommonProcessors.CollectProcessor<UsageInfo>()
         for (psiElement in handler.primaryElements + handler.secondaryElements) {
             if (highlightingMode) {
-                if (testType == FindUsageTestType.FIR) {
+                if (testType.isFir) {
                     ProgressManager.getInstance().run(
                         object : Task.Modal(project, "", false) {
                             override fun run(indicator: ProgressIndicator) {

@@ -23,13 +23,12 @@ public final class CompletionParameters {
   private final int myOffset;
   private final int myInvocationCount;
   private final CompletionProcess myProcess;
-  private boolean isTestingMode = false;
-  private boolean completeOnlyNotImported = false;
+  private boolean myIsTestingMode;
+  private boolean myCompleteOnlyNotImported;
 
-  @ApiStatus.Internal
-  public CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
+  private CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
                               @NotNull CompletionType completionType, int offset, int invocationCount, @NotNull Editor editor,
-                              @NotNull CompletionProcess process) {
+                              @NotNull CompletionProcess process, boolean isTestingMode, boolean completeOnlyNotImported) {
     PsiUtilCore.ensureValid(position);
     assert position.getTextRange().containsOffset(offset) : position;
     myPosition = position;
@@ -39,16 +38,25 @@ public final class CompletionParameters {
     myInvocationCount = invocationCount;
     myEditor = editor;
     myProcess = process;
+    myIsTestingMode = isTestingMode;
+    myCompleteOnlyNotImported = completeOnlyNotImported;
+  }
+
+  @ApiStatus.Internal
+  public CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
+                              @NotNull CompletionType completionType, int offset, int invocationCount, @NotNull Editor editor,
+                              @NotNull CompletionProcess process) {
+    this(position, originalFile, completionType, offset, invocationCount, editor, process, false, false);
   }
 
   @NotNull
   public CompletionParameters withType(@NotNull CompletionType type) {
-    return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myEditor, myProcess);
+    return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myEditor, myProcess, myIsTestingMode, myCompleteOnlyNotImported);
   }
 
   @NotNull
   public CompletionParameters withInvocationCount(int newCount) {
-    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount, myEditor, myProcess);
+    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount, myEditor, myProcess, myIsTestingMode, myCompleteOnlyNotImported);
   }
 
   /**
@@ -116,7 +124,7 @@ public final class CompletionParameters {
 
   @NotNull
   public CompletionParameters withPosition(@NotNull PsiElement element, int offset) {
-    return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myEditor, myProcess);
+    return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myEditor, myProcess, myIsTestingMode, myCompleteOnlyNotImported);
   }
 
   public boolean isExtendedCompletion() {
@@ -137,18 +145,18 @@ public final class CompletionParameters {
   }
 
   public boolean isTestingMode() {
-    return isTestingMode;
+    return myIsTestingMode;
   }
 
   public void setIsTestingMode(boolean runTestingMode) {
-    isTestingMode = runTestingMode;
+    myIsTestingMode = runTestingMode;
   }
 
   public boolean isCompleteOnlyNotImported() {
-    return completeOnlyNotImported;
+    return myCompleteOnlyNotImported;
   }
 
   public void setCompleteOnlyNotImported(boolean onlyNonImported) {
-    completeOnlyNotImported = onlyNonImported;
+    myCompleteOnlyNotImported = onlyNonImported;
   }
 }

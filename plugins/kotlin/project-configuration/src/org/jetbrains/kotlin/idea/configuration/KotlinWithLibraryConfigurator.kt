@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.projectConfiguration.askUpdateRuntime
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread
 import org.jetbrains.kotlin.idea.versions.forEachAllUsedLibraries
@@ -111,6 +112,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         getOrCreateKotlinLibrary(project, collector)
         val writeActions = mutableListOf<() -> Unit>()
         ActionUtil.underModalProgress(project, KotlinProjectConfigurationBundle.message("configure.kotlin.in.modules.progress.text")) {
+            KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project)
             val progressIndicator = ProgressManager.getGlobalProgressIndicator()
             for ((index, module) in modulesToConfigure.withIndex()) {
                 if (!isUnitTestMode()) {

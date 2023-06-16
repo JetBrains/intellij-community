@@ -10,13 +10,10 @@ import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * @author anna
@@ -135,18 +132,28 @@ public final class TypeMigrationReplacementUtil {
     }
   }
 
-  static PsiNewExpression replaceNewExpressionType(final Project project, final PsiNewExpression expression, final Map.Entry<TypeMigrationUsageInfo, PsiType> info) {
-    final PsiType changeType = info.getValue();
-    if (changeType != null) {
+  static PsiNewExpression replaceNewExpressionType(Project project, PsiNewExpression expression, PsiType targetType) {
+    if (targetType instanceof PsiEllipsisType) {
+      PsiArrayInitializerExpression initializer = expression.getArrayInitializer();
+      if (initializer != null) {
+        PsiExpression[] initializers = initializer.getInitializers();
+        if (initializers.length != 0) {
+          expression.getParent().addRangeBefore(initializers[0], initializers[initializers.length - 1], expression);
+        }
+        expression.delete();
+        return null;
+      }
+    }
+    if (targetType != null) {
       try {
         final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
-        final PsiType componentType = changeType.getDeepComponentType();
+        final PsiType componentType = targetType.getDeepComponentType();
         if (classReference != null) {
-          final PsiElement psiElement = changeType.equals(RefactoringChangeUtil.getTypeByExpression(expression))
+          final PsiElement psiElement = targetType.equals(RefactoringChangeUtil.getTypeByExpression(expression))
                                         ? classReference
                                         : replaceTypeWithClassReferenceOrKeyword(project, componentType, classReference);
           final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(psiElement, PsiNewExpression.class);
-          if (!tryToReplaceWithDiamond(newExpression, changeType)) {
+          if (!tryToReplaceWithDiamond(newExpression, targetType)) {
             return newExpression;
           }
         }

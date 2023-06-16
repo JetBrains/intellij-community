@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -19,6 +20,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
@@ -134,14 +138,7 @@ internal class OverrideKeywordHandler(
                 generateMemberInNewAnalysisSession(classOrObjectPointer.element!!, member, project)
             },
             shortenReferences = { element ->
-                val shortenings = allowAnalysisOnEdt {
-                    analyze(element) {
-                        collectPossibleReferenceShortenings(element.containingKtFile, element.textRange)
-                    }
-                }
-                runWriteAction {
-                    shortenings.invokeShortening()
-                }
+                shortenReferencesInRange(element.containingKtFile, element.textRange)
             }
         )
     }
@@ -179,6 +176,9 @@ internal class OverrideKeywordHandler(
     companion object {
         private val renderingOptionsForLookupElementRendering =
             KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+                annotationRenderer = annotationRenderer.with {
+                    annotationFilter = KtRendererAnnotationsFilter.NONE
+                }
                 modifiersRenderer = modifiersRenderer.with {
                     modifierFilter = KtRendererModifierFilter.onlyWith(KtTokens.TYPE_MODIFIER_KEYWORDS)
                 }

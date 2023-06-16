@@ -16,10 +16,11 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.BinaryFileTypePolicy;
+import com.intellij.util.indexing.hints.FileNameSuffixInputFilter;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
@@ -51,7 +52,8 @@ public class PySetuptoolsNamespaceIndex extends ScalarIndexExtension<String> {
     }
   };
 
-  private final FileBasedIndex.InputFilter myInputFilter = file -> StringUtil.endsWith(file.getNameSequence(), NAMESPACE_FILE_SUFFIX) && !file.getFileType().isBinary();
+  private final FileBasedIndex.InputFilter myInputFilter =
+    new FileNameSuffixInputFilter(NAMESPACE_FILE_SUFFIX, false /* don't ignore case */, BinaryFileTypePolicy.NON_BINARY);
 
   @NotNull
   @Override

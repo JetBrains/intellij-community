@@ -19,14 +19,25 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.util.io.isFile
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
-import com.jetbrains.packagesearch.intellij.plugin.util.*
-import kotlinx.coroutines.flow.*
+import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
+import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
+import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
+import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
+import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
+import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jetbrains.idea.packagesearch.SortMetric
 import org.jetbrains.idea.packagesearch.api.PackageSearchApiClient
 import org.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import org.jetbrains.packagesearch.api.v2.ApiRepository
@@ -65,7 +76,8 @@ internal class ProjectDataProvider(
 
     suspend fun doSearch(
         searchQuery: String,
-        filterOptions: FilterOptions
+        filterOptions: FilterOptions,
+        sortMetric: SortMetric,
     ): ParsedSearchResponse {
         val repositoryIds = filterOptions.onlyRepositoryIds
 
@@ -73,6 +85,7 @@ internal class ProjectDataProvider(
             searchQuery = searchQuery,
             onlyStable = filterOptions.onlyStable,
             onlyMpp = filterOptions.onlyKotlinMultiplatform,
+            sortMetric = sortMetric,
             repositoryIds = repositoryIds.toList()
         )
 

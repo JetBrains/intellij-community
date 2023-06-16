@@ -2,12 +2,13 @@
 <body>
 <p>Reports a problem when you are trying
   to call objects that are not callable, like, for example, properties:</p>
-<pre  style="font-family: monospace">
+<p><b>Example:</b></p>
+<pre><code>
 class Record:
     @property
     def as_json(self):
 
 json = Record().as_json()
-</pre>
+</code></pre>
 </body>
 </html>

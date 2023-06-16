@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -76,7 +77,10 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     // TODO filter out targets defined in stubs
     return StreamEx.of(resolveReferenceAugAssignmentsAware(elementAtCaret, resolveContext, new HashSet<>()))
       .select(PyTargetExpression.class)
-      .filter(target -> !index.isInLibraryClasses(target.getContainingFile().getVirtualFile()))
+      .filter(target -> {
+        VirtualFile dir = target.getContainingFile().getOriginalFile().getVirtualFile();
+        return dir != null && !index.isInLibraryClasses(dir);
+      })
       .filter(target -> canBeAnnotated(target))
       .filter(target -> !isAnnotated(target, typeEvalContext))
       .toList();

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.util.SlowOperations
 import com.intellij.xml.util.XmlStringUtil
 import java.awt.event.InputEvent
 import java.util.*
@@ -42,7 +43,9 @@ private class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: 
 
     TooltipActionsLogger.logExecute(project, inputEvent)
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
-    val intentions = ShowIntentionsPass.getAvailableFixes(editor, psiFile, -1, myActualOffset)
+    val intentions = SlowOperations.knownIssue("IDEA-301732, EA-660480").use {
+      ShowIntentionsPass.getAvailableFixes(editor, psiFile, -1, myActualOffset)
+    }
 
     for (descriptor in intentions) {
       val action = descriptor.action

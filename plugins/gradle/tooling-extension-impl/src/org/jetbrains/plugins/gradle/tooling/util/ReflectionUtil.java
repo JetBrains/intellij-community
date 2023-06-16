@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.util;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public final class ReflectionUtil {
@@ -25,5 +24,18 @@ public final class ReflectionUtil {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static boolean dynamicCheckInstanceOf(Object object, String... classNames) {
+    boolean result = false;
+    for (String className : classNames) {
+      try {
+        Class clazz = Class.forName(className);
+        result = result || clazz.isInstance(object);
+      }
+      catch (ClassNotFoundException ignore) {
+      }
+    }
+    return result;
   }
 }

@@ -15,14 +15,17 @@
  */
 package com.android.tools.adtui.webp;
 
+import com.intellij.ide.ApplicationLoadListener;
+import com.intellij.openapi.application.Application;
+import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.Node;
 
-import javax.imageio.metadata.IIOInvalidTreeException;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.spi.ImageWriterSpi;
+import java.nio.file.Path;
 
 public final class WebpMetadata extends IIOMetadata {
   public static final String WEBP_FORMAT_LOWER_CASE = "webp";
@@ -35,8 +38,12 @@ public final class WebpMetadata extends IIOMetadata {
   public static final float DEFAULT_ENCODING_QUALITY = 0.75f;
   public static final boolean DEFAULT_LOSSLESS = true;
 
-  static final class WebpMetadataRegistrar {
+  static final class WebpMetadataRegistrar implements ApplicationLoadListener {
     private WebpMetadataRegistrar() {
+    }
+
+    @Override
+    public void beforeApplicationLoaded(@NotNull Application application, @NotNull Path configPath) {
       ensureWebpRegistered();
     }
   }
@@ -61,7 +68,7 @@ public final class WebpMetadata extends IIOMetadata {
   }
 
   @Override
-  public void mergeTree(String formatName, Node root) throws IIOInvalidTreeException {
+  public void mergeTree(String formatName, Node root) {
   }
 
   @Override

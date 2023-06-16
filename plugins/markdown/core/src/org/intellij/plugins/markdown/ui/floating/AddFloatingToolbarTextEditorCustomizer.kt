@@ -9,10 +9,10 @@ import com.intellij.openapi.util.Disposer
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 
-internal class AddFloatingToolbarTextEditorCustomizer: TextEditorCustomizer {
+private class AddFloatingToolbarTextEditorCustomizer: TextEditorCustomizer {
   override fun customize(textEditor: TextEditor) {
     if (shouldAcceptEditor(textEditor) && !AdvancedSettings.getBoolean("markdown.hide.floating.toolbar")) {
-      val toolbar = FloatingToolbar(textEditor.editor, "Markdown.Toolbar.Floating")
+      val toolbar = MarkdownFloatingToolbar(textEditor.editor)
       Disposer.register(textEditor, toolbar)
     }
   }

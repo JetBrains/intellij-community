@@ -25,7 +25,10 @@ import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.importing.*;
+import org.jetbrains.idea.maven.importing.MavenEventsTestHelper;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
+import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
+import org.jetbrains.idea.maven.importing.MavenRootModelAdapterLegacyImpl;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -130,16 +133,16 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
                     """);
 
     assertSources("project", "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project", "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
 
     updateTargetFolders();
 
     assertSources("project", "src/main/java");
-    assertResources("project", "src/main/resources");
+    assertDefaultResources("project");
     assertTestSources("project", "src/test/java");
-    assertTestResources("project", "src/test/resources");
+    assertDefaultTestResources("project");
   }
 
   @Test 

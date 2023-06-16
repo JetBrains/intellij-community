@@ -35,6 +35,7 @@ import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 import org.jetbrains.uast.UExpression;
 
 import javax.swing.*;
@@ -45,7 +46,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQuickFixDialog {
@@ -203,14 +203,18 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
     if (myShowJavaCodeInfo) {
       myJavaCodeInfoPanel.setVisible(showResourceBundleTextField(templateName, myProject));
     }
-    Set<String> result = JavaI18nUtil.suggestExpressionOfType(myResourceBundleType, myLiteralExpression.getSourcePsi());
-    if (result.isEmpty()) {
-      result.add(getResourceBundleText());
-      ContainerUtil.addIfNotNull(result, PropertiesComponent.getInstance(myProject).getValue(RESOURCE_BUNDLE_EXPRESSION_USED));
-    }
 
-    myRBEditorTextField.setHistory(ArrayUtilRt.toStringArray(result));
-    SwingUtilities.invokeLater(() -> myRBEditorTextField.setSelectedIndex(0));
+    ReadAction
+      .nonBlocking(() -> JavaI18nUtil.suggestExpressionOfType(myResourceBundleType, myLiteralExpression.getSourcePsi()))
+      .finishOnUiThread(ModalityState.any(), suggestedBundles -> {
+        if (suggestedBundles.isEmpty()) {
+          suggestedBundles.add(getResourceBundleText());
+          ContainerUtil.addIfNotNull(suggestedBundles, PropertiesComponent.getInstance(myProject).getValue(RESOURCE_BUNDLE_EXPRESSION_USED));
+        }
+        myRBEditorTextField.setHistory(ArrayUtilRt.toStringArray(suggestedBundles));
+        myRBEditorTextField.setSelectedIndex(0);
+      })
+      .submit(PooledThreadExecutor.INSTANCE);
   }
 
   @Override

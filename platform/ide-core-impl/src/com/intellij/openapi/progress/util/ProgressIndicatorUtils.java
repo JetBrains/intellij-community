@@ -42,7 +42,11 @@ import java.util.concurrent.locks.Lock;
 public final class ProgressIndicatorUtils {
   private static final Logger LOG = Logger.getInstance(ProgressIndicatorUtils.class);
 
-  public static @NotNull ProgressIndicator forceWriteActionPriority(@NotNull ProgressIndicator progress, @NotNull Disposable parentDisposable) {
+  private static final int MAX_REJECTED_EXECUTIONS_BEFORE_CANCELLATION = 16;
+
+
+  public static @NotNull ProgressIndicator forceWriteActionPriority(@NotNull ProgressIndicator progress,
+                                                                    @NotNull Disposable parentDisposable) {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
@@ -207,7 +211,6 @@ public final class ProgressIndicatorUtils {
                 }
               }, continuation.getModalityState());
             }
-
           }
 
           @Override
@@ -250,7 +253,7 @@ public final class ProgressIndicatorUtils {
     awaitWithCheckCanceled(semaphore, indicator);
   }
 
-    /** @see ProgressIndicatorUtils#yieldToPendingWriteActions(ProgressIndicator) */
+  /** @see ProgressIndicatorUtils#yieldToPendingWriteActions(ProgressIndicator) */
   public static void yieldToPendingWriteActions() {
     yieldToPendingWriteActions(ProgressIndicatorProvider.getGlobalProgressIndicator());
   }
@@ -293,8 +296,7 @@ public final class ProgressIndicatorUtils {
                                                                               int timeout,
                                                                               @NotNull TimeUnit timeUnit,
                                                                               @NotNull ThrowableComputable<T, E> computable) throws E, ProcessCanceledException {
-    awaitWithCheckCanceled(lock, timeout, timeUnit);
-
+    awaitWithCheckCanceled(() -> lock.tryLock(timeout, timeUnit));
     try {
       return computable.compute();
     }
@@ -326,12 +328,27 @@ public final class ProgressIndicatorUtils {
   }
 
   public static <T> T awaitWithCheckCanceled(@NotNull Future<T> future, @Nullable ProgressIndicator indicator) {
+    int rejectedExecutions = 0;
     while (true) {
       checkCancelledEvenWithPCEDisabled(indicator);
       try {
         return future.get(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
       }
-      catch (TimeoutException | RejectedExecutionException ignore) {
+      catch (TimeoutException ignore) {
+      }
+      catch (RejectedExecutionException ree) {
+        //EA-225412: FJP throws REE (which propagates through futures) e.g. when FJP reaches max
+        // threads while compensating for too many managedBlockers -- or when it is shutdown.
+
+        //This branch creates a risk of infinite loop -- i.e. if the current thread itself is somehow
+        // responsible for FJP resource exhaustion, hence can't release anything, each consequent
+        // future.get() will throw the same REE again and again. So let's limit retries:
+        rejectedExecutions++;
+        if (rejectedExecutions > MAX_REJECTED_EXECUTIONS_BEFORE_CANCELLATION) {
+          //RC: It would be clearer to rethrow ree itself -- but I doubt many callers are ready for it,
+          //    while all callers are ready for PCE, hence...
+          throw new ProcessCanceledException(ree);
+        }
       }
       catch (InterruptedException e) {
         throw new ProcessCanceledException(e);
@@ -349,8 +366,8 @@ public final class ProgressIndicatorUtils {
     }
   }
 
-  public static void awaitWithCheckCanceled(@NotNull Lock lock, int timeout, @NotNull TimeUnit timeUnit) {
-    awaitWithCheckCanceled(() -> lock.tryLock(timeout, timeUnit));
+  public static void awaitWithCheckCanceled(@NotNull Lock lock) {
+    awaitWithCheckCanceled(() -> lock.tryLock(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS));
   }
 
   public static void awaitWithCheckCanceled(@NotNull ThrowableComputable<Boolean, ? extends Exception> waiter) {

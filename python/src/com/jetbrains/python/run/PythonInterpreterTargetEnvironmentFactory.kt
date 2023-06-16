@@ -61,6 +61,14 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
    */
   fun packageManagementSupported(evConfiguration: TargetEnvironmentConfiguration): Boolean? = null
 
+  fun isFor(configuration: TargetEnvironmentConfiguration): Boolean
+
+  /**
+   * Check sdk need to be associated with module.
+   * For example to not allow sdk with DockerComposeTargetEnvironmentConfiguration to be in list of existing sdks for a new project
+   */
+  fun needAssociateWithModule(): Boolean = false
+
   /**
    * For some modules target is obvious (like ``\\wsl$\``)
    */
@@ -107,6 +115,9 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
     @JvmStatic
     fun findProjectSync(project: Project?, configuration: TargetEnvironmentConfiguration): ProjectSync? =
       EP_NAME.extensionList.mapNotNull { it.getProjectSync(project, configuration) }.firstOrNull()
+
+    fun by(configuration: TargetEnvironmentConfiguration): PythonInterpreterTargetEnvironmentFactory? =
+      EP_NAME.extensionList.find { it.isFor(configuration) }
 
     /**
      * Looks for [ProjectSync] that corresponds to the provided [configuration], applies its UI to [this] [Panel] via

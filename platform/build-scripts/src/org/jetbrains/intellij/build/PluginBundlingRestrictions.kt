@@ -24,21 +24,27 @@ class PluginBundlingRestrictions private constructor(
   val supportedArch: List<JvmArchitecture>,
 
   /**
-   * Set to {@code true} if the plugin should be included in distribution for EAP builds only.
+   * Set to `true` if the plugin should be included in distribution for EAP builds only.
    */
   @JvmField
   val includeInEapOnly: Boolean,
+
+  /**
+   * Set to `true` if the plugin should be included in distribution for nightly builds only (non EAP, non Release).
+   */
+  @JvmField
+  val includeInNightlyOnly: Boolean,
 ) {
   companion object {
     @JvmField
-    val NONE = PluginBundlingRestrictions(OsFamily.ALL, JvmArchitecture.ALL, false)
+    val NONE = PluginBundlingRestrictions(OsFamily.ALL, JvmArchitecture.ALL, false, false)
 
     /**
      * Use if the plugin should be included anywhere, just used to calculate searchable options index, provided module list.
      * Must be used with conjunction of other PluginLayout's which do have actual restrictions.
      */
     @JvmField
-    val EPHEMERAL = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), false)
+    val EPHEMERAL = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), false, false)
 
     /**
      * Use for the plugin version which is uploaded to marketplace, since marketplace does not support per-OS/ARCH plugins.
@@ -47,7 +53,7 @@ class PluginBundlingRestrictions private constructor(
      * If plugin is identical for both bundled and marketplace-uploaded versions, use [NONE] instead.
      */
     @JvmField
-    val MARKETPLACE = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), false)
+    val MARKETPLACE = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), false, false)
   }
 
   class Builder {
@@ -63,9 +69,14 @@ class PluginBundlingRestrictions private constructor(
     var supportedArch: List<JvmArchitecture> = JvmArchitecture.ALL
 
     /**
-     * Set to {@code true} if the plugin should be included in distribution for EAP builds only.
+     * Set to `true` if the plugin should be included in distribution for EAP builds only.
      */
     var includeInEapOnly: Boolean = false
+
+    /**
+     * Set to `true` if the plugin should be included in distribution for nightly builds only (non EAP, non Release).
+     */
+    var includeInNightlyOnly: Boolean = false
 
     var ephemeral: Boolean = false
 
@@ -76,15 +87,17 @@ class PluginBundlingRestrictions private constructor(
         check(supportedOs == OsFamily.ALL)
         check(supportedArch == JvmArchitecture.ALL)
         check(!includeInEapOnly)
+        check(!includeInNightlyOnly)
         return EPHEMERAL
       }
       if (marketplace) {
         check(supportedOs == OsFamily.ALL)
         check(supportedArch == JvmArchitecture.ALL)
         check(!includeInEapOnly)
+        check(!includeInNightlyOnly)
         return MARKETPLACE
       }
-      return when (val restrictions = PluginBundlingRestrictions(supportedOs, supportedArch, includeInEapOnly)) {
+      return when (val restrictions = PluginBundlingRestrictions(supportedOs, supportedArch, includeInEapOnly, includeInNightlyOnly)) {
         NONE -> NONE
         else -> restrictions
       }
@@ -103,7 +116,7 @@ class PluginBundlingRestrictions private constructor(
     if (this == NONE) return "unrestricted"
     return "os: ${if (supportedOs == OsFamily.ALL) "unrestricted" else supportedOs.joinToString(",")}, " +
            "arch: ${if (supportedArch == JvmArchitecture.ALL) "unrestricted" else supportedArch.joinToString(",")}, " +
-           "eapOnly: $includeInEapOnly"
+           "eapOnly: $includeInEapOnly, nightlyOnly: $includeInNightlyOnly"
   }
 
   override fun hashCode(): Int {
@@ -113,9 +126,11 @@ class PluginBundlingRestrictions private constructor(
     var result = supportedOs.hashCode()
     result = 31 * result + supportedArch.hashCode()
     result = 31 * result + includeInEapOnly.hashCode()
+    result = 31 * result + includeInNightlyOnly.hashCode()
     return result
   }
 
+  @Suppress("RedundantIf")
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -127,6 +142,8 @@ class PluginBundlingRestrictions private constructor(
 
     if (supportedOs != other.supportedOs) return false
     if (supportedArch != other.supportedArch) return false
-    return includeInEapOnly == other.includeInEapOnly
+    if (includeInEapOnly != other.includeInEapOnly) return false
+    if (includeInNightlyOnly != other.includeInNightlyOnly) return false
+    return true
   }
 }

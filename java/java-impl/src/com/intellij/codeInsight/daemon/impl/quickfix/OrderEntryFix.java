@@ -28,6 +28,7 @@ import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -89,6 +90,18 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
   @NotNull
   public static List<@NotNull LocalQuickFix> registerFixes(@NotNull PsiReference reference, @NotNull List<? super IntentionAction> registrar) {
+    return registerFixes(reference, registrar, shortReferenceName -> {
+      Project project = reference.getElement().getProject();
+      return PsiShortNamesCache.getInstance(project).getClassesByName(shortReferenceName, GlobalSearchScope.allScope(project));
+    });
+  }
+
+  @NotNull
+  public static List<@NotNull LocalQuickFix> registerFixes(
+    @NotNull PsiReference reference,
+    @NotNull List<? super IntentionAction> registrar,
+    @NotNull Function<? super String, PsiClass[]> shortReferenceNameToClassesLookup
+    ) {
     PsiElement psiElement = reference.getElement();
     String shortReferenceName = reference.getRangeInElement().substring(psiElement.getText());
 
@@ -119,7 +132,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       return result;
     }
 
-    PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(shortReferenceName, GlobalSearchScope.allScope(project));
+    PsiClass[] classes = shortReferenceNameToClassesLookup.fun(shortReferenceName);
     List<PsiClass> allowedDependencies = filterAllowedDependencies(psiElement, classes);
     if (allowedDependencies.isEmpty()) {
       return result;
@@ -263,7 +276,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       .collect(Collectors.toSet());
     if (!libraries.isEmpty()) {
       result.add(new AddLibraryDependencyFix(reference, currentModule,
-                                             ContainerUtil.map2Map(libraries, library -> Pair.create(library, null)), scope, exported));
+                                             ContainerUtil.map2Map(libraries, library -> Pair.create(library, "")), scope, exported));
     }
   }
 

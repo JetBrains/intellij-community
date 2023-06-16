@@ -13,7 +13,7 @@ class SimilarUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("similar.usages", 6)
+    private val GROUP = EventLogGroup("similar.usages", 7)
     private val COMPONENT_CLASS = EventFields.Class("component")
     private val NUMBER_OF_LOADED = EventFields.Int("number_of_loaded")
     private val NAVIGATE_TO_USAGE_CLICKED = GROUP.registerVarargEvent("navigate.to.usage.clicked", COMPONENT_CLASS, USAGE_VIEW)
@@ -21,9 +21,9 @@ class SimilarUsagesCollector : CounterUsagesCollector() {
     private val MOST_COMMON_USAGE_PATTERNS_REFRESH_CLICKED = GROUP.registerEvent("most.common.usage.patterns.refresh.clicked", USAGE_VIEW)
     private val LINK_TO_SIMILAR_USAGES_FROM_USAGE_PREVIEW_CLICKED = GROUP.registerEvent("link.to.similar.usage.clicked", USAGE_VIEW)
     private val SHOW_SIMILAR_USAGES_LINK_CLICKED = GROUP.registerEvent("show.similar.usages.link.clicked", USAGE_VIEW)
-    private val MORE_CLUSTERS_LOADED = GROUP.registerEvent("more.clusters.loaded", USAGE_VIEW, NUMBER_OF_LOADED)
+    private val MORE_SNIPPETS_LOADED_IN_CLUSTERS_PREVIEW = GROUP.registerEvent("more.snippets.loaded.in.clusters.preview", USAGE_VIEW,
+                                                                               NUMBER_OF_LOADED)
     private val MORE_USAGES_LOADED = GROUP.registerEvent("more.usages.loaded", USAGE_VIEW, NUMBER_OF_LOADED)
-    private val MORE_NON_CLUSTERED_USAGES_LOADED = GROUP.registerEvent("more.non.clustered.usage.loaded", USAGE_VIEW, NUMBER_OF_LOADED)
 
     @JvmStatic
     fun logMostCommonUsagePatternsShown(project: Project, usageView: UsageView) {
@@ -51,13 +51,8 @@ class SimilarUsagesCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    fun logMoreClustersLoaded(project: Project, usageView: UsageView, numberOfAddedUsages: Int) {
-      MORE_CLUSTERS_LOADED.log(project, usageView, numberOfAddedUsages)
-    }
-
-    @JvmStatic
-    fun logMoreNonClusteredUsagesLoaded(project: Project, usageView: UsageView, numberOfAddedUsages: Int) {
-      MORE_NON_CLUSTERED_USAGES_LOADED.log(project, usageView, numberOfAddedUsages)
+    fun logMoreSnippetsLoadedInClustersPreview(project: Project, usageView: UsageView, numberOfAddedUsages: Int) {
+      MORE_SNIPPETS_LOADED_IN_CLUSTERS_PREVIEW.log(project, usageView, numberOfAddedUsages)
     }
 
     @JvmStatic

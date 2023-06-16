@@ -17,10 +17,12 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.Range
 import com.sun.jdi.Location
 import com.sun.jdi.Method
+import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeStackFrame
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
 import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
 import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.KotlinStepOverFilter
@@ -212,9 +214,26 @@ fun getStepOutAction(location: Location, frameProxy: StackFrameProxyImpl): Kotli
     val filter = object : KotlinStepOverFilter(location) {
         override fun isAcceptable(location: Location, locationToken: LocationToken): Boolean =
             locationToken.lineNumber >= 0
-                    && locationToken.lineNumber != token.lineNumber
                     && token.inlineVariables.any { it !in locationToken.inlineVariables }
     }
 
-    return KotlinStepAction.KotlinStepOver(filter)
+    // Consider stepping with minimal step size if we are inside an inline lambda to handle one line lambdas.
+    val stepSize =
+        if (token.isInsideOneLineInlineLambda())
+            StepRequest.STEP_MIN
+        else
+            StepRequest.STEP_LINE
+    return KotlinStepAction.KotlinStepOver(filter, stepSize)
+}
+
+private fun LocationToken.isInsideOneLineInlineLambda(): Boolean {
+    for (variable in inlineVariables) {
+        val borders = variable.getBorders() ?: continue
+        if (variable.name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) &&
+            borders.start.lineNumber() == borders.endInclusive.lineNumber())
+        {
+            return true
+        }
+    }
+    return false
 }

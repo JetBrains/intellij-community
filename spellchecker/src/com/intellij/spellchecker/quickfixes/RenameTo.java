@@ -10,13 +10,13 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
@@ -104,9 +104,17 @@ public class RenameTo extends LazySuggestions implements SpellCheckerQuickFix {
 
   @Nullable
   protected Editor getEditor(PsiElement element, @NotNull Project project) {
-    return findInjectionHost(element) != null
-           ? InjectedLanguageUtil.openEditorFor(element.getContainingFile(), project)
-           : FileEditorManager.getInstance(project).getSelectedTextEditor();
+    Editor editor = null;
+    if (findInjectionHost(element) != null) {
+      editor = InjectedLanguageUtil.openEditorFor(element.getContainingFile(), project);
+    }
+    if (editor == null) {
+      editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    }
+    if (editor == null) {
+      editor = PsiEditorUtil.findEditor(element);
+    }
+    return editor;
   }
 
   @Override

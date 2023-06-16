@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.SystemInfo
@@ -9,7 +10,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
 internal class GitSetupProjectConfig : ProjectActivity {
-  override suspend fun execute(project: Project) {
+  override suspend fun execute(project: Project) : Unit = blockingContext {
     ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
       setupConfigIfNeeded(project)
     }
@@ -35,7 +36,9 @@ internal class GitSetupProjectConfig : ProjectActivity {
 
   private enum class ConfigVariables(val gitName: String, val settingsGetter: (GitVcsOptions) -> String?) {
     GC_AUTO("gc.auto", { it.gcAuto }),
-    CORE_LONGPATHS("core.longpaths", { if (SystemInfo.isWindows) it.coreLongpaths else null })
+    CORE_FS_MONITOR("core.fsmonitor", { it.coreFsMonitor }),
+    CORE_UNTRACKED_CACHE("core.untrackedcache", { it.coreUntrackedCache }),
+    CORE_LONGPATHS("core.longpaths", { if (SystemInfo.isWindows) it.coreLongpaths else null }),
+    FEATURE_MANY_FILES("feature.manyFiles", { it.featureManyFiles }),
   }
 }
-

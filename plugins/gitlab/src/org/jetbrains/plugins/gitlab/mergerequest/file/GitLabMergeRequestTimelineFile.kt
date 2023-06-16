@@ -28,7 +28,7 @@ internal class GitLabMergeRequestTimelineFile(connectionId: String,
   override fun getFileType(): FileType = GitLabTimelineFileType.instance
 
   private fun findDetails(): GitLabMergeRequestDetails? =
-    findConnection()?.projectData?.mergeRequests?.findCachedDetails(mergeRequestId)
+    findContext()?.projectData?.mergeRequests?.findCachedDetails(mergeRequestId)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

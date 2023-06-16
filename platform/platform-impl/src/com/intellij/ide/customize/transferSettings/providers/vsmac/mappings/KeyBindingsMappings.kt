@@ -3,7 +3,7 @@ package com.intellij.ide.customize.transferSettings.providers.vsmac.mappings
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 
 object KeyBindingsMappings {
-  val defaultVSMacKeymap = mapOf<String, List<KeyboardShortcut>>(
+  val defaultVSMacKeymap: Map<String, List<KeyboardShortcut>> = mapOf<String, List<KeyboardShortcut>>(
     "EditorBackSpace" to listOf(KeyboardShortcut.fromString("pressed BACK_SPACE")),
     "\$Copy" to listOf(KeyboardShortcut.fromString("meta pressed C")),
     "\$Cut" to listOf(KeyboardShortcut.fromString("meta pressed X")),
@@ -68,7 +68,7 @@ object KeyBindingsMappings {
     "ShowIntentionActions" to listOf(KeyboardShortcut.fromString("alt pressed ENTER"))
   )
 
-  fun commandIdMap(commandId: String) = when (commandId) {
+  fun commandIdMap(commandId: String): String? = when (commandId) {
     "MonoDevelop.Refactoring.RefactoryCommands.FindReferences" -> "FindUsages"
     "MonoDevelop.Refactoring.RefactoryCommands.GotoDeclaration" -> "GotoDeclaration"
     "MonoDevelop.Debugger.DebugCommands.ClearAllBreakpoints" -> "RiderRemoveAllLineBreakpoints"
@@ -132,7 +132,7 @@ object KeyBindingsMappings {
     else -> null
   }
 
-  fun shortcutMap(shortcut: String) = when (shortcut) {
+  fun shortcutMap(shortcut: String): String = when (shortcut) {
     "Shift" -> "shift"
     "Alt" -> "alt"
     "Meta" -> "meta"

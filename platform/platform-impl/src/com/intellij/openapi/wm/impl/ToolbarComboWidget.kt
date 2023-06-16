@@ -11,9 +11,10 @@ import javax.swing.UIManager
 import kotlin.properties.Delegates
 import kotlin.reflect.KProperty
 
+@Suppress("LeakingThis")
 abstract class ToolbarComboWidget: JComponent() {
 
-  val pressListeners = mutableListOf<ActionListener>()
+  val pressListeners: MutableList<ActionListener> = mutableListOf()
 
   var text: @Nls String? by Delegates.observable("", this::fireUpdateEvents)
 
@@ -22,6 +23,8 @@ abstract class ToolbarComboWidget: JComponent() {
   var leftIconsGap: Int by Delegates.observable(0, this::fireUpdateEvents)
   var rightIconsGap: Int by Delegates.observable(0, this::fireUpdateEvents)
   var hoverBackground: Color? by Delegates.observable(null, this::fireUpdateEvents)
+  var transparentHoverBackground: Color? by Delegates.observable(null, this::fireUpdateEvents)
+  var highlightBackground: Color? by Delegates.observable(null, this::fireUpdateEvents)
   var isExpandable: Boolean by Delegates.observable(true, this::fireUpdateEvents)
 
   init {
@@ -40,7 +43,9 @@ abstract class ToolbarComboWidget: JComponent() {
   }
 
   fun addPressListener(action: ActionListener) {
+    val listenersCountBefore = pressListeners.size
     pressListeners += action
+    firePropertyChange("pressListenersCount", listenersCountBefore, pressListeners.size)
   }
 
   private fun fireUpdateEvents(prop: KProperty<*>, oldValue: Any?, newValue: Any?) {

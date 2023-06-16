@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.IdeBundle;
@@ -199,14 +199,14 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
       public void undo() {
         // invoke later because changing document inside undo/redo is not allowed
         Application application = ApplicationManager.getApplication();
-        application.invokeLater(undo, ModalityState.NON_MODAL, project.getDisposed());
+        application.invokeLater(undo, ModalityState.nonModal(), project.getDisposed());
       }
 
       @Override
       public void redo() {
         // invoke later because changing document inside undo/redo is not allowed
         Application application = ApplicationManager.getApplication();
-        application.invokeLater(redo, ModalityState.NON_MODAL, project.getDisposed());
+        application.invokeLater(redo, ModalityState.nonModal(), project.getDisposed());
       }
     };
 

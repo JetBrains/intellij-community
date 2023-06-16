@@ -34,6 +34,7 @@ import javax.swing.tree.TreePath;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -173,13 +174,20 @@ public final class TreeState implements JDOMExternalizable {
 
   @NotNull
   public static TreeState createOn(@NotNull JTree tree, boolean persistExpand, boolean persistSelect) {
-    List<PathElement[]> expandedPaths = persistExpand
-      ? createPaths(tree, TreeUtil.collectExpandedPaths(tree))
+    List<TreePath> expanded = persistExpand ? TreeUtil.collectExpandedPaths(tree) : Collections.emptyList();
+    List<TreePath> selected = persistSelect ? TreeUtil.collectSelectedPaths(tree) : Collections.emptyList();
+    return createOn(tree, expanded, selected);
+  }
+
+  @NotNull
+  public static TreeState createOn(@NotNull JTree tree, @NotNull List<TreePath> expandedPaths, @NotNull List<TreePath> selectedPaths) {
+    List<PathElement[]> expandedPathElements = !expandedPaths.isEmpty()
+      ? createPaths(tree, expandedPaths)
       : new ArrayList<>();
-    List<PathElement[]> selectedPaths = persistSelect
-      ? createPaths(tree, TreeUtil.collectSelectedPaths(tree))
+    List<PathElement[]> selectedPathElements = !selectedPaths.isEmpty()
+      ? createPaths(tree, selectedPaths)
       : new ArrayList<>();
-    return new TreeState(expandedPaths, selectedPaths);
+    return new TreeState(expandedPathElements, selectedPathElements);
   }
 
   @NotNull
@@ -509,6 +517,11 @@ public final class TreeState implements JDOMExternalizable {
 
     Visitor(PathElement[] elements) {
       this.elements = elements;
+    }
+
+    @Override
+    public @NotNull TreeVisitor.VisitThread visitThread() {
+      return VisitThread.BGT;
     }
 
     @NotNull

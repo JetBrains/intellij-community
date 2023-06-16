@@ -9,6 +9,6 @@ interface EditorColorsManagerListener {
 
   companion object {
     @JvmField
-    val TOPIC = Topic(EditorColorsManagerListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
+    val TOPIC: Topic<EditorColorsManagerListener> = Topic(EditorColorsManagerListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
   }
 }

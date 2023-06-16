@@ -136,6 +136,7 @@ public final class DnDManagerImpl extends DnDManager {
   @Override
   public void registerTarget(DnDTarget target, JComponent component) {
     component.putClientProperty(TARGET_KEY, target);
+    //noinspection ResultOfObjectAllocationIgnored
     new DropTarget(component, DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
   }
 

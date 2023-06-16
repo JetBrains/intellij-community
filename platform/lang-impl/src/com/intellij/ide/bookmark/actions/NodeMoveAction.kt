@@ -7,17 +7,17 @@ import com.intellij.ide.bookmark.ui.tree.GroupNode
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.ui.UIBundle.messagePointer
 import com.intellij.util.ui.tree.TreeUtil
-import java.util.function.Supplier
 
-internal class NodeMoveUpAction : NodeMoveAction(false, messagePointer("move.up.action.name"))
-internal class NodeMoveDownAction : NodeMoveAction(true, messagePointer("move.down.action.name"))
-internal abstract class NodeMoveAction(val next: Boolean, dynamicText: Supplier<String>) : DumbAwareAction(dynamicText) {
+internal class NodeMoveUpAction : NodeMoveAction(false)
+
+internal class NodeMoveDownAction : NodeMoveAction(true)
+
+internal abstract class NodeMoveAction(val next: Boolean) : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  override fun update(event: AnActionEvent) = with(event.presentation) {
+  override fun update(event: AnActionEvent): Unit = with(event.presentation) {
     isEnabledAndVisible = process(event, false)
     if (!isVisible) isVisible = !ActionPlaces.isPopupPlace(event.place)
   }
@@ -57,7 +57,7 @@ internal abstract class NodeMoveAction(val next: Boolean, dynamicText: Supplier<
 }
 
 internal class NodeMoveActionPromoter : ActionPromoter {
-  override fun suppress(actions: List<AnAction>, context: DataContext) = when {
+  override fun suppress(actions: List<AnAction>, context: DataContext): List<AnAction>? = when {
     context.getData(PlatformDataKeys.TOOL_WINDOW)?.id != ToolWindowId.BOOKMARKS -> null
     actions.none { it is NodeMoveAction } -> null
     else -> actions.filter { it !is NodeMoveAction }

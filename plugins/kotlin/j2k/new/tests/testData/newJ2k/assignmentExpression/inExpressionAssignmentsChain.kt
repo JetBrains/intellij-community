@@ -11,6 +11,6 @@ internal object Test {
         do {
         } while (b.let { a = a xor it; a })
         println(c.also { b = it }.let { a = a and it; a })
-        println(b != c.also { a = it })
+        println((b != c).also { a = it })
     }
 }

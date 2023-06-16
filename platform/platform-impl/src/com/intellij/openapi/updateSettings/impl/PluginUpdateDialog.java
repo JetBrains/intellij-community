@@ -175,10 +175,9 @@ final class PluginUpdateDialog extends DialogWrapper {
     if (myPlatformUpdate) return;
 
     List<PluginDownloader> toDownloads = new ArrayList<>();
-    int index = 0;
 
     for (PluginDownloader downloader : myDownloaders) {
-      ListPluginComponent component = myGroup.ui.plugins.get(index++);
+      ListPluginComponent component = Objects.requireNonNull(myGroup.ui.findComponent(downloader.getDescriptor()));
       if (component.getChooseUpdateButton().isSelected()) {
         toDownloads.add(downloader);
       }
@@ -240,7 +239,7 @@ final class PluginUpdateDialog extends DialogWrapper {
         return installedDescriptors;
       }
 
-      private @NotNull @Nls String getUpdateNotificationMessage(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
+      private static @NotNull @Nls String getUpdateNotificationMessage(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
         if (descriptors.size() == 1) {
           IdeaPluginDescriptor descriptor = descriptors.get(0);
           return IdeBundle.message("notification.content.updated.plugin.to.version", descriptor.getName(), descriptor.getVersion());

@@ -26,14 +26,16 @@ BOOLEAN=true|false
 BARE_KEY_OR_NUMBER=-?[0-9]+
 BARE_KEY_OR_DATE={DATE}[Zz]?
 
+ZERO_PREFIXABLE_DEC_INT=[0-9](_?[0-9])*
+
 DEC_INT=[-+]?(0|[1-9](_?[0-9])*) // no leading zeros
 HEX_INT=0x[0-9a-fA-F](_?[0-9a-fA-F])*
 OCT_INT=0o[0-7](_?[0-7])*
 BIN_INT=0b[01](_?[01])*
 INTEGER={DEC_INT}|{HEX_INT}|{OCT_INT}|{BIN_INT}
 
-EXP=[eE]{DEC_INT}
-FRAC=\.[0-9](_?[0-9])*
+EXP=[eE][-+]?{ZERO_PREFIXABLE_DEC_INT}
+FRAC=\.{ZERO_PREFIXABLE_DEC_INT}
 SPECIAL_FLOAT=[-+]?(inf|nan)
 FLOAT={DEC_INT}({EXP}|{FRAC}{EXP}?)|{SPECIAL_FLOAT}
 

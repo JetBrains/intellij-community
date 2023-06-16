@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.scale.ScaleType;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.ImageUtil;
@@ -17,16 +18,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
-import static com.intellij.ui.scale.ScaleType.USR_SCALE;
-
 /**
  * @author Alexander Lobas
  */
 public final class HiDPIPluginLogoIcon extends PluginLogoIcon {
-  private static Icon myCachedErrorLogo2x;
+  private static Icon cachedErrorLogo2x;
 
-  HiDPIPluginLogoIcon(@NotNull Icon logo, @NotNull Icon logoBig) {
-    super(logo, createHiDPIDisabledIcon(logo, true), logoBig, createHiDPIDisabledIcon(logoBig, true));
+  HiDPIPluginLogoIcon(@NotNull JBImageIcon logo, @NotNull JBImageIcon logoBig) {
+    super(logo, calculateDisabledIcon(logo, true), logoBig, calculateDisabledIcon(logoBig, true));
   }
 
   HiDPIPluginLogoIcon(@NotNull Icon logo, @NotNull Icon logoDisabled, @NotNull Icon logoBig, @NotNull Icon logoDisabledBig) {
@@ -35,23 +34,22 @@ public final class HiDPIPluginLogoIcon extends PluginLogoIcon {
 
   @Override
   protected @NotNull Icon getErrorLogo2x() {
-    if (myCachedErrorLogo2x == null) {
+    if (cachedErrorLogo2x == null) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      myCachedErrorLogo2x = super.getErrorLogo2x();
+      cachedErrorLogo2x = super.getErrorLogo2x();
     }
-    return myCachedErrorLogo2x;
+    return cachedErrorLogo2x;
   }
 
   static void clearCache() {
-    myCachedErrorLogo2x = null;
-    synchronized (disabledIcons) {
-      disabledIcons.clear();
-    }
+    cachedErrorLogo2x = null;
+    disabledIcons.invalidateAll();
+    baseDisabledIcons.invalidateAll();
   }
 
   @Override
-  protected @NotNull Icon getDisabledIcon(@NotNull Icon icon, boolean base) {
-    return createHiDPIDisabledIcon(icon, base);
+  protected @NotNull Icon getDisabledIcon(@NotNull JBImageIcon icon, boolean base) {
+    return calculateDisabledIcon(icon, base);
   }
 
   @Override
@@ -87,10 +85,6 @@ public final class HiDPIPluginLogoIcon extends PluginLogoIcon {
     };
   }
 
-  private static @NotNull Icon createHiDPIDisabledIcon(@NotNull Icon icon, boolean base) {
-    return getHiDPI(ScaleContext.create(), createDisabledIcon(icon, base));
-  }
-
   static @NotNull Icon loadSVG(@Nullable URL url, @NotNull InputStream stream, int width, int height) throws IOException {
     ScaleContext context = ScaleContext.create();
     BufferedImage image = (BufferedImage)SVGLoader.load(url, stream, context, width, height);
@@ -117,16 +111,16 @@ public final class HiDPIPluginLogoIcon extends PluginLogoIcon {
 
   private static @NotNull Icon wrapHiDPI(@NotNull ScaleContext context, @NotNull JBHiDPIScaledImage image) {
     return new JBImageIcon(image) {
-      final double myBase = context.getScale(USR_SCALE);
+      final double myBase = context.getScale(ScaleType.USR_SCALE);
 
       private void update() {
         if (context.update()) {
-          setImage(image.scale(context.getScale(USR_SCALE) / myBase));
+          setImage(image.scale(context.getScale(ScaleType.USR_SCALE) / myBase));
         }
       }
 
       @Override
-      public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
+      public synchronized void paintIcon(Component c, @NotNull Graphics g, int x, int y) {
         update();
         super.paintIcon(c, g, x, y);
       }

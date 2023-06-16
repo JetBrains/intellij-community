@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
@@ -148,7 +148,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
   context.executeStep(spanBuilder("sign").setAttribute("file", installerFile.toString()), BuildOptions.WIN_SIGN_STEP) {
     context.signFiles(listOf(installerFile))
   }
-  context.notifyArtifactWasBuilt(installerFile)
+  context.notifyArtifactBuilt(installerFile)
   return installerFile
 }
 

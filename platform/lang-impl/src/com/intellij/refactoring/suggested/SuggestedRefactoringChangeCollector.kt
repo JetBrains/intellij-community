@@ -116,7 +116,7 @@ class SuggestedRefactoringChangeCollector(
   }
 
   @set:TestOnly
-  var _amendStateInBackgroundEnabled = !ApplicationManager.getApplication().isUnitTestMode
+  var _amendStateInBackgroundEnabled: Boolean = !ApplicationManager.getApplication().isUnitTestMode
     set(value) {
       if (value != field) {
         field = value

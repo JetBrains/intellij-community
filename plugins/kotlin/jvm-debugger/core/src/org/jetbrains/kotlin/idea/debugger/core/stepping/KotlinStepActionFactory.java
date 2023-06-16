@@ -21,9 +21,10 @@ public final class KotlinStepActionFactory {
             DebugProcessImpl debugProcess,
             SuspendContextImpl suspendContext,
             boolean ignoreBreakpoints,
-            @NotNull KotlinMethodFilter methodFilter
+            @NotNull KotlinMethodFilter methodFilter,
+            int stepSize
     ) {
-        return debugProcess.new StepOverCommand(suspendContext, ignoreBreakpoints, methodFilter, StepRequest.STEP_LINE) {
+        return debugProcess.new StepOverCommand(suspendContext, ignoreBreakpoints, methodFilter, stepSize) {
             @Override
             protected @NotNull String getStatusText() {
                 return KotlinDebuggerCoreBundle.message("stepping.over.inline");
@@ -31,7 +32,7 @@ public final class KotlinStepActionFactory {
 
             @Override
             public @NotNull RequestHint getHint(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, @Nullable RequestHint parentHint) {
-                KotlinStepOverRequestHint hint = new KotlinStepOverRequestHint(stepThread, suspendContext, methodFilter, parentHint);
+                KotlinStepOverRequestHint hint = new KotlinStepOverRequestHint(stepThread, suspendContext, methodFilter, parentHint, stepSize);
                 hint.setResetIgnoreFilters(!debugProcess.getSession().shouldIgnoreSteppingFilters());
                 hint.setRestoreBreakpoints(ignoreBreakpoints);
                 try {

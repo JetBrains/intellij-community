@@ -169,9 +169,7 @@ internal abstract class UastFakeDescriptorLightMethodBase<T: CallableMemberDescr
 
         other as UastFakeDescriptorLightMethodBase<*>
 
-        if (original != other.original) return false
-
-        return true
+        return original == other.original
     }
 
     override fun hashCode(): Int = original.hashCode()

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -24,43 +10,46 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class MoveMembersHandler extends MoveHandlerDelegate {
   @Override
-  public boolean canMove(final PsiElement[] elements, @Nullable final PsiElement targetContainer, @Nullable PsiReference reference) {
+  public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
     for(PsiElement element: elements) {
-      if (!isFieldOrStaticMethod(element)) return false;
+      if (!isMovableMember(element)) return false;
     }
     return targetContainer == null || super.canMove(elements, targetContainer, reference);
   }
 
   @Override
-  public boolean isValidTarget(final PsiElement targetElement, PsiElement[] sources) {
+  public boolean isValidTarget(PsiElement targetElement, PsiElement[] sources) {
     return targetElement instanceof PsiClass && !(targetElement instanceof PsiAnonymousClass);
   }
 
   @Override
-  public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
+  public void doMove(Project project, PsiElement[] elements, PsiElement targetContainer, MoveCallback callback) {
     MoveMembersImpl.doMove(project, elements, targetContainer, callback);
   }
 
   @Override
-  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
-                           final Editor editor) {
-    if (isFieldOrStaticMethod(element)) {
-      MoveMembersImpl.doMove(project, new PsiElement[]{element}, null, null);
+  public boolean tryToMove(PsiElement element, Project project, DataContext dataContext, PsiReference reference, Editor editor) {
+    if (isMovableMember(element)) {
+      List<PsiElement> elements = CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, element.getContainingFile(), null,
+                                                                                            e -> isMovableMember(e));
+      MoveMembersImpl.doMove(project, elements.toArray(PsiElement.EMPTY_ARRAY), null, null);
       return true;
     }
     return false;
   }
 
-  private static boolean isFieldOrStaticMethod(final PsiElement element) {
-    if (element instanceof PsiField) return true;
-    if (element instanceof PsiMethod) {
+  private static boolean isMovableMember(PsiElement element) {
+    if (element instanceof PsiMethod || element instanceof PsiField || element instanceof PsiClassInitializer) {
       if (element instanceof SyntheticElement) return false;
-      return ((PsiMethod) element).hasModifierProperty(PsiModifier.STATIC);
+      return ((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
     }
     return false;
   }

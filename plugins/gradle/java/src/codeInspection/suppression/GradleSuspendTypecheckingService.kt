@@ -10,7 +10,7 @@ import com.intellij.util.containers.HashingStrategy
 
 @Service(Service.Level.PROJECT)
 internal class GradleSuspendTypecheckingService(val project: Project) : Disposable {
-  private val projectsFailedToImport : MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.canonical())
+  private val projectsFailedToImport : MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet()
 
   fun suspendHighlighting(projectPath: String) {
     projectsFailedToImport.add(projectPath)

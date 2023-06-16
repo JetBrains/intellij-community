@@ -11,7 +11,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use GHHostedRepositoriesManager")
 @Service
 class GHProjectRepositoriesManager(private val project: Project) : Disposable {
@@ -40,6 +42,7 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
 
   @Deprecated("Use GHHostedRepositoriesManager", level = DeprecationLevel.ERROR)
   companion object {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use GHHostedRepositoriesManager.knownRepositoriesState")
     @JvmField
     @Topic.AppLevel

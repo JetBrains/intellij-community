@@ -15,8 +15,7 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -65,7 +64,7 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
     return new UnnecessaryParenthesesVisitor();
   }
 
-  private class UnnecessaryParenthesesFix extends InspectionGadgetsFix {
+  private class UnnecessaryParenthesesFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -74,8 +73,7 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (element instanceof PsiParameterList parameterList) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
         final String text = Objects.requireNonNull(parameterList.getParameter(0)).getName() + "->{}";
@@ -88,7 +86,7 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryParenthesesFix();
   }
 

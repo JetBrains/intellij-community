@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -59,5 +59,10 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
   @Override
   public String getGroupDisplayName() {
     return getTool().getGroupDisplayName();
+  }
+
+  @Override
+  public boolean isCleanupTool() {
+    return ((StructuralSearchFakeInspection)myTool).isCleanup();
   }
 }

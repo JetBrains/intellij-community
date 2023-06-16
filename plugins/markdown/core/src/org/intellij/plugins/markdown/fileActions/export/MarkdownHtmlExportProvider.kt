@@ -9,9 +9,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.RecentsManager
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
-import com.intellij.ui.layout.Cell
-import com.intellij.ui.layout.LCFlags
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.RowsRange
 import com.intellij.ui.layout.selected
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionFormat
@@ -31,12 +32,11 @@ import java.awt.event.FocusListener
 import java.io.File
 import java.util.function.BiConsumer
 import javax.swing.JCheckBox
-import javax.swing.JComponent
 import javax.swing.JTextField
 
 internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
   private lateinit var saveImagesCheckbox: JCheckBox
-  private val resourceDirField = TextFieldWithHistoryWithBrowseButton()
+  private lateinit var resourceDirField: TextFieldWithHistoryWithBrowseButton
 
   override val formatDescription: MarkdownFileActionFormat
     get() = format
@@ -71,31 +71,30 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
     return null
   }
 
-  override fun createSettingsComponent(project: Project,
-                                       suggestedTargetFile: File): JComponent {
-    return panel(LCFlags.fillX) {
-      row {
-        cell {
-          createSaveImageCheckbox()
-          createResourceDirField(project, suggestedTargetFile)
+  override fun Panel.createSettingsComponent(project: Project, suggestedTargetFile: File): RowsRange {
+    createResourceDirField(project, suggestedTargetFile)
 
-          addSettingsListeners(project)
-        }
+    return rowsRange {
+      row {
+        saveImagesCheckbox = checkBox(MarkdownBundle.message("markdown.export.to.html.save.images.checkbox"))
+          .onChanged { saveSettings(project) }
+          .gap(RightGap.SMALL)
+          .applyToComponent {
+            toolTipText = MarkdownBundle.message("markdown.export.dialog.checkbox.tooltip")
+            isSelected = service<MarkdownHtmlExportSettings>().getResourceSavingSettings().isSaved
+          }.component
+        cell(resourceDirField)
+          .align(AlignX.FILL)
+          .validationOnApply { validateTargetDir(it) }
+          .focused()
+          .enabledIf(saveImagesCheckbox.selected)
+        addSettingsListeners(project)
       }
     }
   }
 
-  private fun Cell.createSaveImageCheckbox() {
-    saveImagesCheckbox = checkBox(MarkdownBundle.message("markdown.export.to.html.save.images.checkbox"))
-      .component
-      .apply {
-        toolTipText = MarkdownBundle.message("markdown.export.dialog.checkbox.tooltip")
-        isSelected = service<MarkdownHtmlExportSettings>().getResourceSavingSettings().isSaved
-      }
-  }
-
-  private fun Cell.createResourceDirField(project: Project, suggestedTargetFile: File) {
-    resourceDirField.apply {
+  private fun createResourceDirField(project: Project, suggestedTargetFile: File) {
+    resourceDirField = TextFieldWithHistoryWithBrowseButton().apply {
       setTextFieldPreferredWidth(MarkdownFileActionsBaseDialog.MAX_PATH_LENGTH)
 
       val resDirRecent = RecentsManager.getInstance(project).getRecentEntries(IMAGE_DIR_RESENT_KEYS)
@@ -113,16 +112,9 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
         TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT
       )
     }
-
-    resourceDirField(growX).apply {
-      withValidationOnApply { validateTargetDir(it) }
-      focused()
-      enableIf(saveImagesCheckbox.selected)
-    }
   }
 
   private fun addSettingsListeners(project: Project) {
-    saveImagesCheckbox.addChangeListener { saveSettings(project) }
     resourceDirField.childComponent.textEditor.addFocusListener(SaveSettingsListener(project))
   }
 

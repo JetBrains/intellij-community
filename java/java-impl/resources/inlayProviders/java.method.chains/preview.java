@@ -1,17 +1,9 @@
-abstract class Foo<T> {
-  void main() {
-    listOf(1, 2, 3).filter(it -> it % 2 == 0)<# Foo<Integer> #>
-      .map(it -> it * 2)<# Foo<int> #>
-      .map(it -> "item: " + it)<# Foo<Object> #>
-      .forEach(this::println);
-  }
-
-  abstract Void println(Object any);
-  abstract Foo<Integer> listOf(int... args);
-  abstract Foo<T> filter(Function<T, Boolean> isAccepted);
-  abstract <R> Foo<R> map(Function<T, R> mapper);
-  abstract void forEach(Function<T, Void> fun);
-  interface Function<T, R> {
-    R call(T t);
+import java.util.stream.*;
+class Foo {
+  {
+    Stream.of(1, 2, 3).filter(x -> x % 2 == 0)/*<# Stream<Integer> #>*/
+      .map(x -> x * 2)/*<# Stream<Integer> #>*/
+      .map(x -> "item: " + x)/*<# Stream<String> #>*/
+      .forEach(System.out::println);
   }
 }

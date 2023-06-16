@@ -4,10 +4,7 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImplementOrExtendFix;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -23,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.ActionType;
 import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UElement;
 
 import java.util.Set;
 
@@ -50,10 +46,6 @@ public class RegistrationProblemsInspection extends DevKitUastInspectionBase {
       if (componentClasses != null && !componentClasses.isEmpty()) {
         PsiElement sourcePsi = uClass.getSourcePsi();
         if (sourcePsi == null) return null;
-        UElement classAnchor = uClass.getUastAnchor();
-        if (classAnchor == null) return null;
-        PsiElement classPsiAnchor = classAnchor.getSourcePsi();
-        if (classPsiAnchor == null) return null;
 
         ProblemsHolder holder = createProblemsHolder(uClass, manager, isOnTheFly);
 
@@ -63,10 +55,10 @@ public class RegistrationProblemsInspection extends DevKitUastInspectionBase {
             LocalQuickFix[] fixes = sourcePsi.getLanguage().is(JavaLanguage.INSTANCE) ?
                                     ImplementOrExtendFix.createFixes(nameIdentifier, checkedClass, componentClass, isOnTheFly) :
                                     LocalQuickFix.EMPTY_ARRAY;
-            holder.registerProblem(classPsiAnchor,
-                                   DevKitBundle.message("inspections.registration.problems.incompatible.message",
-                                                        componentClass.getQualifiedName()),
-                                   fixes);
+            ProblemHolderUtilKt.registerUProblem(holder, uClass,
+                                                 DevKitBundle.message("inspections.registration.problems.incompatible.message",
+                                                                      componentClass.getQualifiedName()),
+                                                 fixes);
           }
         }
         if (ActionType.ACTION.isOfType(checkedClass) && !hasNoArgConstructor(checkedClass)) {
@@ -74,10 +66,11 @@ public class RegistrationProblemsInspection extends DevKitUastInspectionBase {
           LocalQuickFix[] fixes = sourcePsi.getLanguage().is(JavaLanguage.INSTANCE) ?
                                   new LocalQuickFix[]{new CreateConstructorFix(checkedClass, isOnTheFly)} :
                                   LocalQuickFix.EMPTY_ARRAY;
-          holder.registerProblem(classPsiAnchor, DevKitBundle.message("inspections.registration.problems.missing.noarg.ctor"), fixes);
+          ProblemHolderUtilKt.registerUProblem(holder, uClass, DevKitBundle.message("inspections.registration.problems.missing.noarg.ctor"),
+                                               fixes);
         }
         if (checkedClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          holder.registerProblem(classPsiAnchor, DevKitBundle.message("inspections.registration.problems.abstract"));
+          ProblemHolderUtilKt.registerUProblem(holder, uClass, DevKitBundle.message("inspections.registration.problems.abstract"));
         }
         return holder.getResultsArray();
       }

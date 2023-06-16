@@ -98,7 +98,7 @@ class ModuleLibraryBridgeTest {
       ModuleRootModificationUtil.addModuleLibrary(module, antLibraryName, listOf(), emptyList())
       module
     }
-    
+
     val moduleRootManager = WriteCommandAction.writeCommandAction(project).compute<ModuleRootManager, RuntimeException> {
       val moduleRootManager = ModuleRootManager.getInstance(module)
       moduleRootManager.modifiableModel.let { rootModel ->
@@ -110,7 +110,7 @@ class ModuleLibraryBridgeTest {
       }
       moduleRootManager
     }
-    
+
     WriteCommandAction.writeCommandAction(project).run<RuntimeException> {
       assertModuleLibraryDependency(moduleRootManager, mavenLibraryName)
 
@@ -210,7 +210,7 @@ class ModuleLibraryBridgeTest {
       ModuleRootModificationUtil.addModuleLibrary(module, antLibraryName, listOf(), emptyList())
       module
     }
-    
+
     WriteCommandAction.writeCommandAction(project).run<RuntimeException> {
       val moduleRootManager = ModuleRootManager.getInstance(module)
       moduleRootManager.modifiableModel.let { rootModel ->
@@ -240,7 +240,7 @@ class ModuleLibraryBridgeTest {
         rootModel.commit()
       }
     }
-    
+
     val libraryDependencies = WorkspaceModel.getInstance(project).currentSnapshot
       .entities(ModuleEntity::class.java).first()
       .dependencies.drop(1)
@@ -401,7 +401,7 @@ class ModuleLibraryBridgeTest {
                                                   emptyList())
       module
     }
-    
+
     WriteCommandAction.writeCommandAction(project).run<RuntimeException> {
       val moduleRootManager = ModuleRootManager.getInstance(module)
       moduleRootManager.modifiableModel.let { rootModel ->

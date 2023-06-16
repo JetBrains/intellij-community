@@ -15,7 +15,6 @@ cryptography.hazmat.primitives.hashes.BLAKE2s.__init__
 cryptography.hazmat.primitives.hashes.Hash.__init__
 cryptography.hazmat.primitives.hmac.HMAC.__init__
 cryptography.hazmat.primitives.hmac.HMAC.update
-cryptography.hazmat.primitives.serialization.pkcs12.serialize_key_and_certificates
 cryptography.hazmat.primitives.serialization.pkcs7.PKCS7SignatureBuilder.__init__
 cryptography.x509.CertificateBuilder.public_key
 cryptography.x509.CertificateBuilder.serial_number

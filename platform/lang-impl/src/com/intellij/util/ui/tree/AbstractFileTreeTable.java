@@ -66,7 +66,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     myModel = (MyModel<T>)getTableModel();
     myModel.setTreeTable(this);
 
-    new TreeTableSpeedSearch(this, o -> {
+    TreeTableSpeedSearch.installOn(this, o -> {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)o.getLastPathComponent();
       final Object userObject = node.getUserObject();
       if (userObject == null) {

@@ -12,9 +12,8 @@ inline fun withTxAndClipAligned(
   height: Int,
   paintingCode: (Graphics2D) -> Unit
 ) {
-  val aligned = g.create(x, y, width, height)
+  val aligned = g.create(x, y, width, height) as Graphics2D
   try {
-    aligned as Graphics2D
     alignToInt(aligned)
     paintingCode(aligned)
   }
@@ -23,10 +22,12 @@ inline fun withTxAndClipAligned(
   }
 }
 
-fun alignToInt(g: Graphics) {
+@PublishedApi
+internal fun alignToInt(g: Graphics) {
   if (g !is Graphics2D) {
     return
   }
+
   val rm = PaintUtil.RoundingMode.ROUND_FLOOR_BIAS
   PaintUtil.alignTxToInt(g, null, true, true, rm)
   PaintUtil.alignClipToInt(g, true, true, rm, rm)

@@ -36,7 +36,7 @@ internal class ClickCheckingPresentation(
   val presentation: InlayPresentation,
   var expectedClick: Pair<Int, Int>?
 ): InlayPresentation by presentation {
-  var wasClicked = false
+  var wasClicked: Boolean = false
 
   override fun mouseClicked(event: MouseEvent, translated: Point) {
     val expectedClickVal = expectedClick
@@ -56,7 +56,7 @@ internal class ClickCheckingPresentation(
 }
 
 internal class ChangeCountingListener : PresentationListener {
-  var contentChangesCount = 0
+  var contentChangesCount: Int = 0
   val contentChanged: Boolean
     get() = contentChangesCount != 0
 

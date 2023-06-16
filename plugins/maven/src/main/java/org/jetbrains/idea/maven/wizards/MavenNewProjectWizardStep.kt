@@ -6,10 +6,13 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logS
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.setupProjectFromBuilder
 import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProjectWizardStep
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -19,6 +22,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
 import icons.OpenapiIcons
+import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import javax.swing.Icon
@@ -70,6 +74,24 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       return error(message)
     }
     return null
+  }
+
+  protected fun <T : AbstractMavenModuleBuilder> linkMavenProject(project: Project, builder: T, configure: (T) -> Unit = {}): Module? {
+    builder.moduleJdk = sdk
+    builder.name = parentStep.name
+    builder.contentEntryPath = "${parentStep.path}/${parentStep.name}"
+
+    builder.isCreatingNewProject = context.isCreatingNewProject
+
+    builder.parentProject = parentData
+    builder.aggregatorProject = parentData
+    builder.projectId = MavenId(groupId, artifactId, version)
+    builder.isInheritGroupId = parentData?.mavenId?.groupId == groupId
+    builder.isInheritVersion = parentData?.mavenId?.version == version
+
+    configure(builder)
+
+    return setupProjectFromBuilder(project, builder)
   }
 
   class MavenDataView(override val data: MavenProject) : DataView<MavenProject>() {

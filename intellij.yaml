@@ -7,6 +7,9 @@ versionControl:
     updateMethod: rebase
     gcAuto: "50000"
     coreLongpaths: "true"
+    coreFsMonitor: "true"
+    coreUntrackedCache: "true"
+    featureManyFiles: "true"
 
 sharedIndex:
   project:

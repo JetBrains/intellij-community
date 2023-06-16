@@ -3,6 +3,8 @@ package com.jetbrains.python.packaging.bridge
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -114,7 +116,7 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
                               extraOptions: String?,
                               listener: Listener,
                               installToUser: Boolean) {
-    scope.launch {
+    scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
       val repository = if (repoPackage.repoUrl != null) {
         manager.repositoryManager.repositories.find { it.repositoryUrl == repoPackage.repoUrl }
       } else null
@@ -134,7 +136,7 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
 
 
   override fun uninstallPackages(installedPackages: List<InstalledPackage>, listener: Listener) {
-    scope.launch {
+    scope.launch(Dispatchers.IO + ModalityState.current().asContextElement()) {
       try {
         runningUnderOldUI = true
         val namesToDelete = installedPackages.map { it.name.lowercase() }

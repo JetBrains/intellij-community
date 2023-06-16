@@ -5,68 +5,81 @@ import com.intellij.ide.navbar.ide.*
 import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
-import com.intellij.util.ui.EDT
+import com.intellij.ui.components.JBPanel
+import com.intellij.util.attachAsChildTo
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.transformLatest
 import java.awt.BorderLayout
 import java.awt.Window
-import javax.swing.JPanel
 
 internal class StaticNavBarPanel(
   private val project: Project,
   private val cs: CoroutineScope,
   private val updateRequests: Flow<Any>,
   private val requestNavigation: (NavBarVmItem) -> Unit,
-) : JPanel(BorderLayout()), Activatable {
+) : JBPanel<StaticNavBarPanel>(BorderLayout()), Activatable {
 
-  init {
-    UiNotifyConnector(this, this, false)
-  }
-
-  private var job: Job? = null
+  private val _window: MutableStateFlow<Window?> = MutableStateFlow(null)
+  private val _vm: MutableStateFlow<NavBarVm?> = MutableStateFlow(null)
+  val model: NavBarVm? get() = _vm.value
 
   override fun hideNotify() {
-    EDT.assertIsEdt()
-    job?.cancel()
+    _window.value = null
   }
 
   override fun showNotify() {
-    EDT.assertIsEdt()
-    // compute the window once and pass it around instead of going through UI hierarchy on each event
-    val window = UIUtil.getWindow(this)
-                 ?: return
-    val prev = job
-    job = cs.launch {
-      prev?.join()
-      withModel(window) { vm ->
-        showPanel(vm)
+    _window.value = UIUtil.getWindow(this)
+  }
+
+  init {
+    UiNotifyConnector.installOn(this, this, false)
+
+    // This coroutine will GC-ed together with the `StaticNavBarPanel` instance as long as it isn't referenced by anything else,
+    // `attachAsChildTo` makes sure the coroutine refs are cleaned.
+    @OptIn(DelicateCoroutinesApi::class)
+    GlobalScope.launch {
+      _window.collectLatest { window ->
+        if (window != null) {
+          coroutineScope {
+            val windowScope = this@coroutineScope
+            cs.launch {
+              attachAsChildTo(windowScope)
+              handleWindow(window)
+            }
+          }
+        }
+      }
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    GlobalScope.launch(Dispatchers.EDT) {
+      _vm.collectLatest { vm ->
+        if (vm != null) {
+          handleVm(vm)
+        }
       }
     }
   }
 
-  @Volatile
-  var model: NavBarVm? = null
-    private set
-
-  private suspend fun withModel(window: Window, block: suspend (NavBarVm) -> Nothing): Nothing = supervisorScope {
-    LOG.assertTrue(model === null, "model was not cleared correctly")
+  private suspend fun handleWindow(window: Window): Nothing = supervisorScope {
     val vm = NavBarVmImpl(
       this@supervisorScope,
       initialItems = defaultModel(project),
       contextItems = contextItems(window),
       requestNavigation,
     )
-    model = vm
+    _vm.value = vm
     try {
-      block(vm)
+      awaitCancellation()
     }
     finally {
-      LOG.assertTrue(model === vm, "model was changed")
-      model = null
+      _vm.value = null
     }
   }
 
@@ -79,16 +92,14 @@ internal class StaticNavBarPanel(
     }
   }
 
-  private suspend fun showPanel(vm: NavBarVm): Nothing = withContext(Dispatchers.EDT) {
-    supervisorScope {
-      val panel = NewNavBarPanel(this@supervisorScope, vm, project, isFloating = false)
-      add(panel)
-      try {
-        awaitCancellation()
-      }
-      finally {
-        remove(panel)
-      }
+  private suspend fun handleVm(vm: NavBarVm): Nothing = supervisorScope {
+    val panel = NewNavBarPanel(this@supervisorScope, vm, project, isFloating = false)
+    add(panel)
+    try {
+      awaitCancellation()
+    }
+    finally {
+      remove(panel)
     }
   }
 }

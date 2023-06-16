@@ -45,7 +45,7 @@ object GitHistoryNotificationPanel {
           RegistryBooleanOptionDescriptor.suggestRestartIfNecessary(this)
         }
         else {
-          (VcsProjectLog.getInstance(project)?.dataManager?.index as? VcsLogModifiableIndex)?.scheduleIndex(false)
+          (VcsProjectLog.getInstance(project).dataManager?.index as? VcsLogModifiableIndex)?.scheduleIndex(false)
         }
         this.parent?.remove(this)
       }

@@ -213,7 +213,7 @@ class ProjectLibraryBridgeTest {
       libraryBridgeTree = it.libraries[0]
       assertTrue(libraryBridgeTwo === libraryBridgeTree)
 
-      libraryBridgeTree!!.modifiableModel.let { mLib->
+      libraryBridgeTree!!.modifiableModel.let { mLib ->
         mLib.name = anotherLibraryName
         mLib
       }
@@ -265,13 +265,13 @@ class ProjectLibraryBridgeTest {
     val library = createProjectLibrary("lib")
     assertEquals(2, events.size)
     assertEquals(0, excludedUrlEvents.size)
-    
+
     val root = library.getFiles(OrderRootType.CLASSES).single()
     projectModel.modifyLibrary(library) {
       it.addExcludedRoot(root.url)
     }
     assertTrue(excludedUrlEvents.last() is EntityChange.Added)
-    
+
     projectModel.modifyLibrary(library) {
       it.removeExcludedRoot(root.url)
     }
@@ -298,7 +298,7 @@ class ProjectLibraryBridgeTest {
     assertTrue(newEntity.tableId is LibraryTableId.ProjectLibraryTableId)
     assertEquals(2, newEntity.roots.size)
   }
-  
+
   private fun createProjectLibrary(libraryName: String, withRoots: Boolean = true): Library {
     val library = runWriteActionAndWait {
       LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary(libraryName)
@@ -309,6 +309,6 @@ class ProjectLibraryBridgeTest {
         it.addRoot(projectModel.baseProjectDir.newVirtualFile("$libraryName-sources.jar"), OrderRootType.SOURCES)
       }
     }
-    return library      
+    return library
   }
 }

@@ -381,6 +381,11 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     doTest();
   }
+  public void testDefaultAnnotationForLoopParameter() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    doTest();
+  }
   public void testCheckerDefaultQualifier() {
     addCheckerAnnotations(myFixture);
     doTest();

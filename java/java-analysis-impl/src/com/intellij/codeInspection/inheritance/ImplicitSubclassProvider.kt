@@ -42,7 +42,7 @@ abstract class ImplicitSubclassProvider {
   /**
    * Information about implicitly overridden methods.
    * @property description an explanation why this method was overridden.
-   * @property isAbstract is overridden method abstract.
+   * @property acceptedModifiers modifiers that allowed to be overriden. by default: all not 'private' modifiers.
    */
   class OverridingInfo @JvmOverloads constructor(@Nls(capitalization = Sentence)
                                                  val description: String,
@@ -63,7 +63,7 @@ abstract class ImplicitSubclassProvider {
 
   companion object {
     @JvmField
-    val EP_NAME: ExtensionPointName<ImplicitSubclassProvider> = ExtensionPointName.create<ImplicitSubclassProvider>("com.intellij.codeInsight.implicitSubclassProvider")
+    val EP_NAME: ExtensionPointName<ImplicitSubclassProvider> = ExtensionPointName.create("com.intellij.codeInsight.implicitSubclassProvider")
   }
 
 }

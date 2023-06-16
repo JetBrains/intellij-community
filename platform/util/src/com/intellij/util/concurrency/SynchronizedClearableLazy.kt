@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 
 /**
- * Kotlin-friendly version of ClearableLazyValue
+ * Kotlin-friendly version of [com.intellij.openapi.util.ClearableLazyValue]
  */
 class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T>, Supplier<T> {
   private val computedValue = AtomicReference(notYetInitialized())
@@ -46,9 +46,9 @@ class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T>, 
       computedValue.set(value)
     }
 
-  override fun isInitialized() = isInitialized(computedValue.get())
+  override fun isInitialized(): Boolean = isInitialized(computedValue.get())
 
-  override fun toString() = computedValue.toString()
+  override fun toString(): String = computedValue.toString()
 
   fun drop(): T? = nullize(computedValue.getAndSet(notYetInitialized()))
 

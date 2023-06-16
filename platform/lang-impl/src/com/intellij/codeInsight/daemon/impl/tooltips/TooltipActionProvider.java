@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.tooltips;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -29,14 +29,21 @@ public interface TooltipActionProvider {
   TooltipAction getTooltipAction(@NotNull HighlightInfo info, @NotNull Editor editor, @NotNull PsiFile psiFile);
 
 
-  @Nullable
-  static TooltipAction calcTooltipAction(@NotNull HighlightInfo info, @NotNull Project project, @NotNull Editor editor) {
+  static @Nullable TooltipAction calcTooltipAction(@NotNull HighlightInfo info, @NotNull Project project, @NotNull Editor editor) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
 
     return EP_NAME.getExtensionList().stream()
       .map(extension -> extension.getTooltipAction(info, editor, file))
       .filter(Objects::nonNull).findFirst().orElse(null);
+  }
+
+  /**
+   * @deprecated use {@link #calcTooltipAction(HighlightInfo, Project, Editor)}
+   */
+  @Deprecated
+  static TooltipAction calcTooltipAction(@NotNull HighlightInfo info, @NotNull Editor editor) {
+    return calcTooltipAction(info, editor.getProject(), editor);
   }
 
   static boolean isShowActions() {

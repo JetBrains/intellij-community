@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -49,9 +49,8 @@ public class CompositeElement extends TreeElement {
     super(type);
   }
 
-  @NotNull
   @Override
-  public CompositeElement clone() {
+  public @NotNull CompositeElement clone() {
     CompositeElement clone = (CompositeElement)super.clone();
 
     clone.firstChild = null;
@@ -152,14 +151,12 @@ public class CompositeElement extends TreeElement {
     }
   }
 
-  @Nullable
-  public PsiElement findPsiChildByType(@NotNull IElementType type) {
+  public @Nullable PsiElement findPsiChildByType(@NotNull IElementType type) {
     ASTNode node = findChildByType(type);
     return node == null ? null : node.getPsi();
   }
 
-  @Nullable
-  public PsiElement findPsiChildByType(@NotNull TokenSet types) {
+  public @Nullable PsiElement findPsiChildByType(@NotNull TokenSet types) {
     ASTNode node = findChildByType(types);
     return node == null ? null : node.getPsi();
   }
@@ -186,8 +183,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  @Nullable
-  public ASTNode findChildByType(@NotNull TokenSet types) {
+  public @Nullable ASTNode findChildByType(@NotNull TokenSet types) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       assertReadAccessAllowed();
     }
@@ -198,8 +194,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  @Nullable
-  public ASTNode findChildByType(@NotNull TokenSet typesSet, ASTNode anchor) {
+  public @Nullable ASTNode findChildByType(@NotNull TokenSet typesSet, ASTNode anchor) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       assertReadAccessAllowed();
     }
@@ -207,14 +202,12 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return new String(textToCharArray());
   }
 
-  @NotNull
   @Override
-  public CharSequence getChars() {
+  public @NotNull CharSequence getChars() {
     return getText();
     //return new CharArrayCharSequence(textToCharArray());
   }
@@ -329,15 +322,13 @@ public class CompositeElement extends TreeElement {
     return curOffset[0];
   }
 
-  @Nullable
-  public final PsiElement findChildByRoleAsPsiElement(int role) {
+  public final @Nullable PsiElement findChildByRoleAsPsiElement(int role) {
     ASTNode element = findChildByRole(role);
     if (element == null) return null;
     return SourceTreeToPsiMap.treeElementToPsi(element);
   }
 
-  @Nullable
-  public ASTNode findChildByRole(int role) {
+  public @Nullable ASTNode findChildByRole(int role) {
     // assert ChildRole.isUnique(role);
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (getChildRole(child) == role) return child;
@@ -491,8 +482,7 @@ public class CompositeElement extends TreeElement {
     return myCachedLength;
   }
 
-  @NotNull
-  private static TreeElement drillDown(@NotNull TreeElement start) {
+  private static @NotNull TreeElement drillDown(@NotNull TreeElement start) {
     TreeElement cur = start;
     while (cur.getCachedLength() < 0) {
       TreeElement child = cur.getFirstChildNode();
@@ -677,8 +667,7 @@ public class CompositeElement extends TreeElement {
   /**
    * Don't call this method, it's here for implementation reasons.
    */
-  @Nullable
-  final PsiElement getCachedPsi() {
+  final @Nullable PsiElement getCachedPsi() {
     return myWrapper;
   }
 
@@ -777,8 +766,7 @@ public class CompositeElement extends TreeElement {
     DebugUtil.checkTreeStructure(this);
   }
 
-  @NotNull
-  static TreeElement rawSetParents(@NotNull TreeElement child, @NotNull CompositeElement parent) {
+  static @NotNull TreeElement rawSetParents(@NotNull TreeElement child, @NotNull CompositeElement parent) {
     child.rawRemoveUpToWithoutNotifications(null, false);
     while (true) {
       child.setTreeParent(parent);

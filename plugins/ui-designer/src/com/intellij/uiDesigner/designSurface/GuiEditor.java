@@ -339,6 +339,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
     myDropTargetListener = new DesignDropTargetListener(this);
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      //noinspection ResultOfObjectAllocationIgnored
       new DropTarget(getGlassLayer(), DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
     }
 
@@ -1019,15 +1020,8 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   private final class MyLayeredPane extends JBLayeredPane implements Scrollable {
-    /**
-     * All components allocate whole pane's area.
-     */
-    @Override
-    public void doLayout() {
-      for (int i = getComponentCount() - 1; i >= 0; i--) {
-        final Component component = getComponent(i);
-        component.setBounds(0, 0, getWidth(), getHeight());
-      }
+    private MyLayeredPane() {
+      setFullOverlayLayout(true); // All components allocate whole pane's area.
     }
 
     @Override

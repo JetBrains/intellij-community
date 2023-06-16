@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
 import com.intellij.CommonBundle
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLayeredPane
@@ -22,7 +23,6 @@ import java.awt.*
 import java.awt.image.BufferedImage
 import javax.swing.*
 
-@OptIn(FlowPreview::class)
 open class LoadingDecorator @JvmOverloads constructor(
   content: JComponent?,
   parent: Disposable,
@@ -37,7 +37,7 @@ open class LoadingDecorator @JvmOverloads constructor(
 
   var overlayBackground: Color? = null
 
-  private val pane: JLayeredPane = MyLayeredPane(if (useMinimumSize) content else null)
+  private val pane: JLayeredPane = LoadingDecoratorLayeredPane(if (useMinimumSize) content else null)
   private val loadingLayer: LoadingLayer = LoadingLayer(icon)
   private val fadeOutAnimator: Animator
   private var startRequestJob: Job? = null
@@ -94,7 +94,7 @@ open class LoadingDecorator @JvmOverloads constructor(
 
   protected open fun customizeLoadingLayer(parent: JPanel, text: JLabel, icon: AsyncProcessIcon): NonOpaquePanel {
     parent.layout = GridBagLayout()
-    text.font = StartupUiUtil.getLabelFont()
+    text.font = StartupUiUtil.labelFont
     text.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
     icon.border = if ((text.text ?: "").endsWith("...")) JBUI.Borders.emptyRight(8) else JBUI.Borders.empty()
     val result = NonOpaquePanel(VerticalLayout(6))
@@ -119,7 +119,9 @@ open class LoadingDecorator @JvmOverloads constructor(
       startRequestJob = ApplicationManager.getApplication().coroutineScope.launch {
         delay((startDelayMs - (System.currentTimeMillis() - scheduledTime)).coerceAtLeast(0))
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          doStartLoading(takeSnapshot)
+          blockingContext {
+            doStartLoading(takeSnapshot)
+          }
         }
       }
     }
@@ -255,25 +257,16 @@ class LoadingLayerAnimator(
   }
 }
 
-private class MyLayeredPane(private val content: JComponent?) : JBLayeredPane(), LoadingDecorator.CursorAware {
+private class LoadingDecoratorLayeredPane(private val content: JComponent?) : JBLayeredPane(), LoadingDecorator.CursorAware {
+  init {
+    isFullOverlayLayout = true
+  }
+
   override fun getMinimumSize(): Dimension {
     return if (content != null && !isMinimumSizeSet) content.minimumSize else super.getMinimumSize()
   }
 
   override fun getPreferredSize(): Dimension {
     return if (content != null && !isPreferredSizeSet) content.preferredSize else super.getPreferredSize()
-  }
-
-  override fun doLayout() {
-    super.doLayout()
-    for (i in 0 until componentCount) {
-      val each = getComponent(i)
-      if (each is Icon) {
-        each.setBounds(0, 0, each.width, each.height)
-      }
-      else {
-        each.setBounds(0, 0, width, height)
-      }
-    }
   }
 }

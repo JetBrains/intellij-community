@@ -19,7 +19,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsUser
@@ -66,7 +65,7 @@ private class GitCRLFCheckinHandler(project: Project) : GitCheckinHandler(projec
     return GitVcsSettings.getInstance(project).warnAboutCrlf()
   }
 
-  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
+  override suspend fun runGitCheck(commitInfo: CommitInfo): CommitProblem? {
     val git = Git.getInstance()
 
     val files = commitInfo.committedVirtualFiles // Deleted files aren't included. But for them, we don't care about CRLFs.
@@ -130,7 +129,7 @@ private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(pr
 
   override fun isEnabled(): Boolean = true
 
-  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
+  override suspend fun runGitCheck(commitInfo: CommitInfo): CommitProblem? {
     if (commitInfo.commitContext.commitAuthor != null) return null
 
     val vcs = GitVcs.getInstance(project)
@@ -231,7 +230,7 @@ private class GitDetachedRootCheckinHandler(project: Project) : GitCheckinHandle
     return GitVcsSettings.getInstance(project).warnAboutDetachedHead()
   }
 
-  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
+  override suspend fun runGitCheck(commitInfo: CommitInfo): CommitProblem? {
     val detachedRoot = getDetachedRoot(commitInfo)
     if (detachedRoot == null) return null
 
@@ -355,10 +354,12 @@ private class GitDetachedRootCheckinHandler(project: Project) : GitCheckinHandle
 }
 
 private abstract class GitCheckinHandler(val project: Project) : CheckinHandler(), CommitCheck {
-  override fun acceptExecutor(executor: CommitExecutor?): Boolean {
-    return (executor == null || executor is GitCommitAndPushExecutor) &&
-           super.acceptExecutor(executor)
+  final override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
+    if (!commitInfo.isVcsCommit) return null
+    return runGitCheck(commitInfo)
   }
+
+  abstract suspend fun runGitCheck(commitInfo: CommitInfo): CommitProblem?
 
   protected fun getSelectedRoots(commitInfo: CommitInfo): Collection<VirtualFile> {
     val vcsManager = ProjectLevelVcsManager.getInstance(project)

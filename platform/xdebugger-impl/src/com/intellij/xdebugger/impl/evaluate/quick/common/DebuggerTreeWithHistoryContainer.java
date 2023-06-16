@@ -49,9 +49,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     JComponent toolbar = createToolbar(mainPanel, tree);
     tree.setBackground(UIUtil.getToolTipBackground());
     toolbar.setBackground(UIUtil.getToolTipActionBackground());
-    WindowMoveListener moveListener = new WindowMoveListener(mainPanel);
-    toolbar.addMouseListener(moveListener);
-    toolbar.addMouseMotionListener(moveListener);
+    new WindowMoveListener(mainPanel).installTo(toolbar);
     return mainPanel.addToCenter(ScrollPaneFactory.createScrollPane(tree, true)).addToBottom(toolbar);
   }
 

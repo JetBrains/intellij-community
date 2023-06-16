@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.LineIterator;
@@ -40,8 +40,7 @@ public final class LineSet {
     return createLineSet(text, false);
   }
 
-  @NotNull
-  private static LineSet createLineSet(@NotNull CharSequence text, boolean markModified) {
+  private static @NotNull LineSet createLineSet(@NotNull CharSequence text, boolean markModified) {
     IntList starts = new IntArrayList();
     ByteList flags = new ByteArrayList();
 
@@ -92,8 +91,7 @@ public final class LineSet {
     return startLine == findLineIndex(end) && !CharArrayUtil.containLineBreaks(replacement) && !isLastEmptyLine(startLine);
   }
 
-  @NotNull
-  private LineSet updateInsideOneLine(int line, int lengthDelta) {
+  private @NotNull LineSet updateInsideOneLine(int line, int lengthDelta) {
     int[] starts = myStarts.clone();
     for (int i = line + 1; i < starts.length; i++) {
       starts[i] += lengthDelta;
@@ -172,8 +170,7 @@ public final class LineSet {
     return bsResult >= 0 ? bsResult : -bsResult - 2;
   }
 
-  @NotNull
-  public LineIterator createIterator() {
+  public @NotNull LineIterator createIterator() {
     return new LineIteratorImpl(this);
   }
 

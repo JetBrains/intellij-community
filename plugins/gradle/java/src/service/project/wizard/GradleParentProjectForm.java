@@ -24,9 +24,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.EmptyConsumer;
-import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +34,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.function.Consumer;
 
 public class GradleParentProjectForm implements Disposable {
 
@@ -57,10 +55,10 @@ public class GradleParentProjectForm implements Disposable {
   @NotNull
   private final WizardContext myContext;
 
-  public GradleParentProjectForm(@NotNull WizardContext context, @Nullable NullableConsumer<ProjectData> consumer) {
+  public GradleParentProjectForm(@NotNull WizardContext context, @Nullable Consumer<@Nullable ProjectData> consumer) {
     myProjectOrNull = context.getProject();
     myContext = context;
-    myConsumer = consumer == null ? EmptyConsumer.getInstance() : consumer;
+    myConsumer = consumer == null ? __->{} : consumer;
     myIsVisible = !context.isCreatingNewProject() && myProjectOrNull != null && gradleModuleExists(context);
     initComponents();
   }
@@ -77,7 +75,7 @@ public class GradleParentProjectForm implements Disposable {
       @Override
       public void actionPerformed(ActionEvent e) {
         myParent = doSelectProject(myParent);
-        myConsumer.consume(myParent);
+        myConsumer.accept(myParent);
       }
     });
     if (myParent == null) {

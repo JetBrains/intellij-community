@@ -2,6 +2,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.icons.IconReplacer;
+import com.intellij.ui.icons.IconWithToolTip;
 import com.intellij.ui.scale.ScaleType;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBCachingScalableIcon;
@@ -57,7 +59,7 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
   public RowIcon replaceBy(@NotNull IconReplacer replacer) {
     RowIcon icon = new RowIcon(this);
     for (int i = 0; i < icon.myIcons.length; i++) {
-      icon.myIcons[i] = replacer.replaceIcon(icon.myIcons[i]);
+      icon.myIcons[i] = icon.myIcons[i] != null ? replacer.replaceIcon(icon.myIcons[i]) : null;
     }
     return icon;
   }
@@ -184,7 +186,7 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
 
   @Override
   public String toString() {
-    return "Row icon. myIcons=" + Arrays.asList(myIcons);
+    return "RowIcon(icons=" + Arrays.asList(myIcons) + ")";
   }
 
   @Override

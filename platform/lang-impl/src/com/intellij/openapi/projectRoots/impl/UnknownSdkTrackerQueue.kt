@@ -12,7 +12,7 @@ import com.intellij.util.ui.update.Update
 internal class UnknownSdkTrackerQueue : UnknownSdkCollectorQueue(700) {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<UnknownSdkTrackerQueue>()
+    fun getInstance(project: Project): UnknownSdkTrackerQueue = project.service<UnknownSdkTrackerQueue>()
   }
 }
 
@@ -25,7 +25,7 @@ internal abstract class UnknownSdkCollectorQueue(mergingTimeSpaceMillis : Int) :
                                                  null,
                                                  false).usePassThroughInUnitTestMode()
 
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   fun queue(task: UnknownSdkTrackerTask) {
     myUpdateQueue.queue(object : Update(this) {

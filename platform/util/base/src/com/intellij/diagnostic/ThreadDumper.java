@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +18,11 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.intellij.diagnostic.CoroutineDumperKt.COROUTINE_DUMP_HEADER;
+import static com.intellij.diagnostic.CoroutineDumperKt.COROUTINE_DUMP_HEADER_STRIPPED;
+
 public final class ThreadDumper {
+
   private ThreadDumper() {
   }
 
@@ -42,14 +47,23 @@ public final class ThreadDumper {
     return getThreadInfos(ManagementFactory.getThreadMXBean(), true);
   }
 
+  /**
+   * @param stripCoroutineDump whether to remove stackframes from coroutine dump that have no useful debug information.
+   *                           Enabling this flag should significantly reduce coroutine dump size.
+   */
   @NotNull
-  public static ThreadDump getThreadDumpInfo(ThreadInfo @NotNull [] threadInfos) {
+  public static ThreadDump getThreadDumpInfo(ThreadInfo @NotNull [] threadInfos, boolean stripCoroutineDump) {
     sort(threadInfos);
     StringWriter writer = new StringWriter();
     StackTraceElement[] edtStack = dumpThreadInfos(threadInfos, writer);
-    String coroutineDump = CoroutineDumperKt.dumpCoroutines();
+    String coroutineDump = CoroutineDumperKt.dumpCoroutines(null, stripCoroutineDump);
     if (coroutineDump != null) {
-      writer.write("\n---------- Coroutine dump ----------\n");
+      if (stripCoroutineDump) {
+        writer.write("\n" + COROUTINE_DUMP_HEADER_STRIPPED + "\n");
+      }
+      else {
+        writer.write("\n" + COROUTINE_DUMP_HEADER + "\n");
+      }
       writer.write(coroutineDump);
     }
     return new ThreadDump(writer.toString(), edtStack, threadInfos);
@@ -82,7 +96,8 @@ public final class ThreadDumper {
   }
 
   public static boolean isEDT(@Nullable String threadName) {
-    return threadName != null && threadName.startsWith("AWT-EventQueue");
+    return threadName != null && (Boolean.getBoolean("jb.dispatching.on.main.thread")? threadName.contains("AppKit")
+                                                                                     : threadName.startsWith("AWT-EventQueue"));
   }
 
   private static StackTraceElement [] dumpThreadInfos(ThreadInfo @NotNull [] threadInfo, @NotNull Writer f) {
@@ -111,7 +126,8 @@ public final class ThreadDumper {
     return threads;
   }
 
-  private static void dumpThreadInfo(@NotNull ThreadInfo info, @NotNull Writer f) {
+  @Internal
+  public static void dumpThreadInfo(@NotNull ThreadInfo info, @NotNull Writer f) {
     dumpCallStack(info, f, info.getStackTrace());
   }
 

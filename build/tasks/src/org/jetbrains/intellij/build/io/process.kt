@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "RAW_RUN_BLOCKING")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.io
 
 import com.fasterxml.jackson.jr.ob.JSON
-import com.intellij.diagnostic.telemetry.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.openapi.util.io.FileUtilRt
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
@@ -70,10 +70,10 @@ suspend fun runJava(mainClass: String,
             span.setAttribute("classPath", classPathStringBuilder.substring("-classpath".length))
             span.setAttribute("processArgs", processArgs.joinToString(separator = " "))
             span.setAttribute("output", runCatching { Files.readString(outputFile) }.getOrNull() ?: "output file doesn't exist")
-            span.setAttribute("errorOutput",
-                              runCatching { Files.readString(errorOutputFile) }.getOrNull() ?: "error output file doesn't exist")
+            val errorOutput = runCatching { Files.readString(errorOutputFile) }.getOrNull()
+            span.setAttribute("errorOutput", errorOutput ?: "error output file doesn't exist")
             onError?.invoke()
-            throw RuntimeException("Cannot execute $mainClass: $reason\n${processArgs.joinToString(separator = " ")}")
+            throw RuntimeException("Cannot execute $mainClass: $reason\n${processArgs.joinToString(separator = " ")}\n$errorOutput")
           }
 
           try {

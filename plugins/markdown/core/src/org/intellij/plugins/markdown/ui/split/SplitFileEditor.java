@@ -14,11 +14,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.ui.JBEmptyBorder;
-import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -364,35 +362,6 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
         myMap.put(listener, Pair.create(oldPair.getFirst() - 1, oldPair.getSecond()));
       }
       return oldPair.getSecond();
-    }
-  }
-
-  /**
-   * @deprecated Use {@link TextEditorWithPreview.Layout}
-   */
-  @Deprecated(forRemoval = true)
-  public enum SplitEditorLayout {
-    FIRST(true, false, MarkdownBundle.message("markdown.layout.editor.only")),
-    SECOND(false, true, MarkdownBundle.message("markdown.layout.preview.only")),
-    SPLIT(true, true, MarkdownBundle.message("markdown.layout.editor.and.preview"));
-
-    public final boolean showFirst;
-    public final boolean showSecond;
-    public final String presentationName;
-
-    SplitEditorLayout(boolean showFirst, boolean showSecond, String presentationName) {
-      this.showFirst = showFirst;
-      this.showSecond = showSecond;
-      this.presentationName = presentationName;
-    }
-
-    public String getPresentationText() {
-      return StringUtil.capitalize(presentationName);
-    }
-
-    @Override
-    public String toString() {
-      return MarkdownBundle.message("markdown.layout.show", presentationName);
     }
   }
 }

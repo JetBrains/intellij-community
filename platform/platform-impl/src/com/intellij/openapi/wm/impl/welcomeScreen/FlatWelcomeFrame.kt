@@ -9,7 +9,6 @@ import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditServiceListener
-import com.intellij.ide.plugins.PluginDropHandler
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.notification.NotificationsManager
 import com.intellij.notification.impl.NotificationsManagerImpl
@@ -18,6 +17,7 @@ import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent.Companion.getCustomContentHolder
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.DefaultFrameHeader
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.JActionLinkPanel
 import com.intellij.ui.*
@@ -50,7 +51,6 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import com.intellij.util.ui.update.UiNotifyConnector
-import com.jetbrains.JBR
 import kotlinx.coroutines.launch
 import net.miginfocom.swing.MigLayout
 import java.awt.*
@@ -76,11 +76,11 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 
   companion object {
     @JvmField
-    var USE_TABBED_WELCOME_SCREEN = java.lang.Boolean.parseBoolean(System.getProperty("use.tabbed.welcome.screen", "true"))
-    const val BOTTOM_PANEL = "BOTTOM_PANEL"
+    var USE_TABBED_WELCOME_SCREEN: Boolean = java.lang.Boolean.parseBoolean(System.getProperty("use.tabbed.welcome.screen", "true"))
+    const val BOTTOM_PANEL: String = "BOTTOM_PANEL"
     @JvmField
-    val DEFAULT_HEIGHT = if (USE_TABBED_WELCOME_SCREEN) 650 else 460
-    const val MAX_DEFAULT_WIDTH = 800
+    val DEFAULT_HEIGHT: Int = if (USE_TABBED_WELCOME_SCREEN) 650 else 460
+    const val MAX_DEFAULT_WIDTH: Int = 800
 
     private fun saveSizeAndLocation(location: Rectangle) {
       val middle = Point(location.x + location.width / 2, location.y + location.height / 2)
@@ -162,7 +162,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     UIUtil.decorateWindowHeader(getRootPane())
     ToolbarUtil.setTransparentTitleBar(this, getRootPane()) { runnable -> Disposer.register(this) { runnable.run() } }
     app.invokeLater({ (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).dispatchEarlyNotifications() },
-                    ModalityState.NON_MODAL)
+                    ModalityState.nonModal())
   }
 
   protected open fun setupCloseAction() {
@@ -210,12 +210,12 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     UIUtil.decorateWindowHeader(getRootPane())
     title = ""
     title = welcomeFrameTitle
-    AppUIUtil.updateWindowIcon(this)
+    updateAppWindowIcon(this)
   }
 
   override fun addNotify() {
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true)
+      CustomHeader.enableCustomHeader(this)
     }
     super.addNotify()
   }
@@ -320,11 +320,8 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
           val transferable = e.transferable
           val list = FileCopyPasteUtil.getFiles(transferable)
           if (list != null && list.size > 0) {
-            val pluginHandler = PluginDropHandler()
-            if (!pluginHandler.canHandle(transferable, null) || !pluginHandler.handleDrop(transferable, null, null)) {
-              ApplicationManager.getApplication().coroutineScope.launch {
-                ProjectUtil.openOrImportFilesAsync(list, "WelcomeFrame")
-              }
+            ApplicationManager.getApplication().coroutineScope.launch {
+              ProjectUtil.openOrImportFilesAsync(list, "WelcomeFrame")
             }
             e.dropComplete(true)
             return
@@ -357,7 +354,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       val foreground = JBUI.CurrentTheme.DragAndDrop.Area.FOREGROUND
       g.color = foreground
 
-      val labelFont = StartupUiUtil.getLabelFont()
+      val labelFont = StartupUiUtil.labelFont
       val font = labelFont.deriveFont(labelFont.size + 5.0f)
       val drop = IdeBundle.message("welcome.screen.drop.files.to.open.text")
       g.font = font
@@ -473,6 +470,11 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
 }
 
 private class WelcomeFrameMenuBar : IdeMenuBar() {
+  override suspend fun getMainMenuActionGroupAsync(): ActionGroup {
+    val manager = service<ActionManager>()
+    return DefaultActionGroup(manager.getAction(IdeActions.GROUP_FILE), manager.getAction(IdeActions.GROUP_HELP_MENU))
+  }
+
   override fun getMainMenuActionGroup(): ActionGroup {
     val manager = ActionManager.getInstance()
     return DefaultActionGroup(manager.getAction(IdeActions.GROUP_FILE), manager.getAction(IdeActions.GROUP_HELP_MENU))

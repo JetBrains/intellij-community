@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl
 
 import com.intellij.openapi.module.*
@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.*
 
 @ApiStatus.Internal
 fun createGrouper(project: Project, moduleModel: ModifiableModuleModel? = null): ModuleGrouper {
@@ -56,7 +55,7 @@ private class QualifiedNameGrouper(project: Project, model: ModifiableModuleMode
 private class ExplicitModuleGrouper(project: Project, model: ModifiableModuleModel?): ModuleGrouperBase(project, model) {
   override fun getGroupPath(module: Module): List<String> {
     val path = if (model != null) model.getModuleGroupPath(module) else ModuleManager.getInstance(project).getModuleGroupPath(module)
-    return if (path != null) Arrays.asList(*path) else emptyList()
+    return if (path != null) listOf(*path) else emptyList()
   }
 
   override fun getGroupPath(description: ModuleDescription) = when (description) {

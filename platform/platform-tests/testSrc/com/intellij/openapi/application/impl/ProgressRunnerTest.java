@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -52,7 +53,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   public static List<Object[]> dataOnEdt() {
     List<Object[]> result = new ArrayList<>();
     result.add(new Boolean[]{true, false});
-    if (ApplicationImpl.IMPLICIT_READ_ON_EDT_DISABLED) {
+    if (StartupUtil.isImplicitReadOnEDTDisabled()) {
       result.add(new Boolean[]{true, true});
     }
     result.add(new Boolean[]{false, false});

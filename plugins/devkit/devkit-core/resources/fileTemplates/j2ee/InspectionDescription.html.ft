@@ -11,6 +11,12 @@ Make sure the description doesn’t just repeat the inspection title.
 <p>
 See https://jetbrains.design/intellij/text/inspections/#descriptions for more information.
 </p>
+<p>
+Embed code snippets:
+</p>
+<pre><code>
+// automatically highlighted according to inspection registration 'language' attribute
+</code></pre>
 <!-- tooltip end -->
 <p>Text after this comment will only be shown in the settings of the inspection.</p>
 

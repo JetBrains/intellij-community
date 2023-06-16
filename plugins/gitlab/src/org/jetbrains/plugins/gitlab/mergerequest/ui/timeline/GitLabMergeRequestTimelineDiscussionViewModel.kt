@@ -10,18 +10,16 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import java.util.*
 
-interface GitLabMergeRequestTimelineDiscussionViewModel : CollapsibleTimelineItemViewModel {
-  val id: String
-  val date: Date
+interface GitLabMergeRequestTimelineDiscussionViewModel :
+  GitLabMergeRequestTimelineItemViewModel,
+  CollapsibleTimelineItemViewModel {
   val author: Flow<GitLabUserDTO>
 
-  val diffVm: GitLabDiscussionDiffViewModel?
+  val diffVm: Flow<GitLabDiscussionDiffViewModel?>
 
   val mainNote: Flow<GitLabNoteViewModel>
   val replies: Flow<List<GitLabNoteViewModel>>
@@ -38,11 +36,12 @@ interface GitLabMergeRequestTimelineDiscussionViewModel : CollapsibleTimelineIte
 
 private val LOG = logger<GitLabMergeRequestTimelineDiscussionViewModel>()
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   parentCs: CoroutineScope,
   currentUser: GitLabUserDTO,
-  mr: GitLabMergeRequest,
-  discussion: GitLabDiscussion
+  private val mr: GitLabMergeRequest,
+  discussion: GitLabMergeRequestDiscussion
 ) : GitLabMergeRequestTimelineDiscussionViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
@@ -50,11 +49,10 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val mainNote: Flow<GitLabNoteViewModel> = discussion.notes
     .map { it.first() }
     .distinctUntilChangedBy { it.id }
-    .mapScoped { GitLabNoteViewModelImpl(this, it, resolveVm) }
+    .mapScoped { GitLabNoteViewModelImpl(this, it, flowOf(true)) }
     .modelFlow(cs, LOG)
 
   override val id: String = discussion.id
-  override val date: Date = discussion.createdAt
   override val author: Flow<GitLabUserDTO> = mainNote.map { it.author }
 
   private val _repliesFolded = MutableStateFlow(true)
@@ -64,13 +62,13 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     .map { it.drop(1) }
     .mapCaching(
       GitLabNote::id,
-      { cs, note -> GitLabNoteViewModelImpl(cs, note) },
+      { cs, note -> GitLabNoteViewModelImpl(cs, note, flowOf(false)) },
       GitLabNoteViewModelImpl::destroy
     )
     .modelFlow(cs, LOG)
 
   override val resolveVm: GitLabDiscussionResolveViewModel? =
-    if (discussion.canResolve) GitLabDiscussionResolveViewModelImpl(cs, discussion) else null
+    if (discussion.resolvable) GitLabDiscussionResolveViewModelImpl(cs, discussion) else null
 
   override val collapsible: Flow<Boolean> = resolveVm?.resolved ?: flowOf(false)
 
@@ -80,8 +78,11 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val replyVm: GitLabDiscussionReplyViewModel? =
     if (discussion.canAddNotes) GitLabDiscussionReplyViewModelImpl(cs, currentUser, discussion) else null
 
-  override val diffVm: GitLabDiscussionDiffViewModel? =
-    discussion.position?.let { GitLabDiscussionDiffViewModelImpl(cs, mr, it) }
+  override val diffVm: Flow<GitLabDiscussionDiffViewModel?> =
+    discussion.notes
+      .flatMapLatest { it.first().position }
+      .mapScoped { pos -> pos?.let { GitLabDiscussionDiffViewModelImpl(this, mr, it) } }
+      .modelFlow(cs, LOG)
 
   init {
     val resolvedFlow = resolveVm?.resolved
@@ -107,6 +108,51 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
       _collapsed.value = false
     }
   }
+
+  override suspend fun destroy() {
+    try {
+      cs.coroutineContext[Job]!!.cancelAndJoin()
+    }
+    catch (e: CancellationException) {
+      // ignore, cuz we don't want to cancel the invoker
+    }
+  }
+}
+
+class GitLabMergeRequestTimelineDraftDiscussionViewModel(
+  parentCs: CoroutineScope,
+  currentUser: GitLabUserDTO,
+  private val mr: GitLabMergeRequest,
+  draftNote: GitLabMergeRequestNote
+) : GitLabMergeRequestTimelineDiscussionViewModel {
+
+  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+
+  override val mainNote: Flow<GitLabNoteViewModel> =
+    flowOf(GitLabNoteViewModelImpl(cs, draftNote, flowOf(true)))
+
+  override val id: String = draftNote.id
+  override val author: Flow<GitLabUserDTO> = flowOf(currentUser)
+
+  private val _repliesFolded = MutableStateFlow(true)
+  override val repliesFolded: Flow<Boolean> = _repliesFolded.asStateFlow()
+
+  override val replies: Flow<List<GitLabNoteViewModel>> = flowOf(emptyList())
+
+  override val resolveVm: GitLabDiscussionResolveViewModel? = null
+
+  override val collapsible: Flow<Boolean> = flowOf(false)
+  override val collapsed: Flow<Boolean> = flowOf(false)
+
+  override val replyVm: GitLabDiscussionReplyViewModel? = null
+
+  override val diffVm: Flow<GitLabDiscussionDiffViewModel?> =
+    draftNote.position.map { pos -> pos?.let { GitLabDiscussionDiffViewModelImpl(cs, mr, it) } }
+      .modelFlow(cs, LOG)
+
+  override fun setCollapsed(collapsed: Boolean) = Unit
+
+  override fun setRepliesFolded(folded: Boolean) = Unit
 
   override suspend fun destroy() {
     try {

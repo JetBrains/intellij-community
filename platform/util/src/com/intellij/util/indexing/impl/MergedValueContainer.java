@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.ValueContainer;
@@ -19,22 +19,19 @@ public final class MergedValueContainer<Value> extends ValueContainer<Value> {
     myContainers = containers;
   }
 
-  @NotNull
   @Override
-  public InvertedIndexValueIterator<Value> getValueIterator() {
+  public @NotNull InvertedIndexValueIterator<Value> getValueIterator() {
     return new InvertedIndexValueIterator<Value>() {
       int myNextId = 1;
       ValueIterator<Value> myCurrent = myContainers.get(0).getValueIterator();
 
-      @NotNull
       @Override
-      public IntIterator getInputIdsIterator() {
+      public @NotNull IntIterator getInputIdsIterator() {
         return myCurrent.getInputIdsIterator();
       }
 
-      @Nullable
       @Override
-      public IntPredicate getValueAssociationPredicate() {
+      public @Nullable IntPredicate getValueAssociationPredicate() {
         return myCurrent.getValueAssociationPredicate();
       }
 

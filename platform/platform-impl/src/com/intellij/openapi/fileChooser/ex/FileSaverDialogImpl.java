@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -136,7 +138,8 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
       return null;
     }
     if (dir.isDirectory()) {
-      path += File.separator + myFileName.getText();
+      String child = myFileName.getText();
+      path = OSAgnosticPathUtil.isAbsolute(child) ? child : FileUtil.join(path, child);
     }
 
     boolean correctExt = true;

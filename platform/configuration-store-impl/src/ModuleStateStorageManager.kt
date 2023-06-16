@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.configurationStore
 
@@ -18,7 +18,12 @@ import java.nio.file.Path
 import kotlin.concurrent.write
 
 @ApiStatus.Internal
-internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module) : StateStorageManagerImpl("module", macroSubstitutor, module), RenameableStateStorageManager {
+internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module) :
+  StateStorageManagerImpl(
+    rootTagName = "module",
+    macroSubstitutor = macroSubstitutor,
+    componentManager = module,
+  ), RenameableStateStorageManager {
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation) = StoragePathMacros.MODULE_FILE
 
   // the only macro is supported by ModuleStateStorageManager
@@ -60,7 +65,7 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
     }
     finally {
       val requestor = event?.requestor
-      if (requestor == null || requestor !is StateStorage /* not renamed as result of explicit rename */) {
+      if (requestor == null || requestor !is StateStorage /* not renamed as a result of explicit rename */) {
         val module = componentManager as ModuleEx
         module.rename(newPath.fileName.toString().removeSuffix(ModuleFileType.DOT_DEFAULT_EXTENSION), false)
       }
@@ -121,7 +126,8 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
                                   rootElementName: String?,
                                   roamingType: RoamingType,
                                   pathMacroManager: PathMacroSubstitutor? = null,
-                                  provider: StreamProvider? = null) : MyFileStorage(storageManager, file, fileSpec, rootElementName, roamingType, pathMacroManager, provider) {
+                                  provider: StreamProvider? = null) : MyFileStorage(storageManager, file, fileSpec, rootElementName,
+                                                                                    roamingType, pathMacroManager, provider) {
     override fun handleVirtualFileNotFound() {
       if (storageDataRef.get() == null && !storageManager.isExternalSystemStorageEnabled) {
         throw FileNotFoundException(ConfigurationStoreBundle.message("module.file.does.not.exist.error", file.toString()))

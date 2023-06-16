@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
-public class AddFrameworkSupportAction extends AnAction {
+final class AddFrameworkSupportAction extends AnAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -24,14 +24,14 @@ public class AddFrameworkSupportAction extends AnAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
-    Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
-    boolean enable = module != null && AddFrameworkSupportDialog.isAvailable(module);
+  public void update(@NotNull AnActionEvent e) {
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
-      e.getPresentation().setVisible(enable);
+      e.getPresentation().setVisible(false);
     }
     else {
-      e.getPresentation().setEnabled(enable);
+      Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
+      boolean enable = module != null && AddFrameworkSupportDialog.isAvailable(module);
+      e.getPresentation().setEnabledAndVisible(enable);
     }
   }
 }

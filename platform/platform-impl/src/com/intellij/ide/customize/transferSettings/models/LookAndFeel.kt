@@ -11,7 +11,7 @@ interface ILookAndFeel {
 
 class BundledLookAndFeel(override val displayName: @Nls String, val lafInfo: UIManager.LookAndFeelInfo): ILookAndFeel {
   companion object {
-    fun fromManager(lafName: String) = requireNotNull(LafManager.getInstance().installedLookAndFeels.first { it.name == lafName }
+    fun fromManager(lafName: String): BundledLookAndFeel = requireNotNull(LafManager.getInstance().installedLookAndFeels.first { it.name == lafName }
                                                         ?.let { BundledLookAndFeel(it.name, it) })
   }
 }
@@ -19,5 +19,5 @@ class BundledLookAndFeel(override val displayName: @Nls String, val lafInfo: UIM
 class PluginLookAndFeel(override val displayName: @Nls String, val pluginId: String, val installedName: String, val fallback: BundledLookAndFeel) : ILookAndFeel
 
 class SystemDarkThemeDetectorLookAndFeel(val darkLaf: ILookAndFeel, val lightLaf: ILookAndFeel) : ILookAndFeel {
-  override val displayName = "Sync with OS"
+  override val displayName: String = "Sync with OS"
 }

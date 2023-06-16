@@ -11,11 +11,12 @@ import java.awt.*;
 
 public final class LightEditPanel extends JPanel implements Disposable {
   private final LightEditTabs myTabs;
+  private final LightEditorManagerImpl myEditorManager;
 
   public LightEditPanel(@NotNull Project project) {
-    LightEditorManager editorManager = LightEditService.getInstance().getEditorManager();
+    myEditorManager = (LightEditorManagerImpl)LightEditService.getInstance().getEditorManager();
     setLayout(new BorderLayout());
-    myTabs = new LightEditTabs(project,this, (LightEditorManagerImpl)editorManager);
+    myTabs = new LightEditTabs(project, this, myEditorManager);
     add(myTabs, BorderLayout.CENTER);
     setBackground(JBColor.background().darker());
   }
@@ -27,5 +28,6 @@ public final class LightEditPanel extends JPanel implements Disposable {
   @Override
   public void dispose() {
     myTabs.removeAll();
+    myEditorManager.releaseEditors();
   }
 }

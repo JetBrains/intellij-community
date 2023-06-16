@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -81,11 +82,11 @@ public final class AntWorkspaceConfiguration implements PersistentStateComponent
       return;
     }
     for (final AntBuildFileBase buildFile : AntConfiguration.getInstance(myProject).getBuildFileList()) {
-      final Element fileElement = findChildByUrl(properties, buildFile.getVirtualFile().getUrl());
-      if (fileElement == null) {
-        continue;
+      VirtualFile file = buildFile.getVirtualFile();
+      Element fileElement = file != null? findChildByUrl(properties, file.getUrl()) : null;
+      if (fileElement != null) {
+        buildFile.readWorkspaceProperties(fileElement);
       }
-      buildFile.readWorkspaceProperties(fileElement);
     }
   }
 

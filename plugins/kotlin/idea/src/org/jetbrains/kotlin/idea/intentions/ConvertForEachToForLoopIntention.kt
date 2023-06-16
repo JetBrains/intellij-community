@@ -10,10 +10,7 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.getFactoryForImplicitReceiverWithSubtypeOf
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
@@ -25,18 +22,6 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention<KtSimpleNameExpression>(
     KtSimpleNameExpression::class.java, KotlinBundle.lazyMessage("replace.with.a.for.loop")
 ) {
-    companion object {
-        private const val FOR_EACH_NAME = "forEach"
-        private val FOR_EACH_FQ_NAMES: Set<String> by lazy {
-            sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_NAME" }.toSet()
-        }
-
-        private const val FOR_EACH_INDEXED_NAME = "forEachIndexed"
-        private val FOR_EACH_INDEXED_FQ_NAMES: Set<String> by lazy {
-            sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_INDEXED_NAME" }.toSet()
-        }
-    }
-
     override fun isApplicableTo(element: KtSimpleNameExpression): Boolean {
         val referencedName = element.getReferencedName()
         val isForEach = referencedName == FOR_EACH_NAME
@@ -58,8 +43,9 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
 
         val isForEachIndexed = element.getReferencedName() == FOR_EACH_INDEXED_NAME
         val loop = generateLoop(functionLiteral, receiver, isForEachIndexed, context)
-        val result = expressionToReplace.replace(loop) as KtForExpression
-        result.loopParameter?.also { editor?.caretModel?.moveToOffset(it.startOffset) }
+        val result = expressionToReplace.replace(loop)
+        val forExpression = result as? KtForExpression ?: result.collectDescendantsOfType<KtForExpression>().first()
+        forExpression.loopParameter?.also { editor?.caretModel?.moveToOffset(it.startOffset) }
 
         commentSaver.restore(result)
     }
@@ -118,7 +104,7 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
 
         val loopRange = KtPsiUtil.safeDeparenthesize(receiver)
         val parameters = functionLiteral.valueParameters
-        return if (isForEachIndexed) {
+        val loop = if (isForEachIndexed) {
             val loopRangeWithIndex = if (loopRange is KtThisExpression && loopRange.labelQualifier == null) {
                 psiFactory.createExpression("withIndex()")
             } else {
@@ -139,5 +125,21 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
                 body.allChildren
             )
         }
+
+        return if (loopRange.getQualifiedExpressionForReceiver() is KtSafeQualifiedExpression) {
+            psiFactory.createExpressionByPattern("if ($0 != null) { $1 }", loopRange, loop)
+        } else {
+            loop
+        }
     }
+}
+
+private const val FOR_EACH_NAME = "forEach"
+private val FOR_EACH_FQ_NAMES: Set<String> by lazy {
+    sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_NAME" }.toSet()
+}
+
+private const val FOR_EACH_INDEXED_NAME = "forEachIndexed"
+private val FOR_EACH_INDEXED_FQ_NAMES: Set<String> by lazy {
+    sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_INDEXED_NAME" }.toSet()
 }

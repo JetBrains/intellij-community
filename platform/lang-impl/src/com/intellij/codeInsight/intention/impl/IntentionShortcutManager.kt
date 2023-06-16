@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -84,9 +84,9 @@ class IntentionShortcutManager : Disposable {
   internal fun findIntention(wrappedActionId: String): IntentionAction? =
     IntentionManager.getInstance().availableIntentions.firstOrNull { it.wrappedActionId == wrappedActionId }
 
-   /** Register all intentions with shortcuts and keep them up to date */
+  /** Register all intentions with shortcuts and keep them up to date */
   private fun registerIntentionsInActiveKeymap(actionManager: ActionManager) {
-     actionManager.registerIntentionsInKeymap(KeymapManager.getInstance().activeKeymap)
+    actionManager.registerIntentionsInKeymap(KeymapManager.getInstance().activeKeymap)
 
     val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
     busConnection.subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {

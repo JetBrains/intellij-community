@@ -28,7 +28,7 @@ open class ReportProblemAction : DumbAwareAction() {
     e.presentation.isEnabledAndVisible = info != null && info.youtrackUrl != null
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     submit(e.project)

@@ -46,7 +46,8 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
   override fun collectInformation(file: PsiFile): Info? =
     runReadAction { if (isJava8SourceFile(file) && "/**" in file.text) Info(file) else null }
 
-  override fun doAnnotate(collectedInfo: Info): Result? {
+  override fun doAnnotate(collectedInfo: Info?): Result? {
+    collectedInfo ?: return null
     val text = runReadAction { if (collectedInfo.file.isValid) collectedInfo.file.text else null } ?: return null
     val file = collectedInfo.file.virtualFile ?: return null
     val copy = createTempFile(text.toByteArray(file.charset))
@@ -74,7 +75,8 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
     }
   }
 
-  override fun apply(file: PsiFile, annotationResult: Result, holder: AnnotationHolder) {
+  override fun apply(file: PsiFile, annotationResult: Result?, holder: AnnotationHolder) {
+    annotationResult ?: return
     val text = file.text
     val offsets = text.foldIndexed(mutableListOf(0)) { i, offsets, c -> if (c == '\n') offsets += (i + 1); offsets }
 
@@ -87,7 +89,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
           val description = StringUtil.capitalize(message)
           val severity = if (error) HighlightSeverity.ERROR else HighlightSeverity.WARNING
           holder.newAnnotation(severity, description).range(range)
-            .newFix(EmptyIntentionAction(JavaBundle.message("inspection.javadoc.lint.display.name"))).key(key.value).registerFix()
+            .newFix(EmptyIntentionAction(JavaBundle.message("inspection.javadoc.lint.display.name"))).key(key!!).registerFix()
             .create()
         }
       }
@@ -95,7 +97,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
   }
 
   //<editor-fold desc="Helpers">
-  private val key = lazy { HighlightDisplayKey.find(JavadocHtmlLintInspection.SHORT_NAME) }
+  private val key get() = HighlightDisplayKey.find(pairedBatchInspectionShortName)
 
   private val lintOptions = "-Xmsgs:html/private,accessibility/private"
   private val lintPattern = "^.+:(\\d+):\\s+(error|warning):\\s+(.+)$".toPattern()
@@ -126,7 +128,8 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
 
     parameters.charset = file.charset
     parameters.vmParametersList.addProperty("user.language", "en")
-    parameters.mainClass = if (JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_16)) "jdk.javadoc.internal.doclint.DocLint" else "com.sun.tools.doclint.DocLint"
+    parameters.mainClass = if (JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_16)) "jdk.javadoc.internal.doclint.DocLint"
+    else "com.sun.tools.doclint.DocLint"
     parameters.programParametersList.add(lintOptions)
     parameters.programParametersList.add(copy.path)
 

@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
+import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.util.io.DirectBufferWrapper;
 import com.intellij.util.io.PagedFileStorage;
 import io.opentelemetry.api.common.Attributes;
@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
+
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storage;
 
 /**
  * Store blobs, like {@link com.intellij.util.io.storage.AbstractStorage}, but tries to be faster:
@@ -113,7 +115,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
   private static final int RECORD_OFFSET_CAPACITY = 0;
   private static final int RECORD_OFFSET_ACTUAL_LENGTH = RECORD_OFFSET_CAPACITY + Short.BYTES;
   private static final int RECORD_OFFSET_REDIRECT_TO = RECORD_OFFSET_ACTUAL_LENGTH + Short.BYTES;
-  private static final int RECORD_HEADER_SIZE = RECORD_OFFSET_REDIRECT_TO + Integer.BYTES;
+  public static final int RECORD_HEADER_SIZE = RECORD_OFFSET_REDIRECT_TO + Integer.BYTES;
 
 
   /**
@@ -160,6 +162,8 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
   @NotNull
   private final SpaceAllocationStrategy allocationStrategy;
 
+  private final int maxCapacityPageAdjusted;
+
   private int nextRecordId;
 
   private final ThreadLocal<ByteBuffer> threadLocalBuffer;
@@ -190,6 +194,12 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
       }
       return buffer;
     });
+
+    final int pageSize = pagedStorage.getPageSize();
+    maxCapacityPageAdjusted = Math.min(
+      pageSize - Math.max(RECORD_HEADER_SIZE, OFFSET_BUCKET),
+      MAX_CAPACITY - OFFSET_BUCKET
+    );
 
     pagedStorage.lockWrite();
     try {
@@ -417,23 +427,30 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
       try {
         final ByteBuffer bufferWithData = writer.write(temp);
         bufferWithData.flip();
+
+        final int pageSize = pagedStorage.getPageSize();
+
         final int recordLength = bufferWithData.limit();
-        checkLength(recordLength);
+        checkLengthHardLimit(recordLength);
+        if (recordLength + RECORD_HEADER_SIZE > pageSize) {
+          throw new IllegalStateException("record(" + recordLength + "b + " + RECORD_HEADER_SIZE + "b header) " +
+                                          "doesn't fit on page(=" + pageSize + "b)");
+        }
 
         final int capacity = bufferWithData.capacity();
         //Don't check capacity right here -- let allocation strategy first decide how to deal with capacity > MAX
-        final int recordCapacity = allocationStrategy.capacity(
+        final int requestedRecordCapacity = allocationStrategy.capacity(
           recordLength,
           capacity
         );
-        checkCapacity(recordCapacity);
 
-        if (recordCapacity < bufferWithData.limit()) {
+        if (requestedRecordCapacity < recordLength) {
           throw new IllegalStateException(
             "Allocation strategy " + allocationStrategy + "(" + recordLength + ", " + capacity + ")" +
-            " returns " + recordCapacity + " < length(" + recordLength + ")");
+            " returns " + requestedRecordCapacity + " < length(" + recordLength + ")");
         }
-        return allocateRecord(bufferWithData, recordCapacity);
+
+        return writeToNewlyAllocatedRecord(bufferWithData, requestedRecordCapacity);
       }
       finally {
         releaseTemporaryBuffer(temp);
@@ -485,7 +502,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
             totalLiveRecordsPayloadBytes += (newRecordLength - recordActualLength);
           }
           else {//current record is too small for new content -> relocate to a new place
-            final int newRecordId = allocateRecord(newRecordContent, newRecordContent.capacity());
+            final int newRecordId = writeToNewlyAllocatedRecord(newRecordContent, newRecordContent.capacity());
 
             //mark current record as either 'moved' or 'deleted'
             final int recordMark = leaveRedirectOnRecordRelocation ? MOVED_RECORD_MARK : DELETED_RECORD_MARK;
@@ -686,7 +703,6 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
   }
 
 
-
   @Override
   public boolean isDirty() {
     return pagedStorage.isDirty();
@@ -746,13 +762,17 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
   /**
    * content buffer is passed in 'ready for write' state: position=0, limit=[#last byte of payload]
    */
-  private int allocateRecord(final ByteBuffer content,
-                             final int newRecordCapacity) throws IOException {
+  private int writeToNewlyAllocatedRecord(final ByteBuffer content,
+                                          final int requestedRecordCapacity) throws IOException {
     final int pageSize = pagedStorage.getPageSize();
-    final int totalRecordSize = RECORD_HEADER_SIZE + newRecordCapacity;
+
+    final int implementableCapacity = Math.min(requestedRecordCapacity, maxCapacityPageAdjusted);
+    checkCapacityHardLimit(implementableCapacity);
+
+    final int totalRecordSize = RECORD_HEADER_SIZE + implementableCapacity;
     if (totalRecordSize > pageSize) {
       throw new IllegalArgumentException(
-        "record size(header:" + RECORD_HEADER_SIZE + " +capacity:" + newRecordCapacity + ") should be <= pageSize(=" + pageSize + ")");
+        "record size(header:" + RECORD_HEADER_SIZE + " +capacity:" + implementableCapacity + ") should be <= pageSize(=" + pageSize + ")");
     }
 
     pagedStorage.lockWrite();
@@ -778,19 +798,19 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
         assert idToOffset(nextRecordId) == nextPageStartOffset : "idToOffset(" + nextRecordId + ")=" + idToOffset(nextRecordId) +
                                                                  " != nextPageStartOffset(" + nextPageStartOffset + ")";
 
-        return allocateRecord(content, newRecordCapacity);
+        return writeToNewlyAllocatedRecord(content, implementableCapacity);
       }
 
       final int newRecordLength = content.remaining();
       final int offsetOnPage = pagedStorage.getOffsetInPage(recordOffset);
-      final int recordCapacityRoundedUp = roundCapacityUpToBucket(offsetOnPage, pageSize, newRecordCapacity);
+      final int recordCapacityRoundedUp = roundCapacityUpToBucket(offsetOnPage, pageSize, implementableCapacity);
 
       final DirectBufferWrapper page = pagedStorage.getByteBuffer(recordOffset, true);
       final ByteBuffer buffer = page.getBuffer();
       try {
         //check everything before write anything:
-        checkCapacity(recordCapacityRoundedUp);
-        checkLength(newRecordLength);
+        checkCapacityHardLimit(recordCapacityRoundedUp);
+        checkLengthHardLimit(newRecordLength);
 
         putRecordCapacity(buffer, offsetOnPage, recordCapacityRoundedUp);
         putRecordLength(buffer, offsetOnPage, newRecordLength);
@@ -952,7 +972,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
   private static ByteBuffer putRecordCapacity(final ByteBuffer pageBuffer,
                                               final int offsetOnPage,
                                               final int recordCapacity) {
-    checkCapacity(recordCapacity);
+    checkCapacityHardLimit(recordCapacity);
     return pageBuffer.putShort(offsetOnPage + RECORD_OFFSET_CAPACITY, (short)recordCapacity);
   }
 
@@ -960,7 +980,7 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
   private static ByteBuffer putRecordLength(final ByteBuffer pageBuffer,
                                             final int offsetOnPage,
                                             final int recordLength) {
-    checkLength(recordLength);
+    checkLengthHardLimit(recordLength);
     return pageBuffer.putShort(offsetOnPage + RECORD_OFFSET_ACTUAL_LENGTH, (short)recordLength);
   }
 
@@ -1048,20 +1068,20 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
   }
 
 
-  private static void checkCapacity(final int capacity) {
+  private static void checkCapacityHardLimit(final int capacity) {
     if (!isCorrectCapacity(capacity)) {
       throw new IllegalArgumentException("capacity(=" + capacity + ") must be in [0, " + MAX_CAPACITY + "]");
     }
   }
 
-  private static void checkLength(final int length) {
+  private static void checkLengthHardLimit(final int length) {
     if (!isCorrectLength(length)) {
       throw new IllegalArgumentException("length(=" + length + ") must be in [0, " + MAX_LENGTH + "]");
     }
   }
 
-  private static void checkLength(final int length,
-                                  final String messageToFormatWithLength) {
+  private static void checkLengthHardLimit(final int length,
+                                           final String messageToFormatWithLength) {
     if (!isCorrectLength(length)) {
       throw new IllegalArgumentException(messageToFormatWithLength.formatted(length));
     }
@@ -1082,13 +1102,15 @@ public class SmallStreamlinedBlobStorage implements StreamlinedBlobStorage {
 
   @NotNull
   private BatchCallback setupReportingToOpenTelemetry(final Path fileName) {
-    final Meter meter = TraceManager.INSTANCE.getMeter("storage");
+    final Meter meter = TelemetryTracer.getMeter(Storage);
 
     final var recordsAllocated = meter.counterBuilder("StreamlinedBlobStorage.recordsAllocated").buildObserver();
     final var recordsRelocated = meter.counterBuilder("StreamlinedBlobStorage.recordsRelocated").buildObserver();
     final var recordsDeleted = meter.counterBuilder("StreamlinedBlobStorage.recordsDeleted").buildObserver();
-    final var totalLiveRecordsPayloadBytes = meter.upDownCounterBuilder("StreamlinedBlobStorage.totalLiveRecordsPayloadBytes").buildObserver();
-    final var totalLiveRecordsCapacityBytes = meter.upDownCounterBuilder("StreamlinedBlobStorage.totalLiveRecordsCapacityBytes").buildObserver();
+    final var totalLiveRecordsPayloadBytes =
+      meter.upDownCounterBuilder("StreamlinedBlobStorage.totalLiveRecordsPayloadBytes").buildObserver();
+    final var totalLiveRecordsCapacityBytes =
+      meter.upDownCounterBuilder("StreamlinedBlobStorage.totalLiveRecordsCapacityBytes").buildObserver();
     final Attributes attributes = Attributes.builder()
       .put("file", fileName.toString())
       .build();

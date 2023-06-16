@@ -5,10 +5,7 @@ import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.ide.DataManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.LoadingNode;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
@@ -48,13 +45,13 @@ class ServiceViewTree extends Tree {
     ComponentUtil.putClientProperty(this, ANIMATION_IN_RENDERER_ALLOWED, true);
 
     // listeners
-    new TreeSpeedSearch(this, true, DISPLAY_NAME_CONVERTER);
+    TreeSpeedSearch.installOn(this, true, DISPLAY_NAME_CONVERTER);
     ServiceViewTreeLinkMouseListener mouseListener = new ServiceViewTreeLinkMouseListener(this);
     mouseListener.installOn(this);
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent e) {
-        TreePath path = getPathForLocation(e.getX(), e.getY());
+        TreePath path = getClosestPathForLocation(e.getX(), e.getY());
         if (path == null) return false;
 
         Object lastComponent = path.getLastPathComponent();

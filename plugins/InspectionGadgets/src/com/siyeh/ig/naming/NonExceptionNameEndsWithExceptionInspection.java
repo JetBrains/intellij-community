@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -23,7 +25,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
@@ -32,15 +33,15 @@ import org.jetbrains.annotations.NotNull;
 public class NonExceptionNameEndsWithExceptionInspection extends BaseInspection {
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final String name = (String)infos[0];
     final Boolean onTheFly = (Boolean)infos[1];
     if (onTheFly.booleanValue()) {
-      return new InspectionGadgetsFix[]{new RenameFix(),
+      return new LocalQuickFix[]{new RenameFix(),
         new ExtendExceptionFix(name)};
     }
     else {
-      return new InspectionGadgetsFix[]{
+      return new LocalQuickFix[]{
         new ExtendExceptionFix(name)};
     }
   }
@@ -62,7 +63,7 @@ public class NonExceptionNameEndsWithExceptionInspection extends BaseInspection 
     return new NonExceptionNameEndsWithExceptionVisitor();
   }
 
-  private static class ExtendExceptionFix extends InspectionGadgetsFix {
+  private static class ExtendExceptionFix extends PsiUpdateModCommandQuickFix {
 
     private final String name;
 
@@ -84,8 +85,7 @@ public class NonExceptionNameEndsWithExceptionInspection extends BaseInspection 
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass aClass)) {
         return;

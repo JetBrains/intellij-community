@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -48,11 +47,6 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
     }
     myTargetNames = targetNames;
     myPresentableName = compositeName;
-  }
-
-  @Deprecated(forRemoval = true)
-  public ExecuteCompositeTargetEvent(String[] targetNames) {
-    this(Arrays.asList(targetNames));
   }
 
   public ExecuteCompositeTargetEvent(List<@Nls String> targetNames) {

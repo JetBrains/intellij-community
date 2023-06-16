@@ -215,11 +215,13 @@ fun Module.createMultiplatformFacetM1(
     platformKind: TargetPlatform? = null,
     useProjectSettings: Boolean = true,
     implementedModuleNames: List<String>,
-    pureKotlinSourceFolders: List<String>
+    pureKotlinSourceFolders: List<String>,
+    additionalVisibleModuleNames: Set<String>
 ) {
     createFacetWithAdditionalSetup(platformKind, useProjectSettings) {
         this.implementedModuleNames = implementedModuleNames
         this.pureKotlinSourceFolders = pureKotlinSourceFolders
+        this.additionalVisibleModuleNames = additionalVisibleModuleNames
     }
 }
 

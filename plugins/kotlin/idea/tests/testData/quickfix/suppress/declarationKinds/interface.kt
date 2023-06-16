@@ -1,5 +1,5 @@
-// "Suppress 'REDUNDANT_NULLABLE' for interface C" "true"
+// "Suppress 'DIVISION_BY_ZERO' for interface C" "true"
 
 interface C {
-    var foo: String?<caret>?
+    fun foo() = 2 / <caret>0
 }

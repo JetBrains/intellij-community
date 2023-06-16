@@ -32,7 +32,7 @@ private val POINTS = COLORS.mapIndexed { index, color ->
   }
 }.toFloatArray()
 
-const val SLIDE_UNIT = 1
+const val SLIDE_UNIT: Int = 1
 
 class HueSliderComponent : SliderComponent<Int>(0) {
 
@@ -42,7 +42,7 @@ class HueSliderComponent : SliderComponent<Int>(0) {
 
   override fun valueToKnobPosition(value: Int): Int = Math.round(value / 360f * sliderWidth)
 
-  override fun slide(shift: Int) = max(0, min(value + shift * SLIDE_UNIT, 360))
+  override fun slide(shift: Int): Int = max(0, min(value + shift * SLIDE_UNIT, 360))
 
   override fun paintSlider(g2d: Graphics2D) {
     g2d.paint = LinearGradientPaint(Point2D.Double(0.0, 0.0), Point2D.Double(sliderWidth.toDouble(), 0.0), POINTS, COLORS)

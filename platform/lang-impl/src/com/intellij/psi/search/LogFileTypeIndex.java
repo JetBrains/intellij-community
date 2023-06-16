@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,6 +49,11 @@ public final class LogFileTypeIndex extends FileTypeIndexImplBase {
   }
 
   @Override
+  public boolean isDirty() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content) {
     try {
       int fileTypeId = getFileTypeId(content == null ? null : content.getFileType());
@@ -75,8 +80,7 @@ public final class LogFileTypeIndex extends FileTypeIndexImplBase {
     mySnapshot.getFileIds(fileTypeId).forEach(consumer);
   }
 
-  @NotNull
-  private Boolean updateIndex(int fileTypeId, int inputId) {
+  private @NotNull Boolean updateIndex(int fileTypeId, int inputId) {
     myLock.writeLock().lock();
     try {
       if (myInMemoryMode.get()) {

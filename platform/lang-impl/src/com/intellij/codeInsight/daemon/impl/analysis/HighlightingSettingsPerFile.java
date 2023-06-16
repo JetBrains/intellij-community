@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.ide.EssentialHighlightingMode;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
@@ -40,9 +41,9 @@ import java.util.stream.Stream;
 
 @State(name = "HighlightingSettingsPerFile", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class HighlightingSettingsPerFile extends HighlightingLevelManager implements PersistentStateComponent<Element>, ModificationTracker {
-  @NonNls private static final String SETTING_TAG = "setting";
-  @NonNls private static final String ROOT_ATT_PREFIX = "root";
-  @NonNls private static final String FILE_ATT = "file";
+  private static final @NonNls String SETTING_TAG = "setting";
+  private static final @NonNls String ROOT_ATT_PREFIX = "root";
+  private static final @NonNls String FILE_ATT = "file";
   private final MessageBus messageBus;
   private final Set<String> vcsIgnoreFileNames;
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
@@ -73,8 +74,7 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
     throw new RuntimeException("Cannot find root for: " + file);
   }
 
-  @NotNull
-  public FileHighlightingSetting getHighlightingSettingForRoot(@NotNull PsiElement root) {
+  public @NotNull FileHighlightingSetting getHighlightingSettingForRoot(@NotNull PsiElement root) {
     PsiFile containingFile = root.getContainingFile();
     VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return FileHighlightingSetting.FORCE_HIGHLIGHTING;
@@ -86,8 +86,7 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
     return getDefaultHighlightingSetting(root.getProject(), virtualFile);
   }
 
-  @NotNull
-  private static FileHighlightingSetting getDefaultHighlightingSetting(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+  private static @NotNull FileHighlightingSetting getDefaultHighlightingSetting(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     DefaultHighlightingSettingProvider[] providers = DefaultHighlightingSettingProvider.EP_NAME.getExtensions();
     List<DefaultHighlightingSettingProvider> filtered = DumbService.getInstance(project).filterByDumbAwareness(providers);
     for (DefaultHighlightingSettingProvider p : filtered) {
@@ -96,7 +95,7 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
         return setting;
       }
     }
-    return FileHighlightingSetting.FORCE_HIGHLIGHTING;
+    return EssentialHighlightingMode.INSTANCE.isEnabled() ? FileHighlightingSetting.ESSENTIAL : FileHighlightingSetting.FORCE_HIGHLIGHTING;
   }
 
   private static FileHighlightingSetting @NotNull [] getDefaults(@NotNull PsiFile file) {
@@ -234,7 +233,7 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
   public long getModificationCount() {
     return myModificationTracker.getModificationCount();
   }
-  private void incModificationCount() {
+  public void incModificationCount() {
     myModificationTracker.incModificationCount();
   }
 }

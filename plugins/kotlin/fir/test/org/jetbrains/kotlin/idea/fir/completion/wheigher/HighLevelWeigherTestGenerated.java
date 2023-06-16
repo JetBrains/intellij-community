@@ -274,6 +274,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../completion/testData/weighers/basic/expectedType/ifConditionQualified.kt");
         }
 
+        @TestMetadata("MatchingNullableType.kt")
+        public void testMatchingNullableType() throws Exception {
+            runTest("../completion/testData/weighers/basic/expectedType/MatchingNullableType.kt");
+        }
+
         @TestMetadata("returnFromFunction.kt")
         public void testReturnFromFunction() throws Exception {
             runTest("../completion/testData/weighers/basic/expectedType/returnFromFunction.kt");
@@ -287,6 +292,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
         @TestMetadata("returnFromLambda.kt")
         public void testReturnFromLambda() throws Exception {
             runTest("../completion/testData/weighers/basic/expectedType/returnFromLambda.kt");
+        }
+
+        @TestMetadata("typeParameter.kt")
+        public void testTypeParameter() throws Exception {
+            runTest("../completion/testData/weighers/basic/expectedType/typeParameter.kt");
         }
 
         @TestMetadata("whileConditionQualified.kt")
@@ -315,6 +325,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
         @TestMetadata("ImportedFirst.kt")
         public void testImportedFirst() throws Exception {
             runTest("../completion/testData/weighers/basic/parameterNameAndType/ImportedFirst.kt");
+        }
+
+        @TestMetadata("LocalClass.kt")
+        public void testLocalClass() throws Exception {
+            runTest("../completion/testData/weighers/basic/parameterNameAndType/LocalClass.kt");
         }
 
         @TestMetadata("MoreWordsMatchFirst.kt")
@@ -448,6 +463,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
         @TestMetadata("LambdaSignature.kt")
         public void testLambdaSignature() throws Exception {
             runTest("../completion/testData/weighers/basic/LambdaSignature.kt");
+        }
+
+        @TestMetadata("LocalClass.kt")
+        public void testLocalClass() throws Exception {
+            runTest("../completion/testData/weighers/basic/LocalClass.kt");
         }
 
         @TestMetadata("LocalFileBeforeImported.kt")

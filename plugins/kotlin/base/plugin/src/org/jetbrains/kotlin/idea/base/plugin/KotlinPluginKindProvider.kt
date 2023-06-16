@@ -19,6 +19,14 @@ fun isK2Plugin(): Boolean {
     return currentPluginKind == KotlinPluginKind.FIR_PLUGIN
 }
 
+/**
+ * A switch to mitigate exceptions from Android plugin
+ * because it tries to use K1 frontend in K2 plugin.
+ *
+ * This is a separate method from [isK2Plugin] to better track and update its usages.
+ */
+fun suppressAndroidPlugin(): Boolean = isK2Plugin()
+
 fun isFe10Plugin(): Boolean {
     return currentPluginKind == KotlinPluginKind.FE10_PLUGIN
 }

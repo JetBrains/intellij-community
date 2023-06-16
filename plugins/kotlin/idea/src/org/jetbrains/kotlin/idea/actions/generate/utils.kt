@@ -53,7 +53,7 @@ private val MEMBER_RENDERER = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_
     parameterNameRenderingPolicy = ParameterNameRenderingPolicy.NONE
 }
 
-fun confirmMemberRewrite(targetClass: KtClass, vararg descriptors: FunctionDescriptor): Boolean {
+fun confirmMemberRewrite(targetClass: KtClassOrObject, vararg descriptors: FunctionDescriptor): Boolean {
     if (isUnitTestMode()) return true
 
     val functionsText =

@@ -3,7 +3,6 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
@@ -16,6 +15,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -34,7 +34,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 @Tag("SchemaInfo")
-public class UserDefinedJsonSchemaConfiguration {
+public final class UserDefinedJsonSchemaConfiguration {
   private final static Comparator<Item> ITEM_COMPARATOR = (o1, o2) -> {
     if (o1.isPattern() != o2.isPattern()) return o1.isPattern() ? -1 : 1;
     if (o1.isDirectory() != o2.isDirectory()) return o1.isDirectory() ? -1 : 1;
@@ -49,14 +49,8 @@ public class UserDefinedJsonSchemaConfiguration {
   public List<Item> patterns = new SmartList<>();
   public boolean isIgnoredFile = false;
   @Transient
-  private final AtomicClearableLazyValue<List<PairProcessor<Project, VirtualFile>>> myCalculatedPatterns =
-    new AtomicClearableLazyValue<>() {
-      @NotNull
-      @Override
-      protected List<PairProcessor<Project, VirtualFile>> compute() {
-        return recalculatePatterns();
-      }
-    };
+  private final SynchronizedClearableLazy<List<PairProcessor<Project, VirtualFile>>> myCalculatedPatterns = new SynchronizedClearableLazy<>(
+    this::recalculatePatterns);
 
   public UserDefinedJsonSchemaConfiguration() {
   }

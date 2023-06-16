@@ -19,7 +19,7 @@ class EditorConfigQuickfixesTest : BasePlatformTestCase() {
            "quickfix.values.list.cleanup.description")
 
   fun testConvertToPlainPattern() =
-    doTest(EditorConfigCharClassRedundancyInspection::class,
+    doTest(EditorConfigCharClassPatternRedundancyInspection::class,
            "quickfix.charclass.convert.to.plain.pattern.description")
 
   fun testInsertStar() =

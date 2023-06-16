@@ -23,7 +23,6 @@ import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
 import com.jediterm.terminal.model.TerminalModelListener;
 import com.jediterm.terminal.model.TerminalTextBuffer;
-import com.jediterm.terminal.ui.JediTermSearchComponent;
 import com.jediterm.terminal.ui.TerminalAction;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -99,7 +98,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         }
       }
       if (e.getKeyCode() == KeyEvent.VK_ENTER || TerminalShellCommandHandlerHelper.matchedExecutor(e) != null) {
-        TerminalUsageTriggerCollector.Companion.triggerCommandExecuted(project);
+        TerminalUsageTriggerCollector.Companion.triggerCommandExecuted(project, getTypedShellCommand());
         if (myShellCommandHandlerHelper.processEnterKeyPressed(e)) {
           e.consume();
         }
@@ -396,11 +395,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         return lineStr.substring(0, Math.min(maxCursorX, lineStr.length()));
       });
     }
-  }
-
-  @Override
-  protected @NotNull JediTermSearchComponent createSearchComponent() {
-    return new TerminalSearchSession(this).getTerminalSearchComponent();
   }
 
   public static @Nullable ShellTerminalWidget asShellJediTermWidget(@NotNull TerminalWidget widget) {

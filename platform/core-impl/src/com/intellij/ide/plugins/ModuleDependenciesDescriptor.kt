@@ -8,34 +8,34 @@ import java.util.*
 @ApiStatus.Internal
 class ModuleDependenciesDescriptor(@JvmField val modules: List<ModuleReference>, @JvmField val plugins: List<PluginReference>) {
   companion object {
-    @JvmField val EMPTY = ModuleDependenciesDescriptor(Collections.emptyList(), Collections.emptyList())
+    @JvmField val EMPTY: ModuleDependenciesDescriptor = ModuleDependenciesDescriptor(Collections.emptyList(), Collections.emptyList())
   }
 
   class ModuleReference(@JvmField val name: String) {
-    override fun toString() = "ModuleItem(name=$name)"
+    override fun toString(): String = "ModuleItem(name=$name)"
   }
 
   class PluginReference(@JvmField val id: PluginId) {
-    override fun toString() = "PluginReference(id=$id)"
+    override fun toString(): String = "PluginReference(id=$id)"
   }
 
-  override fun toString() = "ModuleDependenciesDescriptor(modules=$modules, plugins=$plugins)"
+  override fun toString(): String = "ModuleDependenciesDescriptor(modules=$modules, plugins=$plugins)"
 }
 
 @ApiStatus.Internal
 class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
   companion object {
-    @JvmField val EMPTY = PluginContentDescriptor(Collections.emptyList())
+    @JvmField val EMPTY: PluginContentDescriptor = PluginContentDescriptor(Collections.emptyList())
   }
 
   @ApiStatus.Internal
   class ModuleItem(@JvmField val name: String, @JvmField val configFile: String?) {
     @JvmField internal var descriptor: IdeaPluginDescriptorImpl? = null
 
-    fun requireDescriptor() = descriptor ?: throw IllegalStateException("Descriptor is not set for $this")
+    fun requireDescriptor(): IdeaPluginDescriptorImpl = descriptor ?: throw IllegalStateException("Descriptor is not set for $this")
 
-    override fun toString() = "ModuleItem(name=$name, descriptor=$descriptor, configFile=$configFile)"
+    override fun toString(): String = "ModuleItem(name=$name, descriptor=$descriptor, configFile=$configFile)"
   }
 
-  override fun toString() = "PluginContentDescriptor(modules=$modules)"
+  override fun toString(): String = "PluginContentDescriptor(modules=$modules)"
 }

@@ -11,7 +11,6 @@ import org.jdom.Element
 object YamlProfileUtils {
 
   private fun copyFrom(source: ToolsImpl, target: ToolsImpl) {
-    target.isEnabled = source.isEnabled
     val defaultState = source.defaultState
     val toolWrapper = InspectionProfileImpl.copyToolSettings(defaultState.tool)
     target.setDefaultState(toolWrapper, defaultState.isEnabled, defaultState.level, defaultState.editorAttributesExternalName)
@@ -26,6 +25,7 @@ object YamlProfileUtils {
       }
       tool.editorAttributesExternalName = it.editorAttributesExternalName
     }
+    target.isEnabled = source.isEnabled
   }
 
   fun createProfileCopy(baseProfile: InspectionProfileImpl,

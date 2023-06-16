@@ -8,7 +8,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.tree.TreePath
 
 internal class GroupBookmarkVisitor(val group: BookmarkGroup, val bookmark: Bookmark? = null) : TreeVisitor {
-  override fun visit(path: TreePath) = when (path.pathCount) {
+  override fun visit(path: TreePath): TreeVisitor.Action = when (path.pathCount) {
     4 -> when (TreeUtil.getAbstractTreeNode(path)?.value) {
       bookmark -> TreeVisitor.Action.INTERRUPT
       else -> TreeVisitor.Action.SKIP_CHILDREN

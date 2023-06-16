@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
+import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.progress.impl.ProgressState
+import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -11,6 +13,15 @@ import org.junit.jupiter.api.assertThrows
 class RunBlockingCancellableTest : CancellationTest() {
 
   @Test
+  fun `without context`() {
+    assertLogThrows<IllegalStateException> {
+      runBlockingCancellable {
+        fail()
+      }
+    }
+  }
+
+  @Test
   fun `with current job context`() {
     currentJobTest { job ->
       assertNotNull(Cancellation.currentJob())
@@ -18,6 +29,7 @@ class RunBlockingCancellableTest : CancellationTest() {
 
       runBlockingCancellable {
         assertJobIsChildOf(job = coroutineContext.job, parent = job)
+        assertNull(currentThreadContextOrNull())
         assertNull(Cancellation.currentJob())
         assertNull(ProgressManager.getGlobalProgressIndicator())
       }
@@ -34,6 +46,7 @@ class RunBlockingCancellableTest : CancellationTest() {
       assertNotNull(ProgressManager.getGlobalProgressIndicator())
 
       runBlockingCancellable {
+        assertNull(currentThreadContextOrNull())
         assertNull(Cancellation.currentJob())
         assertNull(ProgressManager.getGlobalProgressIndicator())
       }
@@ -86,6 +99,15 @@ class RunBlockingCancellableTest : CancellationTest() {
       }
     }
     assertSame(t, thrown)
+  }
+
+  private fun testRunBlockingCancellableRethrow(t: CancellationException) {
+    val thrown = assertThrows<CeProcessCanceledException> {
+      runBlockingCancellable {
+        throw t
+      }
+    }
+    assertSame(t, thrown.cause)
   }
 
   @Test

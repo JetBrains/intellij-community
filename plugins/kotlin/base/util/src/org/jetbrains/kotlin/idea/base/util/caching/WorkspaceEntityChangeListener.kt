@@ -38,9 +38,9 @@ abstract class WorkspaceEntityChangeListener<Entity : WorkspaceEntity, Value : A
 
     private fun handleEvent(event: VersionedStorageChange) {
         val storageBefore = event.storageBefore
-        val changes = event.getChanges(entityClass).ifEmpty { return }
+        val changes = event.getChanges(entityClass).also { if (it.none()) return }
 
-        val outdatedEntities: List<Value> = changes.asSequence()
+        val outdatedEntities: List<Value> = changes
             .mapNotNull(EntityChange<Entity>::oldEntity)
             .mapNotNull { map(storageBefore, it) }
             .toList()

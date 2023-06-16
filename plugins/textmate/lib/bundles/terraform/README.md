@@ -123,7 +123,7 @@ The Terraform VS Code extension bundles the [Terraform Language Server](https://
 
 The extension does require the following to be installed before use:
 
-- VS Code v1.65 or greater
+- VS Code v1.75 or greater
 - Terraform v0.12 or greater
 
 ## Platform Support

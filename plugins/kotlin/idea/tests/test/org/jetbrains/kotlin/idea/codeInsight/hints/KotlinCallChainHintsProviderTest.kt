@@ -2,11 +2,13 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import org.intellij.lang.annotations.Language
 
 /**
  * [org.jetbrains.kotlin.idea.codeInsight.hints.KotlinCallChainHintsProvider]
  */
 class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
+    @Language("kotlin")
     val chainLib = """
         class Foo {
             var foo = Foo()
@@ -51,9 +53,9 @@ class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
 
     fun `test simple`() = doTest("""
         fun main() {
-            Foo().bar()<# [temp:///src/foo.kt:311]Bar #>
-                .foo()<# [temp:///src/foo.kt:0]Foo #>
-                .bar()<# [temp:///src/foo.kt:311]Bar #>
+            Foo().bar()/*<# [temp:///src/foo.kt:311]Bar #>*/
+                .foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
+                .bar()/*<# [temp:///src/foo.kt:311]Bar #>*/
                 .foo()
         }
     """.trimIndent())
@@ -63,18 +65,18 @@ class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
             Foo()
                 .bar {
 
-                }<# [temp:///src/foo.kt:311]Bar #>
-                .foo()<# [temp:///src/foo.kt:0]Foo #>
-                .bar {}<# [temp:///src/foo.kt:311]Bar #>
+                }/*<# [temp:///src/foo.kt:311]Bar #>*/
+                .foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
+                .bar {}/*<# [temp:///src/foo.kt:311]Bar #>*/
                 .foo()
         }
     """.trimIndent())
 
     fun `test duplicated builder`() = doTest("""
         fun main() {
-            Foo().foo()<# [temp:///src/foo.kt:0]Foo #>
+            Foo().foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
                 .bar().foo()
-                .bar()<# [temp:///src/foo.kt:311]Bar #>
+                .bar()/*<# [temp:///src/foo.kt:311]Bar #>*/
                 .foo()
         }
     """.trimIndent())
@@ -82,8 +84,8 @@ class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
     fun `test comments`() = doTest("""
         fun main() {
             Foo().bar() // comment
-                .foo()<# [temp:///src/foo.kt:0]Foo #>
-                .bar()<# [temp:///src/foo.kt:311]Bar #>
+                .foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
+                .bar()/*<# [temp:///src/foo.kt:311]Bar #>*/
                 .foo()// comment
                 .bar()
                 .bar()
@@ -92,22 +94,22 @@ class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
 
     fun `test properties`() = doTest("""
         fun main() {
-            Foo().bar<# [temp:///src/foo.kt:311]Bar #>
-                .foo<# [temp:///src/foo.kt:0]Foo #>
-                .bar.bar<# [temp:///src/foo.kt:311]Bar #>
-                .foo()<# [temp:///src/foo.kt:0]Foo #>
-                .bar<# [temp:///src/foo.kt:311]Bar #>
+            Foo().bar/*<# [temp:///src/foo.kt:311]Bar #>*/
+                .foo/*<# [temp:///src/foo.kt:0]Foo #>*/
+                .bar.bar/*<# [temp:///src/foo.kt:311]Bar #>*/
+                .foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
+                .bar/*<# [temp:///src/foo.kt:311]Bar #>*/
                 .bar()
         }
     """.trimIndent())
 
     fun `test postfix operators`() = doTest("""
         fun main() {
-            Foo().bar()!!<# [temp:///src/foo.kt:311]Bar #>
-                .foo++<# [temp:///src/foo.kt:0]Foo #>
-                .foo[1]<# [temp:///src/foo.kt:311]Bar #>
-                .nullFoo()!!<# [temp:///src/foo.kt:0]Foo #>
-                .foo()()<# [temp:///src/foo.kt:311]Bar #>
+            Foo().bar()!!/*<# [temp:///src/foo.kt:311]Bar #>*/
+                .foo++/*<# [temp:///src/foo.kt:0]Foo #>*/
+                .foo[1]/*<# [temp:///src/foo.kt:311]Bar #>*/
+                .nullFoo()!!/*<# [temp:///src/foo.kt:0]Foo #>*/
+                .foo()()/*<# [temp:///src/foo.kt:311]Bar #>*/
                 .bar
         }
     """.trimIndent())
@@ -115,8 +117,8 @@ class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
     fun `test safe dereference`() = doTest("""
         fun main() {
             Foo()
-                .nullBar()<# [[temp:///src/foo.kt:311]Bar ?] #>
-                ?.foo!!<# [temp:///src/foo.kt:0]Foo #>
+                .nullBar()/*<# [[temp:///src/foo.kt:311]Bar ?] #>*/
+                ?.foo!!/*<# [temp:///src/foo.kt:0]Foo #>*/
                 .bar()
         }
     """.trimIndent())
@@ -124,13 +126,13 @@ class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
     fun `test several call chains`() = doTest("""
         fun main() {
             Foo()
-                .nullBar()<# [[temp:///src/foo.kt:311]Bar ?] #>
-                ?.foo!!<# [temp:///src/foo.kt:0]Foo #>
+                .nullBar()/*<# [[temp:///src/foo.kt:311]Bar ?] #>*/
+                ?.foo!!/*<# [temp:///src/foo.kt:0]Foo #>*/
                 .bar()
 
-            Bar().foo()<# [temp:///src/foo.kt:0]Foo #>
+            Bar().foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
                 .bar().foo()
-                .bar()<# [temp:///src/foo.kt:311]Bar #>
+                .bar()/*<# [temp:///src/foo.kt:311]Bar #>*/
                 .foo()
         }
     """.trimIndent())
@@ -138,26 +140,26 @@ class KotlinCallChainHintsProviderTest : InlayHintsProviderTestCase() {
     fun `test nested call chains`() = doTest("""
         fun main() {
             Foo().foo {
-                    Bar().foo()<# [temp:///src/foo.kt:0]Foo #>
-                         .bar()<# [temp:///src/foo.kt:311]Bar #>
+                    Bar().foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
+                         .bar()/*<# [temp:///src/foo.kt:311]Bar #>*/
                          .foo()
-                }<# [temp:///src/foo.kt:0]Foo #>
-                .bar()<# [temp:///src/foo.kt:311]Bar #>
-                .foo()<# [temp:///src/foo.kt:0]Foo #>
+                }/*<# [temp:///src/foo.kt:0]Foo #>*/
+                .bar()/*<# [temp:///src/foo.kt:311]Bar #>*/
+                .foo()/*<# [temp:///src/foo.kt:0]Foo #>*/
                 .bar()
         }
     """.trimIndent())
 
     fun `test nullable and notnullable types rotation of the same type`() = doTest("""
         fun main() {
-            Foo().nullBar()<# [[temp:///src/foo.kt:311]Bar ?] #>
-                ?.bar!!<# [temp:///src/foo.kt:311]Bar #>
-                .nullBar()<# [[temp:///src/foo.kt:311]Bar ?] #>
+            Foo().nullBar()/*<# [[temp:///src/foo.kt:311]Bar ?] #>*/
+                ?.bar!!/*<# [temp:///src/foo.kt:311]Bar #>*/
+                .nullBar()/*<# [[temp:///src/foo.kt:311]Bar ?] #>*/
                 ?.foo()
         }
     """.trimIndent())
 
-    private fun doTest(text: String) {
+    private fun doTest(@Language("kotlin") text: String) {
         doTestProvider("foo.kt", "$chainLib\n$text", KotlinCallChainHintsProvider())
     }
 }

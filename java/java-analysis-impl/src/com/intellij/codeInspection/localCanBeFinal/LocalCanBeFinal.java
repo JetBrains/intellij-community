@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.MathUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -255,6 +256,8 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         else {
           return;
         }
+        from = MathUtil.clamp(from, 0, flow.getInstructions().size());
+        end = MathUtil.clamp(end, from, flow.getInstructions().size());
         if (!ControlFlowUtil.getWrittenVariables(flow, from, end, false).contains(variable)) {
           writtenVariables.remove(variable);
           result.add(variable);

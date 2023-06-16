@@ -17,6 +17,7 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import javax.swing.Icon
@@ -27,7 +28,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
 
   override fun getIcon(): Icon = AllIcons.Vcs.FromVCSDialog
 
-  override fun getName() = VcsBundle.message("clone.dialog.repository.url.item")
+  override fun getName(): @Nls String = VcsBundle.message("clone.dialog.repository.url.item")
 
   override fun getTooltip(): String {
     return CheckoutProvider.EXTENSION_POINT_NAME.extensions
@@ -89,7 +90,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
       comboBox.selectedItem = selectedByDefaultProvider
     }
 
-    override fun getView() = mainPanel
+    override fun getView(): JPanel = mainPanel
 
     fun openForVcs(clazz: Class<out CheckoutProvider>): RepositoryUrlMainExtensionComponent {
       comboBox.selectedItem = CheckoutProvider.EXTENSION_POINT_NAME.findExtension(clazz)

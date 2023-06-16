@@ -1,14 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
 import com.intellij.openapi.wm.impl.headertoolbar.isDarkHeader
+import com.intellij.ui.JBColor
+import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Rectangle
@@ -17,16 +22,25 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.UIManager
 
-private val lightThemeDarkHeaderDisableFilter: () -> RGBImageFilter =  {
+@ApiStatus.Internal
+val lightThemeDarkHeaderDisableFilter: () -> RGBImageFilter =  {
   if (isDarkHeader()) UIUtil.GrayFilter(-70, -70, 100) else UIUtil.getGrayFilter()
 }
 
-fun getHeaderBackgroundColor(component: JComponent, state: Int): Color? = when (state) {
-  ActionButtonComponent.NORMAL -> if (component.isBackgroundSet) component.background else null
-  ActionButtonComponent.PUSHED -> UIManager.getColor("MainToolbar.Icon.pressedBackground")
-                                  ?: UIManager.getColor("ActionButton.pressedBackground")
-  else -> UIManager.getColor("MainToolbar.Icon.hoverBackground")
-          ?: UIManager.getColor("ActionButton.hoverBackground")
+fun getHeaderBackgroundColor(component: JComponent, state: Int): Color? {
+  if (ProjectWindowCustomizerService.getInstance().isActive()) {
+    return when (state) {
+      ActionButtonComponent.NORMAL -> if (component.isBackgroundSet) component.background else null
+      else -> JBColor.namedColor("MainToolbar.Dropdown.transparentHoverBackground", UIManager.getColor("MainToolbar.Icon.hoverBackground"))
+    }
+  }
+  return when (state) {
+    ActionButtonComponent.NORMAL -> if (component.isBackgroundSet) component.background else null
+    ActionButtonComponent.PUSHED -> UIManager.getColor("MainToolbar.Icon.pressedBackground")
+                                    ?: UIManager.getColor("ActionButton.pressedBackground")
+    else -> UIManager.getColor("MainToolbar.Icon.hoverBackground")
+            ?: UIManager.getColor("ActionButton.hoverBackground")
+  }
 }
 
 internal class HeaderToolbarButtonLook(
@@ -43,27 +57,25 @@ internal class HeaderToolbarButtonLook(
   }
 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon) {
-    val scaledIcon = scaleIcon(adjustColor(icon))
-    super.paintIcon(g, actionButton, scaledIcon)
+    val scaledIcon = scaleIcon(adjustIconForHeader(icon))
+    val iconPos = getIconPosition(actionButton, scaledIcon)
+    paintIconImpl(g, actionButton, scaledIcon, iconPos.x, iconPos.y)
   }
 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon, x: Int, y: Int) {
-    val scaledIcon = scaleIcon(adjustColor(icon))
-    super.paintIcon(g, actionButton, scaledIcon, x, y)
+    val scaledIcon = scaleIcon(adjustIconForHeader(icon))
+    paintIconImpl(g, actionButton, scaledIcon, x, y)
   }
 
   override fun paintDownArrow(g: Graphics?, actionButton: ActionButtonComponent?, originalIcon: Icon, arrowIcon: Icon) {
-    val scaledOriginalIcon = scaleIcon(adjustColor(originalIcon))
-    val scaledArrowIcon = scaleIcon(adjustColor(arrowIcon))
+    val scaledOriginalIcon = scaleIcon(adjustIconForHeader(originalIcon))
+    val scaledArrowIcon = scaleIcon(adjustIconForHeader(arrowIcon))
     super.paintDownArrow(g, actionButton, scaledOriginalIcon, scaledArrowIcon)
   }
 
-  private fun adjustColor(icon: Icon) =
-    if (isDarkHeader()) IconLoader.getDarkIcon(icon, true) else icon
-
   private fun scaleIcon(icon: Icon) : Icon {
     if (icon is ScalableIcon) {
-      return IconLoader.loadCustomVersionOrScale(icon, iconSize())
+      return loadIconCustomVersionOrScale(icon = icon, size = iconSize())
     }
 
     return icon

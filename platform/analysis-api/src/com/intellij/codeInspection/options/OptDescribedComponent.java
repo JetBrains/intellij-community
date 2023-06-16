@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Interface for components that come with a contextual description.
  */
-public sealed interface OptDescribedComponent permits OptString, OptNumber, OptCheckbox, OptStringList, OptTable {
+public sealed interface OptDescribedComponent permits OptCheckbox, OptExpandableString, OptNumber, OptString, OptStringList, OptTable {
 
   /**
    * @param description textual description

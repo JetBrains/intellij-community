@@ -6,7 +6,7 @@ class Bar {
 
   public void set(String s) {}
 
-  private String <caret>name;
+  private String <caret><selection>name</selection>;
   void foo(java.util.List<String> name) {
     for(String name1: name) {
       doSome(new Foo() {{

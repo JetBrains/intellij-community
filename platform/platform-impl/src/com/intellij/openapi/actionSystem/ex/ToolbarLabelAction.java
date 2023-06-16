@@ -17,8 +17,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 public abstract class ToolbarLabelAction extends DumbAwareAction implements CustomComponentAction {
   @Override
@@ -34,7 +32,7 @@ public abstract class ToolbarLabelAction extends DumbAwareAction implements Cust
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    JBLabel label = new MyLabel(presentation)
+    JBLabel label = new MyLabel()
       .withFont(JBUI.Fonts.toolbarFont())
       .withBorder(JBUI.Borders.empty(0, 6, 0, 5));
 
@@ -43,6 +41,11 @@ public abstract class ToolbarLabelAction extends DumbAwareAction implements Cust
     }
 
     return label;
+  }
+
+  @Override
+  public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
+    ((MyLabel)component).updateFromPresentation(presentation);
   }
 
   protected @Nullable HyperlinkListener createHyperlinkListener() {
@@ -78,32 +81,13 @@ public abstract class ToolbarLabelAction extends DumbAwareAction implements Cust
       return installHyperlinkTooltip(super.createHyperlinkListener());
     }
 
-    @NotNull private final Presentation myPresentation;
-
-    MyLabel(@NotNull Presentation presentation) {
-      myPresentation = presentation;
-
-      presentation.addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent e) {
-          String propertyName = e.getPropertyName();
-          if (Presentation.PROP_TEXT.equals(propertyName) ||
-              Presentation.PROP_DESCRIPTION.equals(propertyName) ||
-              Presentation.PROP_ICON.equals(propertyName)) {
-            updatePresentation();
-          }
-        }
-      });
-      updatePresentation();
+    void updateFromPresentation(@NotNull Presentation presentation) {
+      setText(StringUtil.notNullize(presentation.getText()));
+      setToolTipText(StringUtil.nullize(presentation.getDescription()));
+      setIcon(presentation.getIcon());
     }
 
-    private void updatePresentation() {
-      setText(StringUtil.notNullize(myPresentation.getText()));
-      setToolTipText(StringUtil.nullize(myPresentation.getDescription()));
-      setIcon(myPresentation.getIcon());
-    }
-
-    private @NotNull HyperlinkListener installHyperlinkTooltip(@NotNull HyperlinkListener delegate) {
+    @NotNull HyperlinkListener installHyperlinkTooltip(@NotNull HyperlinkListener delegate) {
       String tooltipText = getHyperlinkTooltip();
       if (StringUtil.isEmptyOrSpaces(tooltipText)) return delegate;
 

@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +25,7 @@ public abstract class ProblemHighlightFilter {
   }
 
   public static boolean shouldHighlightFile(@NotNull final PsiFile psiFile) {
-    return SlowOperations.allowSlowOperations(() -> shouldProcess(psiFile, true));
+    return shouldProcess(psiFile, true);
   }
 
   public static boolean shouldProcessFileInBatch(@NotNull final PsiFile psiFile) {

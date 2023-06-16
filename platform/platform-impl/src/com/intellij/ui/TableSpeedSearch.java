@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -19,18 +19,78 @@ import java.util.ListIterator;
 
 import static javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION;
 
+/**
+ * To install the speed search on a {@link JTable} component, pass the table component to one of the constructors.
+ */
 public class TableSpeedSearch extends TableSpeedSearchBase<JTable> {
   private static final PairFunction<Object, Cell, String> TO_STRING = (o, cell) -> o == null || o instanceof Boolean ? "" : o.toString();
   private final PairFunction<Object, ? super Cell, String> myToStringConvertor;
 
+  /**
+   * @param sig parameter is used to avoid clash with the deprecated constructor
+   */
+  protected TableSpeedSearch(JTable table, Void sig, final Convertor<Object, String> toStringConvertor) {
+    this(table, sig, (o, c) -> toStringConvertor.convert(o));
+  }
+
+  /**
+   * @param sig parameter is used to avoid clash with the deprecated constructor
+   */
+  protected TableSpeedSearch(JTable table, Void sig, final PairFunction<Object, ? super Cell, String> toStringConvertor) {
+    super(table, sig);
+
+    myToStringConvertor = toStringConvertor;
+  }
+
+  public static @NotNull TableSpeedSearch installOn(JTable table) {
+    return installOn(table, TO_STRING);
+  }
+
+  public static @NotNull TableSpeedSearch installOn(JTable table, final Convertor<Object, String> toStringConvertor) {
+    return installOn(table, (o, c) -> toStringConvertor.convert(o));
+  }
+
+  public static @NotNull TableSpeedSearch installOn(JTable table, final PairFunction<Object, ? super Cell, String> toStringConvertor) {
+    TableSpeedSearch search = new TableSpeedSearch(table, null, toStringConvertor);
+    search.setupListeners();
+    return search;
+  }
+
+  /**
+   * @deprecated Use the static method {@link TableSpeedSearch#installOn(JTable)} to install a speed search.
+   * <p>
+   * For inheritance use the non-deprecated constructor.
+   * <p>
+   * Also, note that non-deprecated constructor is side effect free, and you should call for {@link TableSpeedSearch#setupListeners()}
+   * method to enable speed search
+   */
+  @Deprecated
   public TableSpeedSearch(JTable table) {
     this(table, TO_STRING);
   }
 
+  /**
+   * @deprecated Use the static method {@link TableSpeedSearch#installOn(JTable, Convertor)} to install a speed search.
+   * <p>
+   * For inheritance use the non-deprecated constructor.
+   * <p>
+   * Also, note that non-deprecated constructor is side effect free, and you should call for {@link TableSpeedSearch#setupListeners()}
+   * method to enable speed search
+   */
+  @Deprecated
   public TableSpeedSearch(JTable table, final Convertor<Object, String> toStringConvertor) {
     this(table, (o, c) -> toStringConvertor.convert(o));
   }
 
+  /**
+   * @deprecated Use the static method {@link TableSpeedSearch#installOn(JTable, PairFunction)} to install a speed search.
+   * <p>
+   * For inheritance use the non-deprecated constructor.
+   * <p>
+   * Also, note that non-deprecated constructor is side effect free, and you should call for {@link TableSpeedSearch#setupListeners()}
+   * method to enable speed search
+   */
+  @Deprecated
   public TableSpeedSearch(JTable table, final PairFunction<Object, ? super Cell, String> toStringConvertor) {
     super(table);
 
@@ -39,6 +99,15 @@ public class TableSpeedSearch extends TableSpeedSearchBase<JTable> {
     table.putClientProperty("JTable.autoStartsEdit", Boolean.FALSE);
 
     new MySelectAllAction(table, this).registerCustomShortcutSet(table, null);
+  }
+
+  @Override
+  public void setupListeners() {
+    super.setupListeners();
+    // edit on F2 & double click, do not interfere with quick search
+    myComponent.putClientProperty("JTable.autoStartsEdit", Boolean.FALSE);
+
+    new MySelectAllAction(myComponent, this).registerCustomShortcutSet(myComponent, null);
   }
 
   @Override

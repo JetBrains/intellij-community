@@ -51,7 +51,7 @@ final class LombokProjectValidatorActivity implements StartupActivity.DumbAware 
           return null;
         }).expireWith(LombokPluginDisposable.getInstance(project))
         .coalesceBy(project, LombokProjectValidatorActivity.class)
-        .finishOnUiThread(ModalityState.NON_MODAL, notification -> {
+        .finishOnUiThread(ModalityState.nonModal(), notification -> {
           if (notification != null) {
             notification.setListener(NotificationListener.URL_OPENING_LISTENER).notify(project);
             Disposer.register(LombokPluginDisposable.getInstance(project), notification::expire);

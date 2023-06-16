@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.tree.AbstractTreeNodeVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,13 @@ class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
   ProjectViewNodeVisitor(@NotNull PsiElement element, @Nullable VirtualFile file, @Nullable Predicate<? super TreePath> predicate) {
     super(createPointer(element)::getElement, predicate);
     this.file = file;
-    LOG.debug("create visitor for element: " + element);
+    LOG.debug("create visitor for element: ", element);
+  }
+
+  ProjectViewNodeVisitor(@NotNull SmartPsiElementPointer<?> pointer) {
+    super(pointer::getElement, null);
+    this.file = null;
+    LOG.debug("create visitor for pointer: ", pointer);
   }
 
   /**

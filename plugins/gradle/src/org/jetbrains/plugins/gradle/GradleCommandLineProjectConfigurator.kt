@@ -1,12 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle
 
 import com.intellij.ide.CommandLineInspectionProgressReporter
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
+import com.intellij.ide.environment.EnvironmentService
+import com.intellij.ide.impl.ProjectOpenKeyProvider
 import com.intellij.ide.warmup.WarmupStatus
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -15,6 +18,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -24,6 +28,7 @@ import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsTask
 import org.jetbrains.plugins.gradle.service.project.open.createLinkSettings
 import org.jetbrains.plugins.gradle.settings.GradleImportHintService
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.startup.GradleProjectSettingsUpdater
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.BufferedWriter
@@ -32,14 +37,17 @@ import java.io.FileWriter
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 private val LOG = logger<GradleCommandLineProjectConfigurator>()
 
 private val gradleLogWriter = BufferedWriter(FileWriter(PathManager.getLogPath() + "/gradle-import.log"))
 
 private const val DISABLE_GRADLE_AUTO_IMPORT = "external.system.auto.import.disabled"
+private const val DISABLE_GRADLE_JDK_FIX = "gradle.auto.auto.jdk.fix.disabled"
 private const val DISABLE_ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY = "android.gradle.project.startup.activity.disabled"
 private const val DISABLE_UPDATE_ANDROID_SDK_LOCAL_PROPERTIES = "android.sdk.local.properties.update.disabled"
+private const val JDK_UPDATE_TIMEOUT_MINUTES = 10
 
 class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigurator {
   override fun getName() = "gradle"
@@ -48,6 +56,7 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
 
   override fun configureEnvironment(context: ConfiguratorContext) = context.run {
     Registry.get(DISABLE_GRADLE_AUTO_IMPORT).setValue(true)
+    Registry.get(DISABLE_GRADLE_JDK_FIX).setValue(true)
     Registry.get(DISABLE_ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY).setValue(true)
     Registry.get(DISABLE_UPDATE_ANDROID_SDK_LOCAL_PROPERTIES).setValue(true)
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
@@ -57,6 +66,14 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
 
   override fun configureProject(project: Project, context: ConfiguratorContext) {
     val basePath = project.basePath ?: return
+    val service = service<EnvironmentService>()
+    val projectSelectionKey = runBlockingCancellable {
+      service.getEnvironmentValue(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR, "Gradle")
+    }
+    if (projectSelectionKey != "Gradle") {
+      // something else was selected to open the project
+      return
+    }
     val state = GradleImportHintService.getInstance(project).state
 
     if (state.skip) return
@@ -90,10 +107,15 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
   }
 
   private fun importProjects(project: Project) {
-    if (!GradleSettings.getInstance(project).linkedProjectsSettings.isEmpty()) {
-      AutoImportProjectTracker.onceIgnoreDisableAutoReloadRegistry()
-      AutoImportProjectTracker.getInstance(project).scheduleProjectRefresh()
+    val linkedProjectsSettings = GradleSettings.getInstance(project).linkedProjectsSettings
+    if (linkedProjectsSettings.isEmpty()) return
+    
+    linkedProjectsSettings.forEach {
+      GradleProjectSettingsUpdater.Util.updateGradleJvm(project, it).get(JDK_UPDATE_TIMEOUT_MINUTES.toLong(), TimeUnit.MINUTES)
     }
+
+    AutoImportProjectTracker.onceIgnoreDisableAutoReloadRegistry()
+    AutoImportProjectTracker.getInstance(project).scheduleProjectRefresh()
   }
 
   private fun linkRootProject(basePath: String, project: Project): Boolean {
@@ -215,13 +237,26 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
     override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
       val gradleText = (if (stdOut) "" else "STDERR: ") + text
       gradleLogWriter.write(gradleText)
-      if (isValidForLogging(gradleText)) {
-        logger.reportMessage(1, gradleText)
+      val croppedMessage = processMessage(gradleText)
+      if (croppedMessage != null) {
+        logger.reportMessage(1, croppedMessage)
       }
     }
 
-    private fun isValidForLogging(gradleText: String) =
-      WarmupStatus.currentStatus(ApplicationManager.getApplication()) == WarmupStatus.InProgress && (!gradleText.startsWith("\rDownload") || gradleText.contains("took"))
+    private fun processMessage(gradleText: String): String? {
+      if (WarmupStatus.currentStatus(ApplicationManager.getApplication()) != WarmupStatus.InProgress) {
+        return gradleText
+      }
+      val cropped = gradleText.trimStart('\r').trimEnd('\n')
+      if (cropped.startsWith("Download")) {
+        // we don't want to be flooded by a ton of download messages, so we'll print only final message
+        if (cropped.contains(" took ")) {
+          return cropped
+        }
+        return null
+      }
+      return cropped
+    }
 
     override fun onEnd(id: ExternalSystemTaskId) {
       gradleLogWriter.flush()

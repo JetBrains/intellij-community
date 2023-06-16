@@ -16,10 +16,7 @@
 package org.jetbrains.idea.maven.server;
 
 import java.io.File;
-import java.rmi.Remote;
-import java.rmi.RemoteException;
-import java.util.List;
 
 public interface MavenServerDownloadListener {
-  void artifactDownloaded(File file, String relativePath) throws RemoteException;
+  void artifactDownloaded(File file, String relativePath);
 }

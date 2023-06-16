@@ -10,10 +10,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ClientProperty;
@@ -39,7 +39,6 @@ import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.WindowTabsLayout;
 import com.intellij.ui.tabs.impl.themes.DefaultTabTheme;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
@@ -58,19 +57,10 @@ import java.util.*;
 /**
  * @author Alexander Lobas
  */
-public class WindowTabsComponent extends JBTabsImpl {
+public final class WindowTabsComponent extends JBTabsImpl {
   private static final String TITLE_LISTENER_KEY = "TitleListener";
 
   private static final int TAB_HEIGHT = 30;
-
-  private static final Icon CLOSE_ICON = ExperimentalUI.isNewUI() ?
-                                         IconManager.getInstance().getIcon("expui/general/closeSmall_dark.svg", AllIcons.class) :
-                                         AllIcons.Actions.Close;
-
-  private static final Icon CLOSE_HOVERED_ICON = ExperimentalUI.isNewUI() ?
-                                                 IconManager.getInstance()
-                                                   .getIcon("expui/general/closeSmallHovered_dark.svg", AllIcons.class) :
-                                                 AllIcons.Actions.CloseHovered;
 
   private static DockManagerImpl myDockManager;
 
@@ -79,7 +69,8 @@ public class WindowTabsComponent extends JBTabsImpl {
   private final Map<IdeFrameImpl, Integer> myIndexes = new HashMap<>();
 
   public WindowTabsComponent(@NotNull IdeFrameImpl nativeWindow, @Nullable Project project, @NotNull Disposable parentDisposable) {
-    super(project, IdeFocusManager.getInstance(project), parentDisposable);
+    super(project, parentDisposable);
+
     myNativeWindow = nativeWindow;
     myParentDisposable = parentDisposable;
 
@@ -87,7 +78,7 @@ public class WindowTabsComponent extends JBTabsImpl {
       @Override
       public @NotNull UiDecoration getDecoration() {
         //noinspection UseDPIAwareInsets
-        return new UiDecoration(JBFont.medium(), new Insets(-1, myDropInfo == null ? 0 : -1, -1, -1));
+        return new UiDecoration(JBFont.medium(), new Insets(-1, getDropInfo() == null ? 0 : -1, -1, -1));
       }
     });
 
@@ -107,12 +98,12 @@ public class WindowTabsComponent extends JBTabsImpl {
   }
 
   @Override
-  protected SingleRowLayout createSingleRowLayout() {
+  protected @NotNull SingleRowLayout createSingleRowLayout() {
     return new WindowTabsLayout(this);
   }
 
   @Override
-  public Dimension getPreferredSize() {
+  public @NotNull Dimension getPreferredSize() {
     return new Dimension(super.getPreferredSize().width, JBUI.scale(TAB_HEIGHT));
   }
 
@@ -122,13 +113,13 @@ public class WindowTabsComponent extends JBTabsImpl {
     return source != null ? source : super.getDraggedTabSelectionInfo();
   }
 
-  private static boolean isSelectionClick(@NotNull MouseEvent e) {
+  private static boolean _isSelectionClick(@NotNull MouseEvent e) {
     return e.getClickCount() == 1 && !e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1
            && !e.isControlDown() && !e.isAltDown() && !e.isMetaDown();
   }
 
   @Override
-  protected TabLabel createTabLabel(TabInfo info) {
+  protected @NotNull TabLabel createTabLabel(@NotNull TabInfo info) {
     return new TabLabel(this, info) {
       {
         for (MouseListener listener : getMouseListeners()) {
@@ -138,7 +129,7 @@ public class WindowTabsComponent extends JBTabsImpl {
         addMouseListener(new MouseAdapter() {
           @Override
           public void mousePressed(MouseEvent e) {
-            if (!UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED) && !isSelectionClick(e)) {
+            if (!UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED) && !_isSelectionClick(e)) {
               handlePopup(e);
             }
           }
@@ -150,15 +141,14 @@ public class WindowTabsComponent extends JBTabsImpl {
 
           @Override
           public void mouseClicked(MouseEvent e) {
-            if (isSelectionClick(e)) {
+            if (_isSelectionClick(e)) {
               Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
               if (c instanceof InplaceButton) return;
               myTabs.select(info, true);
-              ObjectUtils.consumeIfNotNull(PopupUtil.getPopupContainerFor(label), popup -> {
-                if (ClientProperty.isTrue(popup.getContent(), MorePopupAware.class)) {
-                  popup.cancel();
-                }
-              });
+              JBPopup container = PopupUtil.getPopupContainerFor(label);
+              if (container != null && ClientProperty.isTrue(container.getContent(), MorePopupAware.class)) {
+                container.cancel();
+              }
             }
             else {
               handlePopup(e);
@@ -186,19 +176,24 @@ public class WindowTabsComponent extends JBTabsImpl {
       public void setTabActions(ActionGroup group) {
         super.setTabActions(group);
         if (myActionPanel != null) {
-          remove(myActionPanel);
-          add(myActionPanel, BorderLayout.WEST);
+          myActionPanel.setBorder(JBUI.Borders.emptyLeft(6));
         }
       }
 
       @Override
-      protected void paintFadeout(Graphics g) {
+      protected boolean isTabActionsOnTheRight() {
+        return false;
+      }
+
+      @Override
+      protected boolean shouldPaintFadeout() {
+        return false;
       }
     };
   }
 
   @Override
-  protected TabPainterAdapter createTabPainterAdapter() {
+  protected @NotNull TabPainterAdapter createTabPainterAdapter() {
     return new TabPainterAdapter() {
       private final JBTabPainter myTabPainter = new JBDefaultTabPainter(new DefaultTabTheme() {
         @Override
@@ -393,8 +388,14 @@ public class WindowTabsComponent extends JBTabsImpl {
     };
 
     Presentation presentation = closeAction.getTemplatePresentation();
-    presentation.setIcon(CLOSE_ICON);
-    presentation.setHoveredIcon(CLOSE_HOVERED_ICON);
+    boolean isNewUi = ExperimentalUI.isNewUI();
+    presentation.setIcon(isNewUi ?
+                         IconManager.getInstance().getIcon("expui/general/closeSmall_dark.svg", AllIcons.class.getClassLoader()) :
+                         AllIcons.Actions.Close);
+    presentation.setHoveredIcon(isNewUi
+                                ? IconManager.getInstance()
+                                  .getIcon("expui/general/closeSmallHovered_dark.svg", AllIcons.class.getClassLoader())
+                                : AllIcons.Actions.CloseHovered);
 
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(closeAction);
@@ -554,7 +555,7 @@ public class WindowTabsComponent extends JBTabsImpl {
 
       @Override
       public void dragOutStarted(@NotNull MouseEvent mouseEvent, @NotNull TabInfo info) {
-        WindowFrameDockableContent content = new WindowFrameDockableContent(WindowTabsComponent.this, info, myInfo2Label.get(info));
+        WindowFrameDockableContent content = new WindowFrameDockableContent(WindowTabsComponent.this, info, getInfoToLabel().get(info));
         info.setHidden(true);
         DockManagerImpl manager = getDockManager();
         updateDockContainers(manager);

@@ -14,7 +14,7 @@ class A {
         int f = map.keySet().size();
         int g = map.values().size();
         int h = map.entrySet().size();
-        int i = map.entrySet().iterator().next().getKey() + 1
+        int i = map.entrySet().iterator().next().getKey() + 1;
     }
 
     void bar(List<String> list, HashMap<String, Integer> map) {
@@ -41,18 +41,48 @@ class A {
         }
     }
 
-    void kt21504() {
-        byte b = Byte.parseByte("1");
-        short s = Short.parseShort("1");
-        int i  = Integer.parseInt("1");
-        long l = Long.parseLong("1");
-        float f = Float.parseFloat("1");
-        double d = Double.parseDouble("1");
+    void primitiveConversions(boolean bool, byte b, short s, int i, long l, float f, double d, String str) {
+        Boolean.valueOf(bool);
+        Byte.valueOf(b);
+        Short.valueOf(s);
+        Integer.valueOf(i);
+        Long.valueOf(l);
+        Float.valueOf(f);
+        Double.valueOf(d);
 
-        byte b2 = Byte.parseByte("1", 10);
-        short s2 = Short.parseShort("1", 10);
-        int i2  = Integer.parseInt("1", 10);
-        long l2 = Long.parseLong("1", 10);
+        Boolean.parseBoolean(str);
+        Boolean.valueOf(str);
+
+        Byte.parseByte(str);
+        Byte.valueOf(str);
+        Byte.parseByte(str, i);
+        Byte.valueOf(str, i);
+
+        Short.parseShort(str);
+        Short.valueOf(str);
+        Short.parseShort(str, i);
+        Short.valueOf(str, i);
+
+        Integer.parseInt(str);
+        Integer.valueOf(str);
+        Integer.parseInt(str, i);
+        Integer.valueOf(str, i);
+
+        Long.parseLong(str);
+        Long.valueOf(str);
+        Long.parseLong(str, i);
+        Long.valueOf(str, i);
+
+        // These functions were added in JDK 9, hence the error on test JDK 8 (None of the following functions can be called...)
+        // Also, they have no equivalent in Kotlin stdlib
+        Integer.parseInt(str, i, i, i);
+        Long.parseLong(str, i, i, i);
+
+        Float.parseFloat(str);
+        Float.valueOf(str);
+
+        Double.parseDouble(str);
+        Double.valueOf(str);
     }
 
     void kt7940() {

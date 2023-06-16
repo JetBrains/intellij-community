@@ -11,14 +11,13 @@ import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.PyPositionConverter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
 
 public final class PyConsoleDebugProcessHandler extends ProcessHandler implements PositionConverterProvider {
-  private final PyConsoleProcessHandler myConsoleProcessHandler;
+  private final ProcessHandler myConsoleProcessHandler;
 
-  public PyConsoleDebugProcessHandler(final PyConsoleProcessHandler processHandler) {
+  public PyConsoleDebugProcessHandler(final ProcessHandler processHandler) {
     myConsoleProcessHandler = processHandler;
     processHandler.addProcessListener(new ProcessListener() {
       @Override
@@ -54,12 +53,12 @@ public final class PyConsoleDebugProcessHandler extends ProcessHandler implement
     return null;
   }
 
-  public PyConsoleProcessHandler getConsoleProcessHandler() {
+  public ProcessHandler getConsoleProcessHandler() {
     return myConsoleProcessHandler;
   }
 
   @Override
-  public @Nullable PyPositionConverter createPositionConverter(@NotNull PyDebugProcess debugProcess) {
+  public @NotNull PyPositionConverter createPositionConverter(@NotNull PyDebugProcess debugProcess) {
     if (myConsoleProcessHandler instanceof PositionConverterProvider) {
       return ((PositionConverterProvider)myConsoleProcessHandler).createPositionConverter(debugProcess);
     }

@@ -991,6 +991,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("ifElseBranches.kt")
+        public void testIfElseBranches() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/ifElseBranches.kt");
+        }
+
         @TestMetadata("lineBreaksAndComments.kt")
         public void testLineBreaksAndComments() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/lineBreaksAndComments.kt");
@@ -1538,6 +1543,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/invokingByQualified.kt");
         }
 
+        @TestMetadata("nullableFunctionType.kt")
+        public void testNullableFunctionType() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/nullableFunctionType.kt");
+        }
+
         @TestMetadata("override.kt")
         public void testOverride() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/override.kt");
@@ -1551,6 +1561,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @TestMetadata("recursiveCall.kt")
         public void testRecursiveCall() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/recursiveCall.kt");
+        }
+
+        @TestMetadata("selfCallWithDifferentReceiver.kt")
+        public void testSelfCallWithDifferentReceiver() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/selfCallWithDifferentReceiver.kt");
         }
     }
 

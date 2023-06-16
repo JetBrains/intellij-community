@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl
 
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.concurrency.ConcurrentCollectionFactory
 
 internal class UsageFilteringRuleStateImpl(
   private val sharedState: MutableSet<String>
 ) : UsageFilteringRuleState {
 
-  private val localState: MutableSet<String> = ContainerUtil.newConcurrentSet()
+  private val localState: MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet()
 
   init {
     localState.addAll(sharedState)

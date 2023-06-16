@@ -179,7 +179,7 @@ final class FileLoader implements Loader {
     catch (NoSuchFileException e) {
       return null;
     }
-    return classConsumer.consumeClassData(className, data, this);
+    return classConsumer.consumeClassData(className, data);
   }
 
   private static @Nullable LoaderData readFromIndex(Path index) {

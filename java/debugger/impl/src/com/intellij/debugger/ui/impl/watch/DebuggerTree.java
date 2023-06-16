@@ -90,7 +90,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
 
     setModel(model);
 
-    final TreeSpeedSearch search = new TreeSpeedSearch(this);
+    final TreeSpeedSearch search = TreeSpeedSearch.installOn(this);
     search.setComparator(new SpeedSearchComparator(false));
   }
 

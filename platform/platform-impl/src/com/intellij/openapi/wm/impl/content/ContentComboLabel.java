@@ -4,11 +4,9 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.rd.GraphicsExKt;
 import com.intellij.openapi.ui.popup.ActiveIcon;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -27,8 +25,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 final class ContentComboLabel extends ContentLabel {
-  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
-
   private final ActiveIcon myComboIcon = new ActiveIcon(ExperimentalUI.isNewUI()
                                                         ? AllIcons.General.LinkDropTriangle
                                                         : AllIcons.General.ArrowDown);
@@ -71,8 +67,7 @@ final class ContentComboLabel extends ContentLabel {
       if (findHoveredIcon() != null) return;
 
       if (UIUtil.isActionClick(e)) {
-        if (myPopupState.isRecentlyHidden()) return; // do not show new popup
-        ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager(), myPopupState);
+        ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager());
       }
     }
   }

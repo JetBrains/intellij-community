@@ -116,7 +116,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
       .setNamerForFiltering(element -> Objects.requireNonNull(ContainerUtil.getFirstItem(element.getTitleFragments())).first)
-      .setItemChoosenCallback(() -> {
+      .setItemChosenCallback(() -> {
         TestDataNavigationElement selectedElement = list.getSelectedValue();
         if (selectedElement != null) {
           selectedElement.performAction(project);

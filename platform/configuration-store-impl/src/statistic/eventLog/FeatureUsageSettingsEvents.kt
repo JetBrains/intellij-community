@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.statistic.eventLog
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -11,6 +12,7 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.components.ReportValue
 import com.intellij.openapi.components.SkipReportingStatistics
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.util.xmlb.Accessor
@@ -21,16 +23,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
-import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 private val GROUP = EventLogGroup("settings", 9)
 private const val CHANGES_GROUP = "settings.changes"
 private const val ID_FIELD = "id"
 
-private val recordedComponents: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
-private val recordedOptionNames: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
+private val recordedComponents: MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet()
+private val recordedOptionNames: MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet()
 
 internal fun isComponentNameWhitelisted(name: String): Boolean {
   return recordedComponents.contains(name)
@@ -47,24 +47,30 @@ internal object FeatureUsageSettingsEvents {
 
   fun logDefaultConfigurationState(componentName: String, clazz: Class<*>, project: Project?) {
     scope.launch {
-      if (FeatureUsageLogger.isEnabled()) {
-        printer.logDefaultConfigurationState(componentName, clazz, project)
+      blockingContext {
+        if (FeatureUsageLogger.isEnabled()) {
+          printer.logDefaultConfigurationState(componentName, clazz, project)
+        }
       }
     }
   }
 
   fun logConfigurationState(componentName: String, state: Any, project: Project?) {
     scope.launch {
-      if (FeatureUsageLogger.isEnabled()) {
-        printer.logConfigurationState(componentName, state, project)
+      blockingContext {
+        if (FeatureUsageLogger.isEnabled()) {
+          printer.logConfigurationState(componentName, state, project)
+        }
       }
     }
   }
 
   fun logConfigurationChanged(componentName: String, state: Any, project: Project?) {
     scope.launch {
-      if (FeatureUsageLogger.isEnabled()) {
-        printer.logConfigurationStateChanged(componentName, state, project)
+      blockingContext {
+        if (FeatureUsageLogger.isEnabled()) {
+          printer.logConfigurationStateChanged(componentName, state, project)
+        }
       }
     }
   }

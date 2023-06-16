@@ -41,6 +41,9 @@ class SplitDeclarationAndInitializationPredicate
     if (containingClass == null || containingClass.isInterface()) {
       return false;
     }
+    if (containingClass.isRecord() && !field.hasModifierProperty(PsiModifier.STATIC)) {
+      return false;
+    }
     return !ErrorUtil.containsError(field);
   }
 }

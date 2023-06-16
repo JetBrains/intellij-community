@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 
 package com.intellij.diagnostic
@@ -29,6 +29,7 @@ fun rootTask(): CoroutineContext = MeasureCoroutineTime
 
 /**
  * This function is designed to be used instead of `withContext(CoroutineName("subtask")) { ... }`.
+ * See https://github.com/Kotlin/kotlinx.coroutines/issues/3414
  */
 suspend fun <X> subtask(
   name: String,
@@ -36,20 +37,12 @@ suspend fun <X> subtask(
   action: suspend CoroutineScope.() -> X,
 ): X {
   val namedContext = context + CoroutineName(name)
-  if (coroutineContext[CoroutineTimeMeasurerKey] == null) {
-    return withContext(namedContext, action)
+  val measurer = coroutineContext[CoroutineTimeMeasurerKey]
+  return if (measurer == null) {
+    withContext(namedContext, action)
   }
-  return coroutineScope {
-    @OptIn(ExperimentalStdlibApi::class)
-    val start = if (coroutineContext[CoroutineDispatcher] == context[CoroutineDispatcher]) {
-      // mimic withContext behaviour with its UndispatchedCoroutine
-      CoroutineStart.UNDISPATCHED
-    }
-    else {
-      CoroutineStart.DEFAULT
-    }
-    // async forces the framework to call CopyableThreadContextElement#copyForChild
-    async(namedContext, start, action).await()
+  else {
+    withContext(namedContext + measurer.copyForChild(), action)
   }
 }
 
@@ -58,7 +51,6 @@ private val noActivity: Activity = object : Activity {
   override fun setDescription(description: String): Unit = error("must not be invoked")
   override fun endAndStart(name: String): Activity = error("must not be invoked")
   override fun startChild(name: String): Activity = error("must not be invoked")
-  override fun updateThreadName(): Unit = error("must not be invoked")
 }
 
 private object CoroutineTimeMeasurerKey : CoroutineContext.Key<CoroutineTimeMeasurer>

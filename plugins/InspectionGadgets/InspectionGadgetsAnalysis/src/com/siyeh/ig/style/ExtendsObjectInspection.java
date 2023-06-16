@@ -15,8 +15,7 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -46,11 +45,11 @@ public class ExtendsObjectInspection extends BaseInspection implements CleanupLo
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new ExtendsObjectFix();
   }
 
-  private static class ExtendsObjectFix extends InspectionGadgetsFix {
+  private static class ExtendsObjectFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -60,8 +59,7 @@ public class ExtendsObjectInspection extends BaseInspection implements CleanupLo
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement extendClassIdentifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement extendClassIdentifier, @NotNull EditorUpdater updater) {
       final PsiClass element = (PsiClass)extendClassIdentifier.getParent();
       if (element == null) {
         return;
@@ -73,7 +71,7 @@ public class ExtendsObjectInspection extends BaseInspection implements CleanupLo
       final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
       for (PsiJavaCodeReferenceElement referenceElement :
         referenceElements) {
-        deleteElement(referenceElement);
+        referenceElement.delete();
       }
     }
   }

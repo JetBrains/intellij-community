@@ -4,8 +4,8 @@ package com.intellij.util.messages.impl
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.ContainerUtil
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentMap
+import java.util.function.BiConsumer
 import java.util.function.Predicate
 
 private val EMPTY_MAP = HashMap<String, MutableList<ListenerDescriptor>>()
@@ -104,13 +105,18 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
   }
 
   private fun <L> subscribeLazyListeners(topic: Topic<L>) {
-    if (topic.listenerClass === Runnable::class.java || topicClassToListenerDescriptor === EMPTY_MAP) {
+    if (topic.listenerClass === Runnable::class.java) {
       return
     }
 
-    ProgressManager.getInstance().executeNonCancelableSection {
+    val topicClassToListenerDescriptor = topicClassToListenerDescriptor
+    if (topicClassToListenerDescriptor === EMPTY_MAP) {
+      return
+    }
+
+    Cancellation.computeInNonCancelableSection<Unit, Exception> {
       // use a linked hash map for repeatable results
-      val listenerDescriptors = topicClassToListenerDescriptor.remove(topic.listenerClass.name) ?: return@executeNonCancelableSection
+      val listenerDescriptors = topicClassToListenerDescriptor.remove(topic.listenerClass.name) ?: return@computeInNonCancelableSection
       val listenerMap = LinkedHashMap<PluginDescriptor, MutableList<Any>>()
       for (listenerDescriptor in listenerDescriptors) {
         try {
@@ -126,9 +132,9 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
           LOG.error("Cannot create listener", e)
         }
       }
-      listenerMap.forEach { (key, listeners) ->
+      listenerMap.forEach(BiConsumer { key, listeners ->
         subscribers.add(DescriptorBasedMessageBusConnection(key, topic, listeners))
-      }
+      })
     }
   }
 
@@ -145,7 +151,9 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
       return false
     }
 
-    childBuses.forEach { it.clearSubscriberCache(topicAndHandlerPairs) }
+    for (bus in childBuses) {
+      bus.clearSubscriberCache(topicAndHandlerPairs)
+    }
 
     // disposed handlers are not removed for TO_CHILDREN topics in the same way as for other directions
     // because it is not wise to check each child bus - waitingBuses list can be used instead of checking each child bus message queue
@@ -156,13 +164,17 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
   override fun clearSubscriberCache(topicAndHandlerPairs: Array<Any>) {
     super.clearSubscriberCache(topicAndHandlerPairs)
 
-    childBuses.forEach { it.clearSubscriberCache(topicAndHandlerPairs) }
+    for (bus in childBuses) {
+      bus.clearSubscriberCache(topicAndHandlerPairs)
+    }
   }
 
   override fun removeEmptyConnectionsRecursively() {
     super.removeEmptyConnectionsRecursively()
 
-    childBuses.forEach { it.removeEmptyConnectionsRecursively() }
+    for (bus in childBuses) {
+      bus.removeEmptyConnectionsRecursively()
+    }
   }
 
   /**
@@ -219,13 +231,13 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
 
     // todo it means that order of subscribers is not preserved
-    // it is very minor requirement, but still, makes sense to comply it
+    // it is a very minor requirement, but still, makes sense to comply it
     if (newSubscribers != null) {
       subscribers.addAll(newSubscribers)
     }
     if (isChanged) {
       // we can check it more precisely, but for simplicity, just clearing all
-      // adding project level listener for an app level topic is not recommended, but supported
+      // adding a project level listener for an app level topic is not recommended, but supported
       if (rootBus !== this) {
         rootBus.subscriberCache.clear()
       }
@@ -236,7 +248,9 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
   override fun disconnectPluginConnections(predicate: Predicate<Class<*>>) {
     super.disconnectPluginConnections(predicate)
 
-    childBuses.forEach { it.disconnectPluginConnections(predicate) }
+    for (bus in childBuses) {
+      bus.disconnectPluginConnections(predicate)
+    }
   }
 
   @TestOnly
@@ -245,7 +259,9 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
 
     rootBus.subscriberCache.clear()
     subscriberCache.clear()
-    childBuses.forEach { it.subscriberCache.clear() }
+    for (bus in childBuses) {
+      bus.subscriberCache.clear()
+    }
   }
 
   override fun disposeChildren() {

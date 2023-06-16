@@ -115,6 +115,14 @@ public class FontFamilyService {
     return getFont(family, subFamily, subFamily, Font.PLAIN, size);
   }
 
+  public static @Nullable FontFamilyDescriptor getDescriptorByFont(@NotNull Font font) {
+    return getInstance().getDescriptorByFontImpl(font);
+  }
+
+  public static @Nullable Font getFontByDescriptor(@NotNull FontFamilyDescriptor descriptor) {
+    return getInstance().getFontByDescriptorImpl(descriptor);
+  }
+
   /**
    * Migrates from old font setting ('standard' font family name) to new font settings (typographic family name and typographic subfamily
    * names to be used for 'normal' and 'bold' font) if possible.
@@ -169,7 +177,15 @@ public class FontFamilyService {
     return font;
   }
 
+  protected @Nullable FontFamilyDescriptor getDescriptorByFontImpl(@NotNull Font font) {
+    return null;
+  }
+
+  protected @Nullable Font getFontByDescriptorImpl(@NotNull FontFamilyDescriptor descriptor) {
+    return null;
+  }
+
   protected String @NotNull [] migrateFontSettingImpl(@NotNull String family) {
-    return new String[] {family, null, null};
+    return new String[]{family, null, null};
   }
 }

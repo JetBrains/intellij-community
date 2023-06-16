@@ -14,16 +14,23 @@ import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.GitLabSecurityUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
-class GitLabTokenLoginPanelModel(private val uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean)
+class GitLabTokenLoginPanelModel(private val requiredUsername: String? = null,
+                                 private val uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean)
   : LoginPanelModelBase(), LoginTokenGenerator {
 
   override suspend fun checkToken(): String {
     val server = createServerPath(serverUri)
     val api = service<GitLabApiManager>().getClient(token)
     val user = withContext(Dispatchers.IO) {
-      api.getCurrentUser(server)
+      api.graphQL.getCurrentUser(server)
     } ?: throw IllegalArgumentException(GitLabBundle.message("account.token.invalid"))
     val username = user.username
+    if (requiredUsername != null) {
+      require(username == requiredUsername) {
+        GitLabBundle.message("account.username.mismatch", requiredUsername, username)
+      }
+    }
+
     require(uniqueAccountPredicate(server, username)) {
       GitLabBundle.message("account.not.unique", username)
     }

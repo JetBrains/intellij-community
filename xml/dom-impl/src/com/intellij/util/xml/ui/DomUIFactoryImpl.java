@@ -60,7 +60,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
   }
 
   @Override
-  public final UserActivityWatcher createEditorAwareUserActivityWatcher() {
+  public final @NotNull UserActivityWatcher createEditorAwareUserActivityWatcher() {
     return new UserActivityWatcher() {
       private final DocumentListener myListener = new DocumentListener() {
         @Override

@@ -54,8 +54,8 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
     includeMetaInfo = value
   }
 
-  var onlyStrongReferences = false
-  var includeClassesAsRoots = true
+  var onlyStrongReferences: Boolean = false
+  var includeClassesAsRoots: Boolean = true
 
   private fun openTempEmptyFileChannel(@NonNls type: String): FileChannel {
     val tempPath = tempFilenameSupplier.getTempFilePath(type)

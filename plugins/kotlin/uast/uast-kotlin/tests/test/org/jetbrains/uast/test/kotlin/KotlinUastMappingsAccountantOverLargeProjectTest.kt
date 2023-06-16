@@ -2,10 +2,10 @@
 package org.jetbrains.uast.test.kotlin
 
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.uast.test.common.PsiClassToString
-import org.jetbrains.uast.test.common.UastMappingsAccountantSingleTestBase
-import org.jetbrains.uast.test.common.UastMappingsAccountantTest
-import org.jetbrains.uast.test.common.sourcesFromLargeProject
+import com.intellij.platform.uast.testFramework.common.PsiClassToString
+import com.intellij.platform.uast.testFramework.common.UastMappingsAccountantSingleTestBase
+import com.intellij.platform.uast.testFramework.common.UastMappingsAccountantTest
+import com.intellij.platform.uast.testFramework.common.sourcesFromLargeProject
 import org.junit.Ignore
 import org.junit.Test
 import java.nio.file.Path
@@ -21,7 +21,7 @@ import java.nio.file.Path
  */
 @Ignore("Very laborious task, should be invoked manually only")
 class KotlinUastMappingsAccountantOverLargeProjectTest :
-    AbstractKotlinLargeProjectTest(), UastMappingsAccountantSingleTestBase {
+  AbstractKotlinLargeProjectTest(), UastMappingsAccountantSingleTestBase {
 
     override val testProjectPath: Path = throw NotImplementedError("Must be specified manually")
 
@@ -29,12 +29,12 @@ class KotlinUastMappingsAccountantOverLargeProjectTest :
 
     private val delegate by lazy(LazyThreadSafetyMode.NONE) {
         UastMappingsAccountantTest(
-            sources = sourcesFromLargeProject(KotlinFileType.INSTANCE, project, sourcesToProcessLimit, LOG).asIterable(),
-            storeResultsTo = testProjectPath,
-            resultsNamePrefix = "FULL-kotlin-mappings",
-            psiClassPrinter = PsiClassToString.asIs,
-            doInParallel = true,
-            logger = LOG
+          sources = sourcesFromLargeProject(KotlinFileType.INSTANCE, project, sourcesToProcessLimit, LOG).asIterable(),
+          storeResultsTo = testProjectPath,
+          resultsNamePrefix = "FULL-kotlin-mappings",
+          psiClassPrinter = PsiClassToString.asIs,
+          doInParallel = true,
+          logger = LOG
         )
     }
 

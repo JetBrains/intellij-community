@@ -129,10 +129,11 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     final String expressionText;
     final Project project = switchStatement.getProject();
     int totalCases = allBranches.stream().mapToInt(br -> br.getCaseElements().size()).sum();
+    List<PsiExpression> sideEffectExpressions = SideEffectChecker.extractSideEffectExpressions(switchExpression);
     if (totalCases > 0) {
       commentTracker.markUnchanged(switchExpression);
     }
-    if (totalCases > 1 && RemoveUnusedVariableUtil.checkSideEffects(switchExpression, null, new ArrayList<>())) {
+    if (totalCases > 1 && !sideEffectExpressions.isEmpty()) {
       hadSideEffects = true;
 
       final String variableName = new VariableNameGenerator(switchExpression, VariableKind.LOCAL_VARIABLE)
@@ -141,9 +142,10 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
       declarationString = switchExpressionType.getCanonicalText() + ' ' + variableName + " = " + switchExpression.getText() + ';';
     }
     else {
-      hadSideEffects = false;
+      hadSideEffects = totalCases == 0 && !sideEffectExpressions.isEmpty();
       declarationString = null;
-      expressionText = ParenthesesUtils.getPrecedence(switchExpression) > ParenthesesUtils.EQUALITY_PRECEDENCE
+      int exprPrecedence = useEquals ? ParenthesesUtils.METHOD_CALL_PRECEDENCE : ParenthesesUtils.EQUALITY_PRECEDENCE;
+      expressionText = ParenthesesUtils.getPrecedence(switchExpression) > exprPrecedence
                        ? '(' + switchExpression.getText() + ')'
                        : switchExpression.getText();
     }
@@ -191,8 +193,16 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     }
     JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
     if (hadSideEffects) {
-      final PsiStatement declarationStatement = factory.createStatementFromText(declarationString, switchStatement);
-      javaCodeStyleManager.shortenClassReferences(parent.addBefore(declarationStatement, switchStatement));
+      if (declarationString == null) {
+        sideEffectExpressions.forEach(commentTracker::markUnchanged);
+        PsiStatement[] statements = StatementExtractor.generateStatements(sideEffectExpressions, switchExpression);
+        for (PsiStatement statement : statements) {
+          javaCodeStyleManager.shortenClassReferences(parent.addBefore(statement, switchStatement));
+        }
+      } else {
+        final PsiStatement declarationStatement = factory.createStatementFromText(declarationString, switchStatement);
+        javaCodeStyleManager.shortenClassReferences(parent.addBefore(declarationStatement, switchStatement));
+      }
     }
     final PsiStatement ifStatement = factory.createStatementFromText(ifStatementText, switchStatement);
     if (unwrapDefault) {
@@ -221,7 +231,8 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
   }
 
   private static boolean hasNullCase(@NotNull List<SwitchStatementBranch> allBranches) {
-    return ContainerUtil.or(allBranches, br -> ContainerUtil.or(br.getCaseElements(), ExpressionUtils::isNullLiteral));
+    return ContainerUtil.or(allBranches, br -> ContainerUtil.or(br.getCaseElements(), el -> el instanceof PsiExpression expr &&
+                                                                                            ExpressionUtils.isNullLiteral(expr)));
   }
 
   @NotNull
@@ -422,7 +433,7 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     PsiPatternVariable variable = typeTestPattern.getPatternVariable();
     if (variable == null) return null;
     PsiElement context = PsiTreeUtil.getParentOfType(variable, PsiSwitchStatement.class);
-    boolean isUsedPatternVariable = context != null && VariableAccessUtils.variableIsUsed(variable, context);
+    boolean isUsedPatternVariable = VariableAccessUtils.variableIsUsed(variable, context);
     PsiIdentifier identifier = variable.getNameIdentifier();
     String variableName = isUsedPatternVariable ? commentTracker.textWithComments(identifier) : commentTracker.commentsBefore(identifier);
     return expressionText + " instanceof " + typeText + " " + variableName;

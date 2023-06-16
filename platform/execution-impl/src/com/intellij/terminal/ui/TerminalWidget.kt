@@ -15,11 +15,12 @@ interface TerminalWidget : ComponentContainer {
   val terminalTitle: TerminalTitle
 
   /**
-   * terminal size; null, if the terminal size is 0x0, e.g. the component is not laid out yet
+   * Terminal size in characters according to an underlying UI component;
+   * null, if unavailable, e.g. the component is not shown or not laid out yet
    */
   val termSize: TermSize?
 
-  fun connectToTty(ttyConnector: TtyConnector)
+  fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize)
 
   val ttyConnectorAccessor: TtyConnectorAccessor
 

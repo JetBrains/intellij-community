@@ -23,8 +23,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeDefaultLastCaseFix;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +38,7 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection impleme
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     PsiSwitchLabelStatementBase lbl = (PsiSwitchLabelStatementBase)infos[0];
     if (lbl instanceof PsiSwitchLabelStatement) {
       PsiElement lastDefaultStmt = PsiTreeUtil.skipWhitespacesAndCommentsBackward(PsiTreeUtil.getNextSiblingOfType(lbl, PsiSwitchLabelStatementBase.class));
@@ -56,8 +54,7 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection impleme
         }
       }
     }
-    LocalQuickFix fix = new MakeDefaultLastCaseFix(lbl);
-    return new DelegatingFix(fix);
+    return new MakeDefaultLastCaseFix(lbl);
   }
 
   @Override

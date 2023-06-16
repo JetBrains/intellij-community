@@ -126,6 +126,9 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
   @Override
   public void setAttributeRecordId(final int recordId,
                                    final int recordRef) throws IOException {
+    if (recordRef < NULL_ID) {
+      throw new IllegalArgumentException("file[id: " + recordId + "].attributeRecordId(=" + recordRef + ") must be >=0");
+    }
     setIntField(recordId, ATTR_REF_OFFSET, recordRef);
   }
 
@@ -315,6 +318,11 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
     return allocatedRecordsCount.get();
   }
 
+  @Override
+  public int maxAllocatedID() {
+    return allocatedRecordsCount.get();
+  }
+
   public long actualDataLength() {
     final int recordsCount = recordsCount();
     return (RECORD_SIZE_IN_INTS * (long)recordsCount) * Integer.BYTES + HEADER_SIZE;
@@ -330,6 +338,8 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
         getNameId(recordId),
         getFlags(recordId),
         getParent(recordId),
+        getAttributeRecordId(recordId),
+        getContentRecordId(recordId),
         /* corrupted = */ false
       );
     }
@@ -356,6 +366,12 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
   @Override
   public void close() throws IOException {
     force();
+  }
+
+  @Override
+  public void closeAndRemoveAllFiles() throws IOException {
+    close();
+    //...and nothing to remove
   }
 
   /* =============== implementation =============================================================== */

@@ -82,6 +82,14 @@ class LongBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramCou
     batch[batchPosition + 2] = v3
   }
 
+  fun bind(v1: Long, v2: Long, v3: Long, v4: Long) {
+    assert(paramCount == 4)
+    batch[batchPosition] = v1
+    batch[batchPosition + 1] = v2
+    batch[batchPosition + 2] = v3
+    batch[batchPosition + 3] = v4
+  }
+
   override fun bindParams(pointer: Long, db: SqliteDb) {
     assert(batchQueryCount == 0)
     for ((index, value) in batch.withIndex()) {

@@ -35,6 +35,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -52,7 +53,7 @@ public class TypeMigrationLabeler {
   @Nullable private final Set<PsiElement> myAllowedRoots;
   private TypeEvaluator myTypeEvaluator;
   private final LinkedHashMap<PsiElement, Object> myConversions;
-  private final Map<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>, TypeMigrationUsageInfo> myFailedConversions;
+  private final Map<Pair<SmartPsiElementPointer<PsiElement>, PsiType>, TypeMigrationUsageInfo> myFailedConversions;
   private LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> myMigrationRoots;
   private final LinkedHashMap<TypeMigrationUsageInfo, PsiType> myNewExpressionTypeChange;
   private final LinkedHashMap<TypeMigrationUsageInfo, PsiClassType> myClassTypeArgumentsChange;
@@ -99,15 +100,22 @@ public class TypeMigrationLabeler {
     final @Nls String[] report = new String[myFailedConversions.size()];
     int j = 0;
 
-    for (Pair<SmartPsiElementPointer<PsiExpression>, PsiType> p : myFailedConversions.keySet()) {
-      final PsiExpression element = p.getFirst().getElement();
+    for (Pair<SmartPsiElementPointer<PsiElement>, PsiType> p : myFailedConversions.keySet()) {
+      final PsiElement element = p.getFirst().getElement();
       LOG.assertTrue(element != null);
-      final PsiType type = element.getType();
-      report[j++] = JavaBundle.message("type.migration.cannon.convert.tooltip",
-                                       StringUtil.escapeXmlEntities(element.getText()),
-                                       type != null ? StringUtil.escapeXmlEntities(type.getCanonicalText()) : "",
-                                       StringUtil.escapeXmlEntities(p.getSecond().getCanonicalText()),
-                                       type == null ? 0 : 1);
+      if (element instanceof PsiExpression expression) {
+        final PsiType type = expression.getType();
+        report[j++] = JavaBundle.message("type.migration.cannot.convert.message",
+                                         StringUtil.escapeXmlEntities(element.getText()),
+                                         type != null ? StringUtil.escapeXmlEntities(type.getCanonicalText()) : "",
+                                         StringUtil.escapeXmlEntities(p.getSecond().getCanonicalText()),
+                                         type == null ? 0 : 1);
+      }
+      else {
+        LOG.assertTrue(element instanceof PsiExpressionList);
+        report[j++] = JavaBundle.message("type.migration.cannot.convert.vararg.message",
+                                         StringUtil.escapeXmlEntities(element.getParent().getText()));
+      }
     }
 
     return report;
@@ -122,22 +130,25 @@ public class TypeMigrationLabeler {
     return map2Usages(myFailedConversions.keySet());
   }
 
-  private static UsageInfo @NotNull [] map2Usages(Collection<? extends Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> usages) {
-    return ContainerUtil
-      .map2Array(usages, new UsageInfo[usages.size()], pair -> {
-        final PsiExpression expr = pair.getFirst().getElement();
-        LOG.assertTrue(expr != null);
-        return new UsageInfo(expr) {
-          @Override
-          @Nullable
-          public String getTooltipText() {
-            final PsiType type = expr.isValid() ? expr.getType() : null;
+  private static UsageInfo @NotNull [] map2Usages(Collection<? extends Pair<SmartPsiElementPointer<PsiElement>, PsiType>> usages) {
+    return ContainerUtil.map2Array(usages, new UsageInfo[usages.size()], pair -> {
+      final PsiElement element = pair.getFirst().getElement();
+      LOG.assertTrue(element != null);
+      return new UsageInfo(element) {
+        @Override
+        @Nullable
+        public String getTooltipText() {
+          if (element instanceof PsiExpression expression) {
+            final PsiType type = expression.isValid() ? expression.getType() : null;
             if (type == null) return null;
-            return JavaBundle
-              .message("type.migration.cannot.convert.tooltip", type.getCanonicalText(), pair.getSecond().getCanonicalText());
+            return JavaBundle.message("type.migration.cannot.convert.tooltip", type.getCanonicalText(), pair.getSecond().getCanonicalText());
           }
-        };
-      });
+          else {
+            return JavaBundle.message("type.migration.cannot.convert.vararg.tooltip");
+          }
+        }
+      };
+    });
   }
 
   public TypeMigrationUsageInfo[] getMigratedUsages() {
@@ -278,8 +289,7 @@ public class TypeMigrationLabeler {
       myRemainConversions = conversions;
     }
 
-    public void change(@NotNull TypeMigrationUsageInfo usageInfo,
-                       @NotNull Consumer<? super PsiNewExpression> consumer) {
+    public void change(@NotNull TypeMigrationUsageInfo usageInfo, @NotNull Consumer<? super PsiNewExpression> consumer) {
       final PsiElement element = usageInfo.getElement();
       if (element == null) return;
       final Project project = element.getProject();
@@ -289,7 +299,7 @@ public class TypeMigrationLabeler {
             final PsiElement expressionToReplace = info.getKey().getElement();
             if (expression.equals(expressionToReplace)) {
               final PsiNewExpression newExpression =
-                TypeMigrationReplacementUtil.replaceNewExpressionType(project, (PsiNewExpression)expressionToReplace, info);
+                TypeMigrationReplacementUtil.replaceNewExpressionType(project, (PsiNewExpression)expressionToReplace, info.getValue());
               if (newExpression != null) {
                 consumer.consume(newExpression);
               }
@@ -317,7 +327,7 @@ public class TypeMigrationLabeler {
       else if ((element instanceof PsiField || element instanceof PsiLocalVariable) &&
                isMultiVariableDeclaration((PsiVariable)element)) {
         final PsiTypeElement typeElement = ((PsiVariable)element).getTypeElement();
-        myVariableMigration.putValue(typeElement, usageInfo);
+        if (typeElement != null) myVariableMigration.putValue(typeElement, usageInfo);
       }
       else {
         TypeMigrationReplacementUtil.migrateMemberOrVariableType(element, project, getTypeEvaluator().getType(usageInfo));
@@ -412,10 +422,14 @@ public class TypeMigrationLabeler {
 
   void convertExpression(PsiExpression expr, PsiType toType, PsiType fromType, boolean isCovariantPosition) {
     final PsiMember member = expr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expr).resolveMethod() : null;
+    convertExpression(expr, toType, fromType, isCovariantPosition, member);
+  }
+
+  private void convertExpression(PsiExpression expr, PsiType toType, PsiType fromType, boolean isCovariantPosition, PsiMember member) {
     final TypeConversionDescriptorBase conversion = myRules.findConversion(fromType, toType, member, expr, isCovariantPosition, this);
 
     if (conversion == null) {
-      markFailedConversion(Pair.create(fromType, toType), expr);
+      markFailedConversion(toType, expr);
     }
     else {
       setConversionMapping(expr, conversion);
@@ -433,7 +447,7 @@ public class TypeMigrationLabeler {
 
     if (originalType.equals(PsiTypes.nullType())) {
       if (migrationType instanceof PsiPrimitiveType) {
-        markFailedConversion(Pair.create(originalType, migrationType), expr);
+        markFailedConversion(migrationType, expr);
         return;
       }
       if (place instanceof PsiVariable) {
@@ -455,7 +469,7 @@ public class TypeMigrationLabeler {
       return;
     } else if (expr instanceof PsiClassObjectAccessExpression) {
       if (!TypeConversionUtil.isAssignable(migrationType, expr.getType())) {
-        markFailedConversion(Pair.create(expr.getType(), migrationType), expr);
+        markFailedConversion(migrationType, expr);
         return;
       }
     } else if (expr instanceof PsiArrayInitializerExpression && migrationType instanceof PsiArrayType) {
@@ -503,14 +517,16 @@ public class TypeMigrationLabeler {
           }
 
           if (isGenericsArrayType(elementType)) {
-            markFailedConversion(Pair.create(originalType, migrationType), expr);
+            markFailedConversion(migrationType, expr);
             return;
           }
 
-          final TypeMigrationUsageInfo usageInfo = new TypeMigrationUsageInfo(expr);
-          usageInfo.setOwnerRoot(myCurrentRoot);
-          myNewExpressionTypeChange.put(usageInfo, migrationType);
-          getTypeEvaluator().setType(new TypeMigrationUsageInfo(expr), migrationType);
+          if (!alreadyProcessed) {
+            final TypeMigrationUsageInfo usageInfo = new TypeMigrationUsageInfo(expr);
+            usageInfo.setOwnerRoot(myCurrentRoot);
+            myNewExpressionTypeChange.put(usageInfo, migrationType);
+            getTypeEvaluator().setType(new TypeMigrationUsageInfo(expr), migrationType);
+          }
           return;
         } else if (migrationType instanceof PsiClassType && originalType instanceof PsiClassType &&
                    ((PsiClassType)migrationType).rawType().isAssignableFrom(((PsiClassType)originalType).rawType())) {
@@ -564,11 +580,12 @@ public class TypeMigrationLabeler {
     if (myAllowedRoots != null && !myAllowedRoots.contains(element)) {
       return false;
     }
-    if (type.equals(PsiTypes.nullType())) {
+    if (type.equals(PsiTypes.nullType()) ||
+        PsiTypes.voidType().equals(type) && myCurrentRoot != null) {
       return false;
     }
     final PsiElement resolved = Util.normalizeElement(element);
-    if (!canBeRoot(resolved, myRules.getSearchScope())) {
+    if (!canBeRoot(resolved, myRules.getSearchScope()) || resolved instanceof PsiEnumConstant) {
       return false;
     }
     final PsiType originalType = getElementType(resolved);
@@ -825,10 +842,9 @@ public class TypeMigrationLabeler {
     setTypeUsage(new TypeMigrationUsageInfo(element), place);
   }
 
-  void markFailedConversion(Pair<PsiType, PsiType> typePair, PsiExpression expression) {
-    LOG.assertTrue(typePair.getSecond() != null);
-    final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> key =
-      Pair.create(SmartPointerManager.getInstance(expression.getProject()).createSmartPsiElementPointer(expression), typePair.getSecond());
+  void markFailedConversion(@NotNull PsiType migrationType, PsiElement element) {
+    final Pair<SmartPsiElementPointer<PsiElement>, PsiType> key =
+      Pair.create(SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element), migrationType);
     if (!myFailedConversions.containsKey(key)) {
       myFailedConversions.put(key, getCurrentRoot());
     }
@@ -944,7 +960,8 @@ public class TypeMigrationLabeler {
 
   void migrateMethodCallExpressions(PsiType migrationType, PsiParameter param, PsiClass psiClass) {
     boolean checkNumberOfArguments = false;
-    if (param.getType() instanceof PsiEllipsisType && !(migrationType instanceof PsiEllipsisType)) {
+    PsiType sourceType = param.getType();
+    if (sourceType instanceof PsiEllipsisType && !(migrationType instanceof PsiEllipsisType)) {
       checkNumberOfArguments = true;
     }
     final PsiType strippedType =
@@ -957,20 +974,31 @@ public class TypeMigrationLabeler {
     final List<PsiReference> refs = filterReferences(psiClass, ReferencesSearch.search(method, scope, false));
     for (PsiReference ref1 : refs) {
       final PsiElement ref = ref1.getElement();
-      final PsiElement parent = Util.getEssentialParent(ref);
-      if (parent instanceof PsiCallExpression) {
-        final PsiExpressionList argumentList = ((PsiCallExpression)parent).getArgumentList();
+      final PsiElement parent = ref instanceof PsiEnumConstant ? ref : ref.getParent();
+      if (parent instanceof PsiCall call) {
+        final PsiExpressionList argumentList = call.getArgumentList();
         if (argumentList != null) {
           final PsiExpression[] expressions = argumentList.getExpressions();
-          if (checkNumberOfArguments && parametersCount != expressions.length) {
-            markFailedConversion(Pair.create(param.getType(), migrationType), (PsiCallExpression)parent);
+          if (checkNumberOfArguments) {
+            if (migrationType instanceof PsiArrayType && MethodCallUtils.isVarArgCall(call)) {
+              convertExpression(expressions[index], migrationType, sourceType, false, method);
+              continue;
+            }
+            else if (parametersCount != expressions.length) {
+              markFailedConversion(migrationType, argumentList);
+            }
           }
           if (index > -1 && index < expressions.length) {
             for (int idx = index; idx < (param.isVarArgs() ? expressions.length : index + 1); idx++) {
               final PsiExpression actual = expressions[idx];
               final PsiType type = getTypeEvaluator().evaluateType(actual);
               if (type != null) {
-                migrateExpressionType(actual, strippedType, parent, TypeConversionUtil.isAssignable(strippedType, type), true);
+                if (type instanceof PsiArrayType && migrationType instanceof PsiEllipsisType) {
+                  migrateExpressionType(actual, migrationType, parent, false, true);
+                }
+                else {
+                  migrateExpressionType(actual, strippedType, parent, TypeConversionUtil.isAssignable(strippedType, type), true);
+                }
               }
             }
           }
@@ -991,7 +1019,12 @@ public class TypeMigrationLabeler {
           if (value != null) {
             final PsiType type = getTypeEvaluator().evaluateType(value);
             if (type != null && !type.equals(migrationType)) {
-              migrateExpressionType(value, migrationType, statement, TypeConversionUtil.isAssignable(migrationType, type), true);
+              if (PsiTypes.voidType().equals(migrationType)) {
+                convertExpression(value, migrationType, type, true);
+              }
+              else {
+                migrateExpressionType(value, migrationType, statement, TypeConversionUtil.isAssignable(migrationType, type), true);
+              }
             }
           }
         }
@@ -1025,7 +1058,6 @@ public class TypeMigrationLabeler {
   }
 
   private void migrate(boolean autoMigrate, PsiElement... victims) {
-
     myMigrationRoots = new LinkedList<>();
     myTypeEvaluator = new TypeEvaluator(myMigrationRoots, this, myProject);
 
@@ -1051,7 +1083,7 @@ public class TypeMigrationLabeler {
     return myRootsTree;
   }
 
-  TypeMigrationUsageInfo getCurrentRoot() {
+  public TypeMigrationUsageInfo getCurrentRoot() {
     return myCurrentRoot;
   }
 
@@ -1136,8 +1168,7 @@ public class TypeMigrationLabeler {
 
     buffer.append("Fails:\n");
 
-    final ArrayList<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>
-      failsList = new ArrayList<>(myFailedConversions.keySet());
+    final ArrayList<Pair<SmartPsiElementPointer<PsiElement>, PsiType>> failsList = new ArrayList<>(myFailedConversions.keySet());
     failsList.sort((o1, o2) -> {
       final PsiElement element1 = o1.getFirst().getElement();
       final PsiElement element2 = o2.getFirst().getElement();
@@ -1145,7 +1176,7 @@ public class TypeMigrationLabeler {
       return element1.getText().compareTo(element2.getText());
     });
 
-    for (Pair<SmartPsiElementPointer<PsiExpression>, PsiType> p : failsList) {
+    for (Pair<SmartPsiElementPointer<PsiElement>, PsiType> p : failsList) {
       final PsiElement element = p.getFirst().getElement();
       if (element != null) {
         buffer.append(element.getText()).append("->").append(p.getSecond().getCanonicalText()).append("\n");

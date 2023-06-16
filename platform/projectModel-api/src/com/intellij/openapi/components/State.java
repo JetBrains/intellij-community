@@ -80,6 +80,9 @@ public @interface State {
   @ApiStatus.Internal
   boolean useLoadedStateAsExisting() default true;
 
+  @ApiStatus.Experimental
+  boolean getStateRequiresEdt() default false;
+
   abstract class NameGetter implements Supplier<@Nls String> {
     @Override
     public abstract @Nls String get();

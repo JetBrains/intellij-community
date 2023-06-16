@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -19,8 +19,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.intellij.ui.AnimatedIcon.Default.DELAY;
-import static com.intellij.ui.AnimatedIcon.Default.ICONS;
+import static com.intellij.ui.AnimatedIcon.Default.*;
 
 public class AnimatedIcon implements Icon {
   private static final Logger LOG = Logger.getInstance(AnimatedIcon.class);
@@ -77,11 +76,10 @@ public class AnimatedIcon implements Icon {
 
   public static final class Big extends AnimatedIcon {
     public Big() {
-      super(DELAY, ICONS.toArray(new Icon[0]));
+      super(DEFAULT_BIG_FRAMES);
     }
 
-    public static final int DELAY = 125;
-    public static final List<Icon> ICONS = List.of(
+    private static final Icon[] OLD_BIG_ICONS = {
       AllIcons.Process.Big.Step_1,
       AllIcons.Process.Big.Step_2,
       AllIcons.Process.Big.Step_3,
@@ -89,7 +87,19 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.Big.Step_5,
       AllIcons.Process.Big.Step_6,
       AllIcons.Process.Big.Step_7,
-      AllIcons.Process.Big.Step_8);
+      AllIcons.Process.Big.Step_8};
+
+    private static final Frame[] DEFAULT_BIG_FRAMES = getDefaultBigFrames();
+
+    private static Frame[] getDefaultBigFrames() {
+      if (Boolean.getBoolean("disable.new.spinning.icon")) {
+        return AnimatedIcon.getFrames(DELAY, OLD_BIG_ICONS);
+      }
+      return new SpinningProgressIcon.Big().frames;
+    }
+
+    public static final int DELAY = 125;
+    public static final List<Icon> ICONS = ContainerUtil.map(getDefaultBigFrames(), Frame::getIcon);
 
     public static final AnimatedIcon INSTANCE = new Big();
   }

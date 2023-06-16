@@ -191,7 +191,10 @@ public final class PopupPositionManager {
 
     public void adjust(@NotNull JBPopup popup, @NotNull Dimension d, @NotNull Position @NotNull ... traversalPolicy) {
       Rectangle bounds = adjustBounds(d, traversalPolicy);
+      adjust(popup, d, bounds);
+    }
 
+    public void adjust(@NotNull JBPopup popup, @NotNull Dimension d, Rectangle bounds) {
       Dimension size = bounds.getSize();
       if (!size.equals(d)) {
         popup.setSize(size);

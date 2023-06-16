@@ -48,8 +48,8 @@ class AutoImportProjectTracker(
 
   private val serviceDisposable: Disposable = this
 
-  private val settings get() = AutoImportProjectTrackerSettings.getInstance(project)
-  private val notificationAware get() = ExternalSystemProjectNotificationAware.getInstance(project)
+  private val settings = AutoImportProjectTrackerSettings.getInstance(project)
+  private val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
 
   private val projectStates = ConcurrentHashMap<State.Id, State.Project>()
   private val projectDataMap = ConcurrentHashMap<ExternalSystemProjectId, ProjectData>()

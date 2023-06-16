@@ -12,7 +12,7 @@ class CodeVisionSwitch : InlayHintsSwitch {
   companion object {
     fun setCodeVisionEnabled(project: Project, value: Boolean) {
       CodeVisionSettings.instance().codeVisionEnabled = value
-      InlayHintsPassFactory.forceHintsUpdateOnNextPass()
+      InlayHintsPassFactory.restartDaemonUpdatingHints(project)
       CodeVisionInitializer.getInstance(project).getCodeVisionHost().invalidateProviderSignal.fire(CodeVisionHost.LensInvalidateSignal(null))
     }
   }

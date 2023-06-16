@@ -38,7 +38,7 @@ public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
   private PostfixTemplate myTemplate;
 
   public PostfixTemplateMetaData(@NotNull PostfixTemplate template) {
-    super(template.getClass().getClassLoader(), template.getClass().getSimpleName());
+    super(template.getClass().getClassLoader(), template.getClass().getSimpleName(), false);
     myTemplate = template;
   }
 

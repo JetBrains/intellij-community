@@ -493,7 +493,7 @@ internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel"
         }
         row {
           link("Change color") {
-            ColorPicker.showColorPickerPopup(null, options.color) { color, _ -> color?.let { options.color = it }}
+            ColorChooserService.instance.showPopup(null, options.color, { color, _ -> color?.let { options.color = it }})
           }
         }
         row {
@@ -680,7 +680,7 @@ internal class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel"
 
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     object : DialogWrapper(e.project) {

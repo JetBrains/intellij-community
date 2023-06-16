@@ -3,6 +3,7 @@ package org.jetbrains.jps.builders.impl.java;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
@@ -73,7 +74,7 @@ public final class EclipseCompilerTool extends JavaCompilingTool {
   @Override
   public @NotNull List<File> getAdditionalClasspath() {
     File element = findEcjJarFile();
-    return element == null ? Collections.emptyList() : Collections.singletonList(element);
+    return ContainerUtil.createMaybeSingletonList(element);
   }
 
   public static @Nullable File findEcjJarFile() {

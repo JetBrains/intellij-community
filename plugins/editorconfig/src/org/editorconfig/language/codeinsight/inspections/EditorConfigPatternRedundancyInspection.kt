@@ -4,13 +4,12 @@ package org.editorconfig.language.codeinsight.inspections
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import dk.brics.automaton.Automaton
-import dk.brics.automaton.BasicOperations
 import org.editorconfig.core.EditorConfigAutomatonBuilder
+import org.editorconfig.core.EditorConfigAutomatonBuilder.unionOptimized
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveHeaderElementQuickFix
 import org.editorconfig.language.messages.EditorConfigBundle
+import org.editorconfig.language.psi.EditorConfigEnumerationPattern
 import org.editorconfig.language.psi.EditorConfigPattern
-import org.editorconfig.language.psi.EditorConfigPatternEnumeration
 import org.editorconfig.language.psi.EditorConfigVisitor
 import org.editorconfig.language.util.isSubcaseOf
 
@@ -35,7 +34,7 @@ class EditorConfigPatternRedundancyInspection : LocalInspectionTool() {
       }
 
       val otherAutomatons = otherPatterns.map(EditorConfigAutomatonBuilder::getCachedPatternAutomaton)
-      val otherAutomatonsUnion = otherAutomatons.fold(Automaton(), BasicOperations::union)
+      val otherAutomatonsUnion = otherAutomatons.unionOptimized()
 
       if (pattern isSubcaseOf otherAutomatonsUnion) {
         val message = EditorConfigBundle["inspection.pattern.redundant.to.union.message"]
@@ -49,7 +48,7 @@ class EditorConfigPatternRedundancyInspection : LocalInspectionTool() {
 
   private fun findOtherPatterns(pattern: EditorConfigPattern): List<EditorConfigPattern> {
     val allPatterns = when (val parent = pattern.parent) {
-      is EditorConfigPatternEnumeration -> parent.patternList
+      is EditorConfigEnumerationPattern -> parent.patternList
       else -> listOf(pattern)
     }
     return allPatterns.filter { it !== pattern }

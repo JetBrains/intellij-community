@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -358,7 +359,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
                           () -> projectJdkChanged() :
                           // Prevent root changed event during startup to improve startup performance
                           () -> fireJdkChanged();
-      app.invokeLater(() -> app.runWriteAction(runnable), app.getNoneModalityState());
+      app.invokeLater(() -> app.runWriteAction(runnable), ModalityState.nonModal());
     }
     myStateLoaded = true;
   }

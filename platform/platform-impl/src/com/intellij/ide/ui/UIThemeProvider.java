@@ -46,7 +46,7 @@ public final class UIThemeProvider implements PluginAware {
 
   @Attribute("targetUi")
   @NotNull
-  public TargetUIType targetUI = TargetUIType.CLASSIC;
+  public TargetUIType targetUI = TargetUIType.UNSPECIFIED;
 
   @ApiStatus.Internal
   public byte[] getThemeJson() throws IOException {

@@ -1,11 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.common
 
-import com.intellij.feedback.common.notification.ThanksForFeedbackNotification
-import com.intellij.notification.Notification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.Project
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpRequests.JSON_CONTENT_TYPE
 import kotlinx.serialization.json.JsonObject
@@ -30,6 +27,8 @@ private const val FEEDBACK_COLLECTED_DATA_KEY = "collected_data"
 private const val FEEDBACK_EMAIL_KEY = "email"
 private const val FEEDBACK_SUBJECT_KEY = "subject"
 private const val FEEDBACK_COMMENT_KEY = "comment"
+
+internal const val DEFAULT_FEEDBACK_CONSENT_ID = "rsch.statistics.feedback.common"
 
 private const val REQUEST_ID_KEY = "Request-Id"
 
@@ -86,12 +85,10 @@ data class FeedbackRequestDataWithDetailedAnswer(val email: String,
   }
 }
 
-fun submitFeedback(project: Project?,
-                   feedbackData: FeedbackRequestDataHolder,
+fun submitFeedback(feedbackData: FeedbackRequestDataHolder,
                    onDone: () -> Unit,
                    onError: () -> Unit,
-                   feedbackRequestType: FeedbackRequestType = FeedbackRequestType.TEST_REQUEST,
-                   thanksNotification: Notification? = ThanksForFeedbackNotification()) {
+                   feedbackRequestType: FeedbackRequestType = FeedbackRequestType.TEST_REQUEST) {
   ApplicationManager.getApplication().executeOnPooledThread {
     val feedbackUrl = when (feedbackRequestType) {
       FeedbackRequestType.NO_REQUEST -> return@executeOnPooledThread
@@ -99,12 +96,6 @@ fun submitFeedback(project: Project?,
       FeedbackRequestType.PRODUCTION_REQUEST -> PRODUCTION_FEEDBACK_URL
     }
     sendFeedback(feedbackUrl, feedbackData, onDone, onError)
-  }
-
-  if (thanksNotification != null) {
-    ApplicationManager.getApplication().invokeLater {
-      thanksNotification.notify(project)
-    }
   }
 }
 

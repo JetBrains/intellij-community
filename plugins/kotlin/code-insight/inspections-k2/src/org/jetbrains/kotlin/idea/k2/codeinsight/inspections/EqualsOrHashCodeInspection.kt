@@ -14,12 +14,15 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.DeletePsiElementsFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.isNonNullableBooleanType
+import org.jetbrains.kotlin.idea.codeinsight.utils.isNullableAnyType
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.GenerateFunctionFix
 import org.jetbrains.kotlin.idea.core.AbstractKotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
@@ -53,6 +56,7 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
     }
 
     private fun KtAnalysisSession.matchesEqualsMethodSignature(function: KtFunctionSymbol): Boolean {
+        if (function.modality == Modality.ABSTRACT) return false
         if (function.name != EQUALS) return false
         if (function.typeParameters.isNotEmpty()) return false
         val param = function.valueParameters.singleOrNull() ?: return false
@@ -64,6 +68,7 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
     }
 
     private fun KtAnalysisSession.matchesHashCodeMethodSignature(function: KtFunctionSymbol): Boolean {
+        if (function.modality == Modality.ABSTRACT) return false
         if (function.name != HASH_CODE) return false
         if (function.typeParameters.isNotEmpty()) return false
         if (function.valueParameters.isNotEmpty()) return false
@@ -77,7 +82,7 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
      */
     private fun KtAnalysisSession.findMethod(
         classSymbol: KtClassOrObjectSymbol, methodName: Name, condition: (KtCallableSymbol) -> Boolean
-    ): KtCallableSymbol? = classSymbol.getMemberScope().getCallableSymbols { name -> name == methodName }.filter(condition).singleOrNull()
+    ): KtCallableSymbol? = classSymbol.getMemberScope().getCallableSymbols(methodName).filter(condition).singleOrNull()
 
     private fun KtAnalysisSession.findEqualsMethodForClass(classSymbol: KtClassOrObjectSymbol): KtCallableSymbol? =
         findMethod(classSymbol, EQUALS) { callableSymbol ->
@@ -276,7 +281,7 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                 val isNullable = type.isMarkedNullable
 
                 var text = when {
-                    type == builtinTypes.BYTE || type == builtinTypes.SHORT || type == builtinTypes.INT -> ref
+                    type isEqualTo builtinTypes.BYTE || type isEqualTo builtinTypes.SHORT || type isEqualTo builtinTypes.INT -> ref
 
                     type.isArrayOrPrimitiveArray() -> {
                         val canUseArrayContentFunctions = targetClass.canUseArrayContentFunctions()
@@ -339,12 +344,10 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                 Pair(
                     classOrObjectMemberDeclarations.singleOrNull {
                         val function = it.getSymbol() as? KtFunctionSymbol ?: return@singleOrNull false
-                        if (function.name != EQUALS) return@singleOrNull false
                         matchesEqualsMethodSignature(function)
                     } as? KtNamedFunction,
                     classOrObjectMemberDeclarations.singleOrNull {
                         val function = it.getSymbol() as? KtFunctionSymbol ?: return@singleOrNull false
-                        if (function.name != HASH_CODE) return@singleOrNull false
                         matchesHashCodeMethodSignature(function)
                     } as? KtNamedFunction,
                 )

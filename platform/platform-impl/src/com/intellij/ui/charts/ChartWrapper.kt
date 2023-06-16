@@ -118,9 +118,9 @@ abstract class GridChartWrapper<X: Number, Y: Number>: ChartWrapper(), XYChartCo
     }
   }
 
-  protected open fun findGridLineX(gl: GridLine<X, Y, *>, x: X) = findX(gl.xy, x)
+  protected open fun findGridLineX(gl: GridLine<X, Y, *>, x: X): Double = findX(gl.xy, x)
 
-  protected open fun findGridLineY(gl: GridLine<X, Y, *>, y: Y) = findY(gl.xy, y)
+  protected open fun findGridLineY(gl: GridLine<X, Y, *>, y: Y): Double = findY(gl.xy, y)
 
   abstract fun findMinMax(): MinMax<X, Y>
 
@@ -165,7 +165,7 @@ abstract class ChartWrapper : ChartComponent {
       (field as MutableList<ChartComponent>).addAll(value)
       field.forEach { if (it is Overlay<*>) it.wrapper = this }
     }
-  var margins = Insets(0, 0, 0, 0)
+  var margins: Insets = Insets(0, 0, 0, 0)
 
   open fun paintOverlay(g: Graphics2D) {
     overlays.forEach {
@@ -182,7 +182,7 @@ abstract class ChartWrapper : ChartComponent {
     }
   }
 
-  fun update() = component.repaint()
+  fun update(): Unit = component.repaint()
 
   protected open fun createCentralPanel(): JComponent = CentralPanel()
 
@@ -264,7 +264,7 @@ open class Dataset<T> {
     (data as? MutableList<T>)?.addAll(values) ?: throw UnsupportedOperationException()
   }
 
-  fun Color.transparent(alpha: Double) = ColorUtil.withAlpha(this, alpha)
+  fun Color.transparent(alpha: Double): Color = ColorUtil.withAlpha(this, alpha)
 }
 
 data class Coordinates<X: Number, Y: Number>(val x: X, val y: Y) {
@@ -284,7 +284,7 @@ open class MinMax<X: Number, Y: Number> {
     get() = this::xMin.isInitialized
 
   lateinit var xMax: X
-  val xMaxInitialized
+  val xMaxInitialized: Boolean
     get() = this::xMax.isInitialized
 
   lateinit var yMin: Y
@@ -292,7 +292,7 @@ open class MinMax<X: Number, Y: Number> {
     get() = this::yMin.isInitialized
 
   lateinit var yMax: Y
-  val yMaxInitialized
+  val yMaxInitialized: Boolean
     get() = this::yMax.isInitialized
 
   fun process(point: Coordinates<X, Y>) {
@@ -351,29 +351,29 @@ open class MinMax<X: Number, Y: Number> {
   operator fun component4(): Y = yMax
 
 
-  val isInitialized get() = xMinInitialized && xMaxInitialized && yMinInitialized && yMaxInitialized
+  val isInitialized: Boolean get() = xMinInitialized && xMaxInitialized && yMinInitialized && yMaxInitialized
 }
 
 class Grid<X: Number, Y: Number>: MinMax<X, Y>() {
   lateinit var xOrigin: X
-  val xOriginInitialized
+  val xOriginInitialized: Boolean
     get() = this::xOrigin.isInitialized
   var xLines: ValueIterable<X> = ValueIterable.createStub()
   var xPainter: (Consumer<GridLine<X, Y, X>>) = Consumer {  }
 
   lateinit var yOrigin: Y
-  val yOriginInitialized
+  val yOriginInitialized: Boolean
     get() = this::yOrigin.isInitialized
   var yLines: ValueIterable<Y> = ValueIterable.createStub()
   var yPainter: (Consumer<GridLine<X, Y, Y>>) = Consumer {  }
 }
 
 class GridLine<X: Number, Y: Number, T: Number>(val value: T, @get:JvmName("getXY") val xy: MinMax<X, Y>, @MagicConstant val orientation: Int = SwingConstants.HORIZONTAL) {
-  var paintLine = true
-  var majorLine = false
+  var paintLine: Boolean = true
+  var majorLine: Boolean = false
   var label: String? = null
-  @MagicConstant var horizontalAlignment = SwingConstants.CENTER
-  @MagicConstant var verticalAlignment = SwingConstants.BOTTOM
+  @MagicConstant var horizontalAlignment: Int = SwingConstants.CENTER
+  @MagicConstant var verticalAlignment: Int = SwingConstants.BOTTOM
 }
 
 abstract class ValueIterable<X: Number> : Iterable<X> {

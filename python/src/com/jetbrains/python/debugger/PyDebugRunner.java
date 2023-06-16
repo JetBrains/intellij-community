@@ -9,6 +9,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.console.LanguageConsoleBuilder;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -18,6 +19,7 @@ import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
@@ -37,12 +39,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.net.NetUtils;
-import com.intellij.xdebugger.XDebugProcess;
-import com.intellij.xdebugger.XDebugProcessStarter;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
@@ -59,6 +61,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -71,6 +74,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.jetbrains.python.actions.PyExecuteInConsole.*;
 import static com.jetbrains.python.debugger.PyDebugSupportUtils.ASYNCIO_ENV;
 import static com.jetbrains.python.inspections.PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
 
@@ -391,6 +395,24 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler = new PydevDebugConsoleExecuteActionHandler(console,
                                                                                                                   processHandler,
                                                                                                                   debugConsoleCommunication);
+
+    PythonDebugConsoleCommunication pythonDebugConsoleCommunication =
+      initDebugConsoleView(pythonConsoleView, consoleExecuteActionHandler, debugProcess, processHandler, debugConsoleCommunication, session);
+
+    // We need to enable Debug Console one more time after adding the consoleExecuteActionHandler to the pythonConsoleView
+    if (console.isEnabled()) {
+      console.enableConsole(false);
+    }
+
+    return pythonDebugConsoleCommunication;
+  }
+
+  protected static PythonDebugConsoleCommunication initDebugConsoleView(@NotNull PythonConsoleView pythonConsoleView,
+                                                                        @NotNull PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler,
+                                                                        @NotNull PyDebugProcess debugProcess,
+                                                                        @NotNull ProcessHandler processHandler,
+                                                                        @NotNull PythonDebugConsoleCommunication debugConsoleCommunication,
+                                                                        final XDebugSession session) {
     pythonConsoleView.setExecutionHandler(consoleExecuteActionHandler);
 
     debugProcess.getSession().addSessionListener(consoleExecuteActionHandler);
@@ -405,6 +427,18 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
       @Override
       public void inputRequested() {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (session.getConsoleView() instanceof PythonDebugLanguageConsoleView debugConsoleView) {
+            selectConsoleTab(session.getRunContentDescriptor(), session.getUI().getContentManager(), true);
+
+            if (pythonConsoleView.isVisible()) {
+              requestFocus(true, null, pythonConsoleView, true);
+            }
+            else if (debugConsoleView.getPrimaryConsoleView() instanceof ConsoleViewImpl consoleView) {
+              requestFocus(false, consoleView.getEditor(), null, true);
+            }
+          }
+        });
       }
     });
 

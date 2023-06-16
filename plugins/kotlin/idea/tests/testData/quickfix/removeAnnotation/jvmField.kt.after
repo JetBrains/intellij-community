@@ -1,4 +1,5 @@
 // "Remove @JvmField annotation" "true"
+// IGNORE_FIR
 // WITH_STDLIB
 class Foo {
     private val bar = 0

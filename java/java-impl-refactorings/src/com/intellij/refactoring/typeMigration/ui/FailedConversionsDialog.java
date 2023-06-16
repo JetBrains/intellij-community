@@ -9,12 +9,12 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 
 /**
@@ -41,15 +41,18 @@ public class FailedConversionsDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
     final JEditorPane messagePane = new JEditorPane(UIUtil.HTML_MIME, "");
     messagePane.setEditorKit(HTMLEditorKitBuilder.simple());
     messagePane.setEditable(false);
     messagePane.setMargin(JBUI.insets(5));
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane);
     scrollPane.setPreferredSize(JBUI.size(500, 400));
-    panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
-    panel.add(scrollPane, BorderLayout.CENTER);
+
+    JPanel panel = UI.PanelFactory.panel(scrollPane)
+      .withLabel(RefactoringBundle.message("the.following.problems.were.found"))
+      .moveLabelOnTop()
+      .resizeY(true)
+      .createPanel();
 
     HtmlBuilder builder = new HtmlBuilder();
     for (@Nls String conflictDescription : myConflictDescriptions) {

@@ -14,7 +14,7 @@ internal class BeanExtensionPoint<T : Any>(
   dynamic: Boolean,
 ) : ExtensionPointImpl<T>(name, className, pluginDescriptor, componentManager, null, dynamic), ImplementationClassResolver {
 
-  override fun resolveImplementationClass(componentManager: ComponentManager, adapter: ExtensionComponentAdapter) = extensionClass
+  override fun resolveImplementationClass(componentManager: ComponentManager, adapter: ExtensionComponentAdapter): Class<T> = extensionClass
 
   override fun createAdapter(descriptor: ExtensionDescriptor,
                              pluginDescriptor: PluginDescriptor,

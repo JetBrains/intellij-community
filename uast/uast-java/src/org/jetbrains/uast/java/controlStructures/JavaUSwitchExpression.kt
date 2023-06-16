@@ -3,7 +3,6 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.ChildRole
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.expressions.JavaUExpressionList
@@ -32,7 +31,7 @@ class JavaUSwitchEntryList(
   override val kind: UastSpecialExpressionKind
     get() = JavaSpecialExpressionKinds.SWITCH
 
-  override fun asRenderString() = expressions.joinToString("\n") {
+  override fun asRenderString(): String = expressions.joinToString("\n") {
     it.asRenderString().withMargin
   }
 

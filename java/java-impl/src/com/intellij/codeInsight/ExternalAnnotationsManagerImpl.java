@@ -81,6 +81,7 @@ import com.intellij.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleCustomImlDataEntity;
+import kotlin.sequences.SequencesKt;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -1139,7 +1140,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     private static <T extends WorkspaceEntity> boolean hasAnnotationRootInChanges(@NotNull VersionedStorageChange event,
                                                                                   @NotNull Class<T> entityClass,
                                                                                   @NotNull Predicate<T> hasAnnotationRoot) {
-      for (EntityChange<T> change : event.getChanges(entityClass)) {
+      for (EntityChange<T> change : SequencesKt.asIterable(event.getChanges(entityClass))) {
         T newEntity = change.getNewEntity();
         T oldEntity = change.getOldEntity();
         if (newEntity != null && hasAnnotationRoot.test(newEntity) || oldEntity != null && hasAnnotationRoot.test(oldEntity)) {

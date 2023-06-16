@@ -124,10 +124,10 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
   }
 
   @Override
-  public @NotNull List<XAttachDebugger> getAvailableDebuggers(@NotNull Project project,
-                                                              @NotNull XAttachHost attachHost,
-                                                              @NotNull ProcessInfo processInfo,
-                                                              @NotNull UserDataHolder contextHolder) {
+  public @NotNull List<? extends XAttachDebugger> getAvailableDebuggers(@NotNull Project project,
+                                                                        @NotNull XAttachHost attachHost,
+                                                                        @NotNull ProcessInfo processInfo,
+                                                                        @NotNull UserDataHolder contextHolder) {
     Map<String, LocalAttachInfo> addressMap = contextHolder.getUserData(ADDRESS_MAP_KEY);
     if (addressMap == null) {
       addressMap = new HashMap<>();

@@ -218,17 +218,6 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
 
   /**
    * @return a concatenation of several text contents (which must have the same domains)
-   * with a single synthetic ' ' character inserted between each pair of adjacent components.
-   * @deprecated use {@link #joinWithWhitespace(char, List)}
-   */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  static TextContent joinWithWhitespace(List<? extends @NotNull TextContent> components) {
-    return joinWithWhitespace(' ', components);
-  }
-
-  /**
-   * @return a concatenation of several text contents (which must have the same domains)
    * with the given whitespace character inserted between each pair of adjacent components.
    */
   @Nullable
@@ -278,15 +267,10 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
     public final int start, end;
     public final ExclusionKind kind;
 
-    /** @deprecated use {@link #kind} */
-    @Deprecated(forRemoval = true)
-    public final boolean markUnknown;
-
     public Exclusion(int start, int end, ExclusionKind kind) {
       if (start > end) throw new IllegalArgumentException(start + ">" + end);
       this.start = start;
       this.end = end;
-      this.markUnknown = kind == ExclusionKind.unknown;
       this.kind = kind;
     }
 

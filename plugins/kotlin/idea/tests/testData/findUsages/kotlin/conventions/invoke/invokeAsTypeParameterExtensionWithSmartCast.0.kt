@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "operator fun <T> T.invoke(): T"
 // ERROR: Incompatible types: Friend and Foo.Companion
 // CRI_IGNORE
 

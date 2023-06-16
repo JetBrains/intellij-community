@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
@@ -123,7 +123,8 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
 
   private void processAnchor(@NotNull DfType dfType, @NotNull JavaDfaAnchor anchor, @NotNull ProblemsHolder reporter) {
     ConstantResult result = ConstantResult.fromDfType(dfType);
-    if (result == ConstantResult.UNKNOWN && dfType instanceof DfReferenceType refType && refType.getSpecialField() == SpecialField.UNBOX) {
+    if (result == ConstantResult.UNKNOWN && dfType instanceof DfReferenceType refType && refType.getSpecialField() == SpecialField.UNBOX &&
+        refType.getNullability() == DfaNullability.NOT_NULL) {
       result = ConstantResult.fromDfType(refType.getSpecialFieldType());
     }
     if (result == ConstantResult.UNKNOWN) return;

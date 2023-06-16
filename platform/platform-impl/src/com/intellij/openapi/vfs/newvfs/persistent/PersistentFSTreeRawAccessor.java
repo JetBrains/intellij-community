@@ -30,8 +30,13 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
   @Override
   @NotNull ListResult doLoadChildren(final int parentId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(parentId);
+    if (parentId == SUPER_ROOT_ID) {
+      throw new AssertionError(
+        "Incorrect call .doLoadChildren() with a super-root record id(=" + SUPER_ROOT_ID + "). " +
+        "Super-root is a special file record for internal use, it MUST NOT be used directly");
+    }
 
-    final PersistentFSRecordsStorage records = myFSConnection.getRecords();
+    final PersistentFSRecordsStorage records = connection.getRecords();
 
     //MAYBE RC: .listIds() and .doLoadChildren() both contains same code for reading&parsing children array. It seems
     //         they were implemented this way for optimization i.e. to avoid creating childrenIds array. Could be
@@ -70,6 +75,12 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
 
   @Override
   int @NotNull [] listIds(final int fileId) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(fileId);
+    if (fileId == SUPER_ROOT_ID) {
+      throw new AssertionError(
+        "Incorrect call .listIds() with is a super-root record id(=" + SUPER_ROOT_ID + ") -- use .listRoots() instead");
+    }
+
     final int[] childrenIds = myAttributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
       final int count = DataInputOutputUtil.readINT(buffer);
       final int[] result = ArrayUtil.newIntArray(count);
@@ -87,6 +98,14 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
 
   @Override
   boolean mayHaveChildren(final int fileId) throws IOException {
+    PersistentFSConnection.ensureIdIsValid(fileId);
+    if (fileId == SUPER_ROOT_ID) {
+      throw new AssertionError(
+        "Incorrect call .mayHaveChildren() with is a super-root record id(=" + SUPER_ROOT_ID + ")" +
+        "Super-root is a special file record for internal use, it MUST NOT be used directly"
+      );
+    }
+
     final Boolean hasChildren = myAttributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
       final int count = DataInputOutputUtil.readINT(buffer);
       return Boolean.valueOf(count != 0);
@@ -96,4 +115,47 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
     }
     return hasChildren.booleanValue();
   }
+
+  //@Override
+  //void doSaveChildren(final int parentId,
+  //                    final @NotNull ListResult toSave) throws IOException {
+  //  final List<? extends ChildInfo> children = toSave.children;
+  //  {
+  //    int prevId = parentId;
+  //    for (ChildInfo childInfo : children) {
+  //      final int childId = childInfo.getId();
+  //      if (childId <= 0) {
+  //        throw new IllegalArgumentException("ids must be >0 but got: " + childId + "; childInfo: " + childInfo + "; list: " + toSave);
+  //      }
+  //      if (childId == parentId) {
+  //        FSRecords.LOG.error("Cyclic parent-child relations. parentId=" + parentId + "; list: " + toSave);
+  //      }
+  //      else {
+  //        final int delta = childId - prevId;
+  //        if (prevId != parentId && delta <= 0) {
+  //          throw new IllegalArgumentException("The list must be sorted by (unique) id but got parentId: " +
+  //                                             parentId + "; delta: " + delta + "; childInfo: " + childInfo + "; prevId: " +
+  //                                             prevId + "; toSave: " + toSave);
+  //        }
+  //        prevId = childId;
+  //      }
+  //    }
+  //  }
+  //  myFSConnection.markDirty();
+  //  myAttributeAccessor.writeAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
+  //    DataInputOutputUtil.writeINT(buffer, children.size());
+  //
+  //    int prevId = parentId;
+  //    for (ChildInfo childInfo : children) {
+  //      final int childId = childInfo.getId();
+  //      if (childId == parentId) {
+  //        continue;//skip, already logged above
+  //      }
+  //      final int delta = childId - prevId;
+  //      DataInputOutputUtil.writeINT(buffer, delta);
+  //      prevId = childId;
+  //    }
+  //    return buffer;
+  //  });
+  //}
 }

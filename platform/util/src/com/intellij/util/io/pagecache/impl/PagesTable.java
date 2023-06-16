@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.pagecache.impl;
 
 import com.intellij.openapi.util.IntRef;
@@ -45,10 +45,9 @@ public class PagesTable {
   /**
    * Reads are non-blocking, writes must be guarded by .pagesLock
    */
-  @NotNull
-  private volatile AtomicReferenceArray<PageImpl> pages;
+  private volatile @NotNull AtomicReferenceArray<PageImpl> pages;
 
-  private transient final ReentrantLock pagesLock = new ReentrantLock();
+  private final transient ReentrantLock pagesLock = new ReentrantLock();
 
 
   public PagesTable(final int initialSize) {
@@ -62,15 +61,13 @@ public class PagesTable {
     pages = new AtomicReferenceArray<>(size);
   }
 
-  @Nullable
-  public Page lookupIfExist(final int pageIndex) {
+  public @Nullable Page lookupIfExist(final int pageIndex) {
     return findPageOrInsertionIndex(this.pages, pageIndex, /*insertionIndexRef: */ null);
   }
 
-  @NotNull
-  public PageImpl lookupOrCreate(final int pageIndex,
-                                 final @NotNull IntFunction<PageImpl> uninitializedPageFactory,
-                                 final @NotNull PageContentLoader pageContentLoader) throws IOException {
+  public @NotNull PageImpl lookupOrCreate(final int pageIndex,
+                                          final @NotNull IntFunction<PageImpl> uninitializedPageFactory,
+                                          final @NotNull PageContentLoader pageContentLoader) throws IOException {
     final PageImpl page = findPageOrInsertionIndex(this.pages, pageIndex, /*insertionIndexRef: */null);
     if (page != null) {
       return page;
@@ -130,10 +127,9 @@ public class PagesTable {
   }
 
 
-  @NotNull
-  private PageImpl insertNewPage(final int pageIndex,
-                                 final IntFunction<PageImpl> uninitializedPageFactory,
-                                 final PageContentLoader pageContentLoader) throws IOException {
+  private @NotNull PageImpl insertNewPage(final int pageIndex,
+                                          final IntFunction<PageImpl> uninitializedPageFactory,
+                                          final PageContentLoader pageContentLoader) throws IOException {
 
     //Don't try to be lock-free on updates, just avoid holding the _global_ lock during IO:
     // 1) put blankPage under the pagesLock,
@@ -279,10 +275,9 @@ public class PagesTable {
     return pagesCopied;
   }
 
-  @Nullable
-  private static PageImpl findPageOrInsertionIndex(final @NotNull AtomicReferenceArray<PageImpl> pages,
-                                                   final int pageIndex,
-                                                   final @Nullable IntRef insertionIndexRef) {
+  private static @Nullable PageImpl findPageOrInsertionIndex(final @NotNull AtomicReferenceArray<PageImpl> pages,
+                                                             final int pageIndex,
+                                                             final @Nullable IntRef insertionIndexRef) {
     final int length = pages.length();
     final int initialSlotIndex = hash(pageIndex) % length;
     final int probeStep = 1; // = linear probing

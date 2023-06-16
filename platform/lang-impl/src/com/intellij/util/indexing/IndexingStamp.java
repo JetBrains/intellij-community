@@ -310,11 +310,14 @@ public final class IndexingStamp {
       if (FSRecords.supportsRawAttributesAccess()) {
         try {
           timestamps = FSRecords.readAttributeRawWithLock(id, Timestamps.PERSISTENCE, Timestamps::new);
-          if (timestamps == null && !createIfNoneSaved) {
-            return null;
+          if (timestamps == null) {
+            if (createIfNoneSaved) {
+              timestamps = new Timestamps((DataInputStream)null);
+            }
+            else {
+              return null;
+            }
           }
-          
-          timestamps = new Timestamps((DataInputStream)null);
         }
         catch (IOException e) {
           throw FSRecords.handleError(e);
@@ -435,6 +438,10 @@ public final class IndexingStamp {
         }
       }
     }
+  }
+
+  static boolean isDirty() {
+    return !ourFinishedFiles.isEmpty();
   }
 
   private static final StripedLock ourLock = new StripedLock();

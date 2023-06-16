@@ -91,9 +91,7 @@ class WslTargetEnvironmentConfiguration() : TargetEnvironmentConfiguration(WslTa
 
     other as WslTargetEnvironmentConfiguration
 
-    if (distributionMsId?.lowercase() != other.distributionMsId?.lowercase()) return false
-
-    return true
+    return distributionMsId?.lowercase() == other.distributionMsId?.lowercase()
   }
 
   override fun hashCode(): Int {

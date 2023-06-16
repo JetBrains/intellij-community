@@ -2,8 +2,10 @@ package org.intellij.plugins.markdown.model.psi
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
-internal interface MarkdownSymbolWithUsages: MarkdownSymbol {
+@ApiStatus.Internal
+interface MarkdownSymbolWithUsages: MarkdownSymbol {
   val file: PsiFile
   val range: TextRange
   val searchText: String

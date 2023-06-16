@@ -75,8 +75,7 @@ class LibraryBridgeImpl(
     LibraryStateSnapshot(
       libraryEntity = storage.findLibraryEntity(this) ?: error("Cannot find entity for library with ID $entityId"),
       storage = storage,
-      libraryTable = libraryTable,
-      parentDisposable = this
+      libraryTable = libraryTable
     )
   }
 
@@ -95,6 +94,16 @@ class LibraryBridgeImpl(
 
   override fun toString(): String {
     return "Library '$name', roots: ${librarySnapshot.libraryEntity.roots}"
+  }
+
+  /**
+   * **Please think twice before the usage.** This method was introduced to avoid redundant copying of
+   * the storage. You can use it only if you are sure that you wouldn't roll back your changes, and
+   * they will be applied by the parent modifiable model.
+   */
+  fun getModifiableModelToTargetBuilder(): LibraryEx.ModifiableModelEx {
+    val mutableEntityStorage = targetBuilder ?: error("Unexpected state. Target builder has to be not null")
+    return getModifiableModel(mutableEntityStorage)
   }
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx {

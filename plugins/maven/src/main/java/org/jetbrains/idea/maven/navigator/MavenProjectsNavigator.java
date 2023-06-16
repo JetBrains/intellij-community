@@ -93,7 +93,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
 
   @Override
   public MavenProjectsNavigatorState getState() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (myStructure != null) {
       try {
         myState.treeState = new Element("root");

@@ -94,16 +94,9 @@ public final class DirectBufferWrapper {
   }
 
   public ByteBuffer copy() {
-    //TODO RC: do we really need call to Allocator here? .duplicate() only creates a wrapper,
-    //         main buffer content (native memory chunk for direct buffer) is not allocated anew,
-    //         but shared with myBuffer -- hence neither caching, nor 'IDEA-222358 linux native memory
-    //         leak' are not applicable. Seems like plain call to .duplicate().order(...) should be
-    //         enough:
-    return DirectByteBufferAllocator.allocate(() -> {
-      ByteBuffer duplicate = myBuffer.duplicate();
-      duplicate.order(myBuffer.order());
-      return duplicate;
-    });
+    ByteBuffer duplicate = myBuffer.duplicate();
+    duplicate.order(myBuffer.order());
+    return duplicate;
   }
 
   public byte get(int index, boolean checkAccess) {
@@ -242,8 +235,8 @@ public final class DirectBufferWrapper {
     final ByteBuffer buffer = DirectByteBufferAllocator.ALLOCATOR.allocate(bufferSize);
     buffer.order(myFile.isNativeBytesOrder() ? ByteOrder.nativeOrder() : ByteOrder.BIG_ENDIAN);
     assert buffer.limit() > 0;
-    return myFile.useChannel(ch -> {
-      int readBytes = ch.read(buffer, myPosition);
+    return myFile.executeIdempotentOp(ch -> {
+      final int readBytes = ch.read(buffer, myPosition);
       if (readBytes < bufferSize) {
         for (int i = Math.max(0, readBytes); i < bufferSize; i++) {
           buffer.put(i, (byte)0);
@@ -282,7 +275,7 @@ public final class DirectBufferWrapper {
       buffer.rewind();
       buffer.limit(myBufferDataEndPos);
 
-      myFile.useChannel(ch -> {
+      myFile.executeIdempotentOp(ch -> {
         ch.write(buffer, myPosition);
         return null;
       }, myFile.isReadOnly());

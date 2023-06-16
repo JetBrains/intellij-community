@@ -1939,7 +1939,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           return processor.execute(psiClasses[0]);
         }
         final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes.keySet(), psiClasses[0]);
-        new PsiTargetNavigator().selection(preselection).createPopup(psiClasses, RefactoringBundle.message("choose.destination.class"), processor)
+        new PsiTargetNavigator<>(psiClasses).selection(preselection).createPopup(myProject, RefactoringBundle.message("choose.destination.class"), processor)
           .showInBestPositionFor(myEditor);
         return true;
       }

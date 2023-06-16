@@ -21,12 +21,12 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ExpandBooleanIntention extends MutablyNamedIntention {
+public class ExpandBooleanIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -40,7 +40,7 @@ public class ExpandBooleanIntention extends MutablyNamedIntention {
   }
 
   @Override
-  protected String getTextForElement(PsiElement element) {
+  protected String getTextForElement(@NotNull PsiElement element) {
     if (element instanceof PsiDeclarationStatement) {
       return IntentionPowerPackBundle.message("expand.boolean.declaration.intention.name");
     }

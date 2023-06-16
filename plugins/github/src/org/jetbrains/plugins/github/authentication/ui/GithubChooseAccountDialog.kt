@@ -33,7 +33,7 @@ class GithubChooseAccountDialog @JvmOverloads constructor(project: Project?, par
   private val description: JTextArea? = descriptionText?.let {
     JTextArea().apply {
       minimumSize = Dimension(0, 0)
-      font = StartupUiUtil.getLabelFont()
+      font = StartupUiUtil.labelFont
       text = it
       lineWrap = true
       wrapStyleWord = true
@@ -44,7 +44,7 @@ class GithubChooseAccountDialog @JvmOverloads constructor(project: Project?, par
       margin = JBInsets.emptyInsets()
     }
   }
-  private val accountsList: JBList<GithubAccount> = JBList<GithubAccount>(accounts).apply {
+  private val accountsList: JBList<GithubAccount> = JBList(accounts).apply {
     selectionMode = ListSelectionModel.SINGLE_SELECTION
     cellRenderer = object : ColoredListCellRenderer<GithubAccount>() {
       override fun customizeCellRenderer(list: JList<out GithubAccount>,

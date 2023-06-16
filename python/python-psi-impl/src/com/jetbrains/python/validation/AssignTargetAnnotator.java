@@ -27,7 +27,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +47,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     PyExpression expression = node.getAssignedValue();
     if (expression instanceof PyAssignmentExpression) {
       getHolder()
-        .newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.unparenthesized.assignment.expression.value"))
+        .newAnnotation(HighlightSeverity.ERROR, message("ANN.unparenthesized.assignment.expression.value"))
         .range(expression)
         .create();
     }
@@ -80,7 +79,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     PyExpression target = node.getForPart().getTarget();
     if (target != null) {
       target.accept(new ExprVisitor(Operation.For));
-      checkNotAssignmentExpression(target, PyPsiBundle.message("ANN.assignment.expression.as.a.target"));
+      checkNotAssignmentExpression(target, message("ANN.assignment.expression.as.a.target"));
     }
   }
 
@@ -97,7 +96,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     PyExpression expression = node.getExpression();
     if (expression instanceof PyAssignmentExpression) {
       getHolder()
-        .newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.unparenthesized.assignment.expression.statement"))
+        .newAnnotation(HighlightSeverity.ERROR, message("ANN.unparenthesized.assignment.expression.statement"))
         .range(expression)
         .create();
     }
@@ -108,14 +107,14 @@ public class AssignTargetAnnotator extends PyAnnotator {
     final PyComprehensionElement comprehensionElement = PsiTreeUtil.getParentOfType(node, PyComprehensionElement.class, true, ScopeOwner.class);
     if (ScopeUtil.getScopeOwner(comprehensionElement) instanceof PyClass) {
       getHolder().newAnnotation(HighlightSeverity.ERROR,
-                                PyPsiBundle.message("ANN.assignment.expressions.within.a.comprehension.cannot.be.used.in.a.class.body")).create();
+                                message("ANN.assignment.expressions.within.a.comprehension.cannot.be.used.in.a.class.body")).create();
     }
   }
 
   @Override
   public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
-    final String targetMessage = PyPsiBundle.message("ANN.assignment.expression.as.a.target");
-    final String iterableMessage = PyPsiBundle.message("ANN.assignment.expression.in.an.iterable");
+    final String targetMessage = message("ANN.assignment.expression.as.a.target");
+    final String iterableMessage = message("ANN.assignment.expression.in.an.iterable");
 
     node.getForComponents().forEach(
       it -> {
@@ -142,10 +141,6 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
   private class ExprVisitor extends PyElementVisitor {
     private final Operation myOp;
-    private final @Nls String DELETING_NONE = message("ANN.deleting.none");
-    private final @Nls String ASSIGNMENT_TO_NONE = message("ANN.assign.to.none");
-    private final @Nls String CANT_ASSIGN_TO_FUNCTION_CALL = message("ANN.cant.assign.to.call");
-    private final @Nls String CANT_DELETE_FUNCTION_CALL = message("ANN.cant.delete.call");
 
     ExprVisitor(Operation op) {
       myOp = op;
@@ -156,7 +151,9 @@ public class AssignTargetAnnotator extends PyAnnotator {
       String referencedName = node.getReferencedName();
       if (PyNames.NONE.equals(referencedName)) {
         //noinspection DialogTitleCapitalization
-        getHolder().newAnnotation(HighlightSeverity.ERROR, (myOp == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE).range(node).create();
+        getHolder().newAnnotation(HighlightSeverity.ERROR, (myOp == Operation.Delete) ?
+                                                           message("ANN.deleting.none") :
+                                                           message("ANN.assign.to.none")).range(node).create();
       }
     }
 
@@ -165,24 +162,31 @@ public class AssignTargetAnnotator extends PyAnnotator {
       String targetName = node.getName();
       if (PyNames.NONE.equals(targetName)) {
         final VirtualFile vfile = node.getContainingFile().getVirtualFile();
-        if (vfile != null && !vfile.getUrl().contains("/" + PythonSdkUtil.SKELETON_DIR_NAME + "/")){
+        if (vfile != null && !vfile.getUrl().contains("/" + PythonSdkUtil.SKELETON_DIR_NAME + "/")) {
           //noinspection DialogTitleCapitalization
-          getHolder().newAnnotation(HighlightSeverity.ERROR, (myOp == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE).range(node).create();
+          getHolder().newAnnotation(HighlightSeverity.ERROR,
+                                    (myOp == Operation.Delete) ?
+                                    message("ANN.deleting.none") :
+                                    message("ANN.assign.to.none")).range(node)
+            .create();
         }
       }
       if (PyNames.DEBUG.equals(targetName)) {
         if (LanguageLevel.forElement(node).isPy3K()) {
-          getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.assignment.to.keyword")).range(node).create();
+          getHolder().newAnnotation(HighlightSeverity.ERROR, message("ANN.assignment.to.keyword")).range(node).create();
         }
         else {
-          getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.cannot.assign.to.debug")).range(node).create();
+          getHolder().newAnnotation(HighlightSeverity.ERROR, message("ANN.cannot.assign.to.debug")).range(node).create();
         }
       }
     }
 
     @Override
     public void visitPyCallExpression(final @NotNull PyCallExpression node) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, (myOp == Operation.Delete) ? CANT_DELETE_FUNCTION_CALL : CANT_ASSIGN_TO_FUNCTION_CALL).range(node).create();
+      getHolder().newAnnotation(HighlightSeverity.ERROR, (myOp == Operation.Delete) ?
+                                                         message("ANN.cant.delete.call") :
+                                                         message("ANN.cant.assign.to.call")).range(node)
+        .create();
     }
 
     @Override
@@ -283,12 +287,12 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     @Override
     public void visitPyNoneLiteralExpression(@NotNull PyNoneLiteralExpression node) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.assignment.to.keyword")).range(node).create();
+      getHolder().newAnnotation(HighlightSeverity.ERROR, message("ANN.assignment.to.keyword")).range(node).create();
     }
 
     @Override
     public void visitPyBoolLiteralExpression(@NotNull PyBoolLiteralExpression node) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.assignment.to.keyword")).range(node).create();
+      getHolder().newAnnotation(HighlightSeverity.ERROR, message("ANN.assignment.to.keyword")).range(node).create();
     }
   }
 }

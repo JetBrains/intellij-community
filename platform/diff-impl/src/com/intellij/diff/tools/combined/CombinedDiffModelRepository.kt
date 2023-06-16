@@ -8,20 +8,25 @@ import com.intellij.openapi.util.Disposer
 @Service(Service.Level.PROJECT)
 class CombinedDiffModelRepository : Disposable {
 
-  private val models = hashMapOf<String, CombinedDiffModel>()
+  private val models: HashMap<String, CombinedDiffModel> = hashMapOf()
 
   fun registerModel(sourceId: String, model: CombinedDiffModel) {
-    dispose(sourceId)
+    disposeIfRegistered(sourceId)
 
-    Disposer.register(model.ourDisposable) { models.remove(sourceId) }
+    Disposer.register(model.ourDisposable) {
+      models.remove(sourceId)
+    }
     models[sourceId] = model
   }
 
-  fun findModel(sourceId: String) = models[sourceId]
+  fun findModel(sourceId: String): CombinedDiffModel? = models[sourceId]
 
-  fun dispose(sourceId: String) = models.remove(sourceId)?.ourDisposable?.let(Disposer::dispose)
+  private fun disposeIfRegistered(sourceId: String) {
+    val diffModel = models.remove(sourceId) ?: return
+    Disposer.dispose(diffModel.ourDisposable)
+  }
 
   override fun dispose() {
-    models.clear()
+    models.clear() // TODO: why not dispose?
   }
 }

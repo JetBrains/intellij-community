@@ -10,15 +10,18 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.orNull
 import com.intellij.util.lang.UrlClassLoader
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
@@ -31,6 +34,9 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
+import org.jetbrains.kotlin.fir.extensions.FirAssignExpressionAltererExtension
+import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
+import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
@@ -46,31 +52,44 @@ import java.util.*
 import java.util.concurrent.ConcurrentMap
 
 @OptIn(ExperimentalCompilerApi::class)
-internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : KtCompilerPluginsProvider(), Disposable {
+internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs: CoroutineScope) : KtCompilerPluginsProvider(), Disposable {
     private val pluginsCacheCachedValue: SynchronizedClearableLazy<PluginsCache?> = SynchronizedClearableLazy { createNewCache() }
     private val pluginsCache: PluginsCache?
         get() = pluginsCacheCachedValue.value
 
+    private val onlyBundledPluginsEnabledRegistryValue: RegistryValue =
+        Registry.get("kotlin.k2.only.bundled.compiler.plugins.enabled")
+
+    private val onlyBundledPluginsEnabled: Boolean
+        get() = onlyBundledPluginsEnabledRegistryValue.asBoolean()
+
     init {
-        val messageBusConnection = project.messageBus.connect(this)
-        messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED,
-                                       object : WorkspaceModelChangeListener {
-                override fun changed(event: VersionedStorageChange) {
-                    val hasChanges = event.getChanges(FacetEntity::class.java).any { change ->
-                        change.facetTypes.any { it == KotlinFacetType.ID }
-                    }
-                    if (hasChanges) {
-                        pluginsCacheCachedValue.drop()
-                    }
+        cs.launch {
+            WorkspaceModel.getInstance(project).changesEventFlow.collect { event ->
+                val hasChanges = event.getChanges(FacetEntity::class.java).any { change ->
+                    change.facetTypes.any { it == KotlinFacetType.ID }
+                }
+                if (hasChanges) {
+                    pluginsCacheCachedValue.drop()
                 }
             }
-        )
+        }
+        val messageBusConnection = project.messageBus.connect(this)
         messageBusConnection.subscribe(KotlinCompilerSettingsListener.TOPIC,
             object : KotlinCompilerSettingsListener {
                 override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
                     pluginsCacheCachedValue.drop()
                 }
             }
+        )
+
+        onlyBundledPluginsEnabledRegistryValue.addListener(
+            object : RegistryValueListener {
+                override fun afterValueChanged(value: RegistryValue) {
+                    pluginsCacheCachedValue.drop()
+                }
+            },
+            this
         )
     }
 
@@ -86,7 +105,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
         val pluginsClassLoader: UrlClassLoader = UrlClassLoader.build().apply {
             parent(KtSourceModule::class.java.classLoader)
             val pluginsClasspath = ModuleManager.getInstance(project).modules
-                .flatMap { it.getCompilerArguments().getPluginClassPaths() }
+                .flatMap { it.getCompilerArguments().getSubstitutedPluginClassPaths() }
                 .distinct()
             files(pluginsClasspath)
         }.get()
@@ -111,11 +130,22 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
         return registrars as List<T>
     }
 
+    override fun isPluginOfTypeRegistered(module: KtSourceModule, pluginType: CompilerPluginType): Boolean {
+        val extension = when (pluginType) {
+            CompilerPluginType.ASSIGNMENT -> FirAssignExpressionAltererExtension::class
+            else -> return false
+        }
+
+        return getRegisteredExtensions(module, FirExtensionRegistrarAdapter)
+            .map { (it as FirExtensionRegistrar).configure() }
+            .any { it.extensions[extension]?.isNotEmpty() == true }
+    }
+
     @OptIn(Frontend10ApiUsage::class)
     private fun computeExtensionStorage(module: KtSourceModule): CompilerPluginRegistrar.ExtensionStorage? {
         val classLoader = pluginsCache?.pluginsClassLoader ?: return null
         val compilerArguments = module.ideaModule.getCompilerArguments()
-        val classPaths = compilerArguments.getPluginClassPaths().map { it.toFile() }.takeIf { it.isNotEmpty() } ?: return null
+        val classPaths = compilerArguments.getSubstitutedPluginClassPaths().map { it.toFile() }.takeIf { it.isNotEmpty() } ?: return null
 
         val logger = logger<KtCompilerPluginsProviderIdeImpl>()
 
@@ -162,13 +192,31 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
         return storage
     }
 
-    private fun CommonCompilerArguments.getPluginClassPaths(): List<Path> {
+    private fun CommonCompilerArguments.getOriginalPluginClassPaths(): List<Path> {
         return this
             .pluginClasspaths
             ?.map { Path.of(it).toAbsolutePath() }
             ?.toList()
             .orEmpty()
     }
+
+    private fun CommonCompilerArguments.getSubstitutedPluginClassPaths(): List<Path> {
+        val userDefinedPlugins = getOriginalPluginClassPaths()
+        return userDefinedPlugins.mapNotNull(::substitutePluginJar)
+    }
+
+    /**
+     * We have the following logic for plugins' substitution:
+     * 1. Always replace our own plugins (like "allopen", "noarg", etc.) with bundled ones to avoid binary incompatibility.
+     * 2. Allow to use other compiler plugins only if [onlyBundledPluginsEnabled] is set to false; otherwise, filter them.
+     */
+    private fun substitutePluginJar(userSuppliedPluginJar: Path): Path? {
+        val bundledPlugin = KotlinK2BundledCompilerPlugins.findCorrespondingBundledPlugin(userSuppliedPluginJar)
+        if (bundledPlugin != null) return bundledPlugin.bundledJarLocation
+
+        return userSuppliedPluginJar.takeUnless { onlyBundledPluginsEnabled }
+    }
+
 
     private fun Module.getCompilerArguments(): CommonCompilerArguments {
         return KotlinFacet.get(this)?.configuration?.settings?.mergedCompilerArguments

@@ -38,7 +38,7 @@ class ModuleBasedConfiguratorContext(
         get() = ModuleBasedConfiguratorSettingReference(configurator, module, this)
 
     override val <T : Any> ModuleConfiguratorProperty<T>.reference: PropertyEntityReference<T>
-        get() = ModuleConfiguratorPropertyReference<T>(configurator, module, this)
+        get() = ModuleConfiguratorPropertyReference(configurator, module, this)
 }
 
 class IdBasedConfiguratorContext(
@@ -296,7 +296,8 @@ interface ModuleConfigurator : DisplayableSettingItem, EntitiesOwnerDescriptor {
     ): List<FileTemplate> = emptyList()
 
     companion object {
-        val ALL by lazy {
+        @Suppress("RemoveExplicitTypeArguments")
+        val ALL: List<ModuleConfigurator> by lazy {
             buildList<ModuleConfigurator> {
                 +RealNativeTargetConfigurator.configurators
                 +NativeForCurrentSystemTarget

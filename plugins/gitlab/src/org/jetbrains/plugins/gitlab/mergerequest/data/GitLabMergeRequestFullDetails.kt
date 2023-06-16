@@ -12,11 +12,13 @@ data class GitLabMergeRequestFullDetails(
   override val createdAt: Date,
   override val author: GitLabUserDTO,
   override val mergeStatus: GitLabMergeStatus,
+  override val isMergeable: Boolean,
   override val state: GitLabMergeRequestState,
   override val draft: Boolean,
   override val assignees: List<GitLabUserDTO>,
   override val reviewers: List<GitLabUserDTO>,
   override val webUrl: @NlsSafe String,
+  val detailedLabels: List<GitLabLabelDTO>,
   val targetProject: GitLabProjectDTO,
   val sourceProject: GitLabProjectDTO,
   val description: String,
@@ -26,8 +28,12 @@ data class GitLabMergeRequestFullDetails(
   val conflicts: Boolean,
   val commits: List<GitLabCommitDTO>,
   val diffRefs: GitLabDiffRefs,
-  val headPipeline: GitLabPipelineDTO?
-) : GitLabMergeRequestDetails(iid, title, createdAt, author, mergeStatus, state, draft, assignees, reviewers, webUrl) {
+  val headPipeline: GitLabPipelineDTO?,
+  val userPermissions: GitLabMergeRequestPermissionsDTO,
+  val shouldBeRebased: Boolean,
+  val rebaseInProgress: Boolean
+) : GitLabMergeRequestDetails(iid, title, createdAt, author, mergeStatus, isMergeable, state, draft, assignees, reviewers, webUrl,
+                              detailedLabels.map { it.title }) {
 
   companion object {
     fun fromGraphQL(dto: GitLabMergeRequestDTO) = GitLabMergeRequestFullDetails(
@@ -36,6 +42,7 @@ data class GitLabMergeRequestFullDetails(
       createdAt = dto.createdAt,
       author = dto.author,
       mergeStatus = dto.mergeStatusEnum,
+      isMergeable = dto.mergeable,
       state = dto.state,
       draft = dto.draft,
       assignees = dto.assignees,
@@ -50,7 +57,11 @@ data class GitLabMergeRequestFullDetails(
       conflicts = dto.conflicts,
       commits = dto.commits,
       diffRefs = dto.diffRefs,
-      headPipeline = dto.headPipeline
+      headPipeline = dto.headPipeline,
+      userPermissions = dto.userPermissions,
+      detailedLabels = dto.labels,
+      shouldBeRebased = dto.shouldBeRebased,
+      rebaseInProgress = dto.rebaseInProgress
     )
   }
 }

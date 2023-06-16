@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
@@ -117,8 +117,10 @@ class OldJavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
     // reformat
     PsiDocumentManager.getInstance(myProject).commitDocument(myHostDocument);
     try {
-      CodeStyleManager.getInstance(myProject).reformatRange(
-        origPsiFile, hostStartOffset, myAltFullRange.getEndOffset(), true);
+      if (origPsiFile != null && origPsiFile.isPhysical()) {
+        CodeStyleManager.getInstance(myProject).reformatRange(
+          origPsiFile, hostStartOffset, myAltFullRange.getEndOffset(), true);
+      }
     }
     catch (IncorrectOperationException e1) {
       //LOG.error(e);

@@ -18,6 +18,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -216,7 +217,8 @@ public class DefaultTreeUI extends BasicTreeUI {
 
   private void repaintPath(@Nullable TreePath path) {
     Rectangle bounds = getPathBounds(getTree(), path);
-    if (bounds != null) tree.repaint(0, bounds.y, tree.getWidth(), bounds.height);
+    // repaint 1 px above and 1 px below to avoid rounding errors with fractional scaling:
+    if (bounds != null) tree.repaint(0, bounds.y - 1, tree.getWidth(), bounds.height + 2);
   }
 
   private void removeCachedRenderers() {
@@ -407,7 +409,10 @@ public class DefaultTreeUI extends BasicTreeUI {
   protected boolean isToggleEvent(MouseEvent event) {
     if (!super.isToggleEvent(event)) return false;
     JTree tree = getTree();
-    return tree != null && isExpandPreferable(tree, tree.getSelectionPath());
+    return tree != null
+           // BasicTreeUI uses clickCount % toggleClickCount == 0, which works terrible for single-click, so we double-check here:
+           && tree.getToggleClickCount() == event.getClickCount()
+           && isExpandPreferable(tree, tree.getSelectionPath());
   }
 
   @Override
@@ -453,7 +458,7 @@ public class DefaultTreeUI extends BasicTreeUI {
   @Override
   protected void updateCachedPreferredSize() {
     JTree tree = getTree();
-    AbstractLayoutCache cache = treeState; // TODO: treeState ???
+    AbstractLayoutCache cache = treeState;
     if (tree != null && isValid(tree) && cache != null && tree.isLargeModel() && is("ide.tree.experimental.preferred.width")) {
       Rectangle paintBounds = tree.getVisibleRect();
       if (!paintBounds.isEmpty()) {
@@ -472,12 +477,14 @@ public class DefaultTreeUI extends BasicTreeUI {
           int maxPaintX = paintBounds.x + paintBounds.width;
           int maxPaintY = paintBounds.y + paintBounds.height;
           int width = 0;
-          while (path != null) {
+          for (; path != null; path = cache.getPathForRow(++row)) {
             Rectangle bounds = cache.getBounds(path, buffer);
-            if (bounds == null) continue; // something goes wrong
+            if (bounds == null) {
+              LOG.warn("The bounds for the row " + row + " of the tree " + tree + " with model " + treeModel + " are null, looks like a bug in " + cache);
+              continue;
+            }
             width = Math.max(width, bounds.x + bounds.width);
             if ((bounds.y + bounds.height) >= maxPaintY) break;
-            path = cache.getPathForRow(++row);
           }
           width += insets.left + insets.right;
           if (width < maxPaintX) {
@@ -583,6 +590,12 @@ public class DefaultTreeUI extends BasicTreeUI {
 
   @Override
   protected AbstractLayoutCache createLayoutCache() {
+    if (is("ide.tree.experimental.layout.cache", false)) {
+      return new DefaultTreeLayoutCache(path -> {
+        handleAutoExpand(path);
+        return Unit.INSTANCE;
+      });
+    }
     if (isLargeModel() && getRowHeight() > 0) {
       return new FixedHeightLayoutCache();
     }
@@ -604,23 +617,37 @@ public class DefaultTreeUI extends BasicTreeUI {
       private void onSingleChildInserted(TreePath path, int oldRowCount) {
         if (path == null || oldRowCount + 1 != getRowCount()) return;
         JTree tree = getTree();
-        if (tree == null || !isAutoExpandAllowed(tree) || !tree.isVisible(path)) return;
+        if (!shouldAutoExpand(tree, path)) return;
         TreeModel model = tree.getModel();
         if (model instanceof AsyncTreeModel && 1 == model.getChildCount(path.getLastPathComponent())) {
           int pathCount = 1 + path.getPathCount();
           for (int i = 0; i <= oldRowCount; i++) {
             TreePath row = getPathForRow(i);
             if (row != null && pathCount == row.getPathCount() && path.equals(row.getParentPath())) {
-              Object node = row.getLastPathComponent();
-              if (isAutoExpandAllowed(tree, node)) {
-                ((AsyncTreeModel)model).onValidThread(() -> tree.expandPath(row));
-              }
+              handleAutoExpand(row);
               return; // this code is intended to auto-expand a single child node
             }
           }
         }
       }
     };
+  }
+
+  private static boolean shouldAutoExpand(JTree tree, TreePath path) {
+    return tree != null && isAutoExpandAllowed(tree) && tree.isVisible(path);
+  }
+
+  private void handleAutoExpand(@NotNull TreePath row) {
+    var tree = getTree();
+    if (!shouldAutoExpand(tree, row.getParentPath())) {
+      return;
+    }
+    if (tree.getModel() instanceof AsyncTreeModel asyncTreeModel) {
+      Object node = row.getLastPathComponent();
+      if (isAutoExpandAllowed(tree, node)) {
+        asyncTreeModel.onValidThread(() -> tree.expandPath(row));
+      }
+    }
   }
 
   @Override

@@ -32,12 +32,12 @@ public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourc
   }
 
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return myModule.getName();
   }
 
   @Override
-  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex) {
+  public @NotNull Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, @NotNull TargetOutputIndex outputIndex) {
     return Collections.emptyList();
   }
 
@@ -48,7 +48,7 @@ public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourc
 
   @NotNull
   @Override
-  public List<GradleResourceRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex, BuildDataPaths dataPaths) {
+  public List<GradleResourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model, @NotNull ModuleExcludeIndex index, @NotNull IgnoredFileIndex ignoredFileIndex, @NotNull BuildDataPaths dataPaths) {
     final List<GradleResourceRootDescriptor> result = new ArrayList<>();
 
     GradleProjectConfiguration projectConfig = JpsGradleExtensionService.getInstance().getGradleProjectConfiguration(dataPaths);
@@ -82,7 +82,7 @@ public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourc
 
   @Nullable
   @Override
-  public GradleResourceRootDescriptor findRootDescriptor(String rootId, BuildRootIndex rootIndex) {
+  public GradleResourceRootDescriptor findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex) {
     for (GradleResourceRootDescriptor descriptor : rootIndex.getTargetRoots(this, null)) {
       if (descriptor.getRootId().equals(rootId)) {
         return descriptor;
@@ -99,7 +99,7 @@ public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourc
 
   @NotNull
   @Override
-  public Collection<File> getOutputRoots(CompileContext context) {
+  public Collection<File> getOutputRoots(@NotNull CompileContext context) {
     GradleModuleResourceConfiguration configuration =
       getModuleResourcesConfiguration(context.getProjectDescriptor().dataManager.getDataPaths());
     final Set<File> result = FileCollectionFactory.createCanonicalFileSet();
@@ -137,7 +137,7 @@ public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourc
   }
 
   @Override
-  public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
+  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
     final BuildDataPaths dataPaths = pd.getTargetsState().getDataPaths();
     final GradleModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
     if (configuration != null) {

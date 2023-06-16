@@ -1,12 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table
 
-import com.intellij.util.Consumer
-import com.intellij.util.EmptyConsumer
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.DataGetter
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.VisibleGraph
+import java.util.function.Consumer
 
 internal class CommitSelectionImpl(private val logData: VcsLogData,
                                    private val visibleGraph: VisibleGraph<Int>,
@@ -27,7 +26,7 @@ internal class CommitSelectionImpl(private val logData: VcsLogData,
   }
 
   override fun requestFullDetails(consumer: Consumer<in List<VcsFullCommitDetails>>) {
-    logData.commitDetailsGetter.loadCommitsData(ids, consumer, EmptyConsumer.getInstance(), null)
+    logData.commitDetailsGetter.loadCommitsData(ids, consumer::accept, { }, null)
   }
 
   private fun getIdAtRow(row: Int) = visibleGraph.getRowInfo(row).commit

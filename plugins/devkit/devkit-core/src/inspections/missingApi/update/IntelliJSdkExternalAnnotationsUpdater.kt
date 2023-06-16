@@ -15,7 +15,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import kotlinx.coroutines.*
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.inspections.missingApi.MissingRecentApiInspection
+import org.jetbrains.idea.devkit.inspections.missingApi.MISSING_API_INSPECTION_SHORT_NAME
 import org.jetbrains.idea.devkit.inspections.missingApi.resolve.IntelliJSdkExternalAnnotations
 import org.jetbrains.idea.devkit.inspections.missingApi.resolve.PublicIntelliJSdkExternalAnnotationsRepository
 import org.jetbrains.idea.devkit.inspections.missingApi.resolve.getAnnotationsBuildNumber
@@ -64,7 +64,7 @@ class IntelliJSdkExternalAnnotationsUpdater(private val cs: CoroutineScope) {
   private suspend fun updateIdeaJdkAnnotationsIfNecessaryInner(project: Project, ideaJdk: Sdk, buildNumber: BuildNumber) {
     val inspectionsEnabled = readAction {
       ProjectInspectionProfileManager.getInstance(project).currentProfile
-        .getTools(MissingRecentApiInspection.INSPECTION_SHORT_NAME, project)
+        .getTools(MISSING_API_INSPECTION_SHORT_NAME, project)
         .isEnabled
     }
     if (!inspectionsEnabled) {

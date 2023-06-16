@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.CodeStyleBundle;
@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -29,7 +28,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -115,12 +113,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   }
 
   @Override
-  public void reformatTextWithContext(@NotNull PsiFile file,
-                                      @NotNull ChangedRangesInfo info) throws IncorrectOperationException
-  {
+  public void reformatChanges(@NotNull PsiFile file,
+                              @NotNull ChangedRangesInfo info) throws IncorrectOperationException {
     ensureDocumentCommitted(file);
     FormatTextRanges formatRanges = new FormatTextRanges(info, ChangedRangesUtil.processChangedRanges(file, info));
-    formatRanges.setExtendToContext(true);
     reformatText(file, formatRanges);
   }
 
@@ -540,7 +536,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
           commandRunnable.run();
         }
         else {
-          ApplicationManager.getApplication().invokeLater(commandRunnable, ModalityState.NON_MODAL, file.getProject().getDisposed());
+          ApplicationManager.getApplication().invokeLater(commandRunnable, ModalityState.nonModal(), file.getProject().getDisposed());
         }
       }
     );

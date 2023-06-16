@@ -30,7 +30,7 @@ import java.util.List;
  * Iterator over editor's text contents. Each iteration step corresponds to a text fragment having common graphical attributes
  * (font style, foreground and background color, effect type and color).
  */
-public class IterationState {
+public final class IterationState {
   private static final Logger LOG = Logger.getInstance(IterationState.class);
 
   public static Comparator<RangeHighlighterEx> createByLayerThenByAttributesComparator(EditorColorsScheme scheme) {
@@ -76,8 +76,7 @@ public class IterationState {
 
   private final TextAttributes myMergedAttributes = new TextAttributes();
 
-  @Nullable
-  private final HighlighterIterator myHighlighterIterator;
+  private final @Nullable HighlighterIterator myHighlighterIterator;
   private final HighlighterSweep myView;
   private final HighlighterSweep myDoc;
 
@@ -405,7 +404,6 @@ public class IterationState {
     }
     List<RangeMarker> blocks = myDocument.getGuardedBlocks();
     int result = myEnd;
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < blocks.size(); i++) {
       RangeMarker block = blocks.get(i);
       int nearestValue = getNearestValueAhead(start, alignOffset(block.getStartOffset()), alignOffset(block.getEndOffset()));
@@ -509,7 +507,6 @@ public class IterationState {
   private int getMinSegmentHighlightersEnd() {
     int end = myEnd;
 
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myCurrentHighlighters.size(); i++) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
       if (myReverseIteration) {
@@ -572,7 +569,6 @@ public class IterationState {
       ContainerUtil.quickSort(myCurrentHighlighters, createByLayerThenByAttributesComparator(myEditor.getColorsScheme()));
     }
 
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
       if (highlighter.getTextAttributes(myEditor.getColorsScheme()) == TextAttributes.ERASE_MARKER) {
@@ -583,7 +579,6 @@ public class IterationState {
     List<TextAttributes> cachedAttributes = myCachedAttributesList;
     if (!cachedAttributes.isEmpty()) cachedAttributes.clear();
 
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
       if (atBreak && highlighter.getTargetArea() == HighlighterTargetArea.EXACT_RANGE &&
@@ -632,7 +627,6 @@ public class IterationState {
     @JdkConstants.FontStyle int fontType = Font.PLAIN;
 
     TextAttributesEffectsBuilder effectsBuilder = null;
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < cachedAttributes.size(); i++) {
       TextAttributes attrs = cachedAttributes.get(i);
 
@@ -684,8 +678,7 @@ public class IterationState {
     return myEndOffset;
   }
 
-  @NotNull
-  public TextAttributes getMergedAttributes() {
+  public @NotNull TextAttributes getMergedAttributes() {
     return myMergedAttributes;
   }
 
@@ -698,16 +691,14 @@ public class IterationState {
   }
 
 
-  @NotNull
-  public TextAttributes getPastLineEndBackgroundAttributes() {
+  public @NotNull TextAttributes getPastLineEndBackgroundAttributes() {
     myMergedAttributes.setBackgroundColor(hasSoftWrap() ? getBreakBackgroundColor(true) :
                                           isEditorRightAligned() && myLastBackgroundColor != null ? myLastBackgroundColor :
                                           myCurrentBackgroundColor);
     return myMergedAttributes;
   }
 
-  @NotNull
-  public TextAttributes getBeforeLineStartBackgroundAttributes() {
+  public @NotNull TextAttributes getBeforeLineStartBackgroundAttributes() {
     return isEditorRightAligned() && !hasSoftWrap() ?
            getBreakAttributes() :
            new TextAttributes(null, getBreakBackgroundColor(false), null, null, Font.PLAIN);
@@ -737,7 +728,7 @@ public class IterationState {
     return myEditor instanceof EditorImpl && ((EditorImpl)myEditor).isRightAligned();
   }
 
-  private static class LayerComparator implements Comparator<RangeHighlighterEx> {
+  private static final class LayerComparator implements Comparator<RangeHighlighterEx> {
     private static final LayerComparator INSTANCE = new LayerComparator();
     @Override
     public int compare(RangeHighlighterEx o1, RangeHighlighterEx o2) {

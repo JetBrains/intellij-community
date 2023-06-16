@@ -169,12 +169,15 @@ public class ActionButtonWithText extends ActionButton {
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
       HelpTooltip.dispose(this);
-      if (StringUtil.isNotEmpty(description)) {
-        HelpTooltip tooltip = new HelpTooltip().setDescription(description);
+      HelpTooltip tooltip = myPresentation.getClientProperty(CUSTOM_HELP_TOOLTIP);
+      if (StringUtil.isNotEmpty(description) && tooltip == null) {
+        tooltip = new HelpTooltip().setDescription(description);
         Boolean property = myPresentation.getClientProperty(SHORTCUT_SHOULD_SHOWN);
         if(property != null && property) {
           tooltip.setShortcut(getShortcutText());
         }
+      }
+      if (tooltip != null) {
         tooltip.installOn(this);
       }
     } else {

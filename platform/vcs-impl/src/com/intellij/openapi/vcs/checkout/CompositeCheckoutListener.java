@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.checkout;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -39,18 +40,34 @@ public final class CompositeCheckoutListener implements CheckoutProvider.Listene
     if (myFirstDirectory == null) myFirstDirectory = directory;
 
     for (CheckoutListener listener : CheckoutListener.EP_NAME.getExtensionList()) {
-      myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
-      if (myFoundProject) {
-        LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
-        break;
+      try {
+        myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
+        if (myFoundProject) {
+          LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
+          break;
+        }
+      }
+      catch (ProcessCanceledException ignore) {
+        LOG.info("Checkout listener " + listener + " has been canceled");
+      }
+      catch (Exception e) {
+        LOG.warn("Error in checkout listener: " + listener, e);
       }
     }
 
     for (VcsAwareCheckoutListener listener : VcsAwareCheckoutListener.EP_NAME.getExtensionList()) {
-      boolean processingCompleted = listener.processCheckedOutDirectory(myProject, directory, vcs);
-      if (processingCompleted) {
-        LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
-        break;
+      try {
+        boolean processingCompleted = listener.processCheckedOutDirectory(myProject, directory, vcs);
+        if (processingCompleted) {
+          LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
+          break;
+        }
+      }
+      catch (ProcessCanceledException ignore) {
+        LOG.info("Checkout listener " + listener + " has been canceled");
+      }
+      catch (Exception e) {
+        LOG.warn("Error in checkout listener: " + listener, e);
       }
     }
 
@@ -68,10 +85,18 @@ public final class CompositeCheckoutListener implements CheckoutProvider.Listene
     if (directory == null) return;
 
     for (CheckoutListener listener : CheckoutListener.COMPLETED_EP_NAME.getExtensionList()) {
-      boolean foundProject = listener.processCheckedOutDirectory(myProject, directory);
-      if (foundProject) {
-        LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
-        break;
+      try {
+        boolean foundProject = listener.processCheckedOutDirectory(myProject, directory);
+        if (foundProject) {
+          LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
+          break;
+        }
+      }
+      catch (ProcessCanceledException ignore) {
+        LOG.info("Checkout listener " + listener + " has been canceled");
+      }
+      catch (Exception e) {
+        LOG.warn("Error in checkout listener: " + listener, e);
       }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
-import com.intellij.openapi.util.CachedImageIcon;
 import com.intellij.ui.RetrievableIcon;
+import com.intellij.ui.icons.CachedImageIcon;
 import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.util.ui.accessibility.SimpleAccessible;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,15 +21,17 @@ import javax.swing.*;
 import java.util.regex.Pattern;
 
 /**
- * Interface which should be implemented in order to draw icons in the gutter area and handle events
- * for them. Gutter icons are drawn to the left of the folding area and can be used, for example,
- * to mark implemented or overridden methods.<p/>
- *
- * Daemon code analyzer checks newly arrived gutter icon renderer against the old one and if they are equal, does not redraw the icon.
- * So it is highly advisable to override hashCode()/equals() methods to avoid icon flickering when old gutter renderer gets replaced with
- * the new. Proper implementation of {@code equals} is also important for instances used to specify gutter icons for inlays
- * (see {@link EditorCustomElementRenderer#calcGutterIconRenderer(Inlay)})<p/>
- *
+ * Represents an icon in the gutter area, including its actions.
+ * Gutter icons are drawn to the left of the folding area
+ * and can be used, for example, to mark implemented or overridden methods.
+ * <p>
+ * The daemon code analyzer checks a newly arrived gutter icon renderer
+ * against the old one, and if they are equal, does not redraw the icon.
+ * So it is highly advisable to override {@link #hashCode()}/{@link #equals(Object)}
+ * to avoid icon flickering when the old gutter renderer gets replaced with the new one.
+ * Proper implementation of {@code equals} is also important for renderers that specify
+ * gutter icons for inlays, see {@link EditorCustomElementRenderer#calcGutterIconRenderer(Inlay)}.
+ * <p>
  * During indexing, methods are only invoked for renderers implementing {@link DumbAware}.
  *
  * @author max
@@ -39,10 +41,9 @@ import java.util.regex.Pattern;
  */
 public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAware, SimpleAccessible {
   /**
-   * Returns the action group actions from which are used to fill the context menu
-   * displayed when the icon is right-clicked.
+   * Returns the action group actions that are used to fill the icon's context menu.
    *
-   * @return the group of actions for the context menu, or null if no context menu is required.
+   * @return the actions for the context menu, or null if no context menu is needed
    * @see #getRightButtonClickAction()
    */
   @Nullable
@@ -51,9 +52,9 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
   }
 
   /**
-   * Returns the text of the tooltip displayed when the mouse is over the icon.
+   * Returns the text of the tooltip displayed when the mouse hovers over the icon.
    *
-   * @return the tooltip text, or null if no tooltip is required.
+   * @return the tooltip text, or null if no tooltip is needed
    */
   @Override
   @Nullable
@@ -64,7 +65,7 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
   /**
    * Returns the action executed when the icon is left-clicked.
    *
-   * @return the action instance, or null if no action is required.
+   * @return the action instance, or null if there is no left-click action
    */
   @Nullable
   public AnAction getClickAction() {
@@ -74,7 +75,7 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
   /**
    * Returns the action executed when the icon is middle-clicked.
    *
-   * @return the action instance, or null if no action is required.
+   * @return the action instance, or null if there is no middle-click action
    */
   @Nullable
   public AnAction getMiddleButtonClickAction() {
@@ -93,18 +94,18 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
   }
 
   /**
-   * Returns the value indicating whether the hand cursor should be displayed when the mouse
-   * is hovering over the icon.
+   * Returns whether the hand cursor should be displayed when the mouse is hovering over the icon.
    *
-   * @return true if the hand cursor should be displayed, false if the regular cursor is displayed.
+   * @return {@code true} to display the hand cursor, {@code false} to display the regular cursor
    */
   public boolean isNavigateAction() {
     return false;
   }
 
   /**
-   * Defines positioning of the icon inside gutter's icon area. The order, in which icons with the same alignment values are displayed, is
-   * not specified (it can be influenced using {@link com.intellij.openapi.editor.GutterMarkPreprocessor}).
+   * Defines positioning of the icon inside the gutter's icon area.
+   * The order in which icons with the same alignment values are displayed is not specified
+   * (it can be influenced using {@link com.intellij.openapi.editor.GutterMarkPreprocessor}).
    */
   @NotNull
   public Alignment getAlignment() {
@@ -112,9 +113,9 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
   }
 
   /**
-   * Returns the callback which can be used to handle drag and drop of the gutter icon.
+   * Returns the callback that handles drag and drop of the gutter icon.
    *
-   * @return the drag handler callback, or null if no drag and drop of the icon is required.
+   * @return the drag handler callback, or null if the icon does not support drag and drop.
    */
   @Nullable
   public GutterDraggableObject getDraggableObject() {
@@ -165,7 +166,8 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
 
   public enum Alignment {
     /**
-     * A special alignment option to put icon on top of line number. Used for breakpoints in new UI.
+     * A special alignment option to replace the line number with the icon.
+     * Used for breakpoints in the New UI.
      */
     @ApiStatus.Internal
     LINE_NUMBERS(0),

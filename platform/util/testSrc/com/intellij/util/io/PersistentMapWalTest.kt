@@ -14,11 +14,11 @@ import java.nio.file.Path
 class PersistentMapWalTest {
   @Rule
   @JvmField
-  val tempDirectory = TemporaryDirectory()
+  val tempDirectory: TemporaryDirectory = TemporaryDirectory()
 
   @Rule
   @JvmField
-  val debugWal = TestRule { base, _ ->
+  val debugWal: TestRule = TestRule { base, _ ->
     object : Statement() {
       override fun evaluate() {
         debugWalRecords = true

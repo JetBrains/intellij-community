@@ -8,7 +8,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiManager
 import org.jetbrains.uast.UastLanguagePlugin
 
-@Service
+@Service(Service.Level.PROJECT)
 class UastModificationTracker internal constructor(val project: Project) : ModificationTracker, Disposable {
   private var languageTrackers: List<ModificationTracker>
 

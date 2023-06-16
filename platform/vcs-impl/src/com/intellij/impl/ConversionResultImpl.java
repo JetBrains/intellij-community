@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.impl;
 
 import com.intellij.conversion.ConversionResult;
@@ -85,7 +85,7 @@ final class ConversionResultImpl implements ConversionResult {
         ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
         changeListManager.addUnversionedFiles(null, new ArrayList<>(selected));
       }
-    }, ModalityState.NON_MODAL, project.getDisposed());
+    }, ModalityState.nonModal(), project.getDisposed());
   }
 
   private static boolean containsFilesUnderVcs(@NotNull List<? extends VirtualFile> files, Project project) {

@@ -2,12 +2,11 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
-import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -26,19 +25,39 @@ import java.util.Objects;
 /**
  * refactored from {@link MoveInitializerToConstructorAction}
  */
-public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIntentionAction {
+public abstract class BaseMoveInitializerToMethodAction extends PsiUpdateModCommandAction<PsiField> {
+  public BaseMoveInitializerToMethodAction() {
+    super(PsiField.class);
+  }
+
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (element instanceof PsiCompiledElement) return false;
-    final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false, PsiMember.class, PsiCodeBlock.class, PsiDocComment.class);
-    if (field == null || hasUnsuitableModifiers(field)) return false;
+  @NotNull
+  public String getFamilyName() {
+    return getText();
+  }
+
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiField element) {
+    if (PsiTreeUtil.getParentOfType(context.findLeaf(), PsiField.class, false, PsiMember.class, PsiCodeBlock.class, PsiDocComment.class) !=
+        element) {
+      return null;
+    }
+    return isAvailable(element) ? Presentation.of(getText()) : null;
+  }
+
+  protected boolean isAvailable(@NotNull PsiField field) {
+    if (hasUnsuitableModifiers(field)) return false;
     // Doesn't work for Groovy
     if (field.getLanguage() != JavaLanguage.INSTANCE) return false;
     PsiExpression initializer = field.getInitializer();
     if (initializer == null || initializer.getNextSibling() instanceof PsiErrorElement) return false;
     PsiClass psiClass = field.getContainingClass();
 
-    return psiClass != null && !psiClass.isInterface() && !(psiClass instanceof PsiAnonymousClass) && !(psiClass instanceof PsiSyntheticClass);
+    return psiClass != null &&
+           !psiClass.isInterface() &&
+           !psiClass.isRecord() &&
+           !(psiClass instanceof PsiAnonymousClass) &&
+           !(psiClass instanceof PsiSyntheticClass);
   }
 
   private boolean hasUnsuitableModifiers(@NotNull PsiField field) {
@@ -50,18 +69,18 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     return false;
   }
 
+  @IntentionName
+  protected abstract String getText();
+
   @NotNull
   protected abstract Collection<String> getUnsuitableModifiers();
 
-
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
-    assert field != null;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiField field, @NotNull EditorUpdater updater) {
     final PsiClass aClass = field.getContainingClass();
     if (aClass == null) return;
 
-    final Collection<PsiMethod> methodsToAddInitialization = getOrCreateMethods(project, editor, element.getContainingFile(), aClass);
+    final Collection<PsiMethod> methodsToAddInitialization = getOrCreateMethods(aClass);
 
     if (methodsToAddInitialization.isEmpty()) return;
 
@@ -72,15 +91,11 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     }
 
     if (!assignments.isEmpty()) {
-      highlightRExpression((PsiAssignmentExpression)assignments.get(0).getExpression(), project, editor);
+      PsiExpression expression = ((PsiAssignmentExpression)assignments.get(0).getExpression()).getRExpression();
+      if (expression != null) {
+        updater.highlight(expression, EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      }
     }
-  }
-
-  private static void highlightRExpression(@NotNull PsiAssignmentExpression assignment, @NotNull Project project, Editor editor) {
-    final PsiExpression expression = assignment.getRExpression();
-
-    HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{expression}, 
-                                                                  EditorColors.SEARCH_RESULT_ATTRIBUTES, false, null);
   }
 
   @NotNull
@@ -103,8 +118,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
   }
 
   @NotNull
-  protected abstract Collection<PsiMethod> getOrCreateMethods(@NotNull Project project, @NotNull Editor editor, PsiFile file, @NotNull PsiClass aClass);
-
+  protected abstract Collection<PsiMethod> getOrCreateMethods(@NotNull PsiClass aClass);
 
   @NotNull
   private static PsiExpressionStatement addAssignment(@NotNull PsiCodeBlock codeBlock, @NotNull PsiField field) throws IncorrectOperationException {

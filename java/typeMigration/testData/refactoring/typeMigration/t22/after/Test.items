@@ -1,7 +1,9 @@
 Types:
 PsiField:f : java.lang.Integer
-PsiParameter:s : java.lang.Integer
+PsiParameter:s : java.lang.Integer...
+PsiParameter:s1 : java.lang.Integer
 PsiReferenceExpression:f : java.lang.Integer
+PsiReferenceExpression:s : java.lang.Integer[]
 
 Conversions:
 f -> $

@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyle
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyleState
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.StyleManager
+import com.intellij.ui.icons.overrideIconScale
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
@@ -19,20 +20,16 @@ import javax.swing.border.Border
 import javax.swing.plaf.ButtonUI
 import javax.swing.plaf.basic.BasicButtonUI
 
-internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
+internal open class CustomFrameTitleButtons(myCloseAction: Action) {
   companion object {
-    private val closeIcon = freezeIconUserSize(AllIcons.Windows.CloseActive)
-    private val closeHoverIcon = freezeIconUserSize(AllIcons.Windows.CloseHover)
-    private val closeInactive = freezeIconUserSize(AllIcons.Windows.CloseInactive)
+    private val closeIcon = AllIcons.Windows.CloseActive
+    private val closeHoverIcon = AllIcons.Windows.CloseHover
+    private val closeInactive = AllIcons.Windows.CloseInactive
 
     fun create(myCloseAction: Action): CustomFrameTitleButtons {
       val darculaTitleButtons = CustomFrameTitleButtons(myCloseAction)
       darculaTitleButtons.createChildren()
       return darculaTitleButtons
-    }
-
-    fun freezeIconUserSize(icon: Icon): Icon {
-      return IconUtil.overrideScale(IconUtil.deepCopy(icon, null), ScaleType.USR_SCALE.of(UISettings.defFontScale.toDouble()))
     }
   }
 
@@ -67,7 +64,7 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
     }
   }
 
-  val closeStyleBuilder = ComponentStyle.ComponentStyleBuilder<JButton> {
+  val closeStyleBuilder: ComponentStyle.ComponentStyleBuilder<JButton> = ComponentStyle.ComponentStyleBuilder<JButton> {
     isOpaque = false
     border = Borders.empty()
     icon = closeIcon
@@ -86,7 +83,7 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
   private val activeCloseStyle = closeStyleBuilder.build()
 
   private val inactiveCloseStyle = closeStyleBuilder
-    .updateDefault() {
+    .updateDefault {
       icon = closeInactive
     }.build()
 
@@ -102,7 +99,7 @@ internal open class CustomFrameTitleButtons constructor(myCloseAction: Action) {
       return panel.isCompactMode
     }
 
-  var isSelected = false
+  var isSelected: Boolean = false
     set(value) {
       if(field != value) {
         field = value

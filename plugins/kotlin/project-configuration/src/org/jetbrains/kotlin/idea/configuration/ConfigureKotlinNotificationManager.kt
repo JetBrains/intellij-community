@@ -17,6 +17,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.ConfigureKotlinNotification
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
@@ -31,6 +32,7 @@ object ConfigureKotlinNotificationManager : KotlinSingleNotificationManager<Conf
             .coalesceBy(this)
             .finishOnUiThread(ModalityState.any()) { notificationState ->
                 notificationState?.let {
+                    KotlinJ2KOnboardingFUSCollector.logShowConfigureKtNotification(project)
                     notify(project, ConfigureKotlinNotification(project, excludeModules, it))
                 }
             }

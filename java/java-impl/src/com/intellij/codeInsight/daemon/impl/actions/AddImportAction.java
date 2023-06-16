@@ -12,6 +12,7 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -128,7 +129,7 @@ public class AddImportAction implements QuestionAction {
 
         @Override
         public Icon getIconFor(PsiClass aValue) {
-          return aValue.getIcon(0);
+          return ReadAction.compute(() -> aValue.getIcon(0));
         }
       };
     JBPopup popup = JBPopupFactory.getInstance().createListPopup(myProject, step, superRenderer -> {

@@ -15,13 +15,14 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
@@ -64,11 +65,11 @@ public class NonReproducibleMathCallInspection extends BaseInspection {
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new MakeStrictFix();
   }
 
-  private static class MakeStrictFix extends InspectionGadgetsFix {
+  private static class MakeStrictFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -78,8 +79,8 @@ public class NonReproducibleMathCallInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiIdentifier nameIdentifier = (PsiIdentifier)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiIdentifier nameIdentifier = (PsiIdentifier)startElement;
       final PsiReferenceExpression reference = (PsiReferenceExpression)nameIdentifier.getParent();
       assert reference != null;
       final String name = reference.getReferenceName();

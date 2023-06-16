@@ -1,23 +1,7 @@
-/*
- * Copyright 2006-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -54,7 +38,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection implem
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new ManualArrayToCollectionCopyFix();
   }
 
@@ -106,7 +90,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection implem
   }
 
   private static class ManualArrayToCollectionCopyFix
-    extends InspectionGadgetsFix {
+    extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -115,8 +99,8 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection implem
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiLoopStatement loop = tryCast(descriptor.getPsiElement().getParent(), PsiLoopStatement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiLoopStatement loop = tryCast(startElement.getParent(), PsiLoopStatement.class);
       String newExpression = null;
       if (loop instanceof PsiForStatement) {
         newExpression = getCollectionsAddAllText((PsiForStatement)loop);

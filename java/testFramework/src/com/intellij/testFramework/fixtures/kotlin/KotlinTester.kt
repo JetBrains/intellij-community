@@ -30,11 +30,11 @@ object KotlinTester {
                       VersionComparatorUtil.compare(version, actualKotlinVersion) <= 0)
   }
 
-  const val KOTLIN_VERSION = "1.3.70"
+  const val KOTLIN_VERSION: String = "1.3.70"
 
-  const val KT_STD_JDK_8_MAVEN_ID = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION"
+  const val KT_STD_JDK_8_MAVEN_ID: String = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION"
 
-  const val KT_STD_MAVEN_ID = "org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION"
+  const val KT_STD_MAVEN_ID: String = "org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION"
 
   fun configureKotlinStdLib(model: ModifiableRootModel) {
     MavenDependencyUtil.addFromMaven(model, KT_STD_MAVEN_ID)

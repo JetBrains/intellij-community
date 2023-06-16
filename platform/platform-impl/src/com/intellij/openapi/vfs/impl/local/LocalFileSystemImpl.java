@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -50,11 +52,12 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     myManagingFS = ManagingFS.getInstance();
     myWatcher = new FileWatcher(myManagingFS, () -> {
       AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
-          if (!ApplicationManager.getApplication().isDisposed()) {
-            storeRefreshStatusToFiles();
-          }
-        },
-        STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
+        Application application = ApplicationManager.getApplication();
+        if (application != null && !application.isDisposed()) {
+          storeRefreshStatusToFiles();
+        }
+      },
+      STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
     });
 
     for (PluggableLocalFileSystemContentLoader contentLoader : PLUGGABLE_CONTENT_LOADER_EP_NAME.getExtensionList()) {
@@ -69,7 +72,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
     myWatchRootsManager = new WatchRootsManager(myWatcher, this);
     Disposer.register(ApplicationManager.getApplication(), this);
-    new SymbolicLinkRefresher(this);
+    new SymbolicLinkRefresher(this).refresh();
   }
 
   public @NotNull FileWatcher getFileWatcher() {
@@ -306,15 +309,13 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
           var attrs = copyWithCustomTimestamp(file, FileAttributes.fromNio(file, result.get()));
           list.put(file.getFileName().toString(), attrs);
         }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
+        catch (Exception e) { LOG.warn(e); }
         return true;
       });
 
       return list;
     }
-    catch (AccessDeniedException e) { LOG.debug(e); }
+    catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
     catch (IOException | RuntimeException e) { LOG.warn(e); }
     return Map.of();
   }

@@ -87,7 +87,7 @@ class MavenImportBadJvmConfigEventParser : MavenImportLoggedEventParser {
 
 class MavenJvmConfigOpenQuickFix(private val jvmConfig: VirtualFile) : BuildIssueQuickFix {
 
-  override val id: String = "open_maven_jvm_config_quick_fix_" + jvmConfig
+  override val id: String = "open_maven_jvm_config_quick_fix_$jvmConfig"
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
     OpenFileQuickFix.showFile(project, jvmConfig.toNioPath(), null)

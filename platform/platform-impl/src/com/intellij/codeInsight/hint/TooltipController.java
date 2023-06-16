@@ -33,9 +33,7 @@ public final class TooltipController {
   }
 
   public void cancelTooltip(@NotNull TooltipGroup groupId, MouseEvent mouseEvent, boolean forced) {
-    if (groupId.equals(myCurrentTooltipGroup)) {
-      if (!forced && myCurrentTooltip != null && myCurrentTooltip.canControlAutoHide()) return;
-
+    if (groupId.equals(myCurrentTooltipGroup) && (forced || !shouldSurvive(mouseEvent))) {
       cancelTooltips();
     }
   }
@@ -151,13 +149,10 @@ public final class TooltipController {
   }
 
   public boolean shouldSurvive(final MouseEvent e) {
-    if (myCurrentTooltip != null) {
-      if (myCurrentTooltip.canControlAutoHide()) return true;
-    }
-    return false;
+    return myCurrentTooltip != null && myCurrentTooltip.canControlAutoHide();
   }
 
-  public void hide(LightweightHint lightweightHint) {
+  public void hide(@NotNull LightweightHint lightweightHint) {
     if (myCurrentTooltip != null && myCurrentTooltip.equals(lightweightHint)) {
       hideCurrentTooltip();
     }

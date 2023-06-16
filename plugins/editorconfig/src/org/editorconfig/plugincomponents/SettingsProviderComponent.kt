@@ -6,20 +6,21 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.SlowOperations
 import org.ec4j.core.*
+import org.ec4j.core.model.Version
+import org.ec4j.core.parser.EditorConfigModelHandler
 import org.ec4j.core.parser.ParseException
 import org.editorconfig.EditorConfigRegistry
+import org.editorconfig.core.ec4jwrappers.EditorConfigErrorHandler
 import org.editorconfig.core.ec4jwrappers.EditorConfigPermanentCache
 import org.editorconfig.core.ec4jwrappers.VirtualFileResource
 import java.io.IOException
@@ -42,7 +43,7 @@ class SettingsProviderComponent(private val project: Project) : SimpleModificati
     .configFileName(EditorConfigConstants.EDITORCONFIG)
     .rootDirectories(getRootDirs().map { VirtualFileResource(it) })
     .cache(resourceCache)
-    .loader(EditorConfigLoader.default_())
+    .loader(EditorConfigLoader.of(Version.CURRENT, PropertyTypeRegistry.default_(), EditorConfigErrorHandler()))
     // TODO custom handling of unset values?
     .keepUnset(true)
     .build()
@@ -67,7 +68,9 @@ class SettingsProviderComponent(private val project: Project) : SimpleModificati
 
   fun getProperties(file: VirtualFile): ResourceProperties {
     return try {
-      resourcePropertiesService.queryProperties(VirtualFileResource(file))
+      SlowOperations.knownIssue("IDEA-307301, EA-775214").use {
+        resourcePropertiesService.queryProperties(VirtualFileResource(file))
+      }
     } catch (e: IOException) {
       // error reading from an .editorconfig file
       EMPTY_PROPERTIES

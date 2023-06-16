@@ -29,7 +29,7 @@ class CollapseAllAction : DumbAwareAction {
     if (expander.canCollapse()) expander.collapseAll()
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(event: AnActionEvent) {
     val expander = getTreeExpander(event)

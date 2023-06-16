@@ -28,7 +28,7 @@ class GitNewProjectWizardStep(
   private val gitProperty = propertyGraph.property(false)
     .bindBooleanStorage(GIT_PROPERTY_NAME)
 
-  override val git get() = gitRepositoryInitializer != null && gitProperty.get()
+  override val git: Boolean get() = gitRepositoryInitializer != null && gitProperty.get()
 
   override fun setupUI(builder: Panel) {
     if (gitRepositoryInitializer != null) {

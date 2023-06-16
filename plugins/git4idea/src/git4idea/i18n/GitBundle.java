@@ -9,28 +9,25 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class GitBundle extends DynamicBundle {
-  @NonNls public static final String BUNDLE = "messages.GitBundle";
-  private static final GitBundle INSTANCE = new GitBundle();
+public final class GitBundle {
+  public static final @NonNls String BUNDLE = "messages.GitBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(GitBundle.class, BUNDLE);
 
-  private GitBundle() { super(BUNDLE); }
+  private GitBundle() {}
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 
   /**
    * @deprecated prefer {@link #message(String, Object...)} instead
    */
-  @NotNull
   @Deprecated
-  public static @Nls String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
+  public static @NotNull @Nls String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
     return message(key);
   }
 }

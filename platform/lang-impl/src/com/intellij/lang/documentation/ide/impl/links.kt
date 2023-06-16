@@ -13,8 +13,8 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
-import com.intellij.platform.documentation.DocumentationTarget
-import com.intellij.platform.documentation.impl.handleLink
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.impl.handleLink
 import com.intellij.psi.PsiManager
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.EDT

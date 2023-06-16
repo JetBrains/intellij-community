@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class ChangesViewWorkflowManager implements Disposable {
   @Topic.ProjectLevel
   public static final Topic<ChangesViewWorkflowListener> TOPIC =
@@ -42,7 +42,7 @@ public final class ChangesViewWorkflowManager implements Disposable {
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
     CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> updateCommitWorkflowHandler());
-    ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflowHandler(), ModalityState.NON_MODAL, myProject.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflowHandler(), ModalityState.nonModal(), myProject.getDisposed());
   }
 
   @Nullable

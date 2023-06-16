@@ -76,6 +76,7 @@ public class SemicolonFixer implements Fixer {
         psiElement instanceof PsiThrowStatement ||
         psiElement instanceof PsiBreakStatement ||
         psiElement instanceof PsiContinueStatement ||
+        psiElement instanceof PsiYieldStatement ||
         psiElement instanceof PsiAssertStatement ||
         psiElement instanceof PsiPackageStatement ||
         isStandaloneField(psiElement) ||

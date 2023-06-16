@@ -45,7 +45,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
   private static final Map<String, String> CALLS_MAKING_SORT_USELESS_PARALLEL = Map.of("findAny", "findFirst",
                                                                                        "forEach", "forEachOrdered");
   private static final Set<String> CALLS_KEEPING_SORT_ORDER =
-    Set.of("filter", "distinct", "boxed", "asLongStream", "asDoubleStream", "takeWhile", "dropWhile");
+    Set.of("filter", "distinct", "boxed", "asLongStream", "asDoubleStream");
   private static final Set<String> CALLS_KEEPING_ELEMENTS_DISTINCT =
     Set.of("filter", "boxed", "asLongStream", "limit", "skip", "sorted", "takeWhile", "dropWhile");
   private static final Set<String> CALLS_AFFECTING_PARALLELIZATION = Set.of("sequential", "parallel");
@@ -368,7 +368,8 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       return isBoxUnboxMethod(call.resolveMethod());
     }
     if (!allowBoxUnbox || !(expression instanceof PsiMethodReferenceExpression methodRef)) return false;
-    if (!BOX_UNBOX_NAMES.contains(methodRef.getReferenceName())) return false;
+    String referenceName = methodRef.getReferenceName();
+    if (referenceName == null || !BOX_UNBOX_NAMES.contains(referenceName)) return false;
     PsiMethod method = tryCast(methodRef.resolve(), PsiMethod.class);
     return isBoxUnboxMethod(method);
   }
@@ -399,7 +400,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     return false;
   }
 
-  private static class RemoveCallFix implements LocalQuickFix {
+  private static class RemoveCallFix extends PsiUpdateModCommandQuickFix {
     private final @NotNull String myMethodName;
     private final @Nullable String myBindPreviousCall;
 
@@ -430,8 +431,8 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = tryCast(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiMethodCallExpression call = tryCast(element, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return;
@@ -444,10 +445,14 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     }
   }
 
-  private record ReplaceTerminalCallFix(String newName) implements LocalQuickFix, HighPriorityAction {
+  private static final class ReplaceTerminalCallFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
+    private final String myNewName;
+
+    private ReplaceTerminalCallFix(String newName) { this.myNewName = newName; }
+
     @Override
     public @NotNull String getName() {
-      return JavaBundle.message("inspection.redundant.stream.optional.call.fix.replace.terminal.text", newName);
+      return JavaBundle.message("inspection.redundant.stream.optional.call.fix.replace.terminal.text", myNewName);
     }
 
     @Override
@@ -456,17 +461,17 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!(descriptor.getStartElement() instanceof PsiMethodCallExpression call)) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      if (!(element instanceof PsiMethodCallExpression call)) return;
       PsiMethodCallExpression furtherCall = findCallThatSpoilsSorting(call);
       if (furtherCall == null) return;
       String name = furtherCall.getMethodExpression().getReferenceName();
-      if (name == null || !newName.equals(CALLS_MAKING_SORT_USELESS_PARALLEL.get(name))) return;
-      ExpressionUtils.bindCallTo(furtherCall, newName);
+      if (name == null || !myNewName.equals(CALLS_MAKING_SORT_USELESS_PARALLEL.get(name))) return;
+      ExpressionUtils.bindCallTo(furtherCall, myNewName);
     }
   }
 
-  private static class CollectToOrderedSetFix implements LocalQuickFix {
+  private static class CollectToOrderedSetFix extends PsiUpdateModCommandQuickFix {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -475,8 +480,8 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression sortCall = tryCast(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiMethodCallExpression sortCall = tryCast(element, PsiMethodCallExpression.class);
       if (sortCall == null) return;
       PsiMethodCallExpression collector =
         findSubsequentCall(sortCall, c -> false, UNORDERED_COLLECTOR, CALLS_KEEPING_SORT_ORDER::contains);

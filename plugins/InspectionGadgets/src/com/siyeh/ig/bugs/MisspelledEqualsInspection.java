@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameterList;
 import com.siyeh.HardcodedMethodConstants;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public class MisspelledEqualsInspection extends BaseInspection {
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new RenameFix(HardcodedMethodConstants.EQUALS);
   }
 

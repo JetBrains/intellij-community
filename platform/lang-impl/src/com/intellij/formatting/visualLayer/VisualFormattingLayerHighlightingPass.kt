@@ -12,7 +12,7 @@ import com.intellij.psi.PsiFile
 
 
 class VisualFormattingLayerHighlightingPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
-  override fun createHighlightingPass(file: PsiFile, editor: Editor) = VisualFormattingLayerHighlightingPass(editor, file)
+  override fun createHighlightingPass(file: PsiFile, editor: Editor): VisualFormattingLayerHighlightingPass = VisualFormattingLayerHighlightingPass(editor, file)
   override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
   }

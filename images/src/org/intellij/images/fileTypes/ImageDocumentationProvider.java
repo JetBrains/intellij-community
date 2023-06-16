@@ -26,6 +26,9 @@ public class ImageDocumentationProvider extends AbstractDocumentationProvider {
       return null;
     }
     final VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
+    if (file == null) {
+      return null;
+    }
     ImageInfo imageInfo = ImageInfoIndex.getInfo(file, element.getProject());
     if (imageInfo == null) {
       return null;

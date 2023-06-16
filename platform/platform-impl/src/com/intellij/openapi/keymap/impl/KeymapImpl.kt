@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
@@ -216,10 +216,10 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
           else inherited - toDelete
         }
         !list.contains(toDelete) -> list
-        parent == null -> if (list.size == 1) null else ContainerUtil.newUnmodifiableList(list - toDelete)
+        parent == null -> if (list.size == 1) null else java.util.List.copyOf(list - toDelete)
         else -> {
           val result = list - toDelete
-          if (result.areShortcutsEqualToParent(id)) null else ContainerUtil.newUnmodifiableList(result)
+          if (result.areShortcutsEqualToParent(id)) null else java.util.List.copyOf(result)
         }
       }
     }
@@ -476,7 +476,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         }
       }
       // creating the list even when there are no shortcuts (empty element means that an action overrides a parent one to clear shortcuts)
-      actionIdToShortcuts[id] = Collections.unmodifiableList(shortcuts)
+      actionIdToShortcuts[id] = java.util.List.copyOf(shortcuts)
     }
 
     ActionsCollectorImpl.onActionsLoadedFromKeymapXml(this, actionIds)
@@ -738,7 +738,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
             .addAction(action)
             .notify(project)
         },
-        ModalityState.NON_MODAL)
+        ModalityState.nonModal())
     }
   })
 }

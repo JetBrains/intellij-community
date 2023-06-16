@@ -5,9 +5,13 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
@@ -19,6 +23,8 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.ClickListener;
+import com.intellij.util.LazyInitializer;
+import com.intellij.util.LazyInitializer.LazyValue;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
@@ -45,11 +51,16 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
   private IdeErrorsDialog dialog;
   private boolean isOpeningInProgress;
 
-  private final JPanel component;
+  private final LazyValue<JPanel> component;
+
+  private final IdeMessageAction action = new IdeMessageAction();
 
   public IdeMessagePanel(@Nullable IdeFrame frame, @NotNull MessagePool messagePool) {
-    component = new JPanel(new BorderLayout());
-    component.setOpaque(false);
+    component = LazyInitializer.create(() -> {
+      var result = new JPanel(new BorderLayout());
+      result.setOpaque(false);
+      return result;
+    });
 
     this.frame = frame;
 
@@ -76,7 +87,11 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
 
   @Override
   public JComponent getComponent() {
-    return component;
+    return component.get();
+  }
+
+  public AnAction getAction() {
+    return action;
   }
 
   public void openErrorsDialog(@Nullable LogMessage message) {
@@ -139,11 +154,13 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
         }.installOn(icon);
 
         this.icon = icon;
-        component.add(icon, BorderLayout.CENTER);
+        component.get().add(icon, BorderLayout.CENTER);
       }
 
       icon.setState(state);
-      component.setVisible(state != MessagePool.State.NoErrors);
+      component.get().setVisible(state != MessagePool.State.NoErrors);
+      action.icon = icon.getIcon();
+      action.state = state;
     });
   }
 
@@ -225,5 +242,27 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
     balloon = NotificationsManagerImpl.createBalloon(frame, notification, false, false, new Ref<>(layoutData), project);
     Disposer.register(balloon, () -> balloon = null);
     layout.add(balloon);
+  }
+
+  private class IdeMessageAction extends AnAction implements DumbAware {
+
+    private MessagePool.State state = MessagePool.State.NoErrors;
+    private Icon icon;
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      openErrorsDialog(null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(state != MessagePool.State.NoErrors);
+      e.getPresentation().setIcon(icon);
+    }
   }
 }

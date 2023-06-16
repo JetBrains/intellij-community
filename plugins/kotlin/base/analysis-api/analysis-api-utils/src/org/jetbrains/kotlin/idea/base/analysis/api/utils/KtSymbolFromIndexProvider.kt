@@ -10,13 +10,14 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfTypeSafe
-import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 
 class KtSymbolFromIndexProvider(private val project: Project) {
     context(KtAnalysisSession)
@@ -37,6 +38,9 @@ class KtSymbolFromIndexProvider(private val project: Project) {
             for (value in values) {
                 value.getNamedClassOrObjectSymbol()?.let { yield(it) }
             }
+            yieldAll(
+                getResolveExtensionScopeWithTopLevelDeclarations().getClassifierSymbols(name).filterIsInstance<KtNamedClassOrObjectSymbol>()
+            )
         }
     }
 
@@ -57,6 +61,9 @@ class KtSymbolFromIndexProvider(private val project: Project) {
             for (ktClassOrObject in values) {
                 ktClassOrObject.getNamedClassOrObjectSymbol()?.let { yield(it) }
             }
+            yieldAll(
+                getResolveExtensionScopeWithTopLevelDeclarations().getClassifierSymbols(nameFilter).filterIsInstance<KtNamedClassOrObjectSymbol>()
+            )
         }
     }
 
@@ -66,7 +73,7 @@ class KtSymbolFromIndexProvider(private val project: Project) {
         psiFilter: (PsiClass) -> Boolean = { true }
     ): Sequence<KtNamedClassOrObjectSymbol> {
         val scope = analysisScope
-        val names = buildSet<Name> {
+        val names = buildSet {
             forEachNonKotlinCache { cache ->
                 cache.processAllClassNames({ nameString ->
                     if (!Name.isValidIdentifier(nameString)) return@processAllClassNames true
@@ -112,7 +119,7 @@ class KtSymbolFromIndexProvider(private val project: Project) {
 
         val values = SmartList<KtNamedDeclaration>()
         val processor = CancelableCollectFilterProcessor(values) {
-            it is KtCallableDeclaration && psiFilter(it) && !it.isExpectDeclaration()
+            it is KtCallableDeclaration && psiFilter(it) && !it.isExpectDeclaration() && !it.isKotlinBuiltins()
         }
         KotlinFunctionShortNameIndex.processElements(nameString, project, scope, processor)
         KotlinPropertyShortNameIndex.processElements(nameString, project, scope, processor)
@@ -121,6 +128,9 @@ class KtSymbolFromIndexProvider(private val project: Project) {
             for (callableDeclaration in values) {
                 callableDeclaration.getSymbolOfTypeSafe<KtCallableSymbol>()?.let { yield(it) }
             }
+            yieldAll(
+                getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols(name)
+            )
         }
     }
 
@@ -149,4 +159,13 @@ class KtSymbolFromIndexProvider(private val project: Project) {
     }
 
     private fun getShortName(fqName: String) = Name.identifier(fqName.substringAfterLast('.'))
+}
+
+private val KotlinBuiltins = setOf("kotlin/ArrayIntrinsicsKt", "kotlin/internal/ProgressionUtilKt")
+fun KtCallableDeclaration.isKotlinBuiltins(): Boolean {
+    val file = containingKtFile
+    val virtualFile = file.virtualFile
+    if (virtualFile.extension == "kotlin_metadata") return true
+    if (this !is KtNamedFunction) return false
+    return file.packageFqName.asString().replace(".", "/") + "/" + virtualFile.nameWithoutExtension in KotlinBuiltins
 }

@@ -9,3 +9,4 @@ class Test {
 fun test() {
     Test.Companion.S<caret>
 }
+// AUTOCOMPLETE_SETTING: true

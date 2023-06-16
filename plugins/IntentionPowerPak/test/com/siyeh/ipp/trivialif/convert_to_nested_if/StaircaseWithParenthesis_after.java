@@ -6,7 +6,9 @@ public class X {
     // the following return statement is converted by "Convert to multiple 'ifs'" (on the second &&) to the below, incorrect if-then-else
       if (a > c) if (a < b) if (!bar1(a//comment in bar1
       )) if (!bar2(//comment in bar2
-              a)) return true;/*inside nested*///comment after first condition
+              a)) return true;
+      /*inside nested*/
+      //comment after first condition
       return false;//after end
   }
 

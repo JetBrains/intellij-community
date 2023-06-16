@@ -7,6 +7,7 @@ class A(
     val c = 1
     val d = "A"
 }
+// PRODUCED_CLASS_NAMES: A
 
 //FILE: b/a.kt
 class B(
@@ -19,3 +20,4 @@ class B(
         val b = 6
     }
 }
+// PRODUCED_CLASS_NAMES: B

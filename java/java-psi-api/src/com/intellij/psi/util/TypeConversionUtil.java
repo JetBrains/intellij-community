@@ -142,6 +142,11 @@ public final class TypeConversionUtil {
               return true;
             }
           }
+          //unboxing and widening with type parameters
+          if (fromTypeRank == UNKNOWN_RANK &&
+              isUnboxable((PsiPrimitiveType)toType, (PsiClassType)fromType, new HashSet<>())) {
+            return true;
+          }
         }
         return fromTypeRank == toTypeRank ||
                fromTypeRank < toTypeRank && toTypeRank <= MAX_NUMERIC_RANK;
@@ -423,11 +428,13 @@ public final class TypeConversionUtil {
                                               @NotNull PsiClass psiClass,
                                               @NotNull List<PsiClass> sealedClasses) {
     if (subClass == null) return false;
-    if (subClass.hasModifierProperty(PsiModifier.NON_SEALED) || InheritanceUtil.isInheritorOrSelf(subClass, psiClass, true)) return true;
     if (subClass.hasModifierProperty(PsiModifier.SEALED)) {
       sealedClasses.add(subClass);
+      return false;
     }
-    return false;
+    //DON'T use `hasModifierProperty(PsiModifier.NON_SEALED)`, because compiled classes don't have this modifier
+    return !subClass.hasModifierProperty(PsiModifier.FINAL) ||
+           InheritanceUtil.isInheritorOrSelf(subClass, psiClass, true);
   }
 
   @NotNull

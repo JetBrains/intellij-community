@@ -9,11 +9,11 @@ import javax.swing.DefaultFocusManager
 
 /**
  * We extend the obsolete [DefaultFocusManager] class here instead of [KeyboardFocusManager] to prevent unwanted overwriting of
- * the default focus traversal policy by careless clients. In case they use the obsolete [FocusManager.getCurrentManager] method
+ * the default focus traversal policy by careless clients. In case they use the obsolete [javax.swing.FocusManager.getCurrentManager] method
  * instead of [KeyboardFocusManager.getCurrentKeyboardFocusManager], the former will override the default focus traversal policy,
- * if current focus manager doesn't extend [FocusManager]. We choose to extend [DefaultFocusManager], not just
- * [FocusManager] for the reasons described in [DelegatingDefaultFocusManager]'s javadoc - just in case some legacy code expects
- * it.
+ * if current focus manager doesn't extend [javax.swing.FocusManager]. We choose to extend [DefaultFocusManager], not just
+ * [javax.swing.FocusManager] for the reasons described in [javax.swing.DelegatingDefaultFocusManager]'s javadoc -
+ * just in case some legacy code expects it.
  */
 internal class IdeKeyboardFocusManager : DefaultFocusManager() /* see javadoc above */ {
   // Don't inline this field, it's here to prevent policy override by parent's constructor. Don't make it final either.

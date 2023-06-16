@@ -8,14 +8,14 @@
 <pre><code>
   var counter: Int = 0
       set(value) {
-          <b>counter</b> = if (value < 0) 0 else value
+          <b>counter</b> = if (value &lt; 0) 0 else value
       }
 </code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
   var counter: Int = 0
       set(value) {
-          <b>field</b> = if (value < 0) 0 else value
+          <b>field</b> = if (value &lt; 0) 0 else value
       }
 </code></pre>
 </body>

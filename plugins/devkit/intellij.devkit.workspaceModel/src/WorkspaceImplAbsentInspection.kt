@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.workspaceModel.codegen.SKIPPED_TYPES
+import com.intellij.workspaceModel.codegen.engine.SKIPPED_TYPES
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.psi.*
 
@@ -37,6 +37,6 @@ private class GenerateWorkspaceModelFix(psiElement: PsiElement) : LocalQuickFixO
   override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
     val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
     val module = projectFileIndex.getModuleForFile(file.virtualFile)
-    WorkspaceModelGenerator.generate(project, module!!)
+    WorkspaceModelGenerator.getInstance(project).generate(module!!)
   }
 }

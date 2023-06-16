@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -13,6 +13,7 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.ide.util.scopeChooser.ScopeModel;
+import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.*;
@@ -29,6 +30,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -51,7 +53,10 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class AbstractGotoSEContributor implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting {
+public abstract class AbstractGotoSEContributor implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
+                                                           SearchFieldActionsContributor,
+                                                           SearchEverywhereExtendedInfoProvider {
+  protected static final Pattern ourPatternToDetectAnonymousClasses = Pattern.compile("([.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
   private static final Key<Map<String, String>> SE_SELECTED_SCOPES = Key.create("SE_SELECTED_SCOPES");
 
@@ -234,6 +239,13 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       boolean everywhere = scope.isSearchInLibraries();
       ChooseByNameViewModel viewModel = new MyViewModel(myProject, model);
 
+      if (Registry.is("search.everywhere.recents")) {
+        if (provider.fetchRecents(myProject, progressIndicator, pattern, viewModel,
+                                  item -> processElement(progressIndicator, consumer, model, item.getItem(), item.getWeight()))) {
+          return;
+        }
+      }
+
       if (provider instanceof ChooseByNameInScopeItemProvider) {
         FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, scope);
         ((ChooseByNameInScopeItemProvider)provider).filterElementsWithWeights(viewModel, parameters, progressIndicator,
@@ -264,6 +276,12 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       ProgressIndicatorUtils.yieldToPendingWriteActions();
       ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(fetchRunnable, progressIndicator);
     }
+  }
+
+  @NotNull
+  @Override
+  public List<AnAction> createRightActions(@NotNull String pattern, @NotNull Runnable onChanged) {
+    return ContainerUtil.emptyList();
   }
 
   protected boolean processElement(@NotNull ProgressIndicator progressIndicator,
@@ -341,7 +359,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
           Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
           return new Pair<>(psiElement, extNavigatable);
         })
-        .finishOnUiThread(ModalityState.NON_MODAL,
+        .finishOnUiThread(ModalityState.nonModal(),
                           pair -> {
                             Navigatable extNavigatable = pair.second;
                             PsiElement psiElement = pair.first;
@@ -419,6 +437,10 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   }
 
   protected PsiElement preparePsi(PsiElement psiElement, int modifiers, String searchText) {
+    String path = pathToAnonymousClass(searchText);
+    if (path != null) {
+      psiElement = getElement(psiElement, path);
+    }
     return psiElement.getNavigationElement();
   }
 
@@ -447,6 +469,46 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     }
 
     return -1;
+  }
+
+  private static String pathToAnonymousClass(String searchedText) {
+    return ClassSearchEverywhereContributor.pathToAnonymousClass(ourPatternToDetectAnonymousClasses.matcher(searchedText));
+  }
+
+  @NotNull
+  public static PsiElement getElement(@NotNull PsiElement element, @NotNull String path) {
+    final String[] classes = path.split("\\$");
+    List<Integer> indexes = new ArrayList<>();
+    for (String cls : classes) {
+      if (cls.isEmpty()) continue;
+      try {
+        indexes.add(Integer.parseInt(cls) - 1);
+      }
+      catch (Exception e) {
+        return element;
+      }
+    }
+    PsiElement current = element;
+    for (int index : indexes) {
+      final PsiElement[] anonymousClasses = getAnonymousClasses(current);
+      if (index >= 0 && index < anonymousClasses.length) {
+        current = anonymousClasses[index];
+      }
+      else {
+        return current;
+      }
+    }
+    return current;
+  }
+
+  private static PsiElement @NotNull [] getAnonymousClasses(@NotNull PsiElement element) {
+    for (AnonymousElementProvider provider : AnonymousElementProvider.EP_NAME.getExtensionList()) {
+      final PsiElement[] elements = provider.getAnonymousElements(element);
+      if (elements.length > 0) {
+        return elements;
+      }
+    }
+    return PsiElement.EMPTY_ARRAY;
   }
 
   private static final class MyViewModel implements ChooseByNameViewModel {

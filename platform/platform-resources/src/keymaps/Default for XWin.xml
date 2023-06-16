@@ -1,5 +1,5 @@
 <keymap version="1" name="Default for XWin" disable-mnemonics="false" parent="$default">
-  <action id="FileChooserList.Root">
+  <action id="FileChooser.GoToRoot">
     <keyboard-shortcut first-keystroke="control SLASH"/>
   </action>
   <action id="RunToCursor">

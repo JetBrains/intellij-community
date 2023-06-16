@@ -16,13 +16,14 @@
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
@@ -47,11 +48,11 @@ public class UnusedLabelInspection extends BaseInspection implements CleanupLoca
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new UnusedLabelFix();
   }
 
-  private static class UnusedLabelFix extends InspectionGadgetsFix {
+  private static class UnusedLabelFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -61,8 +62,7 @@ public class UnusedLabelInspection extends BaseInspection implements CleanupLoca
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement label = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement label, @NotNull EditorUpdater updater) {
       final PsiElement parent = label.getParent();
       if (!(parent instanceof PsiLabeledStatement labeledStatement)) {
         return;

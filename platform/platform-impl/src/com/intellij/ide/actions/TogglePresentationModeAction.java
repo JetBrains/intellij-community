@@ -13,11 +13,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.ui.mac.MacFullScreenControlsManager;
 import kotlin.Unit;
 import kotlinx.coroutines.CompletableDeferredKt;
 import kotlinx.coroutines.Job;
@@ -71,6 +73,10 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     ProjectFrameHelper frame = ProjectFrameHelper.getFrameHelper(IdeFrameImpl.getActiveFrame());
     if (frame == null) {
       return CompletableDeferredKt.CompletableDeferred(Unit.INSTANCE);
+    }
+
+    if (SystemInfo.isMac) {
+      MacFullScreenControlsManager.INSTANCE.updateForPresentationMode();
     }
 
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);

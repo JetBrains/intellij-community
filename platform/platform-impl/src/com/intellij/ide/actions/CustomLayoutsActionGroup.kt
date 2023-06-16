@@ -4,7 +4,9 @@ package com.intellij.ide.actions
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
 class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
@@ -13,48 +15,65 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
     CustomLayoutActionGroup(it)
   }
 
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> = childrenCache.getCachedOrUpdatedArray(AnAction.EMPTY_ARRAY)
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> =
+    if (e == null) {
+      AnAction.EMPTY_ARRAY
+    }
+    else {
+      childrenCache.getCachedOrUpdatedArray(AnAction.EMPTY_ARRAY)
+    }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  private class CustomLayoutActionGroup(@NlsSafe private val layoutName: String) : ActionGroup(), DumbAware {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isPopupGroup = e.place != ActionPlaces.MAIN_MENU // to be used as a popup, e.g., in toolbars
+  }
+
+  private class CustomLayoutActionGroup(
+    @NlsSafe private val layoutName: String
+  ) : ActionGroup(ActionsBundle.message("group.CustomLayoutActionsGroup.text"), true), DumbAware {
 
     private val children = arrayOf<AnAction>(
       Apply(layoutName),
-      Save(layoutName),
+      RenameLayoutAction(layoutName),
       Separator(),
       Delete(layoutName),
     )
 
-    init {
-      templatePresentation.isPopupGroup = true
-    }
-
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
-      val manager = ToolWindowDefaultLayoutManager.getInstance()
-      e.presentation.text = if (manager.activeLayoutName == layoutName)
+      val text = if (manager.activeLayoutName == layoutName)
         ActionsBundle.message("group.CustomLayoutActionsGroup.current.text", layoutName)
       else
         layoutName
+      e.presentation.setText(text, false)
       e.presentation.isVisible = layoutName.isNotBlank() // Just in case the layout name is corrupted somehow.
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> = children
 
-    private class Apply(layoutName: String) : RestoreNamedLayoutAction(layoutName) {
+    private class Apply(private val layoutName: String) : DumbAwareAction() {
       init {
         templatePresentation.text = ActionsBundle.message("action.CustomLayoutActionsGroup.Apply.text")
       }
 
-      override fun isSelected(e: AnActionEvent): Boolean = false // no check mark needed in this submenu
-    }
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-    private class Save(layoutName: String) : StoreNamedLayoutAction(layoutName) {
-      init {
-        templatePresentation.text = ActionsBundle.message("action.CustomLayoutActionsGroup.Save.text")
+      override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project ?: return
+        val layoutManager = ToolWindowDefaultLayoutManager.getInstance()
+        layoutManager.activeLayoutName = layoutName
+        ToolWindowManagerEx.getInstanceEx(project).setLayout(layoutManager.getLayoutCopy())
       }
+
+      override fun update(e: AnActionEvent) {
+        super.update(e)
+        e.presentation.isEnabled = manager.activeLayoutName != layoutName
+        e.presentation.description = ActionsBundle.message("action.RestoreNamedLayout.description", layoutName)
+      }
+
     }
 
     private class Delete(layoutName: String) : DeleteNamedLayoutAction(layoutName) {
@@ -66,3 +85,5 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
   }
 
 }
+
+private val manager get() = ToolWindowDefaultLayoutManager.getInstance()

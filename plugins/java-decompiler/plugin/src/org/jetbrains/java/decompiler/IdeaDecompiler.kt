@@ -27,6 +27,8 @@ import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.components.LegalNoticeDialog
 import com.intellij.util.FileContentUtilCore
+import com.intellij.util.ui.EDT
+import org.jetbrains.java.decompiler.main.CancellationManager
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.ClassFormatException
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
@@ -60,6 +62,8 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
         IFernflowerPreferences.NEW_LINE_SEPARATOR to "1",
         IFernflowerPreferences.BANNER to BANNER,
         IFernflowerPreferences.MAX_PROCESSING_METHOD to 60,
+        IFernflowerPreferences.MAX_BYTES_CLASS_NOT_UNDER_PROGRESS to 20_000,
+        IFernflowerPreferences.MAX_LENGTH_CLASS to 15_000,
         IFernflowerPreferences.INDENT_STRING to indent,
         IFernflowerPreferences.IGNORE_INVALID_BYTECODE to "1",
         IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES to "1",
@@ -121,9 +125,26 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
   override fun accepts(file: VirtualFile): Boolean = true
 
-  override fun getText(file: VirtualFile): CharSequence =
-    if (canWork()) TASK_KEY.pop(file)?.get() ?: decompile(file)
-    else ClsFileImpl.decompile(file)
+  override fun getText(file: VirtualFile): CharSequence {
+    if (canWork()) {
+      val previous = TASK_KEY.pop(file)?.get()
+      if (previous != null) {
+        return previous
+      }
+      else {
+        val maxBytes = myOptions.value[IFernflowerPreferences.MAX_BYTES_CLASS_NOT_UNDER_PROGRESS]?.toString()?.toIntOrNull() ?: 0
+        return if (!ApplicationManager.getApplication().isUnitTestMode && maxBytes > 0 && EDT.isCurrentThreadEdt() && file.length > maxBytes) {
+          ClsFileImpl.decompile(file)
+        }
+        else {
+          decompile(file)
+        }
+      }
+    }
+    else {
+      return ClsFileImpl.decompile(file)
+    }
+  }
 
   private fun decompile(file: VirtualFile): CharSequence {
     val indicator = ProgressManager.getInstance().progressIndicator
@@ -145,9 +166,22 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
       val provider = MyBytecodeProvider(files)
       val saver = MyResultSaver()
-      val decompiler = BaseDecompiler(provider, saver, options, myLogger.value)
+
+      val maxSecProcessingMethod = options[IFernflowerPreferences.MAX_PROCESSING_METHOD]?.toString()?.toIntOrNull() ?: 0
+      val maxLengthClass = options[IFernflowerPreferences.MAX_LENGTH_CLASS]?.toString()?.toIntOrNull() ?: 0
+      val decompiler = BaseDecompiler(provider, saver, options, myLogger.value,
+                                      IdeaCancellationManager(maxSecProcessingMethod, maxLengthClass))
       files.forEach { decompiler.addSource(File(it.path)) }
-      decompiler.decompileContext()
+      try {
+        decompiler.decompileContext()
+      }
+      catch (e: CancellationManager.CanceledException) {
+        val cause = e.cause
+        if (cause != null) {
+          throw cause
+        }
+        throw e
+      }
 
       val mapping = saver.myMapping
       if (mapping != null) {
@@ -189,19 +223,19 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       }
     }
 
-    override fun saveFolder(path: String) { }
+    override fun saveFolder(path: String) {}
 
-    override fun copyFile(source: String, path: String, entryName: String) { }
+    override fun copyFile(source: String, path: String, entryName: String) {}
 
-    override fun createArchive(path: String, archiveName: String, manifest: Manifest) { }
+    override fun createArchive(path: String, archiveName: String, manifest: Manifest) {}
 
-    override fun saveDirEntry(path: String, archiveName: String, entryName: String) { }
+    override fun saveDirEntry(path: String, archiveName: String, entryName: String) {}
 
-    override fun copyEntry(source: String, path: String, archiveName: String, entry: String) { }
+    override fun copyEntry(source: String, path: String, archiveName: String, entry: String) {}
 
-    override fun saveClassEntry(path: String, archiveName: String, qualifiedName: String, entryName: String, content: String) { }
+    override fun saveClassEntry(path: String, archiveName: String, qualifiedName: String, entryName: String, content: String) {}
 
-    override fun closeArchive(path: String, archiveName: String) { }
+    override fun closeArchive(path: String, archiveName: String) {}
   }
 
   private fun <T> Key<T>.pop(holder: UserDataHolder): T? {

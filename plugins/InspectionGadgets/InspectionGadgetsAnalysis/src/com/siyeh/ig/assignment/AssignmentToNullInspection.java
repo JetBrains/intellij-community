@@ -17,14 +17,13 @@ package com.siyeh.ig.assignment;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +42,7 @@ public class AssignmentToNullInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final Object info = infos[0];
     if (!(info instanceof PsiReferenceExpression referenceExpression)) {
       return null;
@@ -63,7 +62,7 @@ public class AssignmentToNullInspection extends BaseInspection {
     if (JavaPsiFacade.getInstance(variable.getProject()).findClass(annotation, variable.getResolveScope()) == null) {
       return null;
     }
-    return new DelegatingFix(new AddAnnotationPsiFix(annotation, variable));
+    return new AddAnnotationPsiFix(annotation, variable);
   }
 
   @Override

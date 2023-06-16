@@ -588,11 +588,11 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                 ?.containingFile
                 ?.name
                 ?.takeIf { containingDeclaration is PackageFragmentDescriptor }
-                ?.let {
+                ?.let {  fileName: @NlsSafe String ->
                     HtmlChunk.fragment(
                         HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"),
                         HtmlChunk.nbsp(),
-                        HtmlChunk.text(it),
+                        HtmlChunk.text(fileName),
                         HtmlChunk.br()
                     )
                 }

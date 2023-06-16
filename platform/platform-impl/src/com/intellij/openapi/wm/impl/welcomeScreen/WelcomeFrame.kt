@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.*
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.help.HelpManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -27,10 +28,10 @@ import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
-import com.intellij.ui.AppUIUtil
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.BalloonLayoutImpl
 import com.intellij.ui.mac.touchbar.TouchbarSupport
+import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
@@ -62,7 +63,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
     glassPane.isVisible = false
     contentPane = screen.welcomePanel
     title = ApplicationNamesInfo.getInstance().fullProductName
-    AppUIUtil.updateWindowIcon(this)
+    updateAppWindowIcon(this)
     ApplicationManager.getApplication().messageBus.connect(listenerDisposable).subscribe(ProjectManager.TOPIC,
                                                                                          object : ProjectManagerListener {
                                                                                            @Suppress("removal", "OVERRIDE_DEPRECATION")
@@ -153,9 +154,11 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
       // ActionManager is used on Welcome Frame, but should be initialized in a pooled thread and not in EDT.
       @Suppress("DEPRECATION")
       ApplicationManager.getApplication().coroutineScope.launch {
-        ActionManager.getInstance()
-        if (SystemInfoRt.isMac) {
-          TouchbarSupport.initialize()
+        blockingContext {
+          ActionManager.getInstance()
+          if (SystemInfoRt.isMac) {
+            TouchbarSupport.initialize()
+          }
         }
       }
 
@@ -180,7 +183,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
 
     private fun registerKeyboardShortcuts(rootPane: JRootPane) {
       val helpAction = ActionListener {
-        getUiEventLogger().logClickOnHelpDialog(WelcomeFrame::class.java.name, WelcomeFrame::class.java)
+        getUiEventLogger().logClickOnHelpDialog(WelcomeFrame::class.java)
         HelpManager.getInstance().invokeHelp("welcome")
       }
       ActionUtil.registerForEveryKeyboardShortcut(rootPane, helpAction, CommonShortcuts.getContextHelp())
@@ -197,12 +200,14 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
 
       val show = prepareToShow() ?: return
       @Suppress("DEPRECATION")
-      app.coroutineScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
-        val windowManager = WindowManager.getInstance() as WindowManagerImpl
-        windowManager.disposeRootFrame()
-        if (windowManager.projectFrameHelpers.isEmpty()) {
-          show.run()
-          lifecyclePublisher?.welcomeScreenDisplayed()
+      app.coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+        blockingContext {
+          val windowManager = WindowManager.getInstance() as WindowManagerImpl
+          windowManager.disposeRootFrame()
+          if (windowManager.projectFrameHelpers.isEmpty()) {
+            show.run()
+            lifecyclePublisher?.welcomeScreenDisplayed()
+          }
         }
       }
     }

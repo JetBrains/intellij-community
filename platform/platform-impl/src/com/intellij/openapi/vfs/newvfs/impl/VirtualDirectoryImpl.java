@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.impl.PsiCachedValue;
@@ -70,7 +71,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return myFs;
   }
 
-  private @Nullable VirtualFileSystemEntry findChild(String name, boolean doRefresh, boolean ensureCanonicalName, NewVirtualFileSystem fs) {
+  private @Nullable VirtualFileSystemEntry findChild(@NotNull String name,
+                                                     boolean doRefresh,
+                                                     boolean ensureCanonicalName,
+                                                     @NotNull NewVirtualFileSystem fs) {
     updateCaseSensitivityIfUnknown(name);
     VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, fs, isCaseSensitive());
 
@@ -98,7 +102,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   // `null` if there can't be a child with this name,` NULL_VIRTUAL_FILE` if cached as absent, the file if found
-  private @Nullable VirtualFileSystemEntry doFindChild(String name, boolean ensureCanonicalName, NewVirtualFileSystem fs, boolean isCaseSensitive) {
+  private @Nullable VirtualFileSystemEntry doFindChild(@NotNull String name,
+                                                       boolean ensureCanonicalName,
+                                                       @NotNull NewVirtualFileSystem fs,
+                                                       boolean isCaseSensitive) {
     if (name.isEmpty()) {
       return null;
     }
@@ -126,7 +133,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return findInPersistence(name, ensureCanonicalName, fs, isCaseSensitive);
   }
 
-  private @Nullable VirtualFileSystemEntry findInPersistence(String name, boolean ensureCanonicalName, NewVirtualFileSystem fs, boolean isCaseSensitive) {
+  private @Nullable VirtualFileSystemEntry findInPersistence(@NotNull String name,
+                                                             boolean ensureCanonicalName,
+                                                             @NotNull NewVirtualFileSystem fs,
+                                                             boolean isCaseSensitive) {
     VirtualFileSystemEntry child;
     synchronized (myData) {
       // maybe another doFindChild() sneaked in the middle
@@ -196,7 +206,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static String deSlash(@NotNull String name) {
     int startTrimmed = -1;
     int endTrimmed = -1;
-    for (int i=0;i<name.length();i++) {
+    for (int i = 0; i < name.length(); i++) {
       char c = name.charAt(i);
       if (startTrimmed == -1) {
         if (!isFileSeparator(c)) {
@@ -248,7 +258,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     VirtualFileSystemEntry child = vfsData.getFileById(id, this, true);
     assert child != null;
-    FileAttributes.CaseSensitivity sensitivity = isDirectory ? PersistentFS.areChildrenCaseSensitive(attributes) : FileAttributes.CaseSensitivity.UNKNOWN;
+    FileAttributes.CaseSensitivity sensitivity =
+      isDirectory ? PersistentFS.areChildrenCaseSensitive(attributes) : FileAttributes.CaseSensitivity.UNKNOWN;
     int newFlags = (PersistentFS.isSymLink(attributes) ? VfsDataFlags.IS_SYMLINK_FLAG : 0) |
                    (PersistentFS.isSpecialFile(attributes) ? VfsDataFlags.IS_SPECIAL_FLAG : 0) |
                    (PersistentFS.isWritable(attributes) ? VfsDataFlags.IS_WRITABLE_FLAG : 0) |
@@ -257,13 +268,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                    (sensitivity == FileAttributes.CaseSensitivity.SENSITIVE ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0) |
                    (PersistentFS.isOfflineByDefault(attributes) ? VfsDataFlags.IS_OFFLINE : 0);
     int relevantFlagsMask = VfsDataFlags.IS_SYMLINK_FLAG |
-               VfsDataFlags.IS_SPECIAL_FLAG |
-               VfsDataFlags.STRICT_PARENT_HAS_SYMLINK_FLAG |
-               VfsDataFlags.IS_WRITABLE_FLAG |
-               VfsDataFlags.IS_HIDDEN_FLAG |
-               VfsDataFlags.CHILDREN_CASE_SENSITIVE |
-               VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED |
-               VfsDataFlags.IS_OFFLINE;
+                            VfsDataFlags.IS_SPECIAL_FLAG |
+                            VfsDataFlags.STRICT_PARENT_HAS_SYMLINK_FLAG |
+                            VfsDataFlags.IS_WRITABLE_FLAG |
+                            VfsDataFlags.IS_HIDDEN_FLAG |
+                            VfsDataFlags.CHILDREN_CASE_SENSITIVE |
+                            VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED |
+                            VfsDataFlags.IS_OFFLINE;
     segment.setFlags(id, relevantFlagsMask, newFlags);
     child.updateLinkStatus(this);
 
@@ -280,7 +291,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return child;
   }
 
-  private @Nullable VirtualFileSystemEntry createAndFindChildWithEventFire(String name, NewVirtualFileSystem fs) {
+  private @Nullable VirtualFileSystemEntry createAndFindChildWithEventFire(@NotNull String name, @NotNull NewVirtualFileSystem fs) {
     VirtualFile fake = new FakeVirtualFile(this, name);
     FileAttributes attributes = fs.getAttributes(fake);
     if (attributes == null) return null;
@@ -294,7 +305,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return findChild(realName);
   }
 
-  private void updateCaseSensitivityIfUnknown(String childName) {
+  private void updateCaseSensitivityIfUnknown(@NotNull String childName) {
     VFilePropertyChangeEvent caseSensitivityEvent = generateCaseSensitivityChangedEventForUnknownCase(this, childName);
     if (caseSensitivityEvent != null) {
       PersistentFSImpl.executeChangeCaseSensitivity(this, (FileAttributes.CaseSensitivity)caseSensitivityEvent.getNewValue());
@@ -305,7 +316,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     else if (getChildrenCaseSensitivity() == FileAttributes.CaseSensitivity.UNKNOWN) {
       // cache case sensitivity anyway even when we failed to read it from the disk, to avoid freezes trying to re-read it constantly
-      setCaseSensitivityFlag(getFileSystem().isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
+      setCaseSensitivityFlag(
+        getFileSystem().isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
     }
   }
 
@@ -474,7 +486,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         String info = "prevFile.isCaseSensitive()=" + (prevFile == null ? "?" : prevFile.isCaseSensitive()) + ';' +
                       "child.isCaseSensitive()=" + (child == null ? "?" : child.isCaseSensitive()) + ';' +
                       "this.isCaseSensitive()=" + this.isCaseSensitive();
-        String message = info + " but in " + this + " the " + verboseToString(prevFile) + "\n is wrongly placed before " + verboseToString(child) + '\n';
+        String message =
+          info + " but in " + this + " the " + verboseToString(prevFile) + "\n is wrongly placed before " + verboseToString(child) + '\n';
         error(message, details);
       }
       synchronized (myData) {
@@ -521,17 +534,30 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (i >= 0) {
       VirtualFileSystemEntry fileById = getVfsData().getFileById(id, this, true);
       if (fileById != null) {
-        LOG.assertTrue(fileById.getId() == id);
+        if (fileById.getId() != id) {
+          LOG.error("getFileById(" + id + ") returns " + fileById + " with different id(=" + fileById.getId() + ")");
+        }
       }
       return fileById;
     }
 
-    String name = getPersistence().getName(id);
+    PersistentFS persistence = getPersistence();
+    String name = persistence.getName(id);
     VirtualFileSystemEntry fileByName = findChild(name, false, false, getFileSystem());
     if (fileByName != null && fileByName.getId() != id) {
       // a child with the same name and different ID was recreated after a refresh session -
       // it doesn't make sense to check it earlier because it is executed outside the VFS' read/write lock
-      LOG.assertTrue(FSRecords.isDeleted(id));
+      final boolean deleted = FSRecords.isDeleted(id);
+      if (!deleted) {
+        LOG.error("FSRecords(id: " + id + ", name: '" + name + "', !deleted), " +
+                  "but VDI.findChild(" + name + ")=" + fileByName + " with different id(=" + fileByName.getId() + ")" +
+                  "\n\tchildren (64 max): \n" +
+                  Arrays.stream(myData.myChildrenIds)
+                    .limit(64)
+                    .mapToObj(childId -> "\t" + childId + ": '" + persistence.getName(childId) + "'\n")
+                    .toList()
+        );
+      }
       return null;
     }
     return fileByName;
@@ -544,7 +570,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   // optimisation: works faster than added.forEach(this::addChild)
   @ApiStatus.Internal
-  public void createAndAddChildren(@NotNull List<ChildInfo> added, boolean markAllChildrenLoaded, @NotNull BiConsumer<? super VirtualFile, ? super ChildInfo> callback) {
+  public void createAndAddChildren(@NotNull List<ChildInfo> added,
+                                   boolean markAllChildrenLoaded,
+                                   @NotNull BiConsumer<? super VirtualFile, ? super ChildInfo> callback) {
     if (added.size() <= 1) {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < added.size(); i++) {
@@ -618,7 +646,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myData.removeAdoptedName(childName);
       int indexInReal = findIndex(myData.myChildrenIds, childName, isCaseSensitive);
       if (indexInReal < 0) {
-        int i = -indexInReal -1;
+        int i = -indexInReal - 1;
         int id = child.getId();
         assert id > 0 : child + ": " + id;
         myData.myChildrenIds = ArrayUtil.insert(myData.myChildrenIds, i, id);
@@ -821,7 +849,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   public @NotNull FileAttributes.CaseSensitivity getChildrenCaseSensitivity() {
     return isChildrenCaseSensitivityKnown() ?
            isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE
-           : FileAttributes.CaseSensitivity.UNKNOWN;
+                                            : FileAttributes.CaseSensitivity.UNKNOWN;
   }
 
   /**
@@ -832,7 +860,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
    * Otherwise, return null.
    */
   @ApiStatus.Internal
-  public static VFilePropertyChangeEvent generateCaseSensitivityChangedEventForUnknownCase(@NotNull VirtualFile parent, @NotNull String childName) {
+  public static VFilePropertyChangeEvent generateCaseSensitivityChangedEventForUnknownCase(@NotNull VirtualFile parent,
+                                                                                           @NotNull String childName) {
     if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() != FileAttributes.CaseSensitivity.UNKNOWN) {
       return null;
     }
@@ -841,12 +870,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @ApiStatus.Internal
-  public static VFilePropertyChangeEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile dir, @NotNull FileAttributes.CaseSensitivity actualCaseSensitivity) {
+  public static VFilePropertyChangeEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile dir,
+                                                                             @NotNull FileAttributes.CaseSensitivity actualCaseSensitivity) {
     if (actualCaseSensitivity != FileAttributes.CaseSensitivity.UNKNOWN) {
       if (dir.getFileSystem().isCaseSensitive() != (actualCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
         // fire only when the new case sensitivity is different from the default FS sensitivity,
         // because only in that case the file.isCaseSensitive() value could change
-        return new VFilePropertyChangeEvent(null, dir, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY, FileAttributes.CaseSensitivity.UNKNOWN, actualCaseSensitivity, true);
+        return new VFilePropertyChangeEvent(null, dir, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY, FileAttributes.CaseSensitivity.UNKNOWN,
+                                            actualCaseSensitivity, true);
       }
       else {
         PersistentFSImpl.executeChangeCaseSensitivity(dir, actualCaseSensitivity);

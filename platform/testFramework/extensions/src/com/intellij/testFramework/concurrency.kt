@@ -68,7 +68,7 @@ fun assertConcurrentPromises(vararg runnables: () -> Promise<String>, maxTimeout
     val allExecutorThreadsReady = CountDownLatch(numThreads)
     val afterInitBlocker = CountDownLatch(1)
     val allDone = CountDownLatch(numThreads)
-    val promises: MutableList<Promise<String>> = Collections.synchronizedList(ArrayList<Promise<String>>())
+    val promises: MutableList<Promise<String>> = Collections.synchronizedList(ArrayList())
     for (submittedTestRunnable in runnables) {
       threadPool.submit {
         allExecutorThreadsReady.countDown()

@@ -21,29 +21,22 @@ import java.util.concurrent.atomic.AtomicInteger
 open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScope) : BaseProjectDirectories(project) {
 
   private val virtualFilesTree = VirtualFilePrefixTreeFactory.createSet()
-  private val flow = MutableSharedFlow<VersionedStorageChange>(extraBufferCapacity = 1000)
   private val processingCounter = AtomicInteger(0)
 
   private var baseDirectoriesSet: Set<VirtualFile> = emptySet()
 
   init {
     scope.launch {
-      flow.collect { change ->
+      WorkspaceModel.getInstance(project).changesEventFlow.collect { event ->
+        processingCounter.getAndIncrement()
         try {
-          updateTreeAndFireChanges(change)
+          updateTreeAndFireChanges(event)
         }
         finally {
           processingCounter.getAndDecrement()
         }
       }
     }
-
-    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChange) {
-        processingCounter.getAndIncrement()
-        flow.tryEmit(event)
-      }
-    })
 
     synchronized(virtualFilesTree) {
       @Suppress("LeakingThis")

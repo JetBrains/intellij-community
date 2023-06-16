@@ -37,8 +37,8 @@ public class ExposedByPackageLocal {
       List<NestedPrivate> list) { return list.get(0);}
     protected NestedPrivate withPrivate2(
       List<NestedPrivate> list) { return list.get(0);}
-    <warning descr="Class 'NestedPrivate' is exposed outside its defined scope">NestedPrivate</warning> withPrivate3(
-      List<<warning descr="Class 'NestedPrivate' is exposed outside its defined scope">NestedPrivate</warning>> list) { return list.get(0);}
+    <warning descr="Class 'NestedPrivate' is exposed outside its defined visibility scope">NestedPrivate</warning> withPrivate3(
+      List<<warning descr="Class 'NestedPrivate' is exposed outside its defined visibility scope">NestedPrivate</warning>> list) { return list.get(0);}
     private NestedPrivate withPrivate4(
       List<NestedPrivate> list) { return list.get(0);}
 }

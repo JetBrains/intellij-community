@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtProperty
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "val String.x: Int"
 
 @file:JvmName("AKt")
 

@@ -10,6 +10,8 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -269,5 +271,22 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
     }
 
     return executor;
+  }
+
+  public static class Factory implements SearchEverywhereContributorFactory<ChooseRunConfigurationPopup.ItemWrapper> {
+    @Override
+    public @NotNull SearchEverywhereContributor<ChooseRunConfigurationPopup.ItemWrapper> createContributor(@NotNull AnActionEvent initEvent) {
+      Project project = initEvent.getProject();
+      Component contextComponent = initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+      Supplier<String> commandSupplier = () -> {
+        SearchEverywhereManager manager = SearchEverywhereManager.getInstance(project);
+        if (!manager.isShown()) return null;
+
+        return manager.getCurrentlyShownUI().getSearchField().getText();
+      };
+
+      return new RunConfigurationsSEContributor(project, contextComponent, commandSupplier);
+    }
+
   }
 }

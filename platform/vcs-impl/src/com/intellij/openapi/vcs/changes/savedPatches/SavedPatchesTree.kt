@@ -44,7 +44,7 @@ class SavedPatchesTree(project: Project,
     isKeepTreeState = true
     isScrollToSelection = false
     setEmptyText(VcsBundle.message("saved.patch.empty.text"))
-    speedSearch = MySpeedSearch(this)
+    speedSearch = MySpeedSearch.installOn(this)
 
     doubleClickHandler = Processor { e ->
       if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
@@ -164,14 +164,22 @@ class SavedPatchesTree(project: Project,
     }
   }
 
-  private class MySpeedSearch(tree: JTree) :
-    TreeSpeedSearch(tree, true, ChangesBrowserNode.TO_TEXT_CONVERTER.asFunction()) {
+  private class MySpeedSearch private constructor(tree: JTree) : TreeSpeedSearch(tree, true, null,
+                                                                                 ChangesBrowserNode.TO_TEXT_CONVERTER) {
     override fun isMatchingElement(element: Any?, pattern: String?): Boolean {
       val isMatching = super.isMatchingElement(element, pattern)
       if (isMatching) return true
       val node = (element as? TreePath)?.lastPathComponent as? ChangesBrowserNode<*> ?: return false
       val patchObject = node.userObject as? SavedPatchesProvider.PatchObject<*> ?: return false
       return matches(patchObject)
+    }
+
+    companion object {
+      fun installOn(tree: JTree): MySpeedSearch {
+        val search = MySpeedSearch(tree)
+        search.setupListeners()
+        return search
+      }
     }
   }
 

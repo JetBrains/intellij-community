@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,6 +59,9 @@ public class ChooserInterceptor extends UiInterceptors.UiInterceptor<JBPopup> {
     content.setSelectedIndex(actualOptions.indexOf(matched.get(0)));
     assertTrue(popup.canClose()); // calls cancelHandler
     popup.closeOk(null);
+    if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    }
   }
 
   @Override

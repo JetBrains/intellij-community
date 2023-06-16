@@ -41,6 +41,8 @@ private fun collectNewInterpreterOnTargetActions(project: Project,
   PythonInterpreterTargetEnvironmentFactory.EP_NAME.extensionList
     .filter { it.getTargetType().isSystemCompatible() }
     .filter { targetTypeModuleSitsOn == null || targetTypeModuleSitsOn.allowCreationTargetOfThisType(it.getTargetType()) }
+    // filter create new interpreter actions on targets that need to be associated with module like PyDockerComposeTargetEnvironmentFactory
+    .filterNot { project.isDefault && it.needAssociateWithModule() }
     .map { AddInterpreterOnTargetAction(project, it.getTargetType(), onSdkCreated) }
 
 private class AddLocalInterpreterAction(private val project: Project,

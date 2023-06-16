@@ -416,7 +416,7 @@ public final class MavenExternalParameters {
       parametersList.add(goal);
     }
 
-    for (var cmdOption : parameters.getCmdOptions()) {
+    for (var cmdOption : parameters.getOptions()) {
       parametersList.add(cmdOption);
     }
 
@@ -530,16 +530,6 @@ public final class MavenExternalParameters {
                                                   ParametersList cmdList) {
     if (coreSettings.isWorkOffline()) {
       cmdList.add("--offline");
-    }
-
-    boolean atLeastMaven3 = MavenUtil.isMaven3(mavenHome);
-
-    if (!atLeastMaven3) {
-      addIfNotEmpty(cmdList, coreSettings.getPluginUpdatePolicy().getCommandLineOption());
-
-      if (!coreSettings.isUsePluginRegistry()) {
-        cmdList.add("--no-plugin-registry");
-      }
     }
 
     if (coreSettings.getOutputLevel() == MavenExecutionOptions.LoggingLevel.DEBUG) {

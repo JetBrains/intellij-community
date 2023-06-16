@@ -488,7 +488,7 @@ public final class MavenLegacyModuleImporter {
   /**
    * @deprecated use {@link MavenImportUtil#getDefaultLevel(MavenProject)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public static LanguageLevel getDefaultLevel(MavenProject mavenProject) {
     return MavenImportUtil.getDefaultLevel(mavenProject);

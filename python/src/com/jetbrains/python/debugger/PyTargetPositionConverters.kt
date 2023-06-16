@@ -11,6 +11,7 @@ import com.intellij.util.AbstractPathMapper
 import com.intellij.util.PathMappingSettings
 import com.jetbrains.python.debugger.remote.vfs.PyRemotePositionConverter
 import com.jetbrains.python.remote.PyRemotePathMapper
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Creates [PyPositionConverter] for [debugProcess]. The converter uses [pathMappingSettings] for paths resolution and upload volumes
@@ -29,14 +30,13 @@ import com.jetbrains.python.remote.PyRemotePathMapper
  * @see getTargetPaths
  */
 internal fun createTargetedPositionConverter(debugProcess: PyDebugProcess,
-                                             targetEnvironment: TargetEnvironment,
-                                             pathMappingSettings: PathMappingSettings): PyPositionConverter {
-  val pathMapper = PyTargetPathMapper(targetEnvironment, pathMappingSettings)
+                                             pathMapper: PyRemotePathMapper): PyPositionConverter {
   return PyRemotePositionConverter(debugProcess, pathMapper)
 }
 
-private class PyTargetPathMapper(private val targetEnvironment: TargetEnvironment,
-                                 private val pathMappingSettings: PathMappingSettings) : PyRemotePathMapper() {
+@ApiStatus.Internal
+internal class PyTargetPathMapper(private val targetEnvironment: TargetEnvironment,
+                                  private val pathMappingSettings: PathMappingSettings) : PyRemotePathMapper() {
   override fun convertToLocal(remotePath: String): String {
     return AbstractPathMapper.convertToLocal(remotePath, pathMappingSettings.pathMappings)
            ?: targetEnvironment.getLocalPaths(remotePath).firstOrNull()
@@ -52,4 +52,6 @@ private class PyTargetPathMapper(private val targetEnvironment: TargetEnvironmen
   override fun isEmpty(): Boolean {
     return false
   }
+
+  fun getFileMappings(): MutableList<PathMappingSettings.PathMapping> = pathMappingSettings.pathMappings
 }

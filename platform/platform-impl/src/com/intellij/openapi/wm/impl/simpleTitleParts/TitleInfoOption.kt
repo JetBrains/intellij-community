@@ -10,7 +10,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 open class TitleInfoOption {
   companion object {
     @JvmStatic
-    val ALWAYS_ACTIVE = TitleInfoOption()
+    val ALWAYS_ACTIVE: TitleInfoOption = TitleInfoOption()
   }
 
   var isActive: Boolean = true

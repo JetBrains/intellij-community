@@ -14,6 +14,19 @@ import org.jetbrains.plugins.terminal.action.TerminalNewTabAction;
 import java.util.concurrent.TimeUnit;
 
 public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsProviderBase {
+
+  @Override
+  public @NotNull TerminalActionPresentation getSelectAllActionPresentation() {
+    // We cannot use keyboard shortcuts of default "Select All" action ($SelectAll), because
+    // Ctrl+A should move the cursor to the start of a line in Bash/Zsh/Fish. Unfortunately, the behavior
+    // cannot be restricted by Linux only, because these shells can be installed on Windows via WSL/GitBash.
+    // Luckily, macOS's default "Select all" keyboard shortcut can be used here (Cmd+A).
+    //
+    // Let's use "Terminal.SelectAll" action with default keyboard shortcut on macOS (Cmd+A). It allows users
+    // to configure custom keyboard shortcuts and avoid conflicts with shell key-binding actions.
+    return getSelectAllActionPresentation(false);
+  }
+
   @Override
   public boolean audibleBell() {
     return TerminalOptionsProvider.getInstance().getAudibleBell();

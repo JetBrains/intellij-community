@@ -5,6 +5,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspaceModel.jps.serialization.SerializationContext
+import com.intellij.workspaceModel.ide.UnloadedModulesNameHolder
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
@@ -20,11 +21,11 @@ object JpsProjectEntitiesLoader {
                           orphanage: MutableEntityStorage,
                           externalStoragePath: Path,
                           errorReporter: ErrorReporter,
-                          unloadedModuleNames: Set<String> = emptySet(),
+                          unloadedModulesNameHolder: UnloadedModulesNameHolder = UnloadedModulesNameHolder.DUMMY,
                           unloadedEntitiesBuilder: MutableEntityStorage = MutableEntityStorage.create(),
                           context: SerializationContext): JpsProjectSerializers {
     val data = createProjectSerializers(configLocation, externalStoragePath, context)
-    data.loadAll(context.fileContentReader, builder, orphanage, unloadedEntitiesBuilder, unloadedModuleNames, errorReporter)
+    data.loadAll(context.fileContentReader, builder, orphanage, unloadedEntitiesBuilder, unloadedModulesNameHolder, errorReporter)
     return data
   }
   

@@ -1,14 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.timeline
 
-import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
-import com.intellij.collaboration.ui.util.bindChild
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.bindChildIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.diff.util.DiffDrawUtil
+import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.TextDiffType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.diff.impl.patch.PatchHunk
@@ -30,7 +29,7 @@ import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
-import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.EmptyIcon
@@ -39,16 +38,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 import java.awt.Color
 import java.awt.event.ActionListener
 import javax.swing.JComponent
@@ -59,14 +53,31 @@ object TimelineDiffComponentFactory {
 
   fun createDiffComponent(project: Project, editorFactory: EditorFactory,
                           patchHunk: PatchHunk,
-                          anchor: DiffLineLocation?,
+                          anchor: DiffLineLocation,
                           anchorStart: DiffLineLocation?): JComponent {
-    val truncatedHunk = if (anchor == null) patchHunk else truncateHunk(patchHunk, anchor, anchorStart)
+    val truncatedHunk = truncateHunk(patchHunk, anchor, anchorStart)
 
-    val anchorLineIndex = anchor?.let { PatchHunkUtil.findHunkLineIndex(truncatedHunk, it) }
+    val anchorLineIndex = PatchHunkUtil.findHunkLineIndex(truncatedHunk, anchor)
+    val anchorStartLineIndex = anchorStart?.takeIf { it != anchor }?.let { PatchHunkUtil.findHunkLineIndex(truncatedHunk, it) }
+    val anchorRange = if (anchorLineIndex == null) {
+      null
+    }
+    else if (anchorStartLineIndex != null) {
+      LineRange(anchorStartLineIndex, anchorLineIndex + 1)
+    }
+    else {
+      LineRange(anchorLineIndex, anchorLineIndex + 1)
+    }
 
-    if (truncatedHunk.lines.any { it.type != PatchLine.Type.CONTEXT }) {
-      val appliedSplitHunks = GenericPatchApplier.SplitHunk.read(truncatedHunk).map {
+    return createDiffComponent(project, editorFactory, truncatedHunk, anchorRange)
+  }
+
+  fun createDiffComponent(project: Project,
+                          editorFactory: EditorFactory,
+                          patchHunk: PatchHunk,
+                          anchorLineRange: LineRange?): JComponent {
+    if (patchHunk.lines.any { it.type != PatchLine.Type.CONTEXT }) {
+      val appliedSplitHunks = GenericPatchApplier.SplitHunk.read(patchHunk).map {
         AppliedTextPatch.AppliedSplitPatchHunk(it, -1, -1, AppliedTextPatch.HunkStatus.NOT_APPLIED)
       }
 
@@ -87,26 +98,26 @@ object TimelineDiffComponentFactory {
                                                       hunk.patchInsertionRange,
                                                       null)
         }
-        anchorLineIndex?.let { highlightAnchorLine(editor, it) }
+        anchorLineRange?.let { highlightAnchor(editor, it) }
       }
     }
     else {
-      val patchContent = truncatedHunk.text.removeSuffix("\n")
+      val patchContent = patchHunk.text.removeSuffix("\n")
 
       return createDiffComponent(project, editorFactory, patchContent) { editor ->
         editor.gutter.apply {
           setLineNumberConverter(
-            LineNumberConverter.Increasing { _, line -> line + truncatedHunk.startLineBefore },
-            LineNumberConverter.Increasing { _, line -> line + truncatedHunk.startLineAfter }
+            LineNumberConverter.Increasing { _, line -> line + patchHunk.startLineBefore },
+            LineNumberConverter.Increasing { _, line -> line + patchHunk.startLineAfter }
           )
         }
-        anchorLineIndex?.let { highlightAnchorLine(editor, it) }
+        anchorLineRange?.let { highlightAnchor(editor, it) }
       }
     }
   }
 
-  private fun highlightAnchorLine(editor: EditorEx, line: Int) {
-    DiffDrawUtil.createHighlighter(editor, line, line + 1, AnchorLine, false)
+  private fun highlightAnchor(editor: EditorEx, lineRange: LineRange) {
+    DiffDrawUtil.createHighlighter(editor, lineRange.start, lineRange.end, AnchorLine, false)
   }
 
   object AnchorLine : TextDiffType {
@@ -121,18 +132,12 @@ object TimelineDiffComponentFactory {
     override fun getMarkerColor(editor: Editor?) = getColor(editor)
   }
 
-  private const val DIFF_CONTEXT_SIZE = 3
+  const val DIFF_CONTEXT_SIZE = 3
 
   private fun truncateHunk(hunk: PatchHunk, anchor: DiffLineLocation, anchorStart: DiffLineLocation?): PatchHunk {
     if (hunk.lines.size <= DIFF_CONTEXT_SIZE + 1) return hunk
-
-    val hunkWithoutStart = if (anchorStart != null && anchor != anchorStart) {
-      truncateHunkBefore(hunk, anchorStart)
-    }
-    else {
-      truncateHunkBefore(hunk, anchor)
-    }
-    return truncateHunkAfter(hunkWithoutStart, anchor)
+    val actualAnchorStart = anchorStart?.takeIf { it != anchor } ?: anchor
+    return truncateHunkAfter(truncateHunkBefore(hunk, actualAnchorStart), anchor)
   }
 
   private fun truncateHunkBefore(hunk: PatchHunk, location: DiffLineLocation): PatchHunk {
@@ -140,28 +145,7 @@ object TimelineDiffComponentFactory {
     if (lines.size <= DIFF_CONTEXT_SIZE + 1) return hunk
     val lineIdx = PatchHunkUtil.findHunkLineIndex(hunk, location) ?: return hunk
     val startIdx = lineIdx - DIFF_CONTEXT_SIZE
-    if (startIdx <= 0) return hunk
-
-    var startLineBefore: Int = hunk.startLineBefore
-    var startLineAfter: Int = hunk.startLineAfter
-
-    for (i in 0 until startIdx) {
-      val line = lines[i]
-      when (line.type) {
-        PatchLine.Type.CONTEXT -> {
-          startLineBefore++
-          startLineAfter++
-        }
-        PatchLine.Type.ADD -> startLineAfter++
-        PatchLine.Type.REMOVE -> startLineBefore++
-      }
-    }
-    val truncatedLines = lines.subList(startIdx, lines.size)
-    return PatchHunk(startLineBefore, hunk.endLineBefore, startLineAfter, hunk.endLineAfter).apply {
-      for (line in truncatedLines) {
-        addLine(line)
-      }
-    }
+    return PatchHunkUtil.truncateHunkBefore(hunk, startIdx)
   }
 
   private fun truncateHunkAfter(hunk: PatchHunk, location: DiffLineLocation): PatchHunk {
@@ -169,28 +153,7 @@ object TimelineDiffComponentFactory {
     if (lines.size <= DIFF_CONTEXT_SIZE + 1) return hunk
     val lineIdx = PatchHunkUtil.findHunkLineIndex(hunk, location) ?: return hunk
     val endIdx = lineIdx + DIFF_CONTEXT_SIZE
-    if (endIdx > lines.size - 1) return hunk
-
-    var endLineBefore: Int = hunk.endLineBefore
-    var endLineAfter: Int = hunk.endLineAfter
-
-    for (i in lines.size - 1 downTo endIdx) {
-      val line = lines[i]
-      when (line.type) {
-        PatchLine.Type.CONTEXT -> {
-          endLineBefore--
-          endLineAfter--
-        }
-        PatchLine.Type.ADD -> endLineAfter--
-        PatchLine.Type.REMOVE -> endLineBefore--
-      }
-    }
-    val truncatedLines = lines.subList(0, endIdx + 1)
-    return PatchHunk(hunk.startLineBefore, endLineBefore, hunk.startLineAfter, endLineAfter).apply {
-      for (line in truncatedLines) {
-        addLine(line)
-      }
-    }
+    return PatchHunkUtil.truncateHunkAfter(hunk, endIdx)
   }
 
   fun createDiffComponent(project: Project, editorFactory: EditorFactory,
@@ -232,8 +195,8 @@ object TimelineDiffComponentFactory {
   fun createDiffWithHeader(cs: CoroutineScope,
                            collapseVm: CollapsibleTimelineItemViewModel,
                            filePath: @NlsSafe String,
-                           onFileNameClick: () -> Unit,
-                           diffComponentFactory: (CoroutineScope) -> JComponent): JComponent {
+                           fileNameClickListener: Flow<ActionListener?>,
+                           diffComponentFactory: CoroutineScope.() -> JComponent): JComponent {
     val expandCollapseButton = InlineIconButton(EmptyIcon.ICON_16).apply {
       cs.launch(start = CoroutineStart.UNDISPATCHED) {
         collapseVm.collapsed.collect { collapsed ->
@@ -255,19 +218,19 @@ object TimelineDiffComponentFactory {
           }
         }
       }
-      bindVisibility(cs, collapseVm.collapsible)
+      bindVisibilityIn(cs, collapseVm.collapsible)
     }
 
 
 
     return RoundedPanel(ListLayout.vertical(0), 8).apply {
-      add(createFileNameComponent(filePath, expandCollapseButton, onFileNameClick))
+      add(cs.createFileNameComponent(filePath, expandCollapseButton, fileNameClickListener))
       CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }
 
-      bindChild(cs, collapseVm.collapsed) { cs, collapsed ->
-        if (collapsed) return@bindChild null
+      bindChildIn(cs, collapseVm.collapsed) { collapsed ->
+        if (collapsed) return@bindChildIn null
         diffComponentFactory(cs).apply {
           border = IdeBorderFactory.createBorder(SideBorder.TOP)
         }
@@ -275,68 +238,29 @@ object TimelineDiffComponentFactory {
     }
   }
 
-  @Deprecated("deprecated in favor of a reactive solution")
-  fun wrapWithHeader(diffComponent: JComponent,
-                     filePath: @NonNls String,
-                     collapsibleState: StateFlow<Boolean>,
-                     collapsedState: MutableStateFlow<Boolean>,
-                     onFileClick: () -> Unit): JComponent {
-    val scopeProvider = ActivatableCoroutineScopeProvider()
-
-    val expandCollapseButton = InlineIconButton(EmptyIcon.ICON_16).apply {
-      actionListener = ActionListener {
-        collapsedState.update { !it }
-      }
-    }
-
-    scopeProvider.launchInScope {
-      expandCollapseButton.bindVisibility(this, collapsibleState)
-    }
-
-    scopeProvider.launchInScope {
-      collapsedState.collect {
-        expandCollapseButton.icon = if (it) {
-          AllIcons.General.ExpandComponent
-        }
-        else {
-          AllIcons.General.CollapseComponent
-        }
-        expandCollapseButton.hoveredIcon = if (it) {
-          AllIcons.General.ExpandComponentHover
-        }
-        else {
-          AllIcons.General.CollapseComponentHover
-        }
-        //TODO: tooltip?
-      }
-    }
-
-    diffComponent.border = IdeBorderFactory.createBorder(SideBorder.TOP)
-
-    scopeProvider.launchInScope {
-      diffComponent.bindVisibility(this, collapsedState.map { !it })
-    }
-
-    return RoundedPanel(ListLayout.vertical(0), 8).apply {
-      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
-        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
-      }
-
-      add(createFileNameComponent(filePath, expandCollapseButton, onFileClick))
-      add(diffComponent)
-    }.also {
-      scopeProvider.activateWith(it)
-    }
-  }
-
-  private fun createFileNameComponent(filePath: String, expandCollapseButton: JComponent, onFileClick: () -> Unit): JComponent {
+  private fun CoroutineScope.createFileNameComponent(filePath: String, expandCollapseButton: JComponent,
+                                                     nameClickListener: Flow<ActionListener?>): JComponent {
     val name = PathUtil.getFileName(filePath)
     val path = PathUtil.getParentPath(filePath)
     val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(name)
 
-    val nameLabel = LinkLabel<Unit>(name, fileType.icon) { _, _ ->
-      onFileClick()
+    val nameLabel = ActionLink(name).apply {
+      icon = fileType.icon
+      autoHideOnDisable = false
     }
+
+    launch {
+      nameClickListener.collect { listener ->
+        nameLabel.actionListeners.forEach {
+          nameLabel.removeActionListener(it)
+        }
+        if (listener != null) {
+          nameLabel.addActionListener(listener)
+        }
+        nameLabel.isEnabled = listener != null
+      }
+    }
+
     return JPanel(MigLayout(LC().insets("0").gridGap("5", "0").fill().noGrid())).apply {
       isOpaque = false
       border = JBUI.Borders.empty(10)

@@ -51,9 +51,6 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
 
   init {
     cs.launch {
-      if (!StatisticsUploadAssistant.isSendAllowed()) {
-        return@launch
-      }
       logApplicationStateRegularly()
     }
   }
@@ -114,13 +111,15 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
             val data = mergeWithEventData(groupData, metric.data)
             val eventData = data?.build() ?: emptyMap()
             launch {
-              logger.logAsync(group, metric.eventId, eventData, true).asDeferred().join()
+              blockingContext { logger.logAsync(group, metric.eventId, eventData, true) }.asDeferred().join()
             }
           }
         }
 
         launch {
-          logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, FeatureUsageData().addProject(project).build(), true).join()
+          blockingContext {
+            logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, FeatureUsageData().addProject(project).build(), true).join()
+          }
         }
       }
     }
@@ -170,6 +169,8 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
 
   private suspend fun logApplicationStates(onStartup: Boolean) {
     coroutineScope {
+      if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return@coroutineScope
+
       val recorderLoggers = HashMap<String, StatisticsEventLogger>()
 
       val collectors = ApplicationUsagesCollector.getExtensions(this@FUStateUsagesLogger, onStartup)
@@ -191,29 +192,6 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
         }
       }
     }
-  }
-
-  @ScheduledForRemoval
-  @Deprecated(
-    message = "Use ProjectFUStateUsagesLogger.scheduleLogProjectState",
-    ReplaceWith(
-      "project.service<ProjectFUStateUsagesLogger>().scheduleLogProjectState().join()",
-      "com.intellij.openapi.components.service"
-    ),
-  )
-  suspend fun logProjectStates(project: Project) {
-    project.service<ProjectFUStateUsagesLogger>().scheduleLogProjectState().join()
-  }
-
-  @ScheduledForRemoval
-  @Deprecated(
-    message = "Use FUStateUsagesLogger.scheduleLogProjectState",
-    replaceWith = ReplaceWith(
-      "scheduleLogApplicationState().join()"
-    ),
-  )
-  suspend fun logApplicationStates() {
-    scheduleLogApplicationState().join()
   }
 }
 

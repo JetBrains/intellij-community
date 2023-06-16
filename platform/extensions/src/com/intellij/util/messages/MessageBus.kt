@@ -3,7 +3,8 @@ package com.intellij.util.messages
 
 import com.intellij.openapi.Disposable
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Core of IntelliJ Platform messaging infrastructure. Basic functions:
@@ -30,7 +31,7 @@ interface MessageBus : Disposable {
   /**
    * Create a new connection that is disconnected on message bus dispose, or on explicit [SimpleMessageBusConnection.disconnect].
    */
-  @ApiStatus.Experimental
+  @Internal
   fun simpleConnect(): SimpleMessageBusConnection
 
   /**
@@ -73,7 +74,7 @@ interface MessageBus : Disposable {
    *  1. Queued messages delivery starts;
    *
    * **Important:** `subscriber<sub>2</sub>` is being notified about all queued but not delivered messages,
-   * i.e. its callback is invoked for the message<sub>1</sub>;
+   * i.e., its callback is invoked for the message<sub>1</sub>;
    *
    *  1. Queued messages delivery ends because all subscribers have been notified on the `message<sub>1</sub>`;
    *  1. `Message<sub>2</sub>` is queued for delivery to both subscribers;
@@ -96,8 +97,12 @@ interface MessageBus : Disposable {
    */
   fun <L : Any> syncPublisher(topic: Topic<L>): L
 
+  @Internal
+  @Experimental
+  fun <L : Any> syncAndPreloadPublisher(topic: Topic<L>): L
+
   /**
-   * Disposes current bus, i.e. drops all queued but not delivered messages (if any) and disallows further [connections](.connect).
+   * Disposes current bus, i.e., drops all queued but not delivered messages (if any) and disallows further [connections](.connect).
    */
   override fun dispose()
 

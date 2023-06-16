@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 
 /**
  * Implement this interface if symbol name can have a different format and a name provider needs to be
- * called to allow for WebSymbol -> PsiElement reference to be found.
+ * called to allow for [WebSymbol] -> [PsiElement] reference to be found.
  */
 interface PsiSourcedWebSymbolProvider {
 

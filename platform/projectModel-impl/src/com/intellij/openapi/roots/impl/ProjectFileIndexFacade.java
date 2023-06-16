@@ -28,7 +28,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     super(project);
 
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myWorkspaceFileIndex = WorkspaceFileIndexEx.IS_ENABLED ? (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project) : null;
+    myWorkspaceFileIndex = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
   }
 
   @Override
@@ -101,19 +101,13 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   @Override
   public boolean isInProjectScope(@NotNull VirtualFile file) {
     // optimization: equivalent to the super method but has fewer getInfoForFile() calls
-    if (myWorkspaceFileIndex != null) {
-      WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(file, true, true, true, false);
-      if (fileInfo instanceof WorkspaceFileInternalInfo.NonWorkspace) {
-        return false;
-      }
-      if (fileInfo.findFileSet(it -> it.getKind() == WorkspaceFileKind.EXTERNAL) != null && !myFileIndex.isInSourceContent(file)) {
-        return false;
-      }
-      return true;
+    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(file, true, true, true, false);
+    if (fileInfo instanceof WorkspaceFileInternalInfo.NonWorkspace) {
+      return false;
     }
-    DirectoryInfo info = ((ProjectFileIndexImpl)myFileIndex).getInfoForFileOrDirectory(file);
-    if (!info.isInProject(file)) return false;
-    if (info.hasLibraryClassRoot() && !info.isInModuleSource(file)) return false;
-    return info.getModule() != null;
+    if (fileInfo.findFileSet(it -> it.getKind() == WorkspaceFileKind.EXTERNAL) != null && !myFileIndex.isInSourceContent(file)) {
+      return false;
+    }
+    return true;
   }
 }

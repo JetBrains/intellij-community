@@ -43,12 +43,10 @@ class TipsFeedback : SimplePersistentStateComponent<TipsFeedback.State>(State())
       put("ide_build", ApplicationInfo.getInstance().build.asStringWithoutProductCode())
     }
     val feedbackData = FeedbackRequestData(FEEDBACK_REPORT_ID, dataJsonObject)
-    submitFeedback(project = null,
-                   feedbackData = feedbackData,
+    submitFeedback(feedbackData = feedbackData,
                    onDone = {},
                    onError = {},
-                   feedbackRequestType = getFeedbackRequestType(),
-                   thanksNotification = null)
+                   feedbackRequestType = getFeedbackRequestType())
   }
 
   private fun getFeedbackRequestType(): FeedbackRequestType {

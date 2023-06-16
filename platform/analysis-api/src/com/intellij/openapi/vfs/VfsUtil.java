@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -471,24 +471,22 @@ public final class VfsUtil extends VfsUtilCore {
 
   public static @NotNull List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, VirtualFile @NotNull ... files) {
     List<VirtualFile> list = ContainerUtil.filter(files, Conditions.notNull());
-    if (list.isEmpty()) {
-      return Collections.emptyList();
-    }
+    if (list.isEmpty()) return Collections.emptyList();
 
-    for (VirtualFile file : list) {
+    for (var file : list) {
       if (reloadChildren && file.isValid()) {
         file.getChildren();
       }
-
-      if (file instanceof NewVirtualFile) {
+      if (file instanceof NewVirtualFile nvf) {
         if (recursive) {
-          ((NewVirtualFile)file).markDirtyRecursively();
+          nvf.markDirtyRecursively();
         }
         else {
-          ((NewVirtualFile)file).markDirty();
+          nvf.markDirty();
         }
       }
     }
+
     return list;
   }
 

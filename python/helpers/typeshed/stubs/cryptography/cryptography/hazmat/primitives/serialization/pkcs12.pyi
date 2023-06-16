@@ -14,5 +14,5 @@ def serialize_key_and_certificates(
     key: RSAPrivateKeyWithSerialization | EllipticCurvePrivateKeyWithSerialization | DSAPrivateKeyWithSerialization,
     cert: Certificate | None,
     cas: list[Certificate] | None,
-    enc: KeySerializationEncryption,
+    encryption_algorithm: KeySerializationEncryption,
 ) -> bytes: ...

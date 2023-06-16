@@ -15,11 +15,11 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DelegatingFixFactory;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
@@ -34,7 +34,7 @@ public class NonSerializableWithSerializationMethodsInspection extends BaseInspe
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[2];
     return DelegatingFixFactory.createMakeSerializableFix(aClass);
   }

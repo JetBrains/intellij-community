@@ -4,3 +4,7 @@ package com.jetbrains.python.debugger.pydev.tables
 enum class CommandOutputType {
   STREAM, DISPLAY
 }
+
+interface TableCommandParameters {}
+
+class PyDevCommandParameters(val start: Int, val end: Int) : TableCommandParameters

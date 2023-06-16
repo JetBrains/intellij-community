@@ -17,10 +17,20 @@ public interface SuspendManager {
 
   void resume(SuspendContextImpl suspendContext);
 
-  //replaces current context with new one at the same location and fires 'paused' event
+  /**
+   * Replaces current context with new one at the same location and fires 'paused' event.
+   */
   void popFrame(SuspendContextImpl suspendContext);
 
+  /**
+   * Get first of paused contexts or {@code null} if there are no ones.
+   */
   SuspendContextImpl getPausedContext();
+
+  /**
+   * Get all paused contexts.
+   */
+  List<SuspendContextImpl> getPausedContexts();
 
   boolean isFrozen(ThreadReferenceProxyImpl thread);
 

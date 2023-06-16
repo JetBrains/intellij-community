@@ -19,7 +19,7 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
 
   suspend fun importProject(projectInfo: ProjectInfo, wait: Boolean = true): Project {
     return closeOpenedProjectsIfFailAsync {
-      awaitProjectReload(wait = wait) {
+      awaitAnyGradleProjectReload(wait = wait) {
         performOpenAction(
           action = ImportProjectAction(),
           systemId = GradleConstants.SYSTEM_ID,
@@ -30,7 +30,7 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
   }
 
   suspend fun attachProject(project: Project, relativePath: String) {
-    awaitProjectReload {
+    awaitAnyGradleProjectReload {
       performAction(
         action = AttachExternalProjectAction(),
         project = project,
@@ -41,7 +41,7 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
   }
 
   suspend fun attachProjectFromScript(project: Project, relativePath: String) {
-    awaitProjectReload {
+    awaitAnyGradleProjectReload {
       performAction(
         action = ImportProjectFromScriptAction(),
         project = project,

@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.project.wizard
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logArtifactIdChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logGroupIdChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logVersionChanged
@@ -14,13 +15,16 @@ import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.observable.util.bindStorage
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.validation.*
+import com.intellij.openapi.ui.validation.CHECK_ARTIFACT_ID
+import com.intellij.openapi.ui.validation.CHECK_GROUP_ID
+import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
+import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.SortedComboBoxModel
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.text.nullize
 import java.util.Comparator.comparing
 import java.util.function.Function
@@ -74,7 +78,8 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(
         comboBox(parentComboBoxModel, ParentRenderer())
           .bindItem(parentProperty)
           .columns(COLUMNS_MEDIUM)
-          .whenItemSelectedFromUi { logParentChanged(!it.isPresent) }
+          .whenItemSelectedFromUi { logParentChanged(!parent.isPresent) }
+          .onApply { logParentFinished(!parent.isPresent) }
       }.bottomGap(BottomGap.SMALL)
     }
   }

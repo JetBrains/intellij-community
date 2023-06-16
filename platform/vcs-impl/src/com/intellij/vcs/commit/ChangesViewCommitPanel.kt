@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -188,7 +188,7 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
   }
 
   override suspend fun refreshChangesViewBeforeCommit() {
-    val modalityState = coroutineContext.contextModality() ?: ModalityState.NON_MODAL
+    val modalityState = coroutineContext.contextModality() ?: ModalityState.nonModal()
     ChangesViewManager.getInstanceEx(project).promiseRefresh(modalityState).await()
   }
 

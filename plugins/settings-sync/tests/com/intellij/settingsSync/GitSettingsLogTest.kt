@@ -1,15 +1,17 @@
 package com.intellij.settingsSync
 
+import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
-import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.*
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.createFile
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
+import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -20,9 +22,11 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import java.util.*
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.div
 import kotlin.io.path.writeText
 
@@ -40,12 +44,14 @@ internal class GitSettingsLogTest {
 
   private lateinit var configDir: Path
   private lateinit var settingsSyncStorage: Path
+  private var jbaData: JBAccountInfoService.JBAData? = null
 
   @Before
   fun setUp() {
     val mainDir = tempDirManager.createDir()
     configDir = mainDir.resolve("rootconfig").createDirectories()
     settingsSyncStorage = configDir.resolve("settingsSync")
+    jbaData = null
   }
 
   @Test
@@ -244,11 +250,14 @@ internal class GitSettingsLogTest {
 
   @Test
   fun `do not fail if unknown gpg option is written in global config`() {
-    val editorXml = (configDir / "options" / "editor.xml").createFile()
-    editorXml.writeText("editorContent")
-    val settingsLog = initializeGitSettingsLog(editorXml)
+    val userHomeDefault = System.getProperty("user.home")
+    try {
+      val userHome = Files.createTempDirectory("gitSettingsLogTest")
+      System.setProperty("user.home", userHome.absolutePathString())
 
-    (settingsSyncStorage / ".git" / "config").writeText("""
+      val editorXml = (configDir / "options" / "editor.xml").createFile()
+      editorXml.writeText("editorContent")
+      (userHome / ".gitconfig").writeText("""
       [commit]
           gpgsign = true
       [user]
@@ -257,14 +266,19 @@ internal class GitSettingsLogTest {
 	        format = ssh
       [gpg "ssh"]
         allowedSignersFile = ~/.config/git/allowed_signers""".trimIndent())
+      val settingsLog = initializeGitSettingsLog(editorXml)
 
-    settingsLog.forceWriteToMaster(
-      settingsSnapshot {
+      settingsLog.forceWriteToMaster(
+        settingsSnapshot {
+          fileState("options/editor.xml", "ideEditorContent")
+        }, "Local changes"
+      )
+      settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
         fileState("options/editor.xml", "ideEditorContent")
-      }, "Local changes"
-    )
-    settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
-      fileState("options/editor.xml", "ideEditorContent")
+      }
+    }
+    finally {
+      System.setProperty("user.home", userHomeDefault)
     }
   }
 
@@ -365,8 +379,57 @@ internal class GitSettingsLogTest {
     assertMasterIsMergeOfIdeAndCloud()
   }
 
+  @Test
+  fun `use username from JBA`() {
+    val jbaEmail = "some-jba-email@jba-mail.com"
+    val jbaName = "JBA Name"
+
+    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", jbaName, jbaEmail)
+    checkUsernameEmail(jbaName, jbaEmail)
+  }
+
+  @Test
+  @TestFor(issues = ["EA-844607"])
+  fun `use empty email if JBA doesn't provide one`() {
+    val jbaName = "JBA Name 2"
+
+    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", jbaName, null)
+    checkUsernameEmail(jbaName, "")
+  }
+
+  @Test
+  @TestFor(issues = ["EA-844607"])
+  fun `use empty name if JBA doesn't provide one`() {
+    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", null, null)
+    checkUsernameEmail("", "")
+  }
+
+  private fun checkUsernameEmail(expectedName: String, expectedEmail: String) {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+    (settingsSyncStorage / ".git" / "config").writeText("""
+[user]
+        name = Gawr Gura
+        email = just-email@non-existing.addr
+""".trimIndent())
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "Editor Ide")
+        fileState("options/ide.general.xml", "General Ide")
+      }, "Local changes"
+    )
+    val headCommit = getRepository().headCommit()
+    val author = headCommit.authorIdent
+    val committer = headCommit.committerIdent
+    assertEquals(expectedEmail, author.emailAddress)
+    assertEquals(expectedEmail, committer.emailAddress)
+    assertEquals(expectedName, author.name)
+    assertEquals(expectedName, committer.name)
+  }
+
   private fun initializeGitSettingsLog(vararg filesToCopyInitially: Path): GitSettingsLog {
-    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
+    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable, { jbaData }) {
       val fileStates = collectFileStatesFromFiles(filesToCopyInitially.toSet(), configDir)
       SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), null), fileStates, plugins = null, emptyMap(), emptySet())
     }
@@ -377,9 +440,13 @@ internal class GitSettingsLogTest {
     return settingsLog
   }
 
-  private fun assertMasterIsMergeOfIdeAndCloud() {
+  private fun getRepository(): Repository {
     val dotGit = settingsSyncStorage.resolve(".git")
-    FileRepositoryBuilder.create(dotGit.toFile()).use { repository ->
+    return FileRepositoryBuilder.create(dotGit.toFile())
+  }
+
+  private fun assertMasterIsMergeOfIdeAndCloud() {
+    getRepository().use { repository ->
       val walk = RevWalk(repository)
       try {
         val commit: RevCommit = walk.parseCommit(repository.findRef("master").objectId)
@@ -389,14 +456,16 @@ internal class GitSettingsLogTest {
         val ide = repository.findRef("ide")!!
         val cloud = repository.findRef("cloud")!!
         val (parent1, parent2) = parents
-        if (parent1.id == ide.objectId) {
-          assertTrue(parent2.id == cloud.objectId)
-        }
-        else if (parent1.id == cloud.objectId) {
-          assertTrue(parent2.id == ide.objectId)
-        }
-        else {
-          fail("Neither ide nor cloud are parents of master")
+        when (parent1.id) {
+          ide.objectId -> {
+            assertTrue(parent2.id == cloud.objectId)
+          }
+          cloud.objectId -> {
+            assertTrue(parent2.id == ide.objectId)
+          }
+          else -> {
+            fail("Neither ide nor cloud are parents of master")
+          }
         }
         walk.dispose()
       }

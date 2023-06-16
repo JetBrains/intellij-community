@@ -19,10 +19,10 @@ import org.jetbrains.annotations.ApiStatus
 
 open class ModuleIndexableFilesPolicy {
   companion object {
-    fun getInstance() = service<ModuleIndexableFilesPolicy>()
+    fun getInstance(): ModuleIndexableFilesPolicy = service<ModuleIndexableFilesPolicy>()
   }
 
-  open fun shouldIndexSeparateRoots() = true
+  open fun shouldIndexSeparateRoots(): Boolean = true
 }
 
 internal class ModuleIndexableFilesIteratorImpl(private val module: Module,

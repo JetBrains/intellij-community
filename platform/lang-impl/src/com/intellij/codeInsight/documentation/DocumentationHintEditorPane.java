@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.lang.documentation.DocumentationImageResolver;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -65,12 +64,12 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
   }
 
   private JBPopup myHint; // lateinit
-  private Point initialClick;
+  private Point myInitialPress;
 
   @Override
   protected void processMouseEvent(MouseEvent e) {
     if (e.getID() == MouseEvent.MOUSE_PRESSED && myHint != null) {
-      initialClick = null;
+      myInitialPress = null;
       StyledDocument document = (StyledDocument)getDocument();
       int x = e.getX();
       int y = e.getY();
@@ -79,7 +78,7 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
           !hasTextAt(document, x - 3, y) &&
           !hasTextAt(document, x, y + 3) &&
           !hasTextAt(document, x, y - 3)) {
-        initialClick = e.getPoint();
+        myInitialPress = e.getPoint();
       }
     }
     super.processMouseEvent(e);
@@ -89,21 +88,18 @@ public final class DocumentationHintEditorPane extends DocumentationEditorPane {
     Element element = document.getCharacterElement(viewToModel(new Point(x, y)));
     try {
       String text = document.getText(element.getStartOffset(), element.getEndOffset() - element.getStartOffset());
-      if (StringUtil.isEmpty(text.trim())) {
-        return false;
-      }
+      return !text.trim().isEmpty();
     }
     catch (BadLocationException ignored) {
       return false;
     }
-    return true;
   }
 
   @Override
   protected void processMouseMotionEvent(MouseEvent e) {
-    if (e.getID() == MouseEvent.MOUSE_DRAGGED && myHint != null && initialClick != null) {
+    if (e.getID() == MouseEvent.MOUSE_DRAGGED && myHint != null && myInitialPress != null) {
       Point location = myHint.getLocationOnScreen();
-      myHint.setLocation(new Point(location.x + e.getX() - initialClick.x, location.y + e.getY() - initialClick.y));
+      myHint.setLocation(new Point(location.x + e.getX() - myInitialPress.x, location.y + e.getY() - myInitialPress.y));
       e.consume();
       return;
     }

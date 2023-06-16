@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtSecondaryConstructor
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "constructor T()"
 // FIND_BY_REF
 // WITH_FILE_NAME
 

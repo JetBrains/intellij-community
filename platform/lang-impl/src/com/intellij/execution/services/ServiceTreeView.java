@@ -49,6 +49,8 @@ import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
+import static com.intellij.execution.services.ServiceViewDragHelper.getTheOnlyRootContributor;
+
 final class ServiceTreeView extends ServiceView {
   private static final String ADD_SERVICE_ACTION_ID = "ServiceView.AddService";
 
@@ -86,7 +88,7 @@ final class ServiceTreeView extends ServiceView {
 
     Consumer<ServiceViewItem> selector = item ->
       select(item.getValue(), item.getRootContributor().getClass())
-        .onSuccess(result -> AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+        .onSuccess(result -> AppUIExecutor.onUiThread().expireWith(this).submit(() -> {
           JComponent component = getUi().getDetailsComponent();
           if (component != null) {
             IdeFocusManager.getInstance(getProject()).requestFocus(component, false);
@@ -198,7 +200,7 @@ final class ServiceTreeView extends ServiceView {
       .onError(result::setError)
       .onSuccess(path -> {
         ServiceViewItem item = (ServiceViewItem)path.getLastPathComponent();
-        AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+        AppUIExecutor.onUiThread().expireWith(this).submit(() -> {
           ServiceViewManagerImpl manager = (ServiceViewManagerImpl)ServiceViewManager.getInstance(getProject());
           manager.extract(new ServiceViewDragHelper.ServiceViewDragBean(this, Collections.singletonList(item)));
           result.setResult(null);
@@ -240,10 +242,25 @@ final class ServiceTreeView extends ServiceView {
 
   private void onSelectionChanged() {
     List<ServiceViewItem> selected = getSelectedItems();
-    ServiceViewItem newSelection = ContainerUtil.getOnlyItem(selected);
-    if (Comparing.equal(newSelection, myLastSelection)) return;
+
+    ServiceViewItem newSelection;
+    ServiceViewDescriptor newDescriptor;
+    if (selected.size() == 1) {
+      newSelection = selected.get(0);
+      newDescriptor = newSelection.getViewDescriptor();
+    }
+    else {
+      newSelection = null;
+      ServiceViewContributor<?> contributor = getTheOnlyRootContributor(selected);
+      newDescriptor = contributor == null ? null : contributor.getViewDescriptor(getProject());
+    }
+
+
+    if (newSelection != null && newSelection.equals(myLastSelection)) return;
 
     ServiceViewDescriptor oldDescriptor = myLastSelection == null ? null : myLastSelection.getViewDescriptor();
+    if (Comparing.equal(newDescriptor, oldDescriptor)) return;
+
     if (oldDescriptor != null && mySelected) {
       oldDescriptor.onNodeUnselected();
     }
@@ -253,15 +270,14 @@ final class ServiceTreeView extends ServiceView {
 
     if (!mySelected) return;
 
-    ServiceViewDescriptor newDescriptor = newSelection == null ? null : newSelection.getViewDescriptor();
     if (newDescriptor != null) {
-      newDescriptor.onNodeSelected();
+      newDescriptor.onNodeSelected(ContainerUtil.map(selected, ServiceViewItem::getValue));
     }
     myUi.setDetailsComponent(newDescriptor == null ? null : newDescriptor.getContentComponent());
   }
 
   private void selectFirstItemIfNeeded() {
-    AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+    AppUIExecutor.onUiThread().expireWith(this).submit(() -> {
       List<ServiceViewItem> selected = getSelectedItems();
       if (selected.isEmpty()) {
         ServiceViewItem item = ContainerUtil.getFirstItem(getModel().getRoots());
@@ -276,7 +292,7 @@ final class ServiceTreeView extends ServiceView {
     ServiceViewItem lastSelection = myLastSelection;
     WeakReference<ServiceViewItem> itemRef =
       new WeakReference<>(lastSelection == null ? null : getModel().findItemSafe(lastSelection));
-    AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+    AppUIExecutor.onUiThread().expireWith(this).submit(() -> {
       List<ServiceViewItem> selected = getSelectedItems();
       if (selected.isEmpty()) {
         ServiceViewItem item = ContainerUtil.getFirstItem(getModel().getRoots());
@@ -305,7 +321,7 @@ final class ServiceTreeView extends ServiceView {
   }
 
   private void updateNavBar() {
-    AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+    AppUIExecutor.onUiThread().expireWith(this).submit(() -> {
       ServiceViewItem item = getNavBarItem();
       if (item == null) return;
 
@@ -317,7 +333,7 @@ final class ServiceTreeView extends ServiceView {
         ServiceViewItem updatedItem = getModel().findItemSafe(viewItem);
         if (updatedItem != null) {
           WeakReference<ServiceViewItem> updatedRef = new WeakReference<>(updatedItem);
-          AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+          AppUIExecutor.onUiThread().expireWith(this).submit(() -> {
             ServiceViewItem updatedViewItem = updatedRef.get();
             if (updatedViewItem == null) return;
 
@@ -339,7 +355,7 @@ final class ServiceTreeView extends ServiceView {
   }
 
   private void updateSelectionPaths() {
-    AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+    AppUIExecutor.onUiThread().expireWith(this).submit(() -> {
       TreePath[] currentPaths = myTree.getSelectionPaths();
       List<TreePath> selectedPaths =
         currentPaths == null || currentPaths.length == 0 ? Collections.emptyList() : Arrays.asList(currentPaths);
@@ -367,7 +383,7 @@ final class ServiceTreeView extends ServiceView {
               myUpdateSelectionPromise = newSelectPromise;
             }
             else {
-              AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+              AppUIExecutor.onUiThread().expireWith(this).submit(() -> {
                 TreePath[] selectionPaths = myTree.getSelectionPaths();
                 if (selectionPaths != null && isSelectionUpdateNeeded(new SmartList<>(selectionPaths), paths)) {
                   myTree.setSelectionPaths(paths.toArray(new TreePath[0]));
@@ -501,7 +517,7 @@ final class ServiceTreeView extends ServiceView {
     @Override
     public void eventProcessed(ServiceEventListener.@NotNull ServiceEvent e) {
       if (e.type == ServiceEventListener.EventType.UNLOAD_SYNC_RESET) {
-        AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+        AppUIExecutor.onUiThread().expireWith(ServiceTreeView.this).submit(() -> {
           resetTreeModel();
           updateNavBar();
         });
@@ -537,7 +553,7 @@ final class ServiceTreeView extends ServiceView {
     }
 
     private void updateNavBar() {
-      AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+      AppUIExecutor.onUiThread().expireWith(myNavBarPanel).submit(() -> {
         myNavBarPanel.hidePopup();
         myNavBarPanel.getModel().updateModel((Object)null);
         myNavBarPanel.getUpdateQueue().rebuildUi();

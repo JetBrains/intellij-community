@@ -3,12 +3,10 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.PathUtilRt
 import org.apache.commons.compress.archivers.ArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
-import org.apache.commons.io.FileExistsException
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.unmapBuffer
@@ -25,7 +23,7 @@ import kotlin.io.path.readText
 
 private const val fileFlag = 32768  // 0100000
 
-const val executableFileUnixMode = fileFlag or 493  // 0755
+internal const val executableFileUnixMode: Int = fileFlag or 493  // 0755
 
 fun filterFileIfAlreadyInZip(relativePath: String, file: Path, zipFiles: MutableMap<String, Path>): Boolean {
   val old = zipFiles.putIfAbsent(relativePath, file) ?: return true
@@ -71,9 +69,12 @@ private fun compareByMemoryMappedFiles(path1: Path, path2: Path): Boolean {
 }
 
 fun consumeDataByPrefix(file: Path, prefixWithEndingSlash: String, consumer: BiConsumer<String, ByteArray>) {
-  readZipFile(file) { name, entry ->
+  readZipFile(file) { name, dataSupplier ->
     if (name.startsWith(prefixWithEndingSlash)) {
-      consumer.accept(name, entry.getData())
+      val buffer = dataSupplier()
+      val array = ByteArray(buffer.remaining())
+      buffer.get(array)
+      consumer.accept(name, array)
     }
   }
 }
@@ -107,7 +108,7 @@ fun ZipArchiveOutputStream.dir(startDir: Path,
         dirCandidates.add(file)
       }
       else if (attributes.isSymbolicLink) {
-        val entry = ZipArchiveEntryAssertName(prefix + FileUtilRt.toSystemIndependentName(startDir.relativize(file).toString()))
+        val entry = zipArchiveEntry(prefix + startDir.relativize(file).toString().replace('\\', '/'))
         entry.method = ZipEntry.STORED
         entry.lastModifiedTime = buildTime
         entry.unixMode = Files.readAttributes(file, "unix:mode", LinkOption.NOFOLLOW_LINKS)["mode"] as Int
@@ -121,12 +122,12 @@ fun ZipArchiveOutputStream.dir(startDir: Path,
       else {
         assert(attributes.isRegularFile)
 
-        val relativePath = FileUtilRt.toSystemIndependentName(startDir.relativize(file).toString())
+        val relativePath = startDir.relativize(file).toString().replace('\\', '/')
         if (fileFilter != null && !fileFilter(file, relativePath)) {
           continue
         }
 
-        val entry = ZipArchiveEntryAssertName(prefix + relativePath)
+        val entry = zipArchiveEntry(prefix + relativePath)
         entry.size = attributes.size()
         entryCustomizer?.invoke(entry, file, relativePath)
         writeFileEntry(file, entry, this)
@@ -145,15 +146,15 @@ internal fun ZipArchiveOutputStream.entryToDir(file: Path, zipPath: String) {
 private val buildTime = FileTime.from(BuildOptions().buildDateInSeconds, TimeUnit.SECONDS)
 
 internal fun ZipArchiveOutputStream.entry(name: String, file: Path, unixMode: Int = -1) {
-  val entry = ZipArchiveEntryAssertName(name)
+  val entry = zipArchiveEntry(name)
   if (unixMode != -1) {
     entry.unixMode = unixMode
   }
-  writeFileEntry(file, entry, this)
+  writeFileEntry(file = file, entry = entry, out = this)
 }
 
 internal fun ZipArchiveOutputStream.entry(name: String, data: ByteArray) {
-  val entry = ZipArchiveEntryAssertName(name)
+  val entry = zipArchiveEntry(name)
   entry.size = data.size.toLong()
   entry.lastModifiedTime = buildTime
   putArchiveEntry(entry)
@@ -166,7 +167,7 @@ private fun assertRelativePathIsCorrectForPackaging(relativeName: String) {
     throw IllegalArgumentException("relativeName must not be empty")
   }
 
-  if (relativeName.startsWith("/")) {
+  if (relativeName.startsWith('/')) {
     throw IllegalArgumentException("relativeName must not be an absolute path: $relativeName")
   }
 
@@ -201,14 +202,13 @@ private fun writeFileEntry(file: Path, entry: ZipArchiveEntry, out: ZipArchiveOu
   out.closeArchiveEntry()
 }
 
-private class ZipArchiveEntryAssertName(name: String): ZipArchiveEntry(name) {
-  init {
-    assertRelativePathIsCorrectForPackaging(name)
-  }
+private fun zipArchiveEntry(name: String): ZipArchiveEntry {
+  assertRelativePathIsCorrectForPackaging(name)
+  return ZipArchiveEntry(name)
 }
 
 internal class NoDuplicateZipArchiveOutputStream(channel: SeekableByteChannel, compress: Boolean) : ZipArchiveOutputStream(channel) {
-  private val entries = HashSet<String>()
+  private val existingNames = HashSet<String>()
 
   init {
     if (!compress) {
@@ -219,8 +219,8 @@ internal class NoDuplicateZipArchiveOutputStream(channel: SeekableByteChannel, c
   override fun putArchiveEntry(archiveEntry: ArchiveEntry) {
     val entryName = archiveEntry.name
     assertRelativePathIsCorrectForPackaging(entryName)
-    if (!entries.add(entryName)) {
-      throw FileExistsException("File $entryName already exists")
+    if (!existingNames.add(entryName)) {
+      throw IllegalStateException("File $entryName already exists")
     }
     super.putArchiveEntry(archiveEntry)
   }

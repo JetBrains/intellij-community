@@ -4,122 +4,66 @@
 package org.jetbrains.sqlite
 
 import org.intellij.lang.annotations.Language
-import org.jetbrains.sqlite.*
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
+
+private val COMMIT = "commit".encodeToByteArray()
 
 class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : AutoCloseable {
-  @JvmField
-  internal val db: NativeDB
-
-  private val closed = AtomicBoolean(true)
+  private val dbRef = AtomicReference<NativeDB?>()
+  private val lock = ReentrantLock()
 
   val isClosed: Boolean
-    get() = closed.get()
+    get() = dbRef.get() == null
 
   private var currentBusyTimeout: Int
-  /**
-   * @return The busy timeout value for the connection.
-   * @see [http://www.sqlite.org/c3ref/busy_timeout.html](http://www.sqlite.org/c3ref/busy_timeout.html)
-   */
-  var busyTimeout: Int
-    get() = currentBusyTimeout
-    set(timeoutMillis) {
-      currentBusyTimeout = timeoutMillis
-      db.busy_timeout(timeoutMillis)
-    }
 
   init {
     file?.parent?.let { Files.createDirectories(it) }
     loadNativeDb()
-    db = NativeDB()
+    val db = NativeDB()
     @Suppress("IfThenToElvis")
     val status = db.open(if (file == null) ":memory:" else file.toAbsolutePath().normalize().toString(), config.openModeFlag) and 0xff
     if (status != SqliteCodes.SQLITE_OK) {
       throw SqliteDb.newException(status, "", null)
     }
-    closed.set(false)
 
     try {
-      config.apply(this)
+      config.apply(db)
       currentBusyTimeout = config.busyTimeout
     }
-    catch (t: Throwable) {
+    catch (e: Throwable) {
       try {
         db.close()
       }
-      catch (e: Throwable) {
-        t.addSuppressed(e)
+      catch (closeException: Throwable) {
+        e.addSuppressed(closeException)
       }
-      throw t
+      throw e
     }
+
+    dbRef.set(db)
   }
 
-  internal inline fun <T> withConnectionTimeout(queryTimeout: kotlin.time.Duration = kotlin.time.Duration.ZERO, callable: () -> T): T {
-    val queryTimeoutInMilliseconds = queryTimeout.inWholeMilliseconds.toInt()
-    if (queryTimeoutInMilliseconds <= 0) {
-      return callable()
-    }
-
-    val origBusyTimeout = busyTimeout
-    busyTimeout = queryTimeoutInMilliseconds
-    try {
-      return callable()
-    }
-    finally {
-      // reset connection timeout to the original value
-      busyTimeout = origBusyTimeout
+  internal inline fun <T> useDb(task: (db: NativeDB) -> T): T {
+    lock.withLock {
+      return task(getDb())
     }
   }
 
   fun <T : Binder> prepareStatement(@Language("SQLite") sql: String, binder: T): SqlitePreparedStatement<T> {
-    checkOpen()
-    return SqlitePreparedStatement(connection = this, sql = sql, binder = binder)
+    return SqlitePreparedStatement(connection = this, sql = sql.encodeToByteArray(), binder = binder)
   }
 
-  //
-  ///** @see Connection#setSavepoint() */
-  //public SqliteSavepoint setSavepoint() throws SQLException {
-  //  checkOpen();
-  //  var sp = new SqliteSavepoint(savePoint.incrementAndGet());
-  //  getDatabase().exec(String.format("SAVEPOINT %s", sp.getSavepointName()));
-  //  return sp;
-  //}
-  //
-  ///** @see Connection#setSavepoint(String) */
-  //public SqliteSavepoint setSavepoint(String name) throws SQLException {
-  //  checkOpen();
-  //  var sp = new SqliteSavepoint(savePoint.incrementAndGet(), name);
-  //  getDatabase().exec(String.format("SAVEPOINT %s", sp.getSavepointName()));
-  //  return sp;
-  //}
-  //
-  ///** @see Connection#releaseSavepoint(Savepoint) */
-  //public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-  //  checkOpen();
-  //  getDatabase()
-  //    .exec(String.format("RELEASE SAVEPOINT %s", savepoint.getSavepointName()));
-  //}
-  //
-  ///** @see Connection#rollback(Savepoint) */
-  //public void rollback(Savepoint savepoint) throws SQLException {
-  //  checkOpen();
-  //  getDatabase()
-  //    .exec(
-  //      String.format("ROLLBACK TO SAVEPOINT %s", savepoint.getSavepointName())
-  //    );
-  //}
-  //fun getCurrentTransactionMode(): SQLiteConfig.TransactionMode? {
-  //  return field
-  //}
-  //
-  //fun setCurrentTransactionMode(currentTransactionMode: SQLiteConfig.TransactionMode?) {
-  //  field = currentTransactionMode
-  //}
+  fun <T : Binder> prepareStatement(sqlUtf8: ByteArray, binder: T): SqlitePreparedStatement<T> {
+    return SqlitePreparedStatement(connection = this, sql = sqlUtf8, binder = binder)
+  }
 
   fun selectBoolean(@Language("SQLite") sql: String, values: Any? = null): Boolean {
-    return executeLifecycle<Boolean>(sql, values) { statementPointer, isEmpty ->
+    return executeLifecycle<Boolean>(sql.encodeToByteArray(), values) { db, statementPointer, isEmpty ->
       if (isEmpty) {
         false
       }
@@ -131,74 +75,43 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
   }
 
   fun selectString(@Language("SQLite") sql: String, values: Any? = null): String? {
-    return executeLifecycle<String?>(sql, values) { statementPointer, empty ->
+    return executeLifecycle<String?>(sql.encodeToByteArray(), values) { db, statementPointer, empty ->
       if (empty) null else db.column_text(statementPointer, 0)
     }
   }
 
-  private inline fun <T> executeLifecycle(sql: String,
+  private inline fun <T> executeLifecycle(sql: ByteArray,
                                           values: Any? = null,
-                                          executor: (statementPointer: Long, empty: Boolean) -> T): T {
-    checkOpen()
-    val statementPointer = db.prepare_utf8(sql.encodeToByteArray())
-    try {
-      synchronized(db) {
-        bind(statementPointer = statementPointer, values = values)
-        val isEmpty = step(statementPointer, sql)
-        return executor(statementPointer, isEmpty)
+                                          executor: (db: NativeDB, statementPointer: Long, empty: Boolean) -> T): T {
+    useDb { db ->
+      val statementPointer = db.prepare_utf8(sql)
+      try {
+        bind(statementPointer = statementPointer, values = values, db = db)
+        val isEmpty = step(statementPointer = statementPointer, sql = sql, db = db)
+        return executor(db, statementPointer, isEmpty)
       }
-    }
-    finally {
-      db.finalize(statementPointer)
-    }
-  }
-
-  internal fun step(statementPointer: Long, sql: String): Boolean {
-    return when (val status = db.step(statementPointer) and 0xFF) {
-      SqliteCodes.SQLITE_DONE -> true
-      SqliteCodes.SQLITE_ROW -> false
-      else -> throw SqliteDb.newException(status, db.errmsg()!!, sql)
-    }
-  }
-
-  private fun bind(statementPointer: Long, values: Any?) {
-    if (values == null) {
-      return
-    }
-
-    if (values is Int) {
-      val status = db.bind_int(statementPointer, 1, values)
-      if (status != SqliteCodes.SQLITE_OK) {
-        throw db.newException(status)
-      }
-    }
-    else {
-      @Suppress("UNCHECKED_CAST")
-      values as Array<Any?>
-      for ((index, value) in values.withIndex()) {
-        sqlBind(statementPointer, index, value, db)
+      finally {
+        db.finalize(statementPointer)
       }
     }
   }
 
   fun execute(@Language("SQLite") sql: String) {
-    checkOpen()
-    db.exec(sql)
+    getDb().exec(sql.encodeToByteArray())
   }
 
   fun execute(@Language("SQLite") sql: String, values: Any) {
-    checkOpen()
-    executeLifecycle<Unit>(sql, values) { _, _ -> }
+    executeLifecycle<Unit>(sql.encodeToByteArray(), values) { _, _, _ -> }
   }
 
   override fun close() {
-    if (closed.compareAndSet(false, true)) {
-      db.close()
+    lock.withLock {
+      dbRef.getAndSet(null)?.close()
     }
   }
 
-  private fun checkOpen() {
-    check(!closed.get()) { "database connection closed" }
+  private fun getDb(): NativeDB {
+    return requireNotNull(dbRef.get()) { "database connection closed" }
   }
 
   fun beginTransaction() {
@@ -206,51 +119,40 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
   }
 
   fun commit() {
-    checkOpen()
-    db.exec("commit")
+    getDb().exec(COMMIT)
   }
 
   fun rollback() {
-    checkOpen()
-    db.exec("rollback")
+    getDb().exec("rollback".encodeToByteArray())
+  }
+}
+
+internal fun step(statementPointer: Long, sql: ByteArray, db: NativeDB): Boolean {
+  return when (val status = db.step(statementPointer) and 0xFF) {
+    SqliteCodes.SQLITE_DONE -> true
+    SqliteCodes.SQLITE_ROW -> false
+    else -> throw SqliteDb.newException(status, db.errmsg()!!, sql)
+  }
+}
+
+private fun bind(statementPointer: Long, values: Any?, db: NativeDB) {
+  if (values == null) {
+    return
   }
 
-  ///**
-  // * Add a listener for DB update events, see [...](https://www.sqlite.org/c3ref/update_hook.html)
-  // *
-  // * @param listener The listener to receive update events
-  // */
-  //fun addUpdateListener(listener: SQLiteUpdateListener?) {
-  //  db.addUpdateListener(listener)
-  //}
-
-  ///**
-  // * Remove a listener registered for DB update events.
-  // *
-  // * @param listener The listener to no longer receive update events
-  // */
-  //fun removeUpdateListener(listener: SQLiteUpdateListener?) {
-  //  db.removeUpdateListener(listener)
-  //}
-
-  ///**
-  // * Add a listener for DB commit/rollback events, see
-  // * [...](https://www.sqlite.org/c3ref/commit_hook.html)
-  // *
-  // * @param listener The listener to receive commit events
-  // */
-  //fun addCommitListener(listener: SQLiteCommitListener?) {
-  //  db.addCommitListener(listener)
-  //}
-
-  ///**
-  // * Remove a listener registered for DB commit/rollback events.
-  // *
-  // * @param listener The listener is to no longer receive commit/rollback events.
-  // */
-  //fun removeCommitListener(listener: SQLiteCommitListener?) {
-  //  db.removeCommitListener(listener)
-  //}
+  if (values is Int) {
+    val status = db.bind_int(statementPointer, 1, values)
+    if (status != SqliteCodes.SQLITE_OK) {
+      throw db.newException(status)
+    }
+  }
+  else {
+    @Suppress("UNCHECKED_CAST")
+    values as Array<Any?>
+    for ((index, value) in values.withIndex()) {
+      sqlBind(statementPointer, index, value, db)
+    }
+  }
 }
 
 internal fun sqlBind(pointer: Long, index: Int, v: Any?, db: SqliteDb) {

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -41,12 +42,13 @@ final class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devki
       if (!isExtensionPointNameDeclarationViaSuperCall(uCallExpression)) return;
 
       UDeclaration uDeclaration = UastUtils.getParentOfType(uCallExpression, UDeclaration.class);
+      assert uDeclaration != null : uElement.asSourceString();
       process(resolveEpFqn(uCallExpression), uDeclaration, element.getProject(), result);
     }
   }
 
-  private static void process(@Nullable String epFqn,
-                              UDeclaration uDeclaration,
+  private static void process(@Nullable @NonNls String epFqn,
+                              @NotNull UDeclaration uDeclaration,
                               Project project,
                               Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     if (epFqn == null) return;
@@ -65,7 +67,7 @@ final class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devki
     result.add(info);
   }
 
-  private static boolean isExtensionPointNameDeclarationViaSuperCall(UCallExpression uCallExpression) {
+  private static boolean isExtensionPointNameDeclarationViaSuperCall(@NotNull UCallExpression uCallExpression) {
     if (uCallExpression.getValueArgumentCount() != 1) return false;
     if (uCallExpression.getKind() != UastCallKind.CONSTRUCTOR_CALL) {
       if (uCallExpression.getKind() != UastCallKind.METHOD_CALL && !Objects.equals(uCallExpression.getMethodName(), "super")) {
@@ -84,15 +86,14 @@ final class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devki
     return InheritanceUtil.isInheritor(resolvedMethod.getContainingClass(), KeyedExtensionCollector.class.getName());
   }
 
-  @Nullable
-  private static String resolveEpFqn(UCallExpression uCallExpression) {
+
+  private static @Nullable @NonNls String resolveEpFqn(@NotNull UCallExpression uCallExpression) {
     UExpression uParameter = uCallExpression.getArgumentForParameter(0);
     if (uParameter == null) return null;
     return UastUtils.evaluateString(uParameter);
   }
 
-  @Nullable
-  private static String resolveEpFqn(UField uField) {
+  private static @Nullable @NonNls String resolveEpFqn(@NotNull UField uField) {
     final UExpression initializer = uField.getUastInitializer();
 
     UExpression epNameExpression = null;
@@ -110,7 +111,7 @@ final class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devki
     return UastUtils.evaluateString(epNameExpression);
   }
 
-  private static boolean isExtensionPointNameDeclarationField(UField uField) {
+  private static boolean isExtensionPointNameDeclarationField(@NotNull UField uField) {
     if (!uField.isFinal()) {
       return false;
     }

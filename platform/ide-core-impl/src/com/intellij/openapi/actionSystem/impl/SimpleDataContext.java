@@ -54,18 +54,12 @@ public final class SimpleDataContext extends CustomizedDataContext {
     return new SimpleDataContext(dataId2data, parent);
   }
 
-  /** @deprecated use {@link SimpleDataContext#getSimpleContext(DataKey, Object)} instead. */
-  @Deprecated(forRemoval = true)
-  public static @NotNull DataContext getSimpleContext(@NotNull String dataId, @NotNull Object data) {
-    return getSimpleContext(dataId, data, null);
-  }
-
   public static @NotNull <T> DataContext getSimpleContext(@NotNull DataKey<? super T> dataKey, @NotNull T data) {
     return getSimpleContext(dataKey, data, null);
   }
 
   public static @NotNull DataContext getProjectContext(@NotNull Project project) {
-    return getSimpleContext(CommonDataKeys.PROJECT.getName(), project);
+    return getSimpleContext(CommonDataKeys.PROJECT, project);
   }
 
   public static @NotNull Builder builder() {

@@ -5,14 +5,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import git4idea.changes.GitParsedChangesBundle
+import git4idea.changes.GitBranchComparisonResult
 import org.jetbrains.plugins.github.api.data.GHCommit
 import java.util.concurrent.CompletableFuture
 
 interface GHPRChangesDataProvider {
 
   @RequiresEdt
-  fun loadChanges(): CompletableFuture<GitParsedChangesBundle>
+  fun loadChanges(): CompletableFuture<GitBranchComparisonResult>
 
   @RequiresEdt
   fun loadPatchFromMergeBase(progressIndicator: ProgressIndicator, commitSha: String, filePath: String): CompletableFuture<FilePatch?>
@@ -24,7 +24,7 @@ interface GHPRChangesDataProvider {
   fun addChangesListener(disposable: Disposable, listener: () -> Unit)
 
   @RequiresEdt
-  fun loadChanges(disposable: Disposable, consumer: (CompletableFuture<GitParsedChangesBundle>) -> Unit) {
+  fun loadChanges(disposable: Disposable, consumer: (CompletableFuture<GitBranchComparisonResult>) -> Unit) {
     addChangesListener(disposable) {
       consumer(loadChanges())
     }

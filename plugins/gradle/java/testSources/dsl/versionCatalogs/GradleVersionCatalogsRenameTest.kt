@@ -3,13 +3,11 @@ package org.jetbrains.plugins.gradle.dsl.versionCatalogs
 
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
-import com.intellij.psi.PsiManager
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.utils.vfs.getPsiFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -18,17 +16,17 @@ class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @BaseGradleVersionSource
   fun testRenameLibrary(gradleVersion: GradleVersion) {
-    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
-      val buildGradle = findOrCreateFile("build.gradle", "libs.aaa.bbb.ccc")
-      val libsVersionsToml = findOrCreateFile("gradle/libs.versions.toml", """
+    testEmptyProject(gradleVersion) {
+      writeTextAndCommit("build.gradle", "libs.aaa.bbb.ccc")
+      writeTextAndCommit("gradle/libs.versions.toml", """
         [libraries]
         aaa-b<caret>bb_ccc = "a:b:10"
       """.trimIndent())
       runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(libsVersionsToml)
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("gradle/libs.versions.toml"))
         TestDialogManager.setTestDialog(TestDialog.OK)
         codeInsightFixture.renameElementAtCaret("eee-fff_ggg")
-        val uncommittedFile = PsiManager.getInstance(codeInsightFixture.project).findFile(buildGradle)!!
+        val uncommittedFile = getFile("build.gradle").getPsiFile(project)
         Assertions.assertEquals("libs.eee.fff.ggg", uncommittedFile.text)
       }
     }
@@ -37,16 +35,16 @@ class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @BaseGradleVersionSource
   fun testRenameVersionRef(gradleVersion: GradleVersion) {
-    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
-      findOrCreateFile("build.gradle", "")
-      val libsVersionsToml = findOrCreateFile("gradle/libs.versions.toml", """
+    testEmptyProject(gradleVersion) {
+      writeTextAndCommit("build.gradle", "")
+      writeTextAndCommit("gradle/libs.versions.toml", """
         [versions]
         aa<caret>a = "13"
         [libraries]
         aaa-bbb_ccc = { group = "org.apache.groovy", name = "groovy", version.ref = "aaa" }
       """.trimIndent())
       runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(libsVersionsToml)
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("gradle/libs.versions.toml"))
         TestDialogManager.setTestDialog(TestDialog.OK)
         codeInsightFixture.renameElementAtCaret("eee-fff_ggg")
         codeInsightFixture.checkResult("""
@@ -59,10 +57,3 @@ class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
     }
   }
 }
-
-private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
-  .create("GradleVersionCatalogs-refactoring") {
-    withSettingsFile {
-      setProjectName("GradleVersionCatalogs-refactoring")
-    }
-  }

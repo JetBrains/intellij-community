@@ -1,13 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.progress.timeoutRunBlocking
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.timeoutRunBlocking
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.AfterEach
@@ -69,7 +69,8 @@ class EdtCoroutineDispatcherTest {
     val root = LaterInvocator::class.java
 
     ApplicationManager.getApplication().withModality {
-      val job = CoroutineScope(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()).launch {
+      @OptIn(DelicateCoroutinesApi::class)
+      val job = GlobalScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         fail(leak.toString()) // keep reference to the leak
       }
       assertReferenced(root, leak)
@@ -77,6 +78,22 @@ class EdtCoroutineDispatcherTest {
         job.cancelAndJoin()
       }
       LeakHunter.checkLeak(root, leak.javaClass)
+    }
+  }
+
+  @Test
+  fun `dispatched runnable does not leak through uncompleted coroutine`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val job = launch {
+        // this part is wrapped into DispatchedRunnable
+        awaitCancellation()
+        // this part is also wrapped into DispatchedRunnable
+      }
+      yield() // checkLeak should be executed after the coroutine suspends in awaitCancellation
+      @Suppress("INVISIBLE_REFERENCE")
+      val leakClass = DispatchedRunnable::class.java
+      LeakHunter.checkLeak(job, leakClass)
+      job.cancel()
     }
   }
 }

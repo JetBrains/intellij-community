@@ -2,6 +2,16 @@
 
 package org.jetbrains.kotlin.idea.run
 
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.IdeaTestUtil
+import org.jetbrains.kotlin.idea.base.util.allScope
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
+import org.jetbrains.kotlin.psi.*
+import java.io.File
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
@@ -9,11 +19,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.CompilerModuleExtension
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
@@ -22,7 +29,7 @@ import org.jetbrains.kotlin.idea.test.KotlinCodeInsightTestCase
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
-import java.io.File
+import org.jetbrains.kotlin.idea.test.checkPluginIsCorrect
 
 abstract class AbstractRunConfigurationTest : KotlinCodeInsightTestCase() {
     private companion object {
@@ -76,6 +83,8 @@ abstract class AbstractRunConfigurationTest : KotlinCodeInsightTestCase() {
         error("Configured module with name $name not found")
     }
 
+    protected open fun isFirPlugin(): Boolean = false
+
     override fun tearDown() {
         runAll(
             ThrowableRunnable { unconfigureDefaultModule() },
@@ -121,6 +130,7 @@ abstract class AbstractRunConfigurationTest : KotlinCodeInsightTestCase() {
 
             platform.addJdk(testRootDisposable)
             configuredModules = configureModules(projectDir, projectBaseDir, platform)
+            checkPluginIsCorrect(isFirPlugin())
         }
     }
 
@@ -187,4 +197,27 @@ abstract class AbstractRunConfigurationTest : KotlinCodeInsightTestCase() {
         val srcOutputDir: VirtualFile,
         val testOutputDir: VirtualFile
     )
+
+    protected fun createConfigurationFromMain(project: Project, mainFqn: String): KotlinRunConfiguration {
+        val mainFunction = findMainFunction(project, mainFqn)
+        return createConfigurationFromElement(mainFunction) as KotlinRunConfiguration
+    }
+
+    protected fun findMainFunction(
+        project: Project,
+        mainFqn: String
+    ): KtNamedFunction {
+        val scope = project.allScope()
+        val mainFunction =
+            KotlinTopLevelFunctionFqnNameIndex.get(mainFqn, project, scope).firstOrNull()
+                ?: run {
+                    val className = StringUtil.getPackageName(mainFqn)
+                    val shortName = StringUtil.getShortName(mainFqn)
+                    KotlinFullClassNameIndex.get(className, project, scope)
+                        .flatMap { it.declarations }
+                        .filterIsInstance<KtNamedFunction>()
+                        .firstOrNull { it.name == shortName }
+                } ?: error("unable to look up top level function $mainFqn")
+        return mainFunction
+    }
 }

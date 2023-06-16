@@ -12,7 +12,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 @State(name = "RestoreUpdateTree", storages = @Storage(StoragePathMacros.CACHE_FILE))
-@Service
+@Service(Service.Level.PROJECT)
 public final class RestoreUpdateTree implements PersistentStateComponent<Element> {
   private UpdateInfo myUpdateInfo;
 

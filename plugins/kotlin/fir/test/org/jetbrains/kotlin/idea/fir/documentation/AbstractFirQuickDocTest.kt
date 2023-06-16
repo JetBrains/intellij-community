@@ -2,9 +2,11 @@
 package org.jetbrains.kotlin.idea.fir.documentation
 
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
-import com.intellij.platform.documentation.impl.computeDocumentationBlocking
+import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 abstract class AbstractFirQuickDocTest : AbstractQuickDocProviderTest() {
     override fun getDoc(): @Nls String? {
@@ -12,6 +14,10 @@ abstract class AbstractFirQuickDocTest : AbstractQuickDocProviderTest() {
             IdeDocumentationTargetProvider.getInstance(project).documentationTargets(editor, file, editor.caretModel.offset).firstOrNull()
                 ?: return null
         return computeDocumentationBlocking(target.createPointer())?.html
+    }
+
+    override fun getProjectDescriptor(): KotlinLightProjectDescriptor {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
     override fun isFirPlugin(): Boolean {

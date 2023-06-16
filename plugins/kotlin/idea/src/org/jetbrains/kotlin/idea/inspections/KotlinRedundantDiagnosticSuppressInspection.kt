@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative
 import java.lang.reflect.Modifier
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.suppress.KotlinInspectionSuppressor
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 class KotlinRedundantDiagnosticSuppressInspection : AbstractKotlinInspection() {

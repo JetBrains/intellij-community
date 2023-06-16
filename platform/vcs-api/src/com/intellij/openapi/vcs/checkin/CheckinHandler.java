@@ -124,9 +124,10 @@ public abstract class CheckinHandler {
   }
 
   /**
-   * Allows to skip before checkin steps when is not applicable. E.g., there should be no check for todos before shelf/create patch.
+   * Allows to skip {@link #beforeCheckin()} steps when not applicable.
+   * E.g., there should be no check for todos before shelf/create patch.
    *
-   * @param executor current operation ({@code null} for commit)
+   * @param executor current operation ({@code null} for VCS commit)
    * @return {@code true} if handler should be skipped
    */
   public boolean acceptExecutor(CommitExecutor executor) {

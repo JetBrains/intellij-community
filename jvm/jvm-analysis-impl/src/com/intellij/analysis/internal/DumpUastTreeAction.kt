@@ -41,7 +41,7 @@ open class DumpUastTreeAction : AnAction() {
     )
   }
 
-  open fun buildDump(file: PsiFile) = file.toUElement()?.asRecursiveLogString()
+  open fun buildDump(file: PsiFile): String? = file.toUElement()?.asRecursiveLogString()
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal && run {

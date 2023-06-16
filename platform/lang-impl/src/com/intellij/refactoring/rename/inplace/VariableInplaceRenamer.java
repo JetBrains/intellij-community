@@ -60,7 +60,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   private ResolveSnapshotProvider.ResolveSnapshot mySnapshot;
   private TextRange mySelectedRange;
   protected Language myLanguage;
-  private @Nullable SuggestedNameInfo mySuggestedNameInfo;
+  protected @Nullable SuggestedNameInfo mySuggestedNameInfo;
 
   public VariableInplaceRenamer(@NotNull PsiNamedElement elementToRename,
                                 @NotNull Editor editor) {
@@ -348,10 +348,9 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     }
   }
 
-  private void stopDumbLaterIfPossible() {
-    Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
-    if (editor instanceof EditorImpl) {
-      ((EditorImpl)editor).stopDumbLater();
+  protected void stopDumbLaterIfPossible() {
+    if (InjectedLanguageEditorUtil.getTopLevelEditor(myEditor) instanceof EditorImpl editor) {
+      editor.stopDumbLater();
     }
   }
 

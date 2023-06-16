@@ -16,16 +16,21 @@ import com.intellij.openapi.editor.actions.SplitLineAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.*;
 import com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 
@@ -101,6 +106,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
         if (stringElement.getTextOffset() + stringElement.getPrefixLength() >= offset) {
           return Result.Continue;
         }
+
         final String pref = stringElement.getPrefix();
         final String quote = stringElement.getQuote();
 
@@ -112,6 +118,10 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
 
         myPostprocessShift = pref.length() + quote.length();
 
+        boolean parenthesiseOnEnter = PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER;
+        final String delimiter = parenthesiseOnEnter ? "" : " \\";
+
+        // TODO check for a non-parenthesized sequence pattern here
         if (PsiTreeUtil.getParentOfType(stringElement, PyEditorHandlerConfig.IMPLICIT_WRAP_CLASSES) != null) {
           doc.insertString(offset, quote + pref + quote);
           caretOffset.set(caretOffset.get() + 1);
@@ -123,16 +133,18 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
             caretOffset.set(caretOffset.get() + 1);
             insertionOffset++;
           }
-          doc.insertString(insertionOffset, quote + " \\" + pref + quote);
-          caretOffset.set(caretOffset.get() + 3);
+          if (parenthesiseOnEnter) {
+            parenthesise(stringElement, doc);
+            caretOffset.set(caretOffset.get() + 1);
+            insertionOffset++;
+          }
+          doc.insertString(insertionOffset, quote + delimiter + pref + quote);
+          caretOffset.set(caretOffset.get() + delimiter.length() + 1);
         }
         return Result.Continue;
       }
     }
 
-    if (!PyCodeInsightSettings.getInstance().INSERT_BACKSLASH_ON_WRAP) {
-      return Result.Continue;
-    }
     return checkInsertBackslash(file, caretOffset, dataContext, offset, doc);
   }
 
@@ -144,10 +156,66 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     boolean autoWrapInProgress = DataManager.getInstance().loadFromDataContext(dataContext,
                                                                                AutoHardWrapHandler.AUTO_WRAP_LINE_IN_PROGRESS_KEY) != null;
     if (PyWhiteSpaceFormattingStrategy.needInsertBackslash(file, offset, autoWrapInProgress)) {
-      doc.insertString(offset, "\\");
-      caretOffset.set(caretOffset.get() + 1);
+      PsiElement atCaret = file.findElementAt(offset);
+      if (atCaret != null) {
+        // Set of statements which can be parenthesised is a subset of statements which can be split by backslash
+        if (PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER) {
+          PsiElement elementToWrap = findElementToParenthesise(atCaret);
+          if (elementToWrap != null) {
+            parenthesise(elementToWrap, doc);
+            caretOffset.set(caretOffset.get() + 1);
+            return Result.Continue;
+          }
+        }
+        doc.insertString(offset, "\\");
+        caretOffset.set(caretOffset.get() + 1);
+      }
     }
     return Result.Continue;
+  }
+
+  @Nullable
+  private static PsiElement findElementToParenthesise(@NotNull PsiElement nodeAtCaret) {
+    PsiElement wrappable = nodeAtCaret;
+
+    while (true) {
+      PsiElement next = PsiTreeUtil.getParentOfType(wrappable, PyEditorHandlerConfig.CLASSES_TO_PARENTHESISE_ON_ENTER);
+      if (next == null) {
+        break;
+      }
+      wrappable = next;
+    }
+
+    return wrappable != nodeAtCaret ? wrappable : null;
+  }
+
+  private static void parenthesise(@NotNull PsiElement wrappable, @NotNull Document doc) {
+    TextRange rangeToParenthesise;
+    if (wrappable instanceof PyFromImportStatement fromImportStatement) {
+      rangeToParenthesise = getRangeForPsiElementArray(fromImportStatement.getImportElements());
+    }
+    else if (wrappable instanceof PyWithStatement withStatement) {
+      rangeToParenthesise = getRangeForPsiElementArray(withStatement.getWithItems());
+    }
+    else {
+      rangeToParenthesise = wrappable.getTextRange();
+    }
+    if (rangeToParenthesise != null) {
+      doc.insertString(rangeToParenthesise.getEndOffset(), ")");
+      doc.insertString(rangeToParenthesise.getStartOffset(), "(");
+    }
+  }
+
+  @Nullable
+  private static TextRange getRangeForPsiElementArray(PsiElement[] items) {
+    if (!ArrayUtil.isEmpty(items)) {
+      PsiElement first = ArrayUtil.getFirstElement(items);
+      PsiElement last = ArrayUtil.getLastElement(items);
+      if (first != null && last != null) {
+        return first.getTextRange().union(last.getTextRange());
+      }
+    }
+    return null;
   }
 
   private static void insertDocStringStub(Editor editor, PsiElement element, DocstringState state) {

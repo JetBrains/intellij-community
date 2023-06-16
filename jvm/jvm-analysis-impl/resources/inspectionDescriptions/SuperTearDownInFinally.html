@@ -3,7 +3,7 @@
 Reports calls of the JUnit 3's <code>super.tearDown()</code> method that are not performed inside a <code>finally</code> block.
 If an exception is thrown before <code>super.tearDown()</code> is called it could lead to inconsistencies and leaks.
 <p><b>Example:</b></p>
-<pre><code>
+<pre><code lang="java">
   public class AnotherTest extends CompanyTestCase {
     private Path path;
 
@@ -21,7 +21,7 @@ If an exception is thrown before <code>super.tearDown()</code> is called it coul
   }
 </code></pre>
 <p>Improved code:</p>
-<pre><code>
+<pre><code lang="java">
   public class AnotherTest extends CompanyTestCase {
     private Path path;
 

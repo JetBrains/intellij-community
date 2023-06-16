@@ -3,7 +3,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$/ideCoreSrc">
-      <sourceFolder url="file://$MODULE_DIR$/ideCoreSrc" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ideCoreSrc" type="java-resource" />
     </content>
     <content url="file://$MODULE_DIR$/resources">
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />

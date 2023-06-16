@@ -16,15 +16,15 @@ enum class ClientType {
   CONTROLLER,
   GUEST;
 
-  val isLocal  get() = this == LOCAL
+  val isLocal: Boolean get() = this == LOCAL
 
-  val isController  get() = this == CONTROLLER
+  val isController: Boolean get() = this == CONTROLLER
 
-  val isGuest get() = this == GUEST
+  val isGuest: Boolean get() = this == GUEST
 
-  val isOwner get() = isLocal || isController
+  val isOwner: Boolean get() = isLocal || isController
 
-  val isRemote get() = isController || isGuest
+  val isRemote: Boolean get() = isController || isGuest
 
   fun matches(kind: ClientKind): Boolean {
     return kind == ClientKind.ALL ||

@@ -14,8 +14,8 @@ internal class CausalProfilingOptions(
   private val additionalSearchScopes: List<String> = emptyList(),
   /**
    * Such prefixes that if class fqn has at least one of them, then this class will never be selected for experiment.
-   * Note that any string returned by this method should have string returned by {@link #searchScope},
-   * or any string returned by {@link #additionalSearchScopes}, as a prefix.
+   * Note that any string returned by this method should have string returned by [searchScope],
+   * or any string returned by [additionalSearchScopes], as a prefix.
    */
   val scopesToIgnore: List<String> = emptyList(),
 ) {

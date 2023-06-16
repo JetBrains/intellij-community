@@ -20,8 +20,6 @@ class SilentReporter(_Reporter):
     ) -> None: ...
     def system_message(self, level, message, *children, **kwargs): ...
 
-HAS_DOCUTILS: bool
-
 class check(Command):
     description: str
     user_options: Any

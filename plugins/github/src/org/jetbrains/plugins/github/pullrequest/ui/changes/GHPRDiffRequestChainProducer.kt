@@ -1,13 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.changes
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.action.ImmutableToolbarLabelAction
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.diff.chains.AsyncDiffRequestChain
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
-import com.intellij.icons.AllIcons
-import com.intellij.ide.actions.NonEmptyActionGroup
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diff.impl.GenericDataProvider
@@ -20,27 +21,24 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.history.VcsDiffUtil
-import git4idea.changes.GitParsedChangesBundle
+import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.getDiffComputer
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImpl
-import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewResolvedThreadsToggleAction
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsReloadAction
-import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsToggleAction
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
-import org.jetbrains.plugins.github.util.GHToolbarLabelAction
 import java.util.concurrent.CompletableFuture
 
 open class GHPRDiffRequestChainProducer(
   private val project: Project,
   private val dataProvider: GHPRDataProvider,
+  private val htmlImageLoader: AsyncHtmlImageLoader,
   private val avatarIconsProvider: GHAvatarIconsProvider,
   private val repositoryDataService: GHPRRepositoryDataService,
   private val ghostUser: GHUser,
@@ -72,7 +70,7 @@ open class GHPRDiffRequestChainProducer(
 
   private fun loadRequestDataKeys(indicator: ProgressIndicator,
                                   change: Change,
-                                  changesProviderFuture: CompletableFuture<GitParsedChangesBundle>,
+                                  changesProviderFuture: CompletableFuture<GitBranchComparisonResult>,
                                   fetchFuture: CompletableFuture<Void>): Map<Key<out Any>, Any?> {
 
     val changesProvider = ProgressIndicatorUtils.awaitWithCheckCanceled(changesProviderFuture, indicator)
@@ -94,28 +92,20 @@ open class GHPRDiffRequestChainProducer(
         putData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER, dataProvider)
         putData(GHPRDiffReviewSupport.DATA_KEY, reviewSupport)
       }
-      val viewOptionsGroup = NonEmptyActionGroup().apply {
-        isPopup = true
-        templatePresentation.text = GithubBundle.message("pull.request.diff.view.options")
-        templatePresentation.icon = AllIcons.Actions.Show
-        add(GHPRDiffReviewThreadsToggleAction())
-        add(GHPRDiffReviewResolvedThreadsToggleAction())
-      }
-
       requestDataKeys[DiffUserDataKeys.CONTEXT_ACTIONS] = listOf(
-        GHToolbarLabelAction(GithubBundle.message("pull.request.diff.review.label")),
-        viewOptionsGroup,
+        ImmutableToolbarLabelAction(CollaborationToolsBundle.message("review.diff.toolbar.label")),
         GHPRDiffReviewThreadsReloadAction(),
         ActionManager.getInstance().getAction("Github.PullRequest.Review.Submit"))
     }
     return requestDataKeys
   }
 
-  private fun getReviewSupport(changesProvider: GitParsedChangesBundle, change: Change): GHPRDiffReviewSupport? {
+  private fun getReviewSupport(changesProvider: GitBranchComparisonResult, change: Change): GHPRDiffReviewSupport? {
     val diffData = changesProvider.patchesByChange[change] ?: return null
 
     return GHPRDiffReviewSupportImpl(project,
-                                     dataProvider.reviewData, dataProvider.detailsData, avatarIconsProvider,
+                                     dataProvider.reviewData, dataProvider.detailsData,
+                                     htmlImageLoader, avatarIconsProvider,
                                      repositoryDataService,
                                      diffData,
                                      ghostUser,

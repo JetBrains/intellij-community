@@ -15,9 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -51,11 +49,11 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new ManualArrayCopyFix();
   }
 
-  private static class ManualArrayCopyFix extends InspectionGadgetsFix {
+  private static class ManualArrayCopyFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -64,8 +62,7 @@ public class ManualArrayCopyInspection extends BaseInspection implements Cleanup
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement forElement = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement forElement, @NotNull EditorUpdater updater) {
       final PsiForStatement forStatement = (PsiForStatement)forElement.getParent();
       CommentTracker commentTracker = new CommentTracker();
       final String newExpression = buildSystemArrayCopyText(forStatement, commentTracker);

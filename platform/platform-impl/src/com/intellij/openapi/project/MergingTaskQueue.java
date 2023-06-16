@@ -1,21 +1,59 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.Propagation;
+import kotlin.Pair;
+import kotlin.coroutines.CoroutineContext;
+import kotlinx.coroutines.CompletableJob;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
+  public static class SubmissionReceipt {
+    private final long submittedTaskCount;
+
+    private SubmissionReceipt(long submittedTaskCount) {
+      this.submittedTaskCount = submittedTaskCount;
+    }
+
+    public boolean isAfter(@NotNull SubmissionReceipt other) {
+      return submittedTaskCount > other.submittedTaskCount;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      return (submittedTaskCount == ((SubmissionReceipt)o).submittedTaskCount);
+    }
+
+    @Override
+    public int hashCode() {
+      return Long.hashCode(submittedTaskCount);
+    }
+
+    @Override
+    public String toString() {
+      return "SubmissionReceipt{" + submittedTaskCount + '}';
+    }
+  }
+
   private static final Logger LOG = Logger.getInstance(MergingTaskQueue.class);
 
   private final Object myLock = new Object();
@@ -24,6 +62,12 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
   //includes running tasks too
   private final Map<T, ProgressIndicatorBase> myProgresses = new HashMap<>();
+  private final AtomicLong mySubmittedTasksCount = new AtomicLong();
+
+  /**
+   * A thread context for each task
+   */
+  private final Map<T, CoroutineContext> myThreadContexts = new HashMap<>();
 
   /**
    * Disposes tasks, cancel underlying progress indicators, clears tasks queue
@@ -39,13 +83,16 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
       myTasksQueue.clear();
       myProgresses.clear();
+      myThreadContexts.clear();
     }
 
     cancelIndicatorSafe(indicatorsQueue);
     disposeSafe(disposeQueue);
   }
 
-  public void cancelAllTasks() {
+  // This method is not public because it cannot cancel tasks paused by ProgressSuspender.
+  // Use methods from appropriate executor instead (e.g. MergingQueueGuiExecutor#cancelAllTasks)
+  void cancelAllTasks() {
     List<ProgressIndicatorEx> tasks;
     synchronized (myLock) {
       tasks = new ArrayList<>(myProgresses.values());
@@ -67,14 +114,27 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
   }
 
-  public void addTask(@NotNull T task) {
+  /**
+   * Adds a task to the queue. Added task can be merged with one of the existing tasks.
+   *
+   * @param task to add
+   * @return receipt that later can be used to handle concurrent operations. Note that addTask may produce duplicate receipt if new task
+   * does not modify queue state (e.g. when new task is merged into one of the existing tasks)
+   */
+  public SubmissionReceipt addTask(@NotNull T task) {
     List<T> disposeQueue = new ArrayList<>(1);
     T newTask = task;
+    SubmissionReceipt receipt;
+
+    Pair<CoroutineContext, CompletableJob> pair = AppExecutorUtil.propagateContextOrCancellation() ? Propagation.createChildContext() : new Pair<>(null, null);
+    CoroutineContext currentContext = pair.getFirst();
+    @Nullable CompletableJob job = pair.getSecond();
 
     synchronized (myLock) {
       for (int i = myTasksQueue.size() - 1; i >= 0; i--) {
         T oldTask = myTasksQueue.get(i);
         ProgressIndicatorBase indicator = myProgresses.get(oldTask);
+        CoroutineContext otherContext = myThreadContexts.get(oldTask);
         //dispose cancelled tasks
         if (indicator == null || indicator.isCanceled()) {
           myTasksQueue.remove(i);
@@ -92,9 +152,22 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
         }
 
         T mergedTask = task.tryMergeWith(oldTask);
-        if (mergedTask == oldTask) {
+        boolean contextsEqual;
+        if (AppExecutorUtil.propagateContextOrCancellation()) {
+          if ((currentContext == null) != (otherContext == null)) {
+            contextsEqual = false;
+          } else {
+            contextsEqual = currentContext == null || ThreadContext.getContextSkeleton(currentContext).equals(ThreadContext.getContextSkeleton(otherContext));
+          }
+        } else {
+          contextsEqual = true;
+        }
+        if (mergedTask == oldTask && contextsEqual) {
           // new task completely absorbed by the old task which means that we don't need to modify the queue
           newTask = null;
+          if (job != null) {
+            job.cancel(null);
+          }
           disposeQueue.add(task);
           break;
         }
@@ -112,19 +185,38 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       T taskToAdd = newTask;
       if (taskToAdd != null) {
         myTasksQueue.add(taskToAdd);
+        mySubmittedTasksCount.incrementAndGet();
         ProgressIndicatorBase progress = new ProgressIndicatorBase();
         myProgresses.put(taskToAdd, progress);
+        myThreadContexts.put(taskToAdd, currentContext);
         Disposer.register(taskToAdd, () -> {
           //a removed progress means the task would be ignored on queue processing
           synchronized (myLock) {
             myProgresses.remove(taskToAdd);
+            myThreadContexts.remove(taskToAdd);
+            if (job != null) {
+              job.cancel(null);
+            }
           }
           progress.cancel();
         });
       }
+
+      receipt = new SubmissionReceipt(mySubmittedTasksCount.get());
     }
 
     disposeSafe(disposeQueue);
+    return receipt;
+  }
+
+  /**
+   * @return receipt that equals to the latest receipt returned by {@linkplain #addTask(MergeableQueueTask)}
+   */
+  public SubmissionReceipt getLatestSubmissionReceipt() {
+    synchronized (myLock) {
+      // don't be fooled by AtomicLong. We need "synchronized" to make sure that mySubmittedTaskCount and myTasksQueue are changing together
+      return new SubmissionReceipt(mySubmittedTasksCount.get());
+    }
   }
 
   @Nullable
@@ -144,8 +236,9 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
             disposeQueue.add(task);
             continue;
           }
+          CoroutineContext context = myThreadContexts.get(task);
 
-          return wrapTask(task, indicator);
+          return wrapTask(task, indicator, context);
         }
       }
     }
@@ -154,8 +247,8 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
   }
 
-  protected MergingTaskQueue.QueuedTask<T> wrapTask(T task, ProgressIndicatorBase indicator) {
-    return new QueuedTask<>(task, indicator);
+  protected MergingTaskQueue.QueuedTask<T> wrapTask(T task, ProgressIndicatorBase indicator, CoroutineContext context) {
+    return new QueuedTask<>(task, indicator, context);
   }
 
   public boolean isEmpty() {
@@ -203,10 +296,12 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
   public static class QueuedTask<T extends MergeableQueueTask<T>> implements AutoCloseable {
     private final T myTask;
     private final ProgressIndicatorEx myIndicator;
+    private final @Nullable CoroutineContext myContext;
 
-    QueuedTask(@NotNull T task, @NotNull ProgressIndicatorEx progress) {
+    QueuedTask(@NotNull T task, @NotNull ProgressIndicatorEx progress, @Nullable CoroutineContext context) {
       myTask = task;
       myIndicator = progress;
+      myContext = context;
     }
 
     @Override
@@ -228,15 +323,22 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       myIndicator.checkCanceled();
       myIndicator.setIndeterminate(true);
 
-      if (customIndicator == null) {
-        customIndicator = myIndicator;
-      }
-      else {
-        customIndicator.checkCanceled();
-      }
+      ProgressIndicator indicator = customIndicator == null ? myIndicator : customIndicator;
+      indicator.checkCanceled();
 
       beforeTask();
-      myTask.perform(customIndicator);
+      if (AppExecutorUtil.propagateContextOrCancellation() && myContext != null) {
+        try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
+          CompletableJob job = Cancellation.getJob(myContext);
+          if (job != null) {
+            Propagation.runAsCoroutine(job, () -> myTask.perform(indicator));
+          } else {
+            myTask.perform(indicator);
+          }
+        }
+      } else {
+        myTask.perform(indicator);
+      }
     }
 
     String getInfoString() {

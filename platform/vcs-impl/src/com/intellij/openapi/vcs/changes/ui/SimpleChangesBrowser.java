@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.DiffPreview;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +11,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * @deprecated Prefer using {@link SimpleAsyncChangesBrowser} instead.
+ */
+@Deprecated
 public class SimpleChangesBrowser extends ChangesBrowserBase {
   private final List<Change> myChanges = new ArrayList<>();
   @Nullable private ChangeNodeDecorator myChangeNodeDecorator;
@@ -30,8 +33,12 @@ public class SimpleChangesBrowser extends ChangesBrowserBase {
   }
 
 
+  /**
+   * @deprecated Consider overriding {@link ChangesBrowserBase} instead.
+   */
   @NotNull
   @Override
+  @Deprecated
   protected DefaultTreeModel buildTreeModel() {
     return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), myChanges, myChangeNodeDecorator);
   }
@@ -66,10 +73,5 @@ public class SimpleChangesBrowser extends ChangesBrowserBase {
   @NotNull
   public List<Change> getIncludedChanges() {
     return VcsTreeModelData.included(myViewer).userObjects(Change.class);
-  }
-
-  @Override
-  public void setShowDiffActionPreview(@Nullable DiffPreview diffPreview) {
-    super.setShowDiffActionPreview(diffPreview);
   }
 }

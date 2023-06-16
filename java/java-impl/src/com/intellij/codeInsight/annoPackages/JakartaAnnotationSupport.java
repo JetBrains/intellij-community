@@ -7,13 +7,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-// package: jakarta.annotation:jakarta.annotation-api
+// packages: jakarta.annotation:jakarta.annotation-api, jakarta.validation:jakarta.validation-api
 class JakartaAnnotationSupport implements AnnotationPackageSupport {
   @NotNull
   @Override
   public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return switch (nullability) {
-      case NOT_NULL -> List.of("jakarta.annotation.Nonnull");
+      case NOT_NULL -> List.of("jakarta.annotation.Nonnull", "jakarta.validation.constraints.NotNull");
       case NULLABLE -> List.of("jakarta.annotation.Nullable");
       default -> Collections.emptyList();
     };

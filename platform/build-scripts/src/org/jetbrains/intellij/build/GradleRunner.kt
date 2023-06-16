@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build
 
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
 import com.intellij.openapi.util.SystemInfoRt
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -17,6 +17,7 @@ class GradleRunner(
   private val options: BuildOptions,
   private val communityRoot: BuildDependenciesCommunityRoot,
   private val additionalParams: List<String> = emptyList(),
+  private val withRetries: Boolean = true
 ) {
   /**
    * Invokes Gradle tasks on [gradleProjectDir] project.
@@ -88,11 +89,14 @@ class GradleRunner(
     }
     command.addAll(additionalParams)
     command.addAll(tasks)
-    val processBuilder = ProcessBuilder(command).directory(gradleProjectDir.toFile())
-    processBuilder.environment().put("JAVA_HOME", JdkDownloader.getJdkHome(communityRoot, Span.current()::addEvent).toString())
-    processBuilder.inheritIO()
-    synchronized(gradleProjectDir.toString().intern()) {
-      return processBuilder.start().waitFor() == 0
+    val gradleCall = {
+      val processBuilder = ProcessBuilder(command).directory(gradleProjectDir.toFile())
+      processBuilder.environment().put("JAVA_HOME", JdkDownloader.getJdkHome(communityRoot, Span.current()::addEvent).toString())
+      processBuilder.inheritIO()
+      synchronized(gradleProjectDir.toString().intern()) {
+        processBuilder.start().waitFor() == 0
+      }
     }
+    return if (withRetries) retryWithExponentialBackOff { gradleCall() } else gradleCall()
   }
 }

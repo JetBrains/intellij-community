@@ -8,8 +8,12 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.*;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.PlaceProvider;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.AlertIcon;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,10 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.intellij.ui.tabs.impl.JBTabsImpl.PINNED;
-
 public final class TabInfo implements Queryable, PlaceProvider {
-
   public static final String ACTION_GROUP = "actionGroup";
   public static final String ICON = "icon";
   public static final String TAB_COLOR = "color";
@@ -93,13 +94,11 @@ public final class TabInfo implements Queryable, PlaceProvider {
     myPreferredFocusableComponent = component;
   }
 
-  @NotNull
-  public PropertyChangeSupport getChangeSupport() {
+  public @NotNull PropertyChangeSupport getChangeSupport() {
     return myChangeSupport;
   }
 
-  @NotNull
-  public TabInfo setText(@NlsContexts.TabTitle @NotNull String text) {
+  public @NotNull TabInfo setText(@NlsContexts.TabTitle @NotNull String text) {
     List<SimpleTextAttributes> attributes = myText.getAttributes();
     TextAttributes textAttributes = attributes.size() == 1 ? attributes.get(0).toTextAttributes() : null;
     SimpleTextAttributes defaultAttributes = getDefaultAttributes();
@@ -110,8 +109,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return this;
   }
 
-  @NotNull
-  private SimpleTextAttributes getDefaultAttributes() {
+  private @NotNull SimpleTextAttributes getDefaultAttributes() {
     if (myDefaultAttributes == null) {
       int style = (myDefaultStyle != -1 ? myDefaultStyle : SimpleTextAttributes.STYLE_PLAIN)
                   | SimpleTextAttributes.STYLE_USE_EFFECT_COLOR;
@@ -127,8 +125,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return myDefaultAttributes;
   }
 
-  @NotNull
-  public TabInfo clearText(final boolean invalidate) {
+  public @NotNull TabInfo clearText(final boolean invalidate) {
     final String old = myText.toString();
     myText.clear();
     if (invalidate) {
@@ -137,26 +134,23 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return this;
   }
 
-  @NotNull
-  public TabInfo append(@NotNull @NlsContexts.Label String fragment, @NotNull SimpleTextAttributes attributes) {
+  public @NotNull TabInfo append(@NotNull @NlsContexts.Label String fragment, @NotNull SimpleTextAttributes attributes) {
     final String old = myText.toString();
     myText.append(fragment, attributes);
     myChangeSupport.firePropertyChange(TEXT, old, myText.toString());
     return this;
   }
 
-  @NotNull
-  public TabInfo setIcon(Icon icon) {
+  public @NotNull TabInfo setIcon(Icon icon) {
     Icon old = myIcon;
-    if (!IconDeferrer.getInstance().equalIcons(old, icon)) {
+    if (!Objects.equals(old, icon)) {
       myIcon = icon;
       myChangeSupport.firePropertyChange(ICON, old, icon);
     }
     return this;
   }
 
-  @NotNull
-  public TabInfo setComponent(Component c) {
+  public @NotNull TabInfo setComponent(Component c) {
     if (myComponent != c) {
       JComponent old = myComponent;
       myComponent = (JComponent)c;
@@ -174,16 +168,14 @@ public final class TabInfo implements Queryable, PlaceProvider {
   }
 
   public boolean isPinned() {
-    return ClientProperty.isTrue(getComponent(), PINNED);
+    return ClientProperty.isTrue(getComponent(), JBTabsImpl.PINNED);
   }
 
-  @NotNull
-  public @NlsContexts.TabTitle String getText() {
+  public @NotNull @NlsContexts.TabTitle String getText() {
     return myText.toString();
   }
 
-  @NotNull
-  public SimpleColoredText getColoredText() {
+  public @NotNull SimpleColoredText getColoredText() {
     return myText;
   }
 
@@ -196,8 +188,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return myPlace;
   }
 
-  @NotNull
-  public TabInfo setSideComponent(JComponent comp) {
+  public @NotNull TabInfo setSideComponent(JComponent comp) {
     mySideComponent = comp;
     return this;
   }
@@ -206,8 +197,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return mySideComponent;
   }
 
-  @NotNull
-  public TabInfo setActions(ActionGroup group, @NonNls String place) {
+  public @NotNull TabInfo setActions(ActionGroup group, @NonNls String place) {
     ActionGroup old = myGroup;
     myGroup = group;
     myPlace = place;
@@ -215,8 +205,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return this;
   }
 
-  @NotNull
-  public TabInfo setActionsContextComponent(JComponent c) {
+  public @NotNull TabInfo setActionsContextComponent(JComponent c) {
     myActionsContextComponent = c;
     return this;
   }
@@ -225,8 +214,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return myActionsContextComponent;
   }
 
-  @NotNull
-  public TabInfo setObject(final Object object) {
+  public @NotNull TabInfo setObject(final Object object) {
     myObject = object;
     return this;
   }
@@ -239,8 +227,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return myPreferredFocusableComponent != null ? myPreferredFocusableComponent : myComponent;
   }
 
-  @NotNull
-  public TabInfo setPreferredFocusableComponent(final JComponent component) {
+  public @NotNull TabInfo setPreferredFocusableComponent(final JComponent component) {
     myPreferredFocusableComponent = component;
     return this;
   }
@@ -257,8 +244,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return myTabActionPlace;
   }
 
-  @NotNull
-  public TabInfo setTabLabelActions(final ActionGroup tabActions, @NotNull String place) {
+  public @NotNull TabInfo setTabLabelActions(final ActionGroup tabActions, @NotNull String place) {
     ActionGroup old = myTabLabelActions;
     myTabLabelActions = tabActions;
     myTabActionPlace = place;
@@ -266,27 +252,23 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return this;
   }
 
-  @Nullable
-  public ActionGroup getTabPaneActions() {
+  public @Nullable ActionGroup getTabPaneActions() {
     return myTabPaneActions;
   }
 
   /**
    * Sets the actions that will be displayed on the right side of the tabs
    */
-  @NotNull
-  public TabInfo setTabPaneActions(final @Nullable ActionGroup tabPaneActions) {
+  public @NotNull TabInfo setTabPaneActions(final @Nullable ActionGroup tabPaneActions) {
     myTabPaneActions = tabPaneActions;
     return this;
   }
 
-  @Nullable
-  public JComponent getLastFocusOwner() {
+  public @Nullable JComponent getLastFocusOwner() {
     return SoftReference.dereference(myLastFocusOwner);
   }
 
-  @NotNull
-  public TabInfo setAlertIcon(final AlertIcon alertIcon) {
+  public @NotNull TabInfo setAlertIcon(final AlertIcon alertIcon) {
     AlertIcon old = myAlertIcon;
     myAlertIcon = alertIcon;
     myChangeSupport.firePropertyChange(ALERT_ICON, old, myAlertIcon);
@@ -316,8 +298,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return getText();
   }
 
-  @NotNull
-  public AlertIcon getAlertIcon() {
+  public @NotNull AlertIcon getAlertIcon() {
     return myAlertIcon == null ? DEFAULT_ALERT_ICON : myAlertIcon;
   }
 
@@ -349,16 +330,14 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return myEnabled;
   }
 
-  @NotNull
-  public TabInfo setDefaultStyle(@SimpleTextAttributes.StyleAttributeConstant int style) {
+  public @NotNull TabInfo setDefaultStyle(@SimpleTextAttributes.StyleAttributeConstant int style) {
     myDefaultStyle = style;
     myDefaultAttributes = null;
     update();
     return this;
   }
 
-  @NotNull
-  public TabInfo setDefaultForeground(final Color fg) {
+  public @NotNull TabInfo setDefaultForeground(final Color fg) {
     myDefaultForeground = fg;
     myDefaultAttributes = null;
     update();
@@ -369,8 +348,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return myDefaultForeground;
   }
 
-  @NotNull
-  public TabInfo setDefaultAttributes(@Nullable TextAttributes attributes) {
+  public @NotNull TabInfo setDefaultAttributes(@Nullable TextAttributes attributes) {
     editorAttributes = attributes;
     myDefaultAttributes = null;
     update();
@@ -387,8 +365,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     update();
   }
 
-  @NotNull
-  public TabInfo setTooltipText(@NlsContexts.Tooltip String text) {
+  public @NotNull TabInfo setTooltipText(@NlsContexts.Tooltip String text) {
     String old = myTooltipText;
     if (!Objects.equals(old, text)) {
       myTooltipText = text;
@@ -401,8 +378,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return myTooltipText;
   }
 
-  @NotNull
-  public TabInfo setTabColor(Color color) {
+  public @NotNull TabInfo setTabColor(Color color) {
     Color old = myTabColor;
     if (!Comparing.equal(color, old)) {
       myTabColor = color;
@@ -415,8 +391,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return myTabColor;
   }
 
-  @NotNull
-  public TabInfo setTestableUi(Queryable queryable) {
+  public @NotNull TabInfo setTestableUi(Queryable queryable) {
     myQueryable = queryable;
     return this;
   }
@@ -428,8 +403,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     }
   }
 
-  @NotNull
-  public TabInfo setDragOutDelegate(DragOutDelegate delegate) {
+  public @NotNull TabInfo setDragOutDelegate(DragOutDelegate delegate) {
     myDragOutDelegate = delegate;
     return this;
   }
@@ -454,8 +428,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     myDragDelegate = dragDelegate;
   }
 
-  @Nullable
-  public TabInfo getPreviousSelection() {
+  public @Nullable TabInfo getPreviousSelection() {
     return myPreviousSelection.get();
   }
 

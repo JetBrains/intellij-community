@@ -23,7 +23,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -52,7 +52,7 @@ class CompareBranchesLogPanel extends JPanel {
   private CommitListPanel myBranchToHeadListPanel;
 
   CompareBranchesLogPanel(@NotNull CompareBranchesHelper helper, @NotNull String branchName, @NotNull String currentBranchName,
-                                 @NotNull CommitCompareInfo compareInfo, @NotNull Repository initialRepo) {
+                          @NotNull CommitCompareInfo compareInfo, @NotNull Repository initialRepo) {
     super(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     myHelper = helper;
     myBranchName = branchName;
@@ -65,7 +65,7 @@ class CompareBranchesLogPanel extends JPanel {
   }
 
   private JComponent createCenterPanel() {
-    final SimpleChangesBrowser changesBrowser = new SimpleChangesBrowser(myHelper.getProject(), false, true);
+    SimpleAsyncChangesBrowser changesBrowser = new SimpleAsyncChangesBrowser(myHelper.getProject(), false, true);
 
     myHeadToBranchListPanel = new CommitListPanel(
       getHeadToBranchCommits(myInitialRepo),
@@ -140,8 +140,8 @@ class CompareBranchesLogPanel extends JPanel {
   }
 
   private static void addSelectionListener(@NotNull CommitListPanel sourcePanel,
-                                           @NotNull final CommitListPanel otherPanel,
-                                           @NotNull final SimpleChangesBrowser changesBrowser) {
+                                           @NotNull CommitListPanel otherPanel,
+                                           @NotNull SimpleAsyncChangesBrowser changesBrowser) {
     sourcePanel.addListMultipleSelectionListener(changes -> {
       changesBrowser.setChangesToDisplay(changes);
       otherPanel.clearSelection();

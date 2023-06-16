@@ -4,13 +4,15 @@ package git4idea.ui.toolbar
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.ide.ui.customization.groupContainsAction
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.util.NlsSafe
@@ -18,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
-import com.intellij.ui.popup.util.PopupImplUtil
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
@@ -28,6 +29,8 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopup
 import git4idea.ui.branch.GitBranchPopupActions
+import git4idea.ui.branch.GitBranchPopupActions.BRANCH_NAME_LENGTH_DELTA
+import git4idea.ui.branch.GitBranchPopupActions.BRANCH_NAME_SUFFIX_LENGTH
 import git4idea.ui.branch.popup.GitBranchesTreePopup
 import icons.DvcsImplIcons
 import javax.swing.Icon
@@ -37,8 +40,12 @@ private val projectKey = Key.create<Project>("git-widget-project")
 private val repositoryKey = Key.create<GitRepository>("git-widget-repository")
 private val changesKey = Key.create<MyRepoChanges>("git-widget-changes")
 
+private const val GIT_WIDGET_BRANCH_NAME_MAX_LENGTH: Int = 80
+
 internal class GitToolbarWidgetAction : ExpandableComboAction() {
-  private val widgetIcon = IconLoader.getIcon("expui/general/vcs.svg", AllIcons::class.java)
+  private val widgetIcon = ExpUiIcons.General.Vcs
+
+  private val actionsWithIncomingOutgoingEnabled = GitToolbarActions.isEnabledAndVisible()
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -57,9 +64,6 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
       JBPopupFactory.getInstance()
         .createActionGroupPopup(null, group, event.dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, place)
     }
-    val widget = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarComboWidget
-    PopupImplUtil.setPopupToggleButton(popup, widget)
-
     return popup
   }
 
@@ -74,10 +78,16 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     widget.text = presentation.text
     widget.toolTipText = presentation.description
     widget.leftIcons = listOfNotNull(presentation.icon)
+    val schema = CustomActionsSchema.getInstance()
+    val shouldShowIncoming =
+      actionsWithIncomingOutgoingEnabled && !groupContainsAction("MainToolbarNewUI", "main.toolbar.git.update.project", schema)
+    val shouldShowOutgoing =
+      actionsWithIncomingOutgoingEnabled && !groupContainsAction("MainToolbarNewUI", "main.toolbar.git.push", schema)
+
     widget.rightIcons = presentation.getClientProperty(changesKey)?.let { changes ->
       val res = mutableListOf<Icon>()
-      if (changes.incoming) res.add(DvcsImplIcons.Incoming)
-      if (changes.outgoing) res.add(DvcsImplIcons.Outgoing)
+      if (changes.incoming && (!actionsWithIncomingOutgoingEnabled || shouldShowIncoming)) res.add(DvcsImplIcons.Incoming)
+      if (changes.outgoing && (!actionsWithIncomingOutgoingEnabled || shouldShowOutgoing)) res.add(DvcsImplIcons.Outgoing)
       res
     } ?: emptyList()
   }
@@ -136,7 +146,10 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
   @NlsSafe
   private fun calcText(project: Project, repository: GitRepository): String {
     return StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository) { branchName ->
-      GitBranchPopupActions.truncateBranchName(branchName, project)
+      GitBranchPopupActions.truncateBranchName(project, branchName,
+                                               GIT_WIDGET_BRANCH_NAME_MAX_LENGTH,
+                                               BRANCH_NAME_SUFFIX_LENGTH,
+                                               BRANCH_NAME_LENGTH_DELTA)
     }).also { updatePlaceholder(project, it) }
   }
 

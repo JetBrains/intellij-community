@@ -35,7 +35,7 @@ class IndexIdRuleValidator : CustomValidationRule() {
       return validatePlugin(getPluginInfoById(pluginId))
     }else if(!runningFromSources){
       //if pluginId is null & not from sources -> this is core index, so allow it
-      return ValidationResultType.ACCEPTED;
+      return ValidationResultType.ACCEPTED
     }else{ // if (runningFromSources)
 
       //RC: isn't it taxing to scan the lists of all file/stub indexes on _each_ indexId validation?

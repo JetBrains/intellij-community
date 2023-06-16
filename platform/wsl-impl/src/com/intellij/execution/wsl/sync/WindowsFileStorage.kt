@@ -8,6 +8,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.io.*
+import com.intellij.util.system.CpuArch
+import net.jpountz.xxhash.XXHash64
 import net.jpountz.xxhash.XXHashFactory
 import java.io.IOException
 import java.nio.channels.FileChannel
@@ -15,36 +17,62 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.exists
-import kotlin.io.path.extension
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.notExists
 
 private val LOGGER = Logger.getInstance(WindowsFileStorage::class.java)
 
-private class MyFileVisitor(private val onlyExtensions: Array<String>,
+private class MyFileVisitor(private val filters: WslHashFilters,
                             private val rootDir: Path,
-                            private val processFile: (relativeToDir: FilePathRelativeToDir, file: Path, attrs: BasicFileAttributes) -> Unit) : SimpleFileVisitor<Path>() {
-  private val dirLinksInt: MutableMap<FilePathRelativeToDir, FilePathRelativeToDir> = mutableMapOf()
-  val dirLinks: Map<FilePathRelativeToDir, FilePathRelativeToDir> get() = dirLinksInt
+                            private val hashTool: XXHash64,
+                            private val skipHash: Boolean,
+                            private val useStubs: Boolean) : SimpleFileVisitor<Path>() {
+
+  private val _hashes: MutableList<WslHashRecord> = ArrayList(AVG_NUM_FILES)
+  private val _dirLinks: MutableMap<FilePathRelativeToDir, FilePathRelativeToDir> = mutableMapOf()
+  private val _stubs: MutableSet<FilePathRelativeToDir> = mutableSetOf()
+
+  val hashes: List<WslHashRecord> get() = _hashes
+  val dirLinks: Map<FilePathRelativeToDir, FilePathRelativeToDir> get() = _dirLinks
+  val stubs: Set<FilePathRelativeToDir> get() = _stubs
+
   override fun postVisitDirectory(dir: Path?, exc: IOException?): FileVisitResult {
     return super.postVisitDirectory(dir, exc)
   }
 
-  override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+  override fun visitFile(path: Path, attrs: BasicFileAttributes): FileVisitResult {
     if (!(attrs.isRegularFile)) return FileVisitResult.CONTINUE
-    if (onlyExtensions.isNotEmpty() && file.extension !in onlyExtensions) { // Skip because we don't care about this extension
-      return FileVisitResult.CONTINUE
-    }
-    val name = rootDir.relativize(file).joinToString("/").lowercase()
-    processFile(FilePathRelativeToDir(name), file, attrs)
+    processFile(FilePathRelativeToDir(rootDir.relativize(path).joinToString("/").lowercase()), path, attrs)
     return FileVisitResult.CONTINUE
+  }
+
+  fun processFile(relativeToDir: FilePathRelativeToDir, file: Path, attrs: BasicFileAttributes) {
+    if (!filters.isFileNameOk(file.fileName.toString())) {
+      if (useStubs) {
+        _stubs.add(relativeToDir)
+      }
+    }
+    else if (skipHash || attrs.size() == 0L) { // Empty file's hash is 0, see wslhash.c
+      _hashes.add(WslHashRecord(relativeToDir, 0))
+    }
+    else { // Map file and read hash
+      FileChannel.open(file, StandardOpenOption.READ).use {
+        val buf = it.map(FileChannel.MapMode.READ_ONLY, 0, attrs.size())
+        try {
+          _hashes.add(WslHashRecord(relativeToDir, hashTool.hash(buf, 0))) // Seed 0 is default, see wslhash.c
+        }
+        finally {
+          ByteBufferUtil.cleanBuffer(buf) // Unmap file: can't overwrite mapped file
+        }
+      }
+    }
   }
 
   override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult = if (FileSystemUtil.getAttributes(
       dir.toFile())?.isSymLink == true) {
     val target = FileSystemUtil.resolveSymLink(dir.toFile())?.let { rootDir.resolve(it) }
     if (target != null && target.isDirectory() && target.startsWith(rootDir)) {
-      dirLinksInt[FilePathRelativeToDir(rootDir.relativize(dir).toString())] = FilePathRelativeToDir(rootDir.relativize(target).toString())
+      _dirLinks[FilePathRelativeToDir(rootDir.relativize(dir).toString())] = FilePathRelativeToDir(rootDir.relativize(target).toString())
     }
     FileVisitResult.SKIP_SUBTREE
   }
@@ -54,8 +82,7 @@ private class MyFileVisitor(private val onlyExtensions: Array<String>,
 }
 
 class WindowsFileStorage(dir: Path,
-                         distro: AbstractWslDistribution,
-                         onlyExtensions: Array<String>) : FileStorage<WindowsFilePath, LinuxFilePath>(dir, distro, onlyExtensions) {
+                         distro: AbstractWslDistribution) : FileStorage<WindowsFilePath, LinuxFilePath>(dir, distro) {
   private fun runCommand(vararg commands: String) {
     val cmd = arrayOf("cmd", "/c", *commands)
     ExecUtil.execAndGetOutput(GeneralCommandLine(*cmd)).let {
@@ -76,33 +103,21 @@ class WindowsFileStorage(dir: Path,
     }
   }
 
-  override fun getHashesAndLinks(skipHashCalculation: Boolean): Pair<List<WslHashRecord>, Map<FilePathRelativeToDir, FilePathRelativeToDir>> {
-    val result = ArrayList<WslHashRecord>(AVG_NUM_FILES)
-    val hashTool = XXHashFactory.nativeInstance().hash64() // Native hash can access direct (mapped) buffer a little-bit faster
-    val visitor = MyFileVisitor(onlyExtensions, dir) { relativeToDir: FilePathRelativeToDir, file: Path, attrs: BasicFileAttributes ->
-      if (skipHashCalculation || attrs.size() == 0L) { // Empty file's hash is 0, see wslhash.c
-        result.add(WslHashRecord(relativeToDir, 0))
-      }
-      else { // Map file and read hash
-        FileChannel.open(file, StandardOpenOption.READ).use {
-          val buf = it.map(FileChannel.MapMode.READ_ONLY, 0, attrs.size())
-          try {
-            result.add(WslHashRecord(relativeToDir, hashTool.hash(buf, 0))) // Seed 0 is default, see wslhash.c
-          }
-          finally {
-            ByteBufferUtil.cleanBuffer(buf) // Unmap file: can't overwrite mapped file
-          }
-        }
-      }
-    }
+  override fun calculateSyncData(filters: WslHashFilters, skipHash: Boolean, useStubs: Boolean): WslSyncData {
+    val arch = System.getProperty("os.arch")
+    val useNativeHash = CpuArch.CURRENT == CpuArch.X86_64
+    LOGGER.info("Arch $arch, using native hash: $useNativeHash")
+    val hashTool = if (useNativeHash) XXHashFactory.nativeInstance().hash64() else XXHashFactory.safeInstance().hash64() // Native hash can access direct (mapped) buffer a little-bit faster
+    val visitor = MyFileVisitor(filters, dir, hashTool, skipHash, useStubs)
     val time = TimeoutUtil.measureExecutionTime<Throwable> {
       Files.walkFileTree(dir, visitor)
     }
     LOGGER.info("Windows files calculated in $time")
-    return Pair(result, visitor.dirLinks)
+    return WslSyncData(visitor.hashes, visitor.dirLinks, visitor.stubs)
   }
 
   override fun isEmpty(): Boolean = dir.notExists() || dir.listDirectoryEntries().isEmpty()
+
   override fun removeFiles(filesToRemove: Collection<FilePathRelativeToDir>) {
     if (filesToRemove.isEmpty()) return
     for (file in filesToRemove) {
@@ -114,6 +129,16 @@ class WindowsFileStorage(dir: Path,
   }
 
   override fun createTempFile(): Path = createTmpWinFile(distro).first
+
+  override fun createStubs(files: Collection<FilePathRelativeToDir>) {
+    for (file in files) {
+      val filePath = dir.resolve(file.asWindowsPath)
+      if (!filePath.exists()) {
+        filePath.createFile()
+      }
+    }
+  }
+
   override fun removeLinks(vararg linksToRemove: FilePathRelativeToDir) {
     for (link in linksToRemove) {
       runCommand("rmdir", dir.resolve(link.asWindowsPath).toString())
@@ -129,7 +154,7 @@ class WindowsFileStorage(dir: Path,
     LOGGER.info("Creating tar")
     val tarFile = createTempFile()
     val feature = CompletableFuture.supplyAsync {
-      Compressor.Tar(tarFile.toFile(), Compressor.Tar.Compression.NONE).use { tar ->
+      Compressor.Tar(tarFile, Compressor.Tar.Compression.NONE).use { tar ->
         for (relativeFile in files) {
           tar.addFile(relativeFile.asWindowsPath, dir.resolve(relativeFile.asWindowsPath))
         }

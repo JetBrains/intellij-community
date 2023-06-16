@@ -24,6 +24,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.orderToRemoveReplaceAdd
 import java.util.function.Supplier
 
 class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyIndex, Disposable {
@@ -77,7 +78,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     if (project.isDisposed) return
 
     // Roots changed event should be fired for the global libraries linked with module
-    val moduleChanges = event.getChanges(ModuleEntity::class.java)
+    val moduleChanges = event.getChanges(ModuleEntity::class.java).orderToRemoveReplaceAdd()
     for (change in moduleChanges) {
       change.oldEntity?.let { removeTrackedLibrariesAndJdkFromEntity(it) }
       change.newEntity?.let { addTrackedLibraryAndJdkFromEntity(it) }

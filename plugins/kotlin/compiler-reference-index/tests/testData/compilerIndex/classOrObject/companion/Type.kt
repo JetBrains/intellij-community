@@ -1,3 +1,3 @@
-fun Type(t: MainClass.Companion.T) {
+fun Type(t: MainClass.Companion) {
 
 }

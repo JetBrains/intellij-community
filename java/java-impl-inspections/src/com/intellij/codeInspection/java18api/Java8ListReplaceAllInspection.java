@@ -52,10 +52,10 @@ public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspecti
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
-      private boolean isRedundantOperation(PsiExpression replacement,
-                                           PsiStatement body,
-                                           CountingLoop countingLoop,
-                                           IndexedContainer container) {
+      private static boolean isRedundantOperation(PsiExpression replacement,
+                                                  PsiStatement body,
+                                                  CountingLoop countingLoop,
+                                                  IndexedContainer container) {
         PsiLocalVariable counter = countingLoop.getCounter();
         if (ExpressionUtils.isReferenceTo(container.extractIndexFromGetExpression(replacement), counter)) return true;
         if (!(replacement instanceof PsiReferenceExpression)) return false;
@@ -66,7 +66,7 @@ public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspecti
         return ExpressionUtils.isReferenceTo(index, counter) && HighlightControlFlowUtil.isEffectivelyFinal(variable, body, null);
       }
 
-      private boolean isMultilineLambda(PsiStatement body, PsiStatement[] statements) {
+      private static boolean isMultilineLambda(PsiStatement body, PsiStatement[] statements) {
         if (statements.length == 1) return false;
         if (statements.length > 3) return true;
         if (getVariableToInline(statements[0], body) == null) return true;
@@ -107,7 +107,7 @@ public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspecti
     };
   }
 
-  private static class ReplaceWithReplaceAllQuickFix implements LocalQuickFix {
+  private static class ReplaceWithReplaceAllQuickFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -116,9 +116,8 @@ public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement parent = descriptor.getStartElement().getParent();
-      if (!(parent instanceof PsiForStatement statement)) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      if (!(element.getParent() instanceof PsiForStatement statement)) return;
       PsiStatement body = statement.getBody();
       if (body == null) return;
       PsiStatement[] statements = ControlFlowUtils.unwrapBlock(body);

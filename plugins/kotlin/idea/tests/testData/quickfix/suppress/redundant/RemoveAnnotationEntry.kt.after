@@ -5,5 +5,6 @@ fun function() {
 
 }
 
+// IGNORE_FIR
 // TOOL: com.intellij.codeInspection.RedundantSuppressInspection
-// TOOL: org.jetbrains.kotlin.idea.inspections.MoveVariableDeclarationIntoWhenInspection
+// K1_TOOL: org.jetbrains.kotlin.idea.inspections.MoveVariableDeclarationIntoWhenInspection

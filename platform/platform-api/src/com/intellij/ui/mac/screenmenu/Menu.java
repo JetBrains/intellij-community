@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
+@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "unused"})
 public class Menu extends MenuItem {
   private static final boolean USE_STUB = Boolean.getBoolean("jbScreenMenuBar.useStubItem"); // just for tests/experiments
   private static final int CLOSE_DELAY = Integer.getInteger("jbScreenMenuBar.closeDelay", 500); // in milliseconds
@@ -95,10 +95,13 @@ public class Menu extends MenuItem {
 
   public void setTitle(String label) {
     ensureNativePeer();
+    if (label == null)
+      label = "";
+    myTitle = label;
     nativeSetTitle(nativePeer, label, isInHierarchy);
   }
 
-  // Search for subitem by title (reg-exp) in native NSMenu peer
+  // Search for subitem by title (regexp) in native NSMenu peer
   // Returns the index of first child with matched title.
   public int findIndexByTitle(String re) {
     if (re == null || re.isEmpty()) return -1;
@@ -107,7 +110,7 @@ public class Menu extends MenuItem {
     return nativeFindIndexByTitle(nativePeer, re);
   }
 
-  // Search for subitem by title (reg-exp) in native NSMenu peer
+  // Search for subitem by title (regexp) in native NSMenu peer
   // Returns the first child with matched title.
   // NOTE: Always creates java-wrapper for native NSMenuItem (that must be disposed manually)
   synchronized
@@ -120,6 +123,7 @@ public class Menu extends MenuItem {
   }
 
   @SuppressWarnings("SSBasedInspection")
+  synchronized
   void disposeChildren(int delayMs) {
     if (delayMs <= 0) {
       for (MenuItem item : myItems) {
@@ -163,7 +167,7 @@ public class Menu extends MenuItem {
 
   synchronized
   public void endFill(boolean onAppKit) {
-    disposeChildren(0); // NOTE: to test/increase stability use 2000 ms
+    disposeChildren(0);
 
     if (myBuffer.isEmpty()) return;
 
@@ -217,12 +221,12 @@ public class Menu extends MenuItem {
     }
   }
 
-  public void invokeOpenLater() {
+  public void menuNeedsUpdate() {
     // Called on AppKit when menu opening
     myIsOpened = true;
     if (myOnOpen != null) {
       if (USE_STUB) {
-        // NOTE: must add stub item when menu opens (otherwise AppKit considers it as empty and we can't fill it later)
+        // NOTE: must add stub item when menu opens (otherwise AppKit considers it as empty, and we can't fill it later)
         MenuItem stub = new MenuItem();
         myItems.add(stub);
         stub.isInHierarchy = true;
@@ -237,8 +241,20 @@ public class Menu extends MenuItem {
         });
       }
       else {
-        invokeWithLWCToolkit(myOnOpen, () -> endFill(false/*already on AppKit thread*/), myComponent);
+        invokeWithLWCToolkit(myOnOpen, () -> endFill(false/*already on AppKit thread*/), myComponent, true);
       }
+    }
+  }
+
+  public void menuWillOpen() {
+    // Called on AppKit when menu opening
+    if (!myIsOpened) {
+      // When user opens some menu at second time (without focus lost) apple doesn't call menuNeedsUpdate for
+      // this menu (but always calls menuWillOpen) and for all submenus. It causes problems like IDEA-319117.
+      // So detect this case and call menuNeedsUpdate() "manually".
+      // NOTE: unfortunately modifying menu here can cause unstable behaviour, see IDEA-315910.
+      Logger.getInstance(Menu.class).debug("menuNeedsUpdate wasn't called for '" + myTitle + "', will do it now");
+      menuNeedsUpdate();
     }
   }
 
@@ -251,18 +267,10 @@ public class Menu extends MenuItem {
     // Defer clearing to avoid this problem.
     disposeChildren(CLOSE_DELAY);
 
-    // NOTE: we can't perform native cleaning immediately, because items from 'Help' menu stop work.
-    SimpleTimer.getInstance().setUp(() -> {
-      if (myIsOpened) {
-        return;
-      }
+    // NOTE: don't clear native hierarchy here (see IDEA-315910)
+    // It will be done when menu opens next time.
 
-      synchronized (this) {
-        // clean native NSMenu item
-        if (nativePeer != 0) nativeRefill(nativePeer, null, true);
-      }
-    }, CLOSE_DELAY);
-    if (myOnClose != null) invokeWithLWCToolkit(myOnClose, null, myComponent);
+    if (myOnClose != null) invokeWithLWCToolkit(myOnClose, null, myComponent, false);
   }
 
   //
@@ -339,20 +347,25 @@ public class Menu extends MenuItem {
     }
     catch (Throwable e) {
       // default screen menu implementation will be used
-      Logger.getInstance(Menu.class).warn("can't load menu library: " + lib.toFile().getAbsolutePath() + ", exception: " + e.getMessage());
+      Logger.getInstance(Menu.class).warn("can't load menu library: " + lib + ", exception: " + e.getMessage());
     }
 
     return IS_ENABLED;
   }
 
-  private static void invokeWithLWCToolkit(Runnable r, Runnable after, Component invoker) {
+  private static void invokeWithLWCToolkit(Runnable r, Runnable after, Component invoker, boolean wait) {
     try {
       Class<?> toolkitClass = Class.forName("sun.lwawt.macosx.LWCToolkit");
-      Method invokeMethod = ReflectionUtil.getDeclaredMethod(toolkitClass, "invokeAndWait", Runnable.class, Component.class, boolean.class, int.class);
+      @SuppressWarnings("deprecation")
+      Method invokeMethod = wait ?
+        ReflectionUtil.getDeclaredMethod(toolkitClass, "invokeAndWait", Runnable.class, Component.class, boolean.class, int.class) :
+        ReflectionUtil.getDeclaredMethod(toolkitClass, "invokeLater", Runnable.class, Component.class);
       if (invokeMethod != null) {
         try {
-          invokeMethod.invoke(toolkitClass, r, invoker, true, -1);
-          invokeMethod.invoke(toolkitClass, r, invoker);
+          if (wait)
+            invokeMethod.invoke(toolkitClass, r, invoker, true, -1);
+          else
+            invokeMethod.invoke(toolkitClass, r, invoker);
         }
         catch (Exception e) {
           // suppress InvocationTargetException as in openjdk implementation (see com.apple.laf.ScreenMenu.java)

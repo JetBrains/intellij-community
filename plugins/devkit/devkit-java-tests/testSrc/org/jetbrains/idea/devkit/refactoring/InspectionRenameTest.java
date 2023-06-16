@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.refactoring;
 
 import com.intellij.codeInspection.LocalInspectionEP;
@@ -31,12 +31,10 @@ public class InspectionRenameTest extends JavaCodeInsightFixtureTestCase {
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     super.tuneFixture(moduleBuilder);
 
-    moduleBuilder.addLibrary("core-api", PathUtil.getJarPathForClass(LanguageExtensionPoint.class));
-    moduleBuilder.addLibrary("analysis-api", PathUtil.getJarPathForClass(LocalInspectionEP.class));
-    moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
-      .resolveSibling("intellij.platform.resources").toString());
-    moduleBuilder.addLibrary("platform-api", PathUtil.getJarPathForClass(JBList.class));
-    moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(Attribute.class));
+    moduleBuilder.addLibrary("platform-core", PathUtil.getJarPathForClass(LanguageExtensionPoint.class));
+    moduleBuilder.addLibrary("platform-analysis", PathUtil.getJarPathForClass(LocalInspectionEP.class));
+    moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList.class));
+    moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(Attribute.class));
   }
 
   public void testRenameInspectionWithoutGetShortName() {

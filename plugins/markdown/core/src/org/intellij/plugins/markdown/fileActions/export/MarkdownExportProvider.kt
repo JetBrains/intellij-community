@@ -4,11 +4,12 @@ package org.intellij.plugins.markdown.fileActions.export
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RowsRange
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionFormat
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.io.File
-import javax.swing.JComponent
 
 @ApiStatus.Experimental
 interface MarkdownExportProvider {
@@ -18,7 +19,7 @@ interface MarkdownExportProvider {
 
   fun validate(project: Project, file: VirtualFile): @Nls String?
 
-  fun createSettingsComponent(project: Project, suggestedTargetFile: File): JComponent? = null
+  fun Panel.createSettingsComponent(project: Project, suggestedTargetFile: File): RowsRange? = null
 
   companion object {
     private val EP_NAME: ExtensionPointName<MarkdownExportProvider> =

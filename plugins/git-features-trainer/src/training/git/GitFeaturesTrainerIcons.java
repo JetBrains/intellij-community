@@ -14,7 +14,7 @@ public final class GitFeaturesTrainerIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, GitFeaturesTrainerIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 366x80 */ public static final @NotNull Icon GitFeatureBranchIllustration01 = load("illustrations/gitFeatureBranchIllustration01.svg", 1747348138, 2);
-  /** 366x98 */ public static final @NotNull Icon GitFeatureBranchIllustration02 = load("illustrations/gitFeatureBranchIllustration02.svg", -1200255255, 2);
-  /** 366x80 */ public static final @NotNull Icon GitFeatureBranchIllustration03 = load("illustrations/gitFeatureBranchIllustration03.svg", -829472403, 2);
+  /** 366x80 */ public static final @NotNull Icon GitFeatureBranchIllustration01 = load("illustrations/gitFeatureBranchIllustration01.svg", -509352769, 2);
+  /** 366x98 */ public static final @NotNull Icon GitFeatureBranchIllustration02 = load("illustrations/gitFeatureBranchIllustration02.svg", -1659839521, 2);
+  /** 366x80 */ public static final @NotNull Icon GitFeatureBranchIllustration03 = load("illustrations/gitFeatureBranchIllustration03.svg", 1604780659, 2);
 }

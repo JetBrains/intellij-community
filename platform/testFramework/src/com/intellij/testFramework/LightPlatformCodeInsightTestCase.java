@@ -660,6 +660,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction("EditorDown");
   }
 
+  protected void upWithSelection() {
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+  }
+
+  protected void downWithSelection() {
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+  }
+
   protected void lineComment() {
     executeAction(IdeActions.ACTION_COMMENT_LINE);
   }

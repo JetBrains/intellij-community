@@ -228,26 +228,40 @@ public final class JavaPsiPatternUtil {
     return isUnconditionalForType(pattern, type, false);
   }
 
-  public static boolean isUnconditionalForType(@Nullable PsiCaseLabelElement pattern, @NotNull PsiType type, boolean forDomination) {
-    if (pattern == null) return false;
+  @Nullable
+  public static PsiPrimaryPattern findUnconditionalPattern(@Nullable PsiCaseLabelElement pattern) {
+    if (pattern == null) return null;
     if (pattern instanceof PsiPatternGuard) {
       PsiPatternGuard guarded = (PsiPatternGuard)pattern;
       Object constVal = evaluateConstant(guarded.getGuardingExpression());
-      return isUnconditionalForType(guarded.getPattern(), type, forDomination) && Boolean.TRUE.equals(constVal);
+      if (!Boolean.TRUE.equals(constVal)) return null;
+      return findUnconditionalPattern(guarded.getPattern());
     }
-    if (pattern instanceof PsiGuardedPattern) {
+    else if (pattern instanceof PsiGuardedPattern) {
       PsiGuardedPattern guarded = (PsiGuardedPattern)pattern;
       Object constVal = evaluateConstant(guarded.getGuardingExpression());
-      return isUnconditionalForType(guarded.getPrimaryPattern(), type, forDomination) && Boolean.TRUE.equals(constVal);
+      if (!Boolean.TRUE.equals(constVal)) return null;
+      return findUnconditionalPattern(guarded.getPrimaryPattern());
     }
     else if (pattern instanceof PsiParenthesizedPattern) {
-      return isUnconditionalForType(((PsiParenthesizedPattern)pattern).getPattern(), type, forDomination);
+      return findUnconditionalPattern(((PsiParenthesizedPattern)pattern).getPattern());
     }
     else if (pattern instanceof PsiDeconstructionPattern) {
-      return forDomination && dominates(getPatternType(pattern), type);
+      return (PsiDeconstructionPattern)pattern;
     }
     else if (pattern instanceof PsiTypeTestPattern) {
-      return dominates(getPatternType(pattern), type);
+      return (PsiTypeTestPattern)pattern;
+    }
+    return null;
+  }
+  public static boolean isUnconditionalForType(@Nullable PsiCaseLabelElement pattern, @NotNull PsiType type, boolean forDomination) {
+    PsiPrimaryPattern unconditionalPattern = findUnconditionalPattern(pattern);
+    if (unconditionalPattern == null) return false;
+    if (unconditionalPattern instanceof PsiDeconstructionPattern) {
+      return forDomination && dominates(getPatternType(unconditionalPattern), type);
+    }
+    else if (unconditionalPattern instanceof PsiTypeTestPattern) {
+      return dominates(getPatternType(unconditionalPattern), type);
     }
     return false;
   }

@@ -208,7 +208,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
       openProject("project", wait = false)
         .useProjectAsync { project ->
           assertModules(project, "project")
-          awaitProjectReload {
+          awaitAnyGradleProjectReload {
             writeAction {
               testRoot.createFile("project/.idea/gradle.xml")
                 .writeText("""
@@ -233,7 +233,6 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
             }
             PlatformTestUtil.saveProject(project)
           }
-          assertReloadState()
           assertNotificationIsVisible(project, false)
           assertModules(project, "project", "project.main", "project.test")
         }

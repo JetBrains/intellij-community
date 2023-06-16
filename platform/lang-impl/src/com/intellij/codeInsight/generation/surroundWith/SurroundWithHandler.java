@@ -205,7 +205,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     JBPopupFactory.getInstance().createActionGroupPopup(CodeInsightBundle.message("surround.with.chooser.title"), group, context, mnemonics, true).showInBestPositionFor(editor);
   }
 
-  static void doSurround(final Project project, final Editor editor, final Surrounder surrounder, final PsiElement[] elements) {
+  public static void doSurround(final Project project, final Editor editor, final Surrounder surrounder, final PsiElement[] elements) {
     WriteAction.run(() -> PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument()));
     int col = editor.getCaretModel().getLogicalPosition().column;
     int line = editor.getCaretModel().getLogicalPosition().line;

@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.application.options.XmlSettings;
 import com.intellij.codeInsight.completion.ExtendedTagInsertHandler;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
-import com.intellij.codeInsight.daemon.impl.VisibleHighlightingPassFactory;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -229,7 +228,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       final String title = getSelectNSActionTitle();
       final ImportNSAction action = new ImportNSAction(namespaces, getFile(), element, editor, title);
       if (element instanceof XmlTag && token != null) {
-        if (VisibleHighlightingPassFactory.calculateVisibleRange(editor).contains(token.getTextRange())) {
+        if (editor.calculateVisibleRange().contains(token.getTextRange())) {
           HintManager.getInstance().showQuestionHint(editor, message,
                                                      token.getTextOffset(),
                                                      token.getTextOffset() + myNamespacePrefix.length(), action);

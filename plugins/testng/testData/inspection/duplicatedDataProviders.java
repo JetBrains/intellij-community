@@ -8,19 +8,19 @@ import java.util.Iterator;
 class DuplicatedTest1 {
 
   @DataProvider
-  public Object[][] <error descr="Data provider with name 'someTestData' already exists in context">someTestData</error>() {return null;}
+  public Object[][] <warning descr="Data provider with name 'someTestData' already exists in context">someTestData</warning>() {return null;}
 
-  @DataProvider(name=<error descr="Data provider with name 'someTestData' already exists in context">"someTestData"</error>)
+  @DataProvider(name=<warning descr="Data provider with name 'someTestData' already exists in context">"someTestData"</warning>)
   public Object[][] someTestData2() {return null;}
 
 }
 
 class DuplicatedTest2 {
 
-  @DataProvider(name = <error descr="Data provider with name 'asd' already exists in context">"asd"</error>)
+  @DataProvider(name = <warning descr="Data provider with name 'asd' already exists in context">"asd"</warning>)
   public Object[][] someTestData() {return null;}
 
-  @DataProvider(name = <error descr="Data provider with name 'asd' already exists in context">"asd"</error>)
+  @DataProvider(name = <warning descr="Data provider with name 'asd' already exists in context">"asd"</warning>)
   public Object[][] someTestData2() {return null;}
 
 }
@@ -53,7 +53,7 @@ abstract class DuplicateInSuperBase {
 }
 class DuplicateInSuper extends DuplicateInSuperBase {
   @DataProvider
-  public static Object[][] <error descr="Data provider with name 'someTestData' already exists in context">someTestData</error>() {return null;}
+  public static Object[][] <warning descr="Data provider with name 'someTestData' already exists in context">someTestData</warning>() {return null;}
 
   @DataProvider
   public Object[][] getData() {return null;}

@@ -13,4 +13,6 @@ public interface KeyValueStore<K, V> extends Closeable {
   void put(K key, V value) throws IOException;
 
   void force();
+
+  boolean isDirty();
 }

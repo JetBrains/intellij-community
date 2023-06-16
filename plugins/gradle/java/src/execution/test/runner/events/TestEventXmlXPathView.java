@@ -149,6 +149,11 @@ public class TestEventXmlXPathView implements TestEventXmlView {
     return queryXml("/ijLog/event/test/result/failureType");
   }
 
+  @Override
+  public @NotNull String getEventTestResultExceptionName() throws XmlParserException {
+    return queryXml("/ijLog/event/test/result/exceptionName");
+  }
+
   @NotNull
   @Override
   public String getEventTestResultStackTrace() throws XmlParserException {

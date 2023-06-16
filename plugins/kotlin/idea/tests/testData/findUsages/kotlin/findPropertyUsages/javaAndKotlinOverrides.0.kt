@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtProperty
 // OPTIONS: overrides
+// PSI_ELEMENT_AS_TITLE: "var foo: T"
 open class A<T>(t: T) {
     open var <caret>foo: T = t
 }

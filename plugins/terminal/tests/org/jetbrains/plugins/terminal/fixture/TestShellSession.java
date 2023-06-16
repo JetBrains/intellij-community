@@ -8,10 +8,7 @@ import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider;
-import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
-import org.jetbrains.plugins.terminal.ShellStartupOptionsKt;
-import org.jetbrains.plugins.terminal.ShellTerminalWidget;
+import org.jetbrains.plugins.terminal.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -29,7 +26,9 @@ public class TestShellSession {
     myWidget = new ShellTerminalWidget(project, settingsProvider, parentDisposable);
 
     LocalTerminalDirectRunner runner = LocalTerminalDirectRunner.createTerminalRunner(project);
-    PtyProcess process = runner.createProcess(ShellStartupOptionsKt.shellStartupOptions(project.getBasePath()));
+    ShellStartupOptions baseOptions = ShellStartupOptionsKt.shellStartupOptions(project.getBasePath());
+    ShellStartupOptions configuredOptions = runner.configureStartupOptions(baseOptions);
+    PtyProcess process = runner.createProcess(configuredOptions);
     TtyConnector connector = new PtyProcessTtyConnector(process, StandardCharsets.UTF_8);
     myWidget.start(connector);
     myWatcher = new TestTerminalBufferWatcher(myWidget.getTerminalTextBuffer(), myWidget.getTerminal());

@@ -1,18 +1,4 @@
-/*
- * Copyright 2008-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
@@ -355,7 +341,7 @@ public abstract class ResourceInspection extends BaseInspection {
     if (codeBlock == null) {
       return false;
     }
-    final EscapeVisitor visitor = new EscapeVisitor(boundVariable);
+    final EscapeVisitor visitor = new EscapeVisitor(boundVariable, resourceCreationExpression);
     codeBlock.accept(visitor);
     return visitor.isEscaped();
   }
@@ -484,10 +470,13 @@ public abstract class ResourceInspection extends BaseInspection {
   private class EscapeVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiVariable boundVariable;
+    @Nullable
+    private final PsiLoopStatement loopStatement;
     private boolean escaped;
 
-    EscapeVisitor(@NotNull PsiVariable boundVariable) {
+    EscapeVisitor(@NotNull PsiVariable boundVariable, @NotNull PsiExpression creationExpression) {
       this.boundVariable = boundVariable;
+      loopStatement = PsiTreeUtil.getParentOfType(creationExpression, PsiLoopStatement.class);
     }
 
     @Override
@@ -549,7 +538,7 @@ public abstract class ResourceInspection extends BaseInspection {
       PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(expression);
       if (call == null) return;
       String callName = call.getMethodExpression().getReferenceName();
-      if ("close".equals(callName)) {
+      if ("close".equals(callName) && !canBeCloseOutsideLoop(call)) {
         escaped = true;
       }
     }
@@ -562,9 +551,17 @@ public abstract class ResourceInspection extends BaseInspection {
       }
       String name = expression.getMethodExpression().getReferenceName();
       if (name == null) return;
-      if (StringUtil.containsIgnoreCase(name, "close") || StringUtil.containsIgnoreCase(name, "cleanup")) {
+      if ((StringUtil.containsIgnoreCase(name, "close") || StringUtil.containsIgnoreCase(name, "cleanup")) &&
+          !canBeCloseOutsideLoop(expression)) {
         escaped = true;
       }
+    }
+
+    private boolean canBeCloseOutsideLoop(PsiExpression expression) {
+      if (loopStatement == null) {
+        return false;
+      }
+      return !PsiTreeUtil.isAncestor(loopStatement, expression, false);
     }
 
     @Override

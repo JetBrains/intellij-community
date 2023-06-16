@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
@@ -260,7 +260,6 @@ public class MatchOptions implements JDOMExternalizable {
     if (caseSensitiveMatch != matchOptions.caseSensitiveMatch) return false;
     if (looseMatching != matchOptions.looseMatching) return false;
     if (recursiveSearch != matchOptions.recursiveSearch) return false;
-    if (!Objects.equals(scope, matchOptions.scope)) return false;
     if (searchInjectedCode != matchOptions.searchInjectedCode) return false;
     if (!pattern.equals(matchOptions.pattern)) return false;
     if (!variableConstraints.equals(matchOptions.variableConstraints)) return false;
@@ -278,7 +277,6 @@ public class MatchOptions implements JDOMExternalizable {
     result = 29 * result + (caseSensitiveMatch ? 1 : 0);
     result = 29 * result + pattern.hashCode();
     result = 29 * result + variableConstraints.hashCode();
-    if (scope != null) result = 29 * result + scope.hashCode();
     result = 29 * result + (searchInjectedCode ? 1 : 0);
     if (myUnknownFileType != null) result = 29 * result + myUnknownFileType.hashCode();
     if (myFileType != null) result = 29 * result + myFileType.hashCode();

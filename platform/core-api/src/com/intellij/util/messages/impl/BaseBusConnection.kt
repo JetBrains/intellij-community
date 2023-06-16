@@ -89,5 +89,5 @@ internal sealed class BaseBusConnection(bus: MessageBusImpl) : MessageHandlerHol
 
   protected abstract fun disconnect()
 
-  override fun toString() = subscriptions.get().contentToString()
+  override fun toString(): String = subscriptions.get().contentToString()
 }

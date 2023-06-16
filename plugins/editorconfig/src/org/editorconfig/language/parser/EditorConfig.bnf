@@ -18,6 +18,8 @@
   tokens=[
     LINE_COMMENT='regexp:[#;].*'
   ]
+
+  extends(".*_pattern")=pattern
 }
 
 // ---- ---- Basic ---- ----
@@ -56,7 +58,7 @@ root_declaration_value ::= IDENTIFIER
 
 // ---- ---- Header ---- ----
 
-header ::= L_BRACKET (pattern | pattern_enumeration)* R_BRACKET {
+header ::= L_BRACKET pattern_aux? R_BRACKET {
   pin=1
   recoverWhile=not_next_entry
   mixin="org.editorconfig.language.psi.base.EditorConfigHeaderBase"
@@ -66,12 +68,25 @@ header ::= L_BRACKET (pattern | pattern_enumeration)* R_BRACKET {
   ]
 }
 
-pattern_enumeration ::= L_CURLY (pattern (COMMA pattern)*)? R_CURLY {
+fake pattern ::= {
   mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
   implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
 }
 
-pattern ::= (flat_pattern | asterisk_pattern | double_asterisk_pattern | question_pattern | char_class)+ {
+
+private pattern_aux ::= (concatenated_pattern | elemental_pattern) {
+  mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
+  implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
+}
+
+private elemental_pattern ::= (enumeration_pattern | flat_pattern | asterisk_pattern | double_asterisk_pattern | question_pattern | char_class_pattern)
+
+concatenated_pattern ::= elemental_pattern (elemental_pattern)+ {
+  mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
+  implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
+}
+
+enumeration_pattern ::= L_CURLY (pattern_aux (COMMA pattern_aux)*)? R_CURLY {
   mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
   implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
 }
@@ -91,12 +106,12 @@ question_pattern ::= QUESTION {
   implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
 }
 
-flat_pattern ::= PATTERN_IDENTIFIER {
+flat_pattern ::= (PATTERN_IDENTIFIER | PATTERN_WHITE_SPACE)+ {
   mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
   implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
 }
 
-char_class ::= L_BRACKET char_class_exclamation? char_class_letter+ R_BRACKET {
+char_class_pattern ::= L_BRACKET char_class_exclamation? char_class_letter+ R_BRACKET {
   mixin="org.editorconfig.language.psi.base.EditorConfigHeaderElementBase"
   implements="org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement"
 }

@@ -16,7 +16,8 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.builder.VerticalComponentGap
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -29,11 +30,12 @@ import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.border.Border
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 @Deprecated("Use Row.segmentedButton")
 @ApiStatus.ScheduledForRemoval
 class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfiguration: SpacingConfiguration) :
-  ActionToolbarImpl("ButtonSelector", actionGroup, true, true) {
+  ActionToolbarImpl("ButtonSelector", actionGroup, true, true, true) {
 
   init {
     isFocusable = true
@@ -42,7 +44,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
     // Buttons preferred size is calculated in SegmentedButton.getPreferredSize, so reset default size
     setMinimumButtonSize(Dimension(0, 0))
     layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
-    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(size = DarculaUIUtil.BW.get()))
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(size = DarculaUIUtil.BW.unscaled.roundToInt()))
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(true, true))
 
     addFocusListener(object : FocusListener {
@@ -182,8 +184,8 @@ private class DeprecatedSegmentedButton(
 
   override fun getPreferredSize(): Dimension {
     val preferredSize = super.getPreferredSize()
-    return Dimension(preferredSize.width + spacingConfiguration.segmentedButtonHorizontalGap * 2,
-                     preferredSize.height + spacingConfiguration.segmentedButtonVerticalGap * 2)
+    return Dimension(preferredSize.width + JBUIScale.scale(spacingConfiguration.segmentedButtonHorizontalGap) * 2,
+                     preferredSize.height + JBUIScale.scale(spacingConfiguration.segmentedButtonVerticalGap) * 2)
   }
 
   fun setSelected(selected: Boolean) {

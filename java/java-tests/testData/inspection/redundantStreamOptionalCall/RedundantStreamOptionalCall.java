@@ -89,6 +89,14 @@ public class RedundantStreamOptionalCall {
     // another stream
     c.parallelStream().sorted().findFirst().get().chars().parallel().forEach(System.out::println);
   }
+  
+  void dropWhileAndSort() {
+    List<String> collect = Stream.of("E", "D", "C", "B")
+      .sorted()
+      .dropWhile(x -> !x.equals("D"))
+      .sorted(Comparator.reverseOrder())
+      .collect(Collectors.toList());
+  }
 
   void parallelSorted(Collection<String> c) {
     c.stream().sorted().forEach(x -> {});

@@ -628,10 +628,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return myProject;
   }
 
-  @SuppressWarnings("unused")
-  @Deprecated(forRemoval = true)
-  public void setCommitMessage(@Nullable String commitMessage) { }
-
   @Deprecated(forRemoval = true)
   @NotNull
   public String getCommitMessage() {

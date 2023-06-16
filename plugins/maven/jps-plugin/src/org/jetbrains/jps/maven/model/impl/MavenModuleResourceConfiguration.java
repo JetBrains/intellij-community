@@ -100,6 +100,7 @@ public class MavenModuleResourceConfiguration {
     result = 31 * result + (classpath != null ? classpath.hashCode() : 0);
     result = 31 * result + delimitersPattern.hashCode();
     result = 31 * result + modelMap.hashCode();
+    result = 31 * result + modelMap.values().hashCode();
     result = 31 * result + properties.hashCode();
     result = 31 * result + filteringExclusions.hashCode();
     result = 31 * result + (escapeString != null ? escapeString.hashCode() : 0);
@@ -108,6 +109,28 @@ public class MavenModuleResourceConfiguration {
     result = 31 * result + (escapeWindowsPaths ? 1 : 0);
     result = 31 * result + (overwrite ? 1 : 0);
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "MavenModuleResourceConfiguration{" +
+           "id=" + id +
+           ", parentId=" + parentId +
+           ", directory='" + directory + '\'' +
+           ", manifest='" + manifest + '\'' +
+           ", classpath='" + classpath + '\'' +
+           ", delimitersPattern='" + delimitersPattern + '\'' +
+           ", modelMap=" + modelMap +
+           ", properties=" + properties +
+           ", filteringExclusions=" + filteringExclusions +
+           ", escapeString='" + escapeString + '\'' +
+           ", escapeWindowsPaths=" + escapeWindowsPaths +
+           ", overwrite=" + overwrite +
+           ", outputDirectory='" + outputDirectory + '\'' +
+           ", testOutputDirectory='" + testOutputDirectory + '\'' +
+           ", resources=" + resources +
+           ", testResources=" + testResources +
+           '}';
   }
 }
 

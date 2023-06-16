@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -10,22 +10,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Base class for global inspections. Global inspections work only in batch mode
- * (when the &quot;Analyze / Inspect Code&quot; is invoked) and can access the
- * complete graph of references between classes, methods and other elements in the scope
- * selected for the analysis.
- *
+ * Base class for global inspections.
+ * Global inspections work only in batch mode (when "Analyze / Inspect Code" is invoked)
+ * and can access the complete graph of references between classes, methods and other elements
+ * in the scope selected for the analysis.
+ * <p>
  * Global inspections can use a shared local inspection tool for highlighting the cases
  * that do not need global analysis in the editor by implementing {@link #getSharedLocalInspectionTool()}
  * The shared local inspection tools shares settings and documentation with the global inspection tool.
  *
  * @author anna
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections.html">Code Inspections (IntelliJ Platform Docs)</a>
  * @see LocalInspectionTool
  */
 public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   @NotNull
   @Override
-  protected final String getSuppressId() {
+  public final String getSuppressId() {
     return super.getSuppressId();
   }
 
@@ -135,10 +136,10 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
-   * True by default to ensure third party plugins are not broken
-   * 
+   * True by default to ensure third party plugins are not broken.
+   *
    * @return true if inspection should be started ({@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)}) in ReadAction,
-   *         false if ReadAction is taken by inspection itself
+   * false if ReadAction is taken by inspection itself
    */
   public boolean isReadActionNeeded() {
     return true;
@@ -162,12 +163,10 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * can add new problems to {@code problemDescriptionsProcessor} or remove some of the problems
    * collected by {@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)}
    * by calling {@link ProblemDescriptionsProcessor#ignoreElement(RefEntity)}.
-   * 
    * <p>
    * NOTE: if you want to check references in files which are not included in the graph e.g., in xml, which may be located in the scope,
    * you need to explicitly disable optimization and override {@link #getAdditionalJobs(GlobalInspectionContext)}
-   *</p>
-   * 
+   *
    * @param manager                      the inspection manager instance for the project on which the inspection was run.
    * @param globalContext                the context for the current global inspection run.
    * @param problemDescriptionsProcessor the collector for problems reported by the inspection.

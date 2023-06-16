@@ -23,7 +23,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -64,7 +64,7 @@ import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
 public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider, ProblemsViewTab {
   protected final ClientId myClientId = ClientId.getCurrent();
-
+  volatile boolean myDisposed;
   private final Project myProject;
   private final String myId;
   private final ProblemsViewState myState;
@@ -72,7 +72,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   private final ProblemsTreeModel myTreeModel = new ProblemsTreeModel(this);
   private final DescriptorPreview myPreview = new DescriptorPreview(this, true, myClientId);
   private final JPanel myPanel;
-  private final ActionToolbar myToolbar;
+  protected final ActionToolbar myToolbar;
   private final Insets myToolbarInsets = JBUI.insetsRight(1);
   private final Tree myTree;
   private final TreeExpander myTreeExpander;
@@ -124,7 +124,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     @Override
     public boolean isEnabled() {
       VirtualFile file = getSelectedFile();
-      return file != null && null != ProblemsView.getDocument(getProject(), file);
+      return file != null && file.isValid() && ProblemsView.getDocument(getProject(), file) != null;
     }
 
     @Override
@@ -209,18 +209,18 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     myTree.getSelectionModel().setSelectionMode(SINGLE_TREE_SELECTION);
     myTree.addTreeSelectionListener(new RestoreSelectionListener());
     myTree.addTreeSelectionListener(event -> mySelectionAlarm.cancelAndRequest());
-    new TreeSpeedSearch(myTree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
     PopupHandler.installPopupMenu(myTree, getPopupHandlerGroupId(), "ProblemsView.ToolWindow.TreePopup");
     myTreeExpander = new DefaultTreeExpander(myTree);
 
+    JComponent centerComponent = createCenterComponent();
     myToolbar = getToolbar();
-    myToolbar.setTargetComponent(myTree);
+    myToolbar.setTargetComponent(centerComponent);
     myToolbar.getComponent().setVisible(state.getShowToolbar());
-
     myPanel = new JPanel(new BorderLayout());
-    JScrollPane scrollPane = createScrollPane(myTree, true);
+    JScrollPane scrollPane = createScrollPane(centerComponent, true);
     if (ExperimentalUI.isNewUI()) {
       scrollPane.getHorizontalScrollBar().addAdjustmentListener(event -> {
         int orientation = ((ActionToolbarImpl)myToolbar).getOrientation();
@@ -249,6 +249,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   public void dispose() {
     visibilityChangedTo(false);
     myPreview.close();
+    myDisposed = true;
   }
 
   private @Nullable Content getCurrentContent() {
@@ -306,6 +307,10 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
 
   protected void updateToolWindowContent() {
     myUpdateAlarm.cancelAndRequest();
+  }
+
+  protected @NotNull JComponent createCenterComponent() {
+    return myTree;
   }
 
   @Override
@@ -369,7 +374,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     return true;
   }
 
-  void orientationChangedTo(boolean vertical) {
+  @Override
+  public void orientationChangedTo(boolean vertical) {
     setOrientation(vertical);
     myPanel.remove(myToolbar.getComponent());
     myToolbar.setOrientation(vertical ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
@@ -379,7 +385,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     updatePreview();
   }
 
-  void selectionChangedTo(boolean selected) {
+  @Override
+  public void selectionChangedTo(boolean selected) {
     if (selected) {
       myTreeModel.setComparator(createComparator());
       updatePreview();
@@ -393,7 +400,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     visibilityChangedTo(selected);
   }
 
-  void visibilityChangedTo(boolean visible) {
+  @Override
+  public void visibilityChangedTo(boolean visible) {
     if (visible) {
       myShowTime.set(System.nanoTime());
       ProblemsViewStatsCollector.tabShown(this);

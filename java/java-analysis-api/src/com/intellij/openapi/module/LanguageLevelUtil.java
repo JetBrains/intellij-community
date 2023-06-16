@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,9 +17,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public final class LanguageLevelUtil {
   /**
@@ -81,6 +83,8 @@ public final class LanguageLevelUtil {
     ourPresentableShortMessage.put(LanguageLevel.JDK_17_PREVIEW, "18");
     ourPresentableShortMessage.put(LanguageLevel.JDK_18, "19");
     ourPresentableShortMessage.put(LanguageLevel.JDK_18_PREVIEW, "19");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_19, "20");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_19_PREVIEW, "20");
   }
 
   @Nullable
@@ -96,7 +100,7 @@ public final class LanguageLevelUtil {
   private static Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
     if (!ourPresentableShortMessage.containsKey(languageLevel)) return null;
     Reference<Set<String>> ref = ourForbiddenAPI.get(languageLevel);
-    Set<String> result = SoftReference.dereference(ref);
+    Set<String> result = dereference(ref);
     if (result == null) {
       String fileName = "api" + getShortMessage(languageLevel) + ".txt";
       URL resource = LanguageLevelUtil.class.getResource(fileName);

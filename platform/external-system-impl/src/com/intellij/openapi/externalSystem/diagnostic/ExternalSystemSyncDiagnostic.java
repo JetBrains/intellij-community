@@ -1,45 +1,33 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.diagnostic;
 
-import com.intellij.diagnostic.telemetry.IJTracer;
-import com.intellij.diagnostic.telemetry.TraceManager;
-import com.intellij.diagnostic.telemetry.TracerLevel;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanBuilder;
-import io.opentelemetry.context.Context;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.platform.diagnostic.telemetry.Scope;
+import com.intellij.platform.diagnostic.telemetry.helpers.SharedMetrics;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
+import java.util.concurrent.Semaphore;
 
-public final class ExternalSystemSyncDiagnostic {
-  public static final IJTracer syncTracer = TraceManager.INSTANCE.getTracer("external-system-sync");
+public final class ExternalSystemSyncDiagnostic extends SharedMetrics {
+  private static final Semaphore lock = new Semaphore(1);
+  private static ExternalSystemSyncDiagnostic instance = null;
 
-  private static final ConcurrentHashMap<String, Span> spans = new ConcurrentHashMap<>();
+  private ExternalSystemSyncDiagnostic() { super(new Scope("external-system-sync", null)); }
 
-  public static final String gradleSyncSpanName = "gradle.sync.duration"; // Named that way for legacy metric name compatibility
-
-  public static Context getSpanContext(String spanName) {
-    return Context.current().with(getOrStartSpan(spanName));
-  }
-
-  public static Span getOrStartSpan(@NotNull String spanName) {
-    return getOrStartSpan(spanName, (builder) -> builder);
-  }
-
-  public static Span getOrStartSpan(@NotNull String spanName, Function<SpanBuilder, SpanBuilder> action) {
-    return spans.computeIfAbsent(spanName, (name) -> action.apply(syncTracer.spanBuilder(spanName, TracerLevel.DEFAULT)).startSpan());
-  }
-
-  public static void endSpan(@NotNull String spanName) {
-    endSpan(spanName, (span) -> span);
-  }
-
-  public static void endSpan(@NotNull String spanName, Function<Span, Span> action) {
-    if (!spans.containsKey(spanName)) {
-      throw new RuntimeException(String.format("Span with name %s isn't started yet, but called to stop", spanName));
+  public static ExternalSystemSyncDiagnostic getInstance() {
+    try {
+      lock.acquire();
+      if (instance != null) return instance;
+      instance = new ExternalSystemSyncDiagnostic();
+    }
+    catch (InterruptedException e) {
+      lock.release();
+    }
+    finally {
+      lock.release();
     }
 
-    action.apply(spans.get(spanName)).end();
+    return instance;
   }
+
+  // Root span for the sync. Named that way for legacy metric name compatibility
+  public static final String gradleSyncSpanName = "gradle.sync.duration";
 }

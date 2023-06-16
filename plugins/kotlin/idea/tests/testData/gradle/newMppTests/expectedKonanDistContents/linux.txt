@@ -1,5 +1,0 @@
-Kotlin/Native: platform.builtin
-Kotlin/Native: platform.iconv
-Kotlin/Native: platform.linux
-Kotlin/Native: platform.posix
-Kotlin/Native: platform.zlib

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -65,6 +65,10 @@ public final class PsiElementListNavigator {
     }
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.codeInsight.navigation.PsiTargetNavigator }
+   */
+  @Deprecated
   public static <T extends NavigatablePsiElement> void openTargets(@NotNull Editor e,
                                                                    T @NotNull [] targets,
                                                                    @NlsContexts.PopupTitle String title,
@@ -98,12 +102,11 @@ public final class PsiElementListNavigator {
     ProgressManager.getInstance().run(listUpdaterTask);
   }
 
-  @Nullable
-  public static <T extends NavigatablePsiElement> JBPopup navigateOrCreatePopup(T @NotNull [] targets,
-                                                                                @NlsContexts.PopupTitle String title,
-                                                                                @NlsContexts.TabTitle String findUsagesTitle,
-                                                                                ListCellRenderer<? super T> listRenderer,
-                                                                                @Nullable BackgroundUpdaterTask listUpdaterTask) {
+  public static @Nullable <T extends NavigatablePsiElement> JBPopup navigateOrCreatePopup(T @NotNull [] targets,
+                                                                                          @NlsContexts.PopupTitle String title,
+                                                                                          @NlsContexts.TabTitle String findUsagesTitle,
+                                                                                          ListCellRenderer<? super T> listRenderer,
+                                                                                          @Nullable BackgroundUpdaterTask listUpdaterTask) {
     return navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask, selectedElements -> {
       for (NavigatablePsiElement selected : selectedElements) {
         if (selected.isValid()) {
@@ -116,8 +119,7 @@ public final class PsiElementListNavigator {
   /**
    * listUpdaterTask should be started after alarm is initialized so one-item popup won't blink
    */
-  @Nullable
-  public static <T extends NavigatablePsiElement> JBPopup navigateOrCreatePopup(T @NotNull [] targets,
+  public static @Nullable <T extends NavigatablePsiElement> JBPopup navigateOrCreatePopup(T @NotNull [] targets,
                                                                                 @NlsContexts.PopupTitle String title,
                                                                                 @NlsContexts.TabTitle String findUsagesTitle,
                                                                                 ListCellRenderer<? super T> listRenderer,
@@ -140,16 +142,13 @@ public final class PsiElementListNavigator {
 
     private Consumer<? super T[]> myTargetsConsumer;
 
-    @Nullable
-    private @NlsContexts.TabTitle String myFindUsagesTitle;
+    private @Nullable @NlsContexts.TabTitle String myFindUsagesTitle;
 
     private @Nullable ListCellRenderer<? super T> myListRenderer;
 
-    @Nullable
-    private BackgroundUpdaterTask myListUpdaterTask;
+    private @Nullable BackgroundUpdaterTask myListUpdaterTask;
 
-    @Nullable
-    private Project myProject;
+    private @Nullable Project myProject;
 
     public NavigateOrPopupHelper(T @NotNull [] targets, @NlsContexts.PopupTitle String title) {
       myTargets = targets;
@@ -163,38 +162,32 @@ public final class PsiElementListNavigator {
       };
     }
 
-    @NotNull
-    public NavigateOrPopupHelper<T> setFindUsagesTitle(@Nullable @NlsContexts.TabTitle String findUsagesTitle) {
+    public @NotNull NavigateOrPopupHelper<T> setFindUsagesTitle(@Nullable @NlsContexts.TabTitle String findUsagesTitle) {
       myFindUsagesTitle = findUsagesTitle;
       return this;
     }
 
-    @NotNull
-    public NavigateOrPopupHelper<T> setListRenderer(@Nullable ListCellRenderer<? super T> listRenderer) {
+    public @NotNull NavigateOrPopupHelper<T> setListRenderer(@Nullable ListCellRenderer<? super T> listRenderer) {
       myListRenderer = listRenderer;
       return this;
     }
 
-    @NotNull
-    public NavigateOrPopupHelper<T> setListUpdaterTask(@Nullable BackgroundUpdaterTask listUpdaterTask) {
+    public @NotNull NavigateOrPopupHelper<T> setListUpdaterTask(@Nullable BackgroundUpdaterTask listUpdaterTask) {
       myListUpdaterTask = listUpdaterTask;
       return this;
     }
 
-    @NotNull
-    public NavigateOrPopupHelper<T> setTargetsConsumer(@NotNull Consumer<? super T[]> targetsConsumer) {
+    public @NotNull NavigateOrPopupHelper<T> setTargetsConsumer(@NotNull Consumer<? super T[]> targetsConsumer) {
       myTargetsConsumer = targetsConsumer;
       return this;
     }
 
-    @NotNull
-    public NavigateOrPopupHelper<T> setProject(@Nullable Project project) {
+    public @NotNull NavigateOrPopupHelper<T> setProject(@Nullable Project project) {
       myProject = project;
       return this;
     }
 
-    @Nullable
-    public final JBPopup navigateOrCreatePopup() {
+    public final @Nullable JBPopup navigateOrCreatePopup() {
       if (myTargets.length == 0) {
         if (!allowEmptyTargets()) {
           return null; // empty initial targets are not allowed
@@ -290,8 +283,7 @@ public final class PsiElementListNavigator {
       return popup;
     }
 
-    @NotNull
-    private Project getProject() {
+    private @NotNull Project getProject() {
       if (myProject != null) {
         return myProject;
       }

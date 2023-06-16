@@ -76,16 +76,6 @@ public class FontPreferences {
   }
 
   /**
-   * @deprecated use {@link #getFallbackName(String, EditorColorsScheme)} instead
-   */
-  @Nullable
-  @NlsSafe
-  @Deprecated(forRemoval = true)
-  public static String getFallbackName(@NotNull String fontName, int fontSize, @Nullable EditorColorsScheme fallbackScheme) {
-    return getFallbackName(fontName, fallbackScheme);
-  }
-
-  /**
    * There is a possible case that particular font family is not available at particular environment (e.g. Monaco under *nix).
    * However, java environment tries to mask that via 'Dialog' fonts, i.e. when we try to create font like
    * {@code new Font("Monaco", style, size)}, it creates a font object which has font family "Monaco" but is a "Dialog" font.

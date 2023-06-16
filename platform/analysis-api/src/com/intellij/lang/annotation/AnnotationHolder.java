@@ -99,19 +99,6 @@ public interface AnnotationHolder {
 
   /**
    * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
-   * message over the specified AST node.
-   *
-   * @param node    the node over which the annotation is created.
-   * @param message the info message.
-   * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  Annotation createWeakWarningAnnotation(@NotNull ASTNode node,
-                                         @Nullable @InspectionMessage String message);
-
-  /**
-   * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
    * message over the specified text range.
    *
    * @param range   the text range over which the annotation is created.

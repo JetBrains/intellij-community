@@ -8,10 +8,10 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
+import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.platform.idePlatformKind
-import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 internal class KotlinRunLineMarkerContributor : RunLineMarkerContributor() {
@@ -22,9 +22,9 @@ internal class KotlinRunLineMarkerContributor : RunLineMarkerContributor() {
         if (function.nameIdentifier != element) return null
         if (!KotlinMainFunctionDetector.getInstance().isMain(function)) return null
 
-        val platform = function.containingKtFile.module?.platform ?: return null
-        if (platform.isCommon()) return null
-        if (!platform.idePlatformKind.tooling.acceptsAsEntryPoint(function)) return null
+        val module = function.containingKtFile.module ?: return null
+        if (module.isTestModule) return null
+        if (!module.platform.idePlatformKind.tooling.acceptsAsEntryPoint(function)) return null
 
         val icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.TestStateRun)
         return Info(icon, null, *ExecutorAction.getActions(Int.MAX_VALUE))

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.ui.components.panels.Wrapper
@@ -57,7 +58,7 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
 
     override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHPullRequestRequestedReviewer>> {
       return GHUIUtil
-        .showChooserPopup(parentComponent, GHUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider),
+        .showChooserPopup(parentComponent, GHUIUtil.SelectionPresenters.PRReviewers(avatarIconsProvider),
                           model.reviewers, model.loadPotentialReviewers())
     }
 
@@ -76,7 +77,7 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
     override fun getItemComponent(item: GHUser) = createUserLabel(item)
 
     override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHUser>> = GHUIUtil
-      .showChooserPopup(parentComponent, GHUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider),
+      .showChooserPopup(parentComponent, GHUIUtil.SelectionPresenters.Users(avatarIconsProvider),
                         model.assignees, model.loadPotentialAssignees())
 
     override fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<GHUser>) =
@@ -85,7 +86,7 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
 
   private fun createUserLabel(user: GHPullRequestRequestedReviewer) = JLabel(user.shortName,
                                                                              avatarIconsProvider.getIcon(user.avatarUrl,
-                                                                                                         GHUIUtil.AVATAR_SIZE),
+                                                                                                         Avatar.Sizes.BASE),
                                                                              SwingConstants.LEFT).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2)
   }
@@ -100,7 +101,7 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
     override fun getItemComponent(item: GHLabel) = createLabelLabel(item)
 
     override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHLabel>> =
-      GHUIUtil.showChooserPopup(parentComponent, GHUIUtil.SelectionListCellRenderer.Labels(),
+      GHUIUtil.showChooserPopup(parentComponent, GHUIUtil.SelectionPresenters.Labels(),
                                 model.labels, model.loadAssignableLabels())
 
     override fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>) =

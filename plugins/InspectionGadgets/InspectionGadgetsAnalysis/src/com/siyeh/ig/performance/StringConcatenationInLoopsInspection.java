@@ -19,7 +19,9 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.ChangeToAppendUtil;
 import com.intellij.openapi.project.Project;
@@ -294,12 +296,12 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     PsiExpression expression = ObjectUtils.tryCast(ArrayUtil.getFirstElement(infos), PsiExpression.class);
     PsiVariable var = getAppendedVariable(expression);
     if (var == null) return InspectionGadgetsFix.EMPTY_ARRAY;
     boolean needNullSafe = canBeNull(var);
-    List<InspectionGadgetsFix> fixes = new ArrayList<>();
+    List<LocalQuickFix> fixes = new ArrayList<>();
     if (var instanceof PsiLocalVariable) {
       fixes.add(new ReplaceWithStringBuilderFix(var, false));
       if (needNullSafe) {
@@ -323,7 +325,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         fixes.add(new IntroduceStringBuilderFix(var, true));
       }
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   private static boolean canBeNull(PsiVariable var) {
@@ -625,7 +627,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
   }
 
-  static class IntroduceStringBuilderFix extends InspectionGadgetsFix {
+  static class IntroduceStringBuilderFix extends PsiUpdateModCommandQuickFix {
     final String myName;
     final String myTargetType;
     final boolean myNullSafe;
@@ -638,8 +640,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpression expression = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      PsiExpression expression = PsiTreeUtil.getParentOfType(startElement, PsiExpression.class);
       if (expression == null) return;
       PsiVariable variable = getAppendedVariable(expression);
       if (variable == null) return;
@@ -726,7 +728,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
   }
 
-  static class ReplaceWithStringBuilderFix extends InspectionGadgetsFix {
+  static class ReplaceWithStringBuilderFix extends PsiUpdateModCommandQuickFix {
     final String myName;
     final String myTargetType;
     final boolean myNullSafe;
@@ -739,8 +741,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpression expression = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      PsiExpression expression = PsiTreeUtil.getParentOfType(startElement, PsiExpression.class);
       if (expression == null) return;
       if (!(getAppendedVariable(expression) instanceof PsiLocalVariable variable)) return;
       variable.normalizeDeclaration();

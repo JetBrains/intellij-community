@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -28,20 +29,20 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.popup.PopupState;
-import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.UriUtil;
+import com.intellij.util.*;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -113,17 +114,7 @@ public class RunConfigurationStorageUi {
     Presentation presentation = new Presentation(ExecutionBundle.message("run.configuration.manage.file.location"));
     presentation.setIcon(GEAR_WITH_DROPDOWN_ICON);
     presentation.setDisabledIcon(GEAR_WITH_DROPDOWN_DISABLED_ICON);
-    return new ActionButton(showStoragePathAction, presentation, ActionPlaces.TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
-      @Override
-      public Icon getIcon() {
-        if (myStoreAsFileCheckBox.isSelected() &&
-            myRCStorageType == RCStorageType.ArbitraryFileInProject &&
-            getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, myFolderPathIfStoredInArbitraryFile) != null) {
-          return GEAR_WITH_DROPDOWN_ERROR_ICON;
-        }
-        return super.getIcon();
-      }
-    };
+    return new ActionButton(showStoragePathAction, presentation, ActionPlaces.TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
   }
 
   private void manageStorageFileLocation(@Nullable PopupState<Balloon> state) {
@@ -190,6 +181,23 @@ public class RunConfigurationStorageUi {
       myRCStorageType = RCStorageType.ArbitraryFileInProject;
       myFolderPathIfStoredInArbitraryFile = newPath;
     }
+    validatePath();
+  }
+
+  private void validatePath() {
+    ReadAction.nonBlocking(this::checkPathAndGetErrorIcon)
+      .expireWhen(() -> !myStoreAsFileGearButton.isShowing())
+      .finishOnUiThread(ModalityState.defaultModalityState(), myStoreAsFileGearButton::setIcon)
+      .submit(NonUrgentExecutor.getInstance());
+  }
+
+  private Icon checkPathAndGetErrorIcon() {
+    if (myStoreAsFileCheckBox.isSelected() &&
+        myRCStorageType == RCStorageType.ArbitraryFileInProject &&
+        getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, myFolderPathIfStoredInArbitraryFile) != null) {
+      return GEAR_WITH_DROPDOWN_ERROR_ICON;
+    }
+    return GEAR_WITH_DROPDOWN_ICON;
   }
 
   @NonNls
@@ -226,7 +234,8 @@ public class RunConfigurationStorageUi {
     if (file == null) return ExecutionBundle.message("run.configuration.storage.folder.not.within.project");
     if (!file.isDirectory()) return ExecutionBundle.message("run.configuration.storage.folder.path.expected");
 
-    if (ProjectFileIndex.getInstance(project).getContentRootForFile(file, true) == null) {
+    boolean isInContent = WorkspaceFileIndex.getInstance(project).isUrlInContent(VfsUtilCore.pathToUrl(path)) != ThreeState.NO;
+    if (!isInContent) {
       if (ProjectFileIndex.getInstance(project).getContentRootForFile(file, false) == null) {
         return ExecutionBundle.message("run.configuration.storage.folder.not.within.project");
       }
@@ -377,6 +386,7 @@ public class RunConfigurationStorageUi {
                                       myRCStorageType == RCStorageType.ArbitraryFileInProject);
     myStoreAsFileGearButton.setVisible(isManagedRunConfiguration);
     myStoreAsFileGearButton.setEnabled(myStoreAsFileCheckBox.isSelected());
+    validatePath();
   }
 
   public void apply(@NotNull RunnerAndConfigurationSettings settings) {

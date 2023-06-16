@@ -71,6 +71,9 @@ private val LOG = Logger.getInstance(CompareIndices::class.java)
  *
  * The current index must not contain extra data for the current project files, as compared to the stored index.
  * But the current index is allowed to contain extra data for irrelevant files.
+ *
+ * Compares the stored indices with the last created indices, which are in the current moment on the disk.
+ * The folder with the stored indices should be defined by the parameter '-Dcompare.indices.command.stored.indexes.directory'.
  */
 internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, line) {
 
@@ -142,7 +145,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
       patternsList.add(Pair(attrs[0], attrs[1]))
     }
     LOG.info("The following patterns will be ignored from failure reporting: ")
-    patternsList.forEach{  LOG.info("Files .${it.first} in index ${it.second}") }
+    patternsList.forEach { LOG.info("Files .${it.first} in index ${it.second}") }
     patternsList
   }
 
@@ -391,7 +394,8 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
         if (IndexDataComparer.areValuesTheSame(extension, storedValue, currentValue)) {
           continue
         }
-        if (ignoredPatternsForReporting.isEmpty() || !isKnownError(extension, fileDescriptor.originalFilePath.portableFilePath.presentablePath)) {
+        if (ignoredPatternsForReporting.isEmpty() || !isKnownError(extension,
+                                                                   fileDescriptor.originalFilePath.portableFilePath.presentablePath)) {
           errorCollector.runCatchingError {
             val message = buildFileDataMismatchMessage(
               "Values mismatch for key ${IndexDataPresenter.getPresentableIndexKey(storedKey)}",
@@ -548,7 +552,8 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
       return
     }
 
-    if (ignoredPatternsForReporting.isEmpty() || !isKnownError(extension, fileDescriptor.originalFilePath.portableFilePath.presentablePath)) {
+    if (ignoredPatternsForReporting.isEmpty() || !isKnownError(extension,
+                                                               fileDescriptor.originalFilePath.portableFilePath.presentablePath)) {
       val message = buildFileDataMismatchMessage(
         "Indexed data maps do not match for ${fileDescriptor.originalFilePath.portableFilePath.presentablePath}",
         extension,

@@ -17,7 +17,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.util.ArrayUtilRt
 import com.siyeh.ig.ui.ExternalizableStringSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
@@ -33,7 +32,7 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
 
   @JvmField
   val unstableApiAnnotations: List<String> =
-    ExternalizableStringSet(*ArrayUtilRt.toStringArray(StaticAnalysisAnnotationManager.getInstance().knownUnstableApiAnnotations))
+    ExternalizableStringSet(*StaticAnalysisAnnotationManager.getInstance().knownUnstableApiAnnotations)
 
   @JvmField
   var myIgnoreInsideImports: Boolean = true

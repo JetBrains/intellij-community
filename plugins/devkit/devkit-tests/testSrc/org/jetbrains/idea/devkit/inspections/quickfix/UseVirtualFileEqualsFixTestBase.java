@@ -1,21 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.util.PathUtil;
 import org.jetbrains.idea.devkit.inspections.internal.UseVirtualFileEqualsInspection;
 
-abstract class UseVirtualFileEqualsFixTestBase extends DevKitInspectionFixTestBase {
+abstract class UseVirtualFileEqualsFixTestBase extends LightDevKitInspectionFixTestBase {
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new UseVirtualFileEqualsInspection());
-  }
-
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    moduleBuilder.addLibrary("platform-core-api", PathUtil.getJarPathForClass(VirtualFile.class));
+    myFixture.addClass("""
+      package com.intellij.openapi.vfs;
+      public abstract class VirtualFile {}
+      """);
   }
 }

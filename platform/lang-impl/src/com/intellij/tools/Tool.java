@@ -31,21 +31,23 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.execution.ParametersListUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Objects;
 
 public class Tool implements SchemeElement {
   private static final Logger LOG = Logger.getInstance(Tool.class);
 
   @NonNls public static final String ACTION_ID_PREFIX = "Tool_";
 
-  public static final String DEFAULT_GROUP_NAME = "External Tools";
+  public static final @Nls String DEFAULT_GROUP_NAME = ToolsBundle.message("external.tools");
   protected static final ProcessEvent NOT_STARTED_EVENT = new ProcessEvent(new NopProcessHandler(), -1);
   private @NlsSafe String myName;
   private String myDescription;
@@ -300,6 +302,13 @@ public class Tool implements SchemeElement {
                 processHandler.addProcessListener(processListener);
               }
             }
+
+            @Override
+            public void processNotStarted() {
+              if (processListener != null) {
+                processListener.processNotStarted();
+              }
+            }
           });
         if (environment.getState() == null) {
           return false;
@@ -323,6 +332,7 @@ public class Tool implements SchemeElement {
     }
     catch (ExecutionException ex) {
       ExecutionErrorDialog.show(ex, ToolsBundle.message("tools.process.start.error"), project);
+      notifyCouldNotStart(processListener);
       return false;
     }
     return true;
@@ -426,7 +436,7 @@ public class Tool implements SchemeElement {
     // in windows, and we will fail to start process with it.
     cmd.setWorkDirectory((String)null);
     // run command in interactive shell so that shell rc files are executed and configure proper environment
-    wslOptions.setShellPath(wsl.getShellPath()).setExecuteCommandInInteractiveShell(true);
+    wslOptions.setExecuteCommandInInteractiveShell(true);
     return wsl.patchCommandLine(cmd, project, wslOptions);
   }
 }

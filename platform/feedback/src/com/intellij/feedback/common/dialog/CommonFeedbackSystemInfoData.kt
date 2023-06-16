@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.internal.statistic.utils.platformPlugin
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -19,6 +18,9 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.LicensingFacade
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.encodeToJsonElement
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -38,7 +40,7 @@ data class CommonFeedbackSystemInfoData(
   private val registry: List<String>,
   private val disabledBundledPlugins: List<String>,
   private val nonBundledPlugins: List<String>
-) {
+) : JsonSerializable {
   companion object {
     fun getCurrentData(): CommonFeedbackSystemInfoData {
       return CommonFeedbackSystemInfoData(
@@ -92,7 +94,7 @@ data class CommonFeedbackSystemInfoData(
 
     private fun getRuntimeVersion() = SystemInfo.JAVA_RUNTIME_VERSION + SystemInfo.OS_ARCH
     private fun getIsInternalMode(): Boolean = ApplicationManager.getApplication().isInternal
-    private fun getRegistryKeys(): List<String> = Registry.getAll().stream().filter { value: RegistryValue ->
+    private fun getRegistryKeys(): List<String> = Registry.getAll().filter { value: RegistryValue ->
       val pluginId: String? = value.pluginId
       val pluginInfo = if (pluginId != null) getPluginInfoById(PluginId.getId(pluginId)) else platformPlugin
       value.isChangedFromDefault && pluginInfo.isSafeToReport()
@@ -103,7 +105,7 @@ data class CommonFeedbackSystemInfoData(
     private fun getNonBundledPlugins(): List<String> = getPluginsNamesWithVersion { p: IdeaPluginDescriptor -> !p.isBundled }
 
     private fun getPluginsNamesWithVersion(filter: (IdeaPluginDescriptor) -> Boolean): List<String> =
-      PluginManagerCore.getLoadedPlugins().stream()
+      PluginManagerCore.getLoadedPlugins()
         .filter { filter(it) }
         .map { p: IdeaPluginDescriptor ->
           val pluginId = p.pluginId
@@ -167,6 +169,10 @@ data class CommonFeedbackSystemInfoData(
     else {
       CommonFeedbackBundle.message("dialog.feedback.system.info.panel.nonbundled.plugins.empty")
     }
+  }
+
+  override fun serializeToJson(json: Json): JsonElement {
+    return json.encodeToJsonElement(this)
   }
 
   override fun toString(): String {

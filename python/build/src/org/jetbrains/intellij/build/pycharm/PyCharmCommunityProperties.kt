@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -16,8 +17,13 @@ class PyCharmCommunityProperties(communityHome: Path) : PyCharmPropertiesBase() 
     platformPrefix = "PyCharmCore"
     applicationInfoModule = "intellij.pycharm.community"
     brandingResourcePaths = listOf(communityHome.resolve("python/resources"))
+    customJvmMemoryOptions = persistentMapOf("-Xms" to "256m", "-Xmx" to "1500m")
     scrambleMainJar = false
     buildSourcesArchive = true
+
+    /* main module for JetBrains Client isn't available in the intellij-community project, 
+       so this property is set only when PyCharm Community is built from the intellij-ultimate project. */
+    embeddedJetBrainsClientMainModule = null
 
     productLayout.mainModules = listOf("intellij.pycharm.community.main")
     productLayout.productApiModules = listOf("intellij.xml.dom")

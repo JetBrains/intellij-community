@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
@@ -65,8 +51,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return myReferences.clone();
   }
 
-  @NotNull
-  private synchronized PsiReference chooseReference(){
+  private synchronized @NotNull PsiReference chooseReference(){
     if (!mySorted) {
       Arrays.sort(myReferences, COMPARATOR);
       mySorted = true;
@@ -74,15 +59,13 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return myReferences[0];
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement(){
+  public @NotNull PsiElement getElement(){
     return myElement;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     TextRange range = getRangeInElementIfSameForAll();
     if (range != null) return range;
 
@@ -90,8 +73,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return getReferenceRange(chosenRef, myElement);
   }
 
-  @Nullable
-  private TextRange getRangeInElementIfSameForAll() {
+  private @Nullable TextRange getRangeInElementIfSameForAll() {
     TextRange range = null;
     for (PsiReference reference : getReferences()) {
       TextRange refRange = getReferenceRange(reference, myElement);
@@ -105,8 +87,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return range;
   }
 
-  @NotNull
-  public static TextRange getReferenceRange(@NotNull PsiReference reference, @NotNull PsiElement inElement) {
+  public static @NotNull TextRange getReferenceRange(@NotNull PsiReference reference, @NotNull PsiElement inElement) {
     TextRange rangeInElement = reference.getRangeInElement();
     PsiElement refElement = reference.getElement();
     PsiElement element = refElement;
@@ -145,8 +126,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText(){
+  public @NotNull String getCanonicalText(){
     return chooseReference().getCanonicalText();
   }
 

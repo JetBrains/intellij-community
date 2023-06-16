@@ -1,4 +1,4 @@
-Unclassified 13 doSomething(object : A() {}, object : Z() {})
-Unclassified 13 doSomething(object : A() {}, object : Z() {})
-Unclassified 16 val x = object : Z() {
-Unclassified 5 open class Z : A() {
+Unclassified 14 doSomething(object : A() {}, object : Z() {})
+Unclassified 14 doSomething(object : A() {}, object : Z() {})
+Unclassified 17 val x = object : Z() {
+Unclassified 6 open class Z : A() {

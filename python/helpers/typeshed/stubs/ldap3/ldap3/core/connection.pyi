@@ -72,7 +72,16 @@ class Connection:
         version: int = ...,
         authentication: Literal["ANONYMOUS", "SIMPLE", "SASL", "NTLM"] | None = ...,
         client_strategy: Literal[
-            "SYNC", "SAFE_SYNC", "ASYNC", "LDIF", "RESTARTABLE", "REUSABLE", "MOCK_SYNC", "MOCK_ASYNC", "ASYNC_STREAM"
+            "SYNC",
+            "SAFE_RESTARTABLE",
+            "SAFE_SYNC",
+            "ASYNC",
+            "LDIF",
+            "RESTARTABLE",
+            "REUSABLE",
+            "MOCK_SYNC",
+            "MOCK_ASYNC",
+            "ASYNC_STREAM",
         ] = ...,
         auto_referrals: bool = ...,
         auto_range: bool = ...,

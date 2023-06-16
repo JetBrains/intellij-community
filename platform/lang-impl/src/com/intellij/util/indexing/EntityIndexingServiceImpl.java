@@ -2,12 +2,17 @@
 package com.intellij.util.indexing;
 
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
+import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
@@ -15,10 +20,15 @@ import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusSer
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.util.indexing.roots.IndexingRootsCollectionUtil;
 import com.intellij.util.indexing.roots.LibraryIndexableEntityProvider;
+import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.workspaceModel.core.fileIndex.*;
+import com.intellij.util.indexing.roots.builders.IndexableSetContributorFilesIteratorBuilder;
+import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder;
+import com.intellij.workspaceModel.core.fileIndex.DependencyDescription;
+import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
@@ -53,15 +63,10 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     if (changes.isEmpty()) {
       runFullRescan(project, "Project roots have changed");
     }
-    boolean fullReindexOnBuildableChanges = Registry.is("indexing.full.rescan.on.buildable.changes");
     boolean indexDependencies = false;
     for (RootsChangeRescanningInfo change : changes) {
       if (change == RootsChangeRescanningInfo.TOTAL_RESCAN) {
         runFullRescan(project, "Reindex requested by project root model changes");
-        return;
-      }
-      else if (fullReindexOnBuildableChanges && change instanceof BuildableRootsChangeRescanningInfo) {
-        runFullRescan(project, "Reindex requested by buildable changes");
         return;
       }
       else if (change == RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED) {
@@ -102,7 +107,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
         builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, entities, entityStorage));
       }
       else if (change instanceof BuildableRootsChangeRescanningInfo) {
-        builders.addAll(getBuildersOnBuildableChangeInfo((BuildableRootsChangeRescanningInfo)change));
+        builders.addAll(getBuildersOnBuildableChangeInfo((BuildableRootsChangeRescanningInfo)change, project, entityStorage));
       }
       else {
         LOG.warn("Unexpected change " + change.getClass() + " " + change + ", full reindex requested");
@@ -174,13 +179,15 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
 
   @NotNull
   private static List<IndexableIteratorBuilder> getBuildersOnWorkspaceChange(@NotNull Project project,
-                                                                             @NotNull Collection<? extends EntityChange<?>> event,
+                                                                             @NotNull Collection<? extends EntityChange<?>> events,
                                                                              @NotNull EntityStorage entityStorage) {
     List<IndexableIteratorBuilder> builders = new SmartList<>();
-    for (EntityChange<? extends WorkspaceEntity> change : event) {
+    WorkspaceIndexingRootsBuilder descriptionsBuilder = new WorkspaceIndexingRootsBuilder();
+    for (EntityChange<? extends WorkspaceEntity> change : events) {
       collectIteratorBuildersOnChange(Change.fromEntityChange(change), change.getOldEntity(), change.getNewEntity(), project, builders,
-                                      entityStorage);
+                                      descriptionsBuilder, entityStorage);
     }
+    builders.addAll(descriptionsBuilder.createBuilders(project));
     return builders;
   }
 
@@ -189,22 +196,24 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
                                                                                   @Nullable E newEntity,
                                                                                   @NotNull Project project,
                                                                                   @NotNull Collection<? super IndexableIteratorBuilder> builders,
+                                                                                  @NotNull WorkspaceIndexingRootsBuilder descriptionsBuilder,
                                                                                   @NotNull EntityStorage entityStorage) {
     LOG.assertTrue(newEntity != null || change == Change.Removed, "New entity " + newEntity + ", change " + change);
     LOG.assertTrue(oldEntity != null || change == Change.Added, "Old entity " + oldEntity + ", change " + change);
 
     //noinspection unchecked
     Class<? super E> entityClass = (Class<? super E>)Objects.requireNonNull(newEntity == null ? oldEntity : newEntity).getEntityInterface();
-    IndexingRootsCollectionUtil.RootsCollector collector = new IndexingRootsCollectionUtil.RootsCollector(null);
 
     if (IndexableFilesIndex.isEnabled()) {
       List<IndexableIteratorBuilder> newBuilders = new ArrayList<>();
-      collectWFICIteratorsOnChange(change, oldEntity, newEntity, project, newBuilders, collector, entityClass, false, entityStorage);
+      collectWFICIteratorsOnChange(change, oldEntity, newEntity, project, newBuilders, descriptionsBuilder, entityClass, false,
+                                   entityStorage);
       builders.addAll(newBuilders);
     }
     else {
       List<IndexableIteratorBuilder> oldBuilders = new ArrayList<>();
-      collectIEPIteratorsOnChange(change, oldEntity, newEntity, project, oldBuilders, collector, entityClass, false, entityStorage);
+      collectIEPIteratorsOnChange(change, oldEntity, newEntity, project, oldBuilders, descriptionsBuilder, entityClass, false,
+                                  entityStorage);
       builders.addAll(oldBuilders);
     }
   }
@@ -214,7 +223,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
                                                                               @Nullable E newEntity,
                                                                               @NotNull Project project,
                                                                               @NotNull Collection<? super IndexableIteratorBuilder> builders,
-                                                                              @NotNull IndexingRootsCollectionUtil.RootsCollector collector,
+                                                                              @NotNull WorkspaceIndexingRootsBuilder descriptionsBuilder,
                                                                               @NotNull Class<? super E> entityClass,
                                                                               boolean enforcedOnly,
                                                                               @NotNull EntityStorage entityStorage) {
@@ -246,7 +255,8 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     }
 
     if (!enforcedOnly) {
-      collectWFICIteratorsOnChange(change, oldEntity, newEntity, project, builders, collector, entityClass, true, entityStorage
+      collectWFICIteratorsOnChange(change, oldEntity, newEntity, project, builders, descriptionsBuilder, entityClass, true,
+                                   entityStorage
       );
     }
   }
@@ -256,35 +266,40 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
                                                                                @Nullable E newEntity,
                                                                                @NotNull Project project,
                                                                                @NotNull Collection<? super IndexableIteratorBuilder> builders,
-                                                                               @NotNull IndexingRootsCollectionUtil.RootsCollector collector,
+                                                                               @NotNull WorkspaceIndexingRootsBuilder descriptionsBuilder,
                                                                                @NotNull Class<? super E> entityClass,
                                                                                boolean customOnly,
                                                                                @NotNull EntityStorage entityStorage) {
     LOG.assertTrue(newEntity != null || change == Change.Removed, "New entity " + newEntity + ", change " + change);
     LOG.assertTrue(oldEntity != null || change == Change.Added, "Old entity " + oldEntity + ", change " + change);
 
-    if (change != Change.Removed) {
-      List<WorkspaceFileIndexContributor<?>> contributors =
-        ((WorkspaceFileIndexImpl)WorkspaceFileIndex.getInstance(project)).getContributors();
-      for (WorkspaceFileIndexContributor<?> uncheckedContributor : contributors) {
-        if (customOnly && uncheckedContributor instanceof PlatformInternalWorkspaceFileIndexContributor) {
-          continue;
+    List<WorkspaceFileIndexContributor<?>> contributors =
+      ((WorkspaceFileIndexImpl)WorkspaceFileIndex.getInstance(project)).getContributors();
+    for (WorkspaceFileIndexContributor<?> uncheckedContributor : contributors) {
+      if (uncheckedContributor.getStorageKind() != EntityStorageKind.MAIN) {
+        continue;
+      }
+      if (customOnly && uncheckedContributor instanceof PlatformInternalWorkspaceFileIndexContributor) {
+        continue;
+      }
+      if (entityClass == uncheckedContributor.getEntityClass()) {
+        //noinspection unchecked
+        WorkspaceFileIndexContributor<E> contributor = (WorkspaceFileIndexContributor<E>)uncheckedContributor;
+        switch (change) {
+          case Added -> descriptionsBuilder.registerAddedEntity(newEntity, contributor, entityStorage);
+          case Replaced -> descriptionsBuilder.registerChangedEntity(oldEntity, newEntity, contributor, entityStorage);
+          case Removed -> descriptionsBuilder.registerRemovedEntity(oldEntity, contributor, entityStorage);
         }
-        if (entityClass == uncheckedContributor.getEntityClass()) {
-          //noinspection unchecked
-          WorkspaceFileIndexContributor<E> contributor = (WorkspaceFileIndexContributor<E>)uncheckedContributor;
-          builders.addAll(createBuilders(contributor, newEntity, entityStorage, collector));
-        }
-        if (change == Change.Replaced) {
-          handleDependencies(oldEntity, newEntity, builders, collector, entityClass, uncheckedContributor, entityStorage);
-        }
+      }
+      if (change == Change.Replaced) {
+        handleDependencies(oldEntity, newEntity, descriptionsBuilder, entityClass, uncheckedContributor,
+                           entityStorage);
       }
     }
 
     if (!customOnly) {
-      collectIEPIteratorsOnChange(change, oldEntity, newEntity, project, builders, new IndexingRootsCollectionUtil.RootsCollector(null),
-                                  entityClass, true, entityStorage
-      );
+      collectIEPIteratorsOnChange(change, oldEntity, newEntity, project, builders, descriptionsBuilder, entityClass, true,
+                                  entityStorage);
     }
 
     if (!customOnly && change != Change.Removed && isLibraryIgnoredByLibraryRootFileIndexContributor(newEntity)) {
@@ -298,17 +313,6 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     }
   }
 
-  @NotNull
-  private static <E extends WorkspaceEntity> Collection<IndexableIteratorBuilder> createBuilders(@NotNull WorkspaceFileIndexContributor<E> contributor,
-                                                                                                 @NotNull E entity,
-                                                                                                 @NotNull EntityStorage entityStorage,
-                                                                                                 @NotNull IndexingRootsCollectionUtil.RootsCollector collector) {
-    if (contributor.getStorageKind() != EntityStorageKind.MAIN) return Collections.emptyList();
-    IndexingRootsCollectionUtil.IndexingRootsDescriptions roots = new IndexingRootsCollectionUtil.IndexingRootsDescriptions();
-    collector.registerAndCollectAllRoots(roots, contributor, SequencesKt.sequenceOf(entity), entityStorage);
-    return IndexingRootsCollectionUtil.createBuildersFromRootsDescriptions(roots);
-  }
-
   private static <E extends WorkspaceEntity> boolean isLibraryIgnoredByLibraryRootFileIndexContributor(@NotNull E newEntity) {
     return newEntity instanceof LibraryEntity &&
            ((LibraryEntity)newEntity).getSymbolicId().getTableId() instanceof LibraryTableId.GlobalLibraryTableId;
@@ -316,21 +320,20 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
 
   private static <E extends WorkspaceEntity, C extends WorkspaceEntity> void handleDependencies(@NotNull E oldEntity,
                                                                                                 @NotNull E newEntity,
-                                                                                                @NotNull Collection<? super IndexableIteratorBuilder> builders,
-                                                                                                @NotNull IndexingRootsCollectionUtil.RootsCollector collector,
+                                                                                                @NotNull WorkspaceIndexingRootsBuilder descriptionsBuilder,
                                                                                                 @NotNull Class<? super E> entityClass,
                                                                                                 @NotNull WorkspaceFileIndexContributor<C> contributor,
                                                                                                 @NotNull EntityStorage entityStorage) {
     for (DependencyDescription<C> dependency : contributor.getDependenciesOnOtherEntities()) {
-      handleChildEntities(entityClass, oldEntity, newEntity, builders, collector, contributor, dependency, entityStorage);
+      handleChildEntities(entityClass, oldEntity, newEntity, descriptionsBuilder, contributor, dependency,
+                          entityStorage);
     }
   }
 
   private static <E extends WorkspaceEntity, C extends WorkspaceEntity> void handleChildEntities(@NotNull Class<? super E> entityClass,
                                                                                                  @NotNull E oldEntity,
                                                                                                  @NotNull E newEntity,
-                                                                                                 @NotNull Collection<? super IndexableIteratorBuilder> builders,
-                                                                                                 @NotNull IndexingRootsCollectionUtil.RootsCollector collector,
+                                                                                                 @NotNull WorkspaceIndexingRootsBuilder descriptionsBuilder,
                                                                                                  @NotNull WorkspaceFileIndexContributor<C> contributor,
                                                                                                  @NotNull DependencyDescription<C> dependency,
                                                                                                  @NotNull EntityStorage entityStorage) {
@@ -344,22 +347,28 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
 
     newElements.removeAll(oldElements);
     for (C element : newElements) {
-      builders.addAll(createBuilders(contributor, element, entityStorage, collector));
+      descriptionsBuilder.registerAddedEntity(element, contributor, entityStorage);
     }
   }
 
   private static Collection<? extends IndexableIteratorBuilder> getBuildersOnWorkspaceEntitiesRootsChange(@NotNull Project project,
-                                                                                                          @NotNull List<? extends WorkspaceEntity> entities,
+                                                                                                          @NotNull Collection<? extends WorkspaceEntity> entities,
                                                                                                           @NotNull EntityStorage entityStorage) {
+    if (entities.isEmpty()) return Collections.emptyList();
     List<IndexableIteratorBuilder> builders = new SmartList<>();
+
+    WorkspaceIndexingRootsBuilder descriptionsBuilder = new WorkspaceIndexingRootsBuilder();
     for (WorkspaceEntity entity : entities) {
-      collectIteratorBuildersOnChange(Change.Added, null, entity, project, builders, entityStorage);
+      collectIteratorBuildersOnChange(Change.Added, null, entity, project, builders, descriptionsBuilder, entityStorage);
     }
+    builders.addAll(descriptionsBuilder.createBuilders(project));
     return builders;
   }
 
   @NotNull
-  private static Collection<? extends IndexableIteratorBuilder> getBuildersOnBuildableChangeInfo(@NotNull BuildableRootsChangeRescanningInfo buildableInfo) {
+  private static Collection<? extends IndexableIteratorBuilder> getBuildersOnBuildableChangeInfo(@NotNull BuildableRootsChangeRescanningInfo buildableInfo,
+                                                                                                 @NotNull Project project,
+                                                                                                 @NotNull EntityStorage entityStorage) {
     BuildableRootsChangeRescanningInfoImpl info = (BuildableRootsChangeRescanningInfoImpl)buildableInfo;
     List<IndexableIteratorBuilder> builders = new SmartList<>();
     IndexableIteratorBuilders instance = IndexableIteratorBuilders.INSTANCE;
@@ -375,6 +384,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     for (LibraryId library : info.getLibraries()) {
       builders.addAll(instance.forLibraryEntity(library, true));
     }
+    builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, info.getWorkspaceEntities(), entityStorage));
     return builders;
   }
 
@@ -427,5 +437,65 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     private WorkspaceEntitiesRootsChangedRescanningInfo(@NotNull List<EntityReference<WorkspaceEntity>> entities) {
       this.references = entities;
     }
+  }
+
+  @Override
+  public @NotNull Collection<IndexableFilesIterator> createIteratorsForOrigins(@NotNull Project project,
+                                                                               @NotNull EntityStorage entityStorage,
+                                                                               @NotNull Collection<EntityReference<?>> entityReferences,
+                                                                               @NotNull Collection<Sdk> sdks,
+                                                                               @NotNull Collection<LibraryId> libraryIds,
+                                                                               @NotNull Collection<VirtualFile> filesFromAdditionalLibraryRootsProviders,
+                                                                               @NotNull Collection<VirtualFile> filesFromIndexableSetContributors) {
+    List<WorkspaceEntity> entities = ContainerUtil.mapNotNull(entityReferences, (ref) -> ref.resolve(entityStorage));
+    List<IndexableIteratorBuilder> builders = new ArrayList<>(getBuildersOnWorkspaceEntitiesRootsChange(project, entities, entityStorage));
+
+    for (Sdk sdk : sdks) {
+      builders.addAll(IndexableIteratorBuilders.INSTANCE.forSdk(sdk.getName(), sdk.getSdkType().getName()));
+    }
+    for (LibraryId id : libraryIds) {
+      builders.addAll(IndexableIteratorBuilders.INSTANCE.forLibraryEntity(id, true));
+    }
+
+    if (!filesFromAdditionalLibraryRootsProviders.isEmpty()) {
+      List<VirtualFile> roots = new ArrayList<>(filesFromAdditionalLibraryRootsProviders);
+      for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
+        for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(project)) {
+          boolean removed = roots.removeIf(file -> library.contains(file));
+          if (removed) {
+            String name = library instanceof ItemPresentation ? ((ItemPresentation)library).getPresentableText() : null;
+            builders.add(new SyntheticLibraryIteratorBuilder(library, name, library.getAllRoots()));
+          }
+          if (roots.isEmpty()) {
+            break;
+          }
+        }
+      }
+      if (!roots.isEmpty()) {
+        LOG.error("Failed fo find any SyntheticLibrary roots for " + StringUtil.join(roots, "\n"));
+      }
+    }
+
+    if (!filesFromIndexableSetContributors.isEmpty()) {
+      List<VirtualFile> roots = new ArrayList<>(filesFromIndexableSetContributors);
+      for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
+        Set<VirtualFile> applicationRoots = contributor.getAdditionalRootsToIndex();
+        boolean removedApp = roots.removeIf(file -> VfsUtilCore.isUnder(file, applicationRoots));
+        if (removedApp) {
+          builders.add(
+            new IndexableSetContributorFilesIteratorBuilder(null, contributor.getDebugName(), applicationRoots, false, contributor));
+        }
+        Set<VirtualFile> projectRoots = contributor.getAdditionalProjectRootsToIndex(project);
+        boolean removedProject = roots.removeIf(file -> VfsUtilCore.isUnder(file, projectRoots));
+        if (removedProject) {
+          builders.add(new IndexableSetContributorFilesIteratorBuilder(null, contributor.getDebugName(), projectRoots, true, contributor));
+        }
+        if (roots.isEmpty()) {
+          break;
+        }
+      }
+    }
+
+    return IndexableIteratorBuilders.INSTANCE.instantiateBuilders(builders, project, entityStorage);
   }
 }

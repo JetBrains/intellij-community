@@ -29,3 +29,5 @@ class A {
 
 // STEP_INTO: 17
 // SKIP_SYNTHETIC_METHODS: false
+// IGNORE_FOR_K2_CODE
+// Remove ignore after KT-57489 fix

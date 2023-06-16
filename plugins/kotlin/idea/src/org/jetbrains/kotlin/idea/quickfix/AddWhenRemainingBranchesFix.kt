@@ -16,8 +16,11 @@ import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils.generateWhenBranches
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.intentions.ImportAllMembersIntention
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.intentions.ImportAllMembersIntention.Holder.importReceiverMembers
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
+import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 class AddWhenRemainingBranchesFix(
@@ -79,14 +82,12 @@ class AddWhenRemainingBranchesFix(
         }
 
         private fun importAllEntries(element: KtWhenExpression) {
-            with(ImportAllMembersIntention) {
-                element.entries
-                    .map { it.conditions.toList() }
-                    .flatten()
-                    .firstNotNullOfOrNull {
-                        (it as? KtWhenConditionWithExpression)?.expression as? KtDotQualifiedExpression
-                    }?.importReceiverMembers()
-            }
+            element.entries
+                .map { it.conditions.toList() }
+                .flatten()
+                .firstNotNullOfOrNull {
+                    (it as? KtWhenConditionWithExpression)?.expression as? KtDotQualifiedExpression
+                }?.importReceiverMembers()
         }
     }
 }

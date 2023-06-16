@@ -1,30 +1,38 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.ui
 
+import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
-import com.intellij.notification.ActionCenter
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.notification.NotificationAnnouncingMode
 import com.intellij.notification.NotificationGroup
+import com.intellij.notification.impl.NotificationsAnnouncer
 import com.intellij.notification.impl.NotificationsConfigurationImpl
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollingUtil
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.simpleListCellRenderer
 import com.intellij.ui.layout.selected
 import org.jetbrains.annotations.Nullable
 import javax.swing.JCheckBox
 import javax.swing.ListSelectionModel
 
+
 /**
  * @author Konstantin Bulenkov
  */
-class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : ConfigurableUi<NotificationsConfigurationImpl> {
+class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : ConfigurableUi<NotificationsConfigurationImpl>, Disposable {
   private val ui: DialogPanel
   private val notificationsList = createNotificationsList()
-  private val speedSearch = object : ListSpeedSearch<NotificationSettingsWrapper>(notificationsList) {
+  private val speedSearch = object : ListSpeedSearch<NotificationSettingsWrapper>(notificationsList, null, null) {
     override fun isMatchingElement(element: Any?, pattern: String?): Boolean {
       if (super.isMatchingElement(element, pattern)) {
         return true
@@ -40,7 +48,21 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
   private lateinit var notificationSettings: NotificationSettingsUi
   private val myDoNotAskConfigurableUi = DoNotAskConfigurableUi()
 
+  private val screenReaderEnabledProperty = AtomicBooleanProperty(GeneralSettings.getInstance().isSupportScreenReaders)
+  private val notificationModeToUserString: Map<NotificationAnnouncingMode, String> =
+    if (SystemInfo.isMac) mapOf(
+      NotificationAnnouncingMode.NONE to IdeBundle.message("notifications.configurable.announcing.value.off"),
+      NotificationAnnouncingMode.MEDIUM to IdeBundle.message("notifications.configurable.announcing.value.medium"),
+      NotificationAnnouncingMode.HIGH to IdeBundle.message("notifications.configurable.announcing.value.high")
+    )
+    else mapOf(
+      NotificationAnnouncingMode.NONE to IdeBundle.message("notifications.configurable.announcing.value.off"),
+      NotificationAnnouncingMode.MEDIUM to IdeBundle.message("notifications.configurable.announcing.value.not.interrupting"),
+      NotificationAnnouncingMode.HIGH to IdeBundle.message("notifications.configurable.announcing.value.interrupting")
+    )
+
   init {
+    speedSearch.setupListeners()
     ui = panel {
       row {
         useBalloonNotifications = checkBox(IdeBundle.message("notifications.configurable.display.balloon.notifications"))
@@ -52,22 +74,37 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
           .bindSelected(settings::SYSTEM_NOTIFICATIONS)
           .component
       }
+      if (NotificationsAnnouncer.isFeatureAvailable) {
+        row(IdeBundle.message("notifications.configurable.announcing.title")) {
+          val options = listOf(NotificationAnnouncingMode.NONE,
+                               NotificationAnnouncingMode.MEDIUM,
+                               NotificationAnnouncingMode.HIGH)
+
+          val combo = comboBox(options, listCellRenderer {
+            text = notificationModeToUserString[it]
+          }).bindItem(settings::getNotificationAnnouncingMode) { settings.notificationAnnouncingMode = it!! }
+
+          if (SystemInfo.isMac) combo.comment(IdeBundle.message("notifications.configurable.announcing.comment"))
+        }.visibleIf(screenReaderEnabledProperty)
+      }
       row {
         notificationSettings = NotificationSettingsUi(notificationsList.model.getElementAt(0), useBalloonNotifications.selected)
         scrollCell(notificationsList)
         cell(notificationSettings.ui)
           .align(AlignY.TOP)
       }
-      if (ActionCenter.isEnabled()) {
-        row {
-          cell(myDoNotAskConfigurableUi.createComponent())
-            .label(IdeBundle.message("notifications.configurable.do.not.ask.title"), LabelPosition.TOP)
-            .align(Align.FILL)
-        }.topGap(TopGap.SMALL)
-          .resizableRow()
-      }
+      row {
+        cell(myDoNotAskConfigurableUi.createComponent())
+          .label(IdeBundle.message("notifications.configurable.do.not.ask.title"), LabelPosition.TOP)
+          .align(Align.FILL)
+      }.topGap(TopGap.SMALL)
+        .resizableRow()
     }
     ScrollingUtil.ensureSelectionExists(notificationsList)
+
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      screenReaderEnabledProperty.set(GeneralSettings.getInstance().isSupportScreenReaders)
+    })
   }
 
   private fun createNotificationsList(): JBList<NotificationSettingsWrapper> {
@@ -75,7 +112,7 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
       .sortedWith(Comparator { nsw1, nsw2 -> NaturalComparator.INSTANCE.compare(nsw1.toString(), nsw2.toString()) })
       .toTypedArray())
       .apply {
-        cellRenderer = SimpleListCellRenderer.create("") { it.toString() }
+        cellRenderer = simpleListCellRenderer { it.toString() }
         selectionModel.addListSelectionListener {
           selectedValue?.let { notificationSettings.updateUi(it) }
         }
@@ -122,5 +159,7 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
     myDoNotAskConfigurableUi.apply()
   }
 
-  override fun getComponent() = ui
+  override fun getComponent(): DialogPanel = ui
+
+  override fun dispose() {}
 }

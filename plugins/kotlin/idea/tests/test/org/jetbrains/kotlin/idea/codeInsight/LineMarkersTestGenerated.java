@@ -132,6 +132,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/overrideImplement/Interface.kt");
         }
 
+        @TestMetadata("InterfaceDisabledImplOption.kt")
+        public void testInterfaceDisabledImplOption() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/InterfaceDisabledImplOption.kt");
+        }
+
         @TestMetadata("NavigateFromPrivateAbstractClass.kt")
         public void testNavigateFromPrivateAbstractClass() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/NavigateFromPrivateAbstractClass.kt");
@@ -228,6 +233,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
     public static class RecursiveCall extends AbstractLineMarkersTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("backticksInName.kt")
+        public void testBackticksInName() throws Exception {
+            runTest("testData/codeInsight/lineMarker/recursiveCall/backticksInName.kt");
         }
 
         @TestMetadata("companionInvoke.kt")
@@ -341,6 +351,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
         @TestMetadata("jUnit4TestFile.kt")
         public void testJUnit4TestFile() throws Exception {
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnit4TestFile.kt");
+        }
+
+        @TestMetadata("jUnit5TestFile.kt")
+        public void testJUnit5TestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5TestFile.kt");
         }
 
         @TestMetadata("jUnitTestClassWithSubclasses.kt")

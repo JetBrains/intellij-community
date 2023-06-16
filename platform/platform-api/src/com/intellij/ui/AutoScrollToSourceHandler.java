@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -131,12 +132,12 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   private void onSelectionChanged(final Component component) {
-    if (component != null && component.isShowing() && isAutoScrollMode()) {
+    if (component != null && UIUtil.isShowing(component, false) && isAutoScrollMode()) {
       myAutoScrollAlarm.cancelAllRequests();
       myAutoScrollAlarm.addRequest(
         () -> {
-          if (component.isShowing()) { //for tests
-            if (!needToCheckFocus() || component.hasFocus()) {
+          if (UIUtil.isShowing(component, false)) { //for tests
+            if (!needToCheckFocus() || UIUtil.hasFocus(component)) {
               scrollToSource(component);
             }
           }

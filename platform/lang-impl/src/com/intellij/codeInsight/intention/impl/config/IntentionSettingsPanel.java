@@ -65,13 +65,13 @@ public final class IntentionSettingsPanel implements MasterDetails {
         List<Set<String>> keySetList = SearchUtil.findKeys(filter, quoted);
         List<IntentionActionMetaData> result = new ArrayList<>();
         for (IntentionActionMetaData metaData : list) {
-          if (isIntentionAccepted(metaData, filter, force, keySetList, quoted)){
+          if (isIntentionAccepted(metaData, filter, force, keySetList, quoted)) {
             result.add(metaData);
           }
         }
         Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
-        if (force && result.isEmpty()){
-          if (filters.size() > 1){
+        if (force && result.isEmpty()) {
+          if (filters.size() > 1) {
             result = filterModel(filter, false);
           }
         }
@@ -128,7 +128,7 @@ public final class IntentionSettingsPanel implements MasterDetails {
     return myPanel;
   }
 
-  public JTree getIntentionTree(){
+  public JTree getIntentionTree() {
     return myIntentionSettingsTree.getTree();
   }
 
@@ -167,9 +167,10 @@ public final class IntentionSettingsPanel implements MasterDetails {
       }
       try {
         TextDescriptor description = metaData.getDescription();
-        if (StringUtil.containsIgnoreCase(description.getText(), stripped)){
+        if (StringUtil.containsIgnoreCase(description.getText(), stripped)) {
           if (!forceInclude) return true;
-        } else if (forceInclude) return false;
+        }
+        else if (forceInclude) return false;
       }
       catch (IOException e) {
         //skip then

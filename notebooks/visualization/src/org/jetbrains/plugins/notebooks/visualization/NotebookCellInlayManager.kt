@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
@@ -103,12 +104,13 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
 
     addDocumentListener()
 
-    val appMessageBus = ApplicationManager.getApplication().messageBus.connect(editor.disposable)
-
-    appMessageBus.subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+    val connection = ApplicationManager.getApplication().messageBus.connect(editor.disposable)
+    connection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+      updateAll()
       refreshHighlightersLookAndFeel()
     })
-    appMessageBus.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+    connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      updateAll()
       refreshHighlightersLookAndFeel()
     })
 
@@ -129,7 +131,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
     val factories = NotebookCellInlayController.Factory.EP_NAME.extensionList
     for (interval in notebookCellLines.intervals) {
       for (factory in factories) {
-        val controller = factory.compute(editor, emptyList(), notebookCellLines.intervals.listIterator(interval.ordinal))
+        val controller = failSafeCompute(factory, editor, emptyList(), notebookCellLines.intervals.listIterator(interval.ordinal))
         if (controller != null) {
           rememberController(controller, interval)
         }
@@ -212,16 +214,15 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
     }
     addHighlighters(intervalsToAddHighlightersFor.values)
 
-    val allMatchingInlays: MutableList<Pair<Int, NotebookCellInlayController>> =
-      getMatchingInlaysForLines(fullInterestingRange)
-        .mapTo(mutableListOf()) {
-          editor.document.getLineNumber(it.inlay.offset) to it
-        }
+    val allMatchingInlays: MutableList<Pair<Int, NotebookCellInlayController>> = getMatchingInlaysForLines(fullInterestingRange)
+      .mapTo(mutableListOf()) {
+        editor.document.getLineNumber(it.inlay.offset) to it
+      }
     val allFactories = NotebookCellInlayController.Factory.EP_NAME.extensionList
 
     for (interval in matchingIntervals) {
       val seenControllersByFactory: Map<NotebookCellInlayController.Factory, MutableList<NotebookCellInlayController>> =
-        allFactories.associateWith { SmartList<NotebookCellInlayController>() }
+        allFactories.associateWith { SmartList() }
       allMatchingInlays.removeIf { (inlayLine, controller) ->
         if (inlayLine in interval.lines) {
           seenControllersByFactory[controller.factory]?.add(controller)
@@ -231,7 +232,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
       }
       for ((factory, controllers) in seenControllersByFactory) {
         val actualController = if (!editor.isDisposed) {
-          factory.compute(editor, controllers, notebookCellLines.intervals.listIterator(interval.ordinal))
+          failSafeCompute(factory, editor, controllers, notebookCellLines.intervals.listIterator(interval.ordinal))
         }
         else {
           null
@@ -354,6 +355,19 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
       }
     }
 
+  private fun failSafeCompute(factory: NotebookCellInlayController.Factory,
+                              editor: EditorImpl,
+                              controllers: Collection<NotebookCellInlayController>,
+                              intervalIterator: ListIterator<NotebookCellLines.Interval>): NotebookCellInlayController? {
+    try {
+      return factory.compute(editor, controllers, intervalIterator)
+    }
+    catch (ex: Exception) {
+      thisLogger().error("${factory.javaClass.name} shouldn't throw exceptions at NotebookCellInlayController.Factory.compute(...)", ex)
+      return null
+    }
+  }
+
   @TestOnly
   fun getInlays(): MutableMap<Inlay<*>, NotebookCellInlayController> = inlays
 
@@ -407,7 +421,7 @@ private object NotebookCellHighlighterRenderer : CustomHighlighterRenderer {
 private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
                                pointers: Collection<NotebookIntervalPointer>? = null,
                                private var updateAll: Boolean = false) : Update(Any()) {
-  private val pointersSet = pointers?.let { SmartHashSet(pointers) } ?: SmartHashSet()
+  private val pointerSet = pointers?.let { SmartHashSet(pointers) } ?: SmartHashSet()
 
   override fun run() {
     if (updateAll) {
@@ -415,7 +429,7 @@ private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
       return
     }
 
-    val linesList = pointersSet.mapNotNullTo(mutableListOf()) { it.get()?.lines }
+    val linesList = pointerSet.mapNotNullTo(mutableListOf()) { it.get()?.lines }
     linesList.sortBy { it.first }
     linesList.mergeAndJoinIntersections(listOf())
 
@@ -428,9 +442,11 @@ private class UpdateInlaysTask(private val manager: NotebookCellInlayManager,
     update as UpdateInlaysTask
 
     updateAll = updateAll || update.updateAll
-    if (updateAll) return true
+    if (updateAll) {
+      return true
+    }
 
-    pointersSet.addAll(update.pointersSet)
+    pointerSet.addAll(update.pointerSet)
     return true
   }
 }

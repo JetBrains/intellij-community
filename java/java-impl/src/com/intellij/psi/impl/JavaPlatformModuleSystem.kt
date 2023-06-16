@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl
 
 import com.intellij.codeInsight.JavaModuleSystemEx
@@ -129,7 +129,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         val fixes = when {
           packageName.isEmpty() -> emptyList()
           targetModule is PsiCompiledElement && module != null -> listOf(AddExportsOptionFix(module, targetName, packageName, useName))
-          targetModule !is PsiCompiledElement && useModule != null -> listOf(AddExportsDirectiveFix(targetModule, packageName, useName))
+          targetModule !is PsiCompiledElement && useModule != null -> listOf(AddExportsDirectiveFix(targetModule, packageName, useName).asIntention())
           else -> emptyList()
         }
         return when (useModule) {
@@ -138,19 +138,23 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         }
       }
 
-      if (useModule != null && !(targetName == PsiJavaModule.JAVA_BASE || JavaModuleGraphUtil.reads(useModule, targetModule))) {
+      if (useModule != null &&
+          !(targetName == PsiJavaModule.JAVA_BASE || JavaModuleGraphUtil.reads(useModule, targetModule)) &&
+          !inAddedReads(useModule, targetModule)) {
         return when {
           quick -> ERR
           PsiNameHelper.isValidModuleName(targetName, useModule) -> ErrorWithFixes(
             JavaErrorBundle.message("module.access.does.not.read", packageName, targetName, useName),
-            listOf(AddRequiresDirectiveFix(useModule, targetName)))
+            listOf(AddRequiresDirectiveFix(useModule, targetName).asIntention()))
           else -> ErrorWithFixes(JavaErrorBundle.message("module.access.bad.name", packageName, targetName))
         }
       }
     }
     else if (useModule != null) {
       val autoModule = detectAutomaticModule(target)
-      if (autoModule == null || !JavaModuleGraphUtil.reads(useModule, autoModule) && !inSameMultiReleaseModule(place, target)) {
+      if ((autoModule == null) || ((!JavaModuleGraphUtil.reads(useModule, autoModule) && !inAddedReads(useModule, null)) &&
+                                   !inSameMultiReleaseModule(place, target))
+        ) {
         return if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("module.access.to.unnamed", packageName, useModule.name))
       }
     }
@@ -213,6 +217,20 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
       .flatMap { it.splitToSequence(",") }
       .any { it == moduleName || it == "ALL-SYSTEM" || it == "ALL-MODULE-PATH" }
   }
+
+  private fun inAddedReads(fromJavaModule: PsiJavaModule, toJavaModule: PsiJavaModule?): Boolean {
+    val fromModule = ModuleUtilCore.findModuleForPsiElement(fromJavaModule) ?: return false
+    val options = JavaCompilerConfigurationProxy.getAdditionalOptions(fromModule.project, fromModule)
+    return JavaCompilerConfigurationProxy.optionValues(options, "--add-reads")
+      .flatMap { it.splitToSequence(",") }
+      .any {
+        val (optFromModuleName, optToModuleName) = it.split("=").apply { it.first() to it.last() }
+        fromJavaModule.name == optFromModuleName &&
+        (toJavaModule?.name == optToModuleName || (optToModuleName == "ALL-UNNAMED" && isUnnamedModule(toJavaModule)))
+      }
+  }
+
+  private fun isUnnamedModule(module: PsiJavaModule?) = module == null || module is LightJavaModule
 
   private abstract class CompilerOptionFix(private val module: Module) : IntentionAction {
     @NonNls override fun getFamilyName() = "Fix compiler option" // not visible

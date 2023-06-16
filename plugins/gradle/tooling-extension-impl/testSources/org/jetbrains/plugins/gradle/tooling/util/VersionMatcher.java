@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.util;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,12 +25,10 @@ public final class VersionMatcher {
   }
 
   public boolean isVersionMatch(@Nullable String[] targetVersions, final boolean checkBaseVersions) {
-    return ContainerUtil.all(targetVersions, new Condition<String>() {
-      @Override
-      public boolean value(String it) {
-        return isVersionMatch(it, checkBaseVersions);
-      }
-    });
+    for (String t : targetVersions) {
+      if (!isVersionMatch(t, checkBaseVersions)) return false;
+    }
+    return true;
   }
 
   public boolean isVersionMatch(@Nullable String targetVersions, boolean checkBaseVersions) {

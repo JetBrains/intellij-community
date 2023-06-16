@@ -99,7 +99,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myModel.setPanel(this);
     Disposer.register(this, myModel);
     myTable.setModel(myModel);
-    new TableSpeedSearch(myTable);
+    TableSpeedSearch.installOn(myTable);
 
     myTable.setExpandableItemsEnabled(false);
     myTable.getTableHeader().setReorderingAllowed(false);

@@ -21,18 +21,17 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
 
   @Override
   @NotNull
-  public RangeMarker createRangeMarker(@NotNull final VirtualFile file, final int offset) {
+  public RangeMarker createRangeMarker(@NotNull VirtualFile file, int offset) {
     return ReadAction.compute(() -> DocumentImpl.createRangeMarkerForVirtualFile(file, offset, -1, -1, -1, -1, false));
   }
 
   @Override
   @NotNull
-  public RangeMarker createRangeMarker(@NotNull final VirtualFile file, final int line, final int column, final boolean persistent) {
+  public RangeMarker createRangeMarker(@NotNull VirtualFile file, int line, int column, boolean persistent) {
     return ReadAction.compute(() -> {
       Document document = file.getFileType().isBinary() ? null : FileDocumentManager.getInstance().getCachedDocument(file);
       if (document != null) {
-        int offset = DocumentUtil.calculateOffset(document, line, column,
-                                                  CodeStyle.getFacade(myProject, document, file.getFileType()).getTabSize());
+        int offset = DocumentUtil.calculateOffset(document, line, column, CodeStyle.getFacade(myProject, document, file.getFileType()).getTabSize());
         return DocumentImpl.createRangeMarkerForVirtualFile(file, offset, line, column, line, column, persistent);
       }
 

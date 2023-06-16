@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.psi.*
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.SmartList
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
@@ -224,10 +224,11 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
     }
 
     override fun actionPerformed(e: AnActionEvent) {
+      val project = e.project ?: return
       prop.set(!prop.get())
       val storage = InlayHintsSettings.instance()
       storage.storeSettings(ourKey, JavaLanguage.INSTANCE, settings)
-      InlayHintsPassFactory.forceHintsUpdateOnNextPass()
+      InlayHintsPassFactory.restartDaemonUpdatingHints(project)
     }
 
   }

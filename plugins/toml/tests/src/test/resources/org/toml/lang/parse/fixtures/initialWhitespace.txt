@@ -1,0 +1,11 @@
+TOML File
+  PsiWhiteSpace('   ')
+  TomlKeyValue
+    TomlKey
+      TomlKeySegment
+        PsiElement(BARE_KEY)('key')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(BASIC_STRING)('"value"')

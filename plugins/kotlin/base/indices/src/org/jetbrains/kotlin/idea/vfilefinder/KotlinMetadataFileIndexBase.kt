@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.vfilefinder
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
+import org.jetbrains.kotlin.idea.base.indices.names.readKotlinMetadataDefinition
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -15,24 +16,18 @@ abstract class KotlinMetadataFileIndexBase(indexFunction: (ClassId) -> FqName) :
 
     override fun getInputFilter() = DefaultFileTypeSpecificInputFilter(KotlinBuiltInFileType)
 
-    override fun getVersion() = 1
+    override fun getVersion() = 2
 
     private val INDEXER = indexer { fileContent ->
-        if (fileContent.fileType == KotlinBuiltInFileType &&
-            fileContent.fileName.endsWith(MetadataPackageFragment.DOT_METADATA_FILE_EXTENSION)
-        ) {
-            val builtins = BuiltInDefinitionFile.read(fileContent.content, fileContent.file)
-            (builtins as? BuiltInDefinitionFile)?.let { builtinDefFile ->
-                val proto = builtinDefFile.proto
-                proto.class_List.singleOrNull()?.let { cls ->
-                    indexFunction(builtinDefFile.nameResolver.getClassId(cls.fqName))
-                } ?: indexFunction(
-                    ClassId(
-                        builtinDefFile.packageFqName,
-                        Name.identifier(fileContent.fileName.substringBeforeLast(MetadataPackageFragment.DOT_METADATA_FILE_EXTENSION))
-                    )
-                )
-            }
-        } else null
+        val builtIns = readKotlinMetadataDefinition(fileContent) as? BuiltInDefinitionFile ?: return@indexer null
+
+        val singleClass = builtIns.proto.class_List.singleOrNull()
+        if (singleClass != null) {
+            return@indexer indexFunction(builtIns.nameResolver.getClassId(singleClass.fqName))
+        }
+
+        val facadeName = fileContent.fileName.substringBeforeLast(MetadataPackageFragment.DOT_METADATA_FILE_EXTENSION)
+        val classId = ClassId(builtIns.packageFqName, Name.identifier(facadeName))
+        indexFunction(classId)
     }
 }

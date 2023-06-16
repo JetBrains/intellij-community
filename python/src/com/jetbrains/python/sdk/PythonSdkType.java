@@ -112,17 +112,6 @@ public final class PythonSdkType extends SdkType {
     return "reference.project.structure.sdk.python";
   }
 
-  /**
-   * @return name of builtins skeleton file; for Python 2.x it is '{@code __builtins__.py}'.
-   * @deprecated use com.jetbrains.python.sdk.PySdkUtil#getBuiltinsFileName(com.intellij.openapi.projectRoots.Sdk) instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  @NonNls
-  public static String getBuiltinsFileName(@NotNull Sdk sdk) {
-    return PySdkUtil.getBuiltinsFileName(sdk);
-  }
-
   @Override
   @NonNls
   @Nullable
@@ -452,8 +441,7 @@ public final class PythonSdkType extends SdkType {
       }
       return versionString;
     }
-    else if (PythonSdkUtil.isRemote(sdk)) {
-      final PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdkAdditionalData;
+    else if (sdkAdditionalData instanceof PyRemoteSdkAdditionalDataBase data) {
       assert data != null;
       String versionString = data.getVersionString();
       if (StringUtil.isEmpty(versionString)) {

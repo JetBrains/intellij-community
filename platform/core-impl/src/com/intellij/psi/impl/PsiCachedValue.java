@@ -48,6 +48,9 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
   @Override
   protected Object @NotNull [] normalizeDependencies(@Nullable T value, Object @NotNull [] dependencyItems) {
     Object[] dependencies = super.normalizeDependencies(value, dependencyItems);
+    if (dependencies.length == 1 && isPsiModificationCount(dependencies[0])) {
+      return dependencies;
+    }
     if (ContainerUtil.exists(dependencies, PsiCachedValue::isPsiModificationCount)) {
       for (Object dependency : dependencies) {
         if (dependency instanceof PsiElement) {
@@ -57,9 +60,6 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
           }
         }
       }
-    }
-    if (dependencies.length == 1 && isPsiModificationCount(dependencies[0])) {
-      return dependencies;
     }
     if (dependencies.length > 0 && ContainerUtil.and(dependencies, this::anyChangeImpliesPsiCounterChange)) {
       return ArrayUtil.prepend(PSI_MOD_COUNT_OPTIMIZATION, dependencies);

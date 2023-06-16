@@ -9,11 +9,14 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinTestAvailabilityChecker
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractGenericTestIconProvider
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.resolve.descriptorUtil.getAllSuperClassifiers
 
 object Fe10GenericTestIconProvider : AbstractGenericTestIconProvider() {
     override fun isKotlinTestDeclaration(declaration: KtClassOrObject): Boolean {
         val descriptor = declaration.resolveToDescriptorIfAny() ?: return false
-        return isKotlinTestDeclaration(descriptor)
+        return descriptor.getAllSuperClassifiers().any {
+            isKotlinTestDeclaration(it)
+        }
     }
 
     private tailrec fun isIgnored(descriptor: DeclarationDescriptor): Boolean {

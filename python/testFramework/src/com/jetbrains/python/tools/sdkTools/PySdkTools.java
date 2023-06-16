@@ -63,20 +63,19 @@ public final class PySdkTools {
       ref.set(sdk);
     });
     final Sdk sdk = ref.get();
+    if (sdk != null) {
+      ApplicationManager.getApplication().invokeAndWait(() -> SdkConfigurationUtil.addSdk(sdk));
+      if (parentDisposable != null) {
+        Disposer.register(parentDisposable, () -> WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().removeJdk(sdk)));
+      }
+    }
     if (sdkCreationType != SdkCreationType.EMPTY_SDK) {
       try {
-        if (sdk != null && parentDisposable != null) {
-          Disposer.register(parentDisposable, () -> WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().removeJdk(sdk)));
-        }
         generateTempSkeletonsOrPackages(sdk, sdkCreationType == SdkCreationType.SDK_PACKAGES_AND_SKELETONS, module);
       }
       catch (ExecutionException e) {
         throw new InvalidSdkException("Can't generate skeleton packages", e);
       }
-    }
-    //do not register sdk twice
-    if (module == null || sdkCreationType == SdkCreationType.EMPTY_SDK) {
-      ApplicationManager.getApplication().invokeAndWait(() -> SdkConfigurationUtil.addSdk(sdk));
     }
     return sdk;
   }

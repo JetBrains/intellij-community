@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
@@ -20,7 +21,7 @@ interface Placeholder : CellBase<Placeholder> {
 
   override fun enabled(isEnabled: Boolean): Placeholder
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): Placeholder
 
@@ -30,7 +31,11 @@ interface Placeholder : CellBase<Placeholder> {
 
   override fun gap(rightGap: RightGap): Placeholder
 
+  @Deprecated("Use customize(UnscaledGaps) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun customize(customGaps: Gaps): Placeholder
+
+  override fun customize(customGaps: UnscaledGaps): Placeholder
 
   /**
    * Component placed in the cell. If the component is [DialogPanel] then all functionality related to

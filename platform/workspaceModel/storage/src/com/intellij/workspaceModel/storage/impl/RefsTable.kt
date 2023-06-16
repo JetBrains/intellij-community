@@ -630,13 +630,15 @@ internal sealed class AbstractRefsTable {
   }
 }
 
-// TODO: 25.05.2021 Make it value class
-internal data class ChildEntityId(val id: EntityId) {
+@JvmInline
+internal value class ChildEntityId(val id: EntityId) {
   override fun toString(): String {
     return "ChildEntityId(id=${id.asString()})"
   }
 }
-internal data class ParentEntityId(val id: EntityId) {
+
+@JvmInline
+internal value class ParentEntityId(val id: EntityId) {
   override fun toString(): String {
     return "ParentEntityId(id=${id.asString()})"
   }

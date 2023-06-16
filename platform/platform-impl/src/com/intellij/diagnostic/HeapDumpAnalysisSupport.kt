@@ -25,28 +25,24 @@ import kotlin.io.path.exists
 
 open class HeapDumpAnalysisSupport {
   companion object {
-    fun getInstance() = service<HeapDumpAnalysisSupport>()
+    fun getInstance(): HeapDumpAnalysisSupport = service<HeapDumpAnalysisSupport>()
   }
 
-  open fun getPrivacyPolicyUrl(): String {
-    return "https://www.jetbrains.com/company/privacy.html"
-  }
+  open fun getPrivacyPolicyUrl(): String = "https://www.jetbrains.com/company/privacy.html"
 
   open fun uploadReport(reportText: String, heapReportProperties: HeapReportProperties, parentComponent: Component) {
     val text = getHeapDumpReportText(reportText, heapReportProperties)
     val attachment = Attachment("report.txt", text)
     attachment.isIncluded = true
-    val loggingEvent = LogMessage.createEvent(OutOfMemoryError(), "Heap analysis results", attachment)
+    val loggingEvent = LogMessage.eventOf(OutOfMemoryError(), "Heap analysis results", listOf(attachment))
     ITNReporter().submit(arrayOf(loggingEvent), null, parentComponent) { }
   }
 
   /**
    * Checks if there's already a snapshot saved for analysis after restart and notifies the user if needed.
-   * Returns true if there's a pending snapshot and a new one should not be saved.
+   * Returns true if there's a pending snapshot and a new one shouldn't be saved.
    */
-  open fun checkPendingSnapshot(): Boolean {
-    return false
-  }
+  open fun checkPendingSnapshot(): Boolean = false
 
   /**
    * Saves the given snapshot for analysis after restart.

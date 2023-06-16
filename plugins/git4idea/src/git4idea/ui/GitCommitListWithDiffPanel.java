@@ -19,7 +19,7 @@ import com.intellij.dvcs.ui.CommitListPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser;
 import com.intellij.util.Consumer;
 import git4idea.GitCommit;
 import org.jetbrains.annotations.NotNull;
@@ -29,14 +29,14 @@ import java.awt.*;
 import java.util.List;
 
 /**
- * List of commits at the left, the {@link SimpleChangesBrowser} at the right.
+ * List of commits at the left, the {@link com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase} at the right.
  * Select a commit to shows its changes in the changes browser.
  *
  * @author Kirill Likhodedov
  */
 public class GitCommitListWithDiffPanel extends JPanel {
 
-  private final SimpleChangesBrowser myChangesBrowser;
+  private final SimpleAsyncChangesBrowser myChangesBrowser;
   private final CommitListPanel myCommitListPanel;
 
   public GitCommitListWithDiffPanel(@NotNull Project project, @NotNull List<GitCommit> commits) {
@@ -50,7 +50,7 @@ public class GitCommitListWithDiffPanel extends JPanel {
       }
     });
 
-    myChangesBrowser = new SimpleChangesBrowser(project, false, true);
+    myChangesBrowser = new SimpleAsyncChangesBrowser(project, false, true);
     myCommitListPanel.registerDiffAction(myChangesBrowser.getDiffAction());
 
     Splitter splitter = new Splitter(false, 0.7f);

@@ -6,5 +6,5 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @ApiStatus.Experimental
 interface CodeWithMeServerUrlProvider {
-  fun getServerUrl(): String
+  fun getServerUrl(): String?
 }

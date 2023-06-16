@@ -15,8 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
@@ -43,13 +42,13 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ImplicitNumericConversionInspection extends BaseInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreWideningConversions = false;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreCharConversions = false;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreConstantConversions = false;
 
   @Override
@@ -79,11 +78,11 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new ImplicitNumericConversionFix((PsiExpression)infos[0], (PsiType)infos[2]);
   }
 
-  private class ImplicitNumericConversionFix extends InspectionGadgetsFix {
+  private class ImplicitNumericConversionFix extends PsiUpdateModCommandQuickFix {
 
     private final @IntentionName String m_name;
 
@@ -110,8 +109,8 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+      final PsiExpression expression = (PsiExpression)startElement;
       final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
       if (expectedType == null) {
         return;

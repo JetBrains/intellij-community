@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,16 +61,16 @@ class ErrorStripeMarkerImpl extends RangeMarkerImpl {
     else if (isValid()) {
       reportError("Base highlighter " + myHighlighter + " is invalid, mirror " + this + "(prev state: " + oldStart + "-" + oldEnd +
                   ") is valid after " + e);
-      invalidate(e);
+      invalidate();
     }
   }
 
   private void reportError(String message) {
     DocumentEx document = getDocument();
+    RangeMarkerTree.RMNode<RangeMarkerEx> node = myHighlighter instanceof RangeHighlighterImpl ? ((RangeHighlighterImpl)myHighlighter).myNode : null;
     LOG.error(message,
               new Attachment("document.txt", document instanceof DocumentImpl ? ((DocumentImpl)document).dumpState() : "" ),
-              new Attachment("originalTree.txt", myHighlighter instanceof RangeHighlighterImpl ?
-                                                 ((RangeHighlighterImpl)myHighlighter).myNode.getTree().dumpState() : ""),
+              new Attachment("originalTree.txt", node == null ? "" : node.getTree().dumpState()),
               new Attachment("mirrorTree.txt", myNode.getTree().dumpState()));
   }
 

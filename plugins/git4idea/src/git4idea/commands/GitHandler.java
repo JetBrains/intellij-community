@@ -522,21 +522,6 @@ public abstract class GitHandler {
   private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<>());
 
   /**
-   * Adds "--progress" parameter. Usable for long operations, such as clone or fetch.
-   *
-   * @return is "--progress" parameter supported by this version of Git.
-   * @deprecated use {@link #addParameters}
-   */
-  @Deprecated(forRemoval = true)
-  public boolean addProgressParameter() {
-    if (myProject != null && GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(myProject)) {
-      addParameters("--progress");
-      return true;
-    }
-    return false;
-  }
-
-  /**
    * @return exit code for process if it is available
    * @deprecated use {@link GitLineHandler}, {@link Git#runCommand(GitLineHandler)} and {@link GitCommandResult}
    */

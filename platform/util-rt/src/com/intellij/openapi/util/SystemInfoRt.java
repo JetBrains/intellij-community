@@ -16,6 +16,7 @@ public final class SystemInfoRt {
     String version = System.getProperty("os.version").toLowerCase(Locale.ENGLISH);
 
     if (name.startsWith("Windows") && name.matches("Windows \\d+")) {
+      // for whatever reason, JRE reports "Windows 11" as a name and "10.0" as a version on Windows 11
       try {
         String version2 = name.substring("Windows".length() + 1) + ".0";
         if (Float.parseFloat(version2) > Float.parseFloat(version)) {

@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.javabeans;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -23,7 +25,6 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassWithoutConstructorInspection extends BaseInspection {
@@ -36,12 +37,12 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new ClassWithoutConstructorFix();
   }
 
   private static class ClassWithoutConstructorFix
-    extends InspectionGadgetsFix {
+    extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -51,8 +52,7 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement classIdentifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement classIdentifier, @NotNull EditorUpdater updater) {
       final PsiClass aClass = (PsiClass)classIdentifier.getParent();
       final PsiElementFactory factory =
         JavaPsiFacade.getElementFactory(project);

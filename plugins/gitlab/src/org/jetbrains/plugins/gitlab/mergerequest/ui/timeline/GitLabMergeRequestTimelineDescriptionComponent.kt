@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory.createTextPanel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
@@ -28,15 +29,15 @@ internal object GitLabMergeRequestTimelineDescriptionComponent {
 
   fun createComponent(
     cs: CoroutineScope,
-    mr: GitLabMergeRequest,
+    vm: GitLabMergeRequestViewModel,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   ): JComponent {
-    val titlePanel = GitLabMergeRequestTimelineUIUtil.createTitleTextPane(mr.author, date = null)
-    val descriptionTextComponent = createTextPanel(cs, mr.description.map { if (it.isNotBlank()) it else noDescriptionHtmlText })
+    val titlePanel = GitLabMergeRequestTimelineUIUtil.createTitleTextPane(vm.author, date = null)
+    val descriptionTextComponent = createTextPanel(cs, vm.descriptionHtml.map { it.ifBlank { noDescriptionHtmlText } })
 
 
     return CodeReviewChatItemUIUtil.buildDynamic(CodeReviewChatItemUIUtil.ComponentType.FULL,
-                                                 { size -> SingleValueModel(avatarIconsProvider.getIcon(mr.author, size)) },
+                                                 { size -> SingleValueModel(avatarIconsProvider.getIcon(vm.author, size)) },
                                                  descriptionTextComponent) {
       // TODO: allow description editing
       withHeader(titlePanel, null)

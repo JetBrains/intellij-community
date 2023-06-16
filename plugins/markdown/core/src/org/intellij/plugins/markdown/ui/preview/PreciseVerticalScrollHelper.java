@@ -31,6 +31,9 @@ class PreciseVerticalScrollHelper extends MouseAdapter {
   }
 
   private void boundaryReached(MouseWheelEvent event) {
+    if (event.isShiftDown()) {
+      return;
+    }
     final var actualPanel = htmlPanelSupplier.get();
     if (actualPanel == null) {
       return;

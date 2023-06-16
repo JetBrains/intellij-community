@@ -5,13 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
-import kotlin.coroutines.EmptyCoroutineContext
-
-@ApiStatus.Internal
-internal fun launch(parentDisposable: Disposable, action: suspend CoroutineScope.() -> Unit): Job {
-  val coroutineScope = CoroutineScope(EmptyCoroutineContext)
-  return coroutineScope.launch(parentDisposable, action)
-}
 
 @ApiStatus.Internal
 internal fun CoroutineScope.launch(parentDisposable: Disposable, action: suspend CoroutineScope.() -> Unit): Job {

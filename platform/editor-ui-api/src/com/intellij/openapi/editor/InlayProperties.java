@@ -4,16 +4,19 @@ package com.intellij.openapi.editor;
 /**
  * A set of properties that define the inlay's behavior.
  * <p>
- * The properties should be provided when the inlay is created, see
- * {@link InlayModel#addInlineElement(int, InlayProperties, EditorCustomElementRenderer)},
- * {@link InlayModel#addBlockElement(int, InlayProperties, EditorCustomElementRenderer)},
- * {@link InlayModel#addAfterLineEndElement(int, InlayProperties, EditorCustomElementRenderer)}.
+ * The properties should be provided when the inlay is created, see:
+ * <ul>
+ * <li>{@link InlayModel#addInlineElement(int, InlayProperties, EditorCustomElementRenderer) InlayModel.addInlineElement},
+ * <li>{@link InlayModel#addAfterLineEndElement(int, InlayProperties, EditorCustomElementRenderer) InlayModel.adAfterLineEndElement},
+ * <li>{@link InlayModel#addBlockElement(int, InlayProperties, EditorCustomElementRenderer) InlayModel.addBlockElement}.
+ * </ul>
  * <p>
  * This class is mutable (and not thread-safe); the modifying methods return {@code this}, to enable chained invocation.
+ * <p>
  * At the time an inlay is created, the inlay gets an immutable snapshot of the properties,
  * so that further changes to the {@code InlayProperties} instance don't affect the created inlay.
  * <p>
- * Some properties may have an impact only for certain types of inlays,
+ * Some properties may have an impact only for certain {@linkplain Inlay types of inlays},
  * see the setter methods' descriptions for details.
  */
 public final class InlayProperties {
@@ -29,15 +32,14 @@ public final class InlayProperties {
    * <li>The inlay is related to the text that follows (rather than to the preceding text), see {@link #relatesToPrecedingText(boolean)}.
    * <li>If it is a block inlay, it is shown below the corresponding line, see {@link #showAbove(boolean)}.
    * <li>If the corresponding text is collapsed, the inlay is hidden, see {@link #showWhenFolded(boolean)}.
-   * <li>
    * </ul>
    */
   public InlayProperties() {}
 
   /**
-   * This property tells whether this inlay is associated with preceding or following text.
-   * This relation affects the inlay's behavior with respect to changes in editor,
-   * e.g. when text is inserted at the inlay's position,
+   * Tells whether this inlay is associated with the preceding or the following text.
+   * This relation affects the inlay's behavior with respect to changes in the editor.
+   * For example, when text is inserted at the inlay's position,
    * the inlay will end up before the inserted text if the property is {@code false}
    * and after the text if it is {@code true}.
    * <p>
@@ -45,7 +47,7 @@ public final class InlayProperties {
    * and an inline inlay exists at the given offset,
    * the caret will be positioned to the left of the inlay if the property is {@code true}, and vice versa.
    * <p>
-   * For a block elements, this value impacts the inlay's visibility on the boundary offsets of collapsed fold regions.
+   * For block inlays, this value impacts the inlay's visibility on the boundary offsets of collapsed fold regions.
    * If the value is {@code true}, the inlay will be visible at the trailing boundary,
    * and if the value is {@code false}, on the leading boundary.
    */
@@ -56,7 +58,7 @@ public final class InlayProperties {
 
   /**
    * This property applies only to 'block' inlays
-   * and defines whether it will be shown above or below corresponding visual line.
+   * and defines whether it will be shown above or below the corresponding visual line.
    */
   public InlayProperties showAbove(boolean value) {
     myShowAbove = value;
@@ -66,10 +68,10 @@ public final class InlayProperties {
   /**
    * This property impacts the visual order in which adjacent inlays are displayed.
    * <p>
-   * For 'inline' and 'after line end' inlays, higher priority means
+   * For inline and after-line-end inlays, higher priority means
    * the inlay will be shown closer to the left.
    * <p>
-   * For 'block' inlays, higher priority means closer to the line of text
+   * For block inlays, higher priority means closer to the line of text
    * (for inlays related to the same visual line).
    */
   public InlayProperties priority(int value) {
@@ -78,9 +80,8 @@ public final class InlayProperties {
   }
 
   /**
-   * If this property is {@code true}, the inlay will be shown even if the corresponding offset is in a collapsed (folded) area.
-   * <p>
-   * Applies only to 'block' (inter-line) inlays.
+   * For block inlays that have this property set to {@code true},
+   * the inlay is shown even if the corresponding offset is in a collapsed (folded) area.
    */
   public InlayProperties showWhenFolded(boolean value) {
     myShowWhenFolded = value;
@@ -88,8 +89,9 @@ public final class InlayProperties {
   }
 
   /**
-   * 'After line end' inlays with this property won't be moved to the next visual line,
-   * even if they don't fit the editor's visible area.
+   * For after-line-end inlays that have this property set to {@code true},
+   * the inlay is not moved to the next visual line,
+   * even if it doesn't fit the editor's visible area.
    * <p>
    * They also will be displayed to the left of inlays with enabled soft wrapping,
    * regardless of their {@link #priority(int) priorities}.

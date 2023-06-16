@@ -26,7 +26,8 @@ class DistributedTestModel private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
-            serializers.register(RdAgentId)
+            serializers.register(RdAgentInfo)
+            serializers.register(RdAgentType.marshaller)
             serializers.register(RdTestSessionStackTraceElement)
             serializers.register(RdTestSessionExceptionCause)
             serializers.register(RdTestSessionException)
@@ -52,7 +53,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = -1478724711463014225L
+        const val serializationHash = 492600752699924361L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -89,6 +90,8 @@ class DistributedTestModel private constructor(
         )
     }
     //contexts
+    //threading
+    override val extThreading: ExtThreadingKind get() = ExtThreadingKind.Default
 }
 val IProtocol.distributedTestModel get() = getOrCreateExtension(DistributedTestModel::class) { @Suppress("DEPRECATION") DistributedTestModel.create(lifetime, this) }
 
@@ -97,25 +100,28 @@ val IProtocol.distributedTestModel get() = getOrCreateExtension(DistributedTestM
 /**
  * #### Generated from [DistributedTestModel.kt]
  */
-data class RdAgentId (
+data class RdAgentInfo (
     val id: String,
-    val launchNumber: Int
+    val launchNumber: Int,
+    val agentType: RdAgentType
 ) : IPrintable {
     //companion
     
-    companion object : IMarshaller<RdAgentId> {
-        override val _type: KClass<RdAgentId> = RdAgentId::class
+    companion object : IMarshaller<RdAgentInfo> {
+        override val _type: KClass<RdAgentInfo> = RdAgentInfo::class
         
         @Suppress("UNCHECKED_CAST")
-        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdAgentId  {
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdAgentInfo  {
             val id = buffer.readString()
             val launchNumber = buffer.readInt()
-            return RdAgentId(id, launchNumber)
+            val agentType = buffer.readEnum<RdAgentType>()
+            return RdAgentInfo(id, launchNumber, agentType)
         }
         
-        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAgentId)  {
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAgentInfo)  {
             buffer.writeString(value.id)
             buffer.writeInt(value.launchNumber)
+            buffer.writeEnum(value.agentType)
         }
         
         
@@ -129,10 +135,11 @@ data class RdAgentId (
         if (this === other) return true
         if (other == null || other::class != this::class) return false
         
-        other as RdAgentId
+        other as RdAgentInfo
         
         if (id != other.id) return false
         if (launchNumber != other.launchNumber) return false
+        if (agentType != other.agentType) return false
         
         return true
     }
@@ -141,19 +148,37 @@ data class RdAgentId (
         var __r = 0
         __r = __r*31 + id.hashCode()
         __r = __r*31 + launchNumber.hashCode()
+        __r = __r*31 + agentType.hashCode()
         return __r
     }
     //pretty print
     override fun print(printer: PrettyPrinter)  {
-        printer.println("RdAgentId (")
+        printer.println("RdAgentInfo (")
         printer.indent {
             print("id = "); id.print(printer); println()
             print("launchNumber = "); launchNumber.print(printer); println()
+            print("agentType = "); agentType.print(printer); println()
         }
         printer.print(")")
     }
     //deepClone
     //contexts
+    //threading
+}
+
+
+/**
+ * #### Generated from [DistributedTestModel.kt]
+ */
+enum class RdAgentType {
+    HOST, 
+    CLIENT, 
+    GATEWAY;
+    
+    companion object {
+        val marshaller = FrameworkMarshallers.enum<RdAgentType>()
+        
+    }
 }
 
 
@@ -161,15 +186,15 @@ data class RdAgentId (
  * #### Generated from [DistributedTestModel.kt]
  */
 class RdTestSession private constructor(
-    val agentId: RdAgentId,
+    val agentInfo: RdAgentInfo,
     val testClassName: String?,
     val testMethodName: String?,
     val traceCategories: List<String>,
     private val _ready: RdProperty<Boolean?>,
     private val _sendException: RdSignal<RdTestSessionException>,
     private val _shutdown: RdSignal<Unit>,
-    private val _dumpThreads: RdSignal<Unit>,
     private val _closeProject: RdCall<Unit, Boolean>,
+    private val _closeProjectIfOpened: RdCall<Unit, Boolean>,
     private val _runNextAction: RdCall<Unit, Boolean>,
     private val _makeScreenshot: RdCall<String, Boolean>
 ) : RdBindableBase() {
@@ -181,31 +206,31 @@ class RdTestSession private constructor(
         @Suppress("UNCHECKED_CAST")
         override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdTestSession  {
             val _id = RdId.read(buffer)
-            val agentId = RdAgentId.read(ctx, buffer)
+            val agentInfo = RdAgentInfo.read(ctx, buffer)
             val testClassName = buffer.readNullable { buffer.readString() }
             val testMethodName = buffer.readNullable { buffer.readString() }
             val traceCategories = buffer.readList { buffer.readString() }
             val _ready = RdProperty.read(ctx, buffer, __BoolNullableSerializer)
             val _sendException = RdSignal.read(ctx, buffer, RdTestSessionException)
             val _shutdown = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
-            val _dumpThreads = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
             val _closeProject = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
+            val _closeProjectIfOpened = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _runNextAction = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
-            return RdTestSession(agentId, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _dumpThreads, _closeProject, _runNextAction, _makeScreenshot).withId(_id)
+            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _closeProject, _closeProjectIfOpened, _runNextAction, _makeScreenshot).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
             value.rdid.write(buffer)
-            RdAgentId.write(ctx, buffer, value.agentId)
+            RdAgentInfo.write(ctx, buffer, value.agentInfo)
             buffer.writeNullable(value.testClassName) { buffer.writeString(it) }
             buffer.writeNullable(value.testMethodName) { buffer.writeString(it) }
             buffer.writeList(value.traceCategories) { v -> buffer.writeString(v) }
             RdProperty.write(ctx, buffer, value._ready)
             RdSignal.write(ctx, buffer, value._sendException)
             RdSignal.write(ctx, buffer, value._shutdown)
-            RdSignal.write(ctx, buffer, value._dumpThreads)
             RdCall.write(ctx, buffer, value._closeProject)
+            RdCall.write(ctx, buffer, value._closeProjectIfOpened)
             RdCall.write(ctx, buffer, value._runNextAction)
             RdCall.write(ctx, buffer, value._makeScreenshot)
         }
@@ -217,8 +242,8 @@ class RdTestSession private constructor(
     val ready: IProperty<Boolean?> get() = _ready
     val sendException: IAsyncSignal<RdTestSessionException> get() = _sendException
     val shutdown: ISignal<Unit> get() = _shutdown
-    val dumpThreads: IAsyncSignal<Unit> get() = _dumpThreads
     val closeProject: RdCall<Unit, Boolean> get() = _closeProject
+    val closeProjectIfOpened: RdCall<Unit, Boolean> get() = _closeProjectIfOpened
     val runNextAction: RdCall<Unit, Boolean> get() = _runNextAction
     val makeScreenshot: RdCall<String, Boolean> get() = _makeScreenshot
     //methods
@@ -229,34 +254,33 @@ class RdTestSession private constructor(
     
     init {
         _sendException.async = true
-        _dumpThreads.async = true
     }
     
     init {
         bindableChildren.add("ready" to _ready)
         bindableChildren.add("sendException" to _sendException)
         bindableChildren.add("shutdown" to _shutdown)
-        bindableChildren.add("dumpThreads" to _dumpThreads)
         bindableChildren.add("closeProject" to _closeProject)
+        bindableChildren.add("closeProjectIfOpened" to _closeProjectIfOpened)
         bindableChildren.add("runNextAction" to _runNextAction)
         bindableChildren.add("makeScreenshot" to _makeScreenshot)
     }
     
     //secondary constructor
     constructor(
-        agentId: RdAgentId,
+        agentInfo: RdAgentInfo,
         testClassName: String?,
         testMethodName: String?,
         traceCategories: List<String>
     ) : this(
-        agentId,
+        agentInfo,
         testClassName,
         testMethodName,
         traceCategories,
         RdProperty<Boolean?>(null, __BoolNullableSerializer),
         RdSignal<RdTestSessionException>(RdTestSessionException),
         RdSignal<Unit>(FrameworkMarshallers.Void),
-        RdSignal<Unit>(FrameworkMarshallers.Void),
+        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool)
@@ -268,15 +292,15 @@ class RdTestSession private constructor(
     override fun print(printer: PrettyPrinter)  {
         printer.println("RdTestSession (")
         printer.indent {
-            print("agentId = "); agentId.print(printer); println()
+            print("agentInfo = "); agentInfo.print(printer); println()
             print("testClassName = "); testClassName.print(printer); println()
             print("testMethodName = "); testMethodName.print(printer); println()
             print("traceCategories = "); traceCategories.print(printer); println()
             print("ready = "); _ready.print(printer); println()
             print("sendException = "); _sendException.print(printer); println()
             print("shutdown = "); _shutdown.print(printer); println()
-            print("dumpThreads = "); _dumpThreads.print(printer); println()
             print("closeProject = "); _closeProject.print(printer); println()
+            print("closeProjectIfOpened = "); _closeProjectIfOpened.print(printer); println()
             print("runNextAction = "); _runNextAction.print(printer); println()
             print("makeScreenshot = "); _makeScreenshot.print(printer); println()
         }
@@ -285,20 +309,21 @@ class RdTestSession private constructor(
     //deepClone
     override fun deepClone(): RdTestSession   {
         return RdTestSession(
-            agentId,
+            agentInfo,
             testClassName,
             testMethodName,
             traceCategories,
             _ready.deepClonePolymorphic(),
             _sendException.deepClonePolymorphic(),
             _shutdown.deepClonePolymorphic(),
-            _dumpThreads.deepClonePolymorphic(),
             _closeProject.deepClonePolymorphic(),
+            _closeProjectIfOpened.deepClonePolymorphic(),
             _runNextAction.deepClonePolymorphic(),
             _makeScreenshot.deepClonePolymorphic()
         )
     }
     //contexts
+    //threading
 }
 
 
@@ -374,6 +399,7 @@ data class RdTestSessionException (
     }
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -443,6 +469,7 @@ data class RdTestSessionExceptionCause (
     }
     //deepClone
     //contexts
+    //threading
 }
 
 
@@ -518,4 +545,5 @@ data class RdTestSessionStackTraceElement (
     }
     //deepClone
     //contexts
+    //threading
 }

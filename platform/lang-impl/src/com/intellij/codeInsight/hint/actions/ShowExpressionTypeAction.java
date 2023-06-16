@@ -38,13 +38,6 @@ public class ShowExpressionTypeAction extends BaseCodeInsightAction implements D
     setEnabledInModalContext(true);
   }
 
-  @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    super.beforeActionPerformedUpdate(e);
-    // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
-    myRequestFocus = ScreenReader.isActive() && (e.getInputEvent() instanceof KeyEvent);
-  }
-
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
@@ -55,6 +48,13 @@ public class ShowExpressionTypeAction extends BaseCodeInsightAction implements D
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
     Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     return !ShowExpressionTypeHandler.getHandlers(project, language, file.getViewProvider().getBaseLanguage()).isEmpty();
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
+    myRequestFocus = ScreenReader.isActive() && (e.getInputEvent() instanceof KeyEvent);
+    super.actionPerformed(e);
   }
 
 }

@@ -35,7 +35,8 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,21 +50,22 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugProcessStarter;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
-import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.ui.DebuggerColors;
+import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -157,24 +159,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       }
     });
 
-    messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        XDebugSessionImpl session = getCurrentSession();
-        if (session == null) return;
-
-        XStackFrame currentFrame = session.getCurrentStackFrame();
-        if (currentFrame == null) return;
-
-        XSourcePosition alternativePosition = session.getFrameSourcePosition(currentFrame, XSourceKind.ALTERNATIVE);
-        boolean isAlternativeSourceSelected = alternativePosition != null && alternativePosition.getFile().equals(event.getNewFile());
-        boolean isAlternativeSourceDeselected = alternativePosition != null && alternativePosition.getFile().equals(event.getOldFile());
-
-        session.setCurrentSourceKind(!isAlternativeSourceSelected || isAlternativeSourceDeselected
-                                     ? XSourceKind.MAIN : XSourceKind.ALTERNATIVE);
-      }
-    });
-
     messageBusConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void checkUnloadPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
@@ -189,7 +173,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     });
 
     DebuggerEditorListener listener = new DebuggerEditorListener();
-    BreakpointPromoterEditorListener bpPromoter = new BreakpointPromoterEditorListener();
+    BreakpointPromoterEditorListener bpPromoter = new BreakpointPromoterEditorListener(coroutineScope);
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     eventMulticaster.addEditorMouseMotionListener(listener, this);
     eventMulticaster.addEditorMouseListener(listener, this);
@@ -377,9 +361,10 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         if (tab != null) {
           tab.select();
         }
+        myExecutionPointManager.setAlternativeSourceKindFlow(session.getAlternativeSourceKindState());
       }
       else {
-        myExecutionPointManager.setExecutionPoint(null);
+        myExecutionPointManager.clearExecutionPoint();
       }
       onActiveSessionChanged(previousSession, session);
     }
@@ -418,6 +403,18 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     private XSourcePositionImpl myLastPosition = null;
     private Icon myLastIcon = null;
 
+    private final XDebuggerLineChangeHandler lineChangeHandler;
+
+    BreakpointPromoterEditorListener(CoroutineScope coroutineScope) {
+      lineChangeHandler = new XDebuggerLineChangeHandler(coroutineScope, (gutter, position, types) -> {
+        myLastIcon = ObjectUtils.doIfNotNull(ContainerUtil.getFirstItem(types), XBreakpointType::getEnabledIcon);
+        if (myLastIcon != null) {
+          updateActiveLineNumberIcon(gutter, myLastIcon, position.getLine());
+        }
+        return Unit.INSTANCE;
+      });
+    }
+
     @Override
     public void mouseMoved(@NotNull EditorMouseEvent e) {
       if (!ExperimentalUI.isNewUI() || !ShowBreakpointsOverLineNumbersAction.isSelected()) return;
@@ -425,32 +422,33 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       if (editor.getProject() != myProject || editor.getEditorKind() != EditorKind.MAIN_EDITOR) return;
       EditorGutter editorGutter = editor.getGutter();
       if (editorGutter instanceof EditorGutterComponentEx gutter) {
-        if (e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA) {
+        if (e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA && EditorUtil.isBreakPointsOnLineNumbers()) {
           int line = EditorUtil.yToLogicalLineNoCustomRenderers(editor, e.getMouseEvent().getY());
           Document document = editor.getDocument();
           if (DocumentUtil.isValidLine(line, document)) {
             XSourcePositionImpl position = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(document), line);
             if (position != null) {
               if (myLastPosition == null || !myLastPosition.getFile().equals(position.getFile()) || myLastPosition.getLine() != line) {
-                List<XLineBreakpointType> types = XBreakpointUtil.getAvailableLineBreakpointTypes(myProject, position, editor);
+                // drop an icon first and schedule the available types calculation
+                clear(gutter);
                 myLastPosition = position;
-                myLastIcon = ObjectUtils.doIfNotNull(ContainerUtil.getFirstItem(types), XBreakpointType::getEnabledIcon);
-              }
-              if (myLastIcon != null) {
-                gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                updateActiveLineNumberIcon(gutter, myLastIcon, e.getLogicalPosition().line);
-              }
-              else {
-                updateActiveLineNumberIcon(gutter, null, null);
+                lineChangeHandler.lineChanged(editor, position);
               }
               return;
             }
           }
         }
-        myLastPosition = null;
-        myLastIcon = null;
-        updateActiveLineNumberIcon(gutter, null, null);
+        if (myLastIcon != null) {
+          clear(gutter);
+          myLastPosition = null;
+          lineChangeHandler.exitedGutter();
+        }
       }
+    }
+
+    private void clear(EditorGutterComponentEx gutter) {
+      updateActiveLineNumberIcon(gutter, null, null);
+      myLastIcon = null;
     }
 
     private static void updateActiveLineNumberIcon(@NotNull EditorGutterComponentEx gutter, @Nullable Icon icon, @Nullable Integer line) {
@@ -460,6 +458,9 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         gutter.putClientProperty("line.number.hover.icon", icon);
         gutter.putClientProperty("line.number.hover.icon.context.menu", icon == null ? null
                                                                                      : ActionManager.getInstance().getAction("XDebugger.Hover.Breakpoint.Context.Menu"));
+        if (icon != null) {
+          gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Editor updates cursor on MouseMoved, set it explicitly
+        }
         requireRepaint = true;
       }
       if (!Objects.equals(gutter.getClientProperty("active.line.number"), line)) {
@@ -538,7 +539,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         return -1;
       }
       int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, event.getOffset());
-      return editor.getDocument().getLineNumber(lineStartOffset);
+      int documentLine = editor.getDocument().getLineNumber(lineStartOffset);
+      return documentLine < editor.getDocument().getLineCount() ? documentLine : -1;
     }
 
     @Override

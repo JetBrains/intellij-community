@@ -39,5 +39,5 @@ internal class Ini(file: File) {
     }
   }
 
-  fun get(section: String, key: String) =  entries[section]?.get(key)
+  fun get(section: String, key: String): String? =  entries[section]?.get(key)
 }

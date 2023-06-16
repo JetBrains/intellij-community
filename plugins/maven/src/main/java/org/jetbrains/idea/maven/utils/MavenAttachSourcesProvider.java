@@ -15,12 +15,10 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -67,40 +65,37 @@ final class MavenAttachSourcesProvider implements AttachSourcesProvider {
         Collection<MavenArtifact> artifacts = findArtifacts(mavenProjects, orderEntries);
         if (artifacts.isEmpty()) return ActionCallback.REJECTED;
 
-        final AsyncPromise<MavenArtifactDownloader.DownloadResult> result = new AsyncPromise<>();
-        manager.scheduleArtifactsDownloading(mavenProjects, artifacts, true, false, result);
+        var downloadResult = manager.downloadArtifactsSync(mavenProjects, artifacts, true, false);
 
         final ActionCallback resultWrapper = new ActionCallback();
-        result.onSuccess(downloadResult -> {
-          HtmlBuilder builder = null;
-          if (!downloadResult.unresolvedSources.isEmpty()) {
-            builder = new HtmlBuilder();
-            builder.append(MavenProjectBundle.message("sources.not.found.for"));
-            int count = 0;
-            for (MavenId each : downloadResult.unresolvedSources) {
-              if (count++ > 5) {
-                builder.append(HtmlChunk.br()).append(MavenProjectBundle.message("and.more"));
-                break;
-              }
-              builder.append(HtmlChunk.br()).append(each.getDisplayString());
+        HtmlBuilder builder = null;
+        if (!downloadResult.unresolvedSources.isEmpty()) {
+          builder = new HtmlBuilder();
+          builder.append(MavenProjectBundle.message("sources.not.found.for"));
+          int count = 0;
+          for (MavenId each : downloadResult.unresolvedSources) {
+            if (count++ > 5) {
+              builder.append(HtmlChunk.br()).append(MavenProjectBundle.message("and.more"));
+              break;
             }
+            builder.append(HtmlChunk.br()).append(each.getDisplayString());
           }
-          if (builder != null) {
-            cleanUpUnresolvedSourceFiles(psiFile.getProject(), downloadResult.unresolvedSources);
-            Notifications.Bus.notify(new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
-                                                      MavenProjectBundle.message("maven.sources.cannot.download"),
-                                                      builder.wrapWithHtmlBody().toString(),
-                                                      NotificationType.WARNING),
-                                     psiFile.getProject());
-          }
+        }
+        if (builder != null) {
+          cleanUpUnresolvedSourceFiles(psiFile.getProject(), downloadResult.unresolvedSources);
+          Notifications.Bus.notify(new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
+                                                    MavenProjectBundle.message("maven.sources.cannot.download"),
+                                                    builder.wrapWithHtmlBody().toString(),
+                                                    NotificationType.WARNING),
+                                   psiFile.getProject());
+        }
 
-          if (downloadResult.resolvedSources.isEmpty()) {
-            resultWrapper.setRejected();
-          }
-          else {
-            resultWrapper.setDone();
-          }
-        });
+        if (downloadResult.resolvedSources.isEmpty()) {
+          resultWrapper.setRejected();
+        }
+        else {
+          resultWrapper.setDone();
+        }
         return resultWrapper;
       }
     });

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiKeyword;
@@ -39,7 +40,7 @@ public class EmptySynchronizedStatementInspection extends BaseInspection {
   }
 
   @Override
-  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new DeleteUnnecessaryStatementFix(PsiKeyword.SYNCHRONIZED);
   }
 

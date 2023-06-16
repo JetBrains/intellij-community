@@ -15,7 +15,7 @@ import java.awt.event.MouseEvent;
 /**
  * @deprecated Use Kotlin UI DSL and {@link com.intellij.ui.dsl.builder.Panel#collapsibleGroup} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
   protected RefreshablePanel myDetailsComponent;
   protected final JLabel myLabel;

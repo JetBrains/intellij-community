@@ -19,7 +19,7 @@ public final class StackFramePopup {
         .setTitle(JavaDebuggerBundle.message("select.stack.frame"))
         .setAutoSelectIfEmpty(true)
         .setResizable(false)
-        .setItemChoosenCallback(() -> list.navigateToSelectedValue(true))
+        .setItemChosenCallback(() -> list.navigateToSelectedValue(true))
         .createPopup();
 
       list.setSelectedIndex(1);

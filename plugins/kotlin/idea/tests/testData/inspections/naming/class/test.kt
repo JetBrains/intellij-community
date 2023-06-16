@@ -12,4 +12,10 @@ enum class Foo {
     quuxDoo,
 }
 
-class `A B`
+class `A B` {
+
+    companion object myCompanion {}
+
+}
+
+interface My_Interface

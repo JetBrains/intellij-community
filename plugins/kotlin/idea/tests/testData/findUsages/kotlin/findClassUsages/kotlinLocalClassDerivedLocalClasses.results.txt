@@ -1,4 +1,4 @@
-Unclassified 11 class C : A()
-Unclassified 13 class D : T()
-Unclassified 6 class B : A()
-Unclassified 8 open class T : A()
+Unclassified 12 class C : A()
+Unclassified 14 class D : T()
+Unclassified 7 class B : A()
+Unclassified 9 open class T : A()

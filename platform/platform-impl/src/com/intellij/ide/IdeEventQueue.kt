@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "FunctionName")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "FunctionName", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide
 
@@ -40,7 +40,6 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.ui.ComponentUtil
-import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
@@ -92,7 +91,7 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   @VisibleForTesting
   @JvmField
-  val keyboardEventDispatched = AtomicInteger()
+  val keyboardEventDispatched: AtomicInteger = AtomicInteger()
 
   private var isInInputEvent = false
   var trueCurrentEvent: AWTEvent = InvocationEvent(this, EmptyRunnable.getInstance())
@@ -118,18 +117,36 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   @Internal
   @JvmField
-  val isDispatchingOnMainThread: Boolean = Thread.currentThread().name.contains("AppKit")
+  val isDispatchingOnMainThread: Boolean = Thread.currentThread().name.contains("AppKit").also {
+    if (it) System.setProperty("jb.dispatching.on.main.thread", "true")
+  }
 
   private var idleTracker: () -> Unit = {}
 
-  @RequiresEdt
-  internal fun setIdleTracker(value: () -> Unit) {
-    EDT.assertIsEdt()
-    idleTracker = value
+
+  private var testMode: Boolean? = null
+
+  init {
+    assert(isDispatchThread()) { Thread.currentThread() }
+    val systemEventQueue = Toolkit.getDefaultToolkit().systemEventQueue
+    assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
+    systemEventQueue.push(this)
+    EDT.updateEdt()
+    replaceDefaultKeyboardFocusManager()
+    addDispatcher(WindowsAltSuppressor(), null)
+    if (SystemInfoRt.isWindows && java.lang.Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
+      // 'Windows+Up' shortcut would maximize active dialog under Win 7+
+      addDispatcher(WindowsUpMaximizer(), null)
+    }
+    addDispatcher(EditingCanceller(), null)
+    //addDispatcher(new UIMouseTracker(), null);
+    abracadabraDaberBoreh()
+    if (java.lang.Boolean.parseBoolean(System.getProperty("skip.move.resize.events", "true"))) {
+      postEventListeners.add { skipMoveResizeEvents(it) } // hot path, do not use method reference
+    }
   }
 
   companion object {
-    @JvmStatic
     private val _instance by lazy { IdeEventQueue() }
 
     @JvmStatic
@@ -142,21 +159,27 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
+  @RequiresEdt
+  internal fun setIdleTracker(value: () -> Unit) {
+    EDT.assertIsEdt()
+    idleTracker = value
+  }
+
   /**
    * Executes given `runnable` after all focus activities are finished.
    *
    * @apiNote be careful with this method. It may run `runnable` synchronously in the context of the current thread, or may queue
    * runnable until the focus events queue is empty. In the latter case, runnable is going to be run while processing the last focus
-   * event from the queue, without any context, e.g. outside the write-safe context. Consider using safer [IdeFocusManager.doWhenFocusSettlesDown]
+   * event from the queue, without any context, e.g., outside the write-safe context. Consider using safer [IdeFocusManager.doWhenFocusSettlesDown]
    */
   fun executeWhenAllFocusEventsLeftTheQueue(runnable: Runnable) {
     ifFocusEventsInTheQueue(
       yes = { e ->
-        var runnables = runnablesWaitingFocusChange[e]
+        var runnables = runnablesWaitingFocusChange.get(e)
         if (runnables == null) {
           runnables = mutableListOf()
           runnables.add(runnable)
-          runnablesWaitingFocusChange[e] = runnables
+          runnablesWaitingFocusChange.put(e, runnables)
         }
         else {
           Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "We have already had a runnable for the event: $e" }
@@ -183,7 +206,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       yes(lastFocusGainedEvent)
     }
     else {
-      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "No focus gained event in the queue runnable is run on EDT if needed : " + no.javaClass.name }
+      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "No focus gained event in the queue runnable is run on EDT if needed : ${no.javaClass.name}" }
       EdtInvocationManager.invokeLaterIfNeeded(no)
     }
   }
@@ -209,12 +232,14 @@ class IdeEventQueue private constructor() : EventQueue() {
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use IdleFlow and coroutines")
   fun addIdleListener(runnable: Runnable, timeoutMillis: Int) {
+    @Suppress("DEPRECATION")
     IdleTracker.getInstance().addIdleListener(runnable = runnable, timeoutMillis = timeoutMillis)
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use IdleFlow and coroutines")
   fun removeIdleListener(runnable: Runnable) {
+    @Suppress("DEPRECATION")
     IdleTracker.getInstance().removeIdleListener(runnable)
   }
 
@@ -264,14 +289,9 @@ class IdeEventQueue private constructor() : EventQueue() {
   public override fun dispatchEvent(e: AWTEvent) {
     var event = e
 
-    if (isDispatchingOnMainThread && !isDispatchThread()) {
-      super.dispatchEvent(event)
-      return
-    }
-
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     val startedAt = System.currentTimeMillis()
-    val performanceWatcher = PerformanceWatcher.getInstanceOrNull()
+    val performanceWatcher = PerformanceWatcher.getInstanceIfCreated()
     val eventWatcher = EventWatcher.getInstanceOrNull()
     try {
       performanceWatcher?.edtEventStarted()
@@ -456,15 +476,14 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   override fun getNextEvent(): AWTEvent {
-    val event = if (appIsLoaded()) {
-      ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite<AWTEvent, InterruptedException> { super.getNextEvent() }
+    val applicationEx = ApplicationManagerEx.getApplicationEx()
+    val event = if (applicationEx != null && appIsLoaded()) {
+      applicationEx.runUnlockingIntendedWrite<AWTEvent, InterruptedException> { super.getNextEvent() }
     }
     else {
       super.getNextEvent()
     }
-    if (!(isDispatchingOnMainThread && isDispatchThread()) &&
-        isKeyboardEvent(event) &&
-        keyboardEventDispatched.incrementAndGet() > keyboardEventPosted.get()) {
+    if (isKeyboardEvent(event) && keyboardEventDispatched.incrementAndGet() > keyboardEventPosted.get()) {
       throw RuntimeException("$event; posted: $keyboardEventPosted; dispatched: $keyboardEventDispatched")
     }
     return event
@@ -490,7 +509,7 @@ class IdeEventQueue private constructor() : EventQueue() {
    * @param e event to be patched
    * @return new 'patched' event if you need, otherwise null
    *
-   * Note: As side effect this method tracks a special flag for 'Windows' key state that is valuable on itself
+   * Note: As a side effect, this method tracks a special flag for 'Windows' key state that is valuable in itself
    */
   private fun mapMetaState(e: AWTEvent): AWTEvent? {
     if (winMetaPressed) {
@@ -560,14 +579,14 @@ class IdeEventQueue private constructor() : EventQueue() {
       return
     }
 
-    val application = ApplicationManager.getApplication()
+    val application = ApplicationManagerEx.getApplicationEx()
     if (e is ComponentEvent && appIsLoaded && !application.isHeadlessEnvironment) {
       (application.serviceIfCreated<WindowManager>() as WindowManagerEx?)?.dispatchComponentEvent(e)
     }
     when (e) {
       is KeyEvent -> dispatchKeyEvent(e)
       is MouseEvent -> dispatchMouseEvent(e)
-      else -> application.withoutImplicitRead { defaultDispatchEvent(e) }
+      else -> application.runWithoutImplicitRead { defaultDispatchEvent(e) }
     }
   }
 
@@ -732,7 +751,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   private val isReady: Boolean
     get() = !keyboardBusy && keyEventDispatcher.isReady
 
-  fun maybeReady() {
+  internal fun maybeReady() {
     if (ready.isNotEmpty() && isReady) {
       invokeReadyHandlers()
     }
@@ -804,7 +823,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       }
     }
     if (event is InvocationEvent && !isCurrentlyUnderLocalId) {
-      // only do wrapping trickery with non-local events to preserve correct behaviour -
+      // only do wrapping trickery with non-local events to preserve correct behavior -
       // local events will get dispatched under local ID anyway
       val clientId = current
       super.postEvent(InvocationEvent(event.getSource()) { withClientId(clientId).use { dispatchEvent(event) } })
@@ -822,28 +841,6 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   @Deprecated("Does nothing currently")
   fun flushDelayedKeyEvents() {
-  }
-
-  private var testMode: Boolean? = null
-
-  init {
-    assert(isDispatchThread()) { Thread.currentThread() }
-    val systemEventQueue = Toolkit.getDefaultToolkit().systemEventQueue
-    assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
-    systemEventQueue.push(this)
-    EDT.updateEdt()
-    replaceDefaultKeyboardFocusManager()
-    addDispatcher(WindowsAltSuppressor(), null)
-    if (SystemInfoRt.isWindows && java.lang.Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
-      // 'Windows+Up' shortcut would maximize active dialog under Win 7+
-      addDispatcher(WindowsUpMaximizer(), null)
-    }
-    addDispatcher(EditingCanceller(), null)
-    //addDispatcher(new UIMouseTracker(), null);
-    abracadabraDaberBoreh()
-    if (SystemProperties.getBooleanProperty("skip.move.resize.events", true)) {
-      postEventListeners.add(::skipMoveResizeEvents)
-    }
   }
 
   private fun isTestMode(): Boolean {
@@ -902,6 +899,7 @@ typealias PostEventHook = (event: AWTEvent) -> Boolean
 
 private val DISPATCHER_EP = ExtensionPointName<IdeEventQueue.EventDispatcher>("com.intellij.ideEventQueueDispatcher")
 
+@Suppress("ConstPropertyName")
 private const val defaultEventWithWrite = true
 
 private val isSkipMetaPressOnLinux = java.lang.Boolean.getBoolean("keymap.skip.meta.press.on.linux")
@@ -1112,6 +1110,14 @@ private object SequencedEventNestedFieldHolder {
   }
 }
 
+/**
+ * This should've been an item in [IdeEventQueue.dispatchers],
+ * but [IdeEventQueue.dispatchByCustomDispatchers] is run after [IdePopupManager.dispatch]
+ * and after [processAppActivationEvent], which defeats the very purpose of this flag.
+ */
+@Internal
+internal var skipWindowDeactivationEvents: Boolean = false
+
 // we have to stop editing with <ESC> (if any) and consume the event to prevent any further processing (dialog closing etc.)
 private class EditingCanceller : IdeEventQueue.EventDispatcher {
   override fun dispatch(e: AWTEvent): Boolean {
@@ -1154,7 +1160,7 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
     val uiSettings = UISettings.instanceOrNull
     if (uiSettings == null ||
         !SystemInfoRt.isWindows ||
-        !Registry.`is`("actionSystem.win.suppressAlt") ||
+        !Registry.`is`("actionSystem.win.suppressAlt", true) ||
         !(uiSettings.hideToolStripes || uiSettings.presentationMode)) {
       return false
     }
@@ -1170,7 +1176,7 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
         dispatch = false
       }
       else if (component != null) {
-        SwingUtilities.invokeLater {
+        EventQueue.invokeLater {
           try {
             val window = ComponentUtil.getWindow(component)
             if (window == null || !window.isActive) {

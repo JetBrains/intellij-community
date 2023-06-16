@@ -30,3 +30,12 @@ interface StateStorage {
     return StateStorageChooserEx.Resolution.DO
   }
 }
+interface StateStorageChooserEx {
+  enum class Resolution {
+    DO,
+    SKIP,
+    CLEAR
+  }
+
+  fun getResolution(storage: Storage, operation: StateStorageOperation): Resolution
+}

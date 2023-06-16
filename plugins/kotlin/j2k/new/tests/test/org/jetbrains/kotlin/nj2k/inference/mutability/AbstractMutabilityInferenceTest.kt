@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.nj2k.inference.mutability
 
 import com.intellij.openapi.application.runWriteAction
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.formatter.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.CallExpressionConstraintCollector
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.CommonConstraintsCollector
@@ -75,5 +75,5 @@ abstract class AbstractMutabilityInferenceTest : AbstractConstraintCollectorTest
         deleteComments()
     }
 
-    override fun getProjectDescriptor() = descriptorByFileDirective(File(testDataPath, fileName()))
+    override fun getProjectDescriptor() = descriptorByFileDirective(File(testDataDirectory, fileName()))
 }

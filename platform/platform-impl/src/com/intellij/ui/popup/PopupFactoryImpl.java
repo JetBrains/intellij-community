@@ -26,6 +26,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
@@ -79,6 +80,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @Override
   public @NotNull <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<? extends T> list) {
+    LOG.assertTrue(list.isEmpty() || !(list.get(0) instanceof PsiElement) || ApplicationManager.getApplication().isUnitTestMode(),
+                   "Do not use PsiElement for popup model. See PsiTargetNavigator");
     JBList<T> jbList = new JBList<>(new CollectionListModel<>(list));
     PopupUtil.applyNewUIBackground(jbList);
     return new PopupChooserBuilder<>(jbList);
@@ -248,7 +251,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       registerAction("handleActionToggle1", KeyEvent.VK_SPACE, 0, new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          handleToggleAction();
+          handleToggleAction(createKeyEvent(e, KeyEvent.VK_SPACE));
         }
       });
 
@@ -303,7 +306,41 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
     }
 
+    @Override
+    protected void handleRightKeyPressed(@NotNull KeyEvent keyEvent) {
+      if (!handleRightOrLeftKeyPressed(keyEvent, true)) {
+        super.handleRightKeyPressed(keyEvent);
+      }
+    }
+
+    @Override
+    protected void handleLeftKeyPressed(@NotNull KeyEvent keyEvent) {
+      if (!handleRightOrLeftKeyPressed(keyEvent, false)) {
+        super.handleLeftKeyPressed(keyEvent);
+      }
+    }
+
+    private boolean handleRightOrLeftKeyPressed(@NotNull KeyEvent keyEvent, boolean isRightKey) {
+      ActionItem item = ObjectUtils.tryCast(getList().getSelectedValue(), ActionItem.class);
+      ActionPopupStep step = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
+      if (step != null && item != null && step.isSelectable(item) && item.isKeepPopupOpen() && item.myAction instanceof ToggleAction toggleAction) {
+        AnActionEvent event = step.createAnActionEvent(toggleAction, keyEvent);
+        toggleAction.setSelected(event, isRightKey);
+        step.updateStepItems(getList());
+        return true;
+      }
+      return false;
+    }
+
+    /**
+     * @deprecated Do not use or override this method. Use {@link ActionGroupPopup#handleToggleAction(InputEvent)} instead.
+     */
+    @Deprecated
     protected void handleToggleAction() {
+      handleToggleAction(null);
+    }
+
+    protected void handleToggleAction(@Nullable InputEvent inputEvent) {
       List<Object> selectedValues = getList().getSelectedValuesList();
       ActionPopupStep step = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
       if (step == null) return;
@@ -311,7 +348,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       for (Object value : selectedValues) {
         ActionItem item = ObjectUtils.tryCast(value, ActionItem.class);
         if (item != null && step.isSelectable(item) && item.getAction() instanceof Toggleable) {
-          step.performAction(item.getAction(), null);
+          step.performAction(item.getAction(), inputEvent);
           updateStep = true;
         }
       }
@@ -587,20 +624,24 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @Override
   public @NotNull BalloonBuilder createDialogBalloonBuilder(@NotNull JComponent content, @PopupTitle @Nullable String title) {
     final BalloonPopupBuilderImpl builder = new BalloonPopupBuilderImpl(myStorage, content);
+    return fillDialogBalloonBuilder(builder, title);
+  }
+
+  protected @NotNull BalloonBuilder fillDialogBalloonBuilder(BalloonBuilder builder, @PopupTitle @Nullable String title) {
     final Color bg = UIManager.getColor("Panel.background");
     final Color borderOriginal = JBColor.DARK_GRAY;
     final Color border = ColorUtil.toAlpha(borderOriginal, 75);
-    builder
+    return builder
       .setDialogMode(true)
       .setTitle(title)
       .setAnimationCycle(200)
-      .setFillColor(bg).setBorderColor(border).setHideOnClickOutside(false)
+      .setFillColor(bg)
+      .setBorderColor(border)
+      .setHideOnClickOutside(false)
       .setHideOnKeyOutside(false)
       .setHideOnAction(false)
       .setCloseButtonEnabled(true)
       .setShadow(true);
-
-    return builder;
   }
 
   @Override
@@ -629,11 +670,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
     JLabel label = new JLabel();
     final JPanel content = new NonOpaquePanel(new BorderLayout((int)(label.getIconTextGap() * 1.5), (int)(label.getIconTextGap() * 1.5)));
 
-    final NonOpaquePanel textWrapper = new NonOpaquePanel(new GridBagLayout());
+    final NonOpaquePanel textWrapper = new NonOpaquePanel(new BorderLayout());
     JScrollPane scrolledText = ScrollPaneFactory.createScrollPane(text, true);
     scrolledText.setBackground(fillColor);
     scrolledText.getViewport().setBackground(fillColor);
-    textWrapper.add(scrolledText);
+    textWrapper.add(scrolledText, BorderLayout.CENTER);
     content.add(textWrapper, BorderLayout.CENTER);
     if (icon != null) {
       final NonOpaquePanel north = new NonOpaquePanel(new BorderLayout());
@@ -726,8 +767,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final boolean myMnemonicsEnabled;
     private final boolean myHonorActionMnemonics;
 
-    private final boolean myPrependWithSeparator;
-    private final @NlsContexts.Separator String mySeparatorText;
+    boolean myPrependWithSeparator;
+    private @NlsContexts.Separator String mySeparatorText;
 
     @NotNull private final List<InlineActionItem> myInlineActions;
 
@@ -853,6 +894,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     public @NlsContexts.Separator String getSeparatorText() {
       return mySeparatorText;
+    }
+
+    public void setSeparatorText(@NlsContexts.Separator String separatorText) {
+      myPrependWithSeparator = separatorText != null;
+      mySeparatorText = separatorText;
     }
 
     public boolean isEnabled() { return myIsEnabled; }

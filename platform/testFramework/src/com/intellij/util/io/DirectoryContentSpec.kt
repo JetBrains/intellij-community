@@ -33,6 +33,16 @@ inline fun zipFile(content: DirectoryContentBuilder.() -> Unit): DirectoryConten
 }
 
 /**
+ * Builds a data structure specifying content (files, their content, sub-directories, archives) of a JAR file. It can be used to either check
+ * that a given zip file matches this specification or to generate a zip file accordingly to the specification.
+ */
+inline fun jarFile(content: DirectoryContentBuilder.() -> Unit): DirectoryContentSpec {
+  val builder = DirectoryContentBuilderImpl(JarSpec())
+  builder.content()
+  return builder.result
+}
+
+/**
  * Builds [DirectoryContentSpec] structure by an existing directory. Can be used to check that generated directory matched expected data
  * from testData directory.
  * @param originalDir point to an original directory located in the project sources from which [dir] was built; will be used to allow fixing

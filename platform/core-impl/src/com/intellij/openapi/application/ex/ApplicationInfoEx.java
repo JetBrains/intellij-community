@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -22,26 +22,29 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getAboutImageUrl();
 
-  /**
-   * @deprecated use {@link #getSmallApplicationSvgIconUrl()} instead
-   */
+  /** @deprecated please use {@link #getSmallApplicationSvgIconUrl()} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public abstract @NotNull String getSmallIconUrl();
 
   /**
-   * Return path to an SVG file containing icon of the current version of the product. The path is a relative path inside the product's JAR
-   * files. It may return a special icon for EAP builds.
+   * Returns a path to an SVG icon of the product.
+   * The path is a relative path inside the product's JAR files.
+   * Please note that release and EAP builds may have different icons.
    */
-  public abstract @Nullable String getApplicationSvgIconUrl();
+  public abstract @NotNull String getApplicationSvgIconUrl();
 
   /**
-   * Return path to an SVG file containing a variant of {@link #getApplicationSvgIconUrl() the product icon} which is suitable for 16x16 images.
+   * Returns a path to an SVG file,
+   * containing a variant of {@link #getApplicationSvgIconUrl() the product icon} which is suitable for 16x16 images.
    */
-  public abstract @Nullable String getSmallApplicationSvgIconUrl();
+  public abstract @NotNull String getSmallApplicationSvgIconUrl();
 
   public abstract String getToolWindowIconUrl();
 
+  /** @deprecated please use {@link #getApplicationSvgIconUrl()} instead. */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public abstract @Nullable String getWelcomeScreenLogoUrl();
 
   public abstract boolean showLicenseeInfo();
@@ -54,6 +57,9 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    * Returns {@code true} only for EAP builds of "major" releases (i.e. for {@code 2018.3}, but not for {@code 2018.3.1}).
    */
   public abstract boolean isMajorEAP();
+
+  @ApiStatus.Experimental
+  public abstract boolean isPreview();
 
   public abstract @Nullable UpdateUrls getUpdateUrls();
 
@@ -83,8 +89,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract String getWebHelpUrl();
 
   public abstract String getWhatsNewUrl();
-
-  public abstract String getWhatsNewEapUrl();
 
   public abstract boolean isShowWhatsNewOnUpdate();
 
@@ -131,28 +135,17 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
     return "JetBrains".equals(getShortCompanyName());
   }
 
-  public abstract @NotNull List<ProgressSlide> getProgressSlides();
-
-  public abstract int getProgressHeight();
-
-  public abstract int getProgressY();
-
-  public abstract long getProgressColor();
-
   public abstract long getCopyrightForeground();
-
-  public abstract @Nullable String getProgressTailIcon();
 
   public abstract @NotNull BuildNumber getApiVersionAsNumber();
 
   public abstract @NotNull List<PluginId> getEssentialPluginsIds();
 
-  /**
-   * @deprecated Not used anymore.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
   public abstract @Nullable String getDefaultLightLaf();
 
+  public abstract @Nullable String getDefaultClassicLightLaf();
+
   public abstract @Nullable String getDefaultDarkLaf();
+
+  public abstract @Nullable String getDefaultClassicDarkLaf();
 }

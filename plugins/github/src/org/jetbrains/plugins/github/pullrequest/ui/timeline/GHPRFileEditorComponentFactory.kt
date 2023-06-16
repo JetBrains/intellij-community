@@ -10,8 +10,10 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -121,7 +123,8 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     val itemComponentFactory = createItemComponentFactory(
       project,
       editor.detailsData, editor.commentsData, editor.reviewData,
-      reviewThreadsModelsProvider, editor.avatarIconsProvider,
+      reviewThreadsModelsProvider,
+      editor.htmlImageLoader, editor.avatarIconsProvider,
       suggestedChangesHelper,
       editor.securityService.ghostUser,
       editor.securityService.currentUser
@@ -208,7 +211,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     val actionManager = ActionManager.getInstance()
     actionManager.getAction("Github.PullRequest.Timeline.Update").registerCustomShortcutSet(scrollPane, uiDisposable)
     val groupId = "Github.PullRequest.Timeline.Popup"
-    PopupHandler.installPopupMenu(scrollPane, groupId, groupId)
+    PopupHandler.installPopupMenu(scrollPane, groupId, ActionPlaces.POPUP)
 
     return mainPanel
   }
@@ -237,6 +240,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
                                          commentsDataProvider: GHPRCommentsDataProvider,
                                          reviewDataProvider: GHPRReviewDataProvider,
                                          reviewThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
+                                         htmlImageLoader: AsyncHtmlImageLoader,
                                          avatarIconsProvider: GHAvatarIconsProvider,
                                          suggestedChangeHelper: GHPRSuggestedChangeHelper,
                                          ghostUser: GHUser,
@@ -249,6 +253,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       detailsDataProvider,
       commentsDataProvider,
       reviewDataProvider,
+      htmlImageLoader,
       avatarIconsProvider,
       reviewThreadsModelsProvider,
       selectInToolWindowHelper,

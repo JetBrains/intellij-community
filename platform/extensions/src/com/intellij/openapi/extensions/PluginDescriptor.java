@@ -70,6 +70,8 @@ public interface PluginDescriptor {
 
   @Nullable @NlsSafe String getCategory();
 
+  default @Nullable @Nls String getDisplayCategory() { return getCategory(); }
+
   @Nullable String getVendorEmail();
 
   @Nullable String getVendorUrl();

@@ -30,6 +30,7 @@ internal object DebuggerPreferenceKeys {
     val DESCRIPTOR_VIEW_OPTIONS by debuggerPreferenceKey("FULL")
 
     val ATTACH_LIBRARY by debuggerPreferenceKey(emptyList<String>())
+    val ENABLED_LANGUAGE_FEATURE by debuggerPreferenceKey(emptyList<String>())
 
     val SKIP by debuggerPreferenceKey(emptyList<String>())
     val WATCH_FIELD_ACCESS by debuggerPreferenceKey(true)

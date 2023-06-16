@@ -3184,6 +3184,81 @@
   <item name="java.util.List java.util.Iterator&lt;E&gt; iterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.List java.util.List&lt;E&gt; copyOf(java.util.Collection&lt;? extends E&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List java.util.List&lt;E&gt; of()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List java.util.List&lt;E&gt; of(E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List java.util.List&lt;E&gt; of(E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List java.util.List&lt;E&gt; of(E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List java.util.List&lt;E&gt; of(E, E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List java.util.List&lt;E&gt; of(E, E, E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List java.util.List&lt;E&gt; of(E, E, E, E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List java.util.List&lt;E&gt; of(E, E, E, E, E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List java.util.List&lt;E&gt; of(E, E, E, E, E, E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List java.util.List&lt;E&gt; of(E, E, E, E, E, E, E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List java.util.List&lt;E&gt; of(E, E, E, E, E, E, E, E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List java.util.List&lt;E&gt; of(E...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.util.List java.util.List&lt;E&gt; subList(int, int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
     <annotation name='org.intellij.lang.annotations.Flow'>
@@ -3324,6 +3399,87 @@
       <val name="targetIsContainer" val="true" />
     </annotation>
     <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map java.util.Map&lt;K,V&gt; copyOf(java.util.Map&lt;? extends K,? extends V&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map java.util.Map&lt;K,V&gt; of()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map java.util.Map&lt;K,V&gt; of(K, V)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map java.util.Map&lt;K,V&gt; of(K, V, K, V)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map java.util.Map&lt;K,V&gt; of(K, V, K, V, K, V)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map java.util.Map&lt;K,V&gt; of(K, V, K, V, K, V, K, V)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map java.util.Map&lt;K,V&gt; of(K, V, K, V, K, V, K, V, K, V)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map java.util.Map&lt;K,V&gt; of(K, V, K, V, K, V, K, V, K, V, K, V)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map java.util.Map&lt;K,V&gt; of(K, V, K, V, K, V, K, V, K, V, K, V, K, V)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_,_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map java.util.Map&lt;K,V&gt; of(K, V, K, V, K, V, K, V, K, V, K, V, K, V, K, V)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map java.util.Map&lt;K,V&gt; of(K, V, K, V, K, V, K, V, K, V, K, V, K, V, K, V, K, V)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map java.util.Map&lt;K,V&gt; of(K, V, K, V, K, V, K, V, K, V, K, V, K, V, K, V, K, V, K, V)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map java.util.Map&lt;K,V&gt; ofEntries(java.util.Map.Entry&lt;? extends K,? extends V&gt;...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map java.util.Map.Entry&lt;K,V&gt; entry(K, V)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_-&gt;new&quot;"/>
       <val name="pure" val="true"/>
     </annotation>
   </item>
@@ -3785,6 +3941,81 @@
   </item>
   <item name='java.util.Set java.util.Iterator&lt;E&gt; iterator()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set java.util.Set&lt;E&gt; copyOf(java.util.Collection&lt;? extends E&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Set java.util.Set&lt;E&gt; of()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+  <item name='java.util.Set java.util.Set&lt;E&gt; of(E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Set java.util.Set&lt;E&gt; of(E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Set java.util.Set&lt;E&gt; of(E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Set java.util.Set&lt;E&gt; of(E, E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Set java.util.Set&lt;E&gt; of(E, E, E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Set java.util.Set&lt;E&gt; of(E, E, E, E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Set java.util.Set&lt;E&gt; of(E, E, E, E, E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Set java.util.Set&lt;E&gt; of(E, E, E, E, E, E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Set java.util.Set&lt;E&gt; of(E, E, E, E, E, E, E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Set java.util.Set&lt;E&gt; of(E, E, E, E, E, E, E, E, E, E)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_,_,_,_,_,_,_-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Set java.util.Set&lt;E&gt; of(E...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.SortedMap java.util.SortedMap&lt;K,V&gt; headMap(K)">
     <annotation name="org.jetbrains.annotations.NotNull" />

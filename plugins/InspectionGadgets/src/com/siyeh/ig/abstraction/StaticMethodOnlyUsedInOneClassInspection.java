@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.abstraction;
 
 import com.intellij.analysis.AnalysisScope;
@@ -6,12 +6,12 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -28,17 +28,16 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseSharedLocalInspection;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RefactoringInspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UElement;
 
-import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspection {
 
@@ -196,6 +195,9 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
                                           ? ((RefMethod)refEntity).getUastElement().getUastAnchor()
                                           : ((RefField)refEntity).getUastElement().getUastAnchor();
                   if (anchor == null) return false;
+
+                  if (isInGeneratedSource(containingClass)) return false;
+
                   final PsiElement identifier = anchor.getSourcePsi();
                   final ProblemDescriptor problemDescriptor = createProblemDescriptor(manager, identifier, containingClass);
                   problemDescriptionsProcessor.addProblemElement(refEntity, problemDescriptor);
@@ -214,6 +216,17 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       }
     });
 
+    return false;
+  }
+
+  private static boolean isInGeneratedSource(PsiClass containingClass) {
+    if (containingClass.getContainingFile() != null && containingClass.getContainingFile().getVirtualFile() != null) {
+      boolean isGeneratedSource = JavaProjectRootsUtil.isInGeneratedCode(containingClass.getContainingFile().getVirtualFile(),
+                                                                         containingClass.getProject());
+      if (isGeneratedSource) {
+        return true;
+      }
+    }
     return false;
   }
 
@@ -347,7 +360,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
 
     @Override
     @Nullable
-    protected InspectionGadgetsFix buildFix(Object... infos) {
+    protected LocalQuickFix buildFix(Object... infos) {
       final PsiMember member = (PsiMember)infos[0];
       final PsiClass usageClass = (PsiClass)infos[1];
       return new StaticMethodOnlyUsedInOneClassFix(usageClass, member instanceof PsiMethod);
@@ -440,6 +453,10 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
         if (containingClass == null || usageClass.equals(containingClass)) {
           return null;
         }
+        if (isInGeneratedSource(usageClass)) {
+          return null;
+        }
+
         if (mySettingsDelegate.ignoreTestClasses && TestUtils.isInTestCode(usageClass)) {
           return null;
         }

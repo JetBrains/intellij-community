@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.diff;
 
 import com.intellij.openapi.util.Ref;
@@ -51,8 +51,7 @@ public final class DiffTree<OT, NT> {
     NOT_EQUAL, // 100% different
   }
 
-  @NotNull
-  private static <OT, NT> DiffTreeChangeBuilder<OT, NT> emptyConsumer() {
+  private static @NotNull <OT, NT> DiffTreeChangeBuilder<OT, NT> emptyConsumer() {
     //noinspection unchecked
     return (DiffTreeChangeBuilder<OT, NT>)EMPTY_CONSUMER;
   }
@@ -68,8 +67,7 @@ public final class DiffTree<OT, NT> {
     public void nodeInserted(@NotNull Object oldParent, @NotNull Object newNode, int pos) { }
   };
 
-  @NotNull
-  private CompareResult build(@NotNull OT oldNode, @NotNull NT newNode, int level, @NotNull DiffTreeChangeBuilder<? super OT, ? super NT> consumer) {
+  private @NotNull CompareResult build(@NotNull OT oldNode, @NotNull NT newNode, int level, @NotNull DiffTreeChangeBuilder<? super OT, ? super NT> consumer) {
     if (level == myNewChildrenLists.size()) {
       myNewChildrenLists.add(new Ref<>());
       myOldChildrenLists.add(new Ref<>());
@@ -274,8 +272,7 @@ public final class DiffTree<OT, NT> {
     return CharArrayUtil.regionMatches(myOldText, oldStart, oldEnd, myNewText, newStart, newEnd);
   }
 
-  @NotNull
-  private CompareResult looksEqual(OT oldChild1, NT newChild1) {
+  private @NotNull CompareResult looksEqual(OT oldChild1, NT newChild1) {
     if (oldChild1 == null || newChild1 == null || !myComparator.typesEqual(oldChild1, newChild1)) return CompareResult.NOT_EQUAL;
     ThreeState ret = myComparator.deepEqual(oldChild1, newChild1);
     if (ret == ThreeState.YES) return CompareResult.EQUAL;

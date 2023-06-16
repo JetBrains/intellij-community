@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.project.Project
@@ -13,7 +13,6 @@ import com.intellij.ui.content.TabDescriptor
 import com.intellij.ui.content.TabGroupId
 import com.intellij.util.Consumer
 import com.intellij.util.ContentUtilEx
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogUi
@@ -21,7 +20,6 @@ import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.JComponent
@@ -84,7 +82,7 @@ object VcsLogContentUtil {
       return
     }
 
-    val runConsumer = Runnable { VcsLogContentProvider.getInstance(project)!!.executeOnMainUiCreated(consumer) }
+    val runConsumer = Runnable { getVcsLogContentProvider(project)!!.executeOnMainUiCreated(consumer) }
     if (!window.isVisible) {
       window.activate(runConsumer)
     }

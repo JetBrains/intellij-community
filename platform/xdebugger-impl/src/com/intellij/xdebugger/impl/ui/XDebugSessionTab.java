@@ -9,6 +9,7 @@ import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.UIExperiment;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.ViewImpl;
@@ -74,7 +75,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       }
     }
     XDebugSessionTab tab;
-    if (Registry.is("debugger.new.tool.window.layout")) {
+    if (UIExperiment.isNewDebuggerUIEnabled() || XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(session.getDebugProcess())) {
       if (XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess())) {
         tab = new XDebugSessionTab3(session, icon, environment);
       }
@@ -178,7 +179,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   protected void addVariablesAndWatches(@NotNull XDebugSessionImpl session) {
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
     if (!myWatchesInVariables) {
-      myUi.addContent(createWatchesContent(session), 0, PlaceInGrid.right, false);
+      myUi.addContent(createWatchesContent(session, null), 0, PlaceInGrid.right, false);
     }
   }
 
@@ -247,8 +248,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return result;
   }
 
-  protected Content createWatchesContent(@NotNull XDebugSessionImpl session) {
-    myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables);
+  protected Content createWatchesContent(@NotNull XDebugSessionImpl session, @Nullable XWatchesViewImpl watchesView) {
+    myWatchesView = watchesView != null ? watchesView : new XWatchesViewImpl(session, myWatchesInVariables);
     registerView(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getPanel(),
                                                 XDebuggerBundle.message("debugger.session.tab.watches.title"), null, myWatchesView.getDefaultFocusedComponent());

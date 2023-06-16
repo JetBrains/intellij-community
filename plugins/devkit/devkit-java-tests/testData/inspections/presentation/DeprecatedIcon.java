@@ -1,5 +1,5 @@
 import com.intellij.ide.presentation.Presentation;
 
-@Presentation(icon = "<error descr="'Chrome16' is deprecated">AllIcons.Xml.Browsers.Chrome16</error>")
+@Presentation(icon = "<error descr="'Icon' is deprecated">AllIcons.Icon</error>")
 public class DeprecatedIcon {
 }

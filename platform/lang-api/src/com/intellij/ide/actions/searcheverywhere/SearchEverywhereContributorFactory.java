@@ -19,17 +19,8 @@ public interface SearchEverywhereContributorFactory<Item> {
 
   /**
    * Returns 'true' if the contributor is available and should be created
-   * @deprecated see {@link #isAvailable(Project)}
-   */
-  @Deprecated(forRemoval = true)
-  default boolean isAvailable() {
-    return true;
-  }
-
-  /**
-   * Returns 'true' if the contributor is available and should be created
    */
   default boolean isAvailable(Project project) {
-    return isAvailable();
+    return true;
   }
 }

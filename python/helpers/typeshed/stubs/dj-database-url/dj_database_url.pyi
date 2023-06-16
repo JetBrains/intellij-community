@@ -1,6 +1,7 @@
 from typing import Any
 from typing_extensions import TypedDict
 
+DJANGO_VERSION: tuple[str | int, ...] | None  # None if django is not installed
 DEFAULT_ENV: str
 SCHEMES: dict[str, str]
 

@@ -1,10 +1,10 @@
 // MODE: inheritors
 
-<# block [ 2 Inheritors] #>
+/*<# block [ 2 Inheritors] #>*/
 abstract class SomeClass {
-<# block [     1 Override] #>
+/*<# block [     1 Override] #>*/
     open fun someFun() = ""
-<# block [     2 Implementations] #>
+/*<# block [     2 Implementations] #>*/
     abstract fun someAbstractFun()
 }
 

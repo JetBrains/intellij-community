@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.Contract;
@@ -21,18 +21,27 @@ public final class BitUtil {
     return (flags & mask) == mask;
   }
 
+  /**
+   * @return {@code value} with the bit corresponding to the {@code mask} set (if setBit is true) or cleared (if setBit is false)
+   */
   @Contract(pure = true)
   public static byte set(byte value, byte mask, boolean setBit) {
     assertOneBitMask(mask);
     return (byte)(setBit ? value | mask : value & ~mask);
   }
 
+  /**
+   * @return {@code value} with the bit corresponding to the {@code mask} set (if setBit is true) or cleared (if setBit is false)
+   */
   @Contract(pure = true)
   public static int set(int value, int mask, boolean setBit) {
     assertOneBitMask(mask);
     return setBit ? value | mask : value & ~mask;
   }
 
+  /**
+   * @return {@code value} with the bit corresponding to the {@code mask} set (if setBit is true) or cleared (if setBit is false)
+   */
   @Contract(pure = true)
   public static long set(long value, long mask, boolean setBit) {
     assertOneBitMask(mask);
@@ -63,8 +72,7 @@ public final class BitUtil {
     assert (mask & mask - 1) == 0 : invalidMaskError(mask);
   }
 
-  @NotNull
-  private static String invalidMaskError(long mask) {
+  private static @NotNull String invalidMaskError(long mask) {
     return "Mask must have only one bit set, but got: " + Long.toBinaryString(mask);
   }
 }

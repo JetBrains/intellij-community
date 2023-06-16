@@ -4,38 +4,46 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.nio.file.Path;
 
-final class PersistentFSPaths {
+public final class PersistentFSPaths {
+  /** @deprecated remove as soon as {@link VfsDependentEnum} class is removed */
+  @Deprecated
   @NonNls private static final String DEPENDENT_PERSISTENT_LIST_START_PREFIX = "vfs_enum_";
+
   @NonNls private static final String ROOTS_START_PREFIX = "roots_";
   static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
 
   @NotNull
-  private final String myCachesDir;
+  private final Path storagesDir;
 
-  PersistentFSPaths(@NotNull String dir) {
-    myCachesDir = dir;
+  PersistentFSPaths(final @NotNull Path storagesDir) {
+    this.storagesDir = storagesDir.toAbsolutePath();
   }
 
-  @NotNull File getCorruptionMarkerFile() {
-    return new File(new File(myCachesDir), "corruption.marker");
+  public @NotNull Path getCorruptionMarkerFile() {
+    return storagesDir.resolve("corruption.marker");
   }
 
-  @NotNull File getVfsEnumBaseFile() {
-    return new File(new File(myCachesDir), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
+  //@NotNull File getVfsEnumBaseFile() {
+  //  return new File(new File(myCachesDir), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
+  //}
+
+  /** @deprecated remove as soon as {@link VfsDependentEnum} is removed */
+  @Deprecated
+  public @NotNull Path getVfsEnumFile(@NotNull String enumName) {
+    return storagesDir.resolve(DEPENDENT_PERSISTENT_LIST_START_PREFIX + enumName + VFS_FILES_EXTENSION);
   }
 
-  @NotNull Path getVfsEnumFile(@NotNull String enumName) {
-    return Path.of(myCachesDir).resolve(DEPENDENT_PERSISTENT_LIST_START_PREFIX + enumName + VFS_FILES_EXTENSION);
+  public @NotNull Path getRootsBaseFile() {
+    return storagesDir.resolve(ROOTS_START_PREFIX);
   }
 
-  @NotNull File getRootsBaseFile() {
-    return new File(new File(myCachesDir), ROOTS_START_PREFIX);
+  public @NotNull Path getRootsStorage(@NotNull String storageName) {
+    return storagesDir.resolve(ROOTS_START_PREFIX + storageName + VFS_FILES_EXTENSION);
   }
 
-  @NotNull Path getRootsStorage(@NotNull String storageName) {
-    return Path.of(myCachesDir).resolve(ROOTS_START_PREFIX + storageName + VFS_FILES_EXTENSION);
+  public @NotNull Path storagePath(final @NotNull String storageName) {
+    return storagesDir.resolve(storageName + VFS_FILES_EXTENSION);
   }
 }

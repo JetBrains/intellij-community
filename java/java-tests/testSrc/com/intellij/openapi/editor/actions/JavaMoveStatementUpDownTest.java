@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.EditorTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaMoveStatementUpDownTest extends MoveStatementUpDownTestBase {
@@ -134,7 +135,7 @@ public class JavaMoveStatementUpDownTest extends MoveStatementUpDownTestBase {
 
   public void testMoveCollapsedMethods() {
     myBeforeMoveTask = () -> {
-      CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
+      EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
       getEditor().getFoldingModel().runBatchFoldingOperation(() -> {
         for (FoldRegion foldRegion : getEditor().getFoldingModel().getAllFoldRegions()) {
           foldRegion.setExpanded(false);

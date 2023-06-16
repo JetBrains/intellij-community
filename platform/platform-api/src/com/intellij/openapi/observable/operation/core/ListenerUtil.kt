@@ -11,8 +11,8 @@ import com.intellij.util.ConcurrencyUtil
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.whenEventHappened
  */
-fun ObservableOperationTrace.whenOperationScheduled(listener: () -> Unit) = whenOperationScheduled(null, listener)
-fun ObservableOperationTrace.whenOperationScheduled(parentDisposable: Disposable?, listener: () -> Unit) =
+fun ObservableOperationTrace.whenOperationScheduled(listener: () -> Unit): Unit = whenOperationScheduled(null, listener)
+fun ObservableOperationTrace.whenOperationScheduled(parentDisposable: Disposable?, listener: () -> Unit): Unit =
   scheduleObservable.whenEventHappened(parentDisposable, listener)
 
 /**
@@ -20,8 +20,8 @@ fun ObservableOperationTrace.whenOperationScheduled(parentDisposable: Disposable
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.whenEventHappened
  */
-fun ObservableOperationTrace.whenOperationScheduled(ttl: Int, listener: () -> Unit) = whenOperationScheduled(ttl, null, listener)
-fun ObservableOperationTrace.whenOperationScheduled(ttl: Int, parentDisposable: Disposable?, listener: () -> Unit) =
+fun ObservableOperationTrace.whenOperationScheduled(ttl: Int, listener: () -> Unit): Unit = whenOperationScheduled(ttl, null, listener)
+fun ObservableOperationTrace.whenOperationScheduled(ttl: Int, parentDisposable: Disposable?, listener: () -> Unit): Unit =
   scheduleObservable.whenEventHappened(ttl, parentDisposable, listener)
 
 /**
@@ -29,8 +29,8 @@ fun ObservableOperationTrace.whenOperationScheduled(ttl: Int, parentDisposable: 
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.onceWhenEventHappened
  */
-fun ObservableOperationTrace.onceWhenOperationScheduled(listener: () -> Unit) = onceWhenOperationScheduled(null, listener)
-fun ObservableOperationTrace.onceWhenOperationScheduled(parentDisposable: Disposable?, listener: () -> Unit) =
+fun ObservableOperationTrace.onceWhenOperationScheduled(listener: () -> Unit): Unit = onceWhenOperationScheduled(null, listener)
+fun ObservableOperationTrace.onceWhenOperationScheduled(parentDisposable: Disposable?, listener: () -> Unit): Unit =
   scheduleObservable.onceWhenEventHappened(parentDisposable, listener)
 
 /**
@@ -38,8 +38,8 @@ fun ObservableOperationTrace.onceWhenOperationScheduled(parentDisposable: Dispos
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.whenEventHappened
  */
-fun ObservableOperationTrace.whenOperationStarted(listener: () -> Unit) = whenOperationStarted(null, listener)
-fun ObservableOperationTrace.whenOperationStarted(parentDisposable: Disposable?, listener: () -> Unit) =
+fun ObservableOperationTrace.whenOperationStarted(listener: () -> Unit): Unit = whenOperationStarted(null, listener)
+fun ObservableOperationTrace.whenOperationStarted(parentDisposable: Disposable?, listener: () -> Unit): Unit =
   startObservable.whenEventHappened(parentDisposable, listener)
 
 /**
@@ -47,8 +47,8 @@ fun ObservableOperationTrace.whenOperationStarted(parentDisposable: Disposable?,
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.whenEventHappened
  */
-fun ObservableOperationTrace.whenOperationStarted(ttl: Int, listener: () -> Unit) = whenOperationStarted(ttl, null, listener)
-fun ObservableOperationTrace.whenOperationStarted(ttl: Int, parentDisposable: Disposable?, listener: () -> Unit) =
+fun ObservableOperationTrace.whenOperationStarted(ttl: Int, listener: () -> Unit): Unit = whenOperationStarted(ttl, null, listener)
+fun ObservableOperationTrace.whenOperationStarted(ttl: Int, parentDisposable: Disposable?, listener: () -> Unit): Unit =
   startObservable.whenEventHappened(ttl, parentDisposable, listener)
 
 /**
@@ -56,8 +56,8 @@ fun ObservableOperationTrace.whenOperationStarted(ttl: Int, parentDisposable: Di
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.onceWhenEventHappened
  */
-fun ObservableOperationTrace.onceWhenOperationStarted(listener: () -> Unit) = onceWhenOperationStarted(null, listener)
-fun ObservableOperationTrace.onceWhenOperationStarted(parentDisposable: Disposable?, listener: () -> Unit) =
+fun ObservableOperationTrace.onceWhenOperationStarted(listener: () -> Unit): Unit = onceWhenOperationStarted(null, listener)
+fun ObservableOperationTrace.onceWhenOperationStarted(parentDisposable: Disposable?, listener: () -> Unit): Unit =
   startObservable.onceWhenEventHappened(parentDisposable, listener)
 
 /**
@@ -65,8 +65,8 @@ fun ObservableOperationTrace.onceWhenOperationStarted(parentDisposable: Disposab
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.whenEventHappened
  */
-fun ObservableOperationTrace.whenOperationFinished(listener: () -> Unit) = whenOperationFinished(null, listener)
-fun ObservableOperationTrace.whenOperationFinished(parentDisposable: Disposable?, listener: () -> Unit) =
+fun ObservableOperationTrace.whenOperationFinished(listener: () -> Unit): Unit = whenOperationFinished(null, listener)
+fun ObservableOperationTrace.whenOperationFinished(parentDisposable: Disposable?, listener: () -> Unit): Unit =
   finishObservable.whenEventHappened(parentDisposable, listener)
 
 /**
@@ -74,8 +74,8 @@ fun ObservableOperationTrace.whenOperationFinished(parentDisposable: Disposable?
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.whenEventHappened
  */
-fun ObservableOperationTrace.whenOperationFinished(ttl: Int, listener: () -> Unit) = whenOperationFinished(ttl, null, listener)
-fun ObservableOperationTrace.whenOperationFinished(ttl: Int, parentDisposable: Disposable?, listener: () -> Unit) =
+fun ObservableOperationTrace.whenOperationFinished(ttl: Int, listener: () -> Unit): Unit = whenOperationFinished(ttl, null, listener)
+fun ObservableOperationTrace.whenOperationFinished(ttl: Int, parentDisposable: Disposable?, listener: () -> Unit): Unit =
   finishObservable.whenEventHappened(ttl, parentDisposable, listener)
 
 /**
@@ -83,13 +83,13 @@ fun ObservableOperationTrace.whenOperationFinished(ttl: Int, parentDisposable: D
  *
  * @see com.intellij.openapi.observable.dispatcher.SingleEventDispatcher.onceWhenEventHappened
  */
-fun ObservableOperationTrace.onceWhenOperationFinished(listener: () -> Unit) = onceWhenOperationFinished(null, listener)
-fun ObservableOperationTrace.onceWhenOperationFinished(parentDisposable: Disposable?, listener: () -> Unit) =
+fun ObservableOperationTrace.onceWhenOperationFinished(listener: () -> Unit): Unit = onceWhenOperationFinished(null, listener)
+fun ObservableOperationTrace.onceWhenOperationFinished(parentDisposable: Disposable?, listener: () -> Unit): Unit =
   finishObservable.onceWhenEventHappened(parentDisposable, listener)
 
-fun ObservableOperationTrace.withScheduledOperation(action: () -> Unit) = withScheduledOperation(null, action)
-fun ObservableOperationTrace.withStartedOperation(action: () -> Unit) = withStartedOperation(null, action)
-fun ObservableOperationTrace.withCompletedOperation(listener: () -> Unit) = withCompletedOperation(null, listener)
+fun ObservableOperationTrace.withScheduledOperation(action: () -> Unit): Unit = withScheduledOperation(null, action)
+fun ObservableOperationTrace.withStartedOperation(action: () -> Unit): Unit = withStartedOperation(null, action)
+fun ObservableOperationTrace.withCompletedOperation(listener: () -> Unit): Unit = withCompletedOperation(null, listener)
 
 /**
  * Executed [listener] if or when operation is scheduled.

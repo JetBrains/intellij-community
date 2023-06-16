@@ -5,6 +5,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.filters.CompositeFilter;
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.Filter;
@@ -12,7 +13,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.FileUrlProvider;
-import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
+import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction;
 import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup;
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * Use {@link SMRunnerConsolePropertiesProvider} so importer {@link AbstractImportTestsAction.ImportRunProfile#ImportRunProfile(VirtualFile, Project)}
  * would be able to create properties by read configuration and test navigation, rerun failed tests etc. would work on imported results
  */
-public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParserEx {
+public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParser {
   private final RunProfile myConfiguration;
   @NotNull private final String myTestFrameworkName;
   private final CompositeFilter myCustomFilter;
@@ -216,5 +217,16 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
    */
   public boolean isUndefined() {
     return false;
+  }
+
+  @Override
+  public @NotNull String getWindowId() {
+    if (myConfiguration instanceof RunConfiguration configuration) {
+      RunDashboardManager manager = RunDashboardManager.getInstance(getProject());
+      if (manager.isShowInDashboard(configuration)) {
+        return manager.getToolWindowId();
+      }
+    }
+    return super.getWindowId();
   }
 }

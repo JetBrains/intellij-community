@@ -13,7 +13,7 @@ class PyOnDemandValueEvaluator(linkText: @Nls String,
   override fun startEvaluation(callback: XFullValueEvaluationCallback) {
     node.setFullValueEvaluator(PyLoadingValueEvaluator(PydevBundle.message("pydev.loading.value"), myDebugProcess, myExpression))
     callback.evaluated("... Loading Value")
-    val pyAsyncValue = PyFrameAccessor.PyAsyncValue<String>(debugValue, debugValue.createDebugValueCallback())
+    val pyAsyncValue = PyFrameAccessor.PyAsyncValue(debugValue, debugValue.createDebugValueCallback())
     myDebugProcess.loadAsyncVariablesValues(null, listOf(pyAsyncValue))
   }
 

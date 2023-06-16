@@ -31,8 +31,8 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import training.lang.LangManager
 import training.lang.LangSupport
@@ -140,12 +140,13 @@ val switchOnExperimentalLessons: Boolean
   get() = Registry.`is`("ift.experimental.lessons", false)
 
 val enableLessonsAndPromoters: Boolean
-  get() = ExperimentalUI.isNewUI() || Registry.`is`("ift.enable.in.old.ui", false)
+  get() = ExperimentalUI.isNewUI() || Registry.`is`("ift.enable.in.old.ui", false) || PlatformUtils.isDataSpell()
 
 fun invokeActionForFocusContext(action: AnAction) {
   DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
     invokeLater {
       val event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.LEARN_TOOLWINDOW, dataContext)
+      event.presentation.isPerformGroup = true
       performActionDumbAwareWithCallbacks(action, event)
     }
   }

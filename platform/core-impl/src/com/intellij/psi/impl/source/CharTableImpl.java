@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,14 +15,12 @@ public final class CharTableImpl implements CharTable {
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final StringHashToCharSequencesMap entries = new StringHashToCharSequencesMap(10, 0.9f);
 
-  @NotNull
   @Override
-  public CharSequence intern(@NotNull CharSequence text) {
+  public @NotNull CharSequence intern(@NotNull CharSequence text) {
     return text.length() > INTERN_THRESHOLD ? text : doIntern(text);
   }
 
-  @NotNull
-  private CharSequence doIntern(@NotNull CharSequence text, int startOffset, int endOffset) {
+  private @NotNull CharSequence doIntern(@NotNull CharSequence text, int startOffset, int endOffset) {
     int hashCode;
     if (startOffset == 0 && endOffset == text.length()) {
       hashCode = StringUtil.stringHashCode(text);
@@ -40,33 +38,28 @@ public final class CharTableImpl implements CharTable {
     }
   }
 
-  @NotNull
-  public CharSequence doIntern(@NotNull CharSequence text) {
+  public @NotNull CharSequence doIntern(@NotNull CharSequence text) {
     return doIntern(text, 0, text.length());
   }
 
-  @NotNull
   @Override
-  public CharSequence intern(@NotNull CharSequence baseText, int startOffset, int endOffset) {
+  public @NotNull CharSequence intern(@NotNull CharSequence baseText, int startOffset, int endOffset) {
     return endOffset - startOffset > INTERN_THRESHOLD ? substring(baseText, startOffset, endOffset)
                                                       : doIntern(baseText, startOffset, endOffset);
   }
 
-  @NotNull
-  private static String substring(@NotNull CharSequence text, int startOffset, int endOffset) {
+  private static @NotNull String substring(@NotNull CharSequence text, int startOffset, int endOffset) {
     if (text instanceof String) {
       return ((String)text).substring(startOffset, endOffset);
     }
     return text.subSequence(startOffset, endOffset).toString();
   }
 
-  @Nullable
-  public static CharSequence getStaticInterned(@NotNull CharSequence text) {
+  public static @Nullable CharSequence getStaticInterned(@NotNull CharSequence text) {
     return STATIC_ENTRIES.get(text);
   }
 
-  @NotNull
-  private static StringHashToCharSequencesMap newStaticSet() {
+  private static @NotNull StringHashToCharSequencesMap newStaticSet() {
     StringHashToCharSequencesMap r = new StringHashToCharSequencesMap(10, 0.9f);
     r.add("==");
     r.add("!=");
@@ -200,8 +193,7 @@ public final class CharTableImpl implements CharTable {
       getOrAddSubSequenceWithHashCode(hashCode, sequence, 0, endOffset);
     }
 
-    @NotNull
-    private CharSequence getOrAddSubSequenceWithHashCode(int hashCode, @NotNull CharSequence sequence, int startOffset, int endOffset) {
+    private @NotNull CharSequence getOrAddSubSequenceWithHashCode(int hashCode, @NotNull CharSequence sequence, int startOffset, int endOffset) {
       Object value = get(hashCode);
       String addedSequence;
 

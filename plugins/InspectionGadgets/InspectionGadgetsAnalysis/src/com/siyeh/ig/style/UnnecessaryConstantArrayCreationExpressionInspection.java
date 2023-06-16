@@ -1,9 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -25,14 +23,14 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     if (infos.length != 0 && infos[0] instanceof String) {
       return new UnnecessaryConstantArrayCreationExpressionFix((String)infos[0]);
     }
     return null;
   }
 
-  private static final class UnnecessaryConstantArrayCreationExpressionFix extends InspectionGadgetsFix {
+  private static final class UnnecessaryConstantArrayCreationExpressionFix extends PsiUpdateModCommandQuickFix {
     private final String myType;
 
     private UnnecessaryConstantArrayCreationExpressionFix(String type) {
@@ -52,8 +50,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       if (!(element instanceof PsiNewExpression newExpression)) {
         return;
       }

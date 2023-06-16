@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.ExternalSystemManager
@@ -19,8 +20,11 @@ import kotlinx.coroutines.withContext
 
 internal class ExternalSystemStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
+    val esProjectsManager = readAction {
+      ExternalProjectsManagerImpl.getInstance(project)
+    }
     blockingContext {
-      ExternalProjectsManagerImpl.getInstance(project).init()
+      esProjectsManager.init()
     }
 
     // do not compute in EDT

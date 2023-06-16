@@ -155,7 +155,7 @@ private val EP_NAME = ExtensionPointName<GeneralEditorOptionsProviderEP>("com.in
 
 class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(message("title.editor"), ID), WithEpDependencies {
   companion object {
-    const val ID = "preferences.editor"
+    const val ID: String = "preferences.editor"
 
     private fun clearAllIdentifierHighlighters() {
       for (project in ProjectManager.getInstance().openProjects) {
@@ -238,6 +238,24 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
           checkBox(caretInsideTabs)
         }
         row { checkBox(virtualPageAtBottom) }
+      }
+      group(message("group.scroll.offset")) {
+        row(message("label.vertical.scroll.offset.value")) {
+          intTextField()
+            .bindIntText(editorSettings::getVerticalScrollOffset, editorSettings::setVerticalScrollOffset)
+        }
+        row(message("label.vertical.scroll.jump.value")) {
+          intTextField()
+            .bindIntText(editorSettings::getVerticalScrollJump, editorSettings::setVerticalScrollJump)
+        }
+        row(message("label.horizontal.scroll.offset.value")) {
+          intTextField()
+            .bindIntText(editorSettings::getHorizontalScrollOffset, editorSettings::setHorizontalScrollOffset)
+        }
+        row(message("label.horizontal.scroll.jump.value")) {
+          intTextField()
+            .bindIntText(editorSettings::getHorizontalScrollJump, editorSettings::setHorizontalScrollJump)
+        }
       }
       group(message("group.caret.movement")) {
         caretStopRow(message("label.word.move.caret.actions.behavior"), CaretOptionMode.WORD, WordBoundary.values())

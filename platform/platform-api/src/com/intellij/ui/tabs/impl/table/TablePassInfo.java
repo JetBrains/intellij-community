@@ -4,21 +4,23 @@ package com.intellij.ui.tabs.impl.table;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
-import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class TablePassInfo extends LayoutPassInfo {
+/**
+ * @deprecated use {@link com.intellij.ui.tabs.impl.multiRow.MultiRowLayout}
+ * with {@link com.intellij.ui.tabs.impl.multiRow.MultiRowPassInfo} instead
+ */
+@SuppressWarnings("removal")
+@Deprecated(forRemoval = true)
+public final class TablePassInfo extends LayoutPassInfo {
   final List<TableRow> table = new ArrayList<>();
   public final Rectangle toFitRec;
   public final Rectangle tabRectangle = new Rectangle();
   final Map<TabInfo, TableRow> myInfo2Row = new HashMap<>();
   final JBTabsImpl myTabs;
-  @NotNull public final Rectangle entryPointRect = new Rectangle();
-  @NotNull public final Rectangle moreRect = new Rectangle();
-  @NotNull public final Rectangle titleRect = new Rectangle();
   public final List<TabInfo> invisible = new ArrayList<>();
   final Map<TabInfo, Integer> lengths = new LinkedHashMap<>();
   final Map<TabInfo, Rectangle> bounds = new HashMap<>();
@@ -45,11 +47,18 @@ public class TablePassInfo extends LayoutPassInfo {
 
   @Override
   public Rectangle getHeaderRectangle() {
-    return (Rectangle)toFitRec.clone();
+    return (Rectangle)tabRectangle.clone();
   }
 
   @Override
   public int getRequiredLength() {
     return requiredLength;
+  }
+
+  @Override
+  public int getScrollExtent() {
+    return !moreRect.isEmpty() ? moreRect.x - toFitRec.x - myTabs.getActionsInsets().left
+           : table.size() > 1 || entryPointRect.isEmpty() ? toFitRec.width
+           : entryPointRect.x - toFitRec.x - myTabs.getActionsInsets().left;
   }
 }

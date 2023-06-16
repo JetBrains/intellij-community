@@ -25,7 +25,6 @@ import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.ui.RootIcon;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -154,7 +153,7 @@ public class GoToHashOrRefPopup {
     public @NotNull LookupElementBuilder createLookupBuilder(@NotNull VcsRef item) {
       LookupElementBuilder lookupBuilder = super.createLookupBuilder(item);
       if (myColorManager.hasMultiplePaths()) {
-        ColorIcon icon = RootIcon.createAndScale(VcsLogGraphTable.getRootBackgroundColor(item.getRoot(), myColorManager));
+        ColorIcon icon = RootIcon.createAndScale(myColorManager.getRootColor(item.getRoot()));
         lookupBuilder = lookupBuilder.withTypeText(getTypeText(item), icon, true).withTypeIconRightAligned(true);
       }
       return lookupBuilder;
@@ -187,7 +186,7 @@ public class GoToHashOrRefPopup {
     }
 
     @Override
-    protected @Nullable InsertHandler<LookupElement> createInsertHandler(@NotNull VcsRef item) {
+    protected @NotNull InsertHandler<LookupElement> createInsertHandler(@NotNull VcsRef item) {
       return (context, item1) -> {
         mySelectedRef = (VcsRef)item1.getObject();
         ApplicationManager.getApplication().invokeLater(() -> {

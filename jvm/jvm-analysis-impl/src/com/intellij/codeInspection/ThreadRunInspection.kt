@@ -20,9 +20,8 @@ class ThreadRunInspection : AbstractBaseUastLocalInspectionTool() {
     override fun visitCallExpression(node: UCallExpression): Boolean {
       if (!THREAD_RUN.uCallMatches(node)) return true
       if (node.receiver is USuperExpression) return true
-      val toHighlight = node.methodIdentifier?.sourcePsi ?: return true
       val message = InspectionGadgetsBundle.message("thread.run.problem.descriptor")
-      holder.registerProblem(toHighlight, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, ReplaceMethodCallFix("start"))
+      holder.registerUProblem(node, message, ReplaceMethodCallFix("start"))
       return true
     }
   }

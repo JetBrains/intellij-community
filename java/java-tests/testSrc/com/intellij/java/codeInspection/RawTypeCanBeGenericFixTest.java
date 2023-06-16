@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.miscGenerics.RawUseOfParameterizedTypeInspection;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
@@ -94,6 +95,7 @@ public class RawTypeCanBeGenericFixTest extends LightJavaCodeInsightFixtureTestC
     myFixture.configureByFiles(getTestName(false) + ".java");
     final IntentionAction singleIntention = myFixture.findSingleIntention(intentionName);
     myFixture.launchAction(singleIntention);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + ".java", getTestName(false) + "_after.java", true);
   }
 

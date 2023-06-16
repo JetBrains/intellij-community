@@ -2,27 +2,13 @@
 package com.intellij.util.indexing.dependenciesCache;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.IndexableSetContributor;
+import com.intellij.util.indexing.ReincludedRootsUtil;
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.util.indexing.roots.builders.IndexableSetContributorFilesIteratorBuilder;
 import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetRecognizer;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
-import com.intellij.workspaceModel.storage.EntityReference;
-import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,118 +39,17 @@ final class RescannedRootsUtil {
   private static List<IndexableIteratorBuilder> createBuildersForReincludedFiles(@NotNull Project project,
                                                                                  @NotNull Collection<VirtualFile> reincludedRoots,
                                                                                  @NotNull List<? extends SyntheticLibraryDescriptor> librariesDescriptorsAfter) {
-    if (reincludedRoots.isEmpty()) return Collections.emptyList();
-
-    List<VirtualFile> filesFromIndexableSetContributors = new ArrayList<>();
-    List<VirtualFile> filesFromAdditionalLibraryRootsProviders = new ArrayList<>();
-
-    EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
-    WorkspaceFileIndex workspaceFileIndex = WorkspaceFileIndex.getInstance(project);
-    ArrayList<IndexableIteratorBuilder> result = new ArrayList<>();
-    Iterator<VirtualFile> iterator = reincludedRoots.iterator();
-    while (iterator.hasNext()) {
-      VirtualFile file = iterator.next();
-      WorkspaceFileSet fileSet = workspaceFileIndex.findFileSet(file, true, true, true, true);
-      if (fileSet == null) {
-        filesFromIndexableSetContributors.add(file);
-        iterator.remove();
-        continue;
-      }
-
-      if (fileSet.getKind() == WorkspaceFileKind.CONTENT || fileSet.getKind() == WorkspaceFileKind.TEST_CONTENT) {
-        Module module = WorkspaceFileSetRecognizer.INSTANCE.getModuleForContent(fileSet);
-        if (module != null) {
-          result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleRootsFileBased(((ModuleBridge)module).getModuleEntityId(),
-                                                                                   Collections.singletonList(file)));
-          iterator.remove();
-          continue;
-        }
-
-        EntityReference<?> entityReference = WorkspaceFileSetRecognizer.INSTANCE.getEntityReference(fileSet);
-        LOG.assertTrue(entityReference != null, "Content element's fileSet without entity reference, " + fileSet);
-        result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleUnawareContentEntity(entityReference, Collections.singletonList(file)));
-        iterator.remove();
-        continue;
-      }
-
-      //here we have WorkspaceFileKind.EXTERNAL or WorkspaceFileKind.EXTERNAL_SOURCE
-      Collection<VirtualFile> roots =
-        fileSet.getKind() == WorkspaceFileKind.EXTERNAL ? Collections.singletonList(file) : Collections.emptyList();
-      Collection<VirtualFile> sourceRoots =
-        fileSet.getKind() == WorkspaceFileKind.EXTERNAL_SOURCE ? Collections.singletonList(file) : Collections.emptyList();
-
-      Sdk sdk = WorkspaceFileSetRecognizer.INSTANCE.getSdk(fileSet);
-      if (sdk != null) {
-        result.addAll(IndexableIteratorBuilders.INSTANCE.forSdk(sdk, Collections.singletonList(file)));
-        iterator.remove();
-        continue;
-      }
-
-      if (WorkspaceFileSetRecognizer.INSTANCE.isFromAdditionalLibraryRootsProvider(fileSet)) {
-        filesFromAdditionalLibraryRootsProviders.add(file);
-        iterator.remove();
-        continue;
-      }
-
-      LibraryId libraryId = WorkspaceFileSetRecognizer.INSTANCE.getLibraryId(fileSet, entityStorage);
-      if (libraryId != null) {
-        result.addAll(IndexableIteratorBuilders.INSTANCE.forLibraryEntity(libraryId, true, roots, sourceRoots));
-        iterator.remove();
-        continue;
-      }
-
-      EntityReference<?> entityReference = WorkspaceFileSetRecognizer.INSTANCE.getEntityReference(fileSet);
-      LOG.assertTrue(entityReference != null, "External element's fileSet without entity reference, " + fileSet);
-      IndexableIteratorBuilders.INSTANCE.forExternalEntity(entityReference, roots, sourceRoots);
-      iterator.remove();
-    }
-
-    if (!filesFromAdditionalLibraryRootsProviders.isEmpty()) {
-      result.addAll(createSyntheticLibraryIteratorBuilders(librariesDescriptorsAfter, filesFromAdditionalLibraryRootsProviders));
-    }
-
-    if (!filesFromIndexableSetContributors.isEmpty()) {
-      for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
-        Set<VirtualFile> applicationRoots =
-          collectAndRemoveFilesUnder(filesFromIndexableSetContributors, contributor.getAdditionalRootsToIndex());
-        Set<VirtualFile> projectRoots =
-          collectAndRemoveFilesUnder(filesFromIndexableSetContributors, contributor.getAdditionalProjectRootsToIndex(project));
-
-        if (!applicationRoots.isEmpty()) {
-          result.add(
-            new IndexableSetContributorFilesIteratorBuilder(null, contributor.getDebugName(), applicationRoots, false, contributor));
-        }
-        if (!projectRoots.isEmpty()) {
-          result.add(new IndexableSetContributorFilesIteratorBuilder(null, contributor.getDebugName(), projectRoots, true, contributor));
-        }
-        if (filesFromIndexableSetContributors.isEmpty()) {
-          break;
-        }
-      }
-    }
-
-    if (!reincludedRoots.isEmpty()) {
-      throw new IllegalStateException("Roots were not found: " + StringUtil.join(reincludedRoots, "\n"));
-    }
-    return result;
-  }
-
-  @NotNull
-  private static Set<VirtualFile> collectAndRemoveFilesUnder(List<VirtualFile> fileToCheck, Set<VirtualFile> roots) {
-    Iterator<VirtualFile> iterator = fileToCheck.iterator();
-    Set<VirtualFile> applicationRoots = new HashSet<>();
-    while (iterator.hasNext()) {
-      VirtualFile next = iterator.next();
-      if (VfsUtilCore.isUnder(next, roots)) {
-        applicationRoots.add(next);
-        iterator.remove();
-      }
-    }
-    return applicationRoots;
+    ReincludedRootsUtil.Classifier classifier = ReincludedRootsUtil.classifyFiles(project, reincludedRoots);
+    List<IndexableIteratorBuilder> builders = new ArrayList<>(classifier.createBuildersFromWorkspaceFiles());
+    builders.addAll(classifier.createBuildersFromFilesFromIndexableSetContributors(project));
+    builders.addAll(createSyntheticLibraryIteratorBuilders(librariesDescriptorsAfter,
+                                                           classifier.getFilesFromAdditionalLibraryRootsProviders()));
+    return builders;
   }
 
   private static Collection<SyntheticLibraryIteratorBuilder> createSyntheticLibraryIteratorBuilders(List<? extends SyntheticLibraryDescriptor> librariesDescriptorsAfter,
                                                                                                     Collection<VirtualFile> files) {
+    if (files.isEmpty()) return Collections.emptyList();
     List<SyntheticLibraryIteratorBuilder> builders = new ArrayList<>();
     for (SyntheticLibraryDescriptor lib : librariesDescriptorsAfter) {
       List<VirtualFile> roots = new ArrayList<>();

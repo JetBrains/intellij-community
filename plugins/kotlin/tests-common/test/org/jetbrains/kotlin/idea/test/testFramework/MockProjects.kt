@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.test.testFramework
 
+import com.intellij.mock.MockApplication
 import com.intellij.mock.MockProject
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -13,7 +14,7 @@ interface ProjectEx : Project {
     fun setProjectName(name: String)
 }
 
-class MockProjectEx(parentDisposable: Disposable) : MockProject(if (ApplicationManager.getApplication() != null) ApplicationManager.getApplication().picoContainer else null, parentDisposable), ProjectEx {
+class MockProjectEx(parentDisposable: Disposable) : MockProject(if (ApplicationManager.getApplication() is MockApplication) (ApplicationManager.getApplication() as MockApplication).picoContainer else null, parentDisposable), ProjectEx {
     override fun setProjectName(name: String) {
     }
 

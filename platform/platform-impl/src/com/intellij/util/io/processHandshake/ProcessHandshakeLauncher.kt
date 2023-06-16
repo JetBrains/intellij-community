@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("EXPERIMENTAL_API_USAGE")
 
 package com.intellij.util.io.processHandshake
@@ -6,7 +6,6 @@ package com.intellij.util.io.processHandshake
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.*
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeCoreBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -19,6 +18,7 @@ import com.intellij.util.ExceptionUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
 import java.io.EOFException
 import java.io.IOException
@@ -80,7 +80,7 @@ abstract class ProcessHandshakeLauncher<H, T : ProcessHandshakeTransport<H>, R> 
         }
         catch (e: IOException) {
           // give the launcher a chance to exit cleanly (in case it hasn't yet) to collect the whole output
-          select<Unit> {
+          select {
             finishedAsync.onAwait { }
             launcherOutputTimeoutAfterHandshakeFailedMillis.takeUnless { it < 0 }?.let { timeoutMs ->
               onTimeout(timeoutMs) { launcherOutput.setTimeout() }

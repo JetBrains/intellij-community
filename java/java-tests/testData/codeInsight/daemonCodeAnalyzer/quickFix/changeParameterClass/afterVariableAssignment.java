@@ -1,4 +1,4 @@
-// "Make 'A' extend 'B'" "true"
+// "Make 'A' extend 'B'" "true-preview"
 class B {}
 
 class A extends B {

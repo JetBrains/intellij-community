@@ -25,6 +25,7 @@ public interface PsiModifier {
   String OPEN = "open";
   String TRANSITIVE = "transitive";
   String SEALED = "sealed";
+  //WARNING: it may not be reported for compiled classes.
   String NON_SEALED = "non-sealed";
 
   String[] MODIFIERS = {

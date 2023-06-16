@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.concurrency.ThreadContext;
@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
@@ -63,6 +64,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class DialogWrapperPeerImpl extends DialogWrapperPeer {
@@ -171,7 +173,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   private static WindowManagerEx getWindowManager() {
     WindowManagerEx windowManager = null;
-    Application application = ApplicationManager.getApplication();
+    Application application = LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() ? ApplicationManager.getApplication() : null;
     if (application != null) {
       windowManager = WindowManagerEx.getInstanceEx();
     }
@@ -320,7 +322,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   @Override
   public void setAppIcons() {
-    AppUIUtil.updateWindowIcon(getWindow());
+    AppUIUtilKt.updateAppWindowIcon(getWindow());
   }
 
   @Override
@@ -393,12 +395,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     UIUtil.decorateWindowHeader(rootPane);
 
     Window window = getWindow();
-    if (window instanceof JDialog && !((JDialog)window).isUndecorated() && rootPane != null) {
+    if (window instanceof JDialog && !((JDialog)window).isUndecorated() && rootPane != null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
       ToolbarUtil.setTransparentTitleBar(window, rootPane, runnable -> Disposer.register(myWrapper.getDisposable(), () -> runnable.run()));
     }
 
     Container contentPane = getContentPane();
-    if(contentPane instanceof CustomFrameDialogContent) {
+    if (contentPane instanceof CustomFrameDialogContent) {
       ((CustomFrameDialogContent)contentPane).updateLayout();
     }
 
@@ -658,7 +660,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public void addNotify() {
       if (IdeFrameDecorator.isCustomDecorationActive()) {
-        JBR.getCustomWindowDecoration().setCustomDecorationEnabled(this, true);
+        CustomHeader.enableCustomHeader(this);
       }
       super.addNotify();
       if (SystemInfo.isMacOSVentura && Registry.is("ide.mac.stage.manager.support", false)) {
@@ -934,7 +936,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           Window window = wrapper.getWindow();
           if (window != null) {
             Dimension size = getMinimumSize();
-            if (!(size == null ? myLastMinimumSize == null : size.equals(myLastMinimumSize))) {
+            if (!(Objects.equals(size, myLastMinimumSize))) {
               // update window minimum size only if root pane minimum size is changed
               if (size == null) {
                 myLastMinimumSize = null;

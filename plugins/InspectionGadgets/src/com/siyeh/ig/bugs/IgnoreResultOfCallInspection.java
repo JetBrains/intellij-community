@@ -157,12 +157,6 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
     );
   }
 
-  @Override
-  public @NotNull OptionController getOptionController() {
-    return super.getOptionController()
-      .onPrefix("myMethodMatcher", myMethodMatcher.getOptionController());
-  }
-
   @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull

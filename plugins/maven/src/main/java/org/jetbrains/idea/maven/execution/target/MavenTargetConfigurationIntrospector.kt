@@ -11,8 +11,8 @@ import java.util.concurrent.CompletionStage
 class MavenTargetConfigurationIntrospector(private val config: MavenRuntimeTargetConfiguration) : LanguageRuntimeType.Introspector<MavenRuntimeTargetConfiguration> {
   override fun introspect(subject: LanguageRuntimeType.Introspectable): CompletableFuture<MavenRuntimeTargetConfiguration> {
     var isWindows = false
-    return subject.promiseExecuteScript("ver")
-      .handle { output, _ -> isWindows = output?.contains("Microsoft Windows") ?: false }
+    return subject.promiseExecuteScript(listOf("ver"))
+      .handle { output, _ -> isWindows = output.stdout.contains("Microsoft Windows") }
       .thenFindMaven(subject, isWindows)
       .thenApply { (mavenHome, versionOutput) ->
         if (versionOutput != null) {
@@ -46,7 +46,9 @@ class MavenTargetConfigurationIntrospector(private val config: MavenRuntimeTarge
                                   mavenHomeEnvVariable: String?,
                                   isWindows: Boolean): CompletableFuture<Pair<String?, String?>> {
     if (mavenHomeEnvVariable == null) {
-      return subject.promiseExecuteScript("mvn -version").handle { output, _ -> output?.run { null to output } ?: (null to null) }
+      return subject.promiseExecuteScript(listOf("mvn", "-version")).handle { output, _ ->
+        output?.run { null to output.stdout } ?: (null to null)
+      }
     }
 
     return subject.promiseEnvironmentVariable(mavenHomeEnvVariable).thenCompose { mavenHome ->
@@ -57,8 +59,8 @@ class MavenTargetConfigurationIntrospector(private val config: MavenRuntimeTarge
         val mavenHomeTrimmed = mavenHome.trim()
         val fileSeparator = if (isWindows) Platform.WINDOWS.fileSeparator else Platform.UNIX.fileSeparator
         val mvnScriptPath = arrayOf(mavenHomeTrimmed, "bin", "mvn").joinToString(fileSeparator.toString())
-        return@thenCompose subject.promiseExecuteScript("$mvnScriptPath -version")
-          .handle { output, _ -> output?.run { mavenHomeTrimmed to output } }
+        return@thenCompose subject.promiseExecuteScript(listOf(mvnScriptPath, "-version"))
+          .handle { output, _ -> output?.run { mavenHomeTrimmed to output.stdout } }
       }
     }
   }

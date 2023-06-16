@@ -26,7 +26,7 @@ class ConstructorConverter(
         val candidates = constructors.filter { it !in toTargetConstructorMap }
         if (candidates.size != 1) return null // there should be only one constructor which does not call other constructor
         val primary = candidates.single()
-        if (toTargetConstructorMap.values.any() { it != primary }) return null // all other constructors call our candidate (directly or indirectly)
+        if (toTargetConstructorMap.values.any { it != primary }) return null // all other constructors call our candidate (directly or indirectly)
         return primary
     }
 
@@ -135,7 +135,7 @@ class ConstructorConverter(
 
                 val fieldName = propertyInfo.name
                 if (fieldName != parameter.name) {
-                    parameterUsageReplacementMap.put(parameter.name!!, fieldName)
+                    parameterUsageReplacementMap.put(parameter.name, fieldName)
                 }
             }
 

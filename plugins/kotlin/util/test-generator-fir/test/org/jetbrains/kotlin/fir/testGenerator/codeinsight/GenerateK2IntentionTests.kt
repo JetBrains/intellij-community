@@ -44,6 +44,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/movePropertyToConstructor", pattern = pattern)
             model("${idea}intentions/branched/ifWhen/whenToIf", pattern = pattern)
             model("code-insight/intentions-k2/tests/testData/intentions", pattern = pattern)
+            model("${idea}intentions/convertBinaryExpressionWithDemorgansLaw", pattern = pattern)
         }
     }
 

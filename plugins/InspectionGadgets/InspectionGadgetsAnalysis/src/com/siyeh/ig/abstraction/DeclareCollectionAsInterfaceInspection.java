@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.abstraction;
 
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -70,11 +73,11 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new DeclareCollectionAsInterfaceFix((String)infos[0]);
   }
 
-  private static class DeclareCollectionAsInterfaceFix extends InspectionGadgetsFix {
+  private static class DeclareCollectionAsInterfaceFix extends PsiUpdateModCommandQuickFix {
 
     private final String typeString;
 
@@ -96,8 +99,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiJavaCodeReferenceElement referenceElement)) {
         return;

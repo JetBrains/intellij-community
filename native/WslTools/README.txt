@@ -31,3 +31,13 @@ See https://wiki.musl-libc.org/getting-started.html for more info
 
 Q: I got error opening project in CLion:
 A: Make sure you run "make". Then, tools->Makefile->Reload
+
+Q: How do I compile binaries for aarch64 platform?
+A: Run "make -f Makefile.cross clean all". The required musl cross-compiler will be downloaded and
+ all tools will be cross-compiled for aarch64 platform.
+
+Q: How do I check the target platform of the compiled binary?
+A: Check the output of "file YOUR_BINARY".
+
+Q: How do I test that cross-compiled binary works on aarch64?
+A: Run "sudo apt install qemu-user-static" (adjust for your distro). Then run "qemu-aarch64-static YOUR_BINARY".

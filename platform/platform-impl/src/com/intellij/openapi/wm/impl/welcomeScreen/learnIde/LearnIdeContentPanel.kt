@@ -70,6 +70,16 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
     repaint()
   }
 
+  override fun updateUI() {
+    super.updateUI()
+    if (parent != null) reInitHelpAndResourcePanel()
+  }
+
+  private fun reInitHelpAndResourcePanel() {
+    helpAndResourcesPanel.removeAll()
+    initHelpAndResourcePanel()
+  }
+
   private fun initHelpAndResourcePanel() {
     helpAndResourcesPanel.apply {
       layout = BoxLayout(this, BoxLayout.PAGE_AXIS)

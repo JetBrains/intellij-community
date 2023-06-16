@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.util.lang.JavaVersion
-import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.junit.Test
 import org.junit.runners.Parameterized
@@ -13,12 +13,14 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
   fun testSyncMessages() {
     importProject("")
     val expectedExecutionTree: String
+    val gradleJvmSupportMatrix = GradleJvmSupportMatrix.getInstance()
     when {
-      currentGradleVersion < GradleVersion.version("2.6") -> expectedExecutionTree =
+      gradleJvmSupportMatrix.isUnsupported(currentGradleVersion) -> expectedExecutionTree =
         "-\n" +
         " -failed\n" +
         "  Unsupported Gradle"
-      currentGradleVersion < GradleVersion.version("3.0") -> expectedExecutionTree =
+      // sample assertion for deprecated Gradle version.
+      gradleJvmSupportMatrix.isDeprecated(currentGradleVersion) -> expectedExecutionTree =
         "-\n" +
         " -finished\n" +
         "  Gradle ${currentGradleVersion.version} support can be dropped in the next release"

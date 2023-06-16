@@ -11,7 +11,6 @@ import com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.isReusable
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
@@ -27,15 +26,22 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.platform.documentation.impl.DocumentationRequest
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import javax.swing.JPanel
 
 @Service
-internal class DocumentationToolWindowManager(private val project: Project) : Disposable {
+internal class DocumentationToolWindowManager(
+  private val project: Project,
+  private val cs: CoroutineScope,
+) {
+
   companion object {
     const val TOOL_WINDOW_ID: String = "documentation.v2"
 
@@ -55,7 +61,6 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
 
   private val toolWindow: ToolWindowEx
 
-  private val cs = CoroutineScope(SupervisorJob())
   private var waitForFocusRequest: Boolean = false
 
   init {
@@ -79,10 +84,6 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
     toolWindow.installWatcher(toolWindow.contentManager)
     toolWindow.component.putClientProperty(ChooseByNameBase.TEMPORARILY_FOCUSABLE_COMPONENT_KEY, true)
     toolWindow.helpId = "reference.toolWindows.Documentation"
-  }
-
-  override fun dispose() {
-    cs.cancel()
   }
 
   /**

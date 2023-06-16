@@ -5,14 +5,15 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.google.gson.Gson
-import com.intellij.execution.processTools.getResultStdoutStr
-import com.intellij.execution.processTools.mapFlat
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.createProcessWithResult
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.add.target.conda.TargetCommandExecutor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 import java.util.*
@@ -28,24 +29,19 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
     /**
      * @return list of conda environments
      */
-    suspend fun getEnvs(command: PyCondaCommand): Result<List<PyCondaEnv>> = withContext(Dispatchers.IO) {
-      val (request, env, commandLineBuilder) = command.createRequestEnvAndCommandLine().getOrElse { return@withContext Result.failure(it) }
-      val commandLine = commandLineBuilder.apply {
-        addParameters("info", "--envs", "--json")
-      }.build()
-      val json = env.createProcessWithResult(commandLine)
-        .mapFlat { it.getResultStdoutStr() }
-        .getOrElse { return@withContext Result.failure(it) }
-
-     return@withContext kotlin.runCatching { // External command may return junk
+    @ApiStatus.Internal
+    suspend fun getEnvs(command: TargetCommandExecutor,
+                        fullCondaPathOnTarget: FullPathOnTarget): Result<List<PyCondaEnv>> = withContext(Dispatchers.IO) {
+      val json = command.execute(listOf(fullCondaPathOnTarget, "info", "--envs", "--json")).thenApply { it.stdout }.await()
+      return@withContext kotlin.runCatching { // External command may return junk
         val info = Gson().fromJson(json, CondaInfoJson::class.java)
-        val fileSeparator = request.targetPlatform.platform.fileSeparator
+        val fileSeparator = command.targetPlatform.await().platform.fileSeparator
         info.envs.distinctBy { it.trim().lowercase(Locale.getDefault()) }.map { envPath ->
           // Env name is the basename for envs inside of default location
           val envName = if (info.envs_dirs.any { envPath.startsWith(it) }) envPath.split(fileSeparator).last() else null
           val base = envPath.equals(info.conda_prefix, ignoreCase = true)
           PyCondaEnv(envName?.let { PyCondaEnvIdentity.NamedEnv(it) } ?: PyCondaEnvIdentity.UnnamedEnv(envPath, base),
-                     command.fullCondaPathOnTarget)
+                     fullCondaPathOnTarget)
 
         }
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.application.ReadAction;
@@ -6,25 +6,27 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 public final class LazyPatchContentRevision implements ContentRevision {
   private final VirtualFile myVf;
   private final FilePath myNewFilePath;
-  @NotNull private final String myRevision;
+  private final @NotNull String myRevision;
   private final TextFilePatch myPatch;
 
-  private final NotNullLazyValue<Data> myData = NotNullLazyValue.atomicLazy(this::loadContent);
+  private final Supplier<Data> myData = new SynchronizedClearableLazy<>(this::loadContent);
 
   public LazyPatchContentRevision(final VirtualFile vf,
                                   final FilePath newFilePath,
-                                  @NotNull final String revision,
+                                  final @NotNull String revision,
                                   final TextFilePatch patch) {
     myVf = vf;
     myNewFilePath = newFilePath;
@@ -51,28 +53,24 @@ public final class LazyPatchContentRevision implements ContentRevision {
   }
 
   @Override
-  @Nullable
-  public String getContent() {
-    return myData.getValue().content;
+  public @Nullable String getContent() {
+    return myData.get().content;
   }
 
   public boolean isPatchApplyFailed() {
-    return myData.getValue().patchApplyFailed;
+    return myData.get().patchApplyFailed;
   }
 
   @Override
-  @NotNull
-  public FilePath getFile() {
+  public @NotNull FilePath getFile() {
     return myNewFilePath;
   }
 
   @Override
-  @NotNull
-  public VcsRevisionNumber getRevisionNumber() {
+  public @NotNull VcsRevisionNumber getRevisionNumber() {
     return new VcsRevisionNumber() {
-      @NotNull
       @Override
-      public String asString() {
+      public @NotNull String asString() {
         return myRevision;
       }
 
@@ -84,7 +82,7 @@ public final class LazyPatchContentRevision implements ContentRevision {
   }
 
   private static class Data {
-    @Nullable public final String content;
+    public final @Nullable String content;
     public final boolean patchApplyFailed;
 
     Data(@Nullable String content, boolean patchApplyFailed) {

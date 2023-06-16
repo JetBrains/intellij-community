@@ -26,7 +26,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(ExitAppWithTimeoutCommand.PREFIX, ExitAppWithTimeoutCommand::new),
       Map.entry(OpenFileWithTerminateCommand.PREFIX, OpenFileWithTerminateCommand::new),
       Map.entry(WaitForSmartCommand.PREFIX, WaitForSmartCommand::new),
-      Map.entry(WaitForVcsLogCommand.PREFIX, WaitForVcsLogCommand::new),
+      Map.entry(WaitVcsLogIndexingCommand.PREFIX, WaitVcsLogIndexingCommand::new),
       Map.entry(WaitForAsyncRefreshCommand.PREFIX, WaitForAsyncRefreshCommand::new),
       Map.entry(SingleInspectionCommand.PREFIX, SingleInspectionCommand::new),
       Map.entry(StartPowerSave.PREFIX, StartPowerSave::new),
@@ -42,6 +42,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(OpenProjectView.PREFIX, OpenProjectView::new),
       Map.entry(MoveDirectoryCommand.PREFIX, MoveDirectoryCommand::new),
       Map.entry(RunClassInPlugin.PREFIX, RunClassInPlugin::new),
+      Map.entry(RunServiceInPlugin.PREFIX, RunServiceInPlugin::new),
       Map.entry(SetupProjectSdkCommand.PREFIX, SetupProjectSdkCommand::new),
       Map.entry(OpenProjectCommand.PREFIX, OpenProjectCommand::new),
       Map.entry(CodeAnalysisCommand.PREFIX, CodeAnalysisCommand::new),
@@ -74,7 +75,19 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(AssertOpenedFileInSpecificRoot.PREFIX, AssertOpenedFileInSpecificRoot::new),
       Map.entry(CloseAllTabsCommand.PREFIX, CloseAllTabsCommand::new),
       Map.entry(CollectAllFilesCommand.PREFIX, CollectAllFilesCommand::new),
-      Map.entry(ExecuteEditorActionCommand.PREFIX, ExecuteEditorActionCommand::new)
+      Map.entry(ExecuteEditorActionCommand.PREFIX, ExecuteEditorActionCommand::new),
+      Map.entry(AssertCompletionCommand.PREFIX, AssertCompletionCommand::new),
+      Map.entry(AssertFindUsagesCommand.PREFIX, AssertFindUsagesCommand::new),
+      Map.entry(SetBreakpointCommand.PREFIX, SetBreakpointCommand::new),
+      Map.entry(DebugRunConfigurationCommand.PREFIX, DebugRunConfigurationCommand::new),
+      Map.entry(DebugStepCommand.PREFIX, DebugStepCommand::new),
+      Map.entry(StopDebugProcessCommand.PREFIX, StopDebugProcessCommand::new),
+      Map.entry(WaitJpsBuildCommand.PREFIX, WaitJpsBuildCommand::new),
+      Map.entry(WaitForFinishedCodeAnalysis.PREFIX, WaitForFinishedCodeAnalysis::new),
+      Map.entry(ConditionalMemoryDumpCommand.PREFIX, ConditionalMemoryDumpCommand::new),
+      Map.entry(AcceptDecompileNotice.PREFIX, AcceptDecompileNotice::new),
+      Map.entry(DisableCodeVisionCommand.PREFIX, DisableCodeVisionCommand::new),
+      Map.entry(InstallCustomJBR.PREFIX, InstallCustomJBR::new)
     );
   }
 }

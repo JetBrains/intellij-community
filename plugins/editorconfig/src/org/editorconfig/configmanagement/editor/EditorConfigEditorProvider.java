@@ -33,17 +33,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbAware {
-  private final static String EDITOR_TYPE_ID = "org.editorconfig.configmanagement.editor";
+final class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbAware {
+  private static final String EDITOR_TYPE_ID = "org.editorconfig.configmanagement.editor";
 
-  final static int MAX_PREVIEW_LENGTH = 10000;
+  static final int MAX_PREVIEW_LENGTH = 10000;
 
-  private final static PsiAwareTextEditorProvider myMainEditorProvider = new PsiAwareTextEditorProvider();
+  private static final PsiAwareTextEditorProvider myMainEditorProvider = new PsiAwareTextEditorProvider();
 
-  @NotNull
   @Override
-  public Builder createEditorAsync(@NotNull Project project,
-                                   @NotNull VirtualFile file) {
+  public @NotNull Builder createEditorAsync(@NotNull Project project, @NotNull VirtualFile file) {
     return new MyEditorBuilder(project, file);
   }
 
@@ -52,21 +50,18 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
     return FileTypeRegistry.getInstance().isFileOfType(file, EditorConfigFileType.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     return new MyEditorBuilder(project, file).build();
   }
 
-  @NotNull
   @Override
-  public String getEditorTypeId() {
+  public @NotNull String getEditorTypeId() {
     return EDITOR_TYPE_ID;
   }
 
-  @NotNull
   @Override
-  public FileEditorPolicy getPolicy() {
+  public @NotNull FileEditorPolicy getPolicy() {
     return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
   }
 
@@ -80,7 +75,7 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
     }
 
     @Override
-    public FileEditor build() {
+    public @NotNull FileEditor build() {
       VirtualFile contextFile = EditorConfigPreviewManager.getInstance(myProject).getAssociatedPreviewFile(myFile);
       EditorConfigStatusListener statusListener = new EditorConfigStatusListener(myProject, myFile);
       if (contextFile != null && CodeStyle.getSettings(myProject).getCustomSettings(EditorConfigSettings.class).ENABLED) {
@@ -111,8 +106,7 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
       return new EditorConfigPreviewFileEditor(previewEditor, previewFile);
     }
 
-    @NotNull
-    private static String getPreviewText(@NotNull VirtualFile file) {
+    private static @NotNull String getPreviewText(@NotNull VirtualFile file) {
       if (file.getLength() <= MAX_PREVIEW_LENGTH) {
         try {
           return StringUtil.convertLineSeparators(VfsUtilCore.loadText(file));
@@ -133,8 +127,7 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
     }
   }
 
-  @Nullable
-  static Language getLanguage(@NotNull VirtualFile virtualFile) {
+  static @Nullable Language getLanguage(@NotNull VirtualFile virtualFile) {
     FileType fileType = virtualFile.getFileType();
     return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
   }

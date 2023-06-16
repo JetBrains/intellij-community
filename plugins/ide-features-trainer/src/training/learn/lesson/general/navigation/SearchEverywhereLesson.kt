@@ -71,11 +71,11 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
 
     task {
       triggerAndBorderHighlight().listItem { item ->
-        if (item is PsiNameIdentifierOwner)
-          item.name == requiredClassName
-        else if(item is NavigationItem)
-          item.name.isToStringContains(requiredClassName)
-        else item.isToStringContains(requiredClassName)
+        when (item) {
+          is PsiNameIdentifierOwner -> item.name == requiredClassName
+          is NavigationItem -> item.name.isToStringContains(requiredClassName)
+          else -> item.isToStringContains(requiredClassName)
+        }
       }
       restoreByUi()
     }
@@ -90,11 +90,11 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
         Thread.sleep(500) // wait items loading
         val jList = previous.ui as? JList<*> ?: error("No list")
         val itemIndex = LessonUtil.findItem(jList) { item ->
-          if (item is PsiNameIdentifierOwner)
-            item.name == requiredClassName
-          else if(item is NavigationItem)
-            item.name.isToStringContains(requiredClassName)
-          else item.isToStringContains(requiredClassName)
+          when (item) {
+            is PsiNameIdentifierOwner -> item.name == requiredClassName
+            is NavigationItem -> item.name.isToStringContains(requiredClassName)
+            else -> item.isToStringContains(requiredClassName)
+          }
         } ?: error("No item")
 
         ideFrame {

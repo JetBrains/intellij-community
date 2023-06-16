@@ -1,3 +1,3 @@
 <node text="Object (java.lang)">
-  <node text="A ()" base="true"/>
+  <node text="A (a)" base="true"/>
 </node>

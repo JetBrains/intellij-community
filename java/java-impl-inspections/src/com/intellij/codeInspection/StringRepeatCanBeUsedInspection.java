@@ -69,7 +69,7 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
     return call;
   }
 
-  private static final class StringRepeatCanBeUsedFix implements LocalQuickFix {
+  private static final class StringRepeatCanBeUsedFix extends PsiUpdateModCommandQuickFix {
     private final boolean myAddMathMax;
 
     private StringRepeatCanBeUsedFix(boolean addMathMax) {
@@ -84,8 +84,8 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiForStatement statement = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiForStatement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiForStatement statement = PsiTreeUtil.getParentOfType(element, PsiForStatement.class);
       if (statement == null) return;
       CountingLoop loop = CountingLoop.from(statement);
       if (loop == null) return;

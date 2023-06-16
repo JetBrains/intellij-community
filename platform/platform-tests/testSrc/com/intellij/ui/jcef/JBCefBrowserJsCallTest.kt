@@ -3,6 +3,7 @@ package com.intellij.ui.jcef
 
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.ui.scale.TestScaleHelper
+import org.cef.misc.CefLog
 import org.intellij.lang.annotations.Language
 import org.junit.After
 import org.junit.Assert.*
@@ -104,7 +105,10 @@ class JBCefBrowserJsCallTest {
 
     JBCefTestHelper.invokeAndWaitForLatch(latch) {
       jsCall().onProcessed { latch.countDown() }.onSuccess { r1 = it }
-      jsCall().onProcessed { latch.countDown() }.onSuccess { r2 = it }
+      jsCall().onProcessed { }.onSuccess {
+        r2 = it
+        latch.countDown()
+      }
     }
 
     assertEquals("4", r1)
@@ -147,6 +151,8 @@ class JBCefBrowserJsCallTest {
     System.setProperty("ide.browser.jcef.log.level", "verbose");
     System.setProperty("ide.browser.jcef.log.path", " ");
     System.setProperty("jcef.trace.cefbrowser_n.lifespan", "true");
+    System.setProperty("ide.browser.jcef.debug.js", "true");
+
     val browser = JBCefApp.getInstance().createClient().also {
       it.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 24)
     }.let { jbCefClient ->

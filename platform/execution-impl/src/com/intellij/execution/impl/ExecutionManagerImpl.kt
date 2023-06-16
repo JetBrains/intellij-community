@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.CommonBundle
@@ -166,6 +166,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationFinishType.FAILED_TO_START)
     val executorId = environment.executor.id
     inProgress.remove(InProgressEntry(executorId, environment.runner.runnerId))
+    environment.callback?.processNotStarted()
     project.messageBus.syncPublisher(EXECUTION_TOPIC).processNotStarted(executorId, environment, e)
   }
 
@@ -187,7 +188,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
             }
 
             environment.runnerAndConfigurationSettings?.let {
-              descriptor.isActivateToolWindowWhenAdded = it.isActivateToolWindowBeforeRun
+              descriptor.isActivateToolWindowWhenAdded = it.isActivateToolWindowBeforeRun || it.isFocusToolWindowBeforeRun
+              descriptor.isAutoFocusContent= it.isFocusToolWindowBeforeRun
             }
           }
           environment.callback?.let {
@@ -245,7 +247,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
                 return@invokeLaterIfProjectAlive
               }
 
-              val entry = RunningConfigurationEntry(descriptor, environment.runnerAndConfigurationSettings, executor)
+              val entry = RunningConfigurationEntry(descriptor, environment, executor)
               runningConfigurations.add(entry)
               Disposer.register(descriptor, Disposable { runningConfigurations.remove(entry) })
               if (!descriptor.isHiddenContent && !environment.isHeadless) {
@@ -677,7 +679,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         else {
           inProgress.add(InProgressEntry(environment.executor.id, environment.runner.runnerId))
           ReadAction.nonBlocking(Callable { RunManagerImpl.canRunConfiguration(environment) })
-            .finishOnUiThread(ModalityState.NON_MODAL) { canRun ->
+            .finishOnUiThread(ModalityState.nonModal()) { canRun ->
               inProgress.remove(InProgressEntry(environment.executor.id, environment.runner.runnerId))
               if (canRun) {
                 executeConfiguration(environment, environment.runner, assignNewId, this.project, environment.runnerAndConfigurationSettings)
@@ -702,7 +704,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
   private fun editConfigurationUntilSuccess(environment: ExecutionEnvironment, assignNewId: Boolean) {
     ReadAction.nonBlocking(Callable { RunManagerImpl.canRunConfiguration(environment) })
-      .finishOnUiThread(ModalityState.NON_MODAL) { canRun ->
+      .finishOnUiThread(ModalityState.nonModal()) { canRun ->
         val runAnyway = if (!canRun) {
           val message = ExecutionBundle.message("dialog.message.configuration.still.incorrect.do.you.want.to.edit.it.again")
           val title = ExecutionBundle.message("dialog.title.change.configuration.settings")
@@ -814,12 +816,22 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   fun getConfigurations(descriptor: RunContentDescriptor): Set<RunnerAndConfigurationSettings> {
     val result = HashSet<RunnerAndConfigurationSettings>()
     for (entry in runningConfigurations) {
-      if (descriptor === entry.descriptor && entry.settings != null) {
-        result.add(entry.settings)
+      val settings = entry.settings
+      if (descriptor === entry.descriptor && settings != null) {
+        result.add(settings)
       }
     }
     return result
   }
+
+  fun getExecutionEnvironments(descriptor: RunContentDescriptor) =
+    buildSet {
+      for (entry in runningConfigurations) {
+        if (entry.descriptor === descriptor) {
+          add(entry.executionEnvironment)
+        }
+      }
+    }
 }
 
 @ApiStatus.Internal
@@ -983,9 +995,14 @@ private class ProcessExecutionListener(private val project: Project,
 
 private data class InProgressEntry(val executorId: String, val runnerId: String)
 
-private data class RunningConfigurationEntry(val descriptor: RunContentDescriptor,
-                                             val settings: RunnerAndConfigurationSettings?,
-                                             val executor: Executor)
+private data class RunningConfigurationEntry(
+  val descriptor: RunContentDescriptor,
+  val executionEnvironment: ExecutionEnvironment,
+  val executor: Executor
+) {
+  val settings: RunnerAndConfigurationSettings?
+    get() = executionEnvironment.runnerAndConfigurationSettings
+}
 
 private class TargetPrepareComponent(val console: ConsoleView) : JPanel(BorderLayout()), Disposable {
   init {

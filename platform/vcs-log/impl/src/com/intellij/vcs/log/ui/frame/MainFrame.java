@@ -22,7 +22,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -63,6 +62,7 @@ import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -330,7 +330,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       myPathToSelect = filePath;
     }
     else {
-      myChangesBrowser.getViewer().selectFile(filePath);
+      myChangesBrowser.selectFile(filePath);
       myPathToSelect = null;
     }
 
@@ -363,7 +363,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       int maxSize = VcsLogUtil.getMaxSize(detailsList);
       if (maxSize > VcsLogUtil.getShownChangesLimit()) {
         String sizeText = VcsLogUtil.getSizeText(maxSize);
-        myChangesBrowser.showText(statusText -> {
+        myChangesBrowser.setEmptyWithText(statusText -> {
           statusText.setText(VcsLogBundle.message("vcs.log.changes.too.many.status", detailsList.size(), sizeText));
           statusText.appendSecondaryText(VcsLogBundle.message("vcs.log.changes.too.many.show.anyway.status.action"),
                                          SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
@@ -377,7 +377,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     protected int @NotNull [] onSelection(int @NotNull [] selection) {
-      myChangesBrowser.resetSelectedDetails();
+      myChangesBrowser.setEmpty();
       return selection;
     }
 
@@ -397,14 +397,14 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       myChangesLoadingPane.stopLoading();
       myIsLoading = false;
       if (myPathToSelect != null) {
-        myChangesBrowser.getViewer().selectFile(myPathToSelect);
+        myChangesBrowser.selectFile(myPathToSelect);
         myPathToSelect = null;
       }
     }
 
     @Override
     protected void onError(@NotNull Throwable error) {
-      myChangesBrowser.showText(statusText -> statusText.setText(VcsLogBundle.message("vcs.log.error.loading.status")));
+      myChangesBrowser.setEmptyWithText(statusText -> statusText.setText(VcsLogBundle.message("vcs.log.error.loading.changes.status")));
     }
   }
 
@@ -427,12 +427,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                        @NotNull Disposable disposable) {
       super(logId, logData, uiProperties, colorManager, requestMore, disposable);
       myRefresh = refresh;
-      new IndexSpeedSearch(myLogData.getProject(), myLogData.getIndex(), myLogData.getStorage(), this) {
+      IndexSpeedSearch speedSearch = new IndexSpeedSearch(myLogData.getProject(), myLogData.getIndex(), myLogData.getStorage(), this) {
         @Override
         protected boolean isSpeedSearchEnabled() {
           return Registry.is("vcs.log.speedsearch") && super.isSpeedSearchEnabled();
         }
       };
+      speedSearch.setupListeners();
     }
 
     @Override
@@ -443,7 +444,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       DataPackBase dataPack = visiblePack.getDataPack();
       if (dataPack instanceof DataPack.ErrorDataPack) {
         setErrorEmptyText(((DataPack.ErrorDataPack)dataPack).getError(),
-                          VcsLogBundle.message("vcs.log.error.loading.status"));
+                          VcsLogBundle.message("vcs.log.error.loading.commits.status"));
         appendActionToEmptyText(VcsLogBundle.message("vcs.log.refresh.status.action"),
                                 () -> myLogData.refresh(myLogData.getLogProviders().keySet()));
       }

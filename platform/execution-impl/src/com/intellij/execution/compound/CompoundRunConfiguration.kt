@@ -108,13 +108,6 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
   }
 
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState {
-    try {
-      checkConfiguration()
-    }
-    catch (e: RuntimeConfigurationException) {
-      throw ExecutionException(e.message)
-    }
-
     promptUserToUseRunDashboard(project, getConfigurationsWithEffectiveRunTargets().map {
       it.configuration.type
     })

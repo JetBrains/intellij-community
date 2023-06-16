@@ -34,7 +34,7 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
                               EditorOptionsProvider, WithEpDependencies {
 
   companion object {
-    const val ID = "editor.preferences.completion"
+    const val ID: String = "editor.preferences.completion"
     private val LOG = Logger.getInstance(CodeCompletionConfigurable::class.java)
   }
 
@@ -45,7 +45,7 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
   override fun createConfigurables(): List<UnnamedConfigurable> =
     ConfigurableWrapper.createConfigurables(CodeCompletionConfigurableEP.EP_NAME)
 
-  override fun getId() = ID
+  override fun getId(): String = ID
 
   override fun getDependencies(): Collection<BaseExtensionPointName<*>> =
     listOf(CodeCompletionConfigurableEP.EP_NAME)

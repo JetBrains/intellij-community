@@ -284,6 +284,15 @@
       "type": "array",
       "title": "Array of paths to additional editor schemes xml files starting with '/'"
     },
+    "parentTheme": {
+      "type": "string",
+      "title": "Parent theme",
+      "default": null,
+      "examples": [
+        "Dark",
+        "Light"
+      ]
+    },
     "ui": {
       "type": "object"
     },

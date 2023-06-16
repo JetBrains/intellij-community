@@ -21,11 +21,16 @@ import javax.swing.SwingUtilities
  * Logic of key events handling is copied from [org.jetbrains.plugins.terminal.exp.TerminalPanel]
  * Logic of mouse event handling is copied from [com.jediterm.terminal.model.JediTerminal]
  */
-class TerminalEventsHandler(private val terminalStarter: TerminalStarter,
-                            private val model: TerminalModel,
+class TerminalEventsHandler(private val session: TerminalSession,
                             private val settings: JBTerminalSystemSettingsProviderBase) {
   private var ignoreNextKeyTypedEvent: Boolean = false
   private var lastMotionReport: Point? = null
+
+  private val terminalStarter: TerminalStarter
+    get() = session.terminalStarter
+
+  private val model: TerminalModel
+    get() = session.model
 
   fun handleKeyTyped(e: KeyEvent) {
     if (ignoreNextKeyTypedEvent) {

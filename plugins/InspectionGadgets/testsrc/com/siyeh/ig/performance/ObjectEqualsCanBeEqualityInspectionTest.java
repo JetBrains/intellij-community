@@ -4,7 +4,6 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +80,7 @@ public class ObjectEqualsCanBeEqualityInspectionTest extends LightJavaInspection
 
   public void testSingleton() {
     doTest("final class Singleton {" +
-           "  private static final Singleton INSTANCE = new Singleton();" +
+           "  private static final DynamicBundle INSTANCE = new DynamicBundle(Singleton.class, BUNDLE);" +
            "  private Singleton() {}" +
            "}" +
            "class U {" +

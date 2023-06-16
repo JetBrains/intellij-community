@@ -1,15 +1,11 @@
 import ssl
 from builtins import ConnectionError as ConnectionError
-from collections.abc import Iterable
 from http.client import HTTPConnection as _HTTPConnection, HTTPException as HTTPException
-from typing import IO, Any
-from typing_extensions import TypeAlias
+from typing import Any
 
 from . import exceptions, util
 from .packages import ssl_match_hostname
 from .util import ssl_
-
-_TYPE_BODY: TypeAlias = bytes | IO[Any] | Iterable[bytes] | str
 
 class DummyConnection: ...
 

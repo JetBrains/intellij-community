@@ -27,7 +27,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
                               internal val sourceRootName: String? = null,
                               internal val testRootName: String? = null,
                               internal val resourceRootName : String? = null) {
-    MAIN(TEST_MODULE_NAME, testRootName = "test_src"),
+    MAIN(TEST_MODULE_NAME, testRootName = "test_src", resourceRootName = "res"),
     M2("light_idea_test_m2", sourceRootName = "src_m2"),
     M3("light_idea_test_m3", sourceRootName = "src_m3"),
     M4("light_idea_test_m4", sourceRootName = "src_m4"),

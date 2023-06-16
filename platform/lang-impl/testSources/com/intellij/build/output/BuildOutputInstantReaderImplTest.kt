@@ -52,7 +52,7 @@ class BuildOutputInstantReaderImplTest {
         }
         else {
           if (count != 0) {
-            c.accept(MessageEventImpl(Object(), WARNING, "test", "lines of warns:" + count, null))
+            c.accept(MessageEventImpl(Object(), WARNING, "test", "lines of warns:$count", null))
             reader.pushBack()
             return@BuildOutputParser true
           }

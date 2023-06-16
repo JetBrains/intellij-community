@@ -2,13 +2,27 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 public class RenameClassTest extends LightMultiFileTestCase {
   @Override
@@ -80,17 +94,46 @@ public class RenameClassTest extends LightMultiFileTestCase {
   public void testParameterizedQualifier() {
     doRenameClass("foo.Outer.Inner", "Inner1");
   }
-  
+
+  public void testUndoRedoRenameRefactoringListener(){
+    MessageBusConnection connection = myFixture.getProject().getMessageBus().connect();
+    Disposer.register(myFixture.getTestRootDisposable(), connection);
+
+    RefactoringEventListener listener = mock(RefactoringEventListener.class);
+    connection.subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, listener);
+
+    doUndoRedoRenameClass("foo.AnotherTestClass", "AnotherTestClass1");
+
+    verify(listener).refactoringDone(any(String.class), any(RefactoringEventData.class));
+    verify(listener).undoRefactoring(any(String.class));
+    verify(listener).redoRefactoring(any(String.class));
+  }
+
+  private void rename(final String className, final String newName) {
+    PsiClass aClass = myFixture.findClass(className);
+    assertNotNull("Class XX not found", aClass);
+
+    final RenameProcessor processor = new RenameProcessor(getProject(), aClass, newName, true, true);
+    for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
+      processor.addRenamerFactory(factory);
+    }
+    processor.run();
+  }
+
   private void doRenameClass(final String className, final String newName) {
     doTest(() -> {
-      PsiClass aClass = myFixture.findClass(className);
-      assertNotNull("Class XX not found", aClass);
+      rename(className, newName);
+    });
+  }
 
-      final RenameProcessor processor = new RenameProcessor(getProject(), aClass, newName, true, true);
-      for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
-        processor.addRenamerFactory(factory);
-      }
-      processor.run();
+  private void doUndoRedoRenameClass(final String className, final String newName) {
+    doTest(() -> {
+      rename(className, newName);
+      TestDialogManager.setTestDialog(message -> Messages.YES);
+      FileEditor editor = FileEditorManager.getInstance(myFixture.getProject()).getSelectedEditor();
+      UndoManager.getInstance(myFixture.getProject()).undo(editor);
+      UndoManager.getInstance(myFixture.getProject()).redo(editor);
+      TestDialogManager.setTestDialog(TestDialog.DEFAULT);
     });
   }
 

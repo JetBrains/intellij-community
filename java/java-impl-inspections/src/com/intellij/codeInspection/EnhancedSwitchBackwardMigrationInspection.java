@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -16,7 +16,6 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,13 +24,6 @@ import java.util.StringJoiner;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final SwitchMigrationCase[] ourCases = new SwitchMigrationCase[]{
-    EnhancedSwitchBackwardMigrationInspection::inspectReturningSwitch,
-    EnhancedSwitchBackwardMigrationInspection::inspectVariableSavingSwitch,
-    EnhancedSwitchBackwardMigrationInspection::inspectSwitchStatement,
-    EnhancedSwitchBackwardMigrationInspection::inspectAssignmentSwitch,
-  };
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -52,7 +44,7 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
         holder.registerProblem(statement.getFirstChild(), message, new ReplaceWithOldStyleSwitchFix());
       }
 
-      private boolean isNonemptyRuleFormatSwitch(PsiSwitchBlock block) {
+      private static boolean isNonemptyRuleFormatSwitch(PsiSwitchBlock block) {
         PsiSwitchLabelStatementBase label = PsiTreeUtil.getChildOfType(block.getBody(), PsiSwitchLabelStatementBase.class);
         return label instanceof PsiSwitchLabeledRuleStatement;
       }
@@ -60,10 +52,20 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
   }
 
   private static Replacer findReplacer(@NotNull PsiSwitchBlock block) {
-    for (SwitchMigrationCase migrationCase : ourCases) {
-      Replacer replacer = migrationCase.suggestReplacer(block);
-      if (replacer != null) return replacer;
-    }
+    Replacer replacer;
+
+    replacer = inspectReturningSwitch(block);
+    if (replacer != null) return replacer;
+
+    replacer = inspectVariableSavingSwitch(block);
+    if (replacer != null) return replacer;
+
+    replacer = inspectSwitchStatement(block);
+    if (replacer != null) return replacer;
+
+    replacer = inspectAssignmentSwitch(block);
+    if (replacer != null) return replacer;
+
     return null;
   }
 
@@ -94,17 +96,11 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
     return new SwitchStatementReplacer();
   }
 
-  private interface SwitchMigrationCase {
-    @Nullable
-    Replacer suggestReplacer(@NotNull PsiSwitchBlock switchBlock);
-  }
-
   private interface Replacer {
     void replace(PsiSwitchBlock block);
   }
 
-  private static class ReplaceWithOldStyleSwitchFix implements LocalQuickFix {
-
+  private static class ReplaceWithOldStyleSwitchFix extends PsiUpdateModCommandQuickFix {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -113,8 +109,7 @@ public final class EnhancedSwitchBackwardMigrationInspection extends AbstractBas
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       PsiSwitchBlock switchBlock = tryCast(element instanceof PsiSwitchBlock ? element : element.getParent(), PsiSwitchBlock.class);
       if (switchBlock == null) return;
       Replacer replacer = findReplacer(switchBlock);

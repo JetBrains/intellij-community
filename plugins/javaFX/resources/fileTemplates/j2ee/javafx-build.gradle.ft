@@ -26,7 +26,7 @@ ext {
 }
 #end
 
-#if ($context.sdkFeatureVersion > 0)
+#if ($context.sdkFeatureVersion > 0 && !$context.hasLanguage("kotlin"))
 sourceCompatibility = '${context.sdkFeatureVersion}'
 targetCompatibility = '${context.sdkFeatureVersion}'
 #end
@@ -40,11 +40,8 @@ application {
   mainClass = '${context.rootPackage}.HelloApplication'
 }
 #if ($context.hasLanguage("kotlin"))
-
-[compileKotlin, compileTestKotlin].forEach {
-  it.kotlinOptions {
-    jvmTarget = #if ($context.sdkFeatureVersion < 17)'11'#else'17'#end
-  }
+kotlin {
+  jvmToolchain(#if ($context.sdkFeatureVersion < 17) 11 #else 17 #end)
 }
 #end
 
@@ -84,6 +81,7 @@ dependencies {
 #if ($context.hasLibrary("fxgl"))
   implementation('com.github.almasb:fxgl:#if ($context.sdkFeatureVersion >= 17)${context.getBomProperty("fxgl17.version")}#else${context.getBomProperty("fxgl11.version")}#end') {
     exclude(group: 'org.openjfx')
+    exclude(group: 'org.jetbrains.kotlin')
   }
 #end
 

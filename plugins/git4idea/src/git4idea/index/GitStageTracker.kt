@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.intellij.openapi.Disposable
@@ -213,10 +213,8 @@ open class GitStageTracker(val project: Project) : Disposable {
       get() = rootStates.filterValues(RootState::hasStagedFiles).keys
     val changedRoots: Set<VirtualFile>
       get() = rootStates.filterValues(RootState::hasChangedFiles).keys
-
-    fun hasStagedRoots(): Boolean = rootStates.any { it.value.hasStagedFiles() }
-
-    fun hasChangedRoots(): Boolean = rootStates.any { it.value.hasChangedFiles() }
+    val conflictedRoots: Set<VirtualFile>
+      get() = rootStates.filterValues(RootState::hasConflictedFiles).keys
 
     internal fun updatedWith(root: VirtualFile, newState: RootState): State {
       val result = mutableMapOf<VirtualFile, RootState>()
