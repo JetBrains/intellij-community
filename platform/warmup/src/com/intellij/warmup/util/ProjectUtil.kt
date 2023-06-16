@@ -24,6 +24,7 @@ import com.intellij.warmup.impl.WarmupConfiguratorOfCLIConfigurator
 import kotlinx.coroutines.*
 import java.nio.file.Path
 import java.util.*
+import kotlin.collections.HashSet
 
 fun importOrOpenProject(args: OpenProjectArgs, indicator: ProgressIndicator): Project {
   WarmupLogger.logInfo("Opening project from ${args.projectDir}...")
@@ -201,8 +202,14 @@ private suspend fun callProjectConfigurators(
 }
 
 private fun getAllConfigurators() : List<WarmupConfigurator> {
-  return WarmupConfigurator.EP_NAME.extensionList +
+  val warmupConfigurators = WarmupConfigurator.EP_NAME.extensionList
+  val nameSet = warmupConfigurators.mapTo(HashSet()) { it.configuratorPresentableName }
+  return warmupConfigurators +
          CommandLineInspectionProjectConfigurator.EP_NAME.extensionList
-           .filter { it.name.startsWith("qodana").not() }
+           .filter {
+             // Avoid qodana-specific configurators, we have our analogues for warmup
+             it.name.startsWith("qodana").not() &&
+             // New API should be preferable
+             nameSet.contains(it.name).not() }
            .map(::WarmupConfiguratorOfCLIConfigurator)
 }
