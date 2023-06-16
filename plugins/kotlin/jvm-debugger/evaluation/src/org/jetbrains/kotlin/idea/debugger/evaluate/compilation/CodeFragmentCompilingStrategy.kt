@@ -106,8 +106,11 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         val file = suspendContext.activeExecutionStack?.topFrame?.sourcePosition?.file
         val fileContents = file?.readText()
 
+        val sessionName = suspendContext.debugProcess.session.sessionName
+
         val debuggerContext = """
             project: $projectName
+            session: $sessionName
             location: ${suspendContext.location} at ${file?.path}
         """.trimIndent()
 
