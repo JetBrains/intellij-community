@@ -12,57 +12,6 @@ import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
-
-fun getOldestSupportedGradleVersion(): GradleVersion {
-  return getAllSupportedGradleVersions().min()
-}
-
-fun getOldestSupportedJavaVersion(): JavaVersion {
-  return getAllSupportedJavaVersions().min()
-}
-
-/**
- * Returns sorted list (from min to max) of Gradle version which supported by current Idea.
- */
-fun getAllSupportedGradleVersions(): List<GradleVersion> {
-  return GradleJvmSupportMatrix.getInstance().getAllSupportedGradleVersions()
-}
-
-/**
- * Returns sorted list (from min to max) of Java version which supported by current Idea.
- */
-fun getAllSupportedJavaVersions(): List<JavaVersion> {
-  return GradleJvmSupportMatrix.getInstance().getAllSupportedJavaVersions()
-}
-
-fun getSupportedGradleVersions(javaVersion: JavaVersion): List<GradleVersion> {
-  return getAllSupportedGradleVersions().filter {
-    GradleJvmSupportMatrix.isSupported(it, javaVersion)
-  }
-}
-
-fun getSupportedJavaVersions(gradleVersion: GradleVersion): List<JavaVersion> {
-  return getAllSupportedJavaVersions().filter {
-    GradleJvmSupportMatrix.isSupported(gradleVersion, it)
-  }
-}
-
-fun suggestLatestGradleVersion(javaVersion: JavaVersion): GradleVersion? {
-  return getSupportedGradleVersions(javaVersion).lastOrNull()
-}
-
-fun suggestLatestJavaVersion(gradleVersion: GradleVersion): JavaVersion? {
-  return getSupportedJavaVersions(gradleVersion).lastOrNull()
-}
-
-fun suggestOldestCompatibleGradleVersion(javaVersion: JavaVersion): GradleVersion? {
-  return getSupportedGradleVersions(javaVersion).firstOrNull()
-}
-
-fun suggestOldestCompatibleJavaVersion(gradleVersion: GradleVersion): JavaVersion? {
-  return getSupportedJavaVersions(gradleVersion).firstOrNull()
-}
-
 /**
  * Suggest preferred Gradle version for specified restrictions.
  * @return null if Gradle version doesn't exist for these restrictions.
@@ -84,7 +33,7 @@ fun suggestGradleVersion(options: SuggestGradleVersionOptions): GradleVersion? {
     }
   }
   versions.add(GradleVersion.current())
-  versions.addAll(getAllSupportedGradleVersions().asReversed())
+  versions.addAll(GradleJvmSupportMatrix.getAllSupportedGradleVersionsByIdea().asReversed())
   return versions.find { v -> options.filters.all { it(v) } }
 }
 

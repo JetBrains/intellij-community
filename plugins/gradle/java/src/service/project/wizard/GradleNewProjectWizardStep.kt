@@ -243,7 +243,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     if (GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion)) {
       return null
     }
-    val oldestSupportedJavaVersion = getOldestSupportedJavaVersion()
+    val oldestSupportedJavaVersion = GradleJvmSupportMatrix.getOldestSupportedJavaVersionByIdea()
     return errorWithDialog(
       withDialog = withDialog,
       message = GradleBundle.message(
@@ -266,7 +266,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     withDialog: Boolean,
     gradleVersion: GradleVersion
   ): ValidationInfo? {
-    val oldestSupportedGradleVersion = getOldestSupportedGradleVersion()
+    val oldestSupportedGradleVersion = GradleJvmSupportMatrix.getOldestSupportedGradleVersionByIdea()
     if (gradleVersion >= oldestSupportedGradleVersion) {
       return null
     }
@@ -330,8 +330,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       ),
       dialogMessage = GradleBundle.message(
         "gradle.settings.wizard.unsupported.jdk.message",
-        suggestOldestCompatibleJavaVersion(gradleVersion),
-        suggestLatestJavaVersion(gradleVersion),
+        GradleJvmSupportMatrix.suggestOldestSupportedJavaVersion(gradleVersion),
+        GradleJvmSupportMatrix.suggestLatestSupportedJavaVersion(gradleVersion),
         javaVersion.toFeatureString(),
         gradleVersion.version
       )
@@ -446,7 +446,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   protected open fun suggestGradleVersions(): List<String> {
-    return getAllSupportedGradleVersions().filter {
+    return GradleJvmSupportMatrix.getAllSupportedGradleVersionsByIdea().filter {
       validateJdkCompatibility(it) && validateLanguageCompatibility(it)
     }.map { it.version }
   }

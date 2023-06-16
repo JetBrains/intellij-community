@@ -50,14 +50,6 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
     applyState(newState)
   }
 
-  fun getAllSupportedGradleVersions(): List<GradleVersion> {
-    return mySupportedGradleVersions
-  }
-
-  fun getAllSupportedJavaVersions(): List<JavaVersion> {
-    return mySupportedJavaVersions
-  }
-
   private fun isSupportedImpl(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean {
     return myCompatibility.any { (javaVersions, gradleVersions) ->
       javaVersion in javaVersions && gradleVersion in gradleVersions
@@ -65,21 +57,68 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
   }
 
   private fun isJavaSupportedByIdeaImpl(javaVersion: JavaVersion): Boolean {
-    return mySupportedJavaVersions.min() <= javaVersion
+    return getOldestSupportedJavaVersionByIdeaImpl() <= javaVersion
   }
 
   private fun isGradleSupportedByIdeaImpl(gradleVersion: GradleVersion): Boolean {
-    return minimalSupportedGradleVersion <= gradleVersion
+    return getOldestSupportedGradleVersionByIdeaImpl() <= gradleVersion
   }
 
   private fun isGradleDeprecatedByIdeaImpl(gradleVersion: GradleVersion): Boolean {
-    return gradleVersion < minimalRecommendedGradleVersion
+    return gradleVersion < getOldestRecommendedGradleVersionByIdeaImpl()
   }
 
-  val minimalSupportedGradleVersion
-    get() = mySupportedGradleVersions.min()
+  private fun getSupportedGradleVersionsImpl(javaVersion: JavaVersion): List<GradleVersion> {
+    return getAllSupportedGradleVersionsByIdeaImpl().filter {
+      isSupportedImpl(it, javaVersion)
+    }
+  }
 
-  val minimalRecommendedGradleVersion = GradleVersion.version("4.5")
+  private fun getSupportedJavaVersionsImpl(gradleVersion: GradleVersion): List<JavaVersion> {
+    return getAllSupportedJavaVersionsByIdeaImpl().filter {
+      isSupportedImpl(gradleVersion, it)
+    }
+  }
+
+  private fun suggestLatestGradleVersionImpl(javaVersion: JavaVersion): GradleVersion? {
+    return getSupportedGradleVersionsImpl(javaVersion).lastOrNull()
+  }
+
+  private fun suggestLatestJavaVersionImpl(gradleVersion: GradleVersion): JavaVersion? {
+    return getSupportedJavaVersionsImpl(gradleVersion).lastOrNull()
+  }
+
+  private fun suggestOldestCompatibleGradleVersionImpl(javaVersion: JavaVersion): GradleVersion? {
+    return getSupportedGradleVersionsImpl(javaVersion).firstOrNull()
+  }
+
+  private fun suggestOldestCompatibleJavaVersionImpl(gradleVersion: GradleVersion): JavaVersion? {
+    return getSupportedJavaVersionsImpl(gradleVersion).firstOrNull()
+  }
+
+  private fun getAllSupportedGradleVersionsByIdeaImpl(): List<GradleVersion> {
+    return mySupportedGradleVersions
+  }
+
+  private fun getAllSupportedJavaVersionsByIdeaImpl(): List<JavaVersion> {
+    return mySupportedJavaVersions
+  }
+
+  private fun getOldestSupportedGradleVersionByIdeaImpl(): GradleVersion {
+    return getAllSupportedGradleVersionsByIdeaImpl().min()
+  }
+
+  private fun getOldestRecommendedGradleVersionByIdeaImpl(): GradleVersion {
+    return GradleVersion.version("4.5")
+  }
+
+  private fun getOldestSupportedJavaVersionByIdeaImpl(): JavaVersion {
+    return getAllSupportedJavaVersionsByIdeaImpl().min()
+  }
+
+  private fun getOldestRecommendedJavaVersionByIdeaImpl(): JavaVersion {
+    return JavaVersion.compose(8)
+  }
 
   companion object {
 
@@ -134,6 +173,60 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
     @JvmStatic
     fun isGradleDeprecatedByIdea(gradleVersion: GradleVersion): Boolean {
       return getInstance().isGradleDeprecatedByIdeaImpl(gradleVersion)
+    }
+
+    fun getSupportedGradleVersions(javaVersion: JavaVersion): List<GradleVersion> {
+      return getInstance().getSupportedGradleVersionsImpl(javaVersion)
+    }
+
+    fun getSupportedJavaVersions(gradleVersion: GradleVersion): List<JavaVersion> {
+      return getInstance().getSupportedJavaVersionsImpl(gradleVersion)
+    }
+
+    fun suggestLatestSupportedGradleVersion(javaVersion: JavaVersion): GradleVersion? {
+      return getInstance().suggestLatestGradleVersionImpl(javaVersion)
+    }
+
+    fun suggestLatestSupportedJavaVersion(gradleVersion: GradleVersion): JavaVersion? {
+      return getInstance().suggestLatestJavaVersionImpl(gradleVersion)
+    }
+
+    fun suggestOldestSupportedGradleVersion(javaVersion: JavaVersion): GradleVersion? {
+      return getInstance().suggestOldestCompatibleGradleVersionImpl(javaVersion)
+    }
+
+    fun suggestOldestSupportedJavaVersion(gradleVersion: GradleVersion): JavaVersion? {
+      return getInstance().suggestOldestCompatibleJavaVersionImpl(gradleVersion)
+    }
+
+    /**
+     * Returns sorted list (from min to max) of Gradle version which supported by current Idea.
+     */
+    fun getAllSupportedGradleVersionsByIdea(): List<GradleVersion> {
+      return getInstance().getAllSupportedGradleVersionsByIdeaImpl()
+    }
+
+    /**
+     * Returns sorted list (from min to max) of Java version which supported by current Idea.
+     */
+    fun getAllSupportedJavaVersionsByIdea(): List<JavaVersion> {
+      return getInstance().getAllSupportedJavaVersionsByIdeaImpl()
+    }
+
+    fun getOldestSupportedGradleVersionByIdea(): GradleVersion {
+      return getInstance().getOldestSupportedGradleVersionByIdeaImpl()
+    }
+
+    fun getOldestRecommendedGradleVersionByIdea(): GradleVersion {
+      return getInstance().getOldestRecommendedGradleVersionByIdeaImpl()
+    }
+
+    fun getOldestSupportedJavaVersionByIdea(): JavaVersion {
+      return getInstance().getOldestSupportedJavaVersionByIdeaImpl()
+    }
+
+    fun getOldestRecommendedJavaVersionByIdea(): JavaVersion {
+      return getInstance().getOldestRecommendedJavaVersionByIdeaImpl()
     }
   }
 }

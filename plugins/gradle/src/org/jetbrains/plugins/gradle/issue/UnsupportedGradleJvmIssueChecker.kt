@@ -10,8 +10,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.util.GradleBundle
-import org.jetbrains.plugins.gradle.util.getOldestSupportedJavaVersion
-import org.jetbrains.plugins.gradle.util.suggestOldestCompatibleJavaVersion
 
 class UnsupportedGradleJvmIssueChecker : GradleIssueChecker {
 
@@ -22,7 +20,7 @@ class UnsupportedGradleJvmIssueChecker : GradleIssueChecker {
     if (!GradleJvmSupportMatrix.isJavaHomeSupportedByIdea(javaHome.path)) {
       val title = GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.title")
       val description = DescriptionBuilder()
-      val oldestSupportedJavaVersion = getOldestSupportedJavaVersion()
+      val oldestSupportedJavaVersion = GradleJvmSupportMatrix.getOldestSupportedJavaVersionByIdea()
       description.addDescription(
         GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.description", oldestSupportedJavaVersion.feature)
       )
@@ -32,7 +30,7 @@ class UnsupportedGradleJvmIssueChecker : GradleIssueChecker {
         GradleBundle.message("gradle.settings.text.jvm.path")
       )
       val isAndroidStudio = "AndroidStudio" == PlatformUtils.getPlatformPrefix()
-      val oldestCompatibleJavaVersion = suggestOldestCompatibleJavaVersion(gradleVersion)
+      val oldestCompatibleJavaVersion = GradleJvmSupportMatrix.suggestOldestSupportedJavaVersion(gradleVersion)
       if (!isAndroidStudio && oldestCompatibleJavaVersion != null) {
         description.addQuickFixPrompt(
           GradleBundle.message("gradle.build.quick.fix.gradle.jvm", oldestCompatibleJavaVersion, gradleSettingsFix.id)
