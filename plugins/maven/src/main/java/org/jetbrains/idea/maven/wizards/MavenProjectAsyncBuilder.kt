@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.wizards
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
@@ -31,11 +32,11 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 internal class MavenProjectAsyncBuilder {
-  suspend fun commit(project: Project, projectFile: VirtualFile): List<Module> {
+  suspend fun commit(project: Project, projectFile: VirtualFile, modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     val importProjectFile = if (!projectFile.isDirectory) projectFile else null
     val rootDirectory = if (projectFile.isDirectory) projectFile.toNioPath() else projectFile.parent.toNioPath()
 
-    val isVeryNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) === java.lang.Boolean.TRUE
+    val isVeryNewProject = true == project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT)
 
     val directProjectsSettings = MavenWorkspaceSettingsComponent.getInstance(project).settings
 
@@ -120,7 +121,7 @@ internal class MavenProjectAsyncBuilder {
       null
     }
 
-    return manager.addManagedFilesWithProfilesAndUpdate(MavenUtil.collectFiles(projects), selectedProfiles, previewModule)
+    return manager.addManagedFilesWithProfilesAndUpdate(MavenUtil.collectFiles(projects), selectedProfiles, previewModule, modelsProvider)
   }
 
   private fun createPreviewModule(project: Project, selectedProjects: List<MavenProject>): Module? {
