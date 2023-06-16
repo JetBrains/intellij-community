@@ -731,15 +731,13 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     }
   }
 
-  private class Location(location: String, vararg args: Any?) {
+  private class Location(private val location: String, private vararg val args: Any?) {
 
-    private val location = location.format(
+    override fun toString() = location.format(
       *args
         .map { if (it is IntArray) it.toList() else it }
         .toTypedArray()
     )
-
-    override fun toString() = location
 
   }
 
