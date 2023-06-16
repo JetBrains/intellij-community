@@ -53,6 +53,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GroovyDslGradleSettingScriptBuilder;
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -61,7 +62,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatrices;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.junit.Assume;
 import org.junit.Rule;
@@ -236,7 +236,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
   public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion) {
     JavaVersion javaRuntimeVersion = JavaVersion.current();
-    if (GradleJvmSupportMatrices.isSupported(gradleVersion, javaRuntimeVersion)) {
+    if (GradleJvmSupportMatrix.isSupported(gradleVersion, javaRuntimeVersion)) {
       return IdeaTestUtil.requireRealJdkHome();
     }
     // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
@@ -246,7 +246,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
       if (JdkUtil.checkForJdk(path)) {
         JdkVersionDetector.JdkVersionInfo jdkVersionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(path);
         if (jdkVersionInfo == null) continue;
-        if (GradleJvmSupportMatrices.isSupported(gradleVersion, jdkVersionInfo.version)) {
+        if (GradleJvmSupportMatrix.isSupported(gradleVersion, jdkVersionInfo.version)) {
           return path;
         }
       }

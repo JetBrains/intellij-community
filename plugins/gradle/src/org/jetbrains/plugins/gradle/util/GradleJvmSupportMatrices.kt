@@ -13,13 +13,6 @@ import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 
-/**
- * Checks that Java with [javaVersion] is supported by Gradle with [gradleVersion].
- */
-fun isSupported(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean {
-  return GradleJvmSupportMatrix.getInstance().isSupported(gradleVersion, javaVersion)
-}
-
 fun getOldestSupportedGradleVersion(): GradleVersion {
   return getAllSupportedGradleVersions().min()
 }
@@ -43,11 +36,15 @@ fun getAllSupportedJavaVersions(): List<JavaVersion> {
 }
 
 fun getSupportedGradleVersions(javaVersion: JavaVersion): List<GradleVersion> {
-  return getAllSupportedGradleVersions().filter { isSupported(it, javaVersion) }
+  return getAllSupportedGradleVersions().filter {
+    GradleJvmSupportMatrix.isSupported(it, javaVersion)
+  }
 }
 
 fun getSupportedJavaVersions(gradleVersion: GradleVersion): List<JavaVersion> {
-  return getAllSupportedJavaVersions().filter { isSupported(gradleVersion, it) }
+  return getAllSupportedJavaVersions().filter {
+    GradleJvmSupportMatrix.isSupported(gradleVersion, it)
+  }
 }
 
 fun suggestLatestGradleVersion(javaVersion: JavaVersion): GradleVersion? {
@@ -127,7 +124,9 @@ class SuggestGradleVersionOptions {
 
   fun withJavaVersionFilter(javaVersion: JavaVersion?) = apply {
     if (javaVersion != null) {
-      withFilter { isSupported(it, javaVersion) }
+      withFilter {
+        GradleJvmSupportMatrix.isSupported(it, javaVersion)
+      }
     }
   }
 

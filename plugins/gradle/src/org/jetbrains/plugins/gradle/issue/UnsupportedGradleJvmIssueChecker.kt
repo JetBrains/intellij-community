@@ -2,15 +2,11 @@
 package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.issue.BuildIssue
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.pom.Navigatable
 import com.intellij.util.PlatformUtils
-import com.intellij.util.lang.JavaVersion
-import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -22,7 +18,8 @@ class UnsupportedGradleJvmIssueChecker : GradleIssueChecker {
   override fun check(issueData: GradleIssueData): BuildIssue? {
     val buildEnvironment = issueData.buildEnvironment ?: return null
     val gradleVersion = GradleVersion.version(buildEnvironment.gradle.gradleVersion)
-    if (!Util.isSupportedGradleJvm(buildEnvironment)) {
+    val javaHome = buildEnvironment.java.javaHome
+    if (!GradleJvmSupportMatrix.isJavaHomeSupportedByIdea(javaHome.path)) {
       val title = GradleBundle.message("gradle.build.issue.gradle.jvm.unsupported.title")
       val description = DescriptionBuilder()
       val oldestSupportedJavaVersion = getOldestSupportedJavaVersion()
@@ -49,21 +46,6 @@ class UnsupportedGradleJvmIssueChecker : GradleIssueChecker {
       }
     }
     return null
-  }
-
-  object Util {
-    /**
-     * Checks that Java which used for Gradle execution is supported by IDE
-     */
-    @JvmStatic
-    @ApiStatus.Internal
-    fun isSupportedGradleJvm(buildEnvironment: BuildEnvironment): Boolean {
-      val javaHome = buildEnvironment.java.javaHome
-      val javaSdkType = ExternalSystemJdkUtil.getJavaSdkType()
-      val javaVersionString = javaSdkType.getVersionString(javaHome.path) ?: return false
-      val javaVersion = JavaVersion.tryParse(javaVersionString) ?: return false
-      return GradleJvmSupportMatrix.getInstance().isSupportedByIdea(javaVersion)
-    }
   }
 
   private class DescriptionBuilder {
