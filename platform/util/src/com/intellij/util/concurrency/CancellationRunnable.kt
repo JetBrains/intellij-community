@@ -10,7 +10,10 @@ import java.lang.Runnable
  *
  * @see CancellationCallable
  */
-internal class CancellationRunnable(private val myJob: CompletableJob, private val myRunnable: Runnable) : Runnable {
+internal class CancellationRunnable(
+  private val myJob: CompletableJob,
+  private val myRunnable: Runnable,
+  ) : Runnable {
 
   override fun run() {
     runAsCoroutine(myJob, myRunnable)
