@@ -163,7 +163,7 @@ private fun getTopmostParentInside(element: PsiElement, parent: PsiElement): Psi
 private fun findExpression(element: KtElement): KtExpression? {
     var expression = element
     if (expression is KtScript) {
-        expression = expression.descendantsOfType<KtScriptInitializer>().firstOrNull() ?: return null
+        expression = expression.descendantsOfType<KtScriptInitializer>().singleOrNull() ?: return null
     }
 
     if (expression is KtScriptInitializer) {
