@@ -134,6 +134,8 @@ interface VfsSnapshot {
         }
 
         companion object {
+          fun <T> DefinedState<T>.get(): T = mapCases({ throw AssertionError("value expected to be available", it) }) { it }
+
           inline fun <T, R> DefinedState<T>.mapCases(onNotAvailable: (cause: NotEnoughInformationCause) -> R, onReady: (value: T) -> R): R = when (this) {
             is Ready<T> -> onReady(value)
             is NotAvailable -> onNotAvailable(cause)

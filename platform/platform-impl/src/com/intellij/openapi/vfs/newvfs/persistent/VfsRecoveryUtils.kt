@@ -363,6 +363,7 @@ object VfsRecoveryUtils {
         val file = recoveryQueue.pop()
         val validChildren = childrenOf(file)
           .filter { ctx.fileStates.getState(it.fileId) == RecoveryState.INITIALIZED }
+        if (validChildren.isEmpty()) continue;
         try {
           val idDeltas =
             (listOf(file.fileId) + validChildren.map { it.fileId }.sorted())
