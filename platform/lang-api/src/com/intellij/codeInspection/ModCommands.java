@@ -294,7 +294,15 @@ public final class ModCommands {
     @Override
     public <E extends PsiElement> E getWritable(E e) {
       if (e == null) return null;
-      return tracker(e.getContainingFile()).getCopy(e);
+      PsiFile file = e.getContainingFile();
+      PsiFile originalFile = file.getOriginalFile();
+      if (originalFile != file) {
+        FileTracker tracker = tracker(originalFile);
+        if (tracker.myCopyFile == file) {
+          return e;
+        }
+      }
+      return tracker(file).getCopy(e);
     }
 
     @Override
