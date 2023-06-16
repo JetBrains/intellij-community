@@ -11,6 +11,7 @@ import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.EventTarget
 import org.w3c.dom.parsing.XMLSerializer
+import org.w3c.dom.svg.SVGElement
 
 private fun configureLinks() {
   window.addEventListener("click") { event: Event ->
@@ -35,8 +36,9 @@ private fun Element.obtainLinkAttributeValue(): String? {
 fun collectDiagramContent(): String {
   val document = window.document
   val container = document.getElementById("diagram-container") as HTMLElement
-  val element = container.firstChild
+  val element = container.firstChild as? SVGElement
   checkNotNull(element) { "Where should be an svg element" }
+  element.setAttribute("data-ij-mermaid-generated-on-export", "true")
   val serializer = XMLSerializer()
   return serializer.serializeToString(element)
 }
