@@ -20,7 +20,7 @@ final class ContextFunction<T, R> implements Function<T, R> {
 
   @Override
   public R apply(T arg) {
-    try (AccessToken ignored = ThreadContext.installThreadContext(myParentContext, false)) {
+    try (AccessToken ignored = ThreadContext.installThreadContext(myParentContext, true)) {
       return myFunction.apply(arg);
     }
   }
