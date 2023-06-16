@@ -705,8 +705,11 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     if (!LOG.isDebugEnabled) {
       return
     }
+    val convertedArgs = args
+      .map { if (it is IntArray) it.toList() else it }
+      .toTypedArray()
     SlowOperations.startSection(SlowOperations.GENERIC).use { // Only for debugging, so slow ops are fine here.
-      InvariantChecker(location.format(*args)).checkInvariants()
+      InvariantChecker(location.format(*convertedArgs)).checkInvariants()
     }
   }
 
