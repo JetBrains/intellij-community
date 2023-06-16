@@ -7,15 +7,15 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.util.*
-import java.io.DataInputStream
-import java.io.DataOutputStream
+import java.io.DataInput
+import java.io.DataOutput
 
 @Service
-class ScriptRelatedModuleNameFile: AbstractFileAttributePropertyService<String>(
+class ScriptRelatedModuleNameFile: AbstractFileGistService<String>(
     name = "kotlin-script-moduleName",
     version = 1,
-    read = DataInputStream::readString,
-    write = DataOutputStream::writeString
+    read = DataInput::readString,
+    write = DataOutput::writeString
 ) {
     companion object {
         operator fun get(project: Project, file: VirtualFile): String? {
