@@ -104,11 +104,30 @@ private fun proceedPyValueChildrenNames(childrenNodes: Set<String>,
   }
 }
 
-private fun getReferenceString(pyDebugValue: PyDebugValue): String {
+/**
+ * This function returns string presentation of reference expression.
+ *
+ * An example:
+ * ```
+ * class B:
+ *   d = {
+ *      "key1" : df
+ *   }
+ * ```
+ * For completion inside `B.d['key1'].<caret>` that corresponding to `df` PyDebugValue returns "B.d['key1']"
+ */
+private fun getReferenceExpression(pyDebugValue: PyDebugValue, nodeName: String?): String {
+  nodeName ?: return ""
   val parent = pyDebugValue.parent ?: return pyDebugValue.name
-  return generateSequence(parent, PyDebugValue::getParent).fold(pyDebugValue.name) { name, parentValue ->
-    "${parentValue.name}.$name"
+  var referenceName: String = nodeName
+
+  for (parentValue in generateSequence(parent, PyDebugValue::getParent)) {
+    if (parentValue.qualifiedType in typeToDelimiter.keys) {
+      referenceName = "${parentValue.name}[$referenceName]"
+    }
+    referenceName = "${parentValue.name}.$referenceName"
   }
+  return referenceName
 }
 
 interface PyRuntimeCompletionRetrievalService {
@@ -124,16 +143,16 @@ interface PyRuntimeCompletionRetrievalService {
     val debugValue = node.valueContainer
     if (debugValue is DataFrameDebugValue) {
       val dfColumns = completePandasDataFrameColumns(debugValue.treeColumns, listOfCalls.map { it.pyQualifiedName }) ?: return null
-      return CompletionResultData(dfColumns, PyRuntimeCompletionType.DATA_FRAME_COLUMNS, getReferenceString(debugValue))
+      return CompletionResultData(dfColumns, PyRuntimeCompletionType.DATA_FRAME_COLUMNS, getReferenceExpression(debugValue, node.name))
     }
     if (completionType == CompletionType.BASIC) return null
     computeChildrenIfNeeded(node)
     if ((debugValue as PyDebugValue).qualifiedType == "builtins.dict") {
       return CompletionResultData(node.loadedChildren.mapNotNull { (it as? XValueNodeImpl)?.name }.toSet(),
-                                  PyRuntimeCompletionType.DICT_KEYS, getReferenceString(debugValue))
+                                  PyRuntimeCompletionType.DICT_KEYS, getReferenceExpression(debugValue, node.name))
     }
     return CompletionResultData(node.loadedChildren.mapNotNull { (it as? XValueNodeImpl)?.name }.toSet(),
-                                PyRuntimeCompletionType.DYNAMIC_CLASS, getReferenceString(debugValue))
+                                PyRuntimeCompletionType.DYNAMIC_CLASS, getReferenceExpression(debugValue, node.name))
   }
 }
 

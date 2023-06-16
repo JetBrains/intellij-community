@@ -55,6 +55,10 @@ internal fun getCompleteAttribute(parameters: CompletionParameters): List<PyObje
 
   return when (currentElement) {
     is PyCallExpression, is PyParenthesizedExpression -> {
+      if (lastDelimiter == PyTokenTypes.DOT) {
+        val qualifiedElement = PyQualifiedExpressionItem(currentElement.firstChild.text, CALL_DOT)
+        return listOf(PyObjectCandidate(qualifiedElement, emptyList()))
+      }
       emptyList()
     }
     is PyExpression -> buildList {
@@ -88,37 +92,62 @@ private fun getPyElementText(child: PsiElement?): String? {
   return null
 }
 
+private val CALL_DOT = PyElementType("CALL_DOT")
+val pattern = listOf(PyTokenTypes.LPAR, PyTokenTypes.RPAR, PyTokenTypes.DOT)
+
 private fun createPyObjectCandidate(psiElement: PsiElement, lastDelimiter: IElementType): PyObjectCandidate? {
   val names = mutableListOf<String>()
   val delimiter = mutableListOf<IElementType>()
 
   val firstChild: PsiElement = PsiTreeUtil.getDeepestFirst(psiElement)
   val lastChild = PsiTreeUtil.getDeepestLast(psiElement)
-  if (firstChild != lastChild) {
-    var child = PsiTreeUtil.nextLeaf(firstChild)
-    while (child != null) {
-      if (child.elementType == PyTokenTypes.DOT || child.elementType == PyTokenTypes.LBRACKET) {
-        child.elementType?.let { delimiter.add(it) }
-        child = PsiTreeUtil.nextLeaf(child)
-        continue
-      }
-      getPyElementText(child)?.let { names.add(it) }
-      if (child == lastChild) {
-        break
-      }
-      child = PsiTreeUtil.nextLeaf(child)
-    }
 
-    if (delimiter.size == names.size) {
-      val firstDelimiter = delimiter.removeAt(0)
-      delimiter.add(lastDelimiter)
-      return PyObjectCandidate(PyQualifiedExpressionItem(firstChild.text, firstDelimiter),
-                               names.zip(delimiter).map { pair ->
-                                 PyQualifiedExpressionItem(pair.first, pair.second)
-                               })
+  val allChildren = generateSequence(firstChild) { child ->
+    if (child == lastChild) null else PsiTreeUtil.nextLeaf(child)
+  }.toList()
+
+  var index = 0
+  while (index < allChildren.size) {
+    val elementType = allChildren[index].elementType ?: continue
+    when (elementType) {
+      PyTokenTypes.LPAR -> {
+        if (allChildren.size > index + pattern.size && allChildren.subList(index, index + pattern.size).map { it.elementType } == pattern) {
+          delimiter.add(CALL_DOT)
+          index += 3
+        }
+        else {
+          delimiter.add(elementType)
+          index += 1
+        }
+      }
+      PyTokenTypes.RBRACKET -> {
+        if (delimiter.last() != PyTokenTypes.LBRACKET) {
+          delimiter.add(elementType)
+        }
+        index += 1
+      }
+      PyTokenTypes.DOT, PyTokenTypes.LBRACKET -> {
+        delimiter.add(elementType)
+        index += 1
+      }
+      else -> {
+        val elementText = getPyElementText(allChildren[index]) ?: return null
+        names.add(elementText)
+        index += 1
+      }
     }
-    return null
   }
+  delimiter.add(lastDelimiter)
+
+  if (names.isNotEmpty() && delimiter.size == names.size) {
+    val firstDelimiter = delimiter.removeFirst()
+    val firstName = names.removeFirst()
+    return PyObjectCandidate(PyQualifiedExpressionItem(firstName, firstDelimiter),
+                             names.zip(delimiter).map { pair ->
+                               PyQualifiedExpressionItem(pair.first, pair.second)
+                             })
+  }
+
   return PyObjectCandidate(PyQualifiedExpressionItem(firstChild.text, lastDelimiter), emptyList())
 }
 
@@ -247,7 +276,7 @@ internal fun computeChildrenIfNeeded(valueNode: XValueContainerNode<*>) {
         }
       }
     }
-    // Start to listen tree changes.
+    // Start to listen to tree changes.
     valueNode.tree.addTreeListener(listener)
     invokeLater {
       valueNode.startComputingChildren()
@@ -257,12 +286,15 @@ internal fun computeChildrenIfNeeded(valueNode: XValueContainerNode<*>) {
       // Wait until children will be added to the tree.
       futureChildrenReady.get()
     }
-    // Stop to listen tree changes.
+    // Stop to listen to tree changes.
     valueNode.tree.removeTreeListener(listener)
   }
 }
 
-private fun extractChildByName(childrenNodes: List<TreeNode>, name: String): XValueNodeImpl? {
+private fun extractChildByName(currentNode: XValueContainerNode<*>, childrenNodes: List<TreeNode>, name: String): XValueNodeImpl? {
+  if ((currentNode.valueContainer as? PyDebugValue)?.qualifiedType == "builtins.dict") {
+    return childrenNodes.firstOrNull { it is XValueNodeImpl && it.name == "'${name}'" } as XValueNodeImpl?
+  }
   return childrenNodes.firstOrNull { it is XValueNodeImpl && it.name == name } as XValueNodeImpl?
 }
 
@@ -282,14 +314,14 @@ internal fun getParentNodeByName(children: List<TreeNode>, psiName: String, comp
     .filter { node -> (node.valueContainer as PyXValueGroup).groupType == ProcessDebugger.GROUP_TYPE.SPECIAL }
   specialVariables.forEach { node ->
     computeChildrenIfNeeded(node)
-    extractChildByName(node.loadedChildren, psiName)?.let {
+    extractChildByName(node, node.loadedChildren, psiName)?.let {
       return it
     }
   }
   return null
 }
 
-private val typeToDelimiter = mapOf(
+internal val typeToDelimiter = mapOf(
   "polars.internals.dataframe.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET),
   "polars.dataframe.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET),
   "pandas.core.frame.DataFrame" to setOf(PyTokenTypes.LBRACKET, PyTokenTypes.DOT),
@@ -315,7 +347,7 @@ internal fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?,
       else -> {
         if (completionType == CompletionType.BASIC) return null
         computeChildrenIfNeeded(currentNode)
-        currentNode = extractChildByName(currentNode.children, call.pyQualifiedName) ?: return null
+        currentNode = extractChildByName(currentNode, currentNode.children, call.pyQualifiedName) ?: return null
       }
     }
     val valueContainer = currentNode.valueContainer
