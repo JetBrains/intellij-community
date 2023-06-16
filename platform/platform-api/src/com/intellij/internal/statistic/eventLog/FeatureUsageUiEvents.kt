@@ -13,7 +13,7 @@ fun getUiEventLogger(): FeatureUsageUiEvents {
 }
 
 interface FeatureUsageUiEvents {
-  fun logSelectConfigurable(configurable: Configurable)
+  fun logSelectConfigurable(configurable: Configurable, loadedFromCache: Boolean, loadTimeMs: Long)
 
   fun logApplyConfigurable(configurable: Configurable)
 
@@ -27,7 +27,7 @@ interface FeatureUsageUiEvents {
 }
 
 object EmptyFeatureUsageUiEvents : FeatureUsageUiEvents {
-  override fun logSelectConfigurable(configurable: Configurable) {
+  override fun logSelectConfigurable(configurable: Configurable, loadedFromCache: Boolean, loadTimeMs: Long) {
   }
 
   override fun logApplyConfigurable(configurable: Configurable) {
