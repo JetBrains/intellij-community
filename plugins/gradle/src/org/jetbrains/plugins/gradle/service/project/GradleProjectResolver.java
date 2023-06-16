@@ -45,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.target.TargetBuildLauncher;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
-import org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmIssueChecker;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
@@ -221,10 +220,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       if (!isCustomSerializationSupported(resolverCtx, gradleVersion, isCompositeBuildsSupported)) {
         useCustomSerialization = false;
       }
-      if (!GradleJvmSupportMatrix.getInstance().isSupportedByIdea(gradleVersion)) {
+      if (!GradleJvmSupportMatrix.isGradleSupportedByIdea(gradleVersion)) {
         throw new IllegalStateException("Unsupported Gradle version");
       }
-      if (!UnsupportedGradleJvmIssueChecker.Util.isSupportedGradleJvm(buildEnvironment)) {
+      var javaHome = buildEnvironment.getJava().getJavaHome();
+      if (!GradleJvmSupportMatrix.isJavaHomeSupportedByIdea(javaHome.getPath())) {
         throw new IllegalStateException("Unsupported Gradle JVM version");
       }
     }
@@ -309,7 +309,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
             buildFinishWaiter.countDown();
           }
         });
-      if (gradleVersion != null && GradleJvmSupportMatrix.getInstance().isDeprecated(gradleVersion)) {
+      if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
         resolverCtx.report(MessageEvent.Kind.WARNING, new DeprecatedGradleVersionIssue(gradleVersion, resolverCtx.getProjectPath()));
       }
       performanceTrace.addTrace(allModels.getPerformanceTrace());

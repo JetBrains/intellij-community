@@ -7,6 +7,7 @@ import com.intellij.testFramework.replaceService
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilitySupportUpdater
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
@@ -23,7 +24,7 @@ abstract class GradleJvmSupportMatricesTestCase : LightIdeaTestCase() {
   }
 
   fun isSupported(gradleVersion: String, javaVersion: Int) =
-    isSupported(GradleVersion.version(gradleVersion), JavaVersion.compose(javaVersion))
+    GradleJvmSupportMatrix.isSupported(GradleVersion.version(gradleVersion), JavaVersion.compose(javaVersion))
 
   fun suggestGradleVersion(javaVersion: Int): String? =
     suggestGradleVersion {

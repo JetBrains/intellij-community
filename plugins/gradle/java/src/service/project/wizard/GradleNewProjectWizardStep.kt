@@ -240,7 +240,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   private fun ValidationInfoBuilder.validateIdeaJavaCompatibility(withDialog: Boolean, javaVersion: JavaVersion): ValidationInfo? {
-    if (GradleJvmSupportMatrix.getInstance().isSupportedByIdea(javaVersion)) {
+    if (GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion)) {
       return null
     }
     val oldestSupportedJavaVersion = getOldestSupportedJavaVersion()
@@ -307,7 +307,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
   private fun validateJdkCompatibility(gradleVersion: GradleVersion): Boolean {
     val javaVersion = getJdkVersion()
-    return javaVersion == null || isSupported(gradleVersion, javaVersion)
+    return javaVersion == null || GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)
   }
 
   /**
@@ -316,7 +316,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
    */
   private fun ValidationInfoBuilder.validateJdkCompatibility(gradleVersion: GradleVersion, withDialog: Boolean): ValidationInfo? {
     val javaVersion = getJdkVersion()
-    if (javaVersion == null || isSupported(gradleVersion, javaVersion)) return null
+    if (javaVersion == null || GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)) return null
     return validationWithDialog(
       withDialog = withDialog,
       message = GradleBundle.message(

@@ -18,6 +18,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuickFix
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
 import org.jetbrains.plugins.gradle.util.*
 import java.io.File
@@ -66,7 +67,9 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
     }
 
     val isUnsupportedJavaVersionForGradle =
-      javaVersionUsed != null && gradleVersionUsed != null && !isSupported(gradleVersionUsed, javaVersionUsed)
+      javaVersionUsed != null &&
+      gradleVersionUsed != null &&
+      !GradleJvmSupportMatrix.isSupported(gradleVersionUsed, javaVersionUsed)
 
     if (!isUnsupportedJavaVersionForGradle &&
         !isUnsupportedClassVersionErrorIssue &&

@@ -25,8 +25,6 @@ import org.jetbrains.plugins.gradle.util.GradleUtil
 @ApiStatus.Internal
 class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
 
-  val gradleJvmSupportMatrix = GradleJvmSupportMatrix.getInstance()
-
   override fun check(issueData: GradleIssueData): BuildIssue? {
     val rootCause = getRootCauseAndLocation(issueData.error).first
     val rootCauseText = rootCause.toString()
@@ -39,7 +37,7 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
     val isUnsupportedModelBuilderApi = rootCauseText.endsWith(
       "does not support the ModelBuilder API. Support for this is available in Gradle 1.2 and all later versions."
     )
-    val isUnsupportedByIdea = gradleVersionUsed != null && !gradleJvmSupportMatrix.isSupportedByIdea(gradleVersionUsed)
+    val isUnsupportedByIdea = gradleVersionUsed != null && !GradleJvmSupportMatrix.isGradleSupportedByIdea(gradleVersionUsed)
 
     val isAncientGradleVersion = isOldGradleClasspathInfererIssue || isUnsupportedModelBuilderApi || isUnsupportedByIdea
 
@@ -49,7 +47,7 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
     }
 
     val minRequiredVersionCandidate: String
-    if (isAncientGradleVersion) minRequiredVersionCandidate = gradleJvmSupportMatrix.minimalSupportedGradleVersion.version
+    if (isAncientGradleVersion) minRequiredVersionCandidate = GradleJvmSupportMatrix.getInstance().minimalSupportedGradleVersion.version
     else minRequiredVersionCandidate = rootCauseText.substringAfter(unsupportedVersionMessagePrefix).substringBefore(" ", "")
     val gradleMinimumVersionRequired = try {
       GradleVersion.version(minRequiredVersionCandidate)

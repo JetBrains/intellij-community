@@ -27,6 +27,7 @@ import org.gradle.util.GradleVersion;
 import org.hamcrest.CustomMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
@@ -38,7 +39,6 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatrices;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -168,9 +168,8 @@ public abstract class AbstractModelBuilderTest {
   }
 
   public static void assumeGradleCompatibleWithJava(@NotNull String gradleVersion) {
-    assumeTrue("Gradle version [" + gradleVersion + "] is incompatible with Java version [" + JavaVersion.current() + "]",
-               GradleJvmSupportMatrices.isSupported(GradleVersion.version(gradleVersion),
-                                                      JavaVersion.current()));
+    assumeTrue("Gradle [" + gradleVersion + "] cannot be execution on Java [" + JavaVersion.current() + "]",
+               GradleJvmSupportMatrix.isSupported(GradleVersion.version(gradleVersion), JavaVersion.current()));
 
     if (GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("4.8")) < 0) {
       assumeThat(JavaVersion.current().feature, new CustomMatcher<Integer>("Java version older than 9") {
