@@ -46,9 +46,12 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
       return null
     }
 
-    val minRequiredVersionCandidate: String
-    if (isAncientGradleVersion) minRequiredVersionCandidate = GradleJvmSupportMatrix.getInstance().minimalSupportedGradleVersion.version
-    else minRequiredVersionCandidate = rootCauseText.substringAfter(unsupportedVersionMessagePrefix).substringBefore(" ", "")
+    val minRequiredVersionCandidate = if (isAncientGradleVersion) {
+      GradleJvmSupportMatrix.getOldestSupportedGradleVersionByIdea().version
+    }
+    else {
+      rootCauseText.substringAfter(unsupportedVersionMessagePrefix).substringBefore(" ", "")
+    }
     val gradleMinimumVersionRequired = try {
       GradleVersion.version(minRequiredVersionCandidate)
     }

@@ -16,11 +16,12 @@ abstract class GradleJvmSupportMatricesTestCase : LightIdeaTestCase() {
 
   override fun setUp() {
     super.setUp()
-    ApplicationManager.getApplication().replaceService(GradleCompatibilitySupportUpdater::class.java, object : GradleCompatibilitySupportUpdater() {
-      override fun checkForUpdates(): Future<*> {
-        return CompletableFuture.completedFuture(null)
-      }
-    }, testRootDisposable)
+    ApplicationManager.getApplication().replaceService(GradleCompatibilitySupportUpdater::class.java,
+                                                       object : GradleCompatibilitySupportUpdater() {
+                                                         override fun checkForUpdates(): Future<*> {
+                                                           return CompletableFuture.completedFuture(null)
+                                                         }
+                                                       }, testRootDisposable)
   }
 
   fun isSupported(gradleVersion: String, javaVersion: Int) =
@@ -31,15 +32,15 @@ abstract class GradleJvmSupportMatricesTestCase : LightIdeaTestCase() {
       withJavaVersionFilter(JavaVersion.compose(javaVersion))
     }?.version
 
-  fun suggestLatestGradleVersion(javaVersion: Int): String? =
-    suggestLatestGradleVersion(JavaVersion.compose(javaVersion))?.version
+  fun suggestLatestSupportedGradleVersion(javaVersion: Int): String? =
+    GradleJvmSupportMatrix.suggestLatestSupportedGradleVersion(JavaVersion.compose(javaVersion))?.version
 
-  fun suggestLatestJavaVersion(gradleVersion: String): Int? =
-    suggestLatestJavaVersion(GradleVersion.version(gradleVersion))?.feature
+  fun suggestLatestSupportedJavaVersion(gradleVersion: String): Int? =
+    GradleJvmSupportMatrix.suggestLatestSupportedJavaVersion(GradleVersion.version(gradleVersion))?.feature
 
-  fun suggestOldestCompatibleGradleVersion(javaVersion: Int): String? =
-    suggestOldestCompatibleGradleVersion(JavaVersion.compose(javaVersion))?.version
+  fun suggestOldestSupportedGradleVersion(javaVersion: Int): String? =
+    GradleJvmSupportMatrix.suggestOldestSupportedGradleVersion(JavaVersion.compose(javaVersion))?.version
 
-  fun suggestOldestCompatibleJavaVersion(gradleVersion: String): Int? =
-    suggestOldestCompatibleJavaVersion(GradleVersion.version(gradleVersion))?.feature
+  fun suggestOldestSupportedJavaVersion(gradleVersion: String): Int? =
+    GradleJvmSupportMatrix.suggestOldestSupportedJavaVersion(GradleVersion.version(gradleVersion))?.feature
 }
