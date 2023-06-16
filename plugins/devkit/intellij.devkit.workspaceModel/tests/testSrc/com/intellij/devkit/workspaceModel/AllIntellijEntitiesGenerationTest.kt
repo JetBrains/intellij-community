@@ -40,15 +40,15 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   private val LOG = logger<AllIntellijEntitiesGenerationTest>()
 
   private val virtualFileManager = IdeVirtualFileUrlManagerImpl()
-  private val modulesWithUnknownFields: Set<String> = setOf("intellij.platform.workspaceModel.storage.testEntities")
+  private val modulesWithUnknownFields: Set<String> = setOf("intellij.platform.workspace.storage.testEntities")
 
   private val skippedModulePaths: Set<Pair<String, String>> = setOf(
-    "intellij.platform.workspaceModel.storage.tests" to
-      "com/intellij/platform/workspaceModel/storage/tests",
-    "intellij.platform.workspaceModel.storage.testEntities" to
-      "com/intellij/platform/workspaceModel/storage/testEntities/entities",
-    "intellij.platform.workspaceModel.storage" to
-      "com/intellij/workspaceModel/storage"
+    "intellij.platform.workspace.storage.tests" to
+      "com/intellij/platform/workspace/storage/tests",
+    "intellij.platform.workspace.storage.testEntities" to
+      "com/intellij/platform/workspace/storage/testEntities/entities",
+    "intellij.platform.workspace.storage" to
+      "com/intellij/workspace/storage"
   )
 
   private val modulesWithCustomIndentSize: Map<String, Int> = mapOf("kotlin.base.scripting" to 4)
@@ -107,7 +107,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     var storageChanged = false
     modulesToCheck.forEach { (moduleEntity, sourceRoot), pathToPackages ->
       when (moduleEntity.name) {
-        "intellij.platform.workspaceModel.storage" -> {
+        "intellij.platform.workspace.storage" -> {
           runWriteActionAndWait {
             val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
             removeWorkspaceStorageLibrary(modifiableModel)

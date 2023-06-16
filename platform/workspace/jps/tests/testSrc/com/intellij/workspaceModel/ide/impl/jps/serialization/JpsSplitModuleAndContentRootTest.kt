@@ -653,7 +653,7 @@ class JpsSplitModuleAndContentRootTest {
                                           change: (MutableEntityStorage, MutableEntityStorage, JpsProjectConfigLocation) -> Unit) {
 
     val initialDir = PathManagerEx.findFileUnderCommunityHome(
-      "platform/workspaceModel/jps/tests/testData/serialization/splitModuleAndContentRoot/$dirBefore")
+      "platform/workspace/jps/tests/testData/serialization/splitModuleAndContentRoot/$dirBefore")
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(projectModel.project)
     externalStorageConfigurationManager.isEnabled = externalStorage
     checkSaveProjectAfterChange(initialDir, dirAfter, { builder, orphanage, _, location -> change(builder, orphanage, location) },
