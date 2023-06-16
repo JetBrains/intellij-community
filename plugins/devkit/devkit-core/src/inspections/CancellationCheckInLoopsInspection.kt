@@ -61,7 +61,9 @@ class CancellationCheckInLoopsInspection : DevKitUastInspectionBase() {
     if (firstExpressionInLoop is ULoopExpression) return
 
     val cancellationCheckFqn = checkProvider.findCancellationCheckCall(sourcePsi)
-    if (checkProvider.isCancellationCheckCall(firstExpressionInLoop?.sourcePsi, cancellationCheckFqn)) return
+    val firstExpressionInLoopSourcePsi = firstExpressionInLoop?.sourcePsi
+    if (firstExpressionInLoopSourcePsi != null && checkProvider.isCancellationCheckCall(firstExpressionInLoopSourcePsi,
+                                                                                        cancellationCheckFqn)) return
 
     val anchor = sourcePsi.firstChild
     val fixProvider = CancellationCheckInLoopsFixProviders.forLanguage(holder.file.language) ?: return

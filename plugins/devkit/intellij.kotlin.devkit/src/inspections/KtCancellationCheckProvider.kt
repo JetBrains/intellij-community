@@ -18,9 +18,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 private const val PROGRESS_MANAGER_CHECKED_CANCELED = "com.intellij.openapi.progress.ProgressManager.checkCanceled"
 private const val COROUTINE_CHECK_CANCELLED = "com.intellij.openapi.progress.checkCancelled"
 
-class KtCancellationCheckProvider : CancellationCheckProvider {
+internal class KtCancellationCheckProvider : CancellationCheckProvider {
 
-  enum class Context {
+  private enum class Context {
     BLOCKING, SUSPENDING
   }
 
@@ -31,7 +31,7 @@ class KtCancellationCheckProvider : CancellationCheckProvider {
     }
   }
 
-  override fun isCancellationCheckCall(element: PsiElement?, cancellationCheckFqn: String): Boolean {
+  override fun isCancellationCheckCall(element: PsiElement, cancellationCheckFqn: String): Boolean {
     val callExpression = when (element) {
       is KtCallExpression -> element
       is KtDotQualifiedExpression -> element.getChildOfType<KtCallExpression>() ?: return false
