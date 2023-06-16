@@ -180,11 +180,13 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
         if (encoding != null) return encoding;
       }
     }
-    VirtualFile parent = virtualFile;
-    while (parent != null) {
-      Charset charset = myMapping.get(new LightFilePointer(parent.getUrl()));
-      if (charset != null || !useParentDefaults) return charset;
-      parent = parent.getParent();
+    if (!myMapping.isEmpty()) {
+      VirtualFile parent = virtualFile;
+      while (parent != null) {
+        Charset charset = myMapping.get(new LightFilePointer(parent.getUrl()));
+        if (charset != null || !useParentDefaults) return charset;
+        parent = parent.getParent();
+      }
     }
 
     return getDefaultCharset();
