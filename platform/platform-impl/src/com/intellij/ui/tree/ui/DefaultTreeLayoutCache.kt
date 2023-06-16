@@ -36,20 +36,21 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     }
     super.setRootVisible(rootVisible)
     val root = this.root ?: return
+    val debugLocation = Location("setRootVisible(%s)", rootVisible)
     if (rootVisible) {
       root.invalidateSize()
-      rows.update {
+      rows.update(debugLocation) {
         rows.add(0, root)
       }
     }
     else {
-      rows.update {
+      rows.update(debugLocation) {
         rows.removeAt(0)
       }
       treeSelectionModel?.removeSelectionPath(root.path)
     }
     treeSelectionModel?.resetRowSelection()
-    checkInvariants("setRootVisible(%s)", rootVisible)
+    checkInvariants(debugLocation)
   }
 
   override fun setRowHeight(rowHeight: Int) {
@@ -64,20 +65,21 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     else if (rowHeight > 0 && variableHeight != null) {
       variableHeight = null
     }
-    checkInvariants("setRowHeight(%d)", rowHeight)
+    checkInvariants(Location("setRowHeight(%d)", rowHeight))
   }
 
   override fun setNodeDimensions(nd: NodeDimensions?) {
     super.setNodeDimensions(nd)
     invalidateSizes()
-    checkInvariants("setNodeDimensions(%s)", nd)
+    checkInvariants(Location("setNodeDimensions(%s)", nd))
   }
 
   override fun setExpandedState(path: TreePath?, isExpanded: Boolean) {
     val node = getOrCreateNode(path) ?: return
     val wasVisible = node.isVisible
     val oldVisibleChildren = node.visibleChildCount
-    rows.update {
+    val debugLocation = Location("setExpandedState(%s, %s)", path, isExpanded)
+    rows.update(debugLocation) {
       if (isExpanded) {
         node.ensureChildrenVisible()
       }
@@ -87,7 +89,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
         node.invalidateSize()
       }
     }
-    checkInvariants("setExpandedState(%s, %s)", path, isExpanded)
+    checkInvariants(debugLocation)
     val newVisibleChildren = node.visibleChildCount
     if (wasVisible && oldVisibleChildren == 0 && newVisibleChildren == 1) {
       autoExpandHandler(node.getChildAt(0).path)
@@ -172,7 +174,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       changedChildNode.userObject = model.getChild(changedValue, i)
       changedChildNode.invalidateSize()
     }
-    checkInvariants("treeNodesChanged(value=%s, indices=%s)", changedValue, changedChildIndexes)
+    checkInvariants(Location("treeNodesChanged(value=%s, indices=%s)", changedValue, changedChildIndexes))
   }
 
   override fun treeNodesInserted(e: TreeModelEvent?) {
@@ -189,7 +191,8 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     if (!changedNode.isChildrenLoaded) {
       return
     }
-    rows.update {
+    val debugLocation = Location("treeNodesInserted(value=%s, indices=%s)", changedValue, insertedChildIndexes)
+    rows.update(debugLocation) {
       for (i in insertedChildIndexes) {
         changedNode.createChildAt(i, treeModel.getChild(changedNode.userObject, i))
       }
@@ -198,7 +201,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     if (insertedChildIndexes.size == 1 && changedNode.visibleChildCount == 1) {
       autoExpandHandler(changedNode.getChildAt(0).path)
     }
-    checkInvariants("treeNodesInserted(value=%s, indices=%s)", changedValue, insertedChildIndexes)
+    checkInvariants(debugLocation)
   }
 
   override fun treeNodesRemoved(e: TreeModelEvent?) {
@@ -215,7 +218,8 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     if (!changedNode.isChildrenLoaded) {
       return
     }
-    rows.update {
+    val debugLocation = Location("treeNodesRemoved(value=%s, indices=%s)", changedValue, removedChildIndexes)
+    rows.update(debugLocation) {
       for (index in removedChildIndexes.reversed()) {
         changedNode.removeChildAt(index)
       }
@@ -224,7 +228,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       }
     }
     treeSelectionModel?.resetRowSelection()
-    checkInvariants("treeNodesRemoved(value=%s, indices=%s)", changedValue, removedChildIndexes)
+    checkInvariants(debugLocation)
   }
 
   override fun treeStructureChanged(e: TreeModelEvent?) {
@@ -233,6 +237,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     }
     val changedPath = e.treePathOrRoot
     val changedNode = getNode(changedPath)
+    val debugLocation = Location("treeStructureChanged(path=%s)", changedPath)
     if (changedPath.isRoot) {
       rebuild()
       treeSelectionModel?.clearSelection()
@@ -243,7 +248,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
       checkNotNull(parent) { "Changed node $changedNode is not root, but its parent is null" }
       val index = parent.getChildIndex(changedNode)
       check(index != -1) { "The node $parent has no child $changedNode" }
-      rows.update {
+      rows.update(debugLocation) {
         parent.removeChildAt(index)
         val newNode = parent.createChildAt(index, changedPath.lastPathComponent)
         if (childrenWereVisible) {
@@ -251,7 +256,7 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
         }
       }
     }
-    checkInvariants("treeStructureChanged(path=%s)", changedPath)
+    checkInvariants(debugLocation)
   }
 
   private fun rebuild() {
@@ -261,12 +266,14 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     val newRootObject = treeModel?.root ?: return
     val newRootNode = Node(null, CachingTreePath(newRootObject))
     this.root = newRootNode
-    rows.update {
+    val location = Location("rebuild")
+    rows.update(location) {
       if (isRootVisible) {
         rows.add(0, newRootNode)
       }
       newRootNode.ensureChildrenVisible()
     }
+    checkInvariants(location)
   }
 
   private fun getRowByY(y: Int): Int =
@@ -570,11 +577,23 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     }
 
     inline fun update(update: () -> Unit) {
+      updateImpl(null, update)
+    }
+
+    inline fun update(location: Location, update: () -> Unit) {
+      updateImpl(location, update)
+    }
+
+    inline fun updateImpl(location: Location?, update: () -> Unit) {
       val reentry = minimumAffectedRow != -1
       if (reentry) { // Indirect recursion, will update later up the stack.
         update()
         return
       }
+      if (location == null) {
+        throw IllegalStateException("A non-reentry call of NodeList.update with no location is detected")
+      }
+      val initialSize = size
       try {
         minimumAffectedRow = Integer.MAX_VALUE
         update()
@@ -582,6 +601,8 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
           nodes[i].row = i
         }
         onUpdate()
+      } catch (e: Exception) {
+        LOG.error(AssertionError("A bug in DefaultTreeLayoutCache is detected in $location, size was $initialSize, now $size", e))
       } finally {
         minimumAffectedRow = -1
       }
@@ -701,19 +722,28 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
 
   }
 
-  private fun checkInvariants(location: String, vararg args: Any?) {
+  private fun checkInvariants(location: Location) {
     if (!LOG.isDebugEnabled) {
       return
     }
-    val convertedArgs = args
-      .map { if (it is IntArray) it.toList() else it }
-      .toTypedArray()
     SlowOperations.startSection(SlowOperations.GENERIC).use { // Only for debugging, so slow ops are fine here.
-      InvariantChecker(location.format(*convertedArgs)).checkInvariants()
+      InvariantChecker(location).checkInvariants()
     }
   }
 
-  private inner class InvariantChecker(private val location: String) {
+  private class Location(location: String, vararg args: Any?) {
+
+    private val location = location.format(
+      *args
+        .map { if (it is IntArray) it.toList() else it }
+        .toTypedArray()
+    )
+
+    override fun toString() = location
+
+  }
+
+  private inner class InvariantChecker(private val location: Location) {
 
     private val messages = mutableListOf<String>()
 
