@@ -436,6 +436,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
       var document = myDocument;
       if (editor == null || editor.isDisposed() || document == null) return;
       if (updatedLineNumber < 0 || updatedLineNumber >= document.getLineCount()) return;
+      if (lineNumber < 0) return;
       var highlighter = createRangeHighlighter(markupModel, executableLines, className, lineNumber, updatedLineNumber, coverageSuite);
       registerOrDisposeHighlighter(highlighter);
     });
