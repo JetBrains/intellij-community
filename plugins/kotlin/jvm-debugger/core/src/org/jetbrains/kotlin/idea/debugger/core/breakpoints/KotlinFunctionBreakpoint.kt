@@ -31,13 +31,11 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle.message
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerLegacyFacade
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -46,7 +44,7 @@ interface SourcePositionRefiner {
     fun refineSourcePosition(sourcePosition: SourcePosition): SourcePosition
 }
 
-class KotlinFunctionBreakpoint(
+open class KotlinFunctionBreakpoint(
     project: Project,
     breakpoint: XBreakpoint<*>
 ) : MethodBreakpoint(project, breakpoint), SourcePositionRefiner {
