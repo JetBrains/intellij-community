@@ -746,11 +746,17 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
     }
 
     private fun checkEmptyTree() {
+      val root = this@DefaultTreeLayoutCache.root
       if (root != null) {
-        messages += "No visible rows, but the root is = $root"
+        if (isRootVisible) {
+          messages += "No visible rows, but the root is $root and it's visible"
+        }
+        else if (root.childCount > 0) {
+          messages += "No visible rows, but the invisible root $root has children: ${root.children}"
+        }
       }
-      if (nodeByPath.isNotEmpty()) {
-        messages += "No visible rows, but the tree has ${nodeByPath.size} nodes: $nodeByPath"
+      else if (nodeByPath.isNotEmpty()) {
+        messages += "An empty tree has ${nodeByPath.size} nodes: $nodeByPath"
       }
     }
 
@@ -786,16 +792,16 @@ internal class DefaultTreeLayoutCache(private val autoExpandHandler: (TreePath) 
         val node = rows[i]
         val visibleSubtreeSize = node.visibleSubtreeNodeCount()
         if (visibleSubtreeSize <= 0) {
-          messages += "Node ${node.path} is visible, but has the visible subtree of size $visibleSubtreeSize"
+          messages += "Node ${node.path} at row $i is visible, but has the visible subtree of size $visibleSubtreeSize"
         }
         if (!node.isChildrenVisible) {
           if (visibleSubtreeSize > 1) {
-            messages += "Node ${node.path} is not expanded, but has the visible subtree of size $visibleSubtreeSize"
+            messages += "Node ${node.path} at row $i is not expanded, but has the visible subtree of size $visibleSubtreeSize"
           }
           checkAllChildrenAreInvisible(node)
         }
         if (i + visibleSubtreeSize > rows.size) {
-          messages += "Node ${node.path} has the visible subtree of size $visibleSubtreeSize, which is more than rowCount=${rows.size}"
+          messages += "Node ${node.path} at row $i has the visible subtree of size $visibleSubtreeSize, which extends past rowCount=${rows.size}"
         }
       }
     }
