@@ -19,7 +19,7 @@ class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
     return panel {
       for (step in smartUpdate.availableSteps()) {
         row {
-          checkBox(step.stepName).bindSelected(options.property(step.id))
+          checkBox(step.stepName).enabled(step.isEnabled(project)).bindSelected(options.property(step.id))
         }
         val optionsPanel = step.getOptionsPanel(project)
         if (optionsPanel != null) {
