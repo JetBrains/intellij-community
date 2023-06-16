@@ -375,33 +375,33 @@ private fun reportTeamCityFailedTestAndBuildProblem(testName: String, failureMes
 
 @Suppress("RAW_RUN_BLOCKING")
 private fun registerOnFinishRunnables(future: CompletableFuture<*>, mustExitOnFailure: Boolean) {
-  ApplicationManager.getApplication().executeOnPooledThread(Runnable {
     future
       .thenRun { LOG.info("Execution of the script has been finished successfully") }
       .exceptionally(Function { e ->
-        val message = "IDE will be terminated because some errors are detected while running the startup script: $e"
-        if (MUST_REPORT_TEAMCITY_TEST_FAILURE_ON_IDE_ERROR) {
-          val testName = teamCityFailedTestName
-          reportTeamCityFailedTestAndBuildProblem(testName, message, "")
-        }
-        if (SystemProperties.getBooleanProperty("startup.performance.framework", false)) {
-          storeFailureToFile(e.message)
-        }
-        LOG.error(message)
-        runBlocking {
-          takeScreenshotOfAllWindows("onFailure")
-        }
-        val threadDump = """
+        ApplicationManager.getApplication().executeOnPooledThread {
+          val message = "IDE will be terminated because some errors are detected while running the startup script: $e"
+          if (MUST_REPORT_TEAMCITY_TEST_FAILURE_ON_IDE_ERROR) {
+            val testName = teamCityFailedTestName
+            reportTeamCityFailedTestAndBuildProblem(testName, message, "")
+          }
+          if (SystemProperties.getBooleanProperty("startup.performance.framework", false)) {
+            storeFailureToFile(e.message)
+          }
+          LOG.error(message)
+          runBlocking {
+            takeScreenshotOfAllWindows("onFailure")
+          }
+          val threadDump = """
             Thread dump before IDE termination:
             ${ThreadDumper.dumpThreadsToString()}
             """.trimIndent()
-        LOG.info(threadDump)
-        if (mustExitOnFailure) {
-          ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
+          LOG.info(threadDump)
+          if (mustExitOnFailure) {
+            ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
+          }
         }
         null
       })
-  })
 }
 
 private fun storeFailureToFile(errorMessage: String?) {
