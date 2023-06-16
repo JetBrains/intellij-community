@@ -77,8 +77,7 @@
       },
       {
         "java": "8-9",
-        "gradle": "INF-5.1,7.2-INF",
-        "comment": " Gradle older than 2.0 unofficially compatible with Java 8. Gradle from 5.1 to 7.1 and Java 8 aren't compatible: https://github.com/gradle/gradle/issues/8285"
+        "gradle": "INF-INF"
       },
       {
         "java": "9-10",
