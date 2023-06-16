@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.div
 import kotlin.io.path.forEachDirectoryEntry
+import kotlin.math.max
 
 /**
  * VfsLog tracks every modification operation done to files of PersistentFS and persists them in a separate storage,
@@ -48,7 +49,8 @@ class VfsLog(
 
     // todo: probably need to propagate readOnly to storages to ensure safety
     override val stringEnumerator = SimpleStringPersistentEnumerator(storagePath / "stringsEnum")
-    override val operationLogStorage = OperationLogStorageImpl(storagePath / "operations", stringEnumerator)
+    override val operationLogStorage = OperationLogStorageImpl(storagePath / "operations", stringEnumerator,
+                                                               coroutineScope, WORKER_THREADS_COUNT)
     override val payloadStorage = PayloadStorageImpl(storagePath / "data")
 
     fun flush() {
@@ -139,7 +141,10 @@ class VfsLog(
 
     @JvmField
     val LOG_VFS_OPERATIONS_ENABLED: Boolean = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled", false)
-    private val WORKER_THREADS_COUNT = SystemProperties.getIntProperty("idea.vfs.log-vfs-operations.workers", 4)
+    private val WORKER_THREADS_COUNT = SystemProperties.getIntProperty(
+      "idea.vfs.log-vfs-operations.workers",
+      max(4, Runtime.getRuntime().availableProcessors() / 2)
+    )
     // TODO: compaction & its options
   }
 }

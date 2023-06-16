@@ -1,15 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.SkipListAdvancingPositionTracker
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.ResilientFileChannel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.nio.channels.FileChannel
@@ -20,10 +25,19 @@ import kotlin.io.path.div
 class OperationLogStorageImpl(
   storagePath: Path,
   private val stringEnumerator: DataEnumerator<String>,
+  private val scope: CoroutineScope,
+  private val writerJobsCount: Int
 ) : OperationLogStorage {
   private val storageIO: StorageIO
   private var persistentSize by PersistentVar.long(storagePath / "size")
   private val position: AdvancingPositionTracker
+  private val writeQueue = Channel<() -> Unit>(
+    capacity = SystemProperties.getIntProperty("idea.vfs.log-vfs-operations.buffer-capacity", 10_000),
+    BufferOverflow.SUSPEND
+  )
+
+  @Volatile
+  private var isClosed = false
 
   init {
     FileUtil.ensureExists(storagePath.toFile())
@@ -32,6 +46,8 @@ class OperationLogStorageImpl(
     storageIO = ChunkMMappedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
 
     position = SkipListAdvancingPositionTracker(persistentSize ?: 0L)
+
+    repeat(writerJobsCount) { scope.launch { writeWorker() } }
   }
 
   override fun bytesForOperationDescriptor(tag: VfsOperationTag): Int =
@@ -39,25 +55,55 @@ class OperationLogStorageImpl(
 
   private fun sizeOfValueInDescriptor(size: Int) = size - VfsOperationTag.SIZE_BYTES * 2
 
+  private suspend fun writeWorker() {
+    for (job in writeQueue) {
+      performWriteJob(job)
+    }
+  }
+
+  private fun performWriteJob(job: () -> Unit) {
+    try {
+      job()
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+    }
+  }
+
   override fun enqueueOperationWrite(scope: CoroutineScope, tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
     val descrSize = bytesForOperationDescriptor(tag)
     val descrPos = position.beginAdvance(descrSize.toLong())
-    scope.launch {
+    val job = { writeJobImpl(compute, tag, descrPos, descrSize) }
+    val submitted = writeQueue.trySend(job)
+    if (submitted.isSuccess) return
+    performWriteJob(job)
+  }
+
+  private fun writeJobImpl(
+    compute: () -> VfsOperation<*>,
+    tag: VfsOperationTag,
+    descrPos: Long,
+    descrSize: Int
+  ) {
+    try {
+      if (isClosed) throw CancellationException("OperationLogStorage is disposed")
       val operation = compute()
       if (tag != operation.tag) {
         throw IllegalStateException("expected $tag, got ${operation.tag}")
       }
       writeOperation(descrPos, operation)
-    }.invokeOnCompletion {
-      if (it != null) { // TODO: probably need to check specific classes (also, what to do on coroutine cancellation?)
-        try { // try to write error bounding tags
-          storageIO.write(descrPos, byteArrayOf((-tag.ordinal).toByte()))
-          storageIO.write(descrPos + descrSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
-        }
-        catch (e: Throwable) {
-          it.addSuppressed(IOException("failed to set error operation bounds", e))
-        }
+    }
+    catch (e: Throwable) {
+      try { // try to write error bounding tags
+        storageIO.write(descrPos, byteArrayOf((-tag.ordinal).toByte()))
+        storageIO.write(descrPos + descrSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
       }
+      catch (e2: Throwable) {
+        e.addSuppressed(IOException("failed to set error operation bounds", e2))
+      }
+      throw e
+    }
+    finally {
       position.finishAdvance(descrPos)
     }
   }
@@ -114,7 +160,8 @@ class OperationLogStorageImpl(
       }
       return OperationReadResult.Incomplete(tag)
     }
-  } catch (e: Throwable) {
+  }
+  catch (e: Throwable) {
     OperationReadResult.Invalid(e)
   }
 
@@ -199,6 +246,8 @@ class OperationLogStorageImpl(
   }
 
   override fun dispose() {
+    isClosed = true
+    writeQueue.close()
     flush()
     storageIO.close()
   }
@@ -252,5 +301,13 @@ class OperationLogStorageImpl(
     override fun hashCode(): Int {
       return position.hashCode()
     }
+
+    override fun toString(): String {
+      return "Iterator(position=$position)"
+    }
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(OperationLogStorageImpl::class.java)
   }
 }
