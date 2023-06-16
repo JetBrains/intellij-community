@@ -41,6 +41,9 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
   }
 
   val libName = getLibNameBySourceFile(sourceFile)
+  // We need to keep async-profiler agents for all platforms to support remote target profiling,
+  // as a suitable agent is copied to a remote machine
+  val allPlatformsRequired = libName == "async-profiler"
 
   HashMapZipFile.load(sourceFile).use { zipFile ->
     val outDir = context.paths.tempDir.resolve(libName)
@@ -57,7 +60,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
         else -> continue
       }
 
-      if (!context.options.targetOs.contains(os) && signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
+      if (!allPlatformsRequired && !context.options.targetOs.contains(os) && signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
         continue
       }
 
@@ -73,7 +76,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
         }
       }
 
-      if (arch != null &&
+      if (!allPlatformsRequired && arch != null &&
           (context.options.targetArch != null && context.options.targetArch != arch) &&
           signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
         continue
@@ -110,7 +113,10 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
       }
 
       val relativePath = "lib/$libName/" + getRelativePath(libName, arch, fileName, path)
-      context.addDistFile(DistFile(file = file, relativePath = relativePath, os = os, arch = arch))
+      val distFile = DistFile(file = file, relativePath = relativePath,
+                              os = os.takeUnless { allPlatformsRequired },
+                              arch = arch.takeUnless { allPlatformsRequired })
+      context.addDistFile(distFile)
     }
   }
 
