@@ -44,6 +44,7 @@ class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
             strategy.processError(e, codeFragment, executionContext)
             val fallback = strategy.getFallbackStrategy()
             if (fallback != null) {
+                strategy.beforeRunningFallback()
                 return doCompileCodeFragment(fallback, codeFragment, moduleDescriptor, bindingContext, executionContext)
             }
             // This error will be recycled into an error message in the Evaluation/Watches result component,
