@@ -28,7 +28,7 @@ class NotificationBalloonRoundShadowBorderProvider(fillColor: Color, borderColor
     val CORNER_RADIUS: JBValue = UIInteger("Notification.arc", 12)
   }
 
-  private val java2DPainter = ShadowJava2DPainter("Notification")
+  private val java2DPainter = ShadowJava2DPainter("Notification", true)
 
   fun hideBottomSide() {
     java2DPainter.hideBottomSide()
