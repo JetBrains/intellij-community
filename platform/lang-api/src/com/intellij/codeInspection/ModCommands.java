@@ -10,6 +10,7 @@ import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
@@ -269,13 +270,14 @@ public final class ModCommands {
   private static class EditorUpdaterImpl implements EditorUpdater, DocumentListener, Disposable {
     private final @NotNull FileTracker myTracker;
     private final @NotNull Map<PsiFile, FileTracker> myChangedFiles = new LinkedHashMap<>();
-    private int myCaretOffset, mySelectionStart, mySelectionEnd;
+    private int myCaretOffset;
+    private @NotNull TextRange mySelection;
+    private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
     private boolean myPositionUpdated = false;
 
     private EditorUpdaterImpl(@NotNull ModCommandAction.ActionContext actionContext) {
       myCaretOffset = actionContext.offset();
-      mySelectionStart = actionContext.selection().getStartOffset();
-      mySelectionEnd = actionContext.selection().getEndOffset();
+      mySelection = actionContext.selection();
       // TODO: lazily get the tracker for the current file
       myTracker = tracker(actionContext.file());
       myTracker.myPositionDocument.addDocumentListener(this, this);
@@ -303,26 +305,30 @@ public final class ModCommands {
     public void select(@NotNull PsiElement element) {
       validate(element);
       myTracker.unblock();
-      TextRange range = element.getTextRange();
-      select(range);
+      select(element.getTextRange());
     }
 
     @Override
     public void select(@NotNull TextRange range) {
       myPositionUpdated = true;
-      PsiLanguageInjectionHost host = myTracker.myHostCopy;
-      if (host != null) {
-        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myTracker.myProject);
-        PsiFile file = findInjectedFile(instance, host);
-        int start = instance.mapUnescapedOffsetToInjected(file, range.getStartOffset());
-        int end = instance.mapUnescapedOffsetToInjected(file, range.getEndOffset());
-        range = instance.injectedToHost(file, TextRange.create(start, end));
-      }
-      mySelectionStart = range.getStartOffset();
-      mySelectionEnd = range.getEndOffset();
+      range = mapRange(range);
+      mySelection = range;
       myCaretOffset = range.getStartOffset();
     }
-    
+
+    @Override
+    public void highlight(@NotNull PsiElement element, @NotNull TextAttributesKey attributesKey) {
+      validate(element);
+      myTracker.unblock();
+      highlight(element.getTextRange(), attributesKey);
+    }
+
+    @Override
+    public void highlight(@NotNull TextRange range, @NotNull TextAttributesKey attributesKey) {
+      range = mapRange(range);
+      myHighlightInfos.add(new ModHighlight.HighlightInfo(range, attributesKey, true));
+    }
+
     @Override
     public void moveTo(int offset) {
       myPositionUpdated = true;
@@ -343,11 +349,33 @@ public final class ModCommands {
       moveTo(element.getTextRange().getStartOffset());
     }
 
+    @Override
+    public void moveToPrevious(char ch) {
+      myPositionUpdated = true;
+      myTracker.unblock();
+      String text = myTracker.myPositionDocument.getText();
+      int idx = text.lastIndexOf(ch, myCaretOffset);
+      if (idx == -1) return;
+      myCaretOffset = idx;
+    }
+
+    private TextRange mapRange(@NotNull TextRange range) {
+      PsiLanguageInjectionHost host = myTracker.myHostCopy;
+      if (host != null) {
+        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myTracker.myProject);
+        PsiFile file = findInjectedFile(instance, host);
+        int start = instance.mapUnescapedOffsetToInjected(file, range.getStartOffset());
+        int end = instance.mapUnescapedOffsetToInjected(file, range.getEndOffset());
+        range = instance.injectedToHost(file, TextRange.create(start, end));
+      }
+      return range;
+    }
+
     private PsiFile findInjectedFile(InjectedLanguageManager instance, PsiLanguageInjectionHost host) {
       Language language = myTracker.myCopyFile.getLanguage();
       var visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         PsiFile myFile = null;
-        
+
         @Override
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<? extends PsiLanguageInjectionHost.Shred> places) {
           if (injectedPsi.getLanguage() == language) {
@@ -359,16 +387,6 @@ public final class ModCommands {
       return Objects.requireNonNull(visitor.myFile);
     }
 
-    @Override
-    public void moveToPrevious(char ch) {
-      myPositionUpdated = true;
-      myTracker.unblock();
-      String text = myTracker.myPositionDocument.getText();
-      int idx = text.lastIndexOf(ch, myCaretOffset);
-      if (idx == -1) return;
-      myCaretOffset = idx;
-    }
-
     private void validate(@NotNull PsiElement element) {
       if (!element.isValid()) throw new IllegalArgumentException();
       if (!PsiTreeUtil.isAncestor(myTracker.myCopyFile, element, false)) throw new IllegalArgumentException();
@@ -377,8 +395,15 @@ public final class ModCommands {
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
       myCaretOffset = updateOffset(event, myCaretOffset);
-      mySelectionStart = updateOffset(event, mySelectionStart);
-      mySelectionEnd = updateOffset(event, mySelectionEnd);
+      mySelection = updateRange(event, mySelection);
+      myHighlightInfos.replaceAll(info -> info.withRange(updateRange(event, info.range())));
+    }
+
+    private static @NotNull TextRange updateRange(@NotNull DocumentEvent event, @NotNull TextRange range) {
+      int newStart = updateOffset(event, range.getStartOffset());
+      int newEnd = updateOffset(event, range.getEndOffset());
+      if (range.getStartOffset() == newStart && range.getEndOffset() == newEnd) return range;
+      return TextRange.create(newStart, newEnd);
     }
 
     private static int updateOffset(DocumentEvent event, int pos) {
@@ -392,7 +417,7 @@ public final class ModCommands {
     
     private @NotNull ModCommand getCommand() {
       return myChangedFiles.values().stream().map(FileTracker::getUpdateCommand).reduce(nop(), ModCommand::andThen)
-        .andThen(getNavigateCommand());
+        .andThen(getNavigateCommand()).andThen(getHighlightCommand());
     }
 
     @NotNull
@@ -400,9 +425,9 @@ public final class ModCommands {
       if (!myPositionUpdated) return nop();
       int length = myTracker.myTargetFile.getTextLength();
       int start = -1, end = -1, caret = -1;
-      if (this.mySelectionEnd <= length) {
-        start = this.mySelectionStart;
-        end = this.mySelectionEnd;
+      if (mySelection.getEndOffset() <= length) {
+        start = mySelection.getStartOffset();
+        end = mySelection.getEndOffset();
       }
       if (this.myCaretOffset <= length) {
         caret = this.myCaretOffset;
@@ -411,6 +436,14 @@ public final class ModCommands {
       if (origVirtualFile == null) return nop();
       if (start == -1 && end == -1 && caret == -1) return nop();
       return new ModNavigate(origVirtualFile, start, end, caret);
+    }
+    
+    @NotNull
+    private ModCommand getHighlightCommand() {
+      if (myHighlightInfos.isEmpty()) return nop();
+      VirtualFile origVirtualFile = myTracker.myOrigFile.getOriginalFile().getVirtualFile();
+      if (origVirtualFile == null) return nop();
+      return new ModHighlight(origVirtualFile, myHighlightInfos);
     }
   }
 }
