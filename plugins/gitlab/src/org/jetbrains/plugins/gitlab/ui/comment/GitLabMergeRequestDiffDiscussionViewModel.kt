@@ -88,7 +88,7 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
     it?.position ?: flowOf(null)
   }.distinctUntilChanged().map {
     if (it == null) return@map null
-    mapToLocation(diffData, it)
+    it.mapToLocation(diffData)
   }
 
   override val isVisible: Flow<Boolean> = combine(resolveVm?.resolved ?: flowOf(false), discussionsViewOption) { isResolved, viewOption ->
@@ -128,7 +128,7 @@ class GitLabMergeRequestDiffDraftDiscussionViewModel(
 
   override val location: Flow<DiffLineLocation?> = note.position.map {
     if (it == null) return@map null
-    mapToLocation(diffData, it)
+    it.mapToLocation(diffData)
   }
 
   override val isVisible: Flow<Boolean> = flowOf(true)
@@ -144,17 +144,4 @@ class GitLabMergeRequestDiffDraftDiscussionViewModel(
       // ignore, cuz we don't want to cancel the invoker
     }
   }
-}
-
-private fun mapToLocation(diffData: GitTextFilePatchWithHistory, position: GitLabNotePosition): DiffLineLocation? {
-  if (position !is GitLabNotePosition.Text) return null
-
-  if ((position.filePathBefore != null && !diffData.contains(position.parentSha, position.filePathBefore)) &&
-      (position.filePathAfter != null && !diffData.contains(position.sha, position.filePathAfter))) return null
-
-  val (side, lineIndex) = position.location
-  // context should be mapped to the left side
-  val commitSha = side.select(position.parentSha, position.sha)!!
-
-  return diffData.mapLine(commitSha, lineIndex, side)
 }
