@@ -2473,6 +2473,29 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 }
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantIf/invertEmptinessCheck")
+        public static class InvertEmptinessCheck extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("isBlank.kt")
+            public void testIsBlank() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/invertEmptinessCheck/isBlank.kt");
+            }
+
+            @TestMetadata("isEmpty.kt")
+            public void testIsEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/invertEmptinessCheck/isEmpty.kt");
+            }
+
+            @TestMetadata("isNotEmpty.kt")
+            public void testIsNotEmpty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/redundantIf/invertEmptinessCheck/isNotEmpty.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
