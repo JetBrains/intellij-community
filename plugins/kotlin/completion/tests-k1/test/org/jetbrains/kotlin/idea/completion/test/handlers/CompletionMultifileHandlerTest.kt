@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.idea.completion.test.testWithAutoCompleteSetting
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
@@ -56,22 +57,25 @@ open class CompletionMultiFileHandlerTest22 : KotlinFixtureCompletionBaseTestCas
 
         myFixture.configureByFiles(*extraFileNames)
         myFixture.configureByFiles(*filteredFiles.toTypedArray())
-        val items = complete(CompletionType.BASIC, 2)
 
-        if (items != null) {
-            val item = if (tailText == null)
-                items.singleOrNull() ?: error("Multiple items in completion")
-            else {
-                val presentation = LookupElementPresentation()
-                items.first {
-                    it.renderElement(presentation)
-                    presentation.tailText == tailText
+        testWithAutoCompleteSetting(File(testDataDirectory, "$fileNameBase-1.kt").readText()) {
+            val items = complete(CompletionType.BASIC, 2)
+
+            if (items != null) {
+                val item = if (tailText == null)
+                    items.singleOrNull() ?: error("Multiple items in completion")
+                else {
+                    val presentation = LookupElementPresentation()
+                    items.first {
+                        it.renderElement(presentation)
+                        presentation.tailText == tailText
+                    }
                 }
-            }
 
-            CompletionHandlerTestBase.selectItem(myFixture, item, completionChar)
+                CompletionHandlerTestBase.selectItem(myFixture, item, completionChar)
+            }
+            myFixture.checkResultByFile("$fileNameBase.kt.after")
         }
-        myFixture.checkResultByFile("$fileNameBase.kt.after")
     }
 
     override val testDataDirectory: File
