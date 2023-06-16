@@ -11,6 +11,7 @@ class SkipListAdvancingPositionTracker(
   private val inflight = ConcurrentSkipListSet<Long>()
 
   override fun beginAdvance(size: Long): Long {
+    check(size > 0)
     val p = position.getAndAdd(size)
     inflight.add(p)
     return p
