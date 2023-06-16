@@ -1679,10 +1679,7 @@
 
     <group id="RunToolbarMainActionGroup">
       <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
-      <group class="com.intellij.execution.ui.resume.RunWidgetMainResumeGroup">
-        <reference ref="Resume"/>
-        <reference ref="Pause"/>
-      </group>
+      <group class="com.intellij.execution.ui.resume.CompositeResumeGroup"/>
       <group id="RunToolbarTopLevelExecutorActionGroup" class="com.intellij.execution.ui.RunToolbarTopLevelExecutorActionGroup" />
       <reference ref="Stop"/>
       <action id="MoreRunToolbarActions" class="com.intellij.execution.ui.MoreRunToolbarActions" />
