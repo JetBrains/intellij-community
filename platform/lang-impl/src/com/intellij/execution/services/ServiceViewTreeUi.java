@@ -87,7 +87,7 @@ class ServiceViewTreeUi implements ServiceViewUi {
 
   @Override
   public void setServiceToolbar(@NotNull ServiceViewActionProvider actionProvider) {
-    boolean inDetails = UIExperiment.isNewDebuggerUIEnabled();
+    boolean inDetails = ServiceViewUIUtils.isNewServicesUIEnabled();
     myServiceActionToolbar = actionProvider.createServiceToolbar(myMainPanel, inDetails);
     if (inDetails) {
       JComponent wrapper = ServiceViewUIUtils.wrapServicesAligned(myServiceActionToolbar);
@@ -143,7 +143,7 @@ class ServiceViewTreeUi implements ServiceViewUi {
       component = myMessagePanel;
     }
     if (component.getParent() != myContentComponentPanel) {
-      if (UIExperiment.isNewDebuggerUIEnabled()) {
+      if (ServiceViewUIUtils.isNewServicesUIEnabled()) {
         boolean visible = ServiceViewActionProvider.isActionToolBarRequired(component);
         myServiceActionToolbarWrapper.setVisible(visible);
         if (visible) {

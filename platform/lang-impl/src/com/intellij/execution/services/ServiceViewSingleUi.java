@@ -74,6 +74,6 @@ class ServiceViewSingleUi implements ServiceViewUi {
   }
 
   private static boolean isHorizontal() {
-    return UIExperiment.isNewDebuggerUIEnabled();
+    return ServiceViewUIUtils.isNewServicesUIEnabled();
   }
 }
