@@ -313,7 +313,7 @@ object VfsRecoveryUtils {
             val attr = logContext.deenumerateAttribute(enumeratedAttrId) ?: throw IllegalStateException(
               "cannot deenumerate attribute using vfslog enumerator (enumeratedAttribute=$enumeratedAttrId)")
             val attrData = ctx.payloadReader(dataRef)
-            if (attrData !is Ready) continue; // skip if NotAvailable
+            if (attrData !is Ready) continue // skip if NotAvailable
             val attrContent = attrData.value
                                 .cutOutAttributeVersionPrefix(attr) ?: continue // TODO this doesn't look like it should be here
             try {

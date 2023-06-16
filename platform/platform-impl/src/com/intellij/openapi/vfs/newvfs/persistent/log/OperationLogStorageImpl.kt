@@ -26,7 +26,7 @@ class OperationLogStorageImpl(
   storagePath: Path,
   private val stringEnumerator: DataEnumerator<String>,
   private val scope: CoroutineScope,
-  private val writerJobsCount: Int
+  writerJobsCount: Int
 ) : OperationLogStorage {
   private val storageIO: StorageIO
   private var persistentSize by PersistentVar.long(storagePath / "size")

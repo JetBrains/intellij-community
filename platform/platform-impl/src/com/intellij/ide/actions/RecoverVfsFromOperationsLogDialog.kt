@@ -19,15 +19,15 @@ private var Action.text
 
 class RecoverVfsFromOperationsLogDialog(
   project: Project?,
-  private val canRestart: Boolean,
-  private val recoveryPoints: Sequence<VfsRecoveryUtils.RecoveryPoint>
+  canRestart: Boolean,
+  recoveryPoints: Sequence<VfsRecoveryUtils.RecoveryPoint>
 ) : DialogWrapper(project) {
   private class RecoveryPointWrapper(val rp: VfsRecoveryUtils.RecoveryPoint) {
     override fun toString(): String {
       return dateFormat.format(Date(rp.timestamp))
     }
     companion object {
-      private val dateFormat = SimpleDateFormat("HH:mm:ss dd-MM-yyyy");
+      private val dateFormat = SimpleDateFormat("HH:mm:ss dd-MM-yyyy")
     }
   }
 
