@@ -29,7 +29,7 @@ class GitLabMergeRequestDTO(
   val draft: Boolean,
   val author: GitLabUserDTO,
   val targetProject: GitLabProjectDTO,
-  val sourceProject: GitLabProjectDTO,
+  val sourceProject: GitLabProjectDTO?,
   val userPermissions: GitLabMergeRequestPermissionsDTO,
   val shouldBeRebased: Boolean,
   val rebaseInProgress: Boolean,

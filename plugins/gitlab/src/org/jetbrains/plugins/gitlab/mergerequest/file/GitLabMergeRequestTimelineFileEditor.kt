@@ -26,10 +26,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
-import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
-import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestErrorStatusPresenter
+import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.LoadAllGitLabMergeRequestTimelineViewModel
 import java.beans.PropertyChangeListener

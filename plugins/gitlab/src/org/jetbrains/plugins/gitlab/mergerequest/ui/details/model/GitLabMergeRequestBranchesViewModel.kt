@@ -41,10 +41,11 @@ internal class GitLabMergeRequestBranchesViewModel(
   private val cs: CoroutineScope = parentCs.childScope()
 
   private val targetProject: StateFlow<GitLabProjectDTO> = mergeRequest.targetProject
-  private val sourceProject: StateFlow<GitLabProjectDTO> = mergeRequest.sourceProject
+  private val sourceProject: StateFlow<GitLabProjectDTO?> = mergeRequest.sourceProject
 
   override val sourceBranch: StateFlow<String> =
     combine(targetProject, sourceProject, mergeRequest.sourceBranch) { targetProject, sourceProject, sourceBranch ->
+      if (sourceProject == null) return@combine ""
       if (targetProject == sourceProject) return@combine sourceBranch
       val sourceUrl = sourceProject.webUrl
       val sourceProjectOwner = sourceUrl.split("/").dropLast(1).last()
@@ -77,7 +78,7 @@ internal class GitLabMergeRequestBranchesViewModel(
     ) {
       override fun run(indicator: ProgressIndicator) {
         val sourceBranch = sourceBranch.value
-        val httpForkUrl = sourceProject.value.httpUrlToRepo
+        val httpForkUrl = sourceProject.value?.httpUrlToRepo ?: return
         val pullRequestAuthor = mergeRequest.author
 
         val headRemote = git.findOrCreateRemote(repository, pullRequestAuthor.username, httpForkUrl)

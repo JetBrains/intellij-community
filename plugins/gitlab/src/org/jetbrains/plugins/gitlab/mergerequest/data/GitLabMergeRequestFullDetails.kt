@@ -20,7 +20,7 @@ data class GitLabMergeRequestFullDetails(
   override val webUrl: @NlsSafe String,
   val detailedLabels: List<GitLabLabelDTO>,
   val targetProject: GitLabProjectDTO,
-  val sourceProject: GitLabProjectDTO,
+  val sourceProject: GitLabProjectDTO?,
   val description: String,
   val approvedBy: List<GitLabUserDTO>,
   val targetBranch: String,

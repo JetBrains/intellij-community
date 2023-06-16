@@ -35,7 +35,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActio
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangeListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestErrorStatusPresenter
+import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JPanel

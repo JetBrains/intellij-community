@@ -20,6 +20,7 @@ import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabMergeRequestsListLoader
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.util.concurrent.ConcurrentHashMap
 
@@ -95,13 +96,16 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
     reloadMergeRequest.emit(id)
   }
 
-  @Throws(HttpStatusErrorException::class, IllegalStateException::class)
+  @Throws(HttpStatusErrorException::class, GitLabMergeRequestDataException.EmptySourceProject::class, IllegalStateException::class)
   private suspend fun loadMergeRequest(id: GitLabMergeRequestId): GitLabMergeRequestDTO {
     return withContext(Dispatchers.IO) {
       val body = api.graphQL.loadMergeRequest(glProject, id).body()
       if (body == null) {
         api.rest.getCurrentUser(glProject.serverPath) // Exception is generated automatically if status code >= 400
         error(CollaborationToolsBundle.message("graphql.errors", "empty response"))
+      }
+      if (body.sourceProject == null) {
+        throw GitLabMergeRequestDataException.EmptySourceProject(GitLabBundle.message("merge.request.source.project.not.found"), body.webUrl)
       }
       body
     }

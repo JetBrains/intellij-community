@@ -11,6 +11,7 @@ import com.intellij.util.ui.StatusText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
