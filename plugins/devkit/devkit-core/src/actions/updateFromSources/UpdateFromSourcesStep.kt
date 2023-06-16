@@ -5,6 +5,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 import com.intellij.smartUpdate.SmartUpdateStep
 import com.intellij.smartUpdate.beforeRestart
 import org.jetbrains.annotations.Nls
@@ -23,5 +24,5 @@ class UpdateFromSourcesStep: SmartUpdateStep {
     updateFromSources(project, ::beforeRestart) { Notification("Update from Sources", it, NotificationType.ERROR) }
   }
 
-  override fun isAvailable(project: Project) = PsiUtil.isIdeaProject(project)
+  override fun isAvailable(project: Project) = ExternalUpdateManager.ACTUAL == null && PsiUtil.isIdeaProject(project)
 }
