@@ -7,6 +7,8 @@ import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.completion.ml.ngram.NGram
 import com.intellij.completion.ml.util.prefix
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -14,6 +16,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiTreeUtil
+import kotlin.math.abs
 
 class CommonLocationFeatures : ContextFeatureProvider {
   override fun getName(): String = "common"
@@ -69,6 +72,8 @@ class CommonLocationFeatures : ContextFeatureProvider {
     this["is_in_line_beginning"] = MLFeatureValue.binary(linePrefix.isBlank())
     this["is_in_line_end"] = MLFeatureValue.binary(lineSuffix.isBlank())
     this["prefix_length"] = MLFeatureValue.float(prefixLength)
+    captureNearestNonEmptyLineInfo(document, logicalPosition, true)
+    captureNearestNonEmptyLineInfo(document, logicalPosition, false)
     this["offset"] = MLFeatureValue.float(caretOffset)
     this["text_length"] = MLFeatureValue.float(textLength)
     this["offset_text_length_ratio"] = MLFeatureValue.float(if (textLength == 0) 0.0 else caretOffset.toDouble() / textLength)
@@ -85,6 +90,20 @@ class CommonLocationFeatures : ContextFeatureProvider {
       CharCategory.find(trimmedSuffix.first())?.let { this["non_space_symbol_after_caret"] = MLFeatureValue.categorical(it) }
     }
   }
+
+  private fun MutableMap<String, MLFeatureValue>.captureNearestNonEmptyLineInfo(document: Document,
+                                                                                position: LogicalPosition,
+                                                                                previous: Boolean) {
+    val (name, delta) = if (previous) "previous" to -1 else "following" to 1
+    val startLineNumber = position.line
+    var lineNumber = startLineNumber + delta
+    var text: String? = null
+    while (lineNumber >= 0 && document.getLineText(lineNumber).also { text = it }.isBlank()) lineNumber += delta
+    this["${name}_empty_lines_count"] = MLFeatureValue.float(abs(lineNumber - startLineNumber) - 1)
+    text?.let { this["${name}_non_empty_line_length"] = MLFeatureValue.float(it.length) }
+  }
+
+  private fun Document.getLineText(line: Int) = getText(TextRange(getLineStartOffset(line), getLineEndOffset(line)))
 
   private fun MutableMap<String, MLFeatureValue>.addProjectFeatures(project: Project) {
     val projectInfo = CurrentProjectInfo.getInstance(project)
