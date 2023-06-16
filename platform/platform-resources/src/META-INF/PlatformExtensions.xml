@@ -592,7 +592,6 @@
                              treeRenderer="com.intellij.ide.plugins.PluginManagerConfigurableTreeRenderer"
                              bundle="messages.IdeBundle"
                              key="title.plugins"/>
-    <customFileDropHandler implementation="com.intellij.ide.plugins.PluginDropHandler"/>
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.util.net.HttpProxyConfigurable" id="http.proxy"
                              bundle="messages.IdeBundle"
                              key="http.proxy.configurable"/>
