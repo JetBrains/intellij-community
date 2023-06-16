@@ -40,13 +40,14 @@ class ImlSerializationTest {
 
   @Test
   fun sizeCheck() {
-    val expectedSize = 19_000
+    val expectedSize = 17_000
     val projectDir = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
     val bytes = loadProjectAndCheck(projectDir)
 
     checkSerializationSize(bytes, expectedSize, 2_000)
 
-    assertTrue("v48" == EntityStorageSerializerImpl.SERIALIZER_VERSION,
+    @Suppress("KotlinConstantConditions")
+    assertTrue("v49" == EntityStorageSerializerImpl.SERIALIZER_VERSION,
                "This assertion is a reminder. Have you updated the serializer? Update the serializer version!")
   }
 

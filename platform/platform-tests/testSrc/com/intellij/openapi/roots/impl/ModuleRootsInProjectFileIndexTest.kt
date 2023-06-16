@@ -26,6 +26,7 @@ import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.ThreeState
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -401,6 +402,9 @@ class ModuleRootsInProjectFileIndexTest {
         it addEntity ContentRootEntity(urlManager.fromUrl(rootUrl),
                                        emptyList<@NlsSafe String>(),
                                        module.entitySource) {
+          excludedUrls = listOf(urlManager.fromUrl(excludedUrl)).map {
+            ExcludeUrlEntity(it, module.entitySource)
+          }
           this.module = module
         }
       }
