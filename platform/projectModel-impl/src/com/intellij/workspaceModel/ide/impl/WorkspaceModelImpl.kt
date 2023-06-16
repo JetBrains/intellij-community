@@ -43,6 +43,37 @@ import kotlin.system.measureTimeMillis
 
 val jpsMetrics: JpsMetrics by lazy { JpsMetrics.getInstance() }
 
+/**
+ * Due to the existence of  [updateProjectModelSilent] method that can be executed from any threads in parallel with e.g.
+ * [updateProjectModel] we can face the situation with overwriting changes thus we need to sync all methods executed under WA
+ * with [updateProjectModelSilent].
+ *
+ * Here is an example of the situation which we faced in IDEA-313151
+ *
+ *         Dispatch Thread                       Other Thread
+ *                |                                   |
+ *      call updateProjectModel                       |
+ *                |                                   |
+ *      making copy of storage                        |
+ *                |                                   |
+ *         applying changes                           |
+ *                |                       call updateProjectModelSilent
+ *                |                                   |
+ *                |                        making copy of storage
+ *                |                                   |
+ *                |                           applying changes
+ *                |                                   |
+ *                |                         replace current storage
+ *                |                                   |
+ *                |                           end of method call
+ *                |
+ *     replace current storage
+ *                |
+ *        end of method call
+ *
+ * As a result we lost changes made by `updateProjectModelSilent` method call
+ *
+ */
 open class WorkspaceModelImpl(private val project: Project, private val cs: CoroutineScope) : WorkspaceModel, Disposable {
   @Volatile
   var loadedFromCache = false
@@ -131,6 +162,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     loadedFromCache = false
   }
 
+  @Synchronized
   final override fun updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     checkRecursiveUpdate()
@@ -294,6 +326,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     return BuilderSnapshot(current.version, current.storage)
   }
 
+  @Synchronized
   final override fun replaceProjectModel(replacement: StorageReplacement): Boolean {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
