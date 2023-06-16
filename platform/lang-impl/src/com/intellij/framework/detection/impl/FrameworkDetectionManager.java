@@ -1,10 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl;
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.FrameworkDetector;
@@ -23,10 +19,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -37,7 +31,6 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -111,22 +104,6 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
     @Override
     public void runActivity(@NotNull Project project) {
       getInstance(project).projectOpened();
-    }
-  }
-
-  static final class FrameworkDetectionHighlightingPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
-    @Override
-    public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-      registrar.registerTextEditorHighlightingPass(this, TextEditorHighlightingPassRegistrar.Anchor.LAST, -1, false, false);
-    }
-
-    @Override
-    public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-      final @NotNull Collection<String> detectors = FrameworkDetectorRegistry.getInstance().getDetectorIds(file.getFileType());
-      if (!detectors.isEmpty()) {
-        return new FrameworkDetectionHighlightingPass(file.getProject(), editor, detectors);
-      }
-      return null;
     }
   }
 
@@ -319,25 +296,6 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
   private static void ensureIndexIsUpToDate(@NotNull Project project, Collection<String> detectors) {
     for (String detectorId : detectors) {
       FileBasedIndex.getInstance().getValues(FrameworkDetectionIndex.NAME, detectorId, GlobalSearchScope.projectScope(project));
-    }
-  }
-
-  private static final class FrameworkDetectionHighlightingPass extends TextEditorHighlightingPass {
-    private final Collection<String> myDetectors;
-
-    FrameworkDetectionHighlightingPass(@NotNull Project project, Editor editor, Collection<String> detectors) {
-      super(project, editor.getDocument(), false);
-
-      myDetectors = detectors;
-    }
-
-    @Override
-    public void doCollectInformation(@NotNull ProgressIndicator progress) {
-      ensureIndexIsUpToDate(myProject, myDetectors);
-    }
-
-    @Override
-    public void doApplyInformationToEditor() {
     }
   }
 }

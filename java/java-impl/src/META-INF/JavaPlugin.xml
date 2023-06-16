@@ -323,7 +323,6 @@
 
     <editorFactoryDocumentListener implementation="com.intellij.compiler.server.BuildManager$MyDocumentListener"/>
 
-    <highlightingPassFactory implementation="com.intellij.framework.detection.impl.FrameworkDetectionManager$FrameworkDetectionHighlightingPassFactory"/>
     <postStartupActivity implementation="com.intellij.framework.detection.impl.FrameworkDetectionManager$MyPostStartupActivity"/>
 
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jrt.JrtFileSystemImpl" key="jrt" physical="true"/>
