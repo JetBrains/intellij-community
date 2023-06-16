@@ -3,31 +3,29 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.annotations.NonNls
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
-import com.intellij.platform.workspace.storage.annotations.Child
 
 interface ModuleEntity : WorkspaceEntityWithSymbolicId {
-    val name: @NlsSafe String
+  val name: @NlsSafe String
 
-    val type: @NonNls String?
-    val dependencies: List<ModuleDependencyItem>
+  val type: @NonNls String?
+  val dependencies: List<ModuleDependencyItem>
 
-    val contentRoots: List<@Child ContentRootEntity>
-    @Child val customImlData: ModuleCustomImlDataEntity?
-    @Child val groupPath: ModuleGroupPathEntity?
-    @Child val exModuleOptions: ExternalSystemModuleOptionsEntity?
-    @Child val testProperties: TestModulePropertiesEntity?
-    val facets: List<@Child FacetEntity>
+  val contentRoots: List<@Child ContentRootEntity>
+  @Child
+  val customImlData: ModuleCustomImlDataEntity?
+  @Child
+  val groupPath: ModuleGroupPathEntity?
+  @Child
+  val exModuleOptions: ExternalSystemModuleOptionsEntity?
+  @Child
+  val testProperties: TestModulePropertiesEntity?
+  val facets: List<@Child FacetEntity>
 
-    override val symbolicId: ModuleId
-        get() = ModuleId(name)
+  override val symbolicId: ModuleId
+    get() = ModuleId(name)
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -75,10 +73,10 @@ var ModuleEntity.Builder.sourceRoots: List<SourceRootEntity>
 //endregion
 
 interface ModuleCustomImlDataEntity : WorkspaceEntity {
-    val module: ModuleEntity
+  val module: ModuleEntity
 
-    val rootManagerTagCustomData: @NonNls String?
-    val customModuleOptions: Map<@NonNls String, @NonNls String>
+  val rootManagerTagCustomData: @NonNls String?
+  val customModuleOptions: Map<@NonNls String, @NonNls String>
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -114,9 +112,9 @@ fun MutableEntityStorage.modifyEntity(entity: ModuleCustomImlDataEntity,
 //endregion
 
 interface ModuleGroupPathEntity : WorkspaceEntity {
-    val module: ModuleEntity
+  val module: ModuleEntity
 
-    val path: List<@NonNls String>
+  val path: List<@NonNls String>
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -148,16 +146,16 @@ fun MutableEntityStorage.modifyEntity(entity: ModuleGroupPathEntity, modificatio
 //endregion
 
 
-interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
-    val module: ModuleEntity
+interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
+  val module: ModuleEntity
 
-    val externalSystem: String?
-    val externalSystemModuleVersion: String?
-    val linkedProjectPath: String?
-    val linkedProjectId: String?
-    val rootProjectPath: String?
-    val externalSystemModuleGroup: String?
-    val externalSystemModuleType: String?
+  val externalSystem: String?
+  val externalSystemModuleVersion: String?
+  val linkedProjectPath: String?
+  val linkedProjectId: String?
+  val rootProjectPath: String?
+  val externalSystemModuleGroup: String?
+  val externalSystemModuleType: String?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -194,7 +192,7 @@ fun MutableEntityStorage.modifyEntity(entity: ExternalSystemModuleOptionsEntity,
   ExternalSystemModuleOptionsEntity.Builder::class.java, entity, modification)
 //endregion
 
-interface TestModulePropertiesEntity: WorkspaceEntity {
+interface TestModulePropertiesEntity : WorkspaceEntity {
   val module: ModuleEntity
   val productionModuleId: ModuleId
 
