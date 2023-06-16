@@ -21,9 +21,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
 interface ReaderModeSettings : Disposable {
   companion object {
@@ -118,8 +120,7 @@ interface ReaderModeSettings : Disposable {
       if (ApplicationManager.getApplication().isHeadlessEnvironment) return false
 
       val inFileInLibraries by lazy {
-        FileIndexFacade.getInstance(project).isInLibraryClasses(file)
-        || FileIndexFacade.getInstance(project).isInLibrarySource(file)
+        FileIndexFacade.getInstance(project).isInLibrary(file)
       }
       val isWritable = file.isWritable
 
