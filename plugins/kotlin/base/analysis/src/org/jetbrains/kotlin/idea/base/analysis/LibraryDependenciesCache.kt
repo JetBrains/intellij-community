@@ -46,7 +46,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private class LibraryDependencyCandidatesAndSdkInfos(
     val libraryDependencyCandidates: MutableSet<LibraryDependencyCandidate> = linkedSetOf(),
-    val sdkInfos: MutableSet<SdkInfo> = linkedSetOf()
+    val sdkInfos: MutableSet<SdkInfo> = LinkedHashSet(1)
 ) {
     operator fun plusAssign(other: LibraryDependencyCandidatesAndSdkInfos) {
         libraryDependencyCandidates += other.libraryDependencyCandidates
