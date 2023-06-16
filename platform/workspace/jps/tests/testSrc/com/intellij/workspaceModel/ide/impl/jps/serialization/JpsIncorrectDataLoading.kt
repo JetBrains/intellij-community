@@ -26,7 +26,7 @@ class JpsIncorrectDataLoading : HeavyPlatformTestCase() {
   @Test
   fun `test load broken library order entry`() {
     val projectDir = PathManagerEx.findFileUnderCommunityHome(
-      "platform/workspaceModel/jps/tests/testData/serialization/brokenRoots/libraryOrderEntry")
+      "platform/workspace/jps/tests/testData/serialization/brokenRoots/libraryOrderEntry")
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).toList()
     assertEquals(1, modules.size)
@@ -36,7 +36,7 @@ class JpsIncorrectDataLoading : HeavyPlatformTestCase() {
   @Test
   fun `test load broken library order entry multiple`() {
     val projectDir = PathManagerEx.findFileUnderCommunityHome(
-      "platform/workspaceModel/jps/tests/testData/serialization/brokenRoots/multipleLibraryOrderEntry")
+      "platform/workspace/jps/tests/testData/serialization/brokenRoots/multipleLibraryOrderEntry")
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).toList()
     assertEquals(1, modules.size)
@@ -47,7 +47,7 @@ class JpsIncorrectDataLoading : HeavyPlatformTestCase() {
   @Test
   fun `test mess in source folder`() {
     val projectDir = PathManagerEx.findFileUnderCommunityHome(
-      "platform/workspaceModel/jps/tests/testData/serialization/brokenRoots/sourceFolder")
+      "platform/workspace/jps/tests/testData/serialization/brokenRoots/sourceFolder")
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).toList()
     assertEquals(1, modules.size)
@@ -57,7 +57,7 @@ class JpsIncorrectDataLoading : HeavyPlatformTestCase() {
   @Test
   fun `test mess in broken url`() {
     val projectDir = PathManagerEx.findFileUnderCommunityHome(
-      "platform/workspaceModel/jps/tests/testData/serialization/brokenRoots/sourceFolderBrokenUrl")
+      "platform/workspace/jps/tests/testData/serialization/brokenRoots/sourceFolderBrokenUrl")
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).toList()
     assertEquals(1, modules.size)
@@ -68,7 +68,7 @@ class JpsIncorrectDataLoading : HeavyPlatformTestCase() {
   @Test
   fun `test mess in source folder - is test source`() {
     val projectDir = PathManagerEx.findFileUnderCommunityHome(
-      "platform/workspaceModel/jps/tests/testData/serialization/brokenRoots/sourceFolderBrokenIsTestSource")
+      "platform/workspace/jps/tests/testData/serialization/brokenRoots/sourceFolderBrokenIsTestSource")
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).toList()
     assertEquals(1, modules.size)

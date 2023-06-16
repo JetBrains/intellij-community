@@ -70,7 +70,7 @@ class ModuleTestPropertiesTest {
     val testModuleName = "foo.test"
 
     val projectPath = File(PathManagerEx.getCommunityHomePath(),
-                           "platform/workspaceModel/jps/tests/testData/serialization/moduleTestProperties")
+                           "platform/workspace/jps/tests/testData/serialization/moduleTestProperties")
     val virtualFileUrlManager = VirtualFileUrlManager.getInstance(projectModel.project)
     val storage = copyAndLoadProject(projectPath, virtualFileUrlManager).storage
 

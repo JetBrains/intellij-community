@@ -141,7 +141,7 @@ class JpsGlobalEntitiesSyncTest {
   private fun loadProject(): Project {
     val tmpFolder = temporaryFolder.newFolder()
     val projectDir = File(PathManagerEx.getCommunityHomePath(),
-                          "platform/workspaceModel/jps/tests/testData/serialization/moduleTestProperties")
+                          "platform/workspace/jps/tests/testData/serialization/moduleTestProperties")
     FileUtil.copyDir(projectDir, tmpFolder)
     return PlatformTestUtil.loadAndOpenProject(tmpFolder.toPath(), disposableRule.disposable)
   }

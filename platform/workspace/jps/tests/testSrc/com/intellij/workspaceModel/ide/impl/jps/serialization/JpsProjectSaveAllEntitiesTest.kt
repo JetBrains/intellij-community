@@ -46,14 +46,14 @@ class JpsProjectSaveAllEntitiesTest {
   @Test
   fun `test save facets`() {
     val projectFile = File(PathManagerEx.getCommunityHomePath(),
-                           "platform/workspaceModel/jps/tests/testData/serialization/facets/facets.ipr")
+                           "platform/workspace/jps/tests/testData/serialization/facets/facets.ipr")
     checkLoadSave(projectFile)
   }
 
   @Test
   fun `test order of attributes in NewModuleRootManager component`() {
     val projectFile = File(PathManagerEx.getCommunityHomePath(),
-                           "platform/workspaceModel/jps/tests/testData/serialization/orderOfAttributesInRootManagerTag/orderOfAttributes.ipr")
+                           "platform/workspace/jps/tests/testData/serialization/orderOfAttributesInRootManagerTag/orderOfAttributes.ipr")
     checkLoadSave(projectFile)
   }
 
@@ -69,7 +69,7 @@ class JpsProjectSaveAllEntitiesTest {
     val storage = builder.toSnapshot()
     serializers.saveAllEntities(storage, configLocation)
     val expectedDir = File(PathManagerEx.getCommunityHomePath(),
-                           "platform/workspaceModel/jps/tests/testData/serialization/fromScratch/addLibrary")
+                           "platform/workspace/jps/tests/testData/serialization/fromScratch/addLibrary")
     assertDirectoryMatches(projectDir, expectedDir, emptySet(), emptyList())
   }
 
@@ -85,7 +85,7 @@ class JpsProjectSaveAllEntitiesTest {
     val storage = builder.toSnapshot()
     serializers.saveAllEntities(storage, configLocation)
     val expectedDir = File(PathManagerEx.getCommunityHomePath(),
-                           "platform/workspaceModel/jps/tests/testData/serialization/specialSymbolsInLibraryName")
+                           "platform/workspace/jps/tests/testData/serialization/specialSymbolsInLibraryName")
     assertDirectoryMatches(projectDir, expectedDir, emptySet(), emptyList())
   }
 
@@ -103,7 +103,7 @@ class JpsProjectSaveAllEntitiesTest {
     val storage = builder.toSnapshot()
     serializers.saveAllEntities(storage, configLocation)
     val expectedDir = File(PathManagerEx.getCommunityHomePath(),
-                           "platform/workspaceModel/jps/tests/testData/serialization/specialSymbolsInLibraryName")
+                           "platform/workspace/jps/tests/testData/serialization/specialSymbolsInLibraryName")
     assertDirectoryMatches(projectDir, expectedDir, emptySet(), emptyList())
   }
 

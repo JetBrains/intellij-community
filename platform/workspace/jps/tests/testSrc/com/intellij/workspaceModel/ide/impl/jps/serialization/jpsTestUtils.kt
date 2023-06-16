@@ -398,7 +398,7 @@ internal fun checkSaveProjectAfterChange(originalProjectFile: File,
   FileUtil.copyDir(projectData.originalProjectDir, expectedDir)
   if (changedFilesDirectoryName != null) {
     val changedDir = PathManagerEx.findFileUnderCommunityHome(
-      "platform/workspaceModel/jps/tests/testData/$testDir/$changedFilesDirectoryName")
+      "platform/workspace/jps/tests/testData/$testDir/$changedFilesDirectoryName")
     FileUtil.copyDir(changedDir, expectedDir)
   }
   expectedDir.walk().filter { it.isFile && it.readText().trim() == "<delete/>" }.forEach {
@@ -421,7 +421,7 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
     // Copy original file before loading
     if (originalFile != null) {
       val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(),
-                                      "platform/workspaceModel/jps/tests/testData/serialization/globalLibraries/$originalFile")
+                                      "platform/workspace/jps/tests/testData/serialization/globalLibraries/$originalFile")
       FileUtil.copyDir(globalEntitiesFolder, optionsFolder)
     }
 
@@ -444,7 +444,7 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
     if (expectedFile != null) {
       application.invokeAndWait { saveDocumentsAndProjectsAndApp(true) }
       val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(),
-                                      "platform/workspaceModel/jps/tests/testData/serialization/globalLibraries/$expectedFile")
+                                      "platform/workspace/jps/tests/testData/serialization/globalLibraries/$expectedFile")
       optionsFolder.assertMatches(directoryContentOf(globalEntitiesFolder.toPath()),
                                   filePathFilter = { it.contains("applicationLibraries.xml") })
     }

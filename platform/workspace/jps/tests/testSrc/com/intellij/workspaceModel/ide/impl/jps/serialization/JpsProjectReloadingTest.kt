@@ -71,7 +71,7 @@ class JpsProjectReloadingTest {
   @Test
   fun `all libraries for directory based project`() {
     val projectDir = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/imlUnderDotIdea")
-    val (storage, _, projectDirUrl) = reload(projectDir, "directoryBased/addLibrary", com.intellij.platform.workspace.jps.UnloadedModulesNameHolder.DUMMY)
+    val (storage, _, projectDirUrl) = reload(projectDir, "directoryBased/addLibrary", UnloadedModulesNameHolder.DUMMY)
 
     val libraries = storage.projectLibraries.sortedBy { it.name }.toList()
     assertEquals(1, libraries.size)
@@ -142,7 +142,7 @@ class JpsProjectReloadingTest {
 
   private fun checkProjectAfterReload(directoryNameForDirectoryBased: String,
                                       directoryNameForFileBased: String,
-                                      unloadedModulesNameHolder: com.intellij.platform.workspace.jps.UnloadedModulesNameHolder = com.intellij.platform.workspace.jps.UnloadedModulesNameHolder.DUMMY,
+                                      unloadedModulesNameHolder: com.intellij.platform.workspace.jps.UnloadedModulesNameHolder = UnloadedModulesNameHolder.DUMMY,
                                       checkAction: (ReloadedProjectData) -> Unit) {
     val dirBasedData = reload(sampleDirBasedProjectFile, directoryNameForDirectoryBased, unloadedModulesNameHolder)
     checkAction(dirBasedData)
@@ -172,7 +172,7 @@ class JpsProjectReloadingTest {
                      unloadedModulesNameHolder: com.intellij.platform.workspace.jps.UnloadedModulesNameHolder): ReloadedProjectData {
     return reload(originalProjectDir, unloadedModulesNameHolder) { projectData ->
       val changedDir = PathManagerEx.findFileUnderCommunityHome(
-        "platform/workspaceModel/jps/tests/testData/serialization/reload/$directoryName")
+        "platform/workspace/jps/tests/testData/serialization/reload/$directoryName")
       val newUrls = collectFileUrlsRec(changedDir, projectData.projectDirUrl, true) { it != "<delete/>" }
       val urlsToDelete = collectFileUrlsRec(changedDir, projectData.projectDirUrl, true) { it == "<delete/>" }
       val oldUrls = collectFileUrlsRec(projectData.projectDir, projectData.projectDirUrl, false) { true }
