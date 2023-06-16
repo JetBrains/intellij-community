@@ -26,7 +26,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="JSON" extensions="har;json"
+    <fileType name="JSON" extensions="har;json;jsonc"
               implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE"
               language="JSON"/>
     <fileType name="JSON5" extensions="json5" fileNames="devcontainer.json"
