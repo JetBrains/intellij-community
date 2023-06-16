@@ -110,7 +110,7 @@ public final class FileStatusMap implements Disposable {
     }
 
     private boolean allDirtyScopesAreNull() {
-      for (Object o : dirtyScopes.values()) {
+      for (RangeMarker o : dirtyScopes.values()) {
         if (o != null) return false;
       }
       return true;
