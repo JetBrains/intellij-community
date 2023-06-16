@@ -382,6 +382,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   @Override
   public void dispose() {
     stopSearching();
+    mySearchProgressIndicator = null;
     myListModel.clear();
 
     if (myMlService != null) {
