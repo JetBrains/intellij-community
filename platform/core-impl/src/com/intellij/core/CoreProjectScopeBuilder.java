@@ -54,7 +54,7 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
   private class CoreLibrariesScope extends GlobalSearchScope {
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return myFileIndexFacade.isInLibraryClasses(file) || myFileIndexFacade.isInLibrarySource(file);
+      return myFileIndexFacade.isInLibrary(file);
     }
 
     @Override

@@ -85,6 +85,11 @@ public class MockFileIndexFacade extends FileIndexFacade {
     return Collections.emptySet();
   }
 
+  @Override
+  public boolean isInLibrary(@NotNull VirtualFile file) {
+    return isInLibraryClasses(file) || isInLibrarySource(file);
+  }
+
   public void addLibraryRoot(VirtualFile file) {
     myLibraryRoots.add(file);
   }
