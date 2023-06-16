@@ -35,13 +35,13 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
       gradleVersionUsed = GradleVersion.version(issueData.buildEnvironment.gradle.gradleVersion)
     }
 
-    val isOldGradleClasspathInfererIssue = causedByOldGradleClasspathInferer(gradleVersionUsed, rootCause)
+    val isOldGradleClasspathInfererIssue = causedByOldGradleClasspathInferer(rootCause)
+    val isUnsupportedModelBuilderApi = rootCauseText.endsWith(
+      "does not support the ModelBuilder API. Support for this is available in Gradle 1.2 and all later versions."
+    )
+    val isUnsupportedByIdea = gradleVersionUsed != null && !gradleJvmSupportMatrix.isSupportedByIdea(gradleVersionUsed)
 
-    val isAncientGradleVersion =
-      isOldGradleClasspathInfererIssue ||
-      rootCauseText.endsWith(
-        "does not support the ModelBuilder API. Support for this is available in Gradle 1.2 and all later versions.") ||
-      gradleVersionUsed?.let { gradleJvmSupportMatrix.isUnsupported(it) } == true
+    val isAncientGradleVersion = isOldGradleClasspathInfererIssue || isUnsupportedModelBuilderApi || isUnsupportedByIdea
 
     val unsupportedVersionMessagePrefix = "org.gradle.tooling.UnsupportedVersionException: Support for builds using Gradle versions older than "
     if (!isAncientGradleVersion && !rootCauseText.startsWith(unsupportedVersionMessagePrefix)) {
@@ -61,14 +61,10 @@ class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
     return UnsupportedGradleVersionIssue(gradleVersionUsed, issueData.projectPath, gradleMinimumVersionRequired)
   }
 
-  private fun causedByOldGradleClasspathInferer(gradleVersionUsed: GradleVersion?, rootCause: Throwable): Boolean {
+  private fun causedByOldGradleClasspathInferer(rootCause: Throwable): Boolean {
     val message = rootCause.message ?: return false
     if (!message.startsWith("Cannot determine classpath for resource")) return false
-    if (gradleVersionUsed == null) {
-      return rootCause.stackTrace.find { it.className == "org.gradle.tooling.internal.provider.ClasspathInferer" } != null
-    }
-    else
-      return gradleJvmSupportMatrix.isUnsupported(gradleVersionUsed.baseVersion)
+    return rootCause.stackTrace.find { it.className == "org.gradle.tooling.internal.provider.ClasspathInferer" } != null
   }
 }
 

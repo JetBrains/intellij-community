@@ -15,7 +15,7 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
     val expectedExecutionTree: String
     val gradleJvmSupportMatrix = GradleJvmSupportMatrix.getInstance()
     when {
-      gradleJvmSupportMatrix.isUnsupported(currentGradleVersion) -> expectedExecutionTree =
+      !gradleJvmSupportMatrix.isSupportedByIdea(currentGradleVersion) -> expectedExecutionTree =
         "-\n" +
         " -failed\n" +
         "  Unsupported Gradle"

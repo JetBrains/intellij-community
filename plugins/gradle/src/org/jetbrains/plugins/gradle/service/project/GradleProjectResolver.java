@@ -221,7 +221,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       if (!isCustomSerializationSupported(resolverCtx, gradleVersion, isCompositeBuildsSupported)) {
         useCustomSerialization = false;
       }
-      if (GradleJvmSupportMatrix.getInstance().isUnsupported(gradleVersion)) {
+      if (!GradleJvmSupportMatrix.getInstance().isSupportedByIdea(gradleVersion)) {
         throw new IllegalStateException("Unsupported Gradle version");
       }
       if (!UnsupportedGradleJvmIssueChecker.Util.isSupportedGradleJvm(buildEnvironment)) {
