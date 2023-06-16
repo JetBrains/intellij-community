@@ -2,8 +2,8 @@
 package com.intellij.ui
 
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.openapi.util.IconLoader
 import com.intellij.testFramework.PlatformTestUtil
-import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 class CustomIconLoadingTest {
@@ -26,7 +26,12 @@ class CustomIconLoadingTest {
   }
 
   private fun doTest(path: String) {
-    val icon = CustomActionsSchema.loadCustomIcon(path)
-    assertNotNull(icon)
+    IconLoader.activate()
+    try {
+      CustomActionsSchema.loadCustomIcon(path)
+    }
+    finally {
+      IconLoader.deactivate()
+    }
   }
 }

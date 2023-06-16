@@ -15,6 +15,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.keymap.impl.ui.Group
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
@@ -22,9 +23,9 @@ import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.icons.loadCustomIcon
+import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
-import com.intellij.util.ui.JBImageIcon
+import com.intellij.util.ui.EmptyIcon
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.toPersistentMap
@@ -155,8 +156,19 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
         "file:$independentPath"
       }
       val url = URL(null, urlString)
-      val image = loadCustomIcon(url)
-      return image?.let(::JBImageIcon)
+      val icon = IconLoader.findIcon(url) ?: return null
+      val w = icon.iconWidth
+      val h = icon.iconHeight
+      if (w <= 1 || h <= 1) {
+        return null  // there is no icon by the provided path
+      }
+      if (w > EmptyIcon.ICON_18.iconWidth || h > EmptyIcon.ICON_18.iconHeight) {
+        val s = EmptyIcon.ICON_18.iconWidth / w.coerceAtLeast(h).toFloat()
+        // ScaledResultIcon will be returned here, so we will be unable to scale it again or get the dark version,
+        // but we have nothing to do because the icon is too large
+        return IconUtil.scale(icon, scale = s, ancestor = null)
+      }
+      return icon
     }
   }
 
