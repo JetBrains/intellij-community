@@ -82,7 +82,6 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
   }
 
   private int getLineNumber() {
-    assert myLineNumber > -1;
     return myLineNumber;
   }
 
