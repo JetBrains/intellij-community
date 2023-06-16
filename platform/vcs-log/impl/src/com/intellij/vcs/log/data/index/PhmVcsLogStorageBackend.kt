@@ -342,9 +342,10 @@ internal class PhmVcsLogStorageBackend(
 }
 
 internal fun VcsLogStorage.getHashes(commits: IntArray): List<Hash>? {
+  val commitIds = getCommitIds(commits.asList())
   val result = ArrayList<Hash>(commits.size)
   for (parentIndex in commits) {
-    val id = getCommitId(parentIndex) ?: return null
+    val id = commitIds[parentIndex] ?: return null
     result.add(id.hash)
   }
   return result
