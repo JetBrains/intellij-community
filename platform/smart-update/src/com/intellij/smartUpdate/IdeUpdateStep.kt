@@ -11,6 +11,8 @@ import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 import com.intellij.openapi.updateSettings.impl.restartOrNotify
 import org.jetbrains.annotations.Nls
 import org.jetbrains.ide.ToolboxSettingsActionRegistry
+import javax.swing.JComponent
+import javax.swing.JLabel
 
 const val IDE_UPDATE = "ide.update"
 
@@ -31,8 +33,12 @@ class IdeUpdateStep: SmartUpdateStep {
 
   override fun isEnabled(project: Project) = getUpdateAction() != null
 
+  override fun getDetailsComponent(project: Project): JComponent {
+    return JLabel(getDescription())
+  }
+
   @Nls
-  fun getDescription(): String {
+  private fun getDescription(): String {
     val updateAction = getUpdateAction()
     if (updateAction == null) return SmartUpdateBundle.message("no.updates.available")
     return updateAction.templatePresentation.text

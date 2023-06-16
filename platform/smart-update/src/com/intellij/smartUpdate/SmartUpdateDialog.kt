@@ -18,12 +18,12 @@ class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
     val options = smartUpdate.state
     return panel {
       for (step in smartUpdate.availableSteps()) {
+        val enabled = step.isEnabled(project)
         row {
-          checkBox(step.stepName).enabled(step.isEnabled(project)).bindSelected(options.property(step.id))
+          checkBox(step.stepName).enabled(enabled).bindSelected(options.property(step.id))
         }
-        val optionsPanel = step.getOptionsPanel(project)
-        if (optionsPanel != null) {
-          indent { row { cell(optionsPanel) } }
+        step.getDetailsComponent(project)?.let {
+          indent { row { cell(it).enabled(enabled) } }
         }
       }
     }
