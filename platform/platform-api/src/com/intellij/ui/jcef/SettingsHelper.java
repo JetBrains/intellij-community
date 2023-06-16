@@ -131,7 +131,14 @@ final class SettingsHelper {
       }
     }
     else if (proxySettings.USE_HTTP_PROXY) {
-      String proxyServer = "--proxy-server=" + proxySettings.PROXY_HOST + ":" + proxySettings.PROXY_PORT;
+      String proxyScheme;
+      if (proxySettings.PROXY_TYPE_IS_SOCKS) {
+        proxyScheme = "socks";
+      }
+      else {
+        proxyScheme = "http";
+      }
+      String proxyServer = "--proxy-server=" + proxyScheme + "://" + proxySettings.PROXY_HOST + ":" + proxySettings.PROXY_PORT;
       if (StringUtil.isEmptyOrSpaces(proxySettings.PROXY_EXCEPTIONS)) {
         proxyArgs = new String[]{proxyServer};
       }
