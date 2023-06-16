@@ -83,6 +83,8 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
      */
     abstract fun isBooleanExpression(expression: KtExpression): Boolean
 
+    abstract fun invertEmptinessCheck(condition: KtExpression): KtExpression?
+
     private sealed class BranchType {
         object Simple : BranchType()
 
@@ -172,9 +174,7 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
             val condition = when (redundancyType) {
                 RedundancyType.NONE -> return
                 RedundancyType.THEN_TRUE -> element.condition
-                RedundancyType.ELSE_TRUE -> element.condition?.negate(
-                    optionalBooleanExpressionCheck = ::checkIsBooleanExpressionFromModalWindow
-                )
+                RedundancyType.ELSE_TRUE -> negate(element.condition)
             } ?: return
             val factory = KtPsiFactory(project)
             val newExpressionOnlyWithCondition = when (branchType) {
@@ -197,6 +197,12 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                 val replaced = element.replace(newExpressionOnlyWithCondition)
                 commentSaver.restore(replaced)
             }
+        }
+
+        private fun negate(expression: KtExpression?): KtExpression? {
+            if (expression == null) return null
+            invertEmptinessCheck(expression)?.let { return it }
+            return expression.negate(optionalBooleanExpressionCheck = ::checkIsBooleanExpressionFromModalWindow)
         }
 
         private fun checkIsBooleanExpressionFromModalWindow(expression: KtExpression): Boolean =

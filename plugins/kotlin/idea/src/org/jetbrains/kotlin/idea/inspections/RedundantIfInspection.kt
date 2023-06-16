@@ -2,10 +2,22 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.utils.EmptinessCheckFunctionUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.RedundantIfInspectionBase
 import org.jetbrains.kotlin.idea.intentions.isBooleanExpression
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class RedundantIfInspection : RedundantIfInspectionBase() {
     override fun isBooleanExpression(expression: KtExpression): Boolean = expression.isBooleanExpression()
+
+    override fun invertEmptinessCheck(condition: KtExpression): KtExpression? {
+        return EmptinessCheckFunctionUtils.invertFunctionCall(condition) {
+            val context = condition.analyze(BodyResolveMode.PARTIAL)
+            condition.getResolvedCall(context)?.resultingDescriptor?.fqNameSafe
+        }
+    }
 }

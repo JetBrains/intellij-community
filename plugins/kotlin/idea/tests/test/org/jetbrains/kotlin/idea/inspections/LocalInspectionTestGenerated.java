@@ -9049,6 +9049,29 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 }
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/redundantIf/invertEmptinessCheck")
+        public static class InvertEmptinessCheck extends AbstractLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("isBlank.kt")
+            public void testIsBlank() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/invertEmptinessCheck/isBlank.kt");
+            }
+
+            @TestMetadata("isEmpty.kt")
+            public void testIsEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/invertEmptinessCheck/isEmpty.kt");
+            }
+
+            @TestMetadata("isNotEmpty.kt")
+            public void testIsNotEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/redundantIf/invertEmptinessCheck/isNotEmpty.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -13166,6 +13189,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public static class ReplaceNegatedIsEmptyWithIsNotEmpty extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("call.kt")
+        public void testCall() throws Exception {
+            runTest("testData/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty/call.kt");
         }
 
         @TestMetadata("notNegateBlank.kt")
