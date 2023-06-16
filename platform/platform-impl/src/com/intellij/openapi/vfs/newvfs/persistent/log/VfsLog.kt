@@ -27,17 +27,21 @@ class VfsLog(
     private set
 
   init {
-    version.let {
-      if (it != VERSION) {
-        if (it != null) {
-          LOG.info("VfsLog storage version differs from the implementation version: log $it vs implementation $VERSION")
-        }
-        if (!readOnly) {
+    if (!LOG_VFS_OPERATIONS_ENABLED) {
+      clear() // clear storages so that when feature will be enabled we won't try to recover anything from data that probably has gaps
+    } else {
+      version.let {
+        if (it != VERSION) {
           if (it != null) {
-            LOG.info("Upgrading storage, old data will be lost")
-            clear()
+            LOG.info("VfsLog storage version differs from the implementation version: log $it vs implementation $VERSION")
           }
-          version = VERSION
+          if (!readOnly) {
+            if (it != null) {
+              LOG.info("Upgrading storage, old data will be lost")
+              clear()
+            }
+            version = VERSION
+          }
         }
       }
     }
