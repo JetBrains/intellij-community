@@ -689,7 +689,6 @@
     },
 
     "Ide.Shadow": {
-      "roundedCorners": "false",
       "borderInsets": "6,10,14,10",
       "topLeftSize": "18,14",
       "topRightSize": "18,14",
@@ -713,7 +712,6 @@
       "bottomRight1Color": "#2C2C2C92"
     },
     "Notification.Shadow": {
-      "roundedCorners": "true",
       "borderInsets": "6,10,6,10",
       "topLeftSize": "18,14",
       "topRightSize": "18,14",

@@ -2,13 +2,19 @@
 package com.intellij.ui
 
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import java.awt.*
-import javax.swing.UIManager
+
+private val DEF_INSETS = JBInsets(5)
+private val DEF_SIZE = JBDimension(5, 5)
+private val DEF_COLOR = Gray._200.withAlpha(50)
 
 /**
  * @author Alexander Lobas
  */
-class ShadowJava2DPainter(private val uiKeyGroup: String, private val borderColor: Color? = null) {
+class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCorners: Boolean, private val borderColor: Color? = null) {
   private var hideBottomSide = false
 
   companion object {
@@ -19,14 +25,14 @@ class ShadowJava2DPainter(private val uiKeyGroup: String, private val borderColo
     hideBottomSide = true
   }
 
-  fun getInsets(): Insets = UIManager.getInsets("${uiKeyGroup}.Shadow.borderInsets")
+  fun getInsets(): Insets = JBUI.insets("${uiKeyGroup}.Shadow.borderInsets", DEF_INSETS)
 
   fun paintShadow(g: Graphics2D, x: Int, y: Int, width: Int, height: Int) {
     val insets = getInsets()
-    val topLeftSize = UIManager.getDimension("${uiKeyGroup}.Shadow.topLeftSize")
-    val topRightSize = UIManager.getDimension("${uiKeyGroup}.Shadow.topRightSize")
-    val bottomLeftSize = UIManager.getDimension("${uiKeyGroup}.Shadow.bottomLeftSize")
-    val bottomRightSize = UIManager.getDimension("${uiKeyGroup}.Shadow.bottomRightSize")
+    val topLeftSize = JBUI.size("${uiKeyGroup}.Shadow.topLeftSize", DEF_SIZE)
+    val topRightSize = JBUI.size("${uiKeyGroup}.Shadow.topRightSize", DEF_SIZE)
+    val bottomLeftSize = JBUI.size("${uiKeyGroup}.Shadow.bottomLeftSize", DEF_SIZE)
+    val bottomRightSize = JBUI.size("${uiKeyGroup}.Shadow.bottomRightSize", DEF_SIZE)
 
     setGradient(g, "top", 0, insets.top)
     g.fillRect(x + topLeftSize.width, y, width - topLeftSize.width - topRightSize.width, insets.top)
@@ -41,8 +47,6 @@ class ShadowJava2DPainter(private val uiKeyGroup: String, private val borderColo
 
     setGradient(g, "right", insets.right, 0)
     g.fillRect(x + width - insets.right, y + topRightSize.height, insets.right, height - topRightSize.height - bottomRightSize.height)
-
-    val roundedCorners = UIManager.getBoolean("${uiKeyGroup}.Shadow.roundedCorners")
 
     if (roundedCorners) {
       paintArcCorner(g, x, y, topLeftSize, true, true, "topLeft")
@@ -148,6 +152,6 @@ class ShadowJava2DPainter(private val uiKeyGroup: String, private val borderColo
   }
 
   private fun getColor(sideKey: String, gradientKey: String): Color {
-    return UIManager.getColor("${uiKeyGroup}.Shadow.${sideKey}${gradientKey}Color")
+    return JBColor.namedColor("${uiKeyGroup}.Shadow.${sideKey}${gradientKey}Color", DEF_COLOR)
   }
 }
