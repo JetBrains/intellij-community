@@ -34,10 +34,7 @@ import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
-import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.diagnostics.*
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -193,9 +190,23 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             it.put(LLCompilerFacade.CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
         }
         val builderFactory = ClassBuilderFactories.BINARIES
+
+
+        if (@Suppress("TestOnlyProblems") LOG_COMPILATIONS) {
+            LOG.debug("Compile bytecode for ${codeFragment.text}")
+        }
+
         val result = LLCompilerFacade.compile(codeFragment, compilerConfiguration, languageVersionSettings, builderFactory)
 
         val llCompilationResult = result.getOrNull() ?: error("Implement error processing")
+
+        val errors = llCompilationResult.diagnostics.filter { it.severity == Severity.ERROR }
+
+        if (errors.isNotEmpty()) {
+            //val ktDiagnostic = errors[0] as KtDiagnostic
+            //val message = errors[0].factory.ktRenderer.render(ktDiagnostic)
+            evaluationException(errors[0].toString())
+        }
 
         val classes: List<ClassToLoad> = llCompilationResult.outputFiles.filterCodeFragmentClassFiles()
             .map {
