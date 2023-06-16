@@ -135,7 +135,7 @@ internal fun <V> captureCallableThreadContext(callable: Callable<V>): Callable<V
 }
 
 private fun isContextAwareComputation(runnable: Any) : Boolean {
-  return runnable is Continuation<*> || runnable is ContextAwareRunnable || runnable is ContextAwareCallable<*>
+  return runnable is Continuation<*> || runnable is ContextAwareRunnable || runnable is ContextAwareCallable<*> || runnable is CancellationFutureTask<*>
 }
 
 /**
