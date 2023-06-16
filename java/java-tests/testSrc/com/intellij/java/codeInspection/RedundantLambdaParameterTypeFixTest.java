@@ -4,6 +4,7 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.lambda.RedundantLambdaParameterTypeInspection;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +87,7 @@ public class RedundantLambdaParameterTypeFixTest extends LightJavaCodeInsightFix
     myFixture.configureByFiles(getTestName(false) + ".java");
     final IntentionAction singleIntention = myFixture.findSingleIntention(ourIntentionName);
     myFixture.launchAction(singleIntention);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + ".java", getTestName(false) + "_after.java", true);
   }
 
