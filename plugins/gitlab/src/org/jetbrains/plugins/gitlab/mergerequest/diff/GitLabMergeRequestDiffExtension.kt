@@ -110,7 +110,7 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
   private class NewNoteDiffInlayViewModel(private val changeVm: GitLabMergeRequestDiffChangeViewModel,
                                           private val newLocation: DiffLineLocation,
                                           val editVm: NewGitLabNoteViewModel) : DiffMapped {
-    val id: String = "NEW"
+    val id: String = "NEW_AT_$newLocation"
     override val location: Flow<DiffLineLocation> = flowOf(newLocation)
     override val isVisible: Flow<Boolean> = flowOf(true)
 
