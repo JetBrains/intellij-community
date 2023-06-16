@@ -9,16 +9,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoader
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoadingContext
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
-import org.jetbrains.kotlin.idea.core.util.AbstractFileAttributePropertyService
+import org.jetbrains.kotlin.idea.core.util.AbstractFileGistService
 import org.jetbrains.kotlin.idea.core.util.readObject
 import org.jetbrains.kotlin.idea.core.util.writeObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper.FromCompilationConfiguration
-import java.io.DataInputStream
-import java.io.DataOutputStream
-import java.io.Serializable
+import java.io.*
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 import kotlin.script.experimental.api.*
@@ -106,11 +104,11 @@ internal class ScriptConfigurationSnapshotForFS(
 ) : Serializable
 
 @Service
-internal class ScriptConfigurationSnapshotFile : AbstractFileAttributePropertyService<ScriptConfigurationSnapshotForFS>(
+internal class ScriptConfigurationSnapshotFile : AbstractFileGistService<ScriptConfigurationSnapshotForFS>(
     name = "kotlin-script-dependencies",
     version = 5,
-    read = DataInputStream::readObject,
-    write = DataOutputStream::writeObject
+    read = DataInput::readObject,
+    write = DataOutput::writeObject
 ) {
     companion object {
         operator fun get(project: Project, file: VirtualFile): ScriptConfigurationSnapshotForFS? {
