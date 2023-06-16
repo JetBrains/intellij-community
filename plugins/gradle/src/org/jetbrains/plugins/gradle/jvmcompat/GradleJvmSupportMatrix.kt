@@ -64,6 +64,19 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
     }
   }
 
+  fun isUnsupported(gradleVersion: GradleVersion): Boolean {
+    return gradleVersion < minimalSupportedGradleVersion
+  }
+
+  fun isDeprecated(gradleVersion: GradleVersion): Boolean {
+    return gradleVersion < minimalRecommendedGradleVersion
+  }
+
+  val minimalSupportedGradleVersion
+    get() = mySupportedGradleVersions.min()
+
+  val minimalRecommendedGradleVersion = GradleVersion.version("4.5")
+
   companion object {
     @JvmStatic
     fun getInstance(): GradleJvmSupportMatrix {
