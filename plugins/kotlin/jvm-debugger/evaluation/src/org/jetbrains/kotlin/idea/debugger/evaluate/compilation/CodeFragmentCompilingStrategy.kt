@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.LOG
 import org.jetbrains.kotlin.idea.debugger.evaluate.gatherProjectFilesDependedOnByFragment
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
@@ -88,10 +89,10 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         if (isFallbackDisabled()) {
             throw e
         }
-        // TODO maybe break down known cases of failures and keep statistics on them?
-        //      This way, we will have a complete picture of what exact errors users
-        //      come across.
-        reportErrorWithAttachments(executionContext, codeFragment, e)
+        if (isApplicationInternalMode()) {
+            reportErrorWithAttachments(executionContext, codeFragment, e)
+        }
+        // TODO add statistics
     }
 
     private fun reportErrorWithAttachments(
@@ -123,10 +124,10 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
             add(Attachment("debugger_context.txt", debuggerContext).apply { isIncluded = true })
             add(Attachment("code_fragment.txt", codeFragment.text).apply { isIncluded = true })
             suspendStackTrace?.let {
-                add(Attachment("suspend_stack_trace.txt", it))
+                add(Attachment("suspend_stack_trace.txt", it).apply { isIncluded = true })
             }
             fileContents?.let {
-                add(Attachment("opened_file_contents.txt", it))
+                add(Attachment("opened_file_contents.txt", it).apply { isIncluded = true })
             }
         }
 
