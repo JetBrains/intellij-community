@@ -16,7 +16,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
-import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
@@ -2232,7 +2231,7 @@ public final class HighlightUtil {
           arrayTypeFixChecked = true;
         }
         if (fix != null) {
-          info.registerFix(new LocalQuickFixOnPsiElementAsIntentionAdapter(fix), null, null, null, null);
+          info.registerFix(fix, null, null, null, null);
         }
         holder.add(info.create());
       }
