@@ -105,8 +105,8 @@ fun DailyAggregatedDoubleFactor.get(name: String, decayDuration: Duration, day: 
   val lastTimeName = lastTimeName(name)
   val decayingCountName = decayingCountName(name, decayDuration)
   val lastTime = onDate[lastTimeName] ?: return null
-  val dacayingCount = onDate[decayingCountName]
-  return dacayingCount.decay(timestamp - lastTime, decayDuration)
+  val decayingCount = onDate[decayingCountName]
+  return decayingCount.decay(timestamp - lastTime, decayDuration)
 }
 
 fun MutableDoubleFactor.increment(name: String, decayDuration: Duration, timestamp: Double) {
