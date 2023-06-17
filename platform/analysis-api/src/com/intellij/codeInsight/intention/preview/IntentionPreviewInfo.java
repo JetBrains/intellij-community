@@ -328,11 +328,10 @@ public interface IntentionPreviewInfo {
     return icon;
   }
 
-  @NotNull
-  private static HtmlChunk getHtmlMoveFragment(@Nullable Icon sourceIcon,
-                                               @Nullable Icon targetIcon,
-                                               @Nullable @Nls String sourceName,
-                                               @Nullable @Nls String targetName) {
+  private static @NotNull HtmlChunk getHtmlMoveFragment(@Nullable Icon sourceIcon,
+                                                        @Nullable Icon targetIcon,
+                                                        @Nullable @Nls String sourceName,
+                                                        @Nullable @Nls String targetName) {
     return new HtmlBuilder()
       .append(getIconChunk(sourceIcon, "source_" + sourceName))
       .append(Objects.requireNonNull(sourceName))

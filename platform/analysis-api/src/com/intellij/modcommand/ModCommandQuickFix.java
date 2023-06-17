@@ -27,8 +27,7 @@ public abstract class ModCommandQuickFix implements LocalQuickFix {
    * @param descriptor problem reported by the tool which provided this quick fix action
    * @return a command to be applied to finally execute the fix.
    */
-  @NotNull
-  public abstract ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor);
+  public abstract @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor);
   
   @Override
   public final boolean startInWriteAction() {

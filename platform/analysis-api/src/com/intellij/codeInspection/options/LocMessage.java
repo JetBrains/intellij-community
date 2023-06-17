@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
 import org.jetbrains.annotations.Nls;
@@ -18,7 +18,7 @@ public sealed interface LocMessage permits PlainMessage {
    * Split character is '|'. For example, if the string in resources is "At least | lines", then
    * the prefix is "At least " and the suffix is " lines", and the input field will be placed in-between
    */
-  @NotNull default PrefixSuffix splitLabel() {
+  default @NotNull PrefixSuffix splitLabel() {
     String string = label();
     int splitPos = string.indexOf("|");
     return splitPos == -1 ? new PrefixSuffix(string, "") : new PrefixSuffix(string.substring(0, splitPos), string.substring(splitPos + 1));

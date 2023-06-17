@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.model.BranchableUsageInfo;
@@ -86,19 +72,16 @@ public class MoveRenameUsageInfo extends UsageInfo implements BranchableUsageInf
     }
   }
 
-  @Nullable
-  public PsiElement getUpToDateReferencedElement() {
+  public @Nullable PsiElement getUpToDateReferencedElement() {
     return myReferencedElementPointer == null ? null : myReferencedElementPointer.getElement();
   }
 
-  @Nullable
-  public PsiElement getReferencedElement() {
+  public @Nullable PsiElement getReferencedElement() {
     return myReferencedElement;
   }
 
   @Override
-  @Nullable
-  public PsiReference getReference() {
+  public @Nullable PsiReference getReference() {
     if (myReference != null) {
       final PsiElement element = myReference.getElement();
       if (element.isValid()) {
@@ -122,8 +105,7 @@ public class MoveRenameUsageInfo extends UsageInfo implements BranchableUsageInf
     return checkReferenceRange(element, start -> element.findReferenceAt(start));
   }
 
-  @Nullable
-  private PsiReference checkReferenceRange(PsiElement element, Function<? super Integer, ? extends PsiReference> fn) {
+  private @Nullable PsiReference checkReferenceRange(PsiElement element, Function<? super Integer, ? extends PsiReference> fn) {
     final int start = myReferenceRangeMarker.getStartOffset() - element.getTextRange().getStartOffset();
     final int end = myReferenceRangeMarker.getEndOffset() - element.getTextRange().getStartOffset();
     final PsiReference reference = fn.fun(start);
@@ -138,8 +120,7 @@ public class MoveRenameUsageInfo extends UsageInfo implements BranchableUsageInf
   }
 
   @Override
-  @NotNull
-  public MoveRenameUsageInfo obtainBranchCopy(@NotNull ModelBranch branch) {
+  public @NotNull MoveRenameUsageInfo obtainBranchCopy(@NotNull ModelBranch branch) {
     try {
       MoveRenameUsageInfo copy = (MoveRenameUsageInfo)clone();
       Class<?> aClass = copy.getClass();

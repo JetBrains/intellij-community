@@ -85,7 +85,7 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
   @ApiStatus.Internal
   public static LocalQuickFixAndIntentionActionOnPsiElement from(@NotNull ModCommandAction action, @NotNull PsiElement psiElement) {
     return new LocalQuickFixAndIntentionActionOnPsiElement(psiElement) {
-      @IntentionName private String myText;
+      private @IntentionName String myText;
 
       @Override
       public @NotNull String getFamilyName() {

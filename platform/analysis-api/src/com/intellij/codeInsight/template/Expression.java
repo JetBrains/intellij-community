@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -9,18 +9,15 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class Expression {
 
-  @Nullable
-  public abstract Result calculateResult(ExpressionContext context);
+  public abstract @Nullable Result calculateResult(ExpressionContext context);
 
-  @Nullable
-  public Result calculateQuickResult(ExpressionContext context) {
+  public @Nullable Result calculateQuickResult(ExpressionContext context) {
     return calculateResult(context);
   }
 
   public abstract LookupElement @Nullable [] calculateLookupItems(ExpressionContext context);
 
-  @Nullable
-  public @NlsContexts.PopupAdvertisement String getAdvertisingText() {
+  public @Nullable @NlsContexts.PopupAdvertisement String getAdvertisingText() {
     return null;
   }
 
@@ -36,8 +33,7 @@ public abstract class Expression {
    * @return focus degree to use for expression's lookup.
    * @see LookupFocusDegree
    */
-  @NotNull
-  public LookupFocusDegree getLookupFocusDegree() {
+  public @NotNull LookupFocusDegree getLookupFocusDegree() {
     return LookupFocusDegree.FOCUSED;
   }
 }
