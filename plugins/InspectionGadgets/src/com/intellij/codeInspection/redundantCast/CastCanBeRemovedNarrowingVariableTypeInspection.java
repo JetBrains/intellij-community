@@ -1,12 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -15,10 +16,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -70,7 +69,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
         }
         String message = JavaBundle
           .message("inspection.cast.can.be.removed.narrowing.variable.type.message", variable.getName(), castType.getPresentableText());
-        holder.registerProblem(castTypeElement, message, new CastCanBeRemovedNarrowingVariableTypeFix(castTypeElement, variable, castType, isOnTheFly));
+        holder.registerProblem(castTypeElement, message, new CastCanBeRemovedNarrowingVariableTypeFix(variable, castType, isOnTheFly));
       }
     };
   }
@@ -130,20 +129,19 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
     return true;
   }
 
-  private static class CastCanBeRemovedNarrowingVariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+  private static class CastCanBeRemovedNarrowingVariableTypeFix extends PsiUpdateModCommandQuickFix {
     private final String myVariableName;
     private final String myType;
     private final boolean myOnTheFly;
 
-    CastCanBeRemovedNarrowingVariableTypeFix(PsiTypeElement castTypeElement, PsiVariable variable, PsiType type, boolean onTheFly) {
-      super(castTypeElement);
+    CastCanBeRemovedNarrowingVariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType type, boolean onTheFly) {
       myVariableName = variable.getName();
       myType = type.getPresentableText();
       myOnTheFly = onTheFly;
     }
 
     @Override
-    public @NotNull String getText() {
+    public @NotNull String getName() {
       return JavaBundle.message("inspection.cast.can.be.removed.narrowing.variable.type.fix.name", myVariableName, myType);
     }
 
@@ -154,12 +152,8 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
     }
 
     @Override
-    public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
-                       @Nullable Editor editor,
-                       @NotNull PsiElement startElement,
-                       @NotNull PsiElement endElement) {
-      PsiTypeCastExpression cast = PsiTreeUtil.getParentOfType(startElement, PsiTypeCastExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      PsiTypeCastExpression cast = PsiTreeUtil.getParentOfType(element, PsiTypeCastExpression.class);
       if (cast == null) return;
       PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(cast.getOperand()), PsiReferenceExpression.class);
       if (ref == null) return;
@@ -180,8 +174,8 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
           }
         }
       }
-      if (myOnTheFly && editor != null) {
-        HighlightUtils.highlightElement(newTypeElement, editor);
+      if (myOnTheFly) {
+        updater.highlight(newTypeElement, EditorColors.SEARCH_RESULT_ATTRIBUTES);
       }
     }
   }

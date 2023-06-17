@@ -1007,7 +1007,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddParameterListFix(@NotNull PsiMethod method) {
-    return new AddParameterListFix(method);
+    return new AddParameterListFix(method).asIntention();
   }
 
   @NotNull
@@ -1034,7 +1034,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public @NotNull IntentionAction createAddToPermitsListFix(@NotNull PsiClass subClass,
                                                             @NotNull PsiClass superClass) {
-    return new AddToPermitsListFix(subClass, superClass);
+    return new AddToPermitsListFix(subClass, superClass).asIntention();
   }
 
   @Override
