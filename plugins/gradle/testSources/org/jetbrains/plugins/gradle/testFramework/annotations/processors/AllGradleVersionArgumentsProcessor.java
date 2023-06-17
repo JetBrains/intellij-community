@@ -1,15 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.annotations.processors;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase;
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource;
 import org.jetbrains.plugins.gradle.testFramework.annotations.ArgumentsProcessor;
 import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource;
-import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 
 import java.lang.annotation.Annotation;
-import java.util.Arrays;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class AllGradleVersionArgumentsProcessor extends DelegateArgumentsProcessor<AllGradleVersionsSource, GradleTestSource> {
 
@@ -33,8 +34,8 @@ public class AllGradleVersionArgumentsProcessor extends DelegateArgumentsProcess
 
       @Override
       public String value() {
-        return Arrays.stream(VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS)
-          .flatMap(it -> Arrays.stream(it))
+        return StreamSupport.stream(GradleImportingTestCase.data().spliterator(), false)
+          .map(Objects::toString)
           .collect(Collectors.joining(","));
       }
 
