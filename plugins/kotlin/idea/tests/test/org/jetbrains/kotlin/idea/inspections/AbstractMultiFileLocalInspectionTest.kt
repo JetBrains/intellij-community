@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -15,7 +16,6 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jdom.Document
 import org.jdom.input.SAXBuilder
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -32,6 +32,8 @@ abstract class AbstractMultiFileLocalInspectionTest : AbstractLocalInspectionTes
             KotlinLightProjectDescriptor.INSTANCE
     }
 
+    open fun inspectionClassFieldName(): String = "inspectionClass"
+
     override fun doTest(path: String) {
         val testFile = File(path)
         val config = JsonParser().parse(FileUtil.loadFile(testFile, true)) as JsonObject
@@ -41,7 +43,7 @@ abstract class AbstractMultiFileLocalInspectionTest : AbstractLocalInspectionTes
         val mainFileText = FileUtil.loadFile(mainFile, true)
         TestCase.assertTrue("\"<caret>\" is missing in file \"$mainFilePath\"", mainFileText.contains("<caret>"))
 
-        val inspection = Class.forName(config.getString("inspectionClass")).newInstance() as AbstractKotlinInspection
+        val inspection = Class.forName(config.getString(inspectionClassFieldName())).newInstance() as LocalInspectionTool
         val problemExpectedString = config["problem"]?.asString // null means "some problem", "none" means no problem
         val localFixTextString = config["fix"]?.asString // null means "some single fix" or "none" if no problem expected
 

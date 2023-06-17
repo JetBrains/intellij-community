@@ -2374,6 +2374,379 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/unusedSymbol")
+    public static class UnusedSymbol extends AbstractK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("asDefaultConstructorParameter.kt")
+        public void testAsDefaultConstructorParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/asDefaultConstructorParameter.kt");
+        }
+
+        @TestMetadata("companionViaImport.kt")
+        public void testCompanionViaImport() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/companionViaImport.kt");
+        }
+
+        @TestMetadata("companionViaImport2.kt")
+        public void testCompanionViaImport2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/companionViaImport2.kt");
+        }
+
+        @TestMetadata("contextReceiver.kt")
+        public void testContextReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/contextReceiver.kt");
+        }
+
+        @TestMetadata("dataInlineClassDeclaration.kt")
+        public void testDataInlineClassDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/dataInlineClassDeclaration.kt");
+        }
+
+        @TestMetadata("enumSecondaryConstructor.kt")
+        public void testEnumSecondaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/enumSecondaryConstructor.kt");
+        }
+
+        @TestMetadata("functionWithInlineClass.kt")
+        public void testFunctionWithInlineClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/functionWithInlineClass.kt");
+        }
+
+        @TestMetadata("functionWithInlineClassReceiver.kt")
+        public void testFunctionWithInlineClassReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/functionWithInlineClassReceiver.kt");
+        }
+
+        @TestMetadata("inAnonymous.kt")
+        public void testInAnonymous() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/inAnonymous.kt");
+        }
+
+        @TestMetadata("inAnonymousDeeply.kt")
+        public void testInAnonymousDeeply() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/inAnonymousDeeply.kt");
+        }
+
+        @TestMetadata("inAnonymousDeeplyInTopLevel.kt")
+        public void testInAnonymousDeeplyInTopLevel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/inAnonymousDeeplyInTopLevel.kt");
+        }
+
+        @TestMetadata("inAnonymousInCompanion.kt")
+        public void testInAnonymousInCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/inAnonymousInCompanion.kt");
+        }
+
+        @TestMetadata("inAnonymousInTopLovel.kt")
+        public void testInAnonymousInTopLovel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/inAnonymousInTopLovel.kt");
+        }
+
+        @TestMetadata("inAnonymousRunWrapped.kt")
+        public void testInAnonymousRunWrapped() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/inAnonymousRunWrapped.kt");
+        }
+
+        @TestMetadata("inlineClassConstructor.kt")
+        public void testInlineClassConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/inlineClassConstructor.kt");
+        }
+
+        @TestMetadata("inlineClassMemberFunction.kt")
+        public void testInlineClassMemberFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/inlineClassMemberFunction.kt");
+        }
+
+        @TestMetadata("inlineClassProperty.kt")
+        public void testInlineClassProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/inlineClassProperty.kt");
+        }
+
+        @TestMetadata("innerClass.kt")
+        public void testInnerClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/innerClass.kt");
+        }
+
+        @TestMetadata("internal.kt")
+        public void testInternal() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/internal.kt");
+        }
+
+        @TestMetadata("jsExport.kt")
+        public void testJsExport() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/jsExport.kt");
+        }
+
+        @TestMetadata("lastPropertyInPrimaryConstructor.kt")
+        public void testLastPropertyInPrimaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/lastPropertyInPrimaryConstructor.kt");
+        }
+
+        @TestMetadata("lastPropertyInPrimaryConstructorWithComments.kt")
+        public void testLastPropertyInPrimaryConstructorWithComments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/lastPropertyInPrimaryConstructorWithComments.kt");
+        }
+
+        @TestMetadata("nestedPrivateObject.kt")
+        public void testNestedPrivateObject() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/nestedPrivateObject.kt");
+        }
+
+        @TestMetadata("privateProperty.kt")
+        public void testPrivateProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/privateProperty.kt");
+        }
+
+        @TestMetadata("privatePropertyViaGetter.kt")
+        public void testPrivatePropertyViaGetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/privatePropertyViaGetter.kt");
+        }
+
+        @TestMetadata("privatePropertyViaSetter.kt")
+        public void testPrivatePropertyViaSetter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/privatePropertyViaSetter.kt");
+        }
+
+        @TestMetadata("propertyOfInlineClassType.kt")
+        public void testPropertyOfInlineClassType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/propertyOfInlineClassType.kt");
+        }
+
+        @TestMetadata("secondaryConstructorCalledByImportAlias.kt")
+        public void testSecondaryConstructorCalledByImportAlias() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/secondaryConstructorCalledByImportAlias.kt");
+        }
+
+        @TestMetadata("secondaryConstructorCalledByTypeAlias.kt")
+        public void testSecondaryConstructorCalledByTypeAlias() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/secondaryConstructorCalledByTypeAlias.kt");
+        }
+
+        @TestMetadata("secondaryLocalClassConstructor.kt")
+        public void testSecondaryLocalClassConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/secondaryLocalClassConstructor.kt");
+        }
+
+        @TestMetadata("typeAlias.kt")
+        public void testTypeAlias() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/typeAlias.kt");
+        }
+
+        @TestMetadata("unusedClassExplicitApi.kt")
+        public void testUnusedClassExplicitApi() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedClassExplicitApi.kt");
+        }
+
+        @TestMetadata("unusedEnumEntries.kt")
+        public void testUnusedEnumEntries() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumEntries.kt");
+        }
+
+        @TestMetadata("unusedEnumEntries2.kt")
+        public void testUnusedEnumEntries2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumEntries2.kt");
+        }
+
+        @TestMetadata("unusedEnumEntries3.kt")
+        public void testUnusedEnumEntries3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumEntries3.kt");
+        }
+
+        @TestMetadata("unusedEnumEntries4.kt")
+        public void testUnusedEnumEntries4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumEntries4.kt");
+        }
+
+        @TestMetadata("unusedEnumEntries5.kt")
+        public void testUnusedEnumEntries5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumEntries5.kt");
+        }
+
+        @TestMetadata("unusedEnumEntries6.kt")
+        public void testUnusedEnumEntries6() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumEntries6.kt");
+        }
+
+        @TestMetadata("unusedEnumEntry.kt")
+        public void testUnusedEnumEntry() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumEntry.kt");
+        }
+
+        @TestMetadata("unusedEnumValues.kt")
+        public void testUnusedEnumValues() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumValues.kt");
+        }
+
+        @TestMetadata("unusedEnumValues2.kt")
+        public void testUnusedEnumValues2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumValues2.kt");
+        }
+
+        @TestMetadata("unusedEnumValues3.kt")
+        public void testUnusedEnumValues3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumValues3.kt");
+        }
+
+        @TestMetadata("unusedEnumValues4.kt")
+        public void testUnusedEnumValues4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedEnumValues4.kt");
+        }
+
+        @TestMetadata("unusedExtensionExplicitApi.kt")
+        public void testUnusedExtensionExplicitApi() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedExtensionExplicitApi.kt");
+        }
+
+        @TestMetadata("unusedFunctionExplicitApi.kt")
+        public void testUnusedFunctionExplicitApi() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedFunctionExplicitApi.kt");
+        }
+
+        @TestMetadata("usedEnumFunction.kt")
+        public void testUsedEnumFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction.kt");
+        }
+
+        @TestMetadata("usedEnumFunction10.kt")
+        public void testUsedEnumFunction10() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction10.kt");
+        }
+
+        @TestMetadata("usedEnumFunction11.kt")
+        public void testUsedEnumFunction11() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction11.kt");
+        }
+
+        @TestMetadata("usedEnumFunction12.kt")
+        public void testUsedEnumFunction12() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction12.kt");
+        }
+
+        @TestMetadata("usedEnumFunction13.kt")
+        public void testUsedEnumFunction13() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction13.kt");
+        }
+
+        @TestMetadata("usedEnumFunction14.kt")
+        public void testUsedEnumFunction14() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction14.kt");
+        }
+
+        @TestMetadata("usedEnumFunction15.kt")
+        public void testUsedEnumFunction15() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction15.kt");
+        }
+
+        @TestMetadata("usedEnumFunction2.kt")
+        public void testUsedEnumFunction2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction2.kt");
+        }
+
+        @TestMetadata("usedEnumFunction3.kt")
+        public void testUsedEnumFunction3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction3.kt");
+        }
+
+        @TestMetadata("usedEnumFunction4.kt")
+        public void testUsedEnumFunction4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction4.kt");
+        }
+
+        @TestMetadata("usedEnumFunction5.kt")
+        public void testUsedEnumFunction5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction5.kt");
+        }
+
+        @TestMetadata("usedEnumFunction6.kt")
+        public void testUsedEnumFunction6() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction6.kt");
+        }
+
+        @TestMetadata("usedEnumFunction7.kt")
+        public void testUsedEnumFunction7() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction7.kt");
+        }
+
+        @TestMetadata("usedEnumFunction8.kt")
+        public void testUsedEnumFunction8() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction8.kt");
+        }
+
+        @TestMetadata("usedEnumFunction9.kt")
+        public void testUsedEnumFunction9() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunction9.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithImport.kt")
+        public void testUsedEnumFunctionWithImport() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithImport2.kt")
+        public void testUsedEnumFunctionWithImport2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport2.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithImport3.kt")
+        public void testUsedEnumFunctionWithImport3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport3.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithImport4.kt")
+        public void testUsedEnumFunctionWithImport4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport4.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithImport5.kt")
+        public void testUsedEnumFunctionWithImport5() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport5.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithImport6.kt")
+        public void testUsedEnumFunctionWithImport6() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport6.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithImport7.kt")
+        public void testUsedEnumFunctionWithImport7() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport7.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithImport8.kt")
+        public void testUsedEnumFunctionWithImport8() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithImport8.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithNestedEnum.kt")
+        public void testUsedEnumFunctionWithNestedEnum() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithNestedEnum.kt");
+        }
+
+        @TestMetadata("usedEnumFunctionWithNestedEnum2.kt")
+        public void testUsedEnumFunctionWithNestedEnum2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/usedEnumFunctionWithNestedEnum2.kt");
+        }
+
+        @TestMetadata("valueClassGenericParameter.kt")
+        public void testValueClassGenericParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/valueClassGenericParameter.kt");
+        }
+
+        @TestMetadata("valueClassParameter.kt")
+        public void testValueClassParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/valueClassParameter.kt");
+        }
+
+        @TestMetadata("withJvmNameUsedFromKotlin.kt")
+        public void testWithJvmNameUsedFromKotlin() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/withJvmNameUsedFromKotlin.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)

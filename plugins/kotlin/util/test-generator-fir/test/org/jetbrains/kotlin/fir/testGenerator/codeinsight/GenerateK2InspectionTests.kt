@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.AbstractShare
 import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.idea.kdoc.AbstractSharedK2KDocHighlightingTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2InspectionTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2LocalInspectionTest
+import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2MultiFileLocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.model.*
 
@@ -38,6 +39,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/equalsOrHashCode")
             model("${idea}/inspectionsLocal/removeRedundantQualifierName")
             model("${idea}/inspectionsLocal/equalsBetweenInconvertibleTypes")
+            model("${idea}/inspectionsLocal/unusedSymbol")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
         }
 
@@ -50,6 +52,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspections/equalsAndHashCode", pattern = pattern)
             model("${idea}/inspections/protectedInFinal", pattern = pattern)
             model("${idea}/intentions/convertToStringTemplate", pattern = pattern)
+            model("${idea}/inspections/unusedSymbol", pattern = pattern)
         }
 
         testClass<AbstractK2QuickFixTest> {
@@ -59,6 +62,11 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/removeToStringInStringTemplate", pattern = pattern)
             model("${idea}/quickfix/suppress", pattern = pattern)
             model("${idea}/quickfix/protectedInFinal", pattern = pattern)
+        }
+
+        testClass<AbstractK2MultiFileLocalInspectionTest> {
+            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.test$")
+            model("${idea}/multiFileLocalInspections/unusedSymbol", pattern = pattern)
         }
     }
 

@@ -251,5 +251,18 @@
                      level="WEAK WARNING"
                      language="kotlin" key="inspection.protected.in.final.display.name" bundle="messages.KotlinBundle"/>
 
+    <!-- TODO: We currently have a performance issue caused by reference search. See https://kotlin.jetbrains.space/p/kotlin/reviews/710.
+               We have an idea of indexing reference counts. Enable this inspection after implement it. -->
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection"
+                     shortName="disabledUnusedSymbolInspection"
+                     enabledByDefault="false"
+                     level="NON_SWITCHABLE_WARNING"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     runForWholeFile="true"
+                     language="kotlin"
+                     suppressId="unused" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     key="inspection.unused.symbol.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>
