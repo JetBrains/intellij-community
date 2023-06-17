@@ -164,6 +164,7 @@ private fun navigateToSource(project: Project, request: SourceNavigationRequest,
   if (tryActivateOpenFile(project, request, options)) {
     return
   }
+
   // TODO support pure source request without OpenFileDescriptor
   val offset = request.elementRangeMarker?.takeIf { it.isValid }?.startOffset ?: -1
   val openFileDescriptor = OpenFileDescriptor(project, request.file, offset)
@@ -174,23 +175,20 @@ private fun navigateToSource(project: Project, request: SourceNavigationRequest,
   openFileDescriptor.navigate(options.requestFocus)
 }
 
-private fun tryActivateOpenFile(
-  project: Project,
-  request: SourceNavigationRequest,
-  options: NavigationOptions.Impl,
-): Boolean {
+private fun tryActivateOpenFile(project: Project, request: SourceNavigationRequest, options: NavigationOptions.Impl): Boolean {
   if (!options.preserveCaret && !options.requestFocus) {
     return false
   }
   if (shouldOpenAsNative(request.file)) {
     return false
   }
-  val elementRangeMarker = request.elementRangeMarker
-  if (elementRangeMarker == null || !elementRangeMarker.isValid) {
-    return false
-  }
-  val elementRange = elementRangeMarker.textRange
-  return activateFileIfOpen(project, request.file, elementRange, options.requestFocus, options.requestFocus)
+
+  val elementRange = request.elementRangeMarker?.takeIf { it.isValid }?.textRange  ?: return false
+  return activateFileIfOpen(project = project,
+                            vFile = request.file,
+                            range = elementRange,
+                            searchForOpen = options.requestFocus,
+                            requestFocus = options.requestFocus)
 }
 
 private suspend fun navigateNonSource(request: NavigationRequest, options: NavigationOptions.Impl) {
