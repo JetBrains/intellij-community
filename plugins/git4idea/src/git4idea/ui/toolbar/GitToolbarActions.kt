@@ -7,11 +7,13 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.application.Experiments
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
+import git4idea.repo.GitRepositoryManager
 
 class GitToolbarPushAction: VcsPushAction(), TooltipDescriptionProvider {
   init {
@@ -27,7 +29,9 @@ class GitToolbarPushAction: VcsPushAction(), TooltipDescriptionProvider {
   private fun updatePresentation(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = GitToolbarActions.isEnabledAndVisible()
     val project = e.project ?: return
-    val repository = GitBranchUtil.guessWidgetRepository(project, e.dataContext) ?: return
+    val repository = GitBranchUtil.guessWidgetRepository(project,
+                                                         project.serviceIfCreated<GitRepositoryManager>() ?: return,
+                                                         e.dataContext) ?: return
     val currentBranch = repository.currentBranch ?: return
 
     val hasOutgoingForCurrentBranch = GitBranchIncomingOutgoingManager.getInstance(project).hasOutgoingFor(repository, currentBranch.name)
@@ -45,7 +49,7 @@ class GitToolbarPushAction: VcsPushAction(), TooltipDescriptionProvider {
   }
 }
 
-class GitToolbarUpdateProjectAction : CommonUpdateProjectAction(), TooltipDescriptionProvider {
+private class GitToolbarUpdateProjectAction : CommonUpdateProjectAction(), TooltipDescriptionProvider {
   init {
     ActionManager.getInstance().getAction("Vcs.UpdateProject")?.let(::copyFrom)
   }
@@ -58,8 +62,9 @@ class GitToolbarUpdateProjectAction : CommonUpdateProjectAction(), TooltipDescri
 
   private fun updatePresentation(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = GitToolbarActions.isEnabledAndVisible()
-    val project = e.project ?: return
-    val repository = GitBranchUtil.guessWidgetRepository(project, e.dataContext) ?: return
+    val project = e.project
+    val gitRepositoryManager = project?.serviceIfCreated<GitRepositoryManager>() ?: return
+    val repository = GitBranchUtil.guessWidgetRepository(project, gitRepositoryManager, e.dataContext) ?: return
     val currentBranch = repository.currentBranch ?: return
 
     val hasIncomingForCurrentBranch = GitBranchIncomingOutgoingManager.getInstance(project).hasIncomingFor(repository, currentBranch.name)
@@ -77,8 +82,8 @@ class GitToolbarUpdateProjectAction : CommonUpdateProjectAction(), TooltipDescri
   }
 }
 
-object GitToolbarActions {
-  internal fun isEnabledAndVisible(): Boolean {
+internal object GitToolbarActions {
+  fun isEnabledAndVisible(): Boolean {
     return Registry.`is`("vcs.new.ui.main.toolbar.actions")
            && Experiments.getInstance().isFeatureEnabled("git4idea.new.ui.main.toolbar.actions")
   }

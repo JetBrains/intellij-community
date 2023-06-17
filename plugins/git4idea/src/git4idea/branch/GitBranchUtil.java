@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -25,6 +25,7 @@ import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.branch.GitBranchActionsUtilKt;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
 import it.unimi.dsi.fastutil.Hash;
@@ -228,8 +229,14 @@ public final class GitBranchUtil {
   }
 
   public static @Nullable GitRepository guessWidgetRepository(@NotNull Project project, @NotNull DataContext dataContext) {
+    return guessWidgetRepository(project, GitRepositoryManager.getInstance(project), dataContext);
+  }
+
+  public static @Nullable GitRepository guessWidgetRepository(@NotNull Project project,
+                                                              @NotNull GitRepositoryManager repositoryManager,
+                                                              @NotNull DataContext dataContext) {
     GitVcsSettings settings = GitVcsSettings.getInstance(project);
-    return DvcsUtil.guessWidgetRepository(project, GitUtil.getRepositoryManager(project), settings.getRecentRootPath(), dataContext);
+    return DvcsUtil.guessWidgetRepository(project, repositoryManager, settings.getRecentRootPath(), dataContext);
   }
 
   public static @NotNull Collection<String> getCommonBranches(Collection<? extends GitRepository> repositories,
