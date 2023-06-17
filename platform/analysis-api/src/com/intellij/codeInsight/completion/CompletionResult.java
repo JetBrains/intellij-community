@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -16,8 +16,7 @@ public class CompletionResult {
     mySorter = sorter;
   }
 
-  @Nullable
-  public static CompletionResult wrap(@NotNull LookupElement lookupElement, @NotNull PrefixMatcher matcher, @NotNull CompletionSorter sorter) {
+  public static @Nullable CompletionResult wrap(@NotNull LookupElement lookupElement, @NotNull PrefixMatcher matcher, @NotNull CompletionSorter sorter) {
     if (matcher.prefixMatches(lookupElement)) {
       return new CompletionResult(lookupElement, matcher, sorter);
     }
@@ -36,8 +35,7 @@ public class CompletionResult {
     return myLookupElement;
   }
 
-  @NotNull
-  public CompletionResult withLookupElement(@NotNull LookupElement element) {
+  public @NotNull CompletionResult withLookupElement(@NotNull LookupElement element) {
     if (!myMatcher.prefixMatches(element)) {
       throw new AssertionError("The new element doesn't match the prefix");
     }

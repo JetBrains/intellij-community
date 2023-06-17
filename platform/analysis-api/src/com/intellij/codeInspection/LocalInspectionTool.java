@@ -34,8 +34,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   /**
    * Pattern used for inspection ID validation.
    */
-  @NonNls @Language("RegExp")
-  public static final String VALID_ID_PATTERN = "[a-zA-Z_0-9.-]+";
+  @Language("RegExp") public static final @NonNls String VALID_ID_PATTERN = "[a-zA-Z_0-9.-]+";
   private static final Pattern COMPILED_VALID_ID_PATTERN = Pattern.compile(VALID_ID_PATTERN);
 
   public static boolean isValidID(@NotNull String id) {
@@ -51,9 +50,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    *
    * @return inspection tool ID.
    */
-  @NonNls
-  @NotNull
-  public String getID() {
+  public @NonNls @NotNull String getID() {
     if (myNameProvider instanceof LocalDefaultNameProvider) {
       String id = ((LocalDefaultNameProvider)myNameProvider).getDefaultID();
       if (id != null) {
@@ -63,16 +60,13 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     return getShortName();
   }
 
-  @NotNull
   @Override
-  public final String getSuppressId() {
+  public final @NotNull String getSuppressId() {
     return getID();
   }
 
   @Override
-  @NonNls
-  @Nullable
-  public String getAlternativeID() {
+  public @NonNls @Nullable String getAlternativeID() {
     if (myNameProvider instanceof LocalDefaultNameProvider) {
       return ((LocalDefaultNameProvider)myNameProvider).getDefaultAlternativeID();
     }
@@ -121,8 +115,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @return not-null visitor for this inspection.
    * @see PsiRecursiveVisitor
    */
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return buildVisitor(holder, isOnTheFly);
   }
 
@@ -138,8 +131,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @return not-null visitor for this inspection.
    * @see PsiRecursiveVisitor
    */
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
       public void visitFile(@NotNull PsiFile file) {
@@ -172,8 +164,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @param psiElement: problem element
    * @return problem container element
    */
-  @Nullable
-  public PsiNamedElement getProblemElement(@NotNull PsiElement psiElement) {
+  public @Nullable PsiNamedElement getProblemElement(@NotNull PsiElement psiElement) {
     return psiElement.getContainingFile();
   }
 
@@ -190,8 +181,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
   }
 
-  @NotNull
-  public List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
+  public @NotNull List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
     return manager.defaultProcessFile(this, file);
   }
 }

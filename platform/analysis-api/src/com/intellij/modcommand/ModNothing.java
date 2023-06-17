@@ -11,7 +11,8 @@ public record ModNothing() implements ModCommand {
   public static final ModNothing NOTHING = new ModNothing();
   
   @Override
-  public @NotNull void execute(@NotNull Project project) {
+  @NotNull
+  public void execute(@NotNull Project project) {
   }
 
   @Override

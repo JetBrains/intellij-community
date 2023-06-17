@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Computable;
@@ -14,15 +14,13 @@ public final class WeighingService {
 
   private WeighingService() { }
 
-  @NotNull
-  public static <T, Loc> WeighingComparable<T, Loc> weigh(Key<? extends Weigher<T, Loc>> key, T element, @Nullable Loc location) {
+  public static @NotNull <T, Loc> WeighingComparable<T, Loc> weigh(Key<? extends Weigher<T, Loc>> key, T element, @Nullable Loc location) {
     return weigh(key, new Computable.PredefinedValueComputable<>(element), location);
   }
 
-  @NotNull
-  public static <T, Loc> WeighingComparable<T, Loc> weigh(Key<? extends Weigher<T, Loc>> key,
-                                                          Computable<? extends T> element,
-                                                          @Nullable Loc location) {
+  public static @NotNull <T, Loc> WeighingComparable<T, Loc> weigh(Key<? extends Weigher<T, Loc>> key,
+                                                                   Computable<? extends T> element,
+                                                                   @Nullable Loc location) {
     @SuppressWarnings("unchecked") Weigher<T, Loc>[] array = getWeighers(key).toArray(new Weigher[0]);
     return new WeighingComparable<>(element, location, array);
   }

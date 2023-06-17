@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -55,8 +55,7 @@ public class FileAttribute {
    * @deprecated use {@link FileAttribute#readFileAttribute(VirtualFile)}
    */
   @Deprecated
-  @Nullable
-  public DataInputStream readAttribute(@NotNull VirtualFile file) {
+  public @Nullable DataInputStream readAttribute(@NotNull VirtualFile file) {
     return ManagingFS.getInstance().readAttribute(file, this);
   }
 
@@ -64,18 +63,15 @@ public class FileAttribute {
    * @deprecated use {@link FileAttribute#writeFileAttribute(VirtualFile)}
    */
   @Deprecated
-  @NotNull
-  public DataOutputStream writeAttribute(@NotNull VirtualFile file) {
+  public @NotNull DataOutputStream writeAttribute(@NotNull VirtualFile file) {
     return ManagingFS.getInstance().writeAttribute(file, this);
   }
 
-  @Nullable
-  public AttributeInputStream readFileAttribute(@NotNull VirtualFile file) {
+  public @Nullable AttributeInputStream readFileAttribute(@NotNull VirtualFile file) {
     return ManagingFS.getInstance().readAttribute(file, this);
   }
 
-  @NotNull
-  public AttributeOutputStream writeFileAttribute(@NotNull VirtualFile file) {
+  public @NotNull AttributeOutputStream writeFileAttribute(@NotNull VirtualFile file) {
     return ManagingFS.getInstance().writeAttribute(file, this);
   }
 
@@ -98,8 +94,7 @@ public class FileAttribute {
     }
   }
 
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return myId;
   }
 
@@ -107,8 +102,7 @@ public class FileAttribute {
     return myFixedSize;
   }
 
-  @NotNull
-  public FileAttribute newVersion(int newVersion) {
+  public @NotNull FileAttribute newVersion(int newVersion) {
     return new FileAttribute(newVersion, myFixedSize, myId, myShouldEnumerate);
   }
 
