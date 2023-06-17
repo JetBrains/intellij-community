@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.amazon.ion.IonType;
@@ -89,7 +89,7 @@ public abstract class AbstractModelBuilderTest {
   }
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
-  public static Collection<String[]> data() {
+  public static Iterable<?> data() {
     return Arrays.asList(VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS);
   }
 
