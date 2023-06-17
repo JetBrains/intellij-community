@@ -1037,7 +1037,7 @@ open class FileEditorManagerImpl(
     return coroutineScope {
       val providers: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>
       if (existingComposite == null) {
-        if (!canOpenFile(file)) {
+        if (!canOpenFileAsync(file)) {
           return@coroutineScope FileEditorComposite.EMPTY
         }
 
