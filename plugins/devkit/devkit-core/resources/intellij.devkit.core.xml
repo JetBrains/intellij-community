@@ -295,7 +295,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMigrationXMLInspection"
                      key="inspection.light.service.migration.display.name"/>
-    <localInspection language="JVM" shortName="LightServiceMigrationCode"
+    <localInspection language="UAST" shortName="LightServiceMigrationCode"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
