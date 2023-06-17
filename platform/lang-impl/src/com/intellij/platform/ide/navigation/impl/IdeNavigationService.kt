@@ -13,6 +13,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.mapWithProgress
 import com.intellij.openapi.project.Project
@@ -71,9 +72,7 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
         it.navigationRequest()
       }
     }.filterNotNull()
-    return withContext(Dispatchers.EDT) {
-      navigate(project, requests, options)
-    }
+    return navigate(project = project, requests = requests, options = options)
   }
 
   override suspend fun navigate(navigatable: Navigatable, options: NavigationOptions): Boolean {
@@ -85,9 +84,7 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
         false
       }
       else {
-        withContext(Dispatchers.EDT) {
-          navigateToSource(project, request, options as NavigationOptions.Impl)
-        }
+        navigateToSource(project = project, request = request, options = options as NavigationOptions.Impl)
       }
     }
   }
@@ -99,8 +96,6 @@ internal val LOG: Logger = Logger.getInstance("#com.intellij.platform.ide.naviga
  * Navigates to all sources from [requests], or navigates to first non-source request.
  */
 private suspend fun navigate(project: Project, requests: List<NavigationRequest>, options: NavigationOptions): Boolean {
-  EDT.assertIsEdt()
-
   val maxSourceRequests = Registry.intValue("ide.source.file.navigation.limit", 100)
   var nonSourceRequest: NavigationRequest? = null
 
@@ -110,7 +105,7 @@ private suspend fun navigate(project: Project, requests: List<NavigationRequest>
     if (maxSourceRequests in 1..navigatedSourcesCounter) {
       break
     }
-    if (navigateToSource(project, requestFromNavigatable, options)) {
+    if (navigateToSource(project = project, request = requestFromNavigatable, options = options)) {
       navigatedSourcesCounter++
     }
     else if (nonSourceRequest == null) {
@@ -124,18 +119,16 @@ private suspend fun navigate(project: Project, requests: List<NavigationRequest>
     return false
   }
 
-  navigateNonSource(nonSourceRequest, options)
+  withContext(Dispatchers.EDT) {
+    navigateNonSource(request = nonSourceRequest, options = options)
+  }
   return true
 }
 
 private suspend fun navigateToSource(project: Project, request: NavigationRequest, options: NavigationOptions.Impl): Boolean {
-  EDT.assertIsEdt()
-
   when (request) {
     is SourceNavigationRequest -> {
-      blockingContext {
-        navigateToSource(project, request, options)
-      }
+      navigateToSource(project, request, options)
       return true
     }
     is DirectoryNavigationRequest -> {
@@ -143,8 +136,10 @@ private suspend fun navigateToSource(project: Project, request: NavigationReques
     }
     is RawNavigationRequest -> {
       if (request.canNavigateToSource) {
-        blockingContext {
-          request.navigatable.navigate(options.requestFocus)
+        withContext(Dispatchers.EDT) {
+          blockingContext {
+            request.navigatable.navigate(options.requestFocus)
+          }
         }
         return true
       }
@@ -158,10 +153,8 @@ private suspend fun navigateToSource(project: Project, request: NavigationReques
   }
 }
 
-private fun navigateToSource(project: Project, request: SourceNavigationRequest, options: NavigationOptions.Impl) {
-  EDT.assertIsEdt()
-
-  if (tryActivateOpenFile(project, request, options)) {
+private suspend fun navigateToSource(project: Project, request: SourceNavigationRequest, options: NavigationOptions.Impl) {
+  if (tryActivateOpenFile(project = project, request = request, options = options)) {
     return
   }
 
@@ -172,10 +165,12 @@ private fun navigateToSource(project: Project, request: SourceNavigationRequest,
   if (UISettings.getInstance().openInPreviewTabIfPossible && Registry.`is`("editor.preview.tab.navigation")) {
     openFileDescriptor.isUsePreviewTab = true
   }
-  openFileDescriptor.navigate(options.requestFocus)
+  blockingContext {
+    openFileDescriptor.navigate(options.requestFocus)
+  }
 }
 
-private fun tryActivateOpenFile(project: Project, request: SourceNavigationRequest, options: NavigationOptions.Impl): Boolean {
+private suspend fun tryActivateOpenFile(project: Project, request: SourceNavigationRequest, options: NavigationOptions.Impl): Boolean {
   if (!options.preserveCaret && !options.requestFocus) {
     return false
   }
@@ -187,8 +182,7 @@ private fun tryActivateOpenFile(project: Project, request: SourceNavigationReque
   return activateFileIfOpen(project = project,
                             vFile = request.file,
                             range = elementRange,
-                            searchForOpen = options.requestFocus,
-                            requestFocus = options.requestFocus)
+                            openOptions = FileEditorOpenOptions(requestFocus = options.requestFocus, reuseOpen = options.requestFocus))
 }
 
 private suspend fun navigateNonSource(request: NavigationRequest, options: NavigationOptions.Impl) {

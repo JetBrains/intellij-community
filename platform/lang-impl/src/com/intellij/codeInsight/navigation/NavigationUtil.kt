@@ -13,6 +13,7 @@ import com.intellij.navigation.GotoRelatedItem
 import com.intellij.navigation.GotoRelatedProvider
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.MarkupModelEx
@@ -23,8 +24,8 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx.Companion.getInstanceEx
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileTypes.INativeFileType
 import com.intellij.openapi.fileTypes.UnknownFileType
@@ -203,8 +204,7 @@ private fun activatePsiElementIfOpen(element: PsiElement, searchForOpen: Boolean
                             requestFocus = requestFocus)
 }
 
-@ApiStatus.Internal
-fun activateFileIfOpen(
+private fun activateFileIfOpen(
   project: Project,
   vFile: VirtualFile,
   range: TextRange?,
@@ -212,11 +212,11 @@ fun activateFileIfOpen(
   requestFocus: Boolean
 ): Boolean {
   EDT.assertIsEdt()
-  if (!getInstance(project).hasBeenOpen(vFile)) {
+  if (!EditorHistoryManager.getInstance(project).hasBeenOpen(vFile)) {
     return false
   }
 
-  val fileEditorManager = getInstanceEx(project)
+  val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
   val wasAlreadyOpen = fileEditorManager.isFileOpen(vFile)
   val openOptions = FileEditorOpenOptions(requestFocus = requestFocus, reuseOpen = searchForOpen)
   if (!wasAlreadyOpen) {
@@ -235,6 +235,38 @@ fun activateFileIfOpen(
         if (wasAlreadyOpen) {
           // select the file
           fileEditorManager.openFile(file = vFile, window = null, options = openOptions)
+        }
+        return true
+      }
+    }
+  }
+  return false
+}
+
+@ApiStatus.Internal
+suspend fun activateFileIfOpen(project: Project, vFile: VirtualFile, range: TextRange?, openOptions: FileEditorOpenOptions): Boolean {
+  if (!EditorHistoryManager.getInstance(project).hasBeenOpen(vFile)) {
+    return false
+  }
+
+  val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+  val wasAlreadyOpen = fileEditorManager.isFileOpen(vFile)
+  if (!wasAlreadyOpen) {
+    fileEditorManager.openFile(file = vFile, options = openOptions)
+  }
+
+  if (range == null) {
+    return false
+  }
+
+  for (editor in fileEditorManager.getEditorList(vFile)) {
+    if (editor is TextEditor) {
+      val text = editor.editor
+      val offset = readAction { text.caretModel.offset }
+      if (range.containsOffset(offset)) {
+        if (wasAlreadyOpen) {
+          // select the file
+          fileEditorManager.openFile(file = vFile, options = openOptions)
         }
         return true
       }
