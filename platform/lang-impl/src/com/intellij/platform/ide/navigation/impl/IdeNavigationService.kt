@@ -159,7 +159,7 @@ private suspend fun navigateToSource(project: Project, request: SourceNavigation
   }
 
   // TODO support pure source request without OpenFileDescriptor
-  val offset = request.elementRangeMarker?.takeIf { it.isValid }?.startOffset ?: -1
+  val offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: -1
   val openFileDescriptor = OpenFileDescriptor(project, request.file, offset)
   openFileDescriptor.isUseCurrentWindow = true
   if (UISettings.getInstance().openInPreviewTabIfPossible && Registry.`is`("editor.preview.tab.navigation")) {
