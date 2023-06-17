@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
-import com.intellij.codeInsight.navigation.NavigationUtil
+import com.intellij.codeInsight.navigation.activateFileWithPsiElement
 import com.intellij.codeInsight.template.*
 import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -283,7 +283,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             val project = config.currentFile.project
 
             if (containingElement.containingFile != config.currentFile) {
-                NavigationUtil.activateFileWithPsiElement(containingElement)
+                activateFileWithPsiElement(containingElement)
             }
 
             dialogWithEditor = if (containingElement is KtElement) {

@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.codeInsight.navigation.NavigationUtil
+import com.intellij.codeInsight.navigation.activateFileWithPsiElement
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -115,7 +115,7 @@ class ExtractDeclarationFromCurrentFileIntention : SelfTargetingRangeIntention<K
         val moveCallBack = MoveCallback {
             val newFile = directory.findFile(targetFileName) as KtFile
             val newDeclaration = newFile.declarations.first()
-            NavigationUtil.activateFileWithPsiElement(newFile)
+            activateFileWithPsiElement(newFile)
             FileEditorManager.getInstance(project).selectedTextEditor?.moveCaret(newDeclaration.startOffset + originalOffset)
             runBlocking { withTimeoutOrNull(TIMEOUT_FOR_IMPORT_OPTIMIZING_MS) { OptimizeImportsProcessor(project, file).run() } }
         }
