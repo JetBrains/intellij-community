@@ -92,6 +92,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             )
         }
 
+        override val distributionTypes: List<DistributionTypeItem> = listOf(DistributionTypeItem.WRAPPER)
+
         override fun setupAdvancedSettingsUI(builder: Panel) {
             setupGradleDistributionUI(builder)
             setupGroupIdUI(builder)

@@ -124,12 +124,14 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     builder.onApply { logGradleDslFinished(gradleDsl) }
   }
 
+  protected open val distributionTypes: List<DistributionTypeItem> = listOf(WRAPPER, LOCAL)
+
   protected fun setupGradleDistributionUI(builder: Panel) {
     builder.panel {
       row {
         label(GradleBundle.message("gradle.project.settings.distribution.npw"))
           .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
-        comboBox(listOf(WRAPPER, LOCAL), listCellRenderer { text = it.text })
+        comboBox(distributionTypes, listCellRenderer { text = it.text })
           .columns(COLUMNS_SHORT)
           .bindItem(distributionTypeProperty)
           .whenItemSelectedFromUi { logGradleDistributionChanged(distributionType.value) }
@@ -347,7 +349,11 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   private fun suggestDistributionType(): DistributionTypeItem {
-    return DistributionTypeItem.valueOf(GradleDefaultProjectSettings.getInstance().distributionType)
+    val defaultDistributionType = DistributionTypeItem.valueOf(GradleDefaultProjectSettings.getInstance().distributionType)
+    if (distributionTypes.contains(defaultDistributionType)) {
+      return defaultDistributionType
+    }
+    return distributionTypes.firstOrNull() ?: defaultDistributionType
   }
 
   private fun suggestGradleVersion(): String {
@@ -428,7 +434,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     GROOVY(GradleBundle.message("gradle.dsl.new.project.wizard.groovy"))
   }
 
-  private enum class DistributionTypeItem(val value: DistributionType, val text: @Nls String) {
+  protected enum class DistributionTypeItem(val value: DistributionType, val text: @Nls String) {
     WRAPPER(DistributionType.DEFAULT_WRAPPED, GradleBundle.message("gradle.project.settings.distribution.wrapper")),
     LOCAL(DistributionType.LOCAL, GradleBundle.message("gradle.project.settings.distribution.local"));
 
