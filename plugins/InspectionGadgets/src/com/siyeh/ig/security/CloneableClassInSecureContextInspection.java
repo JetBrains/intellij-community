@@ -16,10 +16,9 @@
 package com.siyeh.ig.security;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -29,7 +28,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveCloneableFix;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -76,7 +74,7 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
     return new CreateExceptionCloneMethodFix();
   }
 
-  private static class CreateExceptionCloneMethodFix extends InspectionGadgetsFix {
+  private static class CreateExceptionCloneMethodFix extends PsiUpdateModCommandQuickFix {
 
     @NotNull
     @Override
@@ -85,9 +83,8 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement().getParent();
-      if (!(element instanceof PsiClass aClass)) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      if (!(element.getParent() instanceof PsiClass aClass)) {
         return;
       }
       @NonNls final StringBuilder methodText = new StringBuilder();
@@ -146,12 +143,7 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
       for (PsiMethodCallExpression cloneCall : collectCallsToClone(aClass)) {
         cloneCall.replace(superCloneCall);
       }
-      if (isOnTheFly() && method.isPhysical()) {
-        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-        if (editor != null) {
-          GenerateMembersUtil.positionCaret(editor, method, true);
-        }
-      }
+      GenerateMembersUtil.positionCaret(updater, method, true);
     }
   }
 

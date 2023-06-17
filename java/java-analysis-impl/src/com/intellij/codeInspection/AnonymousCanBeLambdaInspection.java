@@ -258,7 +258,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   }
 
   /**
-   * Try convert given method of given anonymous class into lambda and replace given element.
+   * Try to convert given method of given anonymous class into lambda and replace given element.
    *
    * @param anonymousClass      physical anonymous class containing method
    * @param method              physical method to convert with non-empty body
@@ -375,7 +375,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     return variable == null || variable instanceof PsiField;
   }
 
-  private static class ReplaceWithLambdaFix implements LocalQuickFix, HighPriorityAction {
+  private static class ReplaceWithLambdaFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
     @NotNull
     @Override
     public String getFamilyName() {
@@ -383,11 +383,8 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (element != null) {
-        replacePsiElementWithLambda(element, false, false);
-      }
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      replacePsiElementWithLambda(element, false, false);
     }
 
     private static void giveUniqueNames(Project project,
@@ -455,7 +452,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   }
 
   public static boolean functionalInterfaceMethodReferenced(PsiMethod psiMethod,
-                                                            PsiAnonymousClass anonymClass,
+                                                            PsiAnonymousClass anonymousClass,
                                                             PsiCallExpression callExpression) {
     if (psiMethod != null && !psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiClass containingClass = psiMethod.getContainingClass();
@@ -469,8 +466,8 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
         return false;
       }
 
-      if (InheritanceUtil.isInheritorOrSelf(anonymClass, containingClass, true) &&
-          !InheritanceUtil.hasEnclosingInstanceInScope(containingClass, anonymClass.getParent(), true, true)) {
+      if (InheritanceUtil.isInheritorOrSelf(anonymousClass, containingClass, true) &&
+          !InheritanceUtil.hasEnclosingInstanceInScope(containingClass, anonymousClass.getParent(), true, true)) {
         return true;
       }
     }
@@ -491,11 +488,11 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     private boolean myBodyContainsForbiddenRefs;
 
     private final PsiMethod myMethod;
-    private final PsiAnonymousClass myAnonymClass;
+    private final PsiAnonymousClass myAnonymousClass;
 
     ForbiddenRefsChecker(PsiMethod method, PsiAnonymousClass aClass) {
       myMethod = method;
-      myAnonymClass = aClass;
+      myAnonymousClass = aClass;
     }
 
     @Override
@@ -505,7 +502,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
       super.visitMethodCallExpression(methodCallExpression);
       final PsiMethod psiMethod = methodCallExpression.resolveMethod();
       if (psiMethod == myMethod ||
-          functionalInterfaceMethodReferenced(psiMethod, myAnonymClass, methodCallExpression)) {
+          functionalInterfaceMethodReferenced(psiMethod, myAnonymousClass, methodCallExpression)) {
         myBodyContainsForbiddenRefs = true;
       }
     }
@@ -541,7 +538,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
 
       super.visitReferenceExpression(expression);
       if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
-        final PsiMember member = PsiTreeUtil.getParentOfType(myAnonymClass, PsiMember.class);
+        final PsiMember member = PsiTreeUtil.getParentOfType(myAnonymousClass, PsiMember.class);
         if (member instanceof PsiField || member instanceof PsiClassInitializer) {
           final PsiElement resolved = expression.resolve();
           final PsiClass memberContainingClass = member.getContainingClass();
@@ -552,12 +549,12 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
             final PsiExpression initializer = ((PsiField)resolved).getInitializer();
             if (initializer == null ||
                 resolved == member ||
-                initializer.getTextOffset() > myAnonymClass.getTextOffset() && ((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC) == member.hasModifierProperty(PsiModifier.STATIC)) {
+                initializer.getTextOffset() > myAnonymousClass.getTextOffset() && ((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC) == member.hasModifierProperty(PsiModifier.STATIC)) {
               myBodyContainsForbiddenRefs = true;
             }
           }
         } else {
-          final PsiMethod method = PsiTreeUtil.getParentOfType(myAnonymClass, PsiMethod.class);
+          final PsiMethod method = PsiTreeUtil.getParentOfType(myAnonymousClass, PsiMethod.class);
           if (method != null && method.isConstructor()) {
             final PsiElement resolved = expression.resolve();
             if (resolved instanceof PsiField &&
@@ -568,7 +565,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
                 final PsiCodeBlock constructorBody = method.getBody();
                 if (constructorBody != null) {
                   final ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(constructorBody);
-                  final int startOffset = flow.getStartOffset(myAnonymClass);
+                  final int startOffset = flow.getStartOffset(myAnonymousClass);
                   final Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, startOffset, false);
                   if (!writtenVariables.contains(resolved)) {
                     myBodyContainsForbiddenRefs = true;

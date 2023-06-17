@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -70,7 +70,7 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
       }
 
       @Contract("null, _ -> null")
-      private AnonymousLambdaAlternative getAlternative(PsiClass type, PsiMethod method) {
+      private static AnonymousLambdaAlternative getAlternative(PsiClass type, PsiMethod method) {
         if(type == null) return null;
         for(AnonymousLambdaAlternative alternative : ALTERNATIVES) {
           if(alternative.myClassName.equals(type.getQualifiedName()) && alternative.myMethodName.equals(method.getName())) {
@@ -82,7 +82,7 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
     };
   }
 
-  static class ReplaceWithLambdaAlternativeFix implements LocalQuickFix {
+  static class ReplaceWithLambdaAlternativeFix extends PsiUpdateModCommandQuickFix {
     @SafeFieldForPreview
     private final @NotNull AnonymousLambdaAlternative myAlternative;
 
@@ -105,10 +105,9 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
-      if(!(element instanceof PsiNewExpression)) return;
-      PsiAnonymousClass aClass = ((PsiNewExpression)element).getAnonymousClass();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      if(!(element instanceof PsiNewExpression newExpression)) return;
+      PsiAnonymousClass aClass = newExpression.getAnonymousClass();
       if(aClass == null) return;
       PsiMethod[] methods = aClass.getMethods();
       if(methods.length != 1) return;
