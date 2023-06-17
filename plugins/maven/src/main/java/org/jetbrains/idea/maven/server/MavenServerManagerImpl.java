@@ -337,12 +337,19 @@ final class MavenServerManagerImpl implements MavenServerManager {
     final String root = pluginFileOrDir.getParent();
     if (pluginFileOrDir.isDirectory()) {
       eventListenerJar = getEventSpyPathForLocalBuild();
+      if (!eventListenerJar.exists()) {
+        MavenLog.LOG.warn("""
+                            Event listener does not exist: Please run rebuild for maven modules:
+                            community/plugins/maven/maven-event-listener"""
+        );
+      }
     }
     else {
       eventListenerJar = new File(root, "maven-event-listener.jar");
-    }
-    if (!eventListenerJar.exists()) {
-      MavenLog.LOG.warn("Event listener does not exist " + eventListenerJar);
+      if (!eventListenerJar.exists()) {
+        MavenLog.LOG.warn("Event listener does not exist at " + eventListenerJar +
+                          ". It should be built as part of plugin layout process and bundled along with maven plugin jars");
+      }
     }
     return eventListenerJar;
   }
