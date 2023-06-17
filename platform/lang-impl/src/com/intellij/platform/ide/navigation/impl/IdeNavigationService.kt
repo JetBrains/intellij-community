@@ -165,8 +165,11 @@ private suspend fun navigateToSource(project: Project, request: SourceNavigation
   if (UISettings.getInstance().openInPreviewTabIfPossible && Registry.`is`("editor.preview.tab.navigation")) {
     openFileDescriptor.isUsePreviewTab = true
   }
-  blockingContext {
-    openFileDescriptor.navigate(options.requestFocus)
+
+  withContext(Dispatchers.EDT) {
+    blockingContext {
+      openFileDescriptor.navigate(options.requestFocus)
+    }
   }
 }
 
