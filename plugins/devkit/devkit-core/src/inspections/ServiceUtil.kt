@@ -110,3 +110,7 @@ fun toLevel(name: String): Service.Level? {
     null
   }
 }
+
+internal fun isLightService(uClass: UClass): Boolean {
+  return uClass.findAnnotation(Service::class.java.canonicalName) != null
+}
