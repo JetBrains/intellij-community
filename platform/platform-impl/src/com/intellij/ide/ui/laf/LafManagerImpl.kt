@@ -462,7 +462,8 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
 
     if (lafToPreviousScheme.isNotEmpty()) {
       val lafsToSchemes = Element(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
-      for ((laf, scheme) in lafToPreviousScheme) {
+      val lafToPreviousSchemeSorted = lafToPreviousScheme.toList().sortedBy { it.first }
+      for ((laf, scheme) in lafToPreviousSchemeSorted) {
         val lafToScheme = Element(ELEMENT_LAF_TO_SCHEME)
         lafToScheme.setAttribute(ATTRIBUTE_LAF, laf)
         lafToScheme.setAttribute(ATTRIBUTE_SCHEME, scheme)
