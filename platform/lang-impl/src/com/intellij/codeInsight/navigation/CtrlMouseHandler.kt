@@ -277,7 +277,7 @@ class CtrlMouseHandler2(
     val highlighters = result.ranges.map { range ->
       editor.markupModel.addRangeHighlighter(
         range.startOffset, range.endOffset, HighlighterLayer.HYPERLINK,
-        NavigationUtil.patchAttributesColor(attributes, range, editor),
+        patchAttributesColor(attributes, range, editor),
         HighlighterTargetArea.EXACT_RANGE
       )
     }
@@ -426,7 +426,7 @@ private fun wrapInScrollPaneIfNeeded(component: JComponent, editor: Editor): JCo
   }
 }
 
-private fun textAttributes(navigatable: Boolean): TextAttributes? {
+private fun textAttributes(navigatable: Boolean): TextAttributes {
   return if (navigatable) {
     EditorColorsManager.getInstance().globalScheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)
   }

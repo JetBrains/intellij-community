@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions
 
-import com.intellij.codeInsight.navigation.NavigationUtil
+import com.intellij.codeInsight.navigation.activateFileWithPsiElement
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
@@ -268,7 +268,7 @@ class JavaToKotlinAction : AnAction() {
                     Messages.getWarningIcon()
                 ) == Messages.OK
             ) {
-                NavigationUtil.activateFileWithPsiElement(firstSyntaxError.navigationElement)
+                activateFileWithPsiElement(firstSyntaxError.navigationElement)
                 return
             }
         }

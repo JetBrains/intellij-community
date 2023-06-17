@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.MarkupModelEx
-import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
@@ -62,11 +61,11 @@ import javax.swing.*
 private val GO_TO_EP_NAME = ExtensionPointName<GotoRelatedProvider>("com.intellij.gotoRelatedProvider")
 
 fun getPsiElementPopup(elements: Array<PsiElement>, title: @NlsContexts.PopupTitle String?): JBPopup {
-  return PsiTargetNavigator(elements).createPopup(elements[0].project, title)
+  return PsiTargetNavigator(elements).createPopup(project = elements[0].project, title = title)
 }
 
 fun getPsiElementPopup(elements: Supplier<Collection<PsiElement>>,
-                       renderer: PsiTargetPresentationRenderer<PsiElement>,
+                       renderer: PsiTargetPresentationRenderer<in PsiElement>,
                        title: @NlsContexts.PopupTitle String?,
                        project: Project): JBPopup {
   return PsiTargetNavigator(elements)
@@ -84,9 +83,9 @@ fun getPsiElementPopup(elements: Array<PsiElement>,
 }
 
 fun <T : PsiElement> getPsiElementPopup(elements: Array<T>,
-                                         renderer: PsiElementListCellRenderer<T>,
+                                         renderer: PsiElementListCellRenderer<in T>,
                                          title: @NlsContexts.PopupTitle String?,
-                                         processor: PsiElementProcessor<T>): JBPopup {
+                                         processor: PsiElementProcessor<in T>): JBPopup {
   return getPsiElementPopup(elements = elements, renderer = renderer, title = title, processor = processor, initialSelection = null)
 }
 
@@ -120,7 +119,7 @@ fun <T : PsiElement?> getPsiElementPopup(elements: Array<T>,
     pane.border = null
     pane.viewportBorder = null
   }
-  hidePopupIfDumbModeStarts(popup, elements[0]!!.project)
+  hidePopupIfDumbModeStarts(popup = popup, project = elements[0]!!.project)
   return popup
 }
 
@@ -135,8 +134,8 @@ fun hidePopupIfDumbModeStarts(popup: JBPopup, project: Project) {
 }
 
 @JvmOverloads
-fun activateFileWithPsiElement(elt: PsiElement, searchForOpen: Boolean = true): Boolean {
-  return openFileWithPsiElement(elt, searchForOpen, true)
+fun activateFileWithPsiElement(element: PsiElement, searchForOpen: Boolean = true): Boolean {
+  return openFileWithPsiElement(element = element, searchForOpen = searchForOpen, requestFocus = true)
 }
 
 fun openFileWithPsiElement(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean {
@@ -147,6 +146,7 @@ fun openFileWithPsiElement(element: PsiElement, searchForOpen: Boolean, requestF
   else {
     element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, true)
   }
+
   val resultRef = Ref<Boolean>()
   // all navigations inside should be treated as a single operation, so that 'Back' action undoes it in one go
   CommandProcessor.getInstance().executeCommand(element.project, {
@@ -161,7 +161,9 @@ fun openFileWithPsiElement(element: PsiElement, searchForOpen: Boolean, requestF
       }
     }
   }, "", null)
-  if (!resultRef.isNull) return resultRef.get()
+  if (!resultRef.isNull) {
+    return resultRef.get()
+  }
   element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
   return false
 }
@@ -170,8 +172,7 @@ private fun shouldOpenAsNative(element: PsiElement): Boolean {
   if (element !is PsiFile) {
     return false
   }
-  val virtualFile: VirtualFile = element.virtualFile ?: return false
-  return shouldOpenAsNative(virtualFile)
+  return shouldOpenAsNative(element.virtualFile ?: return false)
 }
 
 @ApiStatus.Internal
@@ -186,14 +187,20 @@ private fun activatePsiElementIfOpen(element: PsiElement, searchForOpen: Boolean
   if (!element.isValid) {
     return false
   }
+
   element = element.navigationElement
   val file = element.containingFile
   if (file == null || !file.isValid) {
     return false
   }
+
   val vFile = file.virtualFile ?: return false
   val project = element.project
-  return activateFileIfOpen(project, vFile, element.textRange, searchForOpen, requestFocus)
+  return activateFileIfOpen(project = project,
+                            vFile = vFile,
+                            range = element.textRange,
+                            searchForOpen = searchForOpen,
+                            requestFocus = requestFocus)
 }
 
 @ApiStatus.Internal
@@ -208,15 +215,18 @@ fun activateFileIfOpen(
   if (!getInstance(project).hasBeenOpen(vFile)) {
     return false
   }
+
   val fileEditorManager = getInstanceEx(project)
   val wasAlreadyOpen = fileEditorManager.isFileOpen(vFile)
-  val openOptions = FileEditorOpenOptions().withRequestFocus(requestFocus).withReuseOpen(searchForOpen)
+  val openOptions = FileEditorOpenOptions(requestFocus = requestFocus, reuseOpen = searchForOpen)
   if (!wasAlreadyOpen) {
-    fileEditorManager.openFile(vFile, null, openOptions)
+    fileEditorManager.openFile(file = vFile, window = null, options = openOptions)
   }
+
   if (range == null) {
     return false
   }
+
   for (editor in fileEditorManager.getEditors(vFile)) {
     if (editor is TextEditor) {
       val text = editor.editor
@@ -224,7 +234,7 @@ fun activateFileIfOpen(
       if (range.containsOffset(offset)) {
         if (wasAlreadyOpen) {
           // select the file
-          fileEditorManager.openFile(vFile, null, openOptions)
+          fileEditorManager.openFile(file = vFile, window = null, options = openOptions)
         }
         return true
       }
@@ -241,9 +251,9 @@ fun patchAttributesColor(attributes: TextAttributes, range: TextRange, editor: E
   if (attributes.foregroundColor == null && attributes.effectColor == null) {
     return attributes
   }
+
   val model = DocumentMarkupModel.forDocument(editor.document, editor.project, false) ?: return attributes
-  if (!(model as MarkupModelEx).processRangeHighlightersOverlappingWith(range.startOffset,
-                                                                        range.endOffset) { highlighter: RangeHighlighterEx ->
+  if (!(model as MarkupModelEx).processRangeHighlightersOverlappingWith(range.startOffset, range.endOffset) { highlighter ->
       if (highlighter.isValid && highlighter.targetArea == HighlighterTargetArea.LINES_IN_RANGE) {
         val textAttributes = highlighter.getTextAttributes(editor.colorsScheme)
         if (textAttributes != null) {
@@ -262,7 +272,7 @@ fun patchAttributesColor(attributes: TextAttributes, range: TextRange, editor: E
 }
 
 fun getRelatedItemsPopup(items: List<GotoRelatedItem>, title: @NlsContexts.PopupTitle String?): JBPopup {
-  return getRelatedItemsPopup(items, title, false)
+  return getRelatedItemsPopup(items = items, title = title, showContainingModules = false)
 }
 
 /**
@@ -272,7 +282,7 @@ fun getRelatedItemsPopup(items: List<GotoRelatedItem>, title: @NlsContexts.Popup
  * `false` by default
  */
 fun getRelatedItemsPopup(items: List<GotoRelatedItem>, title: @NlsContexts.PopupTitle String?, showContainingModules: Boolean): JBPopup {
-  val elements: MutableList<Any?> = ArrayList(items.size)
+  val elements = ArrayList<Any?>(items.size)
   //todo[nik] move presentation logic to GotoRelatedItem class
   val itemMap = HashMap<PsiElement, GotoRelatedItem>()
   for (item in items) {
@@ -303,23 +313,22 @@ private fun getPsiElementPopup(elements: List<Any?>,
                                title: @NlsContexts.PopupTitle String?,
                                showContainingModules: Boolean,
                                processor: Processor<Any>): JBPopup {
-  val hasMnemonic = Ref.create(false)
+  var hasMnemonic = false
   val renderer: DefaultPsiElementCellRenderer = object : DefaultPsiElementCellRenderer() {
     override fun getElementText(element: PsiElement): String {
-      val customName = itemMap[element]!!.customName
-      return customName ?: super.getElementText(element)
+      return itemMap.get(element)!!.customName ?: super.getElementText(element)
     }
 
     override fun getIcon(element: PsiElement): Icon {
-      val customIcon = itemMap[element]!!.customIcon
-      return customIcon ?: super.getIcon(element)
+      return itemMap.get(element)!!.customIcon ?: super.getIcon(element)
     }
 
     override fun getContainerText(element: PsiElement, name: String): String? {
-      val customContainerName = itemMap[element]!!.customContainerName
+      val customContainerName = itemMap.get(element)!!.customContainerName
       if (customContainerName != null) {
         return customContainerName
       }
+
       val file = element.containingFile
       return if (file != null && getElementText(element) != file.name) "(" + file.name + ")" else null
     }
@@ -353,9 +362,10 @@ private fun getPsiElementPopup(elements: List<Any?>,
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {
       val psiComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-      if (!hasMnemonic.get() || psiComponent !is JPanel) {
+      if (!hasMnemonic || psiComponent !is JPanel) {
         return psiComponent
       }
+
       val panelWithMnemonic = JPanel(BorderLayout())
       val mnemonic = getMnemonic(value, itemMap)
       val label = JLabel("")
@@ -375,9 +385,10 @@ private fun getPsiElementPopup(elements: List<Any?>,
       return psiComponent
     }
   }
+
   @Suppress("DEPRECATION")
-  val popup: ListPopupImpl = object : ListPopupImpl(object : BaseListPopupStep<Any>(title, elements) {
-    private val separators: MutableMap<Any?, ListSeparator> = HashMap()
+  val popup = ListPopupImpl(object : BaseListPopupStep<Any>(title, elements) {
+    private val separators = HashMap<Any?, ListSeparator>()
 
     init {
       var current: String? = null
@@ -386,8 +397,7 @@ private fun getPsiElementPopup(elements: List<Any?>,
         val item = if (element is GotoRelatedItem) element else itemMap[element]
         if (item != null && current != item.group) {
           current = item.group
-          separators.put(element, ListSeparator(
-            if (hasTitle && Strings.isEmpty(current)) CodeInsightBundle.message("goto.related.items.separator.other") else current))
+          separators.put(element, ListSeparator(if (hasTitle && Strings.isEmpty(current)) CodeInsightBundle.message("goto.related.items.separator.other") else current))
           if (!hasTitle && !Strings.isEmpty(current)) {
             hasTitle = true
           }
@@ -398,16 +408,14 @@ private fun getPsiElementPopup(elements: List<Any?>,
       }
     }
 
-    override fun isSpeedSearchEnabled(): Boolean {
-      return true
-    }
+    override fun isSpeedSearchEnabled(): Boolean = true
 
     override fun getIndexedString(value: Any): String {
       if (value is GotoRelatedItem) {
         return value.customName!!
       }
       val element = value as PsiElement
-      return if (!element.isValid) "INVALID" else renderer.getElementText(element) + " " + renderer.getContainerText(element, null)
+      return if (element.isValid) "${renderer.getElementText(element)} ${renderer.getContainerText(element, null)}" else "INVALID"
     }
 
     override fun onChosen(selectedValue: Any, finalChoice: Boolean): PopupStep<*>? {
@@ -415,10 +423,8 @@ private fun getPsiElementPopup(elements: List<Any?>,
       return super.onChosen(selectedValue, finalChoice)
     }
 
-    override fun getSeparatorAbove(value: Any): ListSeparator? {
-      return separators[value]
-    }
-  }) {}
+    override fun getSeparatorAbove(value: Any) = separators.get(value)
+  })
   popup.list.setCellRenderer(object : PopupListElementRenderer<Any?>(popup) {
     override fun getListCellRendererComponent(list: JList<out Any?>?,
                                               value: Any?,
@@ -448,10 +454,10 @@ private fun getPsiElementPopup(elements: List<Any?>,
   for (item in elements) {
     val mnemonic = getMnemonic(item, itemMap)
     if (mnemonic != -1) {
-      val action = createNumberAction(mnemonic, popup, itemMap, processor)
+      val action = createNumberAction(mnemonic = mnemonic, listPopup = popup, itemMap = itemMap, processor = processor)
       popup.registerAction(mnemonic.toString() + "Action", KeyStroke.getKeyStroke(mnemonic.toString()), action)
       popup.registerAction(mnemonic.toString() + "Action", KeyStroke.getKeyStroke("NUMPAD$mnemonic"), action)
-      hasMnemonic.set(true)
+      hasMnemonic = true
     }
   }
   return popup
@@ -474,7 +480,7 @@ private fun createNumberAction(mnemonic: Int,
 }
 
 private fun getMnemonic(item: Any?, itemMap: Map<PsiElement, GotoRelatedItem?>): Int {
-  return (if (item is GotoRelatedItem) item else itemMap[item])!!.mnemonic
+  return (if (item is GotoRelatedItem) item else itemMap.get(item))!!.mnemonic
 }
 
 fun collectRelatedItems(contextElement: PsiElement, dataContext: DataContext?): List<GotoRelatedItem> {

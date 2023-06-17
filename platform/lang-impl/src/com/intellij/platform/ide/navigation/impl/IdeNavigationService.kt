@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.navigation.impl
 
-import com.intellij.codeInsight.navigation.NavigationUtil.activateFileIfOpen
-import com.intellij.codeInsight.navigation.NavigationUtil.shouldOpenAsNative
+import com.intellij.codeInsight.navigation.activateFileIfOpen
+import com.intellij.codeInsight.navigation.shouldOpenAsNative
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.CommonDataKeys
