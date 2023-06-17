@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.Comparing;
@@ -38,7 +39,7 @@ public final class ChangeStringLiteralToCharInMethodCallFix extends PsiUpdateMod
     final boolean isString = isString(literal.getType());
     String message = QuickFixBundle.message("fix.single.character.string.to.char.literal.text", literal.getText(),
                                             quote(convertedValue, !isString), isString ? PsiTypes.charType().getCanonicalText() : "String");
-    return Presentation.of(message);
+    return Presentation.of(message).withPriority(PriorityAction.Priority.HIGH);
   }
 
   @Override
