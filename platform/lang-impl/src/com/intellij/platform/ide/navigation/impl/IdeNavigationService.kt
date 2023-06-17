@@ -72,9 +72,7 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
       }
     }.filterNotNull()
     return withContext(Dispatchers.EDT) {
-      blockingContext {
-        navigate(project, requests, options)
-      }
+      navigate(project, requests, options)
     }
   }
 
@@ -88,9 +86,7 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
       }
       else {
         withContext(Dispatchers.EDT) {
-          blockingContext {
-            navigateToSource(project, request, options as NavigationOptions.Impl)
-          }
+          navigateToSource(project, request, options as NavigationOptions.Impl)
         }
       }
     }
@@ -102,7 +98,7 @@ internal val LOG: Logger = Logger.getInstance("#com.intellij.platform.ide.naviga
 /**
  * Navigates to all sources from [requests], or navigates to first non-source request.
  */
-private fun navigate(project: Project, requests: List<NavigationRequest>, options: NavigationOptions): Boolean {
+private suspend fun navigate(project: Project, requests: List<NavigationRequest>, options: NavigationOptions): Boolean {
   EDT.assertIsEdt()
 
   val maxSourceRequests = Registry.intValue("ide.source.file.navigation.limit", 100)
@@ -127,16 +123,19 @@ private fun navigate(project: Project, requests: List<NavigationRequest>, option
   if (nonSourceRequest == null) {
     return false
   }
+
   navigateNonSource(nonSourceRequest, options)
   return true
 }
 
-private fun navigateToSource(project: Project, request: NavigationRequest, options: NavigationOptions.Impl): Boolean {
+private suspend fun navigateToSource(project: Project, request: NavigationRequest, options: NavigationOptions.Impl): Boolean {
   EDT.assertIsEdt()
 
   when (request) {
     is SourceNavigationRequest -> {
-      navigateToSource(project, request, options)
+      blockingContext {
+        navigateToSource(project, request, options)
+      }
       return true
     }
     is DirectoryNavigationRequest -> {
@@ -144,7 +143,9 @@ private fun navigateToSource(project: Project, request: NavigationRequest, optio
     }
     is RawNavigationRequest -> {
       if (request.canNavigateToSource) {
-        request.navigatable.navigate(options.requestFocus)
+        blockingContext {
+          request.navigatable.navigate(options.requestFocus)
+        }
         return true
       }
       else {
@@ -192,16 +193,20 @@ private fun tryActivateOpenFile(
   return activateFileIfOpen(project, request.file, elementRange, options.requestFocus, options.requestFocus)
 }
 
-private fun navigateNonSource(request: NavigationRequest, options: NavigationOptions.Impl) {
+private suspend fun navigateNonSource(request: NavigationRequest, options: NavigationOptions.Impl) {
   EDT.assertIsEdt()
 
   return when (request) {
     is DirectoryNavigationRequest -> {
-      PsiNavigationSupport.getInstance().navigateToDirectory(request.directory, options.requestFocus)
+      blockingContext {
+        PsiNavigationSupport.getInstance().navigateToDirectory(request.directory, options.requestFocus)
+      }
     }
     is RawNavigationRequest -> {
       check(!request.canNavigateToSource)
-      request.navigatable.navigate(options.requestFocus)
+      blockingContext {
+        request.navigatable.navigate(options.requestFocus)
+      }
     }
     else -> {
       error("Non-source request expected here, got: $request")
