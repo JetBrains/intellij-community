@@ -48,6 +48,7 @@ abstract class AbstractOpenProjectProvider {
     val nioPath = projectDirectory.toNioPath()
     val isValidIdeaProject = ProjectUtil.isValidProjectPath(nioPath)
 
+    val provider = this
     val options = OpenProjectTask {
       isNewProject = !isValidIdeaProject
       this.forceOpenInNewFrame = forceOpenInNewFrame
@@ -61,8 +62,13 @@ abstract class AbstractOpenProjectProvider {
           project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
           project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
           withContext(Dispatchers.EDT) {
-            blockingContext {
-              linkToExistingProject(projectFile, project)
+            if (provider is AbstractOpenProjectAsyncProvider) {
+              provider.linkToExistingProjectAsync(projectFile, project)
+            }
+            else {
+              blockingContext {
+                linkToExistingProject(projectFile, project)
+              }
             }
           }
           ProjectUtil.updateLastProjectLocation(nioPath)

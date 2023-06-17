@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
 import com.intellij.projectImport.ProjectImportBuilder;
@@ -67,7 +68,6 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
 
     private MavenGeneralSettings myGeneralSettingsCache;
     private MavenImportingSettings myImportingSettingsCache;
-
     private Path myImportRootDirectory;
     private VirtualFile myImportProjectFile;
     private List<VirtualFile> myFiles;
@@ -123,12 +123,48 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     return true;
   }
 
+  public VirtualFile getProjectFileToImport() {
+    var projectFile = getParameters().myImportProjectFile;
+    if (null != projectFile) return projectFile;
+
+    var importRootDirectory = getParameters().myImportRootDirectory;
+    if (null != importRootDirectory) {
+      return VirtualFileManager.getInstance().findFileByNioPath(importRootDirectory);
+    }
+
+    return null;
+  }
+
+  private List<Module> commitWithAsyncBuilder(Project project,
+                                              ModifiableModuleModel model,
+                                              ModulesProvider modulesProvider,
+                                              ModifiableArtifactModel artifactModel) {
+    var projectFile = getProjectFileToImport();
+    if (null == projectFile) {
+      LOG.warn("Project file missing");
+      return List.of();
+    }
+
+    IdeUIModifiableModelsProvider modelsProvider = null;
+    if (model != null) {
+      modelsProvider = new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel);
+    }
+
+    return new MavenProjectAsyncBuilder().commitSync(project, projectFile, modelsProvider);
+  }
+
 
   @Override
   public List<Module> commit(Project project,
                              ModifiableModuleModel model,
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel) {
+    // TODO: registry key
+    var asyncBuilder = true;
+    if (asyncBuilder) {
+      return commitWithAsyncBuilder(project, model, modulesProvider, artifactModel);
+    }
+
     boolean isVeryNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
     MavenImportingSettings importingSettings = getImportingSettings();
     if (isVeryNewProject) {
@@ -193,7 +229,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
                          importingSettings, generalSettings);
   }
 
-  @Nullable
+  @NotNull
   private List<Module> performImport(Project project,
                                      ModifiableModuleModel model,
                                      ModulesProvider modulesProvider,
