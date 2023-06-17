@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -164,6 +165,10 @@ public abstract class FileEditorManager {
    * @return current editors for the specified {@code file}
    */
   public abstract FileEditor @NotNull [] getEditors(@NotNull VirtualFile file);
+
+  public @NotNull List<FileEditor> getEditorList(@NotNull VirtualFile file) {
+    return Arrays.asList(getEditors(file));
+  }
 
   /**
    * @return all editors for the specified {@code file}

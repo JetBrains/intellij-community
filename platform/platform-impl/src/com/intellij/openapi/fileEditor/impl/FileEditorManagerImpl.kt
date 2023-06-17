@@ -1523,7 +1523,9 @@ open class FileEditorManagerImpl(
   }
 
   @RequiresEdt
-  override fun getEditors(file: VirtualFile): Array<FileEditor> = getComposite(file)?.allEditors?.toTypedArray() ?: FileEditor.EMPTY_ARRAY
+  final override fun getEditors(file: VirtualFile): Array<FileEditor> = getComposite(file)?.allEditors?.toTypedArray() ?: FileEditor.EMPTY_ARRAY
+
+  final override fun getEditorList(file: VirtualFile): List<FileEditor> = getComposite(file)?.allEditors ?: emptyList()
 
   override fun getAllEditors(file: VirtualFile): Array<FileEditor> {
     val result = ArrayList<FileEditor>()
