@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 @State(name = "Encoding", storages = @Storage("encodings.xml"))
 public final class EncodingProjectManagerImpl extends EncodingProjectManager implements PersistentStateComponent<Element>, Disposable {
   private static final @NonNls String PROJECT_URL = "PROJECT";
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final EncodingManagerImpl myIdeEncodingManager;
   private boolean myNative2AsciiForPropertiesFiles;
   private Charset myDefaultCharsetForPropertiesFiles;
@@ -176,7 +176,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public @Nullable Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults) {
     if (virtualFile != null) {
       for (FileEncodingProvider encodingProvider : FileEncodingProvider.EP_NAME.getIterable()) {
-        Charset encoding = encodingProvider.getEncoding(virtualFile);
+        Charset encoding = encodingProvider.getEncoding(virtualFile, myProject);
         if (encoding != null) return encoding;
       }
     }
