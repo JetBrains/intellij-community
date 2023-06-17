@@ -15,8 +15,12 @@ class ComposePWInitialStep(contextProvider: StarterContextProvider) : StarterIni
         layout.row {
             hyperLink(ComposeProjectWizardBundle.message("compose.desktop.tutorial"), DESKTOP_TEMPLATE_LINK)
         }
+        layout.separator()
         layout.row {
-            text(ComposeProjectWizardBundle.message("compose.multiplatform.template", MULTIPLATFORM_TEMPLATE_LINK))
+            comment(
+                comment = ComposeProjectWizardBundle.message("compose.multiplatform.template", MULTIPLATFORM_TEMPLATE_LINK),
+                maxLineLength = 50
+            )
         }
     }
 
