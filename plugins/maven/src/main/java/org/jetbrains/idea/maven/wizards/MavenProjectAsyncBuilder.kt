@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
@@ -9,10 +10,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.withBackgroundProgress
-import com.intellij.openapi.progress.withRawProgressReporter
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.io.FileUtil
@@ -20,6 +18,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
@@ -28,10 +28,24 @@ import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.MavenWrapperSupport.Companion.getWrapperDistributionUrl
 import org.jetbrains.idea.maven.utils.FileFinder
+import org.jetbrains.idea.maven.utils.MavenAsyncUtil
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 internal class MavenProjectAsyncBuilder {
+  fun commitSync(project: Project, projectFile: VirtualFile, modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+    if (ApplicationManager.getApplication().isDispatchThread) {
+      return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
+        commit(project, projectFile, modelsProvider)
+      }
+    }
+    else {
+      return runBlockingMaybeCancellable {
+        commit(project, projectFile, modelsProvider)
+      }
+    }
+  }
+
   suspend fun commit(project: Project, projectFile: VirtualFile, modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     val importProjectFile = if (!projectFile.isDirectory) projectFile else null
     val rootDirectory = if (projectFile.isDirectory) projectFile.toNioPath() else projectFile.parent.toNioPath()
@@ -49,7 +63,7 @@ internal class MavenProjectAsyncBuilder {
     if (ApplicationManager.getApplication().isDispatchThread) {
       FileDocumentManager.getInstance().saveAllDocuments()
     }
-    MavenUtil.setupProjectSdk(project)
+    MavenAsyncUtil.setupProjectSdk(project)
     val projectsNavigator = MavenProjectsNavigator.getInstance(project)
     if (projectsNavigator != null) projectsNavigator.groupModules = true
 
@@ -88,7 +102,7 @@ internal class MavenProjectAsyncBuilder {
     val projects = tree.rootProjects
 
     if (projects.isEmpty()) {
-      LOG.debug(String.format("Cannot import project for %s", project.toString()))
+      LOG.warn(String.format("Cannot import project for %s", project.toString()))
       return emptyList()
     }
 
@@ -114,21 +128,21 @@ internal class MavenProjectAsyncBuilder {
     manager.setIgnoredState(projects, false)
     MavenLog.LOG.warn("performImport async: Linear Import is disabled")
 
-    val previewModule = if (isVeryNewProject && Registry.`is`("maven.create.dummy.module.on.first.import")) {
-      createPreviewModule(project, projects)
-    }
-    else {
-      null
+    if (isVeryNewProject && Registry.`is`("maven.create.dummy.module.on.first.import")) {
+      // do not update all modules because it can take a lot of time (freeze at project opening)
+      val previewModule = createPreviewModule(project, projects)
+      manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, previewModule)
+      return if (null == previewModule) emptyList() else listOf(previewModule)
     }
 
-    return manager.addManagedFilesWithProfilesAndUpdate(MavenUtil.collectFiles(projects), selectedProfiles, previewModule, modelsProvider)
+    return manager.addManagedFilesWithProfilesAndUpdate(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider)
   }
 
-  private fun createPreviewModule(project: Project, selectedProjects: List<MavenProject>): Module? {
+  private suspend fun createPreviewModule(project: Project, selectedProjects: List<MavenProject>): Module? {
     if (ModuleManager.getInstance(project).modules.isEmpty()) {
       val root = selectedProjects.firstOrNull() ?: return null
       val contentRoot = root.directoryFile
-      return MavenImportUtil.createPreviewModule(project, contentRoot)
+      return withContext(Dispatchers.EDT) { MavenImportUtil.createPreviewModule(project, contentRoot) }
     }
     return null
   }

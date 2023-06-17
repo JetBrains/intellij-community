@@ -46,9 +46,15 @@ class MavenOpenProjectProvider : AbstractOpenProjectAsyncProvider() {
 
     val projectRoot = if (projectFile.isDirectory) projectFile else projectFile.parent
 
+    val projectFileToImport = builder.projectFileToImport ?: projectFile
     if (confirmLinkingUntrustedProject(project, systemId, projectRoot.toNioPath())) {
-      val builder = MavenProjectAsyncBuilder()
-      builder.commit(project, projectFile, null)
+      val asyncBuilder = MavenProjectAsyncBuilder()
+      try {
+        asyncBuilder.commit(project, projectFileToImport, null)
+      }
+      finally {
+        builder.cleanup() // MavenProjectBuilder is stateful
+      }
     }
   }
 
