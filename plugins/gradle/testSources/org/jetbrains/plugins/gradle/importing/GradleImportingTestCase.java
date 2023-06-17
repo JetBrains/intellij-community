@@ -310,8 +310,15 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   public static Iterable<?> data() {
     String gradleVersionsString = System.getProperty("gradle.versions.to.run");
     if (gradleVersionsString != null && !gradleVersionsString.isEmpty()) {
-      String[] gradleVersionsToRun = gradleVersionsString.split(",");
-      return Arrays.asList(gradleVersionsToRun);
+      if (gradleVersionsString.startsWith("LAST:")) {
+        int last = Integer.parseInt(gradleVersionsString.substring("LAST:".length()));
+        List<String> all = Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
+        return all.subList(all.size() - last, all.size());
+      }
+      else {
+        String[] gradleVersionsToRun = gradleVersionsString.split(",");
+        return Arrays.asList(gradleVersionsToRun);
+      }
     }
     return Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
   }
