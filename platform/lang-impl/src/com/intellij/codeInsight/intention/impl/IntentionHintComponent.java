@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
@@ -18,6 +19,7 @@ import com.intellij.internal.statistic.IntentionFUSCollector;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -229,6 +231,17 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       Point point = RelativePoint.getSouthWestOf(component).getScreenPoint();
       point.translate(0, 6);
       myPopup.show(this, RelativePoint.fromScreen(point));
+      ActionButton button = UIUtil.findComponentOfType(component, ActionButton.class);
+      if (button != null && button.getAction() instanceof ShowIntentionActionsAction) {
+        Toggleable.setSelected(button.getPresentation(), true);
+        myPopup.myListPopup.addListener(new JBPopupListener() {
+          @Override
+          public void onClosed(@NotNull LightweightWindowEvent lightEvent) {
+            Toggleable.setSelected(button.getPresentation(), false);
+          }
+        });
+        Disposer.register(myPopup, () -> Toggleable.setSelected(button.getPresentation(), false));
+      }
       return;
     }
     RelativePoint positionHint = null;
