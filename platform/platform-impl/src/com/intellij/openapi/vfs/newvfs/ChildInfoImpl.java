@@ -45,9 +45,13 @@ public final class ChildInfoImpl implements ChildInfo {
     this.nameId = nameId;
     this.symLinkTarget = symLinkTarget;
     this.children = children;
-    if (id <= 0 && id != UNKNOWN_ID_YET || nameId <= 0 && nameId != UNKNOWN_ID_YET) {
+    if (id <= 0 && id != UNKNOWN_ID_YET) {
       int parentId = FSRecords.getParent(id);
-      throw new IllegalArgumentException("invalid arguments id: " + id + " (parent id = " + parentId + "); nameId: " + nameId);
+      throw new IllegalArgumentException("fileId is invalid: fileId=" + id + ", parentId=" + parentId + ", nameId=" + nameId);
+    }
+    else if (nameId <= 0 && nameId != UNKNOWN_ID_YET) {
+      int parentId = FSRecords.getParent(id);
+      throw new IllegalArgumentException("nameId is invalid: fileId=" + id + ", parentId=" + parentId + ", nameId=" + nameId);
     }
   }
 
