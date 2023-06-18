@@ -561,6 +561,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         assert myHint == component;
       }
 
+      myListPopup.setRequestFocus(false);
       if (positionHint != null) {
         myListPopup.show(positionHint);
       }
