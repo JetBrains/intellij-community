@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
@@ -54,8 +54,7 @@ public class RedundantLengthCheckInspection extends AbstractBaseJavaLocalInspect
         if (ifStatement.getElseBranch() != null) return;
         if (!(ControlFlowUtils.stripBraces(ifStatement.getThenBranch()) instanceof PsiForeachStatement forEach)) return;
         if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(forEach.getIteratedValue(), arrayExpression)) {
-          holder.registerProblem(condition, InspectionGadgetsBundle.message("inspection.redundant.length.check.display.name"),
-                                 new SimplifyBooleanExpressionFix(condition, true));
+          holder.problem(condition, InspectionGadgetsBundle.message("inspection.redundant.length.check.display.name")).fix(new SimplifyBooleanExpressionFix(condition, true)).register();
         }
       }
 
@@ -103,8 +102,7 @@ public class RedundantLengthCheckInspection extends AbstractBaseJavaLocalInspect
           forEach = ObjectUtils.tryCast(nextStatement, PsiForeachStatement.class);
         }
         if (forEach != null && equivalence.expressionsAreEquivalent(forEach.getIteratedValue(), arrayExpression)) {
-          holder.registerProblem(condition, InspectionGadgetsBundle.message("inspection.redundant.length.check.display.name"),
-                                 new SimplifyBooleanExpressionFix(condition, false));
+          holder.problem(condition, InspectionGadgetsBundle.message("inspection.redundant.length.check.display.name")).fix(new SimplifyBooleanExpressionFix(condition, false)).register();
         }
       }
     };

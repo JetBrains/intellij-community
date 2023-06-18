@@ -929,7 +929,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createDeleteSideEffectAwareFix(@NotNull PsiExpressionStatement statement) {
-    return new DeleteSideEffectsAwareFix(statement, statement.getExpression());
+    return new DeleteSideEffectsAwareFix(statement, statement.getExpression()).asIntention();
   }
 
   @Nullable
@@ -1151,7 +1151,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createSimplifyBooleanFix(@NotNull PsiExpression expression, boolean value) {
-    return new SimplifyBooleanExpressionFix(expression, value);
+    return new SimplifyBooleanExpressionFix(expression, value).asIntention();
   }
 
   @Override

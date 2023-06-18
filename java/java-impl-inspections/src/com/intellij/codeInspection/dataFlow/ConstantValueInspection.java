@@ -18,7 +18,6 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -28,7 +27,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.bugs.EqualsWithItselfInspection;
@@ -480,35 +478,9 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static @Nullable LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
-    LocalQuickFixOnPsiElement fix = createSimplifyBooleanFix(element, value);
+    SimplifyBooleanExpressionFix fix = createSimplifyBooleanFix(element, value);
     if (fix == null) return null;
-    final String text = fix.getText();
-    return new LocalQuickFix() {
-      @Override
-      public @NotNull String getName() {
-        return text;
-      }
-
-      @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiElement psiElement = descriptor.getPsiElement();
-        if (psiElement == null) return;
-        final LocalQuickFixOnPsiElement fix = createSimplifyBooleanFix(psiElement, value);
-        if (fix == null) return;
-        try {
-          LOG.assertTrue(psiElement.isValid());
-          fix.applyFix();
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
-
-      @Override
-      public @NotNull String getFamilyName() {
-        return JavaAnalysisBundle.message("inspection.data.flow.simplify.boolean.expression.quickfix");
-      }
-    };
+    return fix.asQuickFix();
   }
 
   private static LocalQuickFix createReplaceWithNullCheckFix(PsiElement psiAnchor, boolean evaluatesToTrue) {
@@ -537,7 +509,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     return new LocalQuickFix[]{toRemove ? new RemoveAssignmentFix() : new SimplifyToAssignmentFix()};
   }
 
-  private static LocalQuickFixOnPsiElement createSimplifyBooleanFix(PsiElement element, boolean value) {
+  private static SimplifyBooleanExpressionFix createSimplifyBooleanFix(PsiElement element, boolean value) {
     if (!(element instanceof PsiExpression expression)) return null;
     if (PsiTreeUtil.findChildOfType(element, PsiAssignmentExpression.class) != null) return null;
 
@@ -546,7 +518,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     }
     final SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expression, value);
     // simplify intention already active
-    if (!fix.isAvailable() ||
+    if (!fix.isAvailable(expression) ||
         (SimplifyBooleanExpressionFix.canBeSimplified((PsiExpression)element) && expression instanceof PsiLiteralExpression)) {
       return null;
     }
