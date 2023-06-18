@@ -45,7 +45,6 @@ public class ClassWrapper {
     boolean testMode = DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE);
     CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
     for (StructMethod mt : classStruct.getMethods()) {
-      cancellationManager.checkCanceled();
       DecompilerContext.getLogger().startMethod(mt.getName() + " " + mt.getDescriptor());
 
       MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
@@ -60,6 +59,7 @@ public class ClassWrapper {
       boolean isError = false;
 
       try {
+        cancellationManager.checkCanceled();
         if (mt.containsCode()) {
           if (testMode) {
             root = MethodProcessorRunnable.codeToJava(classStruct, mt, md, varProc);
