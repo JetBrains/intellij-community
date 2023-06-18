@@ -223,7 +223,7 @@ public class IdentifierHighlighterPass {
     //noinspection deprecation
     Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile, myCaretOffset);
     PsiFile injectedFile = PsiDocumentManager.getInstance(myFile.getProject()).getPsiFile(injectedEditor.getDocument());
-    if (injectedFile == null) {
+    if (injectedFile == null || injectedFile == myFile) {
       return Collections.emptyList();
     }
     int injectedOffset = injectedEditor.getCaretModel().getOffset();
