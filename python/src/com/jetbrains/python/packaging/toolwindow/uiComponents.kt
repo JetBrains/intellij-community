@@ -13,11 +13,9 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.table.JBTable
-import com.intellij.util.text.SemVer
 import com.intellij.util.ui.*
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.packaging.common.normalizePyPISemVer
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -44,8 +42,8 @@ internal class PyPackagesTable<T : DisplayablePackage>(project: Project,
     setShowGrid(false)
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
     val column = columnModel.getColumn(1)
-    column.minWidth = 110
-    column.maxWidth = 110
+    column.minWidth = 130
+    column.maxWidth = 130
     column.resizable = false
     border = SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM)
     rowHeight = 20
@@ -96,7 +94,7 @@ internal class PyPackagesTable<T : DisplayablePackage>(project: Project,
         else if (selectedPackage is InstalledPackage && selectedPackage.canBeUpdated) {
           controller.packagingScope.launch(Dispatchers.IO) {
             val specification = selectedPackage.repository.createPackageSpecification(selectedPackage.name,
-                                                                                      selectedPackage.nextVersion.toString())
+                                                                                      selectedPackage.nextVersion!!.presentableText)
             project.service<PyPackagingToolWindowService>().updatePackage(specification)
           }
         }
@@ -303,10 +301,8 @@ private class PyPaginationAwareRenderer : DefaultTableCellRenderer() {
           versionPanel.add(linkLabel)
         }
       }
-      else if (value is InstalledPackage
-               && value.nextVersion != null
-               && value.nextVersion > SemVer.parseFromText(normalizePyPISemVer(value.instance.version)) ) {
-        @NlsSafe val updateLink = value.instance.version + " -> " + value.nextVersion.toString()
+      else if (value is InstalledPackage && value.nextVersion != null && value.canBeUpdated) {
+        @NlsSafe val updateLink = value.instance.version + " -> " + value.nextVersion.presentableText
         linkLabel.text = updateLink
         linkLabel.updateUnderline(table, row)
         versionPanel.add(linkLabel)
@@ -338,6 +334,7 @@ private class PyPaginationAwareRenderer : DefaultTableCellRenderer() {
 
     val attributes = font.attributes as MutableMap<TextAttribute, Any>
     attributes[TextAttribute.UNDERLINE] = underline
+    attributes[TextAttribute.LIGATURES] = TextAttribute.LIGATURES_ON
     font = font.deriveFont(attributes)
   }
 }

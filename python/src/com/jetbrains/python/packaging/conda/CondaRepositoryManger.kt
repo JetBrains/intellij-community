@@ -5,11 +5,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.util.text.SemVer
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.PyPackageVersion
+import com.jetbrains.python.packaging.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.packaging.common.normalizePyPISemVer
 import com.jetbrains.python.packaging.pip.PipBasedRepositoryManager
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.ApiStatus
@@ -44,7 +44,7 @@ class CondaRepositoryManger(project: Project, sdk: Sdk) : PipBasedRepositoryMana
     return super.buildPackageDetails(rawInfo, spec)
   }
 
-  override suspend fun getLatestVersion(spec: PythonPackageSpecification): SemVer? {
+  override suspend fun getLatestVersion(spec: PythonPackageSpecification): PyPackageVersion? {
     if (spec is CondaPackageSpecification) {
       if (spec.name == "python") return null
       val versions = service<CondaPackageCache>()[spec.name]
@@ -52,7 +52,7 @@ class CondaRepositoryManger(project: Project, sdk: Sdk) : PipBasedRepositoryMana
         thisLogger().info("No versions in conda cache for package ${spec.name}")
         return null
       }
-      return SemVer.parseFromText(normalizePyPISemVer(versions.first()))
+      return PyPackageVersionNormalizer.normalize(versions.first())
     }
     return super.getLatestVersion(spec)
   }
