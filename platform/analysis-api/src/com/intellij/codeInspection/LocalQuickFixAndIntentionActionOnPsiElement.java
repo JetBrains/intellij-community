@@ -3,7 +3,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandService;
@@ -85,8 +84,6 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
   @ApiStatus.Internal
   public static LocalQuickFixAndIntentionActionOnPsiElement from(@NotNull ModCommandAction action, @NotNull PsiElement psiElement) {
     return new LocalQuickFixAndIntentionActionOnPsiElement(psiElement) {
-      private @IntentionName String myText;
-
       @Override
       public @NotNull String getFamilyName() {
         return action.getFamilyName();
@@ -94,7 +91,15 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
 
       @Override
       public @NotNull String getText() {
-        return myText == null ? getFamilyName() : myText;
+        PsiElement element = getStartElement();
+        if (element == null) return getFamilyName();
+        ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(null, element.getContainingFile())
+          .withElement(element);
+        ModCommandAction.Presentation presentation = action.getPresentation(context);
+        if (presentation != null) {
+          return presentation.name();
+        }
+        return getFamilyName();
       }
 
       @Override
@@ -104,11 +109,7 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
                                  @NotNull PsiElement startElement,
                                  @NotNull PsiElement endElement) {
         ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(editor, file).withElement(startElement);
-        ModCommandAction.Presentation presentation = action.getPresentation(context);
-        if (presentation != null) {
-          myText = presentation.name();
-        }
-        return presentation != null;
+        return action.getPresentation(context) != null;
       }
 
       @Override
