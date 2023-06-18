@@ -20,6 +20,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.WizardPopup;
@@ -247,7 +249,16 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     popup.setShowSubmenuOnHover(true);
     popup.setAlignByParentBounds(false);
     popup.setActiveRoot(getPopupContainer(this) == null);
-    popup.showUnderneathOf(event.getInputEvent().getComponent());
+    Component component = event.getInputEvent().getComponent();
+    LOG.assertTrue(component != null);
+    if (ActionPlaces.EDITOR_FLOATING_TOOLBAR.equals(event.getPlace())) {
+      Point point = AbstractPopup.defaultPointUnderneathOf(component);
+      point.translate(0, 10);
+      popup.setRequestFocus(false);
+      popup.show(new RelativePoint(component, point));
+      return popup;
+    }
+    popup.showUnderneathOf(component);
     return popup;
   }
 
