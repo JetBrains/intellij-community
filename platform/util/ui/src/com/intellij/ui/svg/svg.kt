@@ -22,11 +22,13 @@ import java.awt.image.BufferedImage
 import java.io.IOException
 import java.io.InputStream
 import java.io.StringWriter
+import javax.xml.XMLConstants
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 import kotlin.math.ceil
+
 
 // https://youtrack.jetbrains.com/issue/IDEA-312509/mvstore.MVStoreException-on-zoom-SVG-with-text
 private const val MAX_SCALE_TO_CACHE = 4
@@ -293,11 +295,22 @@ private fun renderImage(colorPatcher: SvgAttributePatcher?,
     }
   }
   else {
-    val documentElement = DocumentBuilderFactory.newDefaultNSInstance().newDocumentBuilder().parse(data.inputStream()).documentElement
+    val factory = DocumentBuilderFactory.newDefaultNSInstance()
+    factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
+    factory.isValidating = false
+
+    factory.setFeature("http://xml.org/sax/features/validation", false)
+    factory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false)
+    factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+
+    val documentElement = factory.newDocumentBuilder().parse(data.inputStream()).documentElement
     deprecatedColorPatcher.patchColors(documentElement)
 
     val writer = StringWriter()
-    TransformerFactory.newDefaultInstance().newTransformer().transform(DOMSource(documentElement), StreamResult(writer))
+    val transformerFactory = TransformerFactory.newDefaultInstance()
+    transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+    transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+    transformerFactory.newTransformer().transform(DOMSource(documentElement), StreamResult(writer))
     createJSvgDocument(createXmlStreamReader(CharSequenceReader(writer.buffer)))
   }
 
@@ -329,3 +342,62 @@ fun loadWithSizes(sizes: List<Int>, data: ByteArray, scale: Float = JBUIScale.sy
     }
   }
 }
+
+//private class NamespaceAwareWriter {
+//  fun writeToXml(path: Path?, books: List<Book>): String {
+//    val stringWriter = StringWriter()
+//    var writer: XMLStreamWriter? = null
+//    try {
+//      writer = OutputFactoryImpl.newDefaultFactory().createXMLStreamWriter(stringWriter)
+//      writeBooksElem(writer, books)
+//    }
+//    finally {
+//      writer?.close()
+//    }
+//    return stringWriter.toString()
+//  }
+//
+//  @Throws(XMLStreamException::class)
+//  private fun writeBooksElem(writer: XMLStreamWriter?, books: List<Book>) {
+//    writer!!.writeStartDocument("utf-8", "1.0")
+//    writer.writeComment("Describes list of books")
+//    writer.setPrefix("b", NS)
+//    writer.writeStartElement(NS, "books")
+//    writer.writeNamespace("b", NS)
+//    for (book in books) writeBookElem(writer, book)
+//    writer.writeEndElement()
+//    writer.writeEndDocument()
+//  }
+//
+//  @Throws(XMLStreamException::class)
+//  private fun writeBookElem(writer: XMLStreamWriter?, book: Book) {
+//    writer!!.writeStartElement(NS, "book")
+//    writer.writeAttribute(NS, "language", book.getLanguage())
+//    writeAuthorsElem(writer, book.getAuthors())
+//    writer.writeStartElement(NS, "title")
+//    writer.writeCData(book.getTitle())
+//    writer.writeEndElement()
+//    writer.writeStartElement(NS, "category")
+//    writer.writeCharacters(book.getCategory().name())
+//    writer.writeEndElement()
+//    writer.writeStartElement(NS, "year")
+//    writer.writeCharacters(book.getYear().toString())
+//    writer.writeEndElement()
+//    writer.writeEndElement()
+//  }
+//
+//  @Throws(XMLStreamException::class)
+//  private fun writeAuthorsElem(writer: XMLStreamWriter?, authors: List<String>) {
+//    writer!!.writeStartElement(NS, "authors")
+//    for (author in authors) {
+//      writer.writeStartElement(NS, "author")
+//      writer.writeCharacters(author)
+//      writer.writeEndElement()
+//    }
+//    writer.writeEndElement()
+//  }
+//
+//  companion object {
+//    private const val NS = "http://example.com/books"
+//  }
+//}
