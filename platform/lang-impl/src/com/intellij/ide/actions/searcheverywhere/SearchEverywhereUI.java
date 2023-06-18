@@ -80,6 +80,8 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import javax.accessibility.AccessibleContext;
@@ -1482,11 +1484,31 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       emptyStatus.clear();
 
       if (pattern.isEmpty()) return;
-      emptyStatus.appendLine(getNotFoundText());
+      boolean showResetScope = myHeader.canResetScope();
+
+      SearchEverywhereEmptyTextProvider provider = StreamEx.of(myHeader.getSelectedTab().getContributors())
+        .select(SearchEverywhereEmptyTextProvider.class)
+        .findFirst()
+        .orElse(null);
+
+      if (provider != null) {
+        provider.updateEmptyStatus(emptyStatus, () -> {
+          scheduleRebuildList(SearchRestartReason.TAB_CHANGED);
+          return Unit.INSTANCE;
+        });
+
+        if (showResetScope) {
+          emptyStatus.appendLine("");
+          emptyStatus.appendText(IdeBundle.message("searcheverywhere.try.to.reset.scope"));
+          emptyStatus.appendText(" " + StringUtil.toLowerCase(EverythingGlobalScope.getNameText()),
+                                 SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, e -> myHeader.resetScope());
+        }
+
+        return;
+      }
 
       boolean showFindInFilesAction =
         ContainerUtil.exists(myHeader.getSelectedTab().getContributors(), contributor -> contributor.showInFindResults());
-      boolean showResetScope = myHeader.canResetScope();
       boolean showResetFilter = myHeader.getSelectedTab().canClearFilter();
       boolean anyActionAllowed = showFindInFilesAction || showResetScope || showResetFilter;
 
