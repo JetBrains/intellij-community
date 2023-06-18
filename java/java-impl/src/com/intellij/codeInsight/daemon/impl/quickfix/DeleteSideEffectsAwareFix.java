@@ -1,29 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,8 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOnPsiElement implements LowPriorityAction {
-  private final SmartPsiElementPointer<PsiStatement> myStatementPtr;
+public class DeleteSideEffectsAwareFix extends PsiUpdateModCommandAction<PsiStatement> {
   private final SmartPsiElementPointer<PsiExpression> myExpressionPtr;
   private final @IntentionName String myMessage;
   private final boolean myIsAvailable;
@@ -51,7 +34,6 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
   public DeleteSideEffectsAwareFix(@NotNull PsiStatement statement, PsiExpression expression, boolean alwaysAvailable) {
     super(statement);
     SmartPointerManager manager = SmartPointerManager.getInstance(statement.getProject());
-    myStatementPtr = manager.createSmartPsiElementPointer(statement);
     myExpressionPtr = manager.createSmartPsiElementPointer(expression);
     List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(expression);
     if (sideEffects.isEmpty()) {
@@ -73,12 +55,6 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
                     sideEffects.get(0) != PsiUtil.skipParenthesizedExprDown(expression);
   }
 
-  @NotNull
-  @Override
-  public String getText() {
-    return myMessage;
-  }
-
   @Nls
   @NotNull
   @Override
@@ -87,22 +63,13 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    return myIsAvailable;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiStatement element) {
+    return myIsAvailable ? Presentation.of(myMessage).withPriority(PriorityAction.Priority.LOW) : null;
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    PsiStatement statement = myStatementPtr.getElement();
-    if (statement == null) return;
-    PsiExpression expression = myExpressionPtr.getElement();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiStatement statement, @NotNull EditorUpdater updater) {
+    PsiExpression expression = updater.getWritable(myExpressionPtr.getElement());
     if (expression == null) return;
     List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(expression);
     CommentTracker ct = new CommentTracker();
@@ -120,14 +87,5 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
     } else {
       ct.deleteAndRestoreComments(statement);
     }
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    PsiExpression expression = myExpressionPtr.getElement();
-    PsiStatement statement = myStatementPtr.getElement();
-    if (expression == null || statement == null) return null;
-    return new DeleteSideEffectsAwareFix(PsiTreeUtil.findSameElementInCopy(statement, target),
-                                         PsiTreeUtil.findSameElementInCopy(expression, target));
   }
 }

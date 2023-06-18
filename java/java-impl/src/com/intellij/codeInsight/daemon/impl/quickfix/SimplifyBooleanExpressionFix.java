@@ -5,17 +5,16 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiExpression> {
   private static final Logger LOG = Logger.getInstance(SimplifyBooleanExpressionFix.class);
 
   private final boolean mySubExpressionValue;
@@ -48,13 +47,9 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
     mySubExpressionValue = subExpressionValue;
   }
 
-  @Override
+  @IntentionName
   @NotNull
-  public String getText() {
-    PsiExpression subExpression = getSubExpression();
-    if (subExpression == null) {
-      return getFamilyName();
-    }
+  private String getText(@NotNull PsiExpression subExpression) {
     String suffix = "";
     if (SideEffectChecker.mayHaveSideEffects(subExpression, e -> shouldIgnore(e, subExpression))) {
       suffix = canExtractSideEffect(subExpression) ? QuickFixBundle.message("simplify.boolean.expression.extracting.side.effects")
@@ -106,26 +101,21 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
   }
 
   @Override
-  public boolean isAvailable() {
-    PsiExpression expression = getSubExpression();
-    if (!super.isAvailable() ||
-        expression == null ||
-        !BaseIntentionAction.canModify(expression) ||
-        PsiUtil.isAccessedForWriting(expression)) {
-      return false;
-    }
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpression expression) {
+    if (!isAvailable(expression)) return null;
+    return Presentation.of(getText(expression));
+  }
+
+  public boolean isAvailable(@NotNull PsiExpression expression) {
+    if (PsiUtil.isAccessedForWriting(expression)) return false;
     PsiElement element = PsiUtil.skipParenthesizedExprUp(expression);
     PsiElement parent = element == null ? null : element.getParent();
-    if (parent instanceof PsiDoWhileStatement && containsBreakOrContinue((PsiDoWhileStatement)parent)) {
-      return false;
-    }
+    if (parent instanceof PsiDoWhileStatement && containsBreakOrContinue((PsiDoWhileStatement)parent)) return false;
     PsiConditionalExpression parentConditionalExpr = ObjectUtils.tryCast(parent, PsiConditionalExpression.class);
     if (parentConditionalExpr != null && NullabilityProblemKind.fromContext(parentConditionalExpr, Collections.emptyMap()) != null) {
       PsiExpression exprToCheck = mySubExpressionValue ? parentConditionalExpr.getThenExpression()
                                                        : parentConditionalExpr.getElseExpression();
-      if (exprToCheck != null && TypeConversionUtil.isNullType(exprToCheck.getType())) {
-        return false;
-      }
+      return exprToCheck == null || !TypeConversionUtil.isNullType(exprToCheck.getType());
     }
     return true;
   }
@@ -139,17 +129,32 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
            e instanceof PsiContinueStatement && doWhileLoop == ((PsiContinueStatement)e).findContinuedStatement();
   }
 
+  /**
+   * Tries to replace a boolean expression with a given value, simplifying code further if possible (e.g., unwrapping if statement).
+   * May do nothing if simplification is not possible (e.g., expression is l-value).
+   *
+   * @param expression expression to simplify
+   * @param value      expected value of the expression
+   */
+  public static void trySimplify(@NotNull PsiExpression expression, boolean value) {
+    SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expression, value);
+    if (fix.isAvailable(expression)) {
+      fix.invoke(expression);
+    }
+  }
+
   @Override
-  public void invoke(@NotNull final Project project, @NotNull PsiFile file, @Nullable Editor editor,
-                     @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-    if (!isAvailable()) return;
-    PsiExpression subExpression = getSubExpression();
-    if (subExpression == null) return;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression subExpression, @NotNull EditorUpdater updater) {
+    invoke(subExpression);
+  }
+
+  public void invoke(@NotNull PsiExpression subExpression) {
     CommentTracker ct = new CommentTracker();
     if (SideEffectChecker.mayHaveSideEffects(subExpression) && canExtractSideEffect(subExpression)) {
-      subExpression = ensureCodeBlock(project, subExpression);
+      PsiExpression orig = subExpression;
+      subExpression = ensureCodeBlock(subExpression.getProject(), subExpression);
       if (subExpression == null) {
-        LOG.error("ensureCodeBlock returned null", new Attachment("subExpression.txt", getSubExpression().getText()));
+        LOG.error("ensureCodeBlock returned null", new Attachment("subExpression.txt", orig.getText()));
         return;
       }
       PsiStatement anchor = ObjectUtils.tryCast(CommonJavaRefactoringUtil.getParentStatement(subExpression, false), PsiStatement.class);
@@ -432,11 +437,6 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActio
       }
     });
     return canBeSimplified.get().booleanValue();
-  }
-
-  private PsiExpression getSubExpression() {
-    PsiElement element = getStartElement();
-    return element instanceof PsiExpression ? (PsiExpression)element : null;
   }
 
   private static final class ExpressionVisitor extends JavaElementVisitor {
