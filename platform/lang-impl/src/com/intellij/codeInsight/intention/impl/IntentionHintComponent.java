@@ -43,6 +43,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -221,6 +222,15 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   @RequiresEdt
   private void showPopup(boolean mouseClick) {
+    CodeFloatingToolbar toolbar = CodeFloatingToolbar.getToolbar(myEditor);
+    if (toolbar != null && toolbar.isShown()) {
+      JComponent component = toolbar.getComponent();
+      LOG.assertTrue(component != null);
+      Point point = RelativePoint.getSouthWestOf(component).getScreenPoint();
+      point.translate(0, 6);
+      myPopup.show(this, RelativePoint.fromScreen(point));
+      return;
+    }
     RelativePoint positionHint = null;
     if (mouseClick && myLightBulbPanel.isShowing()) {
       RelativePoint swCorner = RelativePoint.getSouthWestOf(myLightBulbPanel);
@@ -458,6 +468,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         add(myIconLabel, BorderLayout.CENTER);
       }
       setBorder(LightBulbUtil.createInactiveBorder(editor));
+      CodeFloatingToolbar toolbar = CodeFloatingToolbar.getToolbar(editor);
+      if (toolbar != null && toolbar.canBeShownAtCurrentSelection()) {
+        setVisible(false);
+      }
     }
 
     @Override
