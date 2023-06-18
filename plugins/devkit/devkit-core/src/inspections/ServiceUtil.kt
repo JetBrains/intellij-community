@@ -18,7 +18,7 @@ import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.uast.*
 
 internal enum class LevelType {
-  APP, PROJECT, APP_AND_PROJECT, NOT_SPECIFIED;
+  APP, PROJECT, MODULE, APP_AND_PROJECT, NOT_SPECIFIED;
 
   fun isApp(): Boolean {
     return this == APP || this == APP_AND_PROJECT
@@ -41,11 +41,12 @@ internal fun getLevelType(annotation: JvmAnnotation, language: Language): LevelT
   return toLevelType(levels)
 }
 
-internal fun getLevelType(project: Project, uClass: UClass): LevelType {
+internal fun getLevelType(project: Project, uClass: UClass): LevelType? {
   val serviceAnnotation = uClass.findAnnotation(Service::class.java.canonicalName)
   if (serviceAnnotation != null) return getLevelType(serviceAnnotation)
   val javaPsi = uClass.javaPsi
   val domManager = DomManager.getDomManager(project)
+  var isModuleService = false
   val levels = HashSet<Service.Level>()
   for (candidate in locateExtensionsByPsiClass(javaPsi)) {
     val tag = candidate.pointer.element ?: continue
@@ -54,9 +55,13 @@ internal fun getLevelType(project: Project, uClass: UClass): LevelType {
       when (element.extensionPoint?.effectiveQualifiedName) {
         "com.intellij.applicationService" -> levels.add(Service.Level.APP)
         "com.intellij.projectService" -> levels.add(Service.Level.PROJECT)
+        "com.intellij.moduleService" -> isModuleService = true
         else -> {}
       }
     }
+  }
+  if (levels.isEmpty()) {
+    return if (isModuleService) LevelType.MODULE else null
   }
   return toLevelType(levels)
 }

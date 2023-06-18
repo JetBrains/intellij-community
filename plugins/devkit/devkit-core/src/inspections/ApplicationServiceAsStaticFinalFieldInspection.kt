@@ -27,7 +27,7 @@ class ApplicationServiceAsStaticFinalFieldInspection : DevKitUastInspectionBase(
 
           val fieldTypeUClass = PsiTypesUtil.getPsiClass(node.type).toUElementOfType<UClass>() ?: return true
           val serviceLevel = getLevelType(holder.project, fieldTypeUClass)
-          if (!serviceLevel.isApp()) return true
+          if (serviceLevel == null || !serviceLevel.isApp()) return true
 
           val sourcePsi = node.sourcePsi ?: return true
           val fixes = AppServiceAsStaticFinalFieldQuickFixProviders.forLanguage(holder.file.language)?.getFixes(sourcePsi) ?: emptyList()

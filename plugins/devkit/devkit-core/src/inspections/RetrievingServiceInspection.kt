@@ -36,7 +36,15 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
         val serviceType = node.returnType as? PsiClassType ?: return true
         val serviceClass = serviceType.resolve()?.toUElement(UClass::class.java) ?: return true
         val serviceLevel = getLevelType(holder.project, serviceClass)
-        if (isServiceRetrievedCorrectly(serviceLevel, howServiceRetrieved)) {
+        if (serviceLevel == LevelType.MODULE) return true
+        if (serviceLevel == null) {
+          val className = serviceClass.qualifiedName
+          if (className != null) {
+            val message = DevKitBundle.message("inspection.retrieving.service.not.registered", className)
+            holder.registerUProblem(node, message)
+          }
+        }
+        else if (isServiceRetrievedCorrectly(serviceLevel, howServiceRetrieved)) {
           val retrievingExpression = node.uastParent as? UQualifiedReferenceExpression ?: return true
           checkIfCanBeReplacedWithGetInstance(retrievingExpression, howServiceRetrieved, serviceClass, holder)
         }
