@@ -37,8 +37,6 @@ public interface IFernflowerPreferences {
 
   String LOG_LEVEL = "log";
   String MAX_PROCESSING_METHOD = "mpm";
-  String MAX_BYTES_CLASS_NOT_UNDER_PROGRESS = "mlmnup";
-  String MAX_LENGTH_CLASS = "mlm";
   String RENAME_ENTITIES = "ren";
   String USER_RENAMER_CLASS = "urc";
   String NEW_LINE_SEPARATOR = "nls";
@@ -85,8 +83,6 @@ public interface IFernflowerPreferences {
 
     defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
     defaults.put(MAX_PROCESSING_METHOD, "0");
-    defaults.put(MAX_BYTES_CLASS_NOT_UNDER_PROGRESS, "0");
-    defaults.put(MAX_LENGTH_CLASS, "0");
     defaults.put(RENAME_ENTITIES, "0");
     defaults.put(NEW_LINE_SEPARATOR, (InterpreterUtil.IS_WINDOWS ? "0" : "1"));
     defaults.put(INDENT_STRING, "   ");

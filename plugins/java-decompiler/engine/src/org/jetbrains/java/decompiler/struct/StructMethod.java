@@ -332,9 +332,4 @@ public class StructMethod extends StructMember {
   public String toString() {
     return name;
   }
-
-
-  public int getCodeLength() {
-    return codeLength;
-  }
 }

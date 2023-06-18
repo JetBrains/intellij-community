@@ -2,10 +2,8 @@
 package org.jetbrains.java.decompiler;
 
 import org.assertj.core.api.Assertions;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
-import org.jetbrains.java.decompiler.struct.StructClass;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -36,7 +34,7 @@ public class CancellableTest {
       private final AtomicInteger myAtomicInteger = new AtomicInteger(0);
 
       @Override
-      public void checkCanceled(@Nullable StructClass classStruct) throws CanceledException {
+      public void checkCanceled() throws CanceledException {
         check();
       }
 
