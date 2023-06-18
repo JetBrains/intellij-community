@@ -13,14 +13,13 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.ig.callMatcher.CallMatcher
-import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-private val COMPONENT_MANAGER_GET_SERVICE: CallMatcher = CallMatcher.anyOf(
+private val COMPONENT_MANAGER_GET_SERVICE = CallMatcher.anyOf(
   CallMatcher.instanceCall(ComponentManager::class.java.canonicalName, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
   CallMatcher.instanceCall(ComponentManager::class.java.canonicalName, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS,
                                                                                                     "boolean"))
@@ -44,17 +43,29 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
             holder.registerUProblem(node, message)
           }
         }
-        else if (isServiceRetrievedCorrectly(serviceLevel, howServiceRetrieved)) {
-          val retrievingExpression = node.uastParent as? UQualifiedReferenceExpression ?: return true
-          checkIfCanBeReplacedWithGetInstance(retrievingExpression, howServiceRetrieved, serviceClass, holder)
+        else if (!isServiceRetrievedCorrectly(serviceLevel, howServiceRetrieved)) {
+          registerProblemMismatchedRetrieving(howServiceRetrieved, holder, node)
         }
         else {
-          val message = getMessage(howServiceRetrieved)
-          holder.registerUProblem(node, message)
+          val retrievingExpression = node.uastParent as? UQualifiedReferenceExpression ?: return true
+          val getInstanceMethod = findGetInstanceMethod(retrievingExpression, howServiceRetrieved, serviceClass)
+          if (getInstanceMethod != null) {
+            registerProblem(getInstanceMethod, howServiceRetrieved, holder, retrievingExpression)
+          }
         }
         return true
       }
     }, arrayOf(UCallExpression::class.java))
+  }
+
+  private fun registerProblemMismatchedRetrieving(howServiceRetrieved: Level,
+                                                  holder: ProblemsHolder,
+                                                  node: UCallExpression) {
+    val message = when (howServiceRetrieved) {
+      Level.APP -> DevKitBundle.message("inspection.retrieving.service.mismatch.for.project.level")
+      Level.PROJECT -> DevKitBundle.message("inspection.retrieving.service.mismatch.for.app.level")
+    }
+    holder.registerUProblem(node, message)
   }
 
   private fun isServiceRetrievedCorrectly(serviceLevel: LevelType, howServiceRetrieved: Level): Boolean {
@@ -75,34 +86,32 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
     }
   }
 
-  private fun getMessage(level: Level): @Nls String {
-    return when (level) {
-      Level.APP -> DevKitBundle.message("inspection.retrieving.service.mismatch.for.project.level")
-      Level.PROJECT -> DevKitBundle.message("inspection.retrieving.service.mismatch.for.app.level")
-    }
-  }
-
-  private fun checkIfCanBeReplacedWithGetInstance(retrievingExpression: UQualifiedReferenceExpression,
-                                                  howServiceRetrieved: Level,
-                                                  serviceClass: UClass,
-                                                  holder: ProblemsHolder) {
+  private fun findGetInstanceMethod(retrievingExpression: UQualifiedReferenceExpression,
+                                    howServiceRetrieved: Level,
+                                    serviceClass: UClass): UMethod? {
     val returnExpr = retrievingExpression.uastParent as? UReturnExpression
     if (returnExpr != null) {
       val containingMethod = returnExpr.jumpTarget as? UMethod
       if (containingMethod != null) {
-        if (howServiceRetrieved == Level.APP && isGetInstanceApplicationLevel(containingMethod)) return
-        if (howServiceRetrieved == Level.PROJECT && isGetInstanceProjectLevel(containingMethod)) return
+        if (howServiceRetrieved == Level.APP && isGetInstanceApplicationLevel(containingMethod)) return null
+        if (howServiceRetrieved == Level.PROJECT && isGetInstanceProjectLevel(containingMethod)) return null
       }
     }
-    val method = when (howServiceRetrieved) {
+    return when (howServiceRetrieved) {
       Level.APP -> findGetInstanceApplicationLevel(serviceClass)
       Level.PROJECT -> findGetInstanceProjectLevel(serviceClass)
     }
-    val qualifiedName = method?.getContainingUClass()?.qualifiedName ?: return
+  }
+
+  private fun registerProblem(replacementMethod: UMethod,
+                              howServiceRetrieved: Level,
+                              holder: ProblemsHolder,
+                              retrievingExpression: UQualifiedReferenceExpression) {
+    val qualifiedName = replacementMethod.getContainingUClass()?.qualifiedName ?: return
     val serviceName = StringUtil.getShortName(qualifiedName)
-    val message = DevKitBundle.message("inspection.retrieving.service.can.be.replaced.with", serviceName, method.name)
-    val fix = ReplaceWithGetInstanceCallFix(serviceName, method.name, howServiceRetrieved)
-    holder.registerProblem(retrievingExpression.sourcePsi!!, message, ProblemHighlightType.WEAK_WARNING, fix)
+    val message = DevKitBundle.message("inspection.retrieving.service.can.be.replaced.with", serviceName, replacementMethod.name)
+    val fix = ReplaceWithGetInstanceCallFix(serviceName, replacementMethod.name, howServiceRetrieved)
+    holder.registerUProblem(retrievingExpression, message, fixes = arrayOf(fix), ProblemHighlightType.WEAK_WARNING)
   }
 
   private fun findGetInstanceProjectLevel(uClass: UClass): UMethod? {
@@ -144,14 +153,14 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
     return (method.uastBody as? UBlockExpression)?.expressions?.singleOrNull() as? UReturnExpression
   }
 
-  class ReplaceWithGetInstanceCallFix(private val serviceName: String,
-                                      private val methodName: String,
-                                      private val howServiceRetrieved: Level) : LocalQuickFix {
+  private class ReplaceWithGetInstanceCallFix(private val serviceName: String,
+                                              private val methodName: String,
+                                              private val howServiceRetrieved: Level) : LocalQuickFix {
 
     override fun getFamilyName(): String = DevKitBundle.message("inspection.retrieving.service.replace.with", serviceName, methodName)
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val oldCall = descriptor.psiElement.toUElement() as? UQualifiedReferenceExpression ?: return
+      val oldCall = descriptor.psiElement.toUElement()?.getParentOfType<UQualifiedReferenceExpression>() ?: return
       val generationPlugin = UastCodeGenerationPlugin.byLanguage(descriptor.psiElement.language) ?: return
       val factory = generationPlugin.getElementFactory(project)
       val serviceName = oldCall.getExpressionType()?.canonicalText ?: return
