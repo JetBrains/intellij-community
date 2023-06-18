@@ -11,6 +11,8 @@ import com.intellij.openapi.actionSystem.impl.FloatingToolbar
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
@@ -28,6 +30,20 @@ class CodeFloatingToolbar(
   coroutineScope: CoroutineScope
 ): FloatingToolbar(editor, coroutineScope, "Floating.CodeToolbar") {
 
+  companion object {
+    private val FLOATING_TOOLBAR = Key<CodeFloatingToolbar>("floating.codeToolbar")
+    
+    @JvmStatic
+    fun getToolbar(editor: Editor): CodeFloatingToolbar? {
+      return editor.getUserData(FLOATING_TOOLBAR)
+    }
+  }
+
+  init {
+    editor.putUserData(FLOATING_TOOLBAR, this)
+    Disposer.register(this) { editor.putUserData(FLOATING_TOOLBAR, null) }
+  }
+
   override fun hasIgnoredParent(element: PsiElement): Boolean {
     return !element.isWritable || TemplateManagerImpl.getInstance(element.project).getActiveTemplate(editor) != null
   }
@@ -42,32 +58,31 @@ class CodeFloatingToolbar(
 
   override fun shouldSurviveDocumentChange(): Boolean = false
 
-  override fun hideByOtherHints(): Boolean = true
+  override fun hideByOtherHints(): Boolean = false
 
   override fun getHintPosition(hint: LightweightHint): Point {
+    val selectionEnd = editor.selectionModel.selectionEnd
+    val selectionStart = editor.selectionModel.selectionStart
     val isOneLineSelection = isOneLineSelection(editor)
-    val isAbove = isOneLineSelection
-                  || editor.selectionModel.selectionStart == editor.caretModel.offset
-                  || Registry.get("floating.codeToolbar.showAbove").asBoolean() && isSelectionStartVisible(editor)
-    val offsetForHint = when {
-      isOneLineSelection -> editor.selectionModel.selectionStart
-      isAbove -> getTextStart(editor, editor.selectionModel.selectionStart)
-      else -> getTextStart(editor, editor.selectionModel.selectionEnd)
-    }
+    val isBelow = isOneLineSelection
+                  || selectionEnd == editor.caretModel.offset
+                  || Registry.get("floating.codeToolbar.showBelow").asBoolean() && isSelectionEndVisible(editor)
+    val anchorOffset = if (isBelow) selectionEnd else selectionStart
+    val offsetForHint = getTextStart(editor, anchorOffset)
     val visualPosition = editor.offsetToVisualPosition(offsetForHint)
-    val hintPos = HintManagerImpl.getHintPosition(hint, editor, visualPosition, HintManager.DEFAULT)
+    val hintPoint = HintManagerImpl.getHintPosition(hint, editor, visualPosition, HintManager.DEFAULT)
     val verticalGap = Registry.get("floating.codeToolbar.verticalOffset").asInteger()
-    val dy = if (editor.selectionModel.selectionEnd == editor.caretModel.offset && !isAbove) {
+    val dy = if (isBelow) {
       editor.lineHeight + verticalGap
     } else {
       -(hint.component.preferredSize.height + verticalGap)
     }
-    hintPos.translate(0, dy)
-    return hintPos
+    hintPoint.translate(0, dy)
+    return hintPoint
   }
 
-  private fun isSelectionStartVisible(editor: Editor): Boolean {
-    return editor.offsetToXY(editor.selectionModel.selectionStart) in editor.scrollingModel.visibleArea
+  private fun isSelectionEndVisible(editor: Editor): Boolean {
+    return editor.offsetToXY(editor.selectionModel.selectionEnd) in editor.scrollingModel.visibleArea
   }
 
   private fun isOneLineSelection(editor: Editor): Boolean {
