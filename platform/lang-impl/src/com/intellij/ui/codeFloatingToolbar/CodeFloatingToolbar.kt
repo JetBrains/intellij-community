@@ -100,7 +100,7 @@ class CodeFloatingToolbar(editor: Editor): FloatingToolbar(editor, "Floating.Cod
 
 
   override fun createActionGroup(): ActionGroup? {
-    val contextAwareActionGroupId = getContextAwareGroupId() ?: return super.createActionGroup()
+    val contextAwareActionGroupId = getContextAwareGroupId()
     val mainActionGroup = CustomActionsSchema.getInstance().getCorrectedAction(contextAwareActionGroupId) as? ActionGroup ?: return super.createActionGroup()
     val configurationGroup = createConfigureGroup(contextAwareActionGroupId)
     return DefaultActionGroup(mainActionGroup, configurationGroup)
