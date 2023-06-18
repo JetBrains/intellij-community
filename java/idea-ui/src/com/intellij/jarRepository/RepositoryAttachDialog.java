@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository;
 
 import com.intellij.icons.AllIcons;
@@ -25,6 +25,7 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.JavaXmlDocumentKt;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.xml.util.XmlStringUtil;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
@@ -44,8 +45,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -185,21 +184,15 @@ public final class RepositoryAttachDialog extends DialogWrapper {
     if (e.getType() == DocumentEvent.EventType.INSERT) {
       String text = textField.getText();
       if (isMvnDependency(text)) {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
-        factory.setValidating(false);
+        DocumentBuilder builder = JavaXmlDocumentKt.createDocumentBuilder();
         try {
-          DocumentBuilder builder = factory.newDocumentBuilder();
-          try {
-            Document document = builder.parse(new InputSource(new StringReader(text)));
-            String mavenCoordinates = extractMavenCoordinates(document);
-            if (mavenCoordinates != null) {
-              textField.setText(mavenCoordinates);
-            }
-          }
-          catch (SAXException | IOException ignored) {
+          Document document = builder.parse(new InputSource(new StringReader(text)));
+          String mavenCoordinates = extractMavenCoordinates(document);
+          if (mavenCoordinates != null) {
+            textField.setText(mavenCoordinates);
           }
         }
-        catch (ParserConfigurationException ignored) {
+        catch (SAXException | IOException ignored) {
         }
       }
     }
