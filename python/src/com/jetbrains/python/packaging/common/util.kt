@@ -101,9 +101,3 @@ suspend fun <T> runPackagingOperationOrShowErrorDialog(sdk: Sdk,
     return Result.failure(ex)
   }
 }
-
-fun normalizePyPISemVer(version: String): String {
-  val components = version.split('.')
-  if (components.size < 3 ) return version + ".0".repeat(3 - components.size)
-  return version
-}

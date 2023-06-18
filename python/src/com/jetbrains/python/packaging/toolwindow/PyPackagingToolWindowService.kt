@@ -26,7 +26,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
-import com.intellij.util.text.SemVer
 import com.jetbrains.python.PyBundle.*
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.PythonHelpersLocator
@@ -34,7 +33,6 @@ import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.packaging.common.normalizePyPISemVer
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.repository.*
@@ -185,11 +183,11 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
       val repository = installedPackages.find { pkg -> pkg.name == it.name }?.repository ?: PyEmptyPackagePackageRepository
       val specification = repository.createPackageSpecification(it.name)
       val latestVersion = manager.repositoryManager.getLatestVersion(specification)
-      val currentVersion = SemVer.parseFromText(normalizePyPISemVer(it.version))
+      val currentVersion = PyPackageVersionNormalizer.normalize(it.version)
 
-      val upgradeTo = if (latestVersion == null
-                          || currentVersion == null
-                          || latestVersion > currentVersion) latestVersion else null
+      val upgradeTo = if (latestVersion != null
+                          && currentVersion != null
+                          && PyPackageVersionComparator.compare(latestVersion, currentVersion) > 0) latestVersion else null
 
       InstalledPackage(it, repository, upgradeTo)
     }
