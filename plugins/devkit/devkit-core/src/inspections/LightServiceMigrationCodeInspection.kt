@@ -23,12 +23,12 @@ internal class LightServiceMigrationCodeInspection : DevKitUastInspectionBase(UC
         aClass.isAnonymousOrLocal()) {
       return ProblemDescriptor.EMPTY_ARRAY
     }
-    if (LightServiceMigrationUtil.isVersion193OrHigher(psiClass) ||
+    if (isVersion193OrHigher(psiClass) ||
         ApplicationManager.getApplication().isUnitTestMode) {
       if (isLightService(aClass)) return ProblemDescriptor.EMPTY_ARRAY
       for (candidate in locateExtensionsByPsiClass(psiClass)) {
         val extension = DomUtil.findDomElement(candidate.pointer.element, Extension::class.java, false) ?: continue
-        val (serviceImplementation, level) = LightServiceMigrationUtil.getServiceImplementation(extension) ?: continue
+        val (serviceImplementation, level) = getServiceImplementation(extension) ?: continue
         if (level == Service.Level.APP &&
             JvmInheritanceUtil.isInheritor(aClass, PersistentStateComponent::class.java.canonicalName)) {
           continue
@@ -45,7 +45,7 @@ internal class LightServiceMigrationCodeInspection : DevKitUastInspectionBase(UC
                               level: Service.Level,
                               manager: InspectionManager,
                               isOnTheFly: Boolean): Array<ProblemDescriptor> {
-    val message = LightServiceMigrationUtil.getMessage(level)
+    val message = getMessage(level)
     val holder = createProblemsHolder(aClass, manager, isOnTheFly)
     holder.registerUProblem(aClass, message)
     return holder.resultsArray
