@@ -706,7 +706,7 @@ open class FileEditorManagerImpl(
    * @return true if all the checks were successfully passed and the file can be closed
    */
   private fun canCloseFile(file: VirtualFile): Boolean {
-    val checks = VirtualFilePreCloseCheck.extensionPoint.extensionsIfPointIsRegistered
+    val checks = VirtualFilePreCloseCheck.EP_NAME.extensionsIfPointIsRegistered
     return checks.all { it.canCloseFile(file) }
   }
 
