@@ -7,7 +7,7 @@ internal class SearchEverywhereAllRankingModelLoader : SearchEverywhereMLRanking
   private val expResourceDirectory = "all_features_exp"
   private val expModelDirectory = "all_model_exp"
 
-  override val supportedContributorName : String = ALL_CONTRIBUTORS_GROUP_ID
+  override val supportedTab : String = ALL_CONTRIBUTORS_GROUP_ID
 
   override fun getBundledModel(): DecisionFunction {
     return getCatBoostModel(expResourceDirectory, expModelDirectory)

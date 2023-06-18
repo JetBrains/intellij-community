@@ -9,7 +9,7 @@ internal class SearchEverywhereFilesRankingModelLoader : SearchEverywhereMLRanki
   private val expResourceDirectory = "files_features_exp"
   private val expModelDirectory = "files_model_exp"
 
-  override val supportedContributorName : String = FileSearchEverywhereContributor::class.java.simpleName
+  override val supportedTab : String = FileSearchEverywhereContributor::class.java.simpleName
 
   override fun getBundledModel(): DecisionFunction {
     return if (shouldProvideExperimentalModel())
