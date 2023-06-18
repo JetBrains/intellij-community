@@ -4,18 +4,23 @@
 
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiClass
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
+import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.util.DevKitDomUtil
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo
 import org.jetbrains.idea.devkit.util.PsiUtil
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 internal data class ServiceInfo(val aClass: PsiClass, val level: Service.Level)
 
@@ -64,4 +69,25 @@ internal fun isVersion193OrHigher(aClass: PsiClass): Boolean {
   return buildNumber != null && buildNumber.baselineVersion >= 193
 }
 
+internal fun containsUnitTestOrHeadlessModeCheck(aClass: UClass): Boolean {
+  var result = false
+
+  aClass.accept(object : AbstractUastVisitor() {
+    override fun visitCallExpression(node: UCallExpression): Boolean {
+      if (IS_UNIT_TEST_OR_HEADLESS_MODE.uCallMatches(node)) {
+        result = true
+        return false
+      }
+      return super.visitCallExpression(node)
+    }
+  })
+
+  return result
+}
+
 private val disallowedAttributes = setOf("serviceInterface", "os", "client", "overrides", "id", "preload")
+
+private val IS_UNIT_TEST_OR_HEADLESS_MODE = CallMatcher.anyOf(
+  CallMatcher.instanceCall(Application::class.java.canonicalName, "isUnitTestMode", "isHeadlessEnvironment"),
+  CallMatcher.staticCall("org.jetbrains.kotlin.idea.util.application.ApplicationUtilsKt", "isUnitTestMode", "isHeadlessEnvironment"),
+)

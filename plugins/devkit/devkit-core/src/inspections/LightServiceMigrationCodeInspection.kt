@@ -33,7 +33,7 @@ internal class LightServiceMigrationCodeInspection : DevKitUastInspectionBase(UC
             JvmInheritanceUtil.isInheritor(aClass, PersistentStateComponent::class.java.canonicalName)) {
           continue
         }
-        if (serviceImplementation == psiClass) {
+        if (serviceImplementation == psiClass && !containsUnitTestOrHeadlessModeCheck(aClass)) {
           return registerProblem(aClass, level, manager, isOnTheFly)
         }
       }
