@@ -31,4 +31,8 @@ private class ServiceLevelExtractorForKotlin : ServiceLevelExtractor {
       }
       .toList()
   }
+
+  override fun isApplicableForKotlin(): Boolean {
+    return true
+  }
 }

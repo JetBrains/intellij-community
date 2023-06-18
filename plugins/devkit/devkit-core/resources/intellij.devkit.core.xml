@@ -532,9 +532,9 @@
       implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldNotBePublicProviderForJVM"/>
     <extensionClassShouldBeFinalErrorMessageProvider language="JVM"
       implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalErrorMessageProvider"/>
-    <serviceLevelExtractor language="JAVA"
-      implementationClass="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractorForJava"/>
-    <lightServiceMustBeFinalErrorMessageProvider language="JAVA"
+    <serviceLevelExtractor language="JVM"
+      implementationClass="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractorForJVM"/>
+    <lightServiceMustBeFinalErrorMessageProvider language="JVM"
       implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalErrorMessageProvider"/>
     <appServiceAsStaticFinalFieldQuickFixProvider
       language="JAVA"

@@ -32,7 +32,7 @@ internal enum class LevelType {
 internal fun getLevelType(annotation: JvmAnnotation, language: Language): LevelType {
   val levels = when (val attributeValue = annotation.findAttribute(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)?.attributeValue) {
     is JvmAnnotationArrayValue -> {
-      val serviceLevelExtractor = ServiceLevelExtractors.forLanguage(language) ?: return LevelType.NOT_SPECIFIED
+      val serviceLevelExtractor = getProvider(ServiceLevelExtractors, language) ?: return LevelType.NOT_SPECIFIED
       serviceLevelExtractor.extractLevels(attributeValue)
     }
     is JvmAnnotationEnumFieldValue -> getLevels(attributeValue)
