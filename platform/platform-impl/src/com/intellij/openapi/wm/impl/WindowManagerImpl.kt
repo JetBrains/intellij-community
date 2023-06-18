@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.wm.impl
@@ -46,7 +46,7 @@ import javax.swing.JWindow
 
 private val LOG = logger<WindowManagerImpl>()
 @JvmField
-internal val IDE_FRAME_EVENT_LOG = Logger.getInstance("ide.frame.events")
+internal val IDE_FRAME_EVENT_LOG: Logger = Logger.getInstance("ide.frame.events")
 
 @NonNls
 private const val FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow"
@@ -506,7 +506,7 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
       // Component moved during project loading - update myDefaultFrameInfo directly.
       // Cannot mark as dirty and compute later, because to convert user space info to device space,
       // we need graphicsConfiguration, but we can get graphicsConfiguration only from frame,
-      // but later, when getStateModificationCount or getState is called, may be no frame at all.
+      // but later, when getStateModificationCount or getState is called, there may be no frame at all.
       defaultFrameInfoHelper.updateFrameInfo(frameHelper, frame)
     }
     else if (!project.isDisposed) {

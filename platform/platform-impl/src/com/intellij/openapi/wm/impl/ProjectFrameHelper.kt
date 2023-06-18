@@ -12,6 +12,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -321,16 +322,12 @@ open class ProjectFrameHelper internal constructor(
       rootPane.putClientProperty(INIT_BOUNDS_KEY, null)
       if (bounds is Rectangle) {
         ProjectFrameBounds.getInstance(project!!).markDirty(bounds)
-        if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
-          IDE_FRAME_EVENT_LOG.debug("Applied init bounds for full screen from client property: $bounds")
-        }
+        IDE_FRAME_EVENT_LOG.debug { "Applied init bounds for full screen from client property: $bounds" }
       }
     }
     else {
       ProjectFrameBounds.getInstance(project!!).markDirty(frame.bounds)
-      if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
-        IDE_FRAME_EVENT_LOG.debug("Applied init bounds for non-fullscreen from the frame: ${frame.bounds}")
-      }
+      IDE_FRAME_EVENT_LOG.debug { "Applied init bounds for non-fullscreen from the frame: ${frame.bounds}" }
     }
   }
 
