@@ -18,6 +18,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowIntentionActionsAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore,
@@ -56,6 +57,14 @@ public class ShowIntentionActionsAction extends BaseCodeInsightAction implements
     if (psiFile == null) return;
 
     if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
+
+    CodeFloatingToolbar toolbar = CodeFloatingToolbar.getToolbar(editor);
+    if (toolbar != null && toolbar.canBeShownAtCurrentSelection() && !toolbar.isShown()) {
+      toolbar.showIfHidden(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> actionPerformed(e));
+      });
+      return;
+    }
     getHandler().invoke(project, editor, psiFile, e.isFromContextMenu());
   }
 

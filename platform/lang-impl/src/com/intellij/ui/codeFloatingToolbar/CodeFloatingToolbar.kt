@@ -49,7 +49,9 @@ class CodeFloatingToolbar(editor: Editor): FloatingToolbar(editor, "Floating.Cod
 
   override fun disableForDoubleClickSelection(): Boolean = true
 
-  override fun shouldReviveAfterClose(): Boolean = false
+  override fun shouldReviveAfterClose(): Boolean {
+    return !Registry.get("floating.codeToolbar.revive.selectionChangeOnly").asBoolean()
+  }
 
   override fun shouldSurviveDocumentChange(): Boolean = false
 
