@@ -22,9 +22,9 @@ internal class LightServiceMigrationXMLInspection : DevKitPluginXmlInspectionBas
     if (element !is Extension) return
     if (!isAllowed(holder)) return
 
-    if (LightServiceMigrationUtil.isVersion193OrHigher(element) ||
+    if (isVersion193OrHigher(element) ||
         ApplicationManager.getApplication().isUnitTestMode) {
-      val (aClass, level) = LightServiceMigrationUtil.getServiceImplementation(element) ?: return
+      val (aClass, level) = getServiceImplementation(element) ?: return
       if (!aClass.hasModifier(JvmModifier.FINAL) || isLibraryClass(aClass)) return
       if (level == Service.Level.APP &&
           JvmInheritanceUtil.isInheritor(aClass, PersistentStateComponent::class.java.canonicalName)) {
@@ -35,7 +35,7 @@ internal class LightServiceMigrationXMLInspection : DevKitPluginXmlInspectionBas
         holder.createProblem(element, ProblemHighlightType.ERROR, message, null)
       }
       else {
-        val message = LightServiceMigrationUtil.getMessage(level)
+        val message = getMessage(level)
         holder.createProblem(element, message)
       }
     }

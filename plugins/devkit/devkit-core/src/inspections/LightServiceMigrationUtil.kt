@@ -1,4 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+@file:JvmName("LightServiceMigrationUtil")
+
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.openapi.components.Service
@@ -14,54 +17,51 @@ import org.jetbrains.idea.devkit.util.DevKitDomUtil
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo
 import org.jetbrains.idea.devkit.util.PsiUtil
 
-internal object LightServiceMigrationUtil {
+internal data class ServiceInfo(val aClass: PsiClass, val level: Service.Level)
 
-  data class ServiceInfo(val aClass: PsiClass, val level: Service.Level)
-
-  fun getServiceImplementation(extension: Extension): ServiceInfo? {
-    val level = when (extension.extensionPoint?.effectiveQualifiedName) {
-      "com.intellij.projectService" -> Service.Level.PROJECT
-      "com.intellij.applicationService" -> Service.Level.APP
-      else -> return null
-    }
-    val extensionPoint = extension.extensionPoint
-    if (extensionPoint == null || !DomUtil.hasXml(extensionPoint.beanClass)) return null
-    if (ServiceDescriptor::class.java.name != extensionPoint.beanClass.stringValue) return null
-    if (hasDisallowedAttributes(extension)) return null
-    val serviceImplementation = DevKitDomUtil.getAttribute(extension, "serviceImplementation") ?: return null
-    if (!DomUtil.hasXml(serviceImplementation)) return null
-    val aClass = serviceImplementation.value as? PsiClass ?: return null
-    return ServiceInfo(aClass, level)
+internal fun getServiceImplementation(extension: Extension): ServiceInfo? {
+  val level = when (extension.extensionPoint?.effectiveQualifiedName) {
+    "com.intellij.projectService" -> Service.Level.PROJECT
+    "com.intellij.applicationService" -> Service.Level.APP
+    else -> return null
   }
+  val extensionPoint = extension.extensionPoint
+  if (extensionPoint == null || !DomUtil.hasXml(extensionPoint.beanClass)) return null
+  if (ServiceDescriptor::class.java.name != extensionPoint.beanClass.stringValue) return null
+  if (hasDisallowedAttributes(extension)) return null
+  val serviceImplementation = DevKitDomUtil.getAttribute(extension, "serviceImplementation") ?: return null
+  if (!DomUtil.hasXml(serviceImplementation)) return null
+  val aClass = serviceImplementation.value as? PsiClass ?: return null
+  return ServiceInfo(aClass, level)
+}
 
-  private fun hasDisallowedAttributes(extension: Extension): Boolean {
-    for (attributeName in disallowedAttributes) {
-      val attribute = DevKitDomUtil.getAttribute(extension, attributeName)
-      if (attribute != null && DomUtil.hasXml(attribute)) return true
-    }
-    return false
+private fun hasDisallowedAttributes(extension: Extension): Boolean {
+  for (attributeName in disallowedAttributes) {
+    val attribute = DevKitDomUtil.getAttribute(extension, attributeName)
+    if (attribute != null && DomUtil.hasXml(attribute)) return true
   }
+  return false
+}
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  fun getMessage(level: Service.Level): String {
-    return when (level) {
-      Service.Level.APP -> DevKitBundle.message("inspection.light.service.migration.app.level.message")
-      Service.Level.PROJECT -> DevKitBundle.message("inspection.light.service.migration.project.level.message")
-    }
+@Nls(capitalization = Nls.Capitalization.Sentence)
+internal fun getMessage(level: Service.Level): String {
+  return when (level) {
+    Service.Level.APP -> DevKitBundle.message("inspection.light.service.migration.app.level.message")
+    Service.Level.PROJECT -> DevKitBundle.message("inspection.light.service.migration.project.level.message")
   }
+}
 
-  fun isVersion193OrHigher(element: DomElement): Boolean {
-    if (PsiUtil.isIdeaProject(element.module?.project)) return true
-    val buildNumber = PluginPlatformInfo.forDomElement(element).sinceBuildNumber
-    return buildNumber != null && buildNumber.baselineVersion >= 193
-  }
+internal fun isVersion193OrHigher(element: DomElement): Boolean {
+  if (PsiUtil.isIdeaProject(element.module?.project)) return true
+  val buildNumber = PluginPlatformInfo.forDomElement(element).sinceBuildNumber
+  return buildNumber != null && buildNumber.baselineVersion >= 193
+}
 
-  fun isVersion193OrHigher(aClass: PsiClass): Boolean {
-    if (PsiUtil.isIdeaProject(aClass.project)) return true
-    val module = ModuleUtilCore.findModuleForPsiElement(aClass) ?: return false
-    val buildNumber = PluginPlatformInfo.forModule(module).sinceBuildNumber
-    return buildNumber != null && buildNumber.baselineVersion >= 193
-  }
+internal fun isVersion193OrHigher(aClass: PsiClass): Boolean {
+  if (PsiUtil.isIdeaProject(aClass.project)) return true
+  val module = ModuleUtilCore.findModuleForPsiElement(aClass) ?: return false
+  val buildNumber = PluginPlatformInfo.forModule(module).sinceBuildNumber
+  return buildNumber != null && buildNumber.baselineVersion >= 193
 }
 
 private val disallowedAttributes = setOf("serviceInterface", "os", "client", "overrides", "id", "preload")
