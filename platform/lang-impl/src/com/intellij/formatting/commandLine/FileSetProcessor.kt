@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.commandLine
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.util.createDocumentBuilder
 import java.io.File
 import java.io.IOException
 import java.nio.charset.Charset
-import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathEvaluationResult
 import javax.xml.xpath.XPathFactory
 
@@ -107,10 +107,8 @@ private tailrec fun File.getOuterProject(): File? {
   return parent.getOuterProject()
 }
 
-private val documentBuilderFactory = DocumentBuilderFactory.newInstance()
-private val xPathFactory = XPathFactory.newDefaultInstance()
-private val usePerProjectSelector = "/component[@name='ProjectCodeStyleConfiguration']/state/option[@name='USE_PER_PROJECT_SETTINGS']/@value='true'"
-private val usePerProjectXPath = xPathFactory.newXPath().compile(usePerProjectSelector)
+private const val usePerProjectSelector = "/component[@name='ProjectCodeStyleConfiguration']/state/option[@name='USE_PER_PROJECT_SETTINGS']/@value='true'"
+private val usePerProjectXPath = XPathFactory.newDefaultInstance().newXPath().compile(usePerProjectSelector)
 
 private fun findCodeStyleSettings(dotIdea: File?): CodeStyleSettings? {
   if (dotIdea == null) return null
@@ -122,9 +120,7 @@ private fun findCodeStyleSettings(dotIdea: File?): CodeStyleSettings? {
   val codeStyleConfig = codeStyles.resolve("codeStyleConfig.xml")
   if (!codeStyleConfig.isFile) return null
 
-  val doc = documentBuilderFactory
-    .newDocumentBuilder()
-    .parse(codeStyleConfig)
+  val doc = createDocumentBuilder().parse(codeStyleConfig)
 
   usePerProjectXPath
     .evaluateExpression(doc)

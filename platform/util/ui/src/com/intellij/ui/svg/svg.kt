@@ -13,6 +13,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.SVGLoader
+import com.intellij.util.createDocumentBuilder
 import com.intellij.util.text.CharSequenceReader
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jetbrains.annotations.ApiStatus
@@ -23,7 +24,6 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.StringWriter
 import javax.xml.XMLConstants
-import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
@@ -295,15 +295,7 @@ private fun renderImage(colorPatcher: SvgAttributePatcher?,
     }
   }
   else {
-    val factory = DocumentBuilderFactory.newDefaultNSInstance()
-    factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
-    factory.isValidating = false
-
-    factory.setFeature("http://xml.org/sax/features/validation", false)
-    factory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false)
-    factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
-
-    val documentElement = factory.newDocumentBuilder().parse(data.inputStream()).documentElement
+    val documentElement = createDocumentBuilder(namespaceAware = true).parse(data.inputStream()).documentElement
     deprecatedColorPatcher.patchColors(documentElement)
 
     val writer = StringWriter()
