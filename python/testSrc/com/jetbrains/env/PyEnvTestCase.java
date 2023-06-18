@@ -188,7 +188,11 @@ public abstract class PyEnvTestCase {
     final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
     EnvTestTagsRequired methodAnnotation = null;
     try {
-      final Method method = getClass().getMethod(myTestName.getMethodName());
+      String methodName = myTestName.getMethodName();
+      if (methodName.contains("[")) {
+        methodName = methodName.substring(0, methodName.indexOf('['));
+      }
+      final Method method = getClass().getMethod(methodName);
       methodAnnotation = method.getAnnotation(EnvTestTagsRequired.class);
     }
     catch (final NoSuchMethodException e) {

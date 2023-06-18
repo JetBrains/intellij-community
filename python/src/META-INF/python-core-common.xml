@@ -512,6 +512,29 @@
 
     <registryKey key="python.new.run.config" defaultValue="true" description="Python Run configurations new UI"/>
 
+    <!-- Black -->
+    <projectConfigurable groupId="tools"
+                         provider="com.jetbrains.python.black.configuration.BlackFormatterConfigurableProvider"
+                         id="com.jetbrains.python.black.configuration.BlackFormatterConfigurable"
+                         bundle="messages.PyBundle"
+                         key="black.configurable.name"
+                         nonDefaultProject="true"/>
+
+    <registryKey key="black.formatter.support.enabled" defaultValue="false"
+                 description="Enable Black formatter support"/>
+
+    <formattingService implementation="com.jetbrains.python.black.BlackFormattingService"/>
+    <actionOnSave id="BlackFormatterActionOnSave"
+                  implementation="com.jetbrains.python.black.BlackFormatterActionOnSave"
+                  order="after FormatOnSaveAction"/>
+
+    <actionOnSaveInfoProvider id="BlackFormatterActionOnSaveInfo"
+                              implementation="com.jetbrains.python.black.configuration.BlackFormatterConfigurable$BlackFormatterActionOnSaveInfoProvider"/>
+
+    <projectService serviceImplementation="com.jetbrains.python.black.configuration.BlackFormatterConfiguration"/>
+    <notificationGroup id="Black Formatter Integration" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
+                       key="black.configurable.name"/>
+
     <dependencyCollector kind="python" implementation="com.jetbrains.python.packaging.PyDependencyCollector"/>
   </extensions>
 
