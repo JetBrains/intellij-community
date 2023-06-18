@@ -16,6 +16,9 @@ internal abstract class SearchEverywhereMLRankingModelLoader {
     private val EP_NAME: ExtensionPointName<SearchEverywhereMLRankingModelLoader>
       = ExtensionPointName.create("com.intellij.searcheverywhere.ml.rankingModelLoader")
 
+    val allLoaders: List<SearchEverywhereMLRankingModelLoader>
+      get() = EP_NAME.extensionList
+
     fun getForTab(contributorId: String): SearchEverywhereMLRankingModelLoader {
       return EP_NAME.findFirstSafe {
         it.supportedContributorName == contributorId
