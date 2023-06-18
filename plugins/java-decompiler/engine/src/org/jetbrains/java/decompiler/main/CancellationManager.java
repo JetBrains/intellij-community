@@ -3,22 +3,13 @@ package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.decompiler.struct.StructClass;
 
 @ApiStatus.Experimental
 public interface CancellationManager {
   /**
    * @throws CanceledException if the process has been canceled.
    */
-  default void checkCanceled() throws CanceledException {
-    checkCanceled(null);
-  }
-
-  /**
-   * @throws CanceledException if the process has been canceled.
-   */
-  void checkCanceled(@Nullable StructClass classStruct) throws CanceledException;
+  void checkCanceled() throws CanceledException;
 
   /**
    * Called every time the body of a new method is started to be decompiled
@@ -59,7 +50,7 @@ public interface CancellationManager {
     }
 
     @Override
-    public void checkCanceled(StructClass classStruct) throws CanceledException {
+    public void checkCanceled() throws CanceledException {
       if (maxMilis <= 0 || startMilis <= 0) {
         return;
       }
