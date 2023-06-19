@@ -131,7 +131,6 @@ open class PluginAdvertiserServiceImpl(
         .mapNotNull { descriptorsById[it] }
         .filterNot { it.isEnabled }
         .filter { pluginManagerFilters.allowInstallingPlugin(it) }
-        .filterNot { it.isOnDemand }
         .toList()
 
       val suggestToInstall = if (plugins.isEmpty())
