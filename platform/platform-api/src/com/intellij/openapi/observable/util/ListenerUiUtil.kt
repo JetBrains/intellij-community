@@ -194,6 +194,16 @@ fun JComponent.whenSizeChanged(parentDisposable: Disposable? = null, listener: (
   })
 }
 
+inline fun <reified T> Component.whenPropertyChanged(
+  propertyName: String,
+  parentDisposable: Disposable? = null,
+  crossinline listener: (T) -> Unit
+) {
+  addPropertyChangeListener(propertyName, parentDisposable) { event ->
+    listener(event.newValue as T)
+  }
+}
+
 @Experimental
 fun <T> JComboBox<T>.whenItemSelectedFromUi(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
   whenPopupMenuWillBecomeInvisible(parentDisposable) {
