@@ -15,7 +15,6 @@ import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.psi.PsiManager
@@ -31,7 +30,6 @@ import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.plugins.gradle.settings.GradleSettings
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 
@@ -254,13 +252,15 @@ class KotlinOnboardingJ2KSessionService(private val project: Project) : Disposab
     }
 
     private suspend fun getGradleVersion(): String? {
+        return null
+        /* cannot be done at this time due to dependency issues
         return readAction {
             val gradleSettings = GradleSettings.getInstance(project)
             project.guessProjectDir()?.path?.let {
                 val linkedSettings = gradleSettings.getLinkedProjectSettings(it)
                 linkedSettings?.resolveGradleVersion()?.version
             }
-        }
+        }*/
     }
 
     internal suspend fun getOrCreateSession(): KotlinOnboardingSession {
