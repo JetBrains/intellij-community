@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_18;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_20;
 
 public class JavadocCompletionInSnippetTest extends BasePlatformTestCase implements TestIndexingModeSupporter {
   private @NotNull IndexingMode myIndexingMode = IndexingMode.SMART;
@@ -36,7 +36,7 @@ public class JavadocCompletionInSnippetTest extends BasePlatformTestCase impleme
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_18;
+    return JAVA_20;
   }
 
   @Override

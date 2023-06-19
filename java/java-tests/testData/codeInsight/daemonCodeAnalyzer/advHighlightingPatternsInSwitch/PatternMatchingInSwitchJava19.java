@@ -41,7 +41,7 @@ class Main {
 
     // Dominance permits a guarded pattern to be followed by its unguarded form:
     switch (o) {
-      case Integer o1 && o1 != null:
+      case Integer o1 when o1 != null:
         System.out.println("num");
         break;
       case Integer i:
@@ -52,7 +52,7 @@ class Main {
         break;
     }
     str = switch (o) {
-      case Integer o1 && o1 != null -> "num";
+      case Integer o1 when o1 != null -> "num";
       case Integer i -> "int";
       default -> "def";
     };
@@ -61,7 +61,7 @@ class Main {
       case (Integer i):
         System.out.println("int");
         break;
-      case <error descr="Label is dominated by a preceding case label '(Integer i)'">Integer o1 && o1 != null</error>:
+      case <error descr="Label is dominated by a preceding case label '(Integer i)'">Integer o1 when o1 != null</error>:
         System.out.println("num");
         break;
       default:
@@ -70,15 +70,15 @@ class Main {
     }
     str = switch (o) {
       case (Integer i) -> "num";
-      case <error descr="Label is dominated by a preceding case label '(Integer i)'">Integer o1 && o1 != null</error> -> "int";
+      case <error descr="Label is dominated by a preceding case label '(Integer i)'">Integer o1 when o1 != null</error> -> "int";
       default -> "def";
     };
 
     switch (o) {
-      case (Integer o1 && o1 > 5):
+      case Integer o1 when o1 > 5:
         System.out.println("int");
         break;
-      case Integer o2 && o2 != null:
+      case Integer o2 when o2 != null:
         System.out.println("num");
         break;
       default:
@@ -86,16 +86,16 @@ class Main {
         break;
     }
     str = switch (o) {
-      case (Integer o1 && o1 > 5) -> "num";
-      case Integer o2 && o2 != null -> "int";
+      case Integer o1 when o1 > 5 -> "num";
+      case Integer o2 when o2 != null -> "int";
       default -> "def";
     };
 
     switch (o) {
-      case (Number i && false):
+      case Number i when Math.random() > 0.5:
         System.out.println("int");
         break;
-      case Integer o2 && o2 != null:
+      case Integer o2 when o2 != null:
         System.out.println("num");
         break;
       default:
@@ -103,16 +103,16 @@ class Main {
         break;
     }
     str = switch (o) {
-      case (Number i && false) -> "num";
-      case Integer o2 && o2 != null -> "int";
+      case Number i when Math.random() > 0.5 -> "num";
+      case Integer o2 when o2 != null -> "int";
       default -> "def";
     };
 
     switch (o) {
-      case (Integer i && true):
+      case Integer i when true:
         System.out.println("int");
         break;
-      case <error descr="Label is dominated by a preceding case label '(Integer i && true)'">(Integer o2 && o2 != null)</error>:
+      case <error descr="Label is dominated by a preceding case label 'Integer i when true'">Integer o2 when o2 != null</error>:
         System.out.println("num");
         break;
       default:
@@ -120,62 +120,62 @@ class Main {
         break;
     }
     str = switch (o) {
-      case (Integer i && true) -> "num";
-      case <error descr="Label is dominated by a preceding case label '(Integer i && true)'">(Integer o2 && o2 != null)</error> -> "int";
+      case Integer i when true -> "num";
+      case <error descr="Label is dominated by a preceding case label 'Integer i when true'">Integer o2 when o2 != null</error> -> "int";
       default -> "def";
     };
 
     // A switch label that has a pattern case label element p that is total for the type of the selector expression
     // of the enclosing switch statement or switch expression dominates a switch label that has a null case label element.
     switch (ii) {
-      case Object obj:
+      case <error descr="'switch' has both an unconditional pattern and a default label">Object obj</error>:
         System.out.println("int");
         break;
-      case <error descr="Label is dominated by a preceding case label 'Object obj'">null</error>:
+      case null:
         System.out.println("num");
         break;
-      default:
+      <error descr="'switch' has both an unconditional pattern and a default label">default</error>:
         System.out.println("def");
         break;
     }
     str = switch (ii) {
-      case Object obj -> "num";
-      case <error descr="Label is dominated by a preceding case label 'Object obj'">null</error> -> "int";
-      default -> "def";
+      case <error descr="'switch' has both an unconditional pattern and a default label">Object obj</error> -> "num";
+      case null -> "int";
+      <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> "def";
     };
 
     switch (ii) {
-      case Object obj, <error descr="Label is dominated by a preceding case label 'Object obj'">null</error>:
+      case <error descr="'switch' has both an unconditional pattern and a default label">Object obj</error>, null:
         System.out.println("int");
         break;
-      default:
+      <error descr="'switch' has both an unconditional pattern and a default label">default</error>:
         System.out.println("def");
         break;
     }
     str = switch (ii) {
-      case Object obj, <error descr="Label is dominated by a preceding case label 'Object obj'">null</error> -> "int";
-      default -> "def";
+      case <error descr="'switch' has both an unconditional pattern and a default label">Object obj</error>, null -> "int";
+      <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> "def";
     };
 
     switch (ii) {
-      case (Integer i && true):
+      case <error descr="'switch' has both an unconditional pattern and a default label">Integer i when true</error>:
         System.out.println("int");
         break;
-      case <error descr="Label is dominated by a preceding case label '(Integer i && true)'">null</error>:
+      case null:
         System.out.println("num");
         break;
-      default:
+      <error descr="'switch' has both an unconditional pattern and a default label">default</error>:
         System.out.println("def");
         break;
     }
     str = switch (ii) {
-      case (Integer i && true) -> "int";
-      case <error descr="Label is dominated by a preceding case label '(Integer i && true)'">null</error> -> "int";
-      default -> "def";
+      case <error descr="'switch' has both an unconditional pattern and a default label">Integer i when true</error> -> "int";
+      case null -> "int";
+      <error descr="'switch' has both an unconditional pattern and a default label">default</error> -> "def";
     };
 
     switch (ii) {
-      case ((Integer i && false)):
+      case Integer i when Math.random() > 0.5:
         System.out.println("int");
         break;
       case null:
@@ -186,7 +186,7 @@ class Main {
         break;
     }
     str = switch (ii) {
-      case ((Integer i && false)) -> "int";
+      case Integer i when Math.random() > 0.5 -> "int";
       case null -> "int";
       default -> "def";
     };
@@ -212,13 +212,13 @@ class Main {
       case <error descr="Label is dominated by a preceding case label 'Day dd'">MONDAY</error>: break;
     }
     str = switch (ii) {
-      case (Integer in && in != null) -> "";
-      case <error descr="Label is dominated by a preceding case label '(Integer in && in != null)'">1</error> -> "";
+      case Integer in when in != null -> "";
+      case <error descr="Label is dominated by a preceding case label 'Integer in when in != null'">1</error> -> "";
       case default -> "";
     };
     switch (d) {
-      case (Day dd && true): break;
-      case  <error descr="Label is dominated by a preceding case label '(Day dd && true)'">MONDAY</error>: break;
+      case Day dd when true: break;
+      case  <error descr="Label is dominated by a preceding case label 'Day dd when true'">MONDAY</error>: break;
     }
   }
 
@@ -231,13 +231,13 @@ class Main {
     // If the type of the selector expression is an enum type E
     String str;
     switch (d) {
-      case Day dd && dd != null:
+      case Day dd when dd != null:
         System.out.println("ok");
-      case <error descr="Label is dominated by a preceding case label 'Day dd && dd != null'">MONDAY</error>:
+      case <error descr="Label is dominated by a preceding case label 'Day dd when dd != null'">MONDAY</error>:
         System.out.println("mon");
     };
     switch (<error descr="'switch' statement does not cover all possible input values">d</error>) {
-      case Day dd && dd != null:
+      case Day dd when dd != null:
         System.out.println("ok");
     };
 
@@ -252,13 +252,13 @@ class Main {
     };
 
     switch (d) {
-      case <error descr="'switch' has both an unconditional pattern and a default label">((Day dd && true))</error>:
+      case <error descr="'switch' has both an unconditional pattern and a default label">Day dd when true</error>:
         System.out.println("ok");
       <error descr="'switch' has both an unconditional pattern and a default label">default</error>: // blah blah blah
         System.out.println("mon");
     };
     switch (d) {
-      case ((Day dd && dd != null)):
+      case Day dd when dd != null:
         System.out.println("ok");
       default:
         System.out.println("mon");
@@ -279,7 +279,7 @@ class Main {
     str = switch(i) {
       case Sub1 s1 -> "ok";
       case Sub2 s2 -> "ok";
-      case Sub3 s3 && true -> "ok";
+      case Sub3 s3 when true -> "ok";
     };
 
     switch (<error descr="'switch' statement does not cover all possible input values">i</error>) {
@@ -318,21 +318,21 @@ class Main {
     switch (<error descr="'switch' statement does not cover all possible input values">i</error>) {
       case Sub1 s1:
         break;
-      case (Sub2 s2 && false):
+      case Sub2 s2 when Math.random() > 0.5:
         break;
       case Sub3 s3:
         break;
     }
     str = switch(<error descr="'switch' expression does not cover all possible input values">i</error>) {
-      case I in && in != null -> "ok";
+      case I in when in != null -> "ok";
     };
 
     switch (i3) {
-      case (Sub9 s && true):
+      case Sub9 s when true:
         break;
       case Sub11 s:
         break;
-      case Sub12 s && true:
+      case Sub12 s when true:
         break;
     }
 

@@ -2,17 +2,12 @@
 package com.siyeh.ig.fixes.style;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.style.EscapedSpaceInspection;
-import com.siyeh.ig.style.LiteralAsArgToStringEqualsInspection;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_17;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_20;
 
 public class EscapedSpaceInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
@@ -22,7 +17,7 @@ public class EscapedSpaceInspectionTest extends LightQuickFixParameterizedTestCa
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_20;
   }
 
   @Override

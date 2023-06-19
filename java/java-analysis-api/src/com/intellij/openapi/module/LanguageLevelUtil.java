@@ -80,9 +80,7 @@ public final class LanguageLevelUtil {
     ourPresentableShortMessage.put(LanguageLevel.JDK_15, "16");
     ourPresentableShortMessage.put(LanguageLevel.JDK_16, "17");
     ourPresentableShortMessage.put(LanguageLevel.JDK_17, "18");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_17_PREVIEW, "18");
     ourPresentableShortMessage.put(LanguageLevel.JDK_18, "19");
-    ourPresentableShortMessage.put(LanguageLevel.JDK_18_PREVIEW, "19");
     ourPresentableShortMessage.put(LanguageLevel.JDK_19, "20");
     ourPresentableShortMessage.put(LanguageLevel.JDK_19_PREVIEW, "20");
   }

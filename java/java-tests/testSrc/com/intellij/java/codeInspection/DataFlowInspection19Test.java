@@ -5,16 +5,20 @@ import com.intellij.JavaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-public class DataFlowInspection17Test extends DataFlowInspectionTestCase {
+public class DataFlowInspection19Test extends DataFlowInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_19;
   }
 
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
+  }
+
+  public void testSuspiciousLabelElementsJava19() {
+    doTest();
   }
 
   public void testParameterNullabilityFromSwitch() {
