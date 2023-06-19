@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.platform.backend.navigation.NavigationRequest;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
@@ -275,6 +276,12 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     SMRootTestProxy root = getRoot();
     if (root == null) return null;
     return TestsUIUtil.getOpenFileDescriptor(this, root.myTestConsoleProperties);
+  }
+
+  @Override
+  public @Nullable NavigationRequest navigationRequest() {
+    Navigatable navigatable = getNavigatable();
+    return navigatable == null ? null : navigatable.navigationRequest();
   }
 
   @Override
