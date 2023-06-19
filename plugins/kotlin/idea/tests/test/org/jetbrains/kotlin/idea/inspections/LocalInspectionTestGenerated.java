@@ -17291,6 +17291,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("abstract.kt")
+                public void testAbstract() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/abstract.kt");
+                }
+
                 @TestMetadata("nonTrivialGet.kt")
                 public void testNonTrivialGet() throws Exception {
                     runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/default/nonTrivialGet.kt");
@@ -17329,6 +17334,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("abstract.kt")
+                public void testAbstract() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/abstract.kt");
+                }
+
                 @TestMetadata("nonTrivialGet.kt")
                 public void testNonTrivialGet() throws Exception {
                     runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/false/nonTrivialGet.kt");
@@ -17365,6 +17375,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public static class True extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("abstract.kt")
+                public void testAbstract() throws Exception {
+                    runTest("testData/inspectionsLocal/usePropertyAccessSyntax/reportNonTrivialAccessors/true/abstract.kt");
                 }
 
                 @TestMetadata("nonTrivialGet.kt")

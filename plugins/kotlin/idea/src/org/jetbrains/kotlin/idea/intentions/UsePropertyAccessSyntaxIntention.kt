@@ -13,6 +13,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.impl.compiled.ClsMethodImpl
 import org.jdom.Element
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -230,7 +231,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         val notProperties = inspection?.fqNameList?.toSet() ?: NotPropertiesService.getNotProperties(callExpression)
         if (function.shouldNotConvertToProperty(notProperties)) return null
 
-        if (inspection?.reportNonTrivialAccessors != true && function.hasMultipleStatements(callExpression.project)) return null
+        if (inspection?.reportNonTrivialAccessors != true && !function.isTrivialAccessor(callExpression.project)) return null
 
         val resolutionScope = callExpression.getResolutionScope(bindingContext, resolutionFacade)
 
@@ -294,14 +295,21 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
     private fun String.isSuitableAsPropertyAccessor(): Boolean =
         canBePropertyAccessor(this) && commonGetterLikePrefixes.none { prefix -> this.contains(prefix) }
 
-    private fun FunctionDescriptor.hasMultipleStatements(project: Project): Boolean {
-        val declarations = DescriptorToSourceUtilsIde.getAllDeclarations(project, targetDescriptor = this)
-        return declarations.any { it.hasMultipleStatements() }
+    private fun FunctionDescriptor.isTrivialAccessor(project: Project): Boolean {
+        val accessors = DescriptorToSourceUtilsIde.getAllDeclarations(project, targetDescriptor = this)
+        return accessors.all { it.isTrivialAccessor() }
     }
 
-    private fun PsiElement.hasMultipleStatements(): Boolean = when (this) {
-        is KtNamedFunction -> bodyBlockExpression?.statements.orEmpty().size > 1
-        is PsiMethod -> body?.statements.orEmpty().size > 1
+    // Accessor is considered trivial if it has exactly one statement
+    // Abstract methods are not trivial because they can be overridden by complex overrides
+    private fun PsiElement.isTrivialAccessor(): Boolean = when (this) {
+        is KtNamedFunction -> bodyBlockExpression?.statements.orEmpty().size == 1
+        is ClsMethodImpl -> {
+            sourceMirrorMethod?.body?.statements?.let { it.size == 1 }
+                ?: true // skip compiled methods for which we can't get the source code
+        }
+
+        is PsiMethod -> body?.statements.orEmpty().size == 1
         else -> false
     }
 
