@@ -47,7 +47,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
     companion object {
         fun useIRFragmentCompiler(): Boolean =
-            Registry.get("debugger.kotlin.evaluator.use.jvm.ir.backend").asBoolean()
+            Registry.get("debugger.kotlin.evaluator.use.new.jvm.ir.backend").asBoolean()
     }
 
     data class CompilationResult(
