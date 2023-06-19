@@ -7,7 +7,8 @@ external interface MermaidModule {
   @JsName("mermaidAPI")
   val api: MermaidApi
 
-  val startOnLoad: Boolean
+  var startOnLoad: Boolean
+
   val diagrams: dynamic
 
   // declare const render: (id: string, text: string, container?: Element) => Promise<RenderResult>;

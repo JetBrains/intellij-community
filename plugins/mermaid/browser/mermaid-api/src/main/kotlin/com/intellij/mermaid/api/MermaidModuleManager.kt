@@ -1,7 +1,5 @@
 package com.intellij.mermaid.api
 
-import kotlinx.coroutines.await
-
 /**
  * Handle loading of mermaid ES module.
  */
@@ -14,11 +12,10 @@ object MermaidModuleManager {
     return instance
   }
 
-  suspend fun loadModule(): MermaidModule {
+  fun loadModule(): MermaidModule {
     check(instance == null) { "Mermaid module should be loaded only once" }
-    // They are esm now
-    val module = import("mermaid/dist/mermaid.core.mjs").await()
-    val exports = module.default.unsafeCast<MermaidModule>()
+    val exports = RawMermaidModule.default
+    exports.startOnLoad = false
     instance = exports
     return exports
   }
