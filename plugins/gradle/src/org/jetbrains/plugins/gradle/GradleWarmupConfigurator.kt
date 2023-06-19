@@ -18,6 +18,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.progress.blockingContextScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -83,9 +84,9 @@ class GradleWarmupConfigurator : WarmupConfigurator {
     try {
       externalAnnotationsNotificationManager.addNotificationListener(externalAnnotationsProgressListener)
       progressManager.addNotificationListener(notificationListener)
-      importProjects(project)
-      notificationListener.waitForImportEnd()
-      externalAnnotationsProgressListener.waitForResolveExternalAnnotationEnd()
+      blockingContextScope {
+        importProjects(project)
+      }
     }
     finally {
       progressManager.removeNotificationListener(notificationListener)
@@ -148,26 +149,17 @@ class GradleWarmupConfigurator : WarmupConfigurator {
   }
 
   private class StateExternalAnnotationNotificationListener : ExternalAnnotationsProgressNotificationListener {
-    private val externalAnnotationsState = ConcurrentHashMap<ExternalAnnotationsTaskId, CompletableFuture<ExternalAnnotationsTaskId>>()
 
     override fun onStartResolve(id: ExternalAnnotationsTaskId) {
-      externalAnnotationsState[id] = CompletableFuture()
       LOG.info("Gradle resolving external annotations started ${id.projectId}")
     }
 
     override fun onFinishResolve(id: ExternalAnnotationsTaskId) {
-      val feature = externalAnnotationsState[id] ?: return
-      feature.complete(id)
       LOG.info("Gradle resolving external annotations completed ${id.projectId}")
-    }
-
-    fun waitForResolveExternalAnnotationEnd() {
-      externalAnnotationsState.values.forEach { it.get() }
     }
   }
 
   class StateNotificationListener(private val project: Project) : ExternalSystemTaskNotificationListenerAdapter() {
-    private val externalSystemState = ConcurrentHashMap<ExternalSystemTaskId, CompletableFuture<ExternalSystemTaskId>>()
 
     override fun onSuccess(id: ExternalSystemTaskId) {
       if (!id.isGradleProjectResolveTask()) return
@@ -184,8 +176,6 @@ class GradleWarmupConfigurator : WarmupConfigurator {
 
         override fun onFinalTasksFinished(projectPath: String?) {
           LOG.info("Gradle data import(final tasks) stage finished: ${id.ideProjectId}")
-          val future = externalSystemState[id] ?: return
-          future.complete(id)
         }
 
         override fun onFinalTasksStarted(projectPath: String?) {
@@ -194,8 +184,6 @@ class GradleWarmupConfigurator : WarmupConfigurator {
 
         override fun onImportFailed(projectPath: String?, t: Throwable) {
           LOG.info("Gradle data import stage finished with failure: ${id.ideProjectId}")
-          val future = externalSystemState[id] ?: return
-          future.completeExceptionally(IllegalStateException("Gradle project ${id.ideProjectId} import failed.", t))
         }
       })
     }
@@ -203,25 +191,16 @@ class GradleWarmupConfigurator : WarmupConfigurator {
     override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
       if (!id.isGradleProjectResolveTask()) return
       LOG.error("Gradle resolve stage finished with failure ${id.ideProjectId}", e)
-      val future = externalSystemState[id] ?: return
-      future.completeExceptionally(IllegalStateException("Gradle project ${id.ideProjectId} resolve failed.", e))
     }
 
     override fun onCancel(id: ExternalSystemTaskId) {
       if (!id.isGradleProjectResolveTask()) return
       LOG.error("Gradle resolve stage canceled ${id.ideProjectId}")
-      val future = externalSystemState[id] ?: return
-      future.completeExceptionally(IllegalStateException("Resolve of ${id.ideProjectId} was canceled"))
     }
 
     override fun onStart(id: ExternalSystemTaskId, workingDir: String) {
       if (!id.isGradleProjectResolveTask()) return
-      externalSystemState[id] = CompletableFuture()
       LOG.info("Gradle resolve stage started ${id.ideProjectId}, working dir: $workingDir")
-    }
-
-    fun waitForImportEnd() {
-      externalSystemState.values.forEach { it.get() }
     }
 
     private fun ExternalSystemTaskId.isGradleProjectResolveTask() = this.projectSystemId == GradleConstants.SYSTEM_ID &&
