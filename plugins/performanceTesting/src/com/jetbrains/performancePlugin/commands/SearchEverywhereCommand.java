@@ -85,6 +85,9 @@ public class SearchEverywhereCommand extends AbstractCommand {
           DataContext dataContext = DataManager.getInstance().getDataContext(focusedComponent);
           IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
           AnActionEvent actionEvent = AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_POPUP, null, dataContext);
+          if(actionEvent.getProject() == null) {
+            actionCallback.reject("Project is null");
+          }
           TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere_dialog_shown", dialogSpan -> {
             SearchEverywhereManager.getInstance(project).show(tabId.get(), "", actionEvent);
           });
