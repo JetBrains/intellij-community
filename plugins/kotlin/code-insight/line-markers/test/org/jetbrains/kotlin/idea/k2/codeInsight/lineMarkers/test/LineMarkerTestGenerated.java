@@ -358,6 +358,11 @@ public abstract class LineMarkerTestGenerated extends AbstractLineMarkerTest {
             performTest();
         }
 
+        @TestMetadata("WithJavaAnonymousInheritor.kt")
+        public void testWithJavaAnonymousInheritor() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("WithJavaInheritor.kt")
         public void testWithJavaInheritor() throws Exception {
             performTest();
