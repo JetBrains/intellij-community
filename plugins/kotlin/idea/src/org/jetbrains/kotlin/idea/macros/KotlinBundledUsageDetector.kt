@@ -39,10 +39,10 @@ class KotlinBundledUsageDetector(private val project: Project, private val cs: C
                 return
             }
 
-            val changes = event.getChanges(LibraryEntity::class.java).also { if (it.none()) return }
+            val changes = event.getChanges(LibraryEntity::class.java).ifEmpty { return }
 
             cs.launch {
-                val isDistUsedInLibraries = changes
+                val isDistUsedInLibraries = changes.asSequence()
                     .mapNotNull { it.newEntity }
                     .flatMap { it.roots }
                     .any { it.url.url.isStartsWithDistPrefix }

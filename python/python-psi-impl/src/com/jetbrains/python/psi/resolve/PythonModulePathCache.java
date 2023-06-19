@@ -17,8 +17,9 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 
 public final class PythonModulePathCache extends PythonPathCache implements Disposable {
@@ -61,7 +62,7 @@ public final class PythonModulePathCache extends PythonPathCache implements Disp
       if (!myModule.isDisposed()) {
         updateCacheForSdk(myModule);
       }
-      Iterable<EntityChange<ModuleEntity>> changes = SequencesKt.asIterable(event.getChanges(ModuleEntity.class));
+      List<EntityChange<ModuleEntity>> changes = event.getChanges(ModuleEntity.class);
       for (EntityChange<ModuleEntity> change : changes) {
         ModuleEntity entity = null;
         if (change instanceof EntityChange.Replaced) {

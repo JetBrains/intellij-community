@@ -178,7 +178,7 @@ class KotlinModuleStateTrackerProvider(val project: Project) : Disposable {
         }
 
         private fun handleLibraryChanges(event: VersionedStorageChange) {
-            val libraryEntities = event.getChanges(LibraryEntity::class.java).also { if (it.none()) return }
+            val libraryEntities = event.getChanges(LibraryEntity::class.java).ifEmpty { return }
             for (change in libraryEntities) {
                 when (change) {
                     is EntityChange.Added -> {}
@@ -197,7 +197,7 @@ class KotlinModuleStateTrackerProvider(val project: Project) : Disposable {
         }
 
         private fun handleModuleChanges(event: VersionedStorageChange) {
-            val moduleEntities = event.getChanges(ModuleEntity::class.java).also { if (it.none()) return }
+            val moduleEntities = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
             for (change in moduleEntities) {
                 when (change) {
                     is EntityChange.Added -> {}

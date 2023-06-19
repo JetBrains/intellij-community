@@ -18,7 +18,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -42,7 +41,7 @@ public class PackagePrefixIndex {
           map = myMap;
         }
         if (map != null) {
-          for (EntityChange<JavaSourceRootPropertiesEntity> change : SequencesKt.asIterable(event.getChanges(JavaSourceRootPropertiesEntity.class))) {
+          for (EntityChange<JavaSourceRootPropertiesEntity> change : event.getChanges(JavaSourceRootPropertiesEntity.class)) {
             JavaSourceRootPropertiesEntity oldEntity = change.getOldEntity();
             if (oldEntity != null) {
               updateMap(oldEntity, event.getStorageBefore(), (prefix, module) -> map.remove(prefix, module));

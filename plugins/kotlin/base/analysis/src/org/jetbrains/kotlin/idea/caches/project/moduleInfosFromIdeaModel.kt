@@ -183,7 +183,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
             val moduleChanges = event.getChanges(ModuleEntity::class.java)
             val sourceRootChanges = event.getChanges(SourceRootEntity::class.java)
 
-            if (moduleChanges.none() && sourceRootChanges.none()) {
+            if (moduleChanges.isEmpty() && sourceRootChanges.isEmpty()) {
                 return
             }
 
@@ -306,8 +306,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
         override fun modelChanged(event: VersionedStorageChange) {
             val storageBefore = event.storageBefore
             val storageAfter = event.storageAfter
-            val moduleChanges = event.getChanges(ModuleEntity::class.java)
-            if (moduleChanges.none()) return
+            val moduleChanges = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
 
             val outdatedModuleSdks: Set<Sdk> = moduleChanges.asSequence()
                 .mapNotNull { it.oldEntity }
