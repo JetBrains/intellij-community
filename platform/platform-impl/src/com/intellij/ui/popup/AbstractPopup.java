@@ -560,7 +560,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   @NotNull
-  public static Point defaultPointUnderneathOf(@NotNull Component aComponent) {
+  private static Point defaultPointUnderneathOf(@NotNull Component aComponent) {
     return new Point(JBUIScale.scale(2), aComponent.getHeight());
   }
 
