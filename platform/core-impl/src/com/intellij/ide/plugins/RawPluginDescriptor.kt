@@ -32,7 +32,6 @@ class RawPluginDescriptor {
   @JvmField internal var isUseIdeaClassLoader: Boolean = false
   @JvmField internal var isBundledUpdateAllowed: Boolean = false
   @JvmField internal var implementationDetail: Boolean = false
-  @ApiStatus.Experimental @JvmField internal var onDemand: Boolean = false
   @JvmField internal var isRestartRequired: Boolean = false
   @JvmField internal var isLicenseOptional: Boolean = false
 

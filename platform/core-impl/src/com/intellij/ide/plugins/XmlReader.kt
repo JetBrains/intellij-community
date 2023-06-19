@@ -35,7 +35,6 @@ import javax.xml.stream.events.XMLEvent
 
 @ApiStatus.Internal const val PACKAGE_ATTRIBUTE: String = "package"
 @ApiStatus.Internal const val IMPLEMENTATION_DETAIL_ATTRIBUTE: String = "implementation-detail"
-@ApiStatus.Experimental const val ON_DEMAND_ATTRIBUTE: String = "on-demand"
 
 private const val defaultXPointerValue = "xpointer(/idea-plugin/*)"
 
@@ -144,7 +143,6 @@ private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDe
       "use-idea-classloader" -> descriptor.isUseIdeaClassLoader = reader.getAttributeAsBoolean(i)
       "allow-bundled-update" -> descriptor.isBundledUpdateAllowed = reader.getAttributeAsBoolean(i)
       IMPLEMENTATION_DETAIL_ATTRIBUTE -> descriptor.implementationDetail = reader.getAttributeAsBoolean(i)
-      ON_DEMAND_ATTRIBUTE -> descriptor.onDemand = reader.getAttributeAsBoolean(i)
       "require-restart" -> descriptor.isRestartRequired = reader.getAttributeAsBoolean(i)
       "version" -> {
         // internalVersionString - why it is not used, but just checked?
