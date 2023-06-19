@@ -74,10 +74,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   static final String MUST_NOT_EXECUTE_INSIDE_READ_ACTION = "Must not execute inside read action";
-  static final String MUST_EXECUTE_INSIDE_READ_ACTION =
-    "Read access is allowed from inside read-action or Event Dispatch Thread (EDT) only (see Application.runReadAction())";
-  static final String MUST_EXECUTE_INSIDE_WRITE_ACTION =
-    "Write access is allowed inside write-action only (see Application.runWriteAction())";
+  static final String MUST_EXECUTE_INSIDE_READ_ACTION = "Read access is allowed from inside read-action or Event Dispatch Thread (EDT) only (see Application.runReadAction())";
+  static final String MUST_EXECUTE_INSIDE_WRITE_ACTION = "Write access is allowed inside write-action only (see Application.runWriteAction())";
   static final String MUST_EXECUTE_UNDER_EDT = "Access is allowed from Event Dispatch Thread (EDT) only";
   static final String MUST_NOT_EXECUTE_UNDER_EDT = "Access from Event Dispatch Thread (EDT) is not allowed";
 
@@ -976,8 +974,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     });
   }
 
-  private <T, E extends Throwable> T runWriteActionWithClass(@NotNull Class<?> clazz, @NotNull ThrowableComputable<T, E> computable)
-    throws E {
+  private <T, E extends Throwable> T runWriteActionWithClass(@NotNull Class<?> clazz, @NotNull ThrowableComputable<T, E> computable) throws E {
     startWrite(clazz);
     try {
       return computable.compute();
@@ -1432,30 +1429,16 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     boolean writeActionInProgress = isWriteActionInProgress();
     boolean writeAccessAllowed = isWriteAccessAllowed();
     return "Application"
-           +
-           (getContainerState().get() == ContainerState.COMPONENT_CREATED ? "" : " (containerState " + getContainerStateName() + ") ")
-           +
-           (isUnitTestMode() ? " (unit test)" : "")
-           +
-           (isInternal() ? " (internal)" : "")
-           +
-           (isHeadlessEnvironment() ? " (headless)" : "")
-           +
-           (isCommandLine() ? " (command line)" : "")
-           +
-           (writeActionPending || writeActionInProgress || writeAccessAllowed ? " (WA" +
-                                                                                (writeActionPending ? " pending" : "") +
-                                                                                (writeActionInProgress ? " inProgress" : "") +
-                                                                                (writeAccessAllowed ? " allowed" : "") +
-                                                                                ")" : "")
-           +
-           (isReadAccessAllowed() ? " (RA allowed)" : "")
-           +
-           (StartupUtil.isImplicitReadOnEDTDisabled() ? " (IR on EDT disabled)" : "")
-           +
-           (isInImpatientReader() ? " (impatient reader)" : "")
-           +
-           (isExitInProgress() ? " (exit in progress)" : "")
+           +(getContainerState().get() == ContainerState.COMPONENT_CREATED ? "" : " (containerState " + getContainerStateName() + ") ")
+           + (isUnitTestMode() ? " (unit test)" : "")
+           + (isInternal() ? " (internal)" : "")
+           + (isHeadlessEnvironment() ? " (headless)" : "")
+           + (isCommandLine() ? " (command line)" : "")
+           + (writeActionPending || writeActionInProgress || writeAccessAllowed ? " (WA" + (writeActionPending ? " pending" : "") + (writeActionInProgress ? " inProgress" : "") + (writeAccessAllowed ? " allowed" : "") + ")" : "")
+           + (isReadAccessAllowed() ? " (RA allowed)" : "")
+           + (StartupUtil.isImplicitReadOnEDTDisabled() ? " (IR on EDT disabled)" : "")
+           + (isInImpatientReader() ? " (impatient reader)" : "")
+           + (isExitInProgress() ? " (exit in progress)" : "")
       ;
   }
 
