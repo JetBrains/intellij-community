@@ -11,7 +11,7 @@ object URIUtil {
 
   fun normalizeAndValidateHttpUri(uri: String): String {
     val normalized = addHttpsSchemaIfMissing(uri).removeSuffix("/")
-    require(uri.startsWith("http")) { CollaborationToolsBundle.message("login.server.invalid") }
+    require(normalized.startsWith("http")) { CollaborationToolsBundle.message("login.server.invalid") }
     URI.create(normalized)
     return normalized
   }

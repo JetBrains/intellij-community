@@ -54,7 +54,7 @@ class TokenLoginInputPanelFactory(
           .validationOnApply {
             when {
               it.text.isBlank() -> error(CollaborationToolsBundle.message("login.server.empty"))
-              !isValidServerUri(it.text) -> error(CollaborationToolsBundle.message("login.server.invalid"))
+              !URIUtil.isValidHttpUri(it.text) -> error(CollaborationToolsBundle.message("login.server.invalid"))
               else -> null
             }
           }
@@ -95,16 +95,6 @@ class TokenLoginInputPanelFactory(
   }
 
   companion object {
-    private fun isValidServerUri(uri: String): Boolean {
-      return try {
-        URIUtil.normalizeAndValidateHttpUri(uri)
-        true
-      }
-      catch (e: Throwable) {
-        false
-      }
-    }
-
     private fun SingleValueModel<Boolean>.toComponentPredicate(defaultState: Boolean = true) = object : ComponentPredicate() {
       override fun addListener(listener: (Boolean) -> Unit) {
         this@toComponentPredicate.addListener {
