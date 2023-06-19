@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AppUIUtil
-import com.intellij.util.ExceptionUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownUsageCollector.Companion.RUNNER_EXECUTED
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
