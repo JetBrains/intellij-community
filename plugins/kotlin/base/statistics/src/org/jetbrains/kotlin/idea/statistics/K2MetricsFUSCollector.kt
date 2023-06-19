@@ -14,11 +14,7 @@ class K2MetricsFUSCollector : ApplicationUsagesCollector() {
         return Companion.group
     }
     override fun getMetrics(): Set<MetricEvent> {
-        val metrics = HashSet<MetricEvent>()
-
-        metrics.add(isK2EnabledEvent.metric(isK2Plugin()))
-
-        return metrics
+        return setOf(isK2EnabledEvent.metric(isK2Plugin()))
     }
 
     companion object {
