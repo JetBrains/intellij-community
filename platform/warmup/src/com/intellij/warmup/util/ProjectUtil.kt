@@ -4,6 +4,7 @@ package com.intellij.warmup.util
 import com.intellij.conversion.ConversionListener
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
+import com.intellij.ide.CommandLineProgressReporterElement
 import com.intellij.ide.impl.*
 import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.openapi.application.EDT
@@ -21,6 +22,7 @@ import com.intellij.util.asSafely
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.warmup.impl.WarmupConfiguratorOfCLIConfigurator
+import com.intellij.warmup.impl.getCommandLineReporter
 import kotlinx.coroutines.*
 import java.nio.file.Path
 import java.util.*
@@ -188,7 +190,9 @@ private suspend fun callProjectConfigurators(
       durationStep(fraction, "Configurator ${configuration.configuratorPresentableName} is in action..." /* NON-NLS */) {
         runTaskAndLogTime("Configure " + configuration.configuratorPresentableName) {
           try {
-            action(configuration)
+            withContext(CommandLineProgressReporterElement(getCommandLineReporter(configuration.configuratorPresentableName))) {
+              action(configuration)
+            }
           } catch (e : CancellationException) {
             val message = (e.message ?: e.stackTraceToString()).lines().joinToString("\n") { "[${configuration.configuratorPresentableName}]: $it" }
             WarmupLogger.logInfo("Configurator '${configuration.configuratorPresentableName}' was cancelled with the following outcome:\n$message")

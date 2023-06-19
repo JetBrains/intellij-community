@@ -13,7 +13,9 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
 
   override fun getDescription(): String = GradleBundle.message("gradle.commandline.description")
 
-  override fun configureEnvironment(context: ConfiguratorContext) = prepareGradleConfiguratorEnvironment(context)
+  override fun configureEnvironment(context: ConfiguratorContext) {
+    prepareGradleConfiguratorEnvironment(context.logger)
+  }
 
   override fun configureProject(project: Project, context: ConfiguratorContext): Unit = runBlockingCancellable {
     GradleWarmupConfigurator().runWarmup(project)

@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle
 
 import com.intellij.ide.CommandLineInspectionProgressReporter
-import com.intellij.ide.CommandLineInspectionProjectConfigurator
+import com.intellij.ide.CommandLineProgressReporterElement
 import com.intellij.ide.environment.EnvironmentService
 import com.intellij.ide.impl.ProjectOpenKeyProvider
 import com.intellij.ide.warmup.WarmupConfigurator
@@ -37,6 +37,7 @@ import org.jetbrains.plugins.gradle.startup.GradleProjectSettingsUpdater
 import java.io.BufferedWriter
 import java.io.FileWriter
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.coroutineContext
 
 
 private val LOG = logger<GradleCommandLineProjectConfigurator>()
@@ -54,7 +55,10 @@ class GradleWarmupConfigurator : WarmupConfigurator {
 
   override val configuratorPresentableName: String = "gradle"
 
-  override suspend fun prepareEnvironment(projectPath: Path) = prepareGradleConfiguratorEnvironment(null)
+  override suspend fun prepareEnvironment(projectPath: Path) {
+    val reporter = coroutineContext[CommandLineProgressReporterElement.Key]
+    prepareGradleConfiguratorEnvironment(reporter?.reporter)
+  }
 
   override suspend fun runWarmup(project: Project): Boolean {
     val basePath = project.basePath ?: return false
@@ -255,12 +259,14 @@ class GradleWarmupConfigurator : WarmupConfigurator {
   }
 }
 
-internal fun prepareGradleConfiguratorEnvironment(context: CommandLineInspectionProjectConfigurator.ConfiguratorContext?) = context.run {
+internal fun prepareGradleConfiguratorEnvironment(logger : CommandLineInspectionProgressReporter?)  {
   Registry.get(DISABLE_GRADLE_AUTO_IMPORT).setValue(true)
   Registry.get(DISABLE_GRADLE_JDK_FIX).setValue(true)
   Registry.get(DISABLE_ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY).setValue(true)
   Registry.get(DISABLE_UPDATE_ANDROID_SDK_LOCAL_PROPERTIES).setValue(true)
   val progressManager = ExternalSystemProgressNotificationManager.getInstance()
-  progressManager.addNotificationListener(GradleWarmupConfigurator.LoggingNotificationListener(context?.logger))
+  if (logger != null) {
+    progressManager.addNotificationListener(GradleWarmupConfigurator.LoggingNotificationListener(logger))
+  }
   Unit
 }

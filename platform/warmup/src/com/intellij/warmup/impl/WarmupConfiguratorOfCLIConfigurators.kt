@@ -47,6 +47,11 @@ internal class WarmupConfiguratorOfCLIConfigurator(val delegate: CommandLineInsp
     get() = delegate.name
 }
 
+internal fun getCommandLineReporter(sectionName: String): CommandLineInspectionProgressReporter = object : CommandLineInspectionProgressReporter {
+  override fun reportError(message: String?) = message?.let { WarmupLogger.logInfo("[$sectionName]: $it") } ?: Unit
+
+  override fun reportMessage(minVerboseLevel: Int, message: String?) = message?.let { WarmupLogger.logInfo("[$sectionName]: $it") } ?: Unit
+}
 
 suspend fun produceConfigurationContext(projectDir: Path?, name: String): CommandLineInspectionProjectConfigurator.ConfiguratorContext {
   val reporter = coroutineContext.rawProgressReporter
@@ -54,12 +59,9 @@ suspend fun produceConfigurationContext(projectDir: Path?, name: String): Comman
     logger<WarmupConfigurator>().warn("No ProgressReporter installed to the coroutine context. Message reporting is disabled")
   }
   return object : CommandLineInspectionProjectConfigurator.ConfiguratorContext {
+    val reporter = getCommandLineReporter(name)
 
-    override fun getLogger(): CommandLineInspectionProgressReporter = object : CommandLineInspectionProgressReporter {
-      override fun reportError(message: String?) = message?.let { WarmupLogger.logInfo("[$name]: $it") } ?: Unit
-
-      override fun reportMessage(minVerboseLevel: Int, message: String?) = message?.let { WarmupLogger.logInfo("[$name]: $it") } ?: Unit
-    }
+    override fun getLogger(): CommandLineInspectionProgressReporter = this.reporter
 
     /**
      * Copy-pasted from [com.intellij.openapi.progress.RawProgressReporterIndicator]. ProgressIndicator will be deprecated,
