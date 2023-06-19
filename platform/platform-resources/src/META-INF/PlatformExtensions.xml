@@ -330,6 +330,32 @@
 
     <editorTabTitleProvider implementation="com.intellij.diff.editor.DiffEditorTabTitleProvider"/>
 
+    <!-- combined diff editor: UP, DOWN, LEFT, RIGHT -->
+    <editorActionHandler action="EditorUp" id="combinedDiffUp" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorUpHandler"/>
+    <editorActionHandler action="EditorDown" id="combinedDiffDown" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorDownHandler"/>
+    <editorActionHandler action="EditorLeft" id="combinedDiffLeft" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorLeftHandler"/>
+    <editorActionHandler action="EditorRight" id="combinedDiffRight" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorRightHandler"/>
+
+    <!-- combined diff editor: UP, DOWN, LEFT, RIGHT with selection-->
+    <editorActionHandler action="EditorUpWithSelection" id="combinedDiffUpWithSelection" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorUpWithSelectionHandler"/>
+    <editorActionHandler action="EditorDownWithSelection" id="combinedDiffDownWithSelection" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorDownWithSelectionHandler"/>
+    <editorActionHandler action="EditorLeftWithSelection" id="combinedDiffLeftWithSelection" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorLeftHandler"/>
+    <editorActionHandler action="EditorRightWithSelection" id="combinedDiffRightWithSelection" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorRightHandler"/>
+
+    <!-- combined diff editor: PageUp, Page Down -->
+    <editorActionHandler action="EditorPageUp" id="combinedDiffPageUp" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorPageUpHandler"/>
+    <editorActionHandler action="EditorPageDown" id="combinedDiffPageDown" order="last"
+                         implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorPageDownHandler"/>
+
     <applicationService serviceInterface="com.intellij.openapi.editor.ScrollPositionCalculator"
                         serviceImplementation="com.intellij.openapi.editor.impl.ScrollPositionCalculatorImpl"/>
 

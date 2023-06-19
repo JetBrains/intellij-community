@@ -122,7 +122,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
     UiNotifyConnector.doWhenFirstShown(
       getMainComponent(),
-      { combinedViewer.selectDiffBlock(blockToSelect, true) },
+      { combinedViewer.selectDiffBlock(blockToSelect, true, CombinedDiffViewer.ScrollPolicy.SCROLL_TO_BLOCK) },
       ourDisposable
     )
   }
