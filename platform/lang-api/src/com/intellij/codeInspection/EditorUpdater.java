@@ -3,8 +3,11 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -27,6 +30,15 @@ public interface EditorUpdater {
    */
   @Contract(value = "null -> null; !null -> !null")
   <E extends PsiElement> E getWritable(E e);
+
+  /**
+   * @param directory parent directory
+   * @param name file name
+   * @param type file type
+   * @param content initial file content
+   * @return a newly created editable non-physical file, whose changes will be added to the final command
+   */
+  @NotNull PsiFile createFile(@NotNull PsiDirectory directory, @NotNull String name, @NotNull FileType type, @NotNull String content);
   
   /**
    * Selects given element

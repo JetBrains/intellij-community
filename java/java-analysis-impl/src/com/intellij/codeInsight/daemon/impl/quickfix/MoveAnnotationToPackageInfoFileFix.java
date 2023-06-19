@@ -1,62 +1,59 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.daemon.impl.analysis;
+package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.EditorUpdater;
+import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MoveAnnotationToPackageInfoFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class MoveAnnotationToPackageInfoFileFix extends PsiUpdateModCommandAction<PsiPackageStatement> {
 
-  protected MoveAnnotationToPackageInfoFileFix(@NotNull PsiPackageStatement pkgStatement) {
+  public MoveAnnotationToPackageInfoFileFix(@NotNull PsiPackageStatement pkgStatement) {
     super(pkgStatement);
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    PsiPackageStatement packageStatement = (PsiPackageStatement)startElement;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiPackageStatement packageStatement) {
     PsiPackage aPackage = getPackage(packageStatement);
-    if (aPackage == null) return false;
+    if (aPackage == null) return null;
     PsiFile packageInfoFile = getPackageInfoFile(aPackage);
-    if (packageInfoFile == null) return true;
-    if (!PsiPackage.PACKAGE_INFO_FILE.equals(packageInfoFile.getName())) return false;
+    if (packageInfoFile == null) return Presentation.of(getFamilyName());
+    if (!PsiPackage.PACKAGE_INFO_FILE.equals(packageInfoFile.getName())) return null;
     PsiPackageStatement packageStatementInPackageInfoFile = PsiTreeUtil.findChildOfType(packageInfoFile, PsiPackageStatement.class);
-    if (packageStatementInPackageInfoFile == null) return false;
+    if (packageStatementInPackageInfoFile == null) return null;
     PsiModifierList missingAnnotations = findMissingAnnotations(packageStatement, packageStatementInPackageInfoFile);
-    return missingAnnotations != null && missingAnnotations.getAnnotations().length != 0;
+    if (missingAnnotations == null || missingAnnotations.getAnnotations().length == 0) return null;
+    return Presentation.of(getFamilyName());
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    PsiPackageStatement packageStatement = (PsiPackageStatement)startElement;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiPackageStatement packageStatement, @NotNull EditorUpdater updater) {
     PsiPackage aPackage = getPackage(packageStatement);
     if (aPackage == null) return;
     PsiFile packageInfoFile = getPackageInfoFile(aPackage);
     if (packageInfoFile == null) {
-      PsiFile createdFile = file.getContainingDirectory().createFile(PsiPackage.PACKAGE_INFO_FILE);
-      createdFile.add(packageStatement);
-      createdFile.navigate(true);
+      packageInfoFile = updater.createFile(packageStatement.getContainingFile().getOriginalFile().getContainingDirectory(),
+                                           PsiPackage.PACKAGE_INFO_FILE, JavaFileType.INSTANCE, "");
     }
-    else if (PsiPackage.PACKAGE_INFO_FILE.equals(packageInfoFile.getName())) {
-      PsiFile modifiedPackageInfoFile = moveAnnotationsAndGetFile(packageStatement, packageInfoFile);
+    if (PsiPackage.PACKAGE_INFO_FILE.equals(packageInfoFile.getName())) {
+      PsiFile modifiedPackageInfoFile = moveAnnotationsAndGetFile(packageStatement, updater.getWritable(packageInfoFile));
       if (modifiedPackageInfoFile != null) {
-        modifiedPackageInfoFile.navigate(true);
+        updater.moveTo(modifiedPackageInfoFile);
       }
+    }
+    deleteAnnotations(packageStatement);
+  }
+
+  private static void deleteAnnotations(@NotNull PsiPackageStatement packageStatement) {
+    for (PsiAnnotation annotation : packageStatement.getAnnotationList().getAnnotations()) {
+      annotation.delete();
     }
   }
 
@@ -68,7 +65,11 @@ public class MoveAnnotationToPackageInfoFileFix extends LocalQuickFixAndIntentio
   private static @Nullable PsiFile moveAnnotationsAndGetFile(@NotNull PsiPackageStatement packageStatement,
                                                              @NotNull PsiFile packageInfoFile) {
     PsiPackageStatement packageStatementInPackageInfoFile = PsiTreeUtil.findChildOfType(packageInfoFile, PsiPackageStatement.class);
-    if (packageStatementInPackageInfoFile == null) return null;
+    if (packageStatementInPackageInfoFile == null) {
+      PsiPackageStatement copy = (PsiPackageStatement)packageStatement.copy();
+      deleteAnnotations(copy);
+      packageStatementInPackageInfoFile = (PsiPackageStatement)packageInfoFile.addBefore(copy, packageInfoFile.getFirstChild());
+    }
     PsiModifierList missingAnnotations = findMissingAnnotations(packageStatement, packageStatementInPackageInfoFile);
     if (missingAnnotations == null) return null;
     PsiModifierList annotationList = packageStatementInPackageInfoFile.getAnnotationList();
@@ -78,6 +79,7 @@ public class MoveAnnotationToPackageInfoFileFix extends LocalQuickFixAndIntentio
     else {
       packageStatementInPackageInfoFile.addBefore(missingAnnotations, packageStatementInPackageInfoFile.getFirstChild());
     }
+    CodeStyleManager.getInstance(packageInfoFile.getProject()).reformat(packageInfoFile);
     return packageInfoFile;
   }
 
@@ -94,30 +96,6 @@ public class MoveAnnotationToPackageInfoFileFix extends LocalQuickFixAndIntentio
       })
       .forEach(PsiElement::delete);
     return copy.getAnnotationList();
-  }
-
-  @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiPackageStatement packageStatement = (PsiPackageStatement)myStartElement.getElement();
-    assert packageStatement != null;
-    PsiPackage aPackage = getPackage(packageStatement);
-    if (aPackage == null) return IntentionPreviewInfo.EMPTY;
-    PsiFile packageInfoFile = getPackageInfoFile(aPackage);
-    if (packageInfoFile == null) {
-      return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, PsiPackage.PACKAGE_INFO_FILE, "", packageStatement.getText());
-    }
-    else if (PsiPackage.PACKAGE_INFO_FILE.equals(packageInfoFile.getName())) {
-      PsiFile modifiedPackageInfoFile = moveAnnotationsAndGetFile(packageStatement, (PsiFile)packageInfoFile.copy());
-      if (modifiedPackageInfoFile == null) return IntentionPreviewInfo.EMPTY;
-      return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, PsiPackage.PACKAGE_INFO_FILE, packageInfoFile.getText(),
-                                                 modifiedPackageInfoFile.getText());
-    }
-    return IntentionPreviewInfo.EMPTY;
-  }
-
-  @Override
-  public @NotNull String getText() {
-    return getFamilyName();
   }
 
   @Override
