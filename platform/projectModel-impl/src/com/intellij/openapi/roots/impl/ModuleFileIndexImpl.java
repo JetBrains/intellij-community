@@ -16,6 +16,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
 import com.intellij.workspaceModel.core.fileIndex.impl.*;
+import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,29 +41,31 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
   @Override
   public boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
-    Collection<VirtualFile> roots = ReadAction.nonBlocking(() -> {
+    Pair<Collection<VirtualFile>, Collection<VirtualFile>> rootsPair = ReadAction.nonBlocking(() -> {
       Project project = myModule.getProject();
       if (project.isDisposed()) return null;
       WorkspaceFileIndexEx index = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
-      Collection<VirtualFile> files = new HashSet<>();
+      Collection<VirtualFile> recursiveRoots = new HashSet<>();
+      Collection<VirtualFile> nonRecursiveRoots = new SmartList<>();
       index.visitFileSets(new WorkspaceFileSetVisitor() {
         @Override
         public void visitIncludedRoot(@NotNull WorkspaceFileSet fileSet) {
-          if (fileSet instanceof WorkspaceFileSetWithCustomData<?> && isInContent((WorkspaceFileSetWithCustomData<?>)fileSet)) {
-            files.add(fileSet.getRoot());
+          if (!(fileSet instanceof WorkspaceFileSetWithCustomData<?>) || !isInContent((WorkspaceFileSetWithCustomData<?>)fileSet)) {
+            return;
+          }
+          VirtualFile root = fileSet.getRoot();
+          if (fileSet instanceof WorkspaceFileSetImpl && !((WorkspaceFileSetImpl)fileSet).getRecursive()) {
+            nonRecursiveRoots.add(fileSet.getRoot());
+          }
+          else {
+            recursiveRoots.add(root);
           }
         }
       });
-      return files;
+      return new Pair<>(recursiveRoots, nonRecursiveRoots);
     }).executeSynchronously();
-    Collection<VirtualFile> highestRoots = selectRootItems(roots, root -> root.getPath());
-
-    for (VirtualFile contentRoot : highestRoots) {
-      if (!iterateContentUnderDirectory(contentRoot, processor, filter)) {
-        return false;
-      }
-    }
-    return true;
+    Collection<VirtualFile> highestRecursiveRoots = selectRootItems(rootsPair.getFirst(), root -> root.getPath());
+    return iterateProvidedRootsOfContent(processor, filter, highestRecursiveRoots, rootsPair.getSecond());
   }
 
   private static <T> Collection<T> selectRootItems(Collection<T> items, Function<T, String> toPath) {//todo[lene] remove copy-paste

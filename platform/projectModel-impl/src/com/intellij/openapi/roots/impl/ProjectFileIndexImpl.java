@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -14,12 +14,16 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
 import com.intellij.workspaceModel.core.fileIndex.impl.*;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry;
+import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This is an internal class, {@link ProjectFileIndex} must be used instead.
@@ -36,21 +40,26 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
   @Override
   public boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
-    List<VirtualFile> roots = ReadAction.compute(() -> {
-      Set<VirtualFile> allRoots = new LinkedHashSet<>();
+    Pair<List<VirtualFile>, List<VirtualFile>> rootsPair = ReadAction.compute(() -> {
+      Set<VirtualFile> allRecursiveRoots = new LinkedHashSet<>();
+      List<VirtualFile> allNonRecursiveRoots = new ArrayList<>();
       myWorkspaceFileIndex.visitFileSets(fileSet -> {
         if (fileSet.getKind().isContent()) {
-          allRoots.add(fileSet.getRoot());
+          VirtualFile root = fileSet.getRoot();
+          if (fileSet instanceof WorkspaceFileSetImpl && !((WorkspaceFileSetImpl)fileSet).getRecursive()) {
+            allNonRecursiveRoots.add(root);
+          }
+          else {
+            allRecursiveRoots.add(root);
+          }
         }
       });
-      return ContainerUtil.filter(allRoots, root -> root.getParent() == null || myWorkspaceFileIndex.getContentFileSetRoot(root.getParent(), false) == null);
+      List<VirtualFile> recursiveRoots =
+        ContainerUtil.filter(allRecursiveRoots, root -> root.getParent() == null ||
+                                                        myWorkspaceFileIndex.getContentFileSetRoot(root.getParent(), false) == null);
+      return new Pair<>(recursiveRoots, allNonRecursiveRoots);
     });
-    for (VirtualFile root : roots) {
-      if (!iterateContentUnderDirectory(root, processor, filter)) {
-        return false;
-      }
-    }
-    return true;
+    return iterateProvidedRootsOfContent(processor, filter, rootsPair.getFirst(), rootsPair.getSecond());
   }
 
   @Override
