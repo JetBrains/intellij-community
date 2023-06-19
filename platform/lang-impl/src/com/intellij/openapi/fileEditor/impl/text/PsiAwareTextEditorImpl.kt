@@ -4,7 +4,6 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.documentation.render.DocRenderManager
 import com.intellij.codeInsight.documentation.render.DocRenderPassFactory
@@ -112,9 +111,6 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
       }
       state.placeholders?.takeIf { it.isNotEmpty() }?.let { placeholders ->
         applyPlaceholders(editor, placeholders)
-      }
-      if (psiFile != null && psiFile.isValid) {
-        DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
       }
     }
   }
