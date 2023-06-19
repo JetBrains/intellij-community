@@ -5,8 +5,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -22,7 +21,7 @@ interface ProjectModelTestEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ProjectModelTestEntity, WorkspaceEntity.Builder<ProjectModelTestEntity>, ObjBuilder<ProjectModelTestEntity> {
+  interface Builder : ProjectModelTestEntity, WorkspaceEntity.Builder<ProjectModelTestEntity> {
     override var entitySource: EntitySource
     override var info: String
     override var descriptor: Descriptor
@@ -31,7 +30,7 @@ interface ProjectModelTestEntity : WorkspaceEntity {
     override var contentRoot: ContentRootTestEntity?
   }
 
-  companion object : Type<ProjectModelTestEntity, Builder>() {
+  companion object : EntityType<ProjectModelTestEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

@@ -9,8 +9,7 @@ import java.util.UUID
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -30,7 +29,7 @@ interface SampleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SampleEntity, WorkspaceEntity.Builder<SampleEntity>, ObjBuilder<SampleEntity> {
+  interface Builder : SampleEntity, WorkspaceEntity.Builder<SampleEntity> {
     override var entitySource: EntitySource
     override var booleanProperty: Boolean
     override var stringProperty: String
@@ -42,7 +41,7 @@ interface SampleEntity : WorkspaceEntity {
     override var randomUUID: UUID?
   }
 
-  companion object : Type<SampleEntity, Builder>() {
+  companion object : EntityType<SampleEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -79,13 +78,13 @@ interface ChildSampleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildSampleEntity, WorkspaceEntity.Builder<ChildSampleEntity>, ObjBuilder<ChildSampleEntity> {
+  interface Builder : ChildSampleEntity, WorkspaceEntity.Builder<ChildSampleEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var parentEntity: SampleEntity?
   }
 
-  companion object : Type<ChildSampleEntity, Builder>() {
+  companion object : EntityType<ChildSampleEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -127,12 +126,12 @@ interface SecondSampleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SecondSampleEntity, WorkspaceEntity.Builder<SecondSampleEntity>, ObjBuilder<SecondSampleEntity> {
+  interface Builder : SecondSampleEntity, WorkspaceEntity.Builder<SecondSampleEntity> {
     override var entitySource: EntitySource
     override var intProperty: Int
   }
 
-  companion object : Type<SecondSampleEntity, Builder>() {
+  companion object : EntityType<SecondSampleEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -159,13 +158,13 @@ interface SourceEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SourceEntity, WorkspaceEntity.Builder<SourceEntity>, ObjBuilder<SourceEntity> {
+  interface Builder : SourceEntity, WorkspaceEntity.Builder<SourceEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var children: List<ChildSourceEntity>
   }
 
-  companion object : Type<SourceEntity, Builder>() {
+  companion object : EntityType<SourceEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -192,13 +191,13 @@ interface ChildSourceEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildSourceEntity, WorkspaceEntity.Builder<ChildSourceEntity>, ObjBuilder<ChildSourceEntity> {
+  interface Builder : ChildSourceEntity, WorkspaceEntity.Builder<ChildSourceEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var parentEntity: SourceEntity
   }
 
-  companion object : Type<ChildSourceEntity, Builder>() {
+  companion object : EntityType<ChildSourceEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -228,12 +227,12 @@ interface SymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SymbolicIdEntity, WorkspaceEntity.Builder<SymbolicIdEntity>, ObjBuilder<SymbolicIdEntity> {
+  interface Builder : SymbolicIdEntity, WorkspaceEntity.Builder<SymbolicIdEntity> {
     override var entitySource: EntitySource
     override var data: String
   }
 
-  companion object : Type<SymbolicIdEntity, Builder>() {
+  companion object : EntityType<SymbolicIdEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

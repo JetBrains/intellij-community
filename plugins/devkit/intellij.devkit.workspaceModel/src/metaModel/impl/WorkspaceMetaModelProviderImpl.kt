@@ -245,7 +245,7 @@ private object StandardNames {
 
 private val ClassDescriptor.isEntityInterface: Boolean
   get() {
-    return isInterface(this) && defaultType.isSubclassOf(FqName(com.intellij.platform.workspace.storage.Obj::class.java.name))
+    return isInterface(this) && defaultType.isSubclassOf(FqName(com.intellij.platform.workspace.storage.WorkspaceEntity::class.java.name))
   }
 
 private val ClassDescriptor.isEntityBuilderInterface: Boolean

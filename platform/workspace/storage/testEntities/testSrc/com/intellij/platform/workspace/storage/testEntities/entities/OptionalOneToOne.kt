@@ -8,8 +8,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 
 interface OptionalOneToOneParentEntity : WorkspaceEntity {
@@ -17,12 +16,12 @@ interface OptionalOneToOneParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OptionalOneToOneParentEntity, WorkspaceEntity.Builder<OptionalOneToOneParentEntity>, ObjBuilder<OptionalOneToOneParentEntity> {
+  interface Builder : OptionalOneToOneParentEntity, WorkspaceEntity.Builder<OptionalOneToOneParentEntity> {
     override var entitySource: EntitySource
     override var child: OptionalOneToOneChildEntity?
   }
 
-  companion object : Type<OptionalOneToOneParentEntity, Builder>() {
+  companion object : EntityType<OptionalOneToOneParentEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -48,13 +47,13 @@ interface OptionalOneToOneChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OptionalOneToOneChildEntity, WorkspaceEntity.Builder<OptionalOneToOneChildEntity>, ObjBuilder<OptionalOneToOneChildEntity> {
+  interface Builder : OptionalOneToOneChildEntity, WorkspaceEntity.Builder<OptionalOneToOneChildEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var parent: OptionalOneToOneParentEntity?
   }
 
-  companion object : Type<OptionalOneToOneChildEntity, Builder>() {
+  companion object : EntityType<OptionalOneToOneChildEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

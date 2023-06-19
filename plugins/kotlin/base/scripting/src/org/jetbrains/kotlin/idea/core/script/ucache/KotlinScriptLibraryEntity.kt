@@ -14,8 +14,7 @@ import java.io.Serializable
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 
 
 data class KotlinScriptLibraryRootTypeId(val name: String) : Serializable {
@@ -50,7 +49,7 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
 
     //region generated code
     @GeneratedCodeApiVersion(1)
-    interface Builder : KotlinScriptLibraryEntity, WorkspaceEntity.Builder<KotlinScriptLibraryEntity>, ObjBuilder<KotlinScriptLibraryEntity> {
+    interface Builder : KotlinScriptLibraryEntity, WorkspaceEntity.Builder<KotlinScriptLibraryEntity> {
         override var entitySource: EntitySource
         override var name: String
         override var roots: MutableList<KotlinScriptLibraryRoot>
@@ -58,7 +57,7 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
         override var usedInScripts: MutableSet<KotlinScriptId>
     }
 
-    companion object : Type<KotlinScriptLibraryEntity, Builder>() {
+    companion object : EntityType<KotlinScriptLibraryEntity, Builder>() {
         @JvmOverloads
         @JvmStatic
         @JvmName("create")

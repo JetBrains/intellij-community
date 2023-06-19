@@ -14,14 +14,14 @@ interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : JavaSourceRootPropertiesEntity, WorkspaceEntity.Builder<JavaSourceRootPropertiesEntity>, ObjBuilder<JavaSourceRootPropertiesEntity> {
+  interface Builder : JavaSourceRootPropertiesEntity, WorkspaceEntity.Builder<JavaSourceRootPropertiesEntity> {
     override var entitySource: EntitySource
     override var sourceRoot: SourceRootEntity
     override var generated: Boolean
     override var packagePrefix: String
   }
 
-  companion object : Type<JavaSourceRootPropertiesEntity, Builder>() {
+  companion object : EntityType<JavaSourceRootPropertiesEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -61,14 +61,14 @@ interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : JavaResourceRootPropertiesEntity, WorkspaceEntity.Builder<JavaResourceRootPropertiesEntity>, ObjBuilder<JavaResourceRootPropertiesEntity> {
+  interface Builder : JavaResourceRootPropertiesEntity, WorkspaceEntity.Builder<JavaResourceRootPropertiesEntity> {
     override var entitySource: EntitySource
     override var sourceRoot: SourceRootEntity
     override var generated: Boolean
     override var relativeOutputPath: String
   }
 
-  companion object : Type<JavaResourceRootPropertiesEntity, Builder>() {
+  companion object : EntityType<JavaResourceRootPropertiesEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

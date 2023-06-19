@@ -4,8 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -20,12 +19,12 @@ interface MainEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : MainEntity, WorkspaceEntity.Builder<MainEntity>, ObjBuilder<MainEntity> {
+  interface Builder : MainEntity, WorkspaceEntity.Builder<MainEntity> {
     override var entitySource: EntitySource
     override var x: String
   }
 
-  companion object : Type<MainEntity, Builder>() {
+  companion object : EntityType<MainEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -55,13 +54,13 @@ interface AttachedEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : AttachedEntity, WorkspaceEntity.Builder<AttachedEntity>, ObjBuilder<AttachedEntity> {
+  interface Builder : AttachedEntity, WorkspaceEntity.Builder<AttachedEntity> {
     override var entitySource: EntitySource
     override var ref: MainEntity
     override var data: String
   }
 
-  companion object : Type<AttachedEntity, Builder>() {
+  companion object : EntityType<AttachedEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

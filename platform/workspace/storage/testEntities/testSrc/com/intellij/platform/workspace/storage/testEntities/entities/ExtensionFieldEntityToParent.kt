@@ -4,8 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -21,14 +20,14 @@ interface MainEntityToParent : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : MainEntityToParent, WorkspaceEntity.Builder<MainEntityToParent>, ObjBuilder<MainEntityToParent> {
+  interface Builder : MainEntityToParent, WorkspaceEntity.Builder<MainEntityToParent> {
     override var entitySource: EntitySource
     override var x: String
     override var child: AttachedEntityToParent?
     override var childNullableParent: AttachedEntityToNullableParent?
   }
 
-  companion object : Type<MainEntityToParent, Builder>() {
+  companion object : EntityType<MainEntityToParent, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -54,12 +53,12 @@ interface AttachedEntityToParent : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : AttachedEntityToParent, WorkspaceEntity.Builder<AttachedEntityToParent>, ObjBuilder<AttachedEntityToParent> {
+  interface Builder : AttachedEntityToParent, WorkspaceEntity.Builder<AttachedEntityToParent> {
     override var entitySource: EntitySource
     override var data: String
   }
 
-  companion object : Type<AttachedEntityToParent, Builder>() {
+  companion object : EntityType<AttachedEntityToParent, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -93,12 +92,12 @@ interface AttachedEntityToNullableParent: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : AttachedEntityToNullableParent, WorkspaceEntity.Builder<AttachedEntityToNullableParent>, ObjBuilder<AttachedEntityToNullableParent> {
+  interface Builder : AttachedEntityToNullableParent, WorkspaceEntity.Builder<AttachedEntityToNullableParent> {
     override var entitySource: EntitySource
     override var data: String
   }
 
-  companion object : Type<AttachedEntityToNullableParent, Builder>() {
+  companion object : EntityType<AttachedEntityToNullableParent, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

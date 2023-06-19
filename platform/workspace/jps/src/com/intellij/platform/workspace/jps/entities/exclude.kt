@@ -6,20 +6,19 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 
 interface ExcludeUrlEntity : WorkspaceEntity {
   val url: VirtualFileUrl
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ExcludeUrlEntity, WorkspaceEntity.Builder<ExcludeUrlEntity>, ObjBuilder<ExcludeUrlEntity> {
+  interface Builder : ExcludeUrlEntity, WorkspaceEntity.Builder<ExcludeUrlEntity> {
     override var entitySource: EntitySource
     override var url: VirtualFileUrl
   }
 
-  companion object : Type<ExcludeUrlEntity, Builder>() {
+  companion object : EntityType<ExcludeUrlEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

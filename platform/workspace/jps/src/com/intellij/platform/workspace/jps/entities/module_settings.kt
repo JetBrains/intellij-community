@@ -6,8 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Abstract
 
 @Abstract
@@ -17,13 +16,13 @@ interface ModuleSettingsBase : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : ModuleSettingsBase> : ModuleSettingsBase, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  interface Builder<T : ModuleSettingsBase> : ModuleSettingsBase, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var name: String
     override var moduleId: ModuleId
   }
 
-  companion object : Type<ModuleSettingsBase, Builder<ModuleSettingsBase>>() {
+  companion object : EntityType<ModuleSettingsBase, Builder<ModuleSettingsBase>>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

@@ -10,8 +10,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -23,14 +22,14 @@ interface KeyParent : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : KeyParent, WorkspaceEntity.Builder<KeyParent>, ObjBuilder<KeyParent> {
+  interface Builder : KeyParent, WorkspaceEntity.Builder<KeyParent> {
     override var entitySource: EntitySource
     override var keyField: String
     override var notKeyField: String
     override var children: List<KeyChild>
   }
 
-  companion object : Type<KeyParent, Builder>() {
+  companion object : EntityType<KeyParent, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -59,13 +58,13 @@ interface KeyChild : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : KeyChild, WorkspaceEntity.Builder<KeyChild>, ObjBuilder<KeyChild> {
+  interface Builder : KeyChild, WorkspaceEntity.Builder<KeyChild> {
     override var entitySource: EntitySource
     override var data: String
     override var parentEntity: KeyParent
   }
 
-  companion object : Type<KeyChild, Builder>() {
+  companion object : EntityType<KeyChild, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

@@ -67,7 +67,7 @@ import com.intellij.platform.workspace.storage.annotations.Abstract
  */
 
 @Abstract
-interface WorkspaceEntity : Obj {
+interface WorkspaceEntity {
   val entitySource: EntitySource
 
   fun <E : WorkspaceEntity> createReference(): EntityReference<E>

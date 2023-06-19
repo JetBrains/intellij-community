@@ -21,7 +21,7 @@ interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SimpleSymbolicIdEntity, WorkspaceEntity.Builder<SimpleSymbolicIdEntity>, ObjBuilder<SimpleSymbolicIdEntity> {
+  interface Builder : SimpleSymbolicIdEntity, WorkspaceEntity.Builder<SimpleSymbolicIdEntity> {
     override var entitySource: EntitySource
     override var version: Int
     override var name: String

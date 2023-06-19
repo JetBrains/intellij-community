@@ -8,8 +8,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 
@@ -20,12 +19,12 @@ interface ParentChainEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentChainEntity, WorkspaceEntity.Builder<ParentChainEntity>, ObjBuilder<ParentChainEntity> {
+  interface Builder : ParentChainEntity, WorkspaceEntity.Builder<ParentChainEntity> {
     override var entitySource: EntitySource
     override var root: CompositeAbstractEntity?
   }
 
-  companion object : Type<ParentChainEntity, Builder>() {
+  companion object : EntityType<ParentChainEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -52,12 +51,12 @@ interface SimpleAbstractEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : SimpleAbstractEntity> : SimpleAbstractEntity, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  interface Builder<T : SimpleAbstractEntity> : SimpleAbstractEntity, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var parentInList: CompositeAbstractEntity?
   }
 
-  companion object : Type<SimpleAbstractEntity, Builder<SimpleAbstractEntity>>() {
+  companion object : EntityType<SimpleAbstractEntity, Builder<SimpleAbstractEntity>>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -80,14 +79,14 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : CompositeAbstractEntity> : CompositeAbstractEntity, SimpleAbstractEntity.Builder<T>, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  interface Builder<T : CompositeAbstractEntity> : CompositeAbstractEntity, SimpleAbstractEntity.Builder<T>, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var parentInList: CompositeAbstractEntity?
     override var children: List<SimpleAbstractEntity>
     override var parentEntity: ParentChainEntity?
   }
 
-  companion object : Type<CompositeAbstractEntity, Builder<CompositeAbstractEntity>>(SimpleAbstractEntity) {
+  companion object : EntityType<CompositeAbstractEntity, Builder<CompositeAbstractEntity>>(SimpleAbstractEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -105,14 +104,14 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
 interface CompositeChildAbstractEntity : CompositeAbstractEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : CompositeChildAbstractEntity, CompositeAbstractEntity.Builder<CompositeChildAbstractEntity>, WorkspaceEntity.Builder<CompositeChildAbstractEntity>, ObjBuilder<CompositeChildAbstractEntity> {
+  interface Builder : CompositeChildAbstractEntity, CompositeAbstractEntity.Builder<CompositeChildAbstractEntity>, WorkspaceEntity.Builder<CompositeChildAbstractEntity> {
     override var entitySource: EntitySource
     override var parentInList: CompositeAbstractEntity?
     override var children: List<SimpleAbstractEntity>
     override var parentEntity: ParentChainEntity?
   }
 
-  companion object : Type<CompositeChildAbstractEntity, Builder>(CompositeAbstractEntity) {
+  companion object : EntityType<CompositeChildAbstractEntity, Builder>(CompositeAbstractEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -136,12 +135,12 @@ fun MutableEntityStorage.modifyEntity(entity: CompositeChildAbstractEntity,
 interface SimpleChildAbstractEntity : SimpleAbstractEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SimpleChildAbstractEntity, SimpleAbstractEntity.Builder<SimpleChildAbstractEntity>, WorkspaceEntity.Builder<SimpleChildAbstractEntity>, ObjBuilder<SimpleChildAbstractEntity> {
+  interface Builder : SimpleChildAbstractEntity, SimpleAbstractEntity.Builder<SimpleChildAbstractEntity>, WorkspaceEntity.Builder<SimpleChildAbstractEntity> {
     override var entitySource: EntitySource
     override var parentInList: CompositeAbstractEntity?
   }
 
-  companion object : Type<SimpleChildAbstractEntity, Builder>(SimpleAbstractEntity) {
+  companion object : EntityType<SimpleChildAbstractEntity, Builder>(SimpleAbstractEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

@@ -8,8 +8,7 @@ import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -39,7 +38,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : EclipseProjectPropertiesEntity, WorkspaceEntity.Builder<EclipseProjectPropertiesEntity>, ObjBuilder<EclipseProjectPropertiesEntity> {
+  interface Builder : EclipseProjectPropertiesEntity, WorkspaceEntity.Builder<EclipseProjectPropertiesEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var variablePaths: Map<String, String>
@@ -51,7 +50,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
     override var srcPlace: Map<String, Int>
   }
 
-  companion object : Type<EclipseProjectPropertiesEntity, Builder>() {
+  companion object : EntityType<EclipseProjectPropertiesEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

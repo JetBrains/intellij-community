@@ -9,8 +9,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 
 interface ModuleTestEntity : WorkspaceEntityWithSymbolicId {
@@ -24,14 +23,14 @@ interface ModuleTestEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ModuleTestEntity, WorkspaceEntity.Builder<ModuleTestEntity>, ObjBuilder<ModuleTestEntity> {
+  interface Builder : ModuleTestEntity, WorkspaceEntity.Builder<ModuleTestEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var contentRoots: List<ContentRootTestEntity>
     override var facets: List<FacetTestEntity>
   }
 
-  companion object : Type<ModuleTestEntity, Builder>() {
+  companion object : EntityType<ModuleTestEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -58,14 +57,14 @@ interface ContentRootTestEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ContentRootTestEntity, WorkspaceEntity.Builder<ContentRootTestEntity>, ObjBuilder<ContentRootTestEntity> {
+  interface Builder : ContentRootTestEntity, WorkspaceEntity.Builder<ContentRootTestEntity> {
     override var entitySource: EntitySource
     override var module: ModuleTestEntity
     override var sourceRootOrder: SourceRootTestOrderEntity?
     override var sourceRoots: List<SourceRootTestEntity>
   }
 
-  companion object : Type<ContentRootTestEntity, Builder>() {
+  companion object : EntityType<ContentRootTestEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -90,13 +89,13 @@ interface SourceRootTestOrderEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SourceRootTestOrderEntity, WorkspaceEntity.Builder<SourceRootTestOrderEntity>, ObjBuilder<SourceRootTestOrderEntity> {
+  interface Builder : SourceRootTestOrderEntity, WorkspaceEntity.Builder<SourceRootTestOrderEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var contentRoot: ContentRootTestEntity
   }
 
-  companion object : Type<SourceRootTestOrderEntity, Builder>() {
+  companion object : EntityType<SourceRootTestOrderEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -123,13 +122,13 @@ interface SourceRootTestEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SourceRootTestEntity, WorkspaceEntity.Builder<SourceRootTestEntity>, ObjBuilder<SourceRootTestEntity> {
+  interface Builder : SourceRootTestEntity, WorkspaceEntity.Builder<SourceRootTestEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var contentRoot: ContentRootTestEntity
   }
 
-  companion object : Type<SourceRootTestEntity, Builder>() {
+  companion object : EntityType<SourceRootTestEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -169,14 +168,14 @@ interface FacetTestEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FacetTestEntity, WorkspaceEntity.Builder<FacetTestEntity>, ObjBuilder<FacetTestEntity> {
+  interface Builder : FacetTestEntity, WorkspaceEntity.Builder<FacetTestEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var moreData: String
     override var module: ModuleTestEntity
   }
 
-  companion object : Type<FacetTestEntity, Builder>() {
+  companion object : EntityType<FacetTestEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

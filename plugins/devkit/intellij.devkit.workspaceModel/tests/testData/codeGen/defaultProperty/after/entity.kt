@@ -18,7 +18,7 @@ interface DefaultFieldEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : DefaultFieldEntity, WorkspaceEntity.Builder<DefaultFieldEntity>, ObjBuilder<DefaultFieldEntity> {
+  interface Builder : DefaultFieldEntity, WorkspaceEntity.Builder<DefaultFieldEntity> {
     override var entitySource: EntitySource
     override var version: Int
     override var data: TestData

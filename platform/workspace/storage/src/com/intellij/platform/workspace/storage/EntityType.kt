@@ -1,17 +1,13 @@
 package com.intellij.platform.workspace.storage
 
-interface Obj
-
-interface ObjBuilder<T : Obj>
-
-abstract class Type<T : Obj, B : ObjBuilder<T>>(val base: Type<*, *>? = null) : Obj {
+abstract class EntityType<T : WorkspaceEntity, B : WorkspaceEntity.Builder<T>>(val base: EntityType<*, *>? = null) {
     var open: Boolean = false
     var abstract: Boolean = false
     var sealed: Boolean = false
 
     val inheritanceAllowed get() = open || sealed || abstract
 
-    val superTypes: List<Type<*, *>>
+    val superTypes: List<EntityType<*, *>>
       get() = base?.superTypes?.toMutableList()?.apply { add(base) } ?: emptyList()
 
 

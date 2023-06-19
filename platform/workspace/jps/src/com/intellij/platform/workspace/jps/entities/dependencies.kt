@@ -10,8 +10,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 import java.io.Serializable
 
@@ -29,7 +28,7 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : LibraryEntity, WorkspaceEntity.Builder<LibraryEntity>, ObjBuilder<LibraryEntity> {
+  interface Builder : LibraryEntity, WorkspaceEntity.Builder<LibraryEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var tableId: LibraryTableId
@@ -39,7 +38,7 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
     override var libraryProperties: LibraryPropertiesEntity?
   }
 
-  companion object : Type<LibraryEntity, Builder>() {
+  companion object : EntityType<LibraryEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -76,14 +75,14 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : LibraryPropertiesEntity, WorkspaceEntity.Builder<LibraryPropertiesEntity>, ObjBuilder<LibraryPropertiesEntity> {
+  interface Builder : LibraryPropertiesEntity, WorkspaceEntity.Builder<LibraryPropertiesEntity> {
     override var entitySource: EntitySource
     override var library: LibraryEntity
     override var libraryType: String
     override var propertiesXmlTag: String?
   }
 
-  companion object : Type<LibraryPropertiesEntity, Builder>() {
+  companion object : EntityType<LibraryPropertiesEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -116,13 +115,13 @@ interface SdkEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SdkEntity, WorkspaceEntity.Builder<SdkEntity>, ObjBuilder<SdkEntity> {
+  interface Builder : SdkEntity, WorkspaceEntity.Builder<SdkEntity> {
     override var entitySource: EntitySource
     override var library: LibraryEntity
     override var homeUrl: VirtualFileUrl
   }
 
-  companion object : Type<SdkEntity, Builder>() {
+  companion object : EntityType<SdkEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

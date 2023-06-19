@@ -5,8 +5,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -16,12 +15,12 @@ interface ParentWithNullsOppositeMultiple : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentWithNullsOppositeMultiple, WorkspaceEntity.Builder<ParentWithNullsOppositeMultiple>, ObjBuilder<ParentWithNullsOppositeMultiple> {
+  interface Builder : ParentWithNullsOppositeMultiple, WorkspaceEntity.Builder<ParentWithNullsOppositeMultiple> {
     override var entitySource: EntitySource
     override var parentData: String
   }
 
-  companion object : Type<ParentWithNullsOppositeMultiple, Builder>() {
+  companion object : EntityType<ParentWithNullsOppositeMultiple, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -56,13 +55,13 @@ interface ChildWithNullsOppositeMultiple : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildWithNullsOppositeMultiple, WorkspaceEntity.Builder<ChildWithNullsOppositeMultiple>, ObjBuilder<ChildWithNullsOppositeMultiple> {
+  interface Builder : ChildWithNullsOppositeMultiple, WorkspaceEntity.Builder<ChildWithNullsOppositeMultiple> {
     override var entitySource: EntitySource
     override var childData: String
     override var parentEntity: ParentWithNullsOppositeMultiple?
   }
 
-  companion object : Type<ChildWithNullsOppositeMultiple, Builder>() {
+  companion object : EntityType<ChildWithNullsOppositeMultiple, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

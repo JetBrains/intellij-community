@@ -18,7 +18,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : JavaModuleSettingsEntity, WorkspaceEntity.Builder<JavaModuleSettingsEntity>, ObjBuilder<JavaModuleSettingsEntity> {
+  interface Builder : JavaModuleSettingsEntity, WorkspaceEntity.Builder<JavaModuleSettingsEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var inheritedCompilerOutput: Boolean
@@ -28,7 +28,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
     override var languageLevelId: String?
   }
 
-  companion object : Type<JavaModuleSettingsEntity, Builder>() {
+  companion object : EntityType<JavaModuleSettingsEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

@@ -4,8 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -21,13 +20,13 @@ interface MainEntityParentList : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : MainEntityParentList, WorkspaceEntity.Builder<MainEntityParentList>, ObjBuilder<MainEntityParentList> {
+  interface Builder : MainEntityParentList, WorkspaceEntity.Builder<MainEntityParentList> {
     override var entitySource: EntitySource
     override var x: String
     override var children: List<AttachedEntityParentList>
   }
 
-  companion object : Type<MainEntityParentList, Builder>() {
+  companion object : EntityType<MainEntityParentList, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -53,12 +52,12 @@ interface AttachedEntityParentList : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : AttachedEntityParentList, WorkspaceEntity.Builder<AttachedEntityParentList>, ObjBuilder<AttachedEntityParentList> {
+  interface Builder : AttachedEntityParentList, WorkspaceEntity.Builder<AttachedEntityParentList> {
     override var entitySource: EntitySource
     override var data: String
   }
 
-  companion object : Type<AttachedEntityParentList, Builder>() {
+  companion object : EntityType<AttachedEntityParentList, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

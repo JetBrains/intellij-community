@@ -12,8 +12,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 
 
 // Use "Generate Workspace Model Implementation" action once interface is updated.
@@ -28,13 +27,13 @@ interface KotlinScriptEntity: WorkspaceEntityWithSymbolicId {
 
     //region generated code
     @GeneratedCodeApiVersion(1)
-    interface Builder : KotlinScriptEntity, WorkspaceEntity.Builder<KotlinScriptEntity>, ObjBuilder<KotlinScriptEntity> {
+    interface Builder : KotlinScriptEntity, WorkspaceEntity.Builder<KotlinScriptEntity> {
         override var entitySource: EntitySource
         override var path: String
         override var dependencies: MutableSet<KotlinScriptLibraryId>
     }
 
-    companion object : Type<KotlinScriptEntity, Builder>() {
+    companion object : EntityType<KotlinScriptEntity, Builder>() {
         @JvmOverloads
         @JvmStatic
         @JvmName("create")
