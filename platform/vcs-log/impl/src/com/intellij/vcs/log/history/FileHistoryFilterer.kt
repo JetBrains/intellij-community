@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.*

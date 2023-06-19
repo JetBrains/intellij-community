@@ -6,8 +6,8 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.platform.diagnostic.telemetry.impl.use
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import io.opentelemetry.api.common.AttributeKey
@@ -44,7 +44,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
-import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries

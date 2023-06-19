@@ -9,9 +9,9 @@ import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.concurrency.JobLauncher
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.impl.computeWithSpan
-import com.intellij.platform.diagnostic.telemetry.impl.runWithSpan
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.EmptyProgressIndicator

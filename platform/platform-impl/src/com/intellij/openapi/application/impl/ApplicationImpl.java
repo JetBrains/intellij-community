@@ -36,7 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.psi.util.ReadActionCache;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.ui.ComponentUtil;

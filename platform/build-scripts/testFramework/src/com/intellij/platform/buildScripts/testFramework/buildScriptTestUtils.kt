@@ -3,7 +3,7 @@
 
 package com.intellij.platform.buildScripts.testFramework
 
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles

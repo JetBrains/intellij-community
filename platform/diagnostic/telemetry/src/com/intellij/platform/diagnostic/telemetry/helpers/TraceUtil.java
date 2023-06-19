@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.diagnostic.telemetry.impl;
+package com.intellij.platform.diagnostic.telemetry.helpers;
 
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.ThrowableConsumer;

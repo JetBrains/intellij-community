@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.diagnostic.telemetry.impl
+package com.intellij.platform.diagnostic.telemetry.helpers
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ThrowableNotNullFunction
@@ -9,8 +9,13 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.context.Context
+import io.opentelemetry.extension.kotlin.asContextElement
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 import java.util.function.Consumer
+import kotlin.coroutines.CoroutineContext
 
 inline fun <T> SpanBuilder.useWithScope(operation: (Span) -> T): T {
   val span = startSpan()
@@ -19,6 +24,24 @@ inline fun <T> SpanBuilder.useWithScope(operation: (Span) -> T): T {
   }
 }
 
+
+suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext, crossinline operation: suspend CoroutineScope.(Span) -> T): T {
+  val span = startSpan()
+  return withContext(Context.current().with(span).asContextElement() + context) {
+    span.use {
+      operation(span)
+    }
+  }
+}
+
+suspend inline fun <T> SpanBuilder.useWithScope2(crossinline operation: suspend (Span) -> T): T {
+  val span = startSpan()
+  return withContext(Context.current().with(span).asContextElement()) {
+    span.use {
+      operation(span)
+    }
+  }
+}
 
 fun runWithSpanSimple(tracer: IJTracer, spanName: String, operation: Runnable) {
   runWithSpan(tracer, spanName) { _ -> operation.run() }

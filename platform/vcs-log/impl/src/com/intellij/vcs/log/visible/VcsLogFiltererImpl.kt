@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.*

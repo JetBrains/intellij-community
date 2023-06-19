@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static git4idea.GitBranchesUsageCollector.*;
 import static git4idea.GitNotificationIdsHolder.CHECKOUT_ROLLBACK_ERROR;

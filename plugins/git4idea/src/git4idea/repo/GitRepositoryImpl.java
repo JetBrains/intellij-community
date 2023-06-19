@@ -28,7 +28,7 @@ import java.io.File;
 import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpan;
 import static com.intellij.util.ObjectUtils.notNull;
 import static git4idea.repo.GitRecentCheckoutBranches.collectRecentCheckoutBranches;
 

@@ -18,8 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpanAttribute;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpanSimple;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpanAttribute;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpanSimple;
 
 
 public class PerformanceTestInfo {

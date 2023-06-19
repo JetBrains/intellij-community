@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceUtil.runWithSpanThrows;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.runWithSpanThrows;
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
 @ApiStatus.Internal
