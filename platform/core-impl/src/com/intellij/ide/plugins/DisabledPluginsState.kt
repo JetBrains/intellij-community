@@ -120,8 +120,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       }
       logger.info(pluginIds.joinedPluginIds(if (enabled) "enable" else "disable"))
 
-      return (changed && saveDisabledPluginsAndInvalidate(disabled))
-        .or(EnabledOnDemandPluginsState.setEnabledState(descriptors, enabled))
+      return changed && saveDisabledPluginsAndInvalidate(disabled)
     }
 
     @JvmStatic
