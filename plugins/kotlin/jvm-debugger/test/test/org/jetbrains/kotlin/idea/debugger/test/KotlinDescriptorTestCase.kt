@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -49,7 +49,6 @@ import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import org.jetbrains.kotlin.idea.test.TestFiles.TestFileFactory
 import org.jetbrains.kotlin.idea.test.TestFiles.createTestFiles
-import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.ComparisonFailure
@@ -114,7 +113,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     var originalUseIrBackendForEvaluation = true
 
     private fun registerEvaluatorBackend() {
-        val useIrBackendForEvaluation = Registry.get("debugger.kotlin.evaluator.use.jvm.ir.backend")
+        val useIrBackendForEvaluation = Registry.get("debugger.kotlin.evaluator.use.new.jvm.ir.backend")
         originalUseIrBackendForEvaluation = useIrBackendForEvaluation.asBoolean()
         useIrBackendForEvaluation.setValue(
             fragmentCompilerBackend() == FragmentCompilerBackend.JVM_IR
@@ -122,7 +121,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     }
 
     private fun restoreEvaluatorBackend() {
-        Registry.get("debugger.kotlin.evaluator.use.jvm.ir.backend")
+        Registry.get("debugger.kotlin.evaluator.use.new.jvm.ir.backend")
             .setValue(originalUseIrBackendForEvaluation)
     }
 
