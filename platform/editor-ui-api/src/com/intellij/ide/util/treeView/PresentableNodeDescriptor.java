@@ -81,8 +81,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return updated;
   }
 
-  @NotNull
-  private PresentationData getUpdatedPresentation() {
+  private @NotNull PresentationData getUpdatedPresentation() {
     final var presentation = getPresentation().clone();
     presentation.clear();
     presentation.setBackground(computeBackgroundColor());
@@ -96,8 +95,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return presentation;
   }
 
-  @NotNull
-  protected PresentationData createPresentation() {
+  protected @NotNull PresentationData createPresentation() {
     return new PresentationData();
   }
 
@@ -125,14 +123,12 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
 
   protected abstract void update(@NotNull PresentationData presentation);
 
-  @NotNull
-  public final PresentationData getPresentation() {
+  public final @NotNull PresentationData getPresentation() {
     final var updatedPresentation = myUpdatedPresentation;
     return updatedPresentation == null ? getTemplatePresentation() : updatedPresentation;
   }
 
-  @NotNull
-  protected final PresentationData getTemplatePresentation() {
+  protected final @NotNull PresentationData getTemplatePresentation() {
     var templatePresentation = myTemplatePresentation;
     if (templatePresentation == null) {
       templatePresentation = createPresentation();
@@ -171,8 +167,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return false;
   }
 
-  @NotNull
-  public Color getHighlightColor() {
+  public @NotNull Color getHighlightColor() {
     return StartupUiUtil.isUnderDarcula() ? ColorUtil.shift(UIUtil.getTreeBackground(), 1.1) : UIUtil.getTreeBackground().brighter();
   }
 
@@ -235,8 +230,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
   }
 
   @ApiStatus.Internal
-  @Nullable
-  protected static String getColoredTextAsPlainText(PresentationData presentation) {
+  protected static @Nullable String getColoredTextAsPlainText(PresentationData presentation) {
     if (!presentation.getColoredText().isEmpty()) {
       StringBuilder result = new StringBuilder();
       for (ColoredFragment each : presentation.getColoredText()) {
