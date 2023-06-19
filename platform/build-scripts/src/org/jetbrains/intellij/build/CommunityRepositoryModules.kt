@@ -334,6 +334,7 @@ object CommunityRepositoryModules {
 
       // libs:
       spec.withProjectLibrary("layoutlib")
+      spec.withProjectLibrary("asm-tools")
 
       spec.withProjectLibrary("studio-analytics-proto") // This is to avoid this library leaking into project jars
       // :libs
