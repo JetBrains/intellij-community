@@ -73,7 +73,7 @@ public class ModCommandServiceImpl implements ModCommandService {
 
   @RequiresEdt
   @Override
-  public void execute(@NotNull Project project, @NotNull ModCommand command) {
+  public void executeInteractively(@NotNull Project project, @NotNull ModCommand command) {
     if (!ensureWritable(project, command)) return;
     doExecute(project, command, true);
   }
@@ -124,7 +124,7 @@ public class ModCommandServiceImpl implements ModCommandService {
     return true;
   }
 
-  private static <T extends @NotNull PsiElement> boolean executeChoose(@NotNull Project project, ModChooseTarget<@NotNull T> cht,
+  private <T extends @NotNull PsiElement> boolean executeChoose(@NotNull Project project, ModChooseTarget<@NotNull T> cht,
                                                                        boolean onTheFly) {
     String name = CommandProcessor.getInstance().getCurrentCommandName();
     var elements = cht.elements();
@@ -132,7 +132,7 @@ public class ModCommandServiceImpl implements ModCommandService {
     if (elements.isEmpty()) return false;
     T element = elements.get(0).element();
     if (elements.size() == 1 || !onTheFly) {
-      executeNextStep(project, nextStep, element, name);
+      executeNextStep(project, nextStep, element, name, onTheFly);
       return true;
     }
     VirtualFile file = element.getContainingFile().getVirtualFile();
@@ -144,7 +144,7 @@ public class ModCommandServiceImpl implements ModCommandService {
     Pass<T> callback = new Pass<>() {
       @Override
       public void pass(T t) {
-        executeNextStep(project, cht.nextStep(), t, name);
+        executeNextStep(project, cht.nextStep(), t, name, onTheFly);
       }
     };
     NotNullFunction<PsiElement, TextRange> ranger = e -> map.get(e).selection();
@@ -154,16 +154,16 @@ public class ModCommandServiceImpl implements ModCommandService {
     return true;
   }
 
-  private static <T extends @NotNull PsiElement> void executeNextStep(@NotNull Project project,
-                                                                      Function<? super T, ? extends ModCommand> nextStep,
-                                                                      T element, 
-                                                                      @Nullable @NlsContexts.Command String name) {
+  private <T extends @NotNull PsiElement> void executeNextStep(@NotNull Project project,
+                                                               Function<? super T, ? extends ModCommand> nextStep,
+                                                               T element,
+                                                               @Nullable @NlsContexts.Command String name, boolean onTheFly) {
     ReadAction.nonBlocking(() -> nextStep.apply(element))
       .finishOnUiThread(ModalityState.defaultModalityState(), next -> {
         if (name != null) {
-          CommandProcessor.getInstance().executeCommand(project, () -> next.execute(project), name, null);
+          CommandProcessor.getInstance().executeCommand(project, () -> doExecute(project, next, true), name, onTheFly);
         } else {
-          next.execute(project);
+          doExecute(project, next, onTheFly);
         }
       })
       .submit(AppExecutorUtil.getAppExecutorService());
