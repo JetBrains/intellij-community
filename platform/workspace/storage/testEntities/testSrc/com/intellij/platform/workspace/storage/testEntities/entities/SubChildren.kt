@@ -9,8 +9,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -23,13 +22,13 @@ interface ParentSubEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentSubEntity, WorkspaceEntity.Builder<ParentSubEntity>, ObjBuilder<ParentSubEntity> {
+  interface Builder : ParentSubEntity, WorkspaceEntity.Builder<ParentSubEntity> {
     override var entitySource: EntitySource
     override var parentData: String
     override var child: ChildSubEntity?
   }
 
-  companion object : Type<ParentSubEntity, Builder>() {
+  companion object : EntityType<ParentSubEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -58,13 +57,13 @@ interface ChildSubEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildSubEntity, WorkspaceEntity.Builder<ChildSubEntity>, ObjBuilder<ChildSubEntity> {
+  interface Builder : ChildSubEntity, WorkspaceEntity.Builder<ChildSubEntity> {
     override var entitySource: EntitySource
     override var parentEntity: ParentSubEntity
     override var child: ChildSubSubEntity?
   }
 
-  companion object : Type<ChildSubEntity, Builder>() {
+  companion object : EntityType<ChildSubEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -91,13 +90,13 @@ interface ChildSubSubEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildSubSubEntity, WorkspaceEntity.Builder<ChildSubSubEntity>, ObjBuilder<ChildSubSubEntity> {
+  interface Builder : ChildSubSubEntity, WorkspaceEntity.Builder<ChildSubSubEntity> {
     override var entitySource: EntitySource
     override var parentEntity: ChildSubEntity
     override var childData: String
   }
 
-  companion object : Type<ChildSubSubEntity, Builder>() {
+  companion object : EntityType<ChildSubSubEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

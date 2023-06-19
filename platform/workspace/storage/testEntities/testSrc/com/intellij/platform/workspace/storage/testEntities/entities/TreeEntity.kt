@@ -10,8 +10,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 
 
 interface TreeEntity : WorkspaceEntity {
@@ -22,14 +21,14 @@ interface TreeEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : TreeEntity, WorkspaceEntity.Builder<TreeEntity>, ObjBuilder<TreeEntity> {
+  interface Builder : TreeEntity, WorkspaceEntity.Builder<TreeEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var children: List<TreeEntity>
     override var parentEntity: TreeEntity?
   }
 
-  companion object : Type<TreeEntity, Builder>() {
+  companion object : EntityType<TreeEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

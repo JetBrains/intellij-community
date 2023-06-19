@@ -8,8 +8,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -21,12 +20,12 @@ interface ParentAbEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentAbEntity, WorkspaceEntity.Builder<ParentAbEntity>, ObjBuilder<ParentAbEntity> {
+  interface Builder : ParentAbEntity, WorkspaceEntity.Builder<ParentAbEntity> {
     override var entitySource: EntitySource
     override var children: List<ChildAbstractBaseEntity>
   }
 
-  companion object : Type<ParentAbEntity, Builder>() {
+  companion object : EntityType<ParentAbEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -54,13 +53,13 @@ interface ChildAbstractBaseEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : ChildAbstractBaseEntity> : ChildAbstractBaseEntity, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  interface Builder<T : ChildAbstractBaseEntity> : ChildAbstractBaseEntity, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentAbEntity
   }
 
-  companion object : Type<ChildAbstractBaseEntity, Builder<ChildAbstractBaseEntity>>() {
+  companion object : EntityType<ChildAbstractBaseEntity, Builder<ChildAbstractBaseEntity>>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -83,14 +82,14 @@ interface ChildFirstEntity : ChildAbstractBaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildFirstEntity, ChildAbstractBaseEntity.Builder<ChildFirstEntity>, WorkspaceEntity.Builder<ChildFirstEntity>, ObjBuilder<ChildFirstEntity> {
+  interface Builder : ChildFirstEntity, ChildAbstractBaseEntity.Builder<ChildFirstEntity>, WorkspaceEntity.Builder<ChildFirstEntity> {
     override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentAbEntity
     override var firstData: String
   }
 
-  companion object : Type<ChildFirstEntity, Builder>(ChildAbstractBaseEntity) {
+  companion object : EntityType<ChildFirstEntity, Builder>(ChildAbstractBaseEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -124,14 +123,14 @@ interface ChildSecondEntity : ChildAbstractBaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildSecondEntity, ChildAbstractBaseEntity.Builder<ChildSecondEntity>, WorkspaceEntity.Builder<ChildSecondEntity>, ObjBuilder<ChildSecondEntity> {
+  interface Builder : ChildSecondEntity, ChildAbstractBaseEntity.Builder<ChildSecondEntity>, WorkspaceEntity.Builder<ChildSecondEntity> {
     override var entitySource: EntitySource
     override var commonData: String
     override var parentEntity: ParentAbEntity
     override var secondData: String
   }
 
-  companion object : Type<ChildSecondEntity, Builder>(ChildAbstractBaseEntity) {
+  companion object : EntityType<ChildSecondEntity, Builder>(ChildAbstractBaseEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

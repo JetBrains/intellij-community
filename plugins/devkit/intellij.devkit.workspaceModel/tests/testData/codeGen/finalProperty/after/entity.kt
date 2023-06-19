@@ -29,7 +29,7 @@ interface FinalFieldsEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FinalFieldsEntity, WorkspaceEntity.Builder<FinalFieldsEntity>, ObjBuilder<FinalFieldsEntity> {
+  interface Builder : FinalFieldsEntity, WorkspaceEntity.Builder<FinalFieldsEntity> {
     override var entitySource: EntitySource
     override var descriptor: AnotherDataClass
   }

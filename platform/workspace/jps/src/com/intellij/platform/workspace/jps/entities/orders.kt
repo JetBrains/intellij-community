@@ -8,8 +8,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 
 /**
@@ -22,13 +21,13 @@ interface FacetsOrderEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FacetsOrderEntity, WorkspaceEntity.Builder<FacetsOrderEntity>, ObjBuilder<FacetsOrderEntity> {
+  interface Builder : FacetsOrderEntity, WorkspaceEntity.Builder<FacetsOrderEntity> {
     override var entitySource: EntitySource
     override var orderOfFacets: MutableList<String>
     override var moduleEntity: ModuleEntity
   }
 
-  companion object : Type<FacetsOrderEntity, Builder>() {
+  companion object : EntityType<FacetsOrderEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -59,13 +58,13 @@ interface ExcludeUrlOrderEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ExcludeUrlOrderEntity, WorkspaceEntity.Builder<ExcludeUrlOrderEntity>, ObjBuilder<ExcludeUrlOrderEntity> {
+  interface Builder : ExcludeUrlOrderEntity, WorkspaceEntity.Builder<ExcludeUrlOrderEntity> {
     override var entitySource: EntitySource
     override var order: MutableList<VirtualFileUrl>
     override var contentRoot: ContentRootEntity
   }
 
-  companion object : Type<ExcludeUrlOrderEntity, Builder>() {
+  companion object : EntityType<ExcludeUrlOrderEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

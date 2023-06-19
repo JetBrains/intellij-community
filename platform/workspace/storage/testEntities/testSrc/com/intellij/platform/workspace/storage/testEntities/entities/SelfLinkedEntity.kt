@@ -4,8 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -20,12 +19,12 @@ interface SelfLinkedEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SelfLinkedEntity, WorkspaceEntity.Builder<SelfLinkedEntity>, ObjBuilder<SelfLinkedEntity> {
+  interface Builder : SelfLinkedEntity, WorkspaceEntity.Builder<SelfLinkedEntity> {
     override var entitySource: EntitySource
     override var parentEntity: SelfLinkedEntity?
   }
 
-  companion object : Type<SelfLinkedEntity, Builder>() {
+  companion object : EntityType<SelfLinkedEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

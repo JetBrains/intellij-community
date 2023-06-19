@@ -15,7 +15,7 @@ interface GrandParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : GrandParentEntity> : GrandParentEntity, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  interface Builder<T : GrandParentEntity> : GrandParentEntity, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var data1: String
   }
@@ -43,7 +43,7 @@ interface ParentEntity : GrandParentEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : ParentEntity> : ParentEntity, GrandParentEntity.Builder<T>, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  interface Builder<T : ParentEntity> : ParentEntity, GrandParentEntity.Builder<T>, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var data1: String
     override var data2: String
@@ -73,7 +73,7 @@ interface ChildEntity: ParentEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildEntity, ParentEntity.Builder<ChildEntity>, WorkspaceEntity.Builder<ChildEntity>, ObjBuilder<ChildEntity> {
+  interface Builder : ChildEntity, ParentEntity.Builder<ChildEntity>, WorkspaceEntity.Builder<ChildEntity> {
     override var entitySource: EntitySource
     override var data1: String
     override var data2: String

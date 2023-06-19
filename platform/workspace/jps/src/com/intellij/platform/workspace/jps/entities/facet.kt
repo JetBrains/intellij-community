@@ -6,8 +6,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import org.jetbrains.annotations.NonNls
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 
 interface FacetEntity: ModuleSettingsBase {
@@ -22,7 +21,7 @@ interface FacetEntity: ModuleSettingsBase {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FacetEntity, ModuleSettingsBase.Builder<FacetEntity>, WorkspaceEntity.Builder<FacetEntity>, ObjBuilder<FacetEntity> {
+  interface Builder : FacetEntity, ModuleSettingsBase.Builder<FacetEntity>, WorkspaceEntity.Builder<FacetEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var moduleId: ModuleId
@@ -32,7 +31,7 @@ interface FacetEntity: ModuleSettingsBase {
     override var underlyingFacet: FacetEntity?
   }
 
-  companion object : Type<FacetEntity, Builder>(ModuleSettingsBase) {
+  companion object : EntityType<FacetEntity, Builder>(ModuleSettingsBase) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

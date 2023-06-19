@@ -9,8 +9,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -37,7 +36,7 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ArtifactEntity, WorkspaceEntity.Builder<ArtifactEntity>, ObjBuilder<ArtifactEntity> {
+  interface Builder : ArtifactEntity, WorkspaceEntity.Builder<ArtifactEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var artifactType: String
@@ -48,7 +47,7 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
     override var artifactOutputPackagingElement: ArtifactOutputPackagingElementEntity?
   }
 
-  companion object : Type<ArtifactEntity, Builder>() {
+  companion object : EntityType<ArtifactEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -83,14 +82,14 @@ interface ArtifactPropertiesEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ArtifactPropertiesEntity, WorkspaceEntity.Builder<ArtifactPropertiesEntity>, ObjBuilder<ArtifactPropertiesEntity> {
+  interface Builder : ArtifactPropertiesEntity, WorkspaceEntity.Builder<ArtifactPropertiesEntity> {
     override var entitySource: EntitySource
     override var artifact: ArtifactEntity
     override var providerType: String
     override var propertiesXmlTag: String?
   }
 
-  companion object : Type<ArtifactPropertiesEntity, Builder>() {
+  companion object : EntityType<ArtifactPropertiesEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -117,12 +116,12 @@ fun MutableEntityStorage.modifyEntity(entity: ArtifactPropertiesEntity,
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : PackagingElementEntity> : PackagingElementEntity, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  interface Builder<T : PackagingElementEntity> : PackagingElementEntity, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity?
   }
 
-  companion object : Type<PackagingElementEntity, Builder<PackagingElementEntity>>() {
+  companion object : EntityType<PackagingElementEntity, Builder<PackagingElementEntity>>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -144,14 +143,14 @@ fun MutableEntityStorage.modifyEntity(entity: ArtifactPropertiesEntity,
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : CompositePackagingElementEntity> : CompositePackagingElementEntity, PackagingElementEntity.Builder<T>, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  interface Builder<T : CompositePackagingElementEntity> : CompositePackagingElementEntity, PackagingElementEntity.Builder<T>, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity?
     override var artifact: ArtifactEntity?
     override var children: List<PackagingElementEntity>
   }
 
-  companion object : Type<CompositePackagingElementEntity, Builder<CompositePackagingElementEntity>>(PackagingElementEntity) {
+  companion object : EntityType<CompositePackagingElementEntity, Builder<CompositePackagingElementEntity>>(PackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -172,7 +171,7 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : DirectoryPackagingElementEntity, CompositePackagingElementEntity.Builder<DirectoryPackagingElementEntity>, WorkspaceEntity.Builder<DirectoryPackagingElementEntity>, ObjBuilder<DirectoryPackagingElementEntity> {
+  interface Builder : DirectoryPackagingElementEntity, CompositePackagingElementEntity.Builder<DirectoryPackagingElementEntity>, WorkspaceEntity.Builder<DirectoryPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity?
     override var artifact: ArtifactEntity?
@@ -180,7 +179,7 @@ interface DirectoryPackagingElementEntity: CompositePackagingElementEntity {
     override var directoryName: String
   }
 
-  companion object : Type<DirectoryPackagingElementEntity, Builder>(CompositePackagingElementEntity) {
+  companion object : EntityType<DirectoryPackagingElementEntity, Builder>(CompositePackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -209,7 +208,7 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ArchivePackagingElementEntity, CompositePackagingElementEntity.Builder<ArchivePackagingElementEntity>, WorkspaceEntity.Builder<ArchivePackagingElementEntity>, ObjBuilder<ArchivePackagingElementEntity> {
+  interface Builder : ArchivePackagingElementEntity, CompositePackagingElementEntity.Builder<ArchivePackagingElementEntity>, WorkspaceEntity.Builder<ArchivePackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity?
     override var artifact: ArtifactEntity?
@@ -217,7 +216,7 @@ interface ArchivePackagingElementEntity: CompositePackagingElementEntity {
     override var fileName: String
   }
 
-  companion object : Type<ArchivePackagingElementEntity, Builder>(CompositePackagingElementEntity) {
+  companion object : EntityType<ArchivePackagingElementEntity, Builder>(CompositePackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -242,14 +241,14 @@ fun MutableEntityStorage.modifyEntity(entity: ArchivePackagingElementEntity,
 interface ArtifactRootElementEntity: CompositePackagingElementEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ArtifactRootElementEntity, CompositePackagingElementEntity.Builder<ArtifactRootElementEntity>, WorkspaceEntity.Builder<ArtifactRootElementEntity>, ObjBuilder<ArtifactRootElementEntity> {
+  interface Builder : ArtifactRootElementEntity, CompositePackagingElementEntity.Builder<ArtifactRootElementEntity>, WorkspaceEntity.Builder<ArtifactRootElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity?
     override var artifact: ArtifactEntity?
     override var children: List<PackagingElementEntity>
   }
 
-  companion object : Type<ArtifactRootElementEntity, Builder>(CompositePackagingElementEntity) {
+  companion object : EntityType<ArtifactRootElementEntity, Builder>(CompositePackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -275,13 +274,13 @@ interface ArtifactOutputPackagingElementEntity: PackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ArtifactOutputPackagingElementEntity, PackagingElementEntity.Builder<ArtifactOutputPackagingElementEntity>, WorkspaceEntity.Builder<ArtifactOutputPackagingElementEntity>, ObjBuilder<ArtifactOutputPackagingElementEntity> {
+  interface Builder : ArtifactOutputPackagingElementEntity, PackagingElementEntity.Builder<ArtifactOutputPackagingElementEntity>, WorkspaceEntity.Builder<ArtifactOutputPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity?
     override var artifact: ArtifactId?
   }
 
-  companion object : Type<ArtifactOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
+  companion object : EntityType<ArtifactOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -313,13 +312,13 @@ interface ModuleOutputPackagingElementEntity : PackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ModuleOutputPackagingElementEntity, PackagingElementEntity.Builder<ModuleOutputPackagingElementEntity>, WorkspaceEntity.Builder<ModuleOutputPackagingElementEntity>, ObjBuilder<ModuleOutputPackagingElementEntity> {
+  interface Builder : ModuleOutputPackagingElementEntity, PackagingElementEntity.Builder<ModuleOutputPackagingElementEntity>, WorkspaceEntity.Builder<ModuleOutputPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity?
     override var module: ModuleId?
   }
 
-  companion object : Type<ModuleOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
+  companion object : EntityType<ModuleOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -345,13 +344,13 @@ interface LibraryFilesPackagingElementEntity : PackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : LibraryFilesPackagingElementEntity, PackagingElementEntity.Builder<LibraryFilesPackagingElementEntity>, WorkspaceEntity.Builder<LibraryFilesPackagingElementEntity>, ObjBuilder<LibraryFilesPackagingElementEntity> {
+  interface Builder : LibraryFilesPackagingElementEntity, PackagingElementEntity.Builder<LibraryFilesPackagingElementEntity>, WorkspaceEntity.Builder<LibraryFilesPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity?
     override var library: LibraryId?
   }
 
-  companion object : Type<LibraryFilesPackagingElementEntity, Builder>(PackagingElementEntity) {
+  companion object : EntityType<LibraryFilesPackagingElementEntity, Builder>(PackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -378,13 +377,13 @@ interface ModuleSourcePackagingElementEntity : PackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ModuleSourcePackagingElementEntity, PackagingElementEntity.Builder<ModuleSourcePackagingElementEntity>, WorkspaceEntity.Builder<ModuleSourcePackagingElementEntity>, ObjBuilder<ModuleSourcePackagingElementEntity> {
+  interface Builder : ModuleSourcePackagingElementEntity, PackagingElementEntity.Builder<ModuleSourcePackagingElementEntity>, WorkspaceEntity.Builder<ModuleSourcePackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity?
     override var module: ModuleId?
   }
 
-  companion object : Type<ModuleSourcePackagingElementEntity, Builder>(PackagingElementEntity) {
+  companion object : EntityType<ModuleSourcePackagingElementEntity, Builder>(PackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -410,13 +409,13 @@ interface ModuleTestOutputPackagingElementEntity : PackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ModuleTestOutputPackagingElementEntity, PackagingElementEntity.Builder<ModuleTestOutputPackagingElementEntity>, WorkspaceEntity.Builder<ModuleTestOutputPackagingElementEntity>, ObjBuilder<ModuleTestOutputPackagingElementEntity> {
+  interface Builder : ModuleTestOutputPackagingElementEntity, PackagingElementEntity.Builder<ModuleTestOutputPackagingElementEntity>, WorkspaceEntity.Builder<ModuleTestOutputPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity?
     override var module: ModuleId?
   }
 
-  companion object : Type<ModuleTestOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
+  companion object : EntityType<ModuleTestOutputPackagingElementEntity, Builder>(PackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -442,13 +441,13 @@ fun MutableEntityStorage.modifyEntity(entity: ModuleTestOutputPackagingElementEn
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : FileOrDirectoryPackagingElementEntity> : FileOrDirectoryPackagingElementEntity, PackagingElementEntity.Builder<T>, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  interface Builder<T : FileOrDirectoryPackagingElementEntity> : FileOrDirectoryPackagingElementEntity, PackagingElementEntity.Builder<T>, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity?
     override var filePath: VirtualFileUrl
   }
 
-  companion object : Type<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>(PackagingElementEntity) {
+  companion object : EntityType<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>(PackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -469,13 +468,13 @@ fun MutableEntityStorage.modifyEntity(entity: ModuleTestOutputPackagingElementEn
 interface DirectoryCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : DirectoryCopyPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<DirectoryCopyPackagingElementEntity>, WorkspaceEntity.Builder<DirectoryCopyPackagingElementEntity>, ObjBuilder<DirectoryCopyPackagingElementEntity> {
+  interface Builder : DirectoryCopyPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<DirectoryCopyPackagingElementEntity>, WorkspaceEntity.Builder<DirectoryCopyPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity?
     override var filePath: VirtualFileUrl
   }
 
-  companion object : Type<DirectoryCopyPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
+  companion object : EntityType<DirectoryCopyPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -504,14 +503,14 @@ interface ExtractedDirectoryPackagingElementEntity: FileOrDirectoryPackagingElem
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ExtractedDirectoryPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<ExtractedDirectoryPackagingElementEntity>, WorkspaceEntity.Builder<ExtractedDirectoryPackagingElementEntity>, ObjBuilder<ExtractedDirectoryPackagingElementEntity> {
+  interface Builder : ExtractedDirectoryPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<ExtractedDirectoryPackagingElementEntity>, WorkspaceEntity.Builder<ExtractedDirectoryPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity?
     override var filePath: VirtualFileUrl
     override var pathInArchive: String
   }
 
-  companion object : Type<ExtractedDirectoryPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
+  companion object : EntityType<ExtractedDirectoryPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -542,14 +541,14 @@ interface FileCopyPackagingElementEntity : FileOrDirectoryPackagingElementEntity
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FileCopyPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<FileCopyPackagingElementEntity>, WorkspaceEntity.Builder<FileCopyPackagingElementEntity>, ObjBuilder<FileCopyPackagingElementEntity> {
+  interface Builder : FileCopyPackagingElementEntity, FileOrDirectoryPackagingElementEntity.Builder<FileCopyPackagingElementEntity>, WorkspaceEntity.Builder<FileCopyPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity?
     override var filePath: VirtualFileUrl
     override var renamedOutputFileName: String?
   }
 
-  companion object : Type<FileCopyPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
+  companion object : EntityType<FileCopyPackagingElementEntity, Builder>(FileOrDirectoryPackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -579,7 +578,7 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : CustomPackagingElementEntity, CompositePackagingElementEntity.Builder<CustomPackagingElementEntity>, WorkspaceEntity.Builder<CustomPackagingElementEntity>, ObjBuilder<CustomPackagingElementEntity> {
+  interface Builder : CustomPackagingElementEntity, CompositePackagingElementEntity.Builder<CustomPackagingElementEntity>, WorkspaceEntity.Builder<CustomPackagingElementEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositePackagingElementEntity?
     override var artifact: ArtifactEntity?
@@ -588,7 +587,7 @@ interface CustomPackagingElementEntity : CompositePackagingElementEntity {
     override var propertiesXmlTag: String
   }
 
-  companion object : Type<CustomPackagingElementEntity, Builder>(CompositePackagingElementEntity) {
+  companion object : EntityType<CustomPackagingElementEntity, Builder>(CompositePackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -623,12 +622,12 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ArtifactsOrderEntity, WorkspaceEntity.Builder<ArtifactsOrderEntity>, ObjBuilder<ArtifactsOrderEntity> {
+  interface Builder : ArtifactsOrderEntity, WorkspaceEntity.Builder<ArtifactsOrderEntity> {
     override var entitySource: EntitySource
     override var orderOfArtifacts: MutableList<String>
   }
 
-  companion object : Type<ArtifactsOrderEntity, Builder>() {
+  companion object : EntityType<ArtifactsOrderEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

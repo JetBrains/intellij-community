@@ -6,8 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 
@@ -21,13 +20,13 @@ interface HeadAbstractionEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : HeadAbstractionEntity, WorkspaceEntity.Builder<HeadAbstractionEntity>, ObjBuilder<HeadAbstractionEntity> {
+  interface Builder : HeadAbstractionEntity, WorkspaceEntity.Builder<HeadAbstractionEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var child: CompositeBaseEntity?
   }
 
-  companion object : Type<HeadAbstractionEntity, Builder>() {
+  companion object : EntityType<HeadAbstractionEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -56,12 +55,12 @@ interface BaseEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : BaseEntity> : BaseEntity, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  interface Builder<T : BaseEntity> : BaseEntity, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity?
   }
 
-  companion object : Type<BaseEntity, Builder<BaseEntity>>() {
+  companion object : EntityType<BaseEntity, Builder<BaseEntity>>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -84,14 +83,14 @@ interface CompositeBaseEntity : BaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder<T : CompositeBaseEntity> : CompositeBaseEntity, BaseEntity.Builder<T>, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  interface Builder<T : CompositeBaseEntity> : CompositeBaseEntity, BaseEntity.Builder<T>, WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity?
     override var children: List<BaseEntity>
     override var parent: HeadAbstractionEntity?
   }
 
-  companion object : Type<CompositeBaseEntity, Builder<CompositeBaseEntity>>(BaseEntity) {
+  companion object : EntityType<CompositeBaseEntity, Builder<CompositeBaseEntity>>(BaseEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -111,13 +110,13 @@ interface MiddleEntity : BaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : MiddleEntity, BaseEntity.Builder<MiddleEntity>, WorkspaceEntity.Builder<MiddleEntity>, ObjBuilder<MiddleEntity> {
+  interface Builder : MiddleEntity, BaseEntity.Builder<MiddleEntity>, WorkspaceEntity.Builder<MiddleEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity?
     override var property: String
   }
 
-  companion object : Type<MiddleEntity, Builder>(BaseEntity) {
+  companion object : EntityType<MiddleEntity, Builder>(BaseEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -149,14 +148,14 @@ fun MutableEntityStorage.addMiddleEntity(property: String = "prop", source: Enti
 interface LeftEntity : CompositeBaseEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : LeftEntity, CompositeBaseEntity.Builder<LeftEntity>, WorkspaceEntity.Builder<LeftEntity>, ObjBuilder<LeftEntity> {
+  interface Builder : LeftEntity, CompositeBaseEntity.Builder<LeftEntity>, WorkspaceEntity.Builder<LeftEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity?
     override var children: List<BaseEntity>
     override var parent: HeadAbstractionEntity?
   }
 
-  companion object : Type<LeftEntity, Builder>(CompositeBaseEntity) {
+  companion object : EntityType<LeftEntity, Builder>(CompositeBaseEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -189,14 +188,14 @@ fun MutableEntityStorage.addLeftEntity(children: Sequence<BaseEntity>, source: E
 interface RightEntity : CompositeBaseEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : RightEntity, CompositeBaseEntity.Builder<RightEntity>, WorkspaceEntity.Builder<RightEntity>, ObjBuilder<RightEntity> {
+  interface Builder : RightEntity, CompositeBaseEntity.Builder<RightEntity>, WorkspaceEntity.Builder<RightEntity> {
     override var entitySource: EntitySource
     override var parentEntity: CompositeBaseEntity?
     override var children: List<BaseEntity>
     override var parent: HeadAbstractionEntity?
   }
 
-  companion object : Type<RightEntity, Builder>(CompositeBaseEntity) {
+  companion object : EntityType<RightEntity, Builder>(CompositeBaseEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

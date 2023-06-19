@@ -10,8 +10,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 
 
@@ -23,14 +22,14 @@ interface SampleEntity2 : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SampleEntity2, WorkspaceEntity.Builder<SampleEntity2>, ObjBuilder<SampleEntity2> {
+  interface Builder : SampleEntity2, WorkspaceEntity.Builder<SampleEntity2> {
     override var entitySource: EntitySource
     override var data: String
     override var boolData: Boolean
     override var optionalData: String?
   }
 
-  companion object : Type<SampleEntity2, Builder>() {
+  companion object : EntityType<SampleEntity2, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -60,7 +59,7 @@ interface VFUEntity2 : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : VFUEntity2, WorkspaceEntity.Builder<VFUEntity2>, ObjBuilder<VFUEntity2> {
+  interface Builder : VFUEntity2, WorkspaceEntity.Builder<VFUEntity2> {
     override var entitySource: EntitySource
     override var data: String
     override var filePath: VirtualFileUrl?
@@ -68,7 +67,7 @@ interface VFUEntity2 : WorkspaceEntity {
     override var notNullRoots: MutableList<VirtualFileUrl>
   }
 
-  companion object : Type<VFUEntity2, Builder>() {
+  companion object : EntityType<VFUEntity2, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

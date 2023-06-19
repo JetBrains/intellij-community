@@ -8,8 +8,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 
@@ -23,13 +22,13 @@ interface ParentNullableEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentNullableEntity, WorkspaceEntity.Builder<ParentNullableEntity>, ObjBuilder<ParentNullableEntity> {
+  interface Builder : ParentNullableEntity, WorkspaceEntity.Builder<ParentNullableEntity> {
     override var entitySource: EntitySource
     override var parentData: String
     override var child: ChildNullableEntity?
   }
 
-  companion object : Type<ParentNullableEntity, Builder>() {
+  companion object : EntityType<ParentNullableEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -57,13 +56,13 @@ interface ChildNullableEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildNullableEntity, WorkspaceEntity.Builder<ChildNullableEntity>, ObjBuilder<ChildNullableEntity> {
+  interface Builder : ChildNullableEntity, WorkspaceEntity.Builder<ChildNullableEntity> {
     override var entitySource: EntitySource
     override var childData: String
     override var parentEntity: ParentNullableEntity
   }
 
-  companion object : Type<ChildNullableEntity, Builder>() {
+  companion object : EntityType<ChildNullableEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

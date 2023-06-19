@@ -6,8 +6,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -28,14 +27,14 @@ interface OoParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OoParentEntity, WorkspaceEntity.Builder<OoParentEntity>, ObjBuilder<OoParentEntity> {
+  interface Builder : OoParentEntity, WorkspaceEntity.Builder<OoParentEntity> {
     override var entitySource: EntitySource
     override var parentProperty: String
     override var child: OoChildEntity?
     override var anotherChild: OoChildWithNullableParentEntity?
   }
 
-  companion object : Type<OoParentEntity, Builder>() {
+  companion object : EntityType<OoParentEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -75,13 +74,13 @@ interface OoChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OoChildEntity, WorkspaceEntity.Builder<OoChildEntity>, ObjBuilder<OoChildEntity> {
+  interface Builder : OoChildEntity, WorkspaceEntity.Builder<OoChildEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
     override var parentEntity: OoParentEntity
   }
 
-  companion object : Type<OoChildEntity, Builder>() {
+  companion object : EntityType<OoChildEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -121,12 +120,12 @@ interface OoChildWithNullableParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OoChildWithNullableParentEntity, WorkspaceEntity.Builder<OoChildWithNullableParentEntity>, ObjBuilder<OoChildWithNullableParentEntity> {
+  interface Builder : OoChildWithNullableParentEntity, WorkspaceEntity.Builder<OoChildWithNullableParentEntity> {
     override var entitySource: EntitySource
     override var parentEntity: OoParentEntity?
   }
 
-  companion object : Type<OoChildWithNullableParentEntity, Builder>() {
+  companion object : EntityType<OoChildWithNullableParentEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -177,14 +176,14 @@ interface OoParentWithPidEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OoParentWithPidEntity, WorkspaceEntity.Builder<OoParentWithPidEntity>, ObjBuilder<OoParentWithPidEntity> {
+  interface Builder : OoParentWithPidEntity, WorkspaceEntity.Builder<OoParentWithPidEntity> {
     override var entitySource: EntitySource
     override var parentProperty: String
     override var childOne: OoChildForParentWithPidEntity?
     override var childThree: OoChildAlsoWithPidEntity?
   }
 
-  companion object : Type<OoParentWithPidEntity, Builder>() {
+  companion object : EntityType<OoParentWithPidEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -223,13 +222,13 @@ interface OoChildForParentWithPidEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OoChildForParentWithPidEntity, WorkspaceEntity.Builder<OoChildForParentWithPidEntity>, ObjBuilder<OoChildForParentWithPidEntity> {
+  interface Builder : OoChildForParentWithPidEntity, WorkspaceEntity.Builder<OoChildForParentWithPidEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
     override var parentEntity: OoParentWithPidEntity
   }
 
-  companion object : Type<OoChildForParentWithPidEntity, Builder>() {
+  companion object : EntityType<OoChildForParentWithPidEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -275,13 +274,13 @@ interface OoChildAlsoWithPidEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OoChildAlsoWithPidEntity, WorkspaceEntity.Builder<OoChildAlsoWithPidEntity>, ObjBuilder<OoChildAlsoWithPidEntity> {
+  interface Builder : OoChildAlsoWithPidEntity, WorkspaceEntity.Builder<OoChildAlsoWithPidEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
     override var parentEntity: OoParentWithPidEntity
   }
 
-  companion object : Type<OoChildAlsoWithPidEntity, Builder>() {
+  companion object : EntityType<OoChildAlsoWithPidEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -324,13 +323,13 @@ interface OoParentWithoutPidEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OoParentWithoutPidEntity, WorkspaceEntity.Builder<OoParentWithoutPidEntity>, ObjBuilder<OoParentWithoutPidEntity> {
+  interface Builder : OoParentWithoutPidEntity, WorkspaceEntity.Builder<OoParentWithoutPidEntity> {
     override var entitySource: EntitySource
     override var parentProperty: String
     override var childOne: OoChildWithPidEntity?
   }
 
-  companion object : Type<OoParentWithoutPidEntity, Builder>() {
+  companion object : EntityType<OoParentWithoutPidEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -377,13 +376,13 @@ interface OoChildWithPidEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OoChildWithPidEntity, WorkspaceEntity.Builder<OoChildWithPidEntity>, ObjBuilder<OoChildWithPidEntity> {
+  interface Builder : OoChildWithPidEntity, WorkspaceEntity.Builder<OoChildWithPidEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
     override var parentEntity: OoParentWithoutPidEntity
   }
 
-  companion object : Type<OoChildWithPidEntity, Builder>() {
+  companion object : EntityType<OoChildWithPidEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

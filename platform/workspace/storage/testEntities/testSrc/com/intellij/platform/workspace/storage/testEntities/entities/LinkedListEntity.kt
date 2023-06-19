@@ -6,8 +6,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 
@@ -30,13 +29,13 @@ interface LinkedListEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : LinkedListEntity, WorkspaceEntity.Builder<LinkedListEntity>, ObjBuilder<LinkedListEntity> {
+  interface Builder : LinkedListEntity, WorkspaceEntity.Builder<LinkedListEntity> {
     override var entitySource: EntitySource
     override var myName: String
     override var next: LinkedListEntityId
   }
 
-  companion object : Type<LinkedListEntity, Builder>() {
+  companion object : EntityType<LinkedListEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

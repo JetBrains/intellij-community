@@ -7,8 +7,7 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -51,14 +50,14 @@ interface NamedEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : NamedEntity, WorkspaceEntity.Builder<NamedEntity>, ObjBuilder<NamedEntity> {
+  interface Builder : NamedEntity, WorkspaceEntity.Builder<NamedEntity> {
     override var entitySource: EntitySource
     override var myName: String
     override var additionalProperty: String?
     override var children: List<NamedChildEntity>
   }
 
-  companion object : Type<NamedEntity, Builder>() {
+  companion object : EntityType<NamedEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -107,13 +106,13 @@ interface NamedChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : NamedChildEntity, WorkspaceEntity.Builder<NamedChildEntity>, ObjBuilder<NamedChildEntity> {
+  interface Builder : NamedChildEntity, WorkspaceEntity.Builder<NamedChildEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
     override var parentEntity: NamedEntity
   }
 
-  companion object : Type<NamedChildEntity, Builder>() {
+  companion object : EntityType<NamedChildEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -154,12 +153,12 @@ interface WithSoftLinkEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : WithSoftLinkEntity, WorkspaceEntity.Builder<WithSoftLinkEntity>, ObjBuilder<WithSoftLinkEntity> {
+  interface Builder : WithSoftLinkEntity, WorkspaceEntity.Builder<WithSoftLinkEntity> {
     override var entitySource: EntitySource
     override var link: NameId
   }
 
-  companion object : Type<WithSoftLinkEntity, Builder>() {
+  companion object : EntityType<WithSoftLinkEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -191,12 +190,12 @@ interface ComposedLinkEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ComposedLinkEntity, WorkspaceEntity.Builder<ComposedLinkEntity>, ObjBuilder<ComposedLinkEntity> {
+  interface Builder : ComposedLinkEntity, WorkspaceEntity.Builder<ComposedLinkEntity> {
     override var entitySource: EntitySource
     override var link: ComposedId
   }
 
-  companion object : Type<ComposedLinkEntity, Builder>() {
+  companion object : EntityType<ComposedLinkEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -233,13 +232,13 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : WithListSoftLinksEntity, WorkspaceEntity.Builder<WithListSoftLinksEntity>, ObjBuilder<WithListSoftLinksEntity> {
+  interface Builder : WithListSoftLinksEntity, WorkspaceEntity.Builder<WithListSoftLinksEntity> {
     override var entitySource: EntitySource
     override var myName: String
     override var links: MutableList<NameId>
   }
 
-  companion object : Type<WithListSoftLinksEntity, Builder>() {
+  companion object : EntityType<WithListSoftLinksEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -286,13 +285,13 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ComposedIdSoftRefEntity, WorkspaceEntity.Builder<ComposedIdSoftRefEntity>, ObjBuilder<ComposedIdSoftRefEntity> {
+  interface Builder : ComposedIdSoftRefEntity, WorkspaceEntity.Builder<ComposedIdSoftRefEntity> {
     override var entitySource: EntitySource
     override var myName: String
     override var link: NameId
   }
 
-  companion object : Type<ComposedIdSoftRefEntity, Builder>() {
+  companion object : EntityType<ComposedIdSoftRefEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

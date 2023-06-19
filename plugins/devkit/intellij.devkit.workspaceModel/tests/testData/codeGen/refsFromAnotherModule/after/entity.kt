@@ -16,7 +16,7 @@ interface ReferredEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ReferredEntity, WorkspaceEntity.Builder<ReferredEntity>, ObjBuilder<ReferredEntity> {
+  interface Builder : ReferredEntity, WorkspaceEntity.Builder<ReferredEntity> {
     override var entitySource: EntitySource
     override var version: Int
     override var name: String

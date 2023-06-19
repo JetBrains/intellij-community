@@ -7,8 +7,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 
 interface IndexingTestEntity : WorkspaceEntity {
   val roots: List<VirtualFileUrl>
@@ -16,13 +15,13 @@ interface IndexingTestEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : IndexingTestEntity, WorkspaceEntity.Builder<IndexingTestEntity>, ObjBuilder<IndexingTestEntity> {
+  interface Builder : IndexingTestEntity, WorkspaceEntity.Builder<IndexingTestEntity> {
     override var entitySource: EntitySource
     override var roots: MutableList<VirtualFileUrl>
     override var excludedRoots: MutableList<VirtualFileUrl>
   }
 
-  companion object : Type<IndexingTestEntity, Builder>() {
+  companion object : EntityType<IndexingTestEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

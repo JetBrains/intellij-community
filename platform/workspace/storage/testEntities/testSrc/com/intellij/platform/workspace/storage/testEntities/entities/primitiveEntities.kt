@@ -9,8 +9,7 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 
 
@@ -20,12 +19,12 @@ interface BooleanEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : BooleanEntity, WorkspaceEntity.Builder<BooleanEntity>, ObjBuilder<BooleanEntity> {
+  interface Builder : BooleanEntity, WorkspaceEntity.Builder<BooleanEntity> {
     override var entitySource: EntitySource
     override var data: Boolean
   }
 
-  companion object : Type<BooleanEntity, Builder>() {
+  companion object : EntityType<BooleanEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -51,12 +50,12 @@ interface IntEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : IntEntity, WorkspaceEntity.Builder<IntEntity>, ObjBuilder<IntEntity> {
+  interface Builder : IntEntity, WorkspaceEntity.Builder<IntEntity> {
     override var entitySource: EntitySource
     override var data: Int
   }
 
-  companion object : Type<IntEntity, Builder>() {
+  companion object : EntityType<IntEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -82,12 +81,12 @@ interface StringEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : StringEntity, WorkspaceEntity.Builder<StringEntity>, ObjBuilder<StringEntity> {
+  interface Builder : StringEntity, WorkspaceEntity.Builder<StringEntity> {
     override var entitySource: EntitySource
     override var data: String
   }
 
-  companion object : Type<StringEntity, Builder>() {
+  companion object : EntityType<StringEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -113,12 +112,12 @@ interface ListEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ListEntity, WorkspaceEntity.Builder<ListEntity>, ObjBuilder<ListEntity> {
+  interface Builder : ListEntity, WorkspaceEntity.Builder<ListEntity> {
     override var entitySource: EntitySource
     override var data: MutableList<String>
   }
 
-  companion object : Type<ListEntity, Builder>() {
+  companion object : EntityType<ListEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -145,12 +144,12 @@ interface OptionalIntEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OptionalIntEntity, WorkspaceEntity.Builder<OptionalIntEntity>, ObjBuilder<OptionalIntEntity> {
+  interface Builder : OptionalIntEntity, WorkspaceEntity.Builder<OptionalIntEntity> {
     override var entitySource: EntitySource
     override var data: Int?
   }
 
-  companion object : Type<OptionalIntEntity, Builder>() {
+  companion object : EntityType<OptionalIntEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -176,12 +175,12 @@ interface OptionalStringEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OptionalStringEntity, WorkspaceEntity.Builder<OptionalStringEntity>, ObjBuilder<OptionalStringEntity> {
+  interface Builder : OptionalStringEntity, WorkspaceEntity.Builder<OptionalStringEntity> {
     override var entitySource: EntitySource
     override var data: String?
   }
 
-  companion object : Type<OptionalStringEntity, Builder>() {
+  companion object : EntityType<OptionalStringEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

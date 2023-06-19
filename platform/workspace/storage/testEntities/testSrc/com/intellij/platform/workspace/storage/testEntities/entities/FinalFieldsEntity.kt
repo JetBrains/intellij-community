@@ -6,8 +6,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 
@@ -35,14 +34,14 @@ interface FinalFieldsEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FinalFieldsEntity, WorkspaceEntity.Builder<FinalFieldsEntity>, ObjBuilder<FinalFieldsEntity> {
+  interface Builder : FinalFieldsEntity, WorkspaceEntity.Builder<FinalFieldsEntity> {
     override var entitySource: EntitySource
     override var descriptor: AnotherDataClass
     override var description: String
     override var anotherVersion: Int
   }
 
-  companion object : Type<FinalFieldsEntity, Builder>() {
+  companion object : EntityType<FinalFieldsEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

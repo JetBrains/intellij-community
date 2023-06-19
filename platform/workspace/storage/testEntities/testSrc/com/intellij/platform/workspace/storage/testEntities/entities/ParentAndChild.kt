@@ -9,8 +9,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -23,13 +22,13 @@ interface ParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentEntity, WorkspaceEntity.Builder<ParentEntity>, ObjBuilder<ParentEntity> {
+  interface Builder : ParentEntity, WorkspaceEntity.Builder<ParentEntity> {
     override var entitySource: EntitySource
     override var parentData: String
     override var child: ChildEntity?
   }
 
-  companion object : Type<ParentEntity, Builder>() {
+  companion object : EntityType<ParentEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -58,13 +57,13 @@ interface ChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildEntity, WorkspaceEntity.Builder<ChildEntity>, ObjBuilder<ChildEntity> {
+  interface Builder : ChildEntity, WorkspaceEntity.Builder<ChildEntity> {
     override var entitySource: EntitySource
     override var childData: String
     override var parentEntity: ParentEntity
   }
 
-  companion object : Type<ChildEntity, Builder>() {
+  companion object : EntityType<ChildEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

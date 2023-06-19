@@ -8,8 +8,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -31,7 +30,7 @@ interface SampleWithSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SampleWithSymbolicIdEntity, WorkspaceEntity.Builder<SampleWithSymbolicIdEntity>, ObjBuilder<SampleWithSymbolicIdEntity> {
+  interface Builder : SampleWithSymbolicIdEntity, WorkspaceEntity.Builder<SampleWithSymbolicIdEntity> {
     override var entitySource: EntitySource
     override var booleanProperty: Boolean
     override var stringProperty: String
@@ -42,7 +41,7 @@ interface SampleWithSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
     override var nullableData: String?
   }
 
-  companion object : Type<SampleWithSymbolicIdEntity, Builder>() {
+  companion object : EntityType<SampleWithSymbolicIdEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -85,13 +84,13 @@ interface ChildWpidSampleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildWpidSampleEntity, WorkspaceEntity.Builder<ChildWpidSampleEntity>, ObjBuilder<ChildWpidSampleEntity> {
+  interface Builder : ChildWpidSampleEntity, WorkspaceEntity.Builder<ChildWpidSampleEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var parentEntity: SampleWithSymbolicIdEntity?
   }
 
-  companion object : Type<ChildWpidSampleEntity, Builder>() {
+  companion object : EntityType<ChildWpidSampleEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

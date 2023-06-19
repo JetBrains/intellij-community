@@ -5,8 +5,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -19,13 +18,13 @@ interface ParentWithNullsMultiple : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentWithNullsMultiple, WorkspaceEntity.Builder<ParentWithNullsMultiple>, ObjBuilder<ParentWithNullsMultiple> {
+  interface Builder : ParentWithNullsMultiple, WorkspaceEntity.Builder<ParentWithNullsMultiple> {
     override var entitySource: EntitySource
     override var parentData: String
     override var children: List<ChildWithNullsMultiple>
   }
 
-  companion object : Type<ParentWithNullsMultiple, Builder>() {
+  companion object : EntityType<ParentWithNullsMultiple, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -52,12 +51,12 @@ interface ChildWithNullsMultiple : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildWithNullsMultiple, WorkspaceEntity.Builder<ChildWithNullsMultiple>, ObjBuilder<ChildWithNullsMultiple> {
+  interface Builder : ChildWithNullsMultiple, WorkspaceEntity.Builder<ChildWithNullsMultiple> {
     override var entitySource: EntitySource
     override var childData: String
   }
 
-  companion object : Type<ChildWithNullsMultiple, Builder>() {
+  companion object : EntityType<ChildWithNullsMultiple, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

@@ -5,8 +5,7 @@ import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 import com.intellij.platform.workspace.storage.annotations.Child
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 
@@ -23,13 +22,13 @@ interface ParentWithNulls : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentWithNulls, WorkspaceEntity.Builder<ParentWithNulls>, ObjBuilder<ParentWithNulls> {
+  interface Builder : ParentWithNulls, WorkspaceEntity.Builder<ParentWithNulls> {
     override var entitySource: EntitySource
     override var parentData: String
     override var child: ChildWithNulls?
   }
 
-  companion object : Type<ParentWithNulls, Builder>() {
+  companion object : EntityType<ParentWithNulls, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -55,12 +54,12 @@ interface ChildWithNulls : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildWithNulls, WorkspaceEntity.Builder<ChildWithNulls>, ObjBuilder<ChildWithNulls> {
+  interface Builder : ChildWithNulls, WorkspaceEntity.Builder<ChildWithNulls> {
     override var entitySource: EntitySource
     override var childData: String
   }
 
-  companion object : Type<ChildWithNulls, Builder>() {
+  companion object : EntityType<ChildWithNulls, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

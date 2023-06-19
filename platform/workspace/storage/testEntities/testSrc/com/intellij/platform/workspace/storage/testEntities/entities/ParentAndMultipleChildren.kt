@@ -7,8 +7,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 
@@ -20,13 +19,13 @@ interface ParentMultipleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentMultipleEntity, WorkspaceEntity.Builder<ParentMultipleEntity>, ObjBuilder<ParentMultipleEntity> {
+  interface Builder : ParentMultipleEntity, WorkspaceEntity.Builder<ParentMultipleEntity> {
     override var entitySource: EntitySource
     override var parentData: String
     override var children: List<ChildMultipleEntity>
   }
 
-  companion object : Type<ParentMultipleEntity, Builder>() {
+  companion object : EntityType<ParentMultipleEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -54,13 +53,13 @@ interface ChildMultipleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChildMultipleEntity, WorkspaceEntity.Builder<ChildMultipleEntity>, ObjBuilder<ChildMultipleEntity> {
+  interface Builder : ChildMultipleEntity, WorkspaceEntity.Builder<ChildMultipleEntity> {
     override var entitySource: EntitySource
     override var childData: String
     override var parentEntity: ParentMultipleEntity
   }
 
-  companion object : Type<ChildMultipleEntity, Builder>() {
+  companion object : EntityType<ChildMultipleEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

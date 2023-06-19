@@ -10,8 +10,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 
 interface TreeMultiparentRootEntity : WorkspaceEntityWithSymbolicId {
@@ -24,13 +23,13 @@ interface TreeMultiparentRootEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : TreeMultiparentRootEntity, WorkspaceEntity.Builder<TreeMultiparentRootEntity>, ObjBuilder<TreeMultiparentRootEntity> {
+  interface Builder : TreeMultiparentRootEntity, WorkspaceEntity.Builder<TreeMultiparentRootEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var children: List<TreeMultiparentLeafEntity>
   }
 
-  companion object : Type<TreeMultiparentRootEntity, Builder>() {
+  companion object : EntityType<TreeMultiparentRootEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -60,7 +59,7 @@ interface TreeMultiparentLeafEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : TreeMultiparentLeafEntity, WorkspaceEntity.Builder<TreeMultiparentLeafEntity>, ObjBuilder<TreeMultiparentLeafEntity> {
+  interface Builder : TreeMultiparentLeafEntity, WorkspaceEntity.Builder<TreeMultiparentLeafEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var mainParent: TreeMultiparentRootEntity?
@@ -68,7 +67,7 @@ interface TreeMultiparentLeafEntity : WorkspaceEntity {
     override var children: List<TreeMultiparentLeafEntity>
   }
 
-  companion object : Type<TreeMultiparentLeafEntity, Builder>() {
+  companion object : EntityType<TreeMultiparentLeafEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

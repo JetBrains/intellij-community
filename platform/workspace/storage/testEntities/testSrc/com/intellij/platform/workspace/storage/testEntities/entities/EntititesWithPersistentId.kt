@@ -6,8 +6,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -24,12 +23,12 @@ interface FirstEntityWithPId : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : FirstEntityWithPId, WorkspaceEntity.Builder<FirstEntityWithPId>, ObjBuilder<FirstEntityWithPId> {
+  interface Builder : FirstEntityWithPId, WorkspaceEntity.Builder<FirstEntityWithPId> {
     override var entitySource: EntitySource
     override var data: String
   }
 
-  companion object : Type<FirstEntityWithPId, Builder>() {
+  companion object : EntityType<FirstEntityWithPId, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -59,12 +58,12 @@ interface SecondEntityWithPId : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SecondEntityWithPId, WorkspaceEntity.Builder<SecondEntityWithPId>, ObjBuilder<SecondEntityWithPId> {
+  interface Builder : SecondEntityWithPId, WorkspaceEntity.Builder<SecondEntityWithPId> {
     override var entitySource: EntitySource
     override var data: String
   }
 
-  companion object : Type<SecondEntityWithPId, Builder>() {
+  companion object : EntityType<SecondEntityWithPId, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

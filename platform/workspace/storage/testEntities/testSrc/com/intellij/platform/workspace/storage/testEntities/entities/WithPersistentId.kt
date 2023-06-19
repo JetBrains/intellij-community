@@ -8,8 +8,7 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.annotations.Open
 import com.intellij.platform.workspace.storage.EntitySource
@@ -62,12 +61,12 @@ interface OneEntityWithSymbolicId : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : OneEntityWithSymbolicId, WorkspaceEntity.Builder<OneEntityWithSymbolicId>, ObjBuilder<OneEntityWithSymbolicId> {
+  interface Builder : OneEntityWithSymbolicId, WorkspaceEntity.Builder<OneEntityWithSymbolicId> {
     override var entitySource: EntitySource
     override var myName: String
   }
 
-  companion object : Type<OneEntityWithSymbolicId, Builder>() {
+  companion object : EntityType<OneEntityWithSymbolicId, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -111,7 +110,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : EntityWithSoftLinks, WorkspaceEntity.Builder<EntityWithSoftLinks>, ObjBuilder<EntityWithSoftLinks> {
+  interface Builder : EntityWithSoftLinks, WorkspaceEntity.Builder<EntityWithSoftLinks> {
     override var entitySource: EntitySource
     override var link: OneSymbolicId
     override var manyLinks: MutableList<OneSymbolicId>
@@ -129,7 +128,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
     override var children: List<SoftLinkReferencedChild>
   }
 
-  companion object : Type<EntityWithSoftLinks, Builder>() {
+  companion object : EntityType<EntityWithSoftLinks, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -175,12 +174,12 @@ interface SoftLinkReferencedChild : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SoftLinkReferencedChild, WorkspaceEntity.Builder<SoftLinkReferencedChild>, ObjBuilder<SoftLinkReferencedChild> {
+  interface Builder : SoftLinkReferencedChild, WorkspaceEntity.Builder<SoftLinkReferencedChild> {
     override var entitySource: EntitySource
     override var parentEntity: EntityWithSoftLinks
   }
 
-  companion object : Type<SoftLinkReferencedChild, Builder>() {
+  companion object : EntityType<SoftLinkReferencedChild, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

@@ -5,8 +5,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -15,12 +14,12 @@ interface ChainedParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChainedParentEntity, WorkspaceEntity.Builder<ChainedParentEntity>, ObjBuilder<ChainedParentEntity> {
+  interface Builder : ChainedParentEntity, WorkspaceEntity.Builder<ChainedParentEntity> {
     override var entitySource: EntitySource
     override var child: List<ChainedEntity>
   }
 
-  companion object : Type<ChainedParentEntity, Builder>() {
+  companion object : EntityType<ChainedParentEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -47,7 +46,7 @@ interface ChainedEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ChainedEntity, WorkspaceEntity.Builder<ChainedEntity>, ObjBuilder<ChainedEntity> {
+  interface Builder : ChainedEntity, WorkspaceEntity.Builder<ChainedEntity> {
     override var entitySource: EntitySource
     override var data: String
     override var parent: ChainedEntity?
@@ -55,7 +54,7 @@ interface ChainedEntity : WorkspaceEntity {
     override var generalParent: ChainedParentEntity?
   }
 
-  companion object : Type<ChainedEntity, Builder>() {
+  companion object : EntityType<ChainedEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

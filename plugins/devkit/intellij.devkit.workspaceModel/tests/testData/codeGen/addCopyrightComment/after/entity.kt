@@ -13,7 +13,7 @@ interface SimpleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SimpleEntity, WorkspaceEntity.Builder<SimpleEntity>, ObjBuilder<SimpleEntity> {
+  interface Builder : SimpleEntity, WorkspaceEntity.Builder<SimpleEntity> {
     override var entitySource: EntitySource
     override var name: String
   }

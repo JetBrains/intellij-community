@@ -9,8 +9,7 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 
 object MavenProjectsTreeEntitySource : EntitySource
 
@@ -19,12 +18,12 @@ interface MavenProjectsTreeSettingsEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : MavenProjectsTreeSettingsEntity, WorkspaceEntity.Builder<MavenProjectsTreeSettingsEntity>, ObjBuilder<MavenProjectsTreeSettingsEntity> {
+  interface Builder : MavenProjectsTreeSettingsEntity, WorkspaceEntity.Builder<MavenProjectsTreeSettingsEntity> {
     override var entitySource: EntitySource
     override var importedFilePaths: MutableList<String>
   }
 
-  companion object : Type<MavenProjectsTreeSettingsEntity, Builder>() {
+  companion object : EntityType<MavenProjectsTreeSettingsEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

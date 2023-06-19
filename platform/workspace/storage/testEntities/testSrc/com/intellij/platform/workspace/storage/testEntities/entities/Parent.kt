@@ -6,8 +6,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -26,7 +25,7 @@ interface XParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : XParentEntity, WorkspaceEntity.Builder<XParentEntity>, ObjBuilder<XParentEntity> {
+  interface Builder : XParentEntity, WorkspaceEntity.Builder<XParentEntity> {
     override var entitySource: EntitySource
     override var parentProperty: String
     override var children: List<XChildEntity>
@@ -34,7 +33,7 @@ interface XParentEntity : WorkspaceEntity {
     override var childChild: List<XChildChildEntity>
   }
 
-  companion object : Type<XParentEntity, Builder>() {
+  companion object : EntityType<XParentEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -67,7 +66,7 @@ interface XChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : XChildEntity, WorkspaceEntity.Builder<XChildEntity>, ObjBuilder<XChildEntity> {
+  interface Builder : XChildEntity, WorkspaceEntity.Builder<XChildEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
     override var dataClass: DataClassX?
@@ -75,7 +74,7 @@ interface XChildEntity : WorkspaceEntity {
     override var childChild: List<XChildChildEntity>
   }
 
-  companion object : Type<XChildEntity, Builder>() {
+  companion object : EntityType<XChildEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -102,13 +101,13 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : XChildWithOptionalParentEntity, WorkspaceEntity.Builder<XChildWithOptionalParentEntity>, ObjBuilder<XChildWithOptionalParentEntity> {
+  interface Builder : XChildWithOptionalParentEntity, WorkspaceEntity.Builder<XChildWithOptionalParentEntity> {
     override var entitySource: EntitySource
     override var childProperty: String
     override var optionalParent: XParentEntity?
   }
 
-  companion object : Type<XChildWithOptionalParentEntity, Builder>() {
+  companion object : EntityType<XChildWithOptionalParentEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -138,13 +137,13 @@ interface XChildChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : XChildChildEntity, WorkspaceEntity.Builder<XChildChildEntity>, ObjBuilder<XChildChildEntity> {
+  interface Builder : XChildChildEntity, WorkspaceEntity.Builder<XChildChildEntity> {
     override var entitySource: EntitySource
     override var parent1: XParentEntity
     override var parent2: XChildEntity
   }
 
-  companion object : Type<XChildChildEntity, Builder>() {
+  companion object : EntityType<XChildChildEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

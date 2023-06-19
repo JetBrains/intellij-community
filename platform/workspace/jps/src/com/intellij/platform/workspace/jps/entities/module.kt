@@ -29,7 +29,7 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ModuleEntity, WorkspaceEntity.Builder<ModuleEntity>, ObjBuilder<ModuleEntity> {
+  interface Builder : ModuleEntity, WorkspaceEntity.Builder<ModuleEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var type: String?
@@ -42,7 +42,7 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
     override var facets: List<FacetEntity>
   }
 
-  companion object : Type<ModuleEntity, Builder>() {
+  companion object : EntityType<ModuleEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -80,14 +80,14 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ModuleCustomImlDataEntity, WorkspaceEntity.Builder<ModuleCustomImlDataEntity>, ObjBuilder<ModuleCustomImlDataEntity> {
+  interface Builder : ModuleCustomImlDataEntity, WorkspaceEntity.Builder<ModuleCustomImlDataEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var rootManagerTagCustomData: String?
     override var customModuleOptions: Map<String, String>
   }
 
-  companion object : Type<ModuleCustomImlDataEntity, Builder>() {
+  companion object : EntityType<ModuleCustomImlDataEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -118,13 +118,13 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ModuleGroupPathEntity, WorkspaceEntity.Builder<ModuleGroupPathEntity>, ObjBuilder<ModuleGroupPathEntity> {
+  interface Builder : ModuleGroupPathEntity, WorkspaceEntity.Builder<ModuleGroupPathEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var path: MutableList<String>
   }
 
-  companion object : Type<ModuleGroupPathEntity, Builder>() {
+  companion object : EntityType<ModuleGroupPathEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -159,7 +159,7 @@ interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ExternalSystemModuleOptionsEntity, WorkspaceEntity.Builder<ExternalSystemModuleOptionsEntity>, ObjBuilder<ExternalSystemModuleOptionsEntity> {
+  interface Builder : ExternalSystemModuleOptionsEntity, WorkspaceEntity.Builder<ExternalSystemModuleOptionsEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var externalSystem: String?
@@ -171,7 +171,7 @@ interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
     override var externalSystemModuleType: String?
   }
 
-  companion object : Type<ExternalSystemModuleOptionsEntity, Builder>() {
+  companion object : EntityType<ExternalSystemModuleOptionsEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -198,13 +198,13 @@ interface TestModulePropertiesEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : TestModulePropertiesEntity, WorkspaceEntity.Builder<TestModulePropertiesEntity>, ObjBuilder<TestModulePropertiesEntity> {
+  interface Builder : TestModulePropertiesEntity, WorkspaceEntity.Builder<TestModulePropertiesEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var productionModuleId: ModuleId
   }
 
-  companion object : Type<TestModulePropertiesEntity, Builder>() {
+  companion object : EntityType<TestModulePropertiesEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

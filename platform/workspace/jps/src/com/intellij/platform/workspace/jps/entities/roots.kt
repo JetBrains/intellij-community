@@ -10,8 +10,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.annotations.Child
 
 interface ContentRootEntity : WorkspaceEntity {
@@ -27,7 +26,7 @@ interface ContentRootEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ContentRootEntity, WorkspaceEntity.Builder<ContentRootEntity>, ObjBuilder<ContentRootEntity> {
+  interface Builder : ContentRootEntity, WorkspaceEntity.Builder<ContentRootEntity> {
     override var entitySource: EntitySource
     override var module: ModuleEntity
     override var url: VirtualFileUrl
@@ -38,7 +37,7 @@ interface ContentRootEntity : WorkspaceEntity {
     override var excludeUrlOrder: ExcludeUrlOrderEntity?
   }
 
-  companion object : Type<ContentRootEntity, Builder>() {
+  companion object : EntityType<ContentRootEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -75,7 +74,7 @@ interface SourceRootEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SourceRootEntity, WorkspaceEntity.Builder<SourceRootEntity>, ObjBuilder<SourceRootEntity> {
+  interface Builder : SourceRootEntity, WorkspaceEntity.Builder<SourceRootEntity> {
     override var entitySource: EntitySource
     override var contentRoot: ContentRootEntity
     override var url: VirtualFileUrl
@@ -83,7 +82,7 @@ interface SourceRootEntity : WorkspaceEntity {
     override var customSourceRootProperties: CustomSourceRootPropertiesEntity?
   }
 
-  companion object : Type<SourceRootEntity, Builder>() {
+  companion object : EntityType<SourceRootEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -115,13 +114,13 @@ interface SourceRootOrderEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : SourceRootOrderEntity, WorkspaceEntity.Builder<SourceRootOrderEntity>, ObjBuilder<SourceRootOrderEntity> {
+  interface Builder : SourceRootOrderEntity, WorkspaceEntity.Builder<SourceRootOrderEntity> {
     override var entitySource: EntitySource
     override var contentRootEntity: ContentRootEntity
     override var orderOfSourceRoots: MutableList<VirtualFileUrl>
   }
 
-  companion object : Type<SourceRootOrderEntity, Builder>() {
+  companion object : EntityType<SourceRootOrderEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -151,13 +150,13 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : CustomSourceRootPropertiesEntity, WorkspaceEntity.Builder<CustomSourceRootPropertiesEntity>, ObjBuilder<CustomSourceRootPropertiesEntity> {
+  interface Builder : CustomSourceRootPropertiesEntity, WorkspaceEntity.Builder<CustomSourceRootPropertiesEntity> {
     override var entitySource: EntitySource
     override var sourceRoot: SourceRootEntity
     override var propertiesXmlTag: String
   }
 
-  companion object : Type<CustomSourceRootPropertiesEntity, Builder>() {
+  companion object : EntityType<CustomSourceRootPropertiesEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

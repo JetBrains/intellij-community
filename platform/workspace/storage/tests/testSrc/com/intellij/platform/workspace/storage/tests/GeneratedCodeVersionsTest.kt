@@ -6,8 +6,7 @@ import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -84,10 +83,10 @@ interface SuperSimpleEntity : WorkspaceEntity {
   //region generated code
   //@formatter:off
   @GeneratedCodeApiVersion(1000000)
-  interface Builder: SuperSimpleEntity, WorkspaceEntity.Builder<SuperSimpleEntity>, ObjBuilder<SuperSimpleEntity> {
+  interface Builder: SuperSimpleEntity, WorkspaceEntity.Builder<SuperSimpleEntity> {
   }
 
-  companion object: Type<SuperSimpleEntity, Builder>() {
+  companion object: EntityType<SuperSimpleEntity, Builder>() {
     operator fun invoke(init: (Builder.() -> Unit)? = null):SuperSimpleEntity {
       val builder = builder()
       init?.invoke(builder)
@@ -195,7 +194,6 @@ open class SuperSimpleEntityImpl : SuperSimpleEntity, WorkspaceEntityBase() {
   }
 
   // TODO: Fill with the data from the current entity
-  fun builder(): ObjBuilder<*> = Builder(SuperSimpleEntityData())
   override fun connectionIdList(): List<ConnectionId> {
     TODO("Not yet implemented")
   }

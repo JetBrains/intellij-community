@@ -8,8 +8,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.ObjBuilder
-import com.intellij.platform.workspace.storage.Type
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 
@@ -21,13 +20,13 @@ interface CollectionFieldEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : CollectionFieldEntity, WorkspaceEntity.Builder<CollectionFieldEntity>, ObjBuilder<CollectionFieldEntity> {
+  interface Builder : CollectionFieldEntity, WorkspaceEntity.Builder<CollectionFieldEntity> {
     override var entitySource: EntitySource
     override var versions: MutableSet<Int>
     override var names: MutableList<String>
   }
 
-  companion object : Type<CollectionFieldEntity, Builder>() {
+  companion object : EntityType<CollectionFieldEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
