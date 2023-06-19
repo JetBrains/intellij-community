@@ -129,7 +129,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
         val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>() as WindowManagerImpl
         val frameHelper = deferredProjectFrameHelper.await()
         val project = rawProjectDeferred.await()
-        subtask("project frame assigning", Dispatchers.EDT) {
+        subtask("project frame assigning") {
           windowManager.assignFrame(frameHelper, project)
           frameHelper.setProject(project)
         }

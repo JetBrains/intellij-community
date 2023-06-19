@@ -8,7 +8,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
@@ -29,7 +32,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl.FrameHelper
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.ui.*
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
@@ -295,8 +297,7 @@ open class ProjectFrameHelper internal constructor(
 
   override fun getProject(): Project? = project
 
-  @RequiresEdt
-  fun setProject(project: Project) {
+  suspend fun setProject(project: Project) {
     if (this.project === project) {
       return
     }
@@ -307,7 +308,10 @@ open class ProjectFrameHelper internal constructor(
     activationTimestamp?.let {
       RecentProjectsManager.getInstance().setActivationTimestamp(project, it)
     }
-    applyInitBounds()
+
+    withContext(Dispatchers.EDT) {
+      applyInitBounds()
+    }
   }
 
   fun setInitBounds(bounds: Rectangle?) {
@@ -333,11 +337,6 @@ open class ProjectFrameHelper internal constructor(
 
   open suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
     rootPane.statusBar!!.init(project)
-
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      val navBar = rootPane.navBarStatusWidgetComponent ?: return@withContext
-      statusBar!!.setCentralWidget(IdeStatusBarImpl.NAVBAR_WIDGET_KEY, navBar)
-    }
   }
 
   fun appClosing() {
