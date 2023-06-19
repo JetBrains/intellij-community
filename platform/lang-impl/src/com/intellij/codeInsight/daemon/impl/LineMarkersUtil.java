@@ -45,7 +45,11 @@ final class LineMarkersUtil {
         markupModel.processRangeHighlightersOverlappingWith(bounds.getStartOffset(), bounds.getEndOffset(),
           highlighter -> {
             LineMarkerInfo<?> info = getLineMarkerInfo(highlighter);
-            if (group == -1 || info != null && info.updatePass == group) {
+
+            if (
+              // (recycle) zombie line marker immediately because similar-looking line markers don't merge, unlike regular HighlightInfos
+              HighlightingMarkupGrave.isZombieMarkup(highlighter) && highlighter.getGutterIconRenderer() != null
+                || group == -1 || info != null && info.updatePass == group) {
               toReuse.recycleHighlighter(highlighter);
             }
             return true;
@@ -103,6 +107,7 @@ final class LineMarkersUtil {
       if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged) {
         markupModel.changeAttributesInBatch(highlighter, changeAttributes(info, rendererChanged, newRenderer, lineSeparatorColorChanged, lineSeparatorPlacementChanged));
       }
+      HighlightingMarkupGrave.unmarkZombieMarkup(highlighter);
     }
     highlighter.putUserData(LINE_MARKER_INFO, info);
     info.highlighter = highlighter;
@@ -139,6 +144,10 @@ final class LineMarkersUtil {
       try {
         allIsClear = markupModel.processRangeHighlightersOverlappingWith(marker.startOffset, marker.endOffset,
           highlighter -> {
+            if (HighlightingMarkupGrave.isZombieMarkup(highlighter)) {
+              toReuse.recycleHighlighter(highlighter);
+              return true;
+            }
             LineMarkerInfo<?> info = getLineMarkerInfo(highlighter);
             if (info != null) {
               markerInTheWay[0] = info;
