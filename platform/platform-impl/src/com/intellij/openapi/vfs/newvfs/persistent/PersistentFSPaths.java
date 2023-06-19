@@ -29,6 +29,8 @@ public final class PersistentFSPaths {
     return storagesDir.resolve("replace-storages.marker");
   }
 
+  public @NotNull Path getVfsLogStorage() { return storagesDir.resolve("vfslog"); }
+
   //@NotNull File getVfsEnumBaseFile() {
   //  return new File(new File(myCachesDir), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
   //}
