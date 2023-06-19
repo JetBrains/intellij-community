@@ -91,6 +91,9 @@ internal class PortableCompilationCacheDownloader(
     if (availableCommitDepth in 0 until lastCommits.count()) {
       val lastCachedCommit = lastCommits.get(availableCommitDepth)
       context.messages.info("Using cache for commit $lastCachedCommit ($availableCommitDepth behind last commit).")
+      context.messages.block("Available cache keys listing") {
+        availableCachesKeys.forEach(context.messages::info)
+      }
       val tasks = mutableListOf<ForkJoinTask<*>>()
       if (!downloadCompilationOutputsOnly) {
         tasks.add(ForkJoinTask.adapt { saveJpsCache(lastCachedCommit) })
