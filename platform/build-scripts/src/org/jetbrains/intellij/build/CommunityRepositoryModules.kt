@@ -627,7 +627,6 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("HdrHistogram")
       spec.withProjectLibrary("javax-inject")
       spec.withProjectLibrary("kotlinx-coroutines-guava")
-      spec.withProjectLibrary("kotlin-tooling-core")
       spec.withProjectLibrary("kxml2")
       spec.withProjectLibrary("layoutinspector-skia-proto")
       spec.withProjectLibrary("layoutinspector-view-proto")
