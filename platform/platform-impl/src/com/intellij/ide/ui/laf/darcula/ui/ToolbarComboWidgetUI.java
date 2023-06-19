@@ -79,6 +79,15 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
       ToolbarComboWidget widget = (ToolbarComboWidget)evt.getSource();
       tryUpdateHtmlRenderer(widget, widget.getText());
     }
+
+    if ("pressListenersCount".equals(evt.getPropertyName())) {
+      ToolbarComboWidget widget = (ToolbarComboWidget)evt.getSource();
+      Insets insets = isSeparatorShown(widget)
+                      ? JBUI.CurrentTheme.MainToolbar.SplitDropdown.borderInsets()
+                      : JBUI.CurrentTheme.MainToolbar.Dropdown.borderInsets();
+      JBEmptyBorder border = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
+      widget.setBorder(border);
+    }
   }
 
   private void tryUpdateHtmlRenderer(ToolbarComboWidget widget, String text) {
@@ -112,9 +121,11 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     int maxTextWidth = calcMaxTextWidth(combo, paintRect);
     try {
       GraphicsUtil.setupAAPainting(g2);
+      boolean skipNextGap = false;
       if (!leftIcons.isEmpty()) {
         Rectangle iconsRect = paintIcons(leftIcons, combo, g2, paintRect, combo.getLeftIconsGap());
         doClip(paintRect, iconsRect.width + getGapAfterLeftIcons());
+        skipNextGap = true;
       }
 
       String text = getText(combo);
@@ -122,24 +133,27 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
         Rectangle textRect = new Rectangle(paintRect.x, paintRect.y, maxTextWidth, paintRect.height);
         drawText(c, text, g2, textRect);
         doClip(paintRect, maxTextWidth);
+        skipNextGap = false;
       }
 
       if (!rightIcons.isEmpty()) {
-        doClip(paintRect, getGapBeforeRightIcons());
+        if (!skipNextGap) doClip(paintRect, getGapBeforeRightIcons());
         Rectangle iconsRect = paintIcons(rightIcons, combo, g2, paintRect, combo.getRightIconsGap());
         doClip(paintRect, iconsRect.width);
+        skipNextGap = false;
       }
 
       if (isSeparatorShown(combo)) {
-        doClip(paintRect, getGapBeforeSeparator());
+        if (!skipNextGap) doClip(paintRect, getGapBeforeSeparator());
         g2.setColor(c.isEnabled() ? UIManager.getColor("MainToolbar.separatorColor") : UIUtil.getLabelDisabledForeground());
         g2.fillRect(paintRect.x, ((int)paintRect.getCenterY()) - SEPARATOR_HEIGHT / 2, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
         separatorPosition = paintRect.x + combo.getInsets().left;
         doClip(paintRect, SEPARATOR_WIDTH);
+        skipNextGap = false;
       }
 
       if (combo.isExpandable()) {
-        doClip(paintRect, getGapBeforeExpandIcon());
+        if (!skipNextGap) doClip(paintRect, getGapBeforeExpandIcon());
         paintIcons(Collections.singletonList(EXPAND_ICON), combo, g2, paintRect, 0); // no gap for single icon
       }
     }
@@ -275,9 +289,11 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     Dimension res = new Dimension();
 
     List<Icon> icons = combo.getLeftIcons();
+    boolean skipNextGap = false;
     if (!icons.isEmpty()) {
       res.width += calcIconsWidth(icons, combo.getLeftIconsGap()) + getGapAfterLeftIcons();
       res.height = icons.stream().mapToInt(Icon::getIconHeight).max().orElse(0);
+      skipNextGap = true;
     }
 
     if (!StringUtil.isEmpty(combo.getText())) {
@@ -285,22 +301,25 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
       String text = getText(combo);
       res.width += metrics.stringWidth(text);
       res.height = Math.max(res.height, metrics.getHeight());
+      skipNextGap = false;
     }
 
     icons = combo.getRightIcons();
     if (!icons.isEmpty()) {
-      if (res.width > 0) res.width += getGapBeforeSeparator();
+      if (res.width > 0 && !skipNextGap) res.width += getGapBeforeRightIcons();
       res.width += calcIconsWidth(icons, combo.getRightIconsGap());
       res.height = Math.max(res.height, icons.stream().mapToInt(Icon::getIconHeight).max().orElse(0));
+      skipNextGap = false;
     }
 
     if (isSeparatorShown(combo)) {
-      if (res.width > 0) res.width += getGapBeforeSeparator();
-      res.width += SEPARATOR_WIDTH + getGapBeforeSeparator();
+      if (res.width > 0 && !skipNextGap) res.width += getGapBeforeSeparator();
+      res.width += SEPARATOR_WIDTH;
+      skipNextGap = false;
     }
 
     if (combo.isExpandable()) {
-      if (res.width > 0) res.width += getGapBeforeExpandIcon();
+      if (res.width > 0 && !skipNextGap) res.width += getGapBeforeExpandIcon();
       res.width += EXPAND_ICON.getIconWidth();
       res.height = Math.max(res.height, EXPAND_ICON.getIconHeight());
     }
