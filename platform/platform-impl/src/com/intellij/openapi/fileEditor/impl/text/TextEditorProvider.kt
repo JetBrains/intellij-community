@@ -1,382 +1,298 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.fileEditor.impl.text;
+package com.intellij.openapi.fileEditor.impl.text
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider;
-import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider;
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
-import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.structureView.StructureViewBuilder
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
+import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
+import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.performWhenLoaded
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl.Companion.createTextEditor
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.Navigatable
+import com.intellij.psi.SingleRootFileViewProvider
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.ui.update.UiNotifyConnector
+import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import java.beans.PropertyChangeListener
+import javax.swing.JComponent
 
-import javax.swing.*;
-import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+private val TEXT_EDITOR_KEY = Key.create<TextEditor>("textEditor")
+private const val TYPE_ID: @NonNls String = "text-editor"
+private const val LINE_ATTR: @NonNls String = "line"
+private const val COLUMN_ATTR: @NonNls String = "column"
+private const val LEAN_FORWARD_ATTR: @NonNls String = "lean-forward"
+private const val SELECTION_START_LINE_ATTR: @NonNls String = "selection-start-line"
+private const val SELECTION_START_COLUMN_ATTR: @NonNls String = "selection-start-column"
+private const val SELECTION_END_LINE_ATTR: @NonNls String = "selection-end-line"
+private const val SELECTION_END_COLUMN_ATTR: @NonNls String = "selection-end-column"
+private const val RELATIVE_CARET_POSITION_ATTR: @NonNls String = "relative-caret-position"
+private const val CARET_ELEMENT: @NonNls String = "caret"
 
-public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
-                                           TextBasedFileEditorProvider,
-                                           StructureViewFileEditorProvider,
-                                           QuickDefinitionProvider,
-                                           DumbAware {
-  protected static final Logger LOG = Logger.getInstance(TextEditorProvider.class);
-
-  private static final Key<TextEditor> TEXT_EDITOR_KEY = Key.create("textEditor");
-
-  private static final @NonNls String TYPE_ID = "text-editor";
-  private static final @NonNls String LINE_ATTR = "line";
-  private static final @NonNls String COLUMN_ATTR = "column";
-  private static final @NonNls String LEAN_FORWARD_ATTR = "lean-forward";
-  private static final @NonNls String SELECTION_START_LINE_ATTR = "selection-start-line";
-  private static final @NonNls String SELECTION_START_COLUMN_ATTR = "selection-start-column";
-  private static final @NonNls String SELECTION_END_LINE_ATTR = "selection-end-line";
-  private static final @NonNls String SELECTION_END_COLUMN_ATTR = "selection-end-column";
-  private static final @NonNls String RELATIVE_CARET_POSITION_ATTR = "relative-caret-position";
-  private static final @NonNls String CARET_ELEMENT = "caret";
-
-  public static @NotNull TextEditorProvider getInstance() {
-    return Objects.requireNonNull(FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findFirstAssignableExtension(TextEditorProvider.class));
-  }
-
-  @Override
-  public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    return isTextFile(file) && !SingleRootFileViewProvider.isTooLargeForContentLoading(file);
-  }
-
-  @Override
-  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-    return new TextEditorImpl(project, file, this, TextEditorImpl.Companion.createTextEditor(project, file));
-  }
-
-  @Override
-  public @NotNull FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
-    TextEditorState state = new TextEditorState();
-    if (element.isEmpty()) {
-      return state;
+open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFileEditorProvider, StructureViewFileEditorProvider,
+                                QuickDefinitionProvider, DumbAware {
+  companion object {
+    @JvmStatic
+    fun getInstance(): TextEditorProvider {
+      return FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findFirstAssignableExtension(TextEditorProvider::class.java)!!
     }
 
-    List<Element> caretElements = element.getChildren(CARET_ELEMENT);
-    if (caretElements.isEmpty()) {
-      state.CARETS = new TextEditorState.CaretState[]{readCaretInfo(element)};
-    }
-    else {
-      state.CARETS = new TextEditorState.CaretState[caretElements.size()];
-      for (int i = 0; i < caretElements.size(); i++) {
-        state.CARETS[i] = readCaretInfo(caretElements.get(i));
-      }
-    }
-
-    state.RELATIVE_CARET_POSITION = StringUtilRt.parseInt(element.getAttributeValue(RELATIVE_CARET_POSITION_ATTR), 0);
-    return state;
-  }
-
-  private static @NotNull TextEditorState.CaretState readCaretInfo(@NotNull Element element) {
-    TextEditorState.CaretState caretState = new TextEditorState.CaretState();
-    caretState.LINE = parseWithDefault(element, LINE_ATTR);
-    caretState.COLUMN = parseWithDefault(element, COLUMN_ATTR);
-    caretState.LEAN_FORWARD = Boolean.parseBoolean(element.getAttributeValue(LEAN_FORWARD_ATTR));
-    caretState.SELECTION_START_LINE = parseWithDefault(element, SELECTION_START_LINE_ATTR);
-    caretState.SELECTION_START_COLUMN = parseWithDefault(element, SELECTION_START_COLUMN_ATTR);
-    caretState.SELECTION_END_LINE = parseWithDefault(element, SELECTION_END_LINE_ATTR);
-    caretState.SELECTION_END_COLUMN = parseWithDefault(element, SELECTION_END_COLUMN_ATTR);
-    return caretState;
-  }
-
-  private static int parseWithDefault(@NotNull Element element, @NotNull String attributeName) {
-    return StringUtilRt.parseInt(element.getAttributeValue(attributeName), 0);
-  }
-
-  @Override
-  public void writeState(@NotNull FileEditorState _state, @NotNull Project project, @NotNull Element element) {
-    TextEditorState state = (TextEditorState)_state;
-
-    if (state.RELATIVE_CARET_POSITION != 0) {
-      element.setAttribute(RELATIVE_CARET_POSITION_ATTR, Integer.toString(state.RELATIVE_CARET_POSITION));
-    }
-
-    for (TextEditorState.CaretState caretState : state.CARETS) {
-      Element e = new Element(CARET_ELEMENT);
-      writeIfNot0(e, LINE_ATTR, caretState.LINE);
-      writeIfNot0(e, COLUMN_ATTR, caretState.COLUMN);
-      if (caretState.LEAN_FORWARD) {
-        e.setAttribute(LEAN_FORWARD_ATTR, Boolean.toString(true));
-      }
-      writeIfNot0(e, SELECTION_START_LINE_ATTR, caretState.SELECTION_START_LINE);
-      writeIfNot0(e, SELECTION_START_COLUMN_ATTR, caretState.SELECTION_START_COLUMN);
-      writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE);
-      writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE);
-      writeIfNot0(e, SELECTION_END_COLUMN_ATTR, caretState.SELECTION_END_COLUMN);
-
-      if (!e.isEmpty()) {
-        element.addContent(e);
-      }
-    }
-  }
-
-  private static void writeIfNot0(@NotNull Element element, @NotNull String name, int value) {
-    if (value != 0) {
-      element.setAttribute(name, Integer.toString(value));
-    }
-  }
-
-  @Override
-  public @NotNull String getEditorTypeId() {
-    return TYPE_ID;
-  }
-
-  @Override
-  public @NotNull FileEditorPolicy getPolicy() {
-    return FileEditorPolicy.NONE;
-  }
-
-  public @NotNull TextEditor getTextEditor(@NotNull Editor editor) {
-    TextEditor textEditor = editor.getUserData(TEXT_EDITOR_KEY);
-    if (textEditor == null) {
-      textEditor = createWrapperForEditor(editor);
-      putTextEditor(editor, textEditor);
-    }
-
-    return textEditor;
-  }
-
-  protected @NotNull EditorWrapper createWrapperForEditor(@NotNull Editor editor) {
-    return new EditorWrapper(editor);
-  }
-
-  public static Document @NotNull [] getDocuments(@NotNull FileEditor editor) {
-    Document[] result;
-    if (editor instanceof DocumentsEditor documentsEditor) {
-      result = documentsEditor.getDocuments();
-    }
-    else if (editor instanceof TextEditor) {
-      result = new Document[]{((TextEditor)editor).getEditor().getDocument()};
-    }
-    else {
-      result = Document.EMPTY_ARRAY;
-      VirtualFile file = editor.getFile();
-      if (file != null) {
-        Document document = FileDocumentManager.getInstance().getDocument(file);
-        if (document != null) {
-          result = new Document[]{document};
+    @JvmStatic
+    fun getDocuments(editor: FileEditor): Array<Document> {
+      return when (editor) {
+        is DocumentsEditor -> editor.documents
+        is TextEditor -> arrayOf(editor.editor.document)
+        else -> {
+          var result = Document.EMPTY_ARRAY
+          val document = editor.getFile()?.let { FileDocumentManager.getInstance().getDocument(it) }
+          if (document != null) {
+            result = arrayOf(document)
+          }
+          result
         }
       }
     }
-    if (ArrayUtil.contains(null, result)) {
-      LOG.error("FileEditor returned null document for " + editor + " (" + editor.getClass() +
-                "); result='" + Arrays.toString(result) +
-                "'; editor instanceof DocumentsEditor: " + (editor instanceof DocumentsEditor) +
-                "; editor instanceof TextEditor: " + (editor instanceof TextEditor) +
-                "; editor.getFile():" + editor.getFile());
+
+    @ApiStatus.Internal
+    fun putTextEditor(editor: Editor, textEditor: TextEditor) {
+      editor.putUserData(TEXT_EDITOR_KEY, textEditor)
     }
-    return result;
+
+    @JvmStatic
+    fun isTextFile(file: VirtualFile): Boolean {
+      if (file.isDirectory || !file.isValid) {
+        return false
+      }
+      val fileType = file.fileType
+      return !fileType.isBinary || BinaryFileTypeDecompilers.getInstance().forFileType(fileType) != null
+    }
   }
 
-  @ApiStatus.Internal
-  public static void putTextEditor(@NotNull Editor editor, @NotNull TextEditor textEditor) {
-    editor.putUserData(TEXT_EDITOR_KEY, textEditor);
+  override fun accept(project: Project, file: VirtualFile): Boolean {
+    return isTextFile(file) && !SingleRootFileViewProvider.isTooLargeForContentLoading(file)
   }
+
+  override fun createEditor(project: Project, file: VirtualFile): FileEditor {
+    return TextEditorImpl(project, file, this, createTextEditor(project, file))
+  }
+
+  override fun readState(element: Element, project: Project, file: VirtualFile): FileEditorState {
+    val state = TextEditorState()
+    if (element.isEmpty) {
+      return state
+    }
+
+    val caretElements = element.getChildren(CARET_ELEMENT)
+    if (caretElements.isEmpty()) {
+      state.CARETS = arrayOf(readCaretInfo(element))
+    }
+    else {
+      state.CARETS = Array(caretElements.size) { i ->
+        readCaretInfo(caretElements[i])
+      }
+    }
+    state.relativeCaretPosition = StringUtilRt.parseInt(element.getAttributeValue(RELATIVE_CARET_POSITION_ATTR), 0)
+    return state
+  }
+
+  override fun writeState(@Suppress("LocalVariableName") _state: FileEditorState, project: Project, element: Element) {
+    val state = _state as TextEditorState
+    if (state.relativeCaretPosition != 0) {
+      element.setAttribute(RELATIVE_CARET_POSITION_ATTR, state.relativeCaretPosition.toString())
+    }
+
+    for (caretState in state.CARETS) {
+      val e = Element(CARET_ELEMENT)
+      writeIfNot0(e, LINE_ATTR, caretState.LINE)
+      writeIfNot0(e, COLUMN_ATTR, caretState.COLUMN)
+      if (caretState.LEAN_FORWARD) {
+        e.setAttribute(LEAN_FORWARD_ATTR, true.toString())
+      }
+      writeIfNot0(e, SELECTION_START_LINE_ATTR, caretState.SELECTION_START_LINE)
+      writeIfNot0(e, SELECTION_START_COLUMN_ATTR, caretState.SELECTION_START_COLUMN)
+      writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE)
+      writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE)
+      writeIfNot0(e, SELECTION_END_COLUMN_ATTR, caretState.SELECTION_END_COLUMN)
+      if (!e.isEmpty) {
+        element.addContent(e)
+      }
+    }
+  }
+
+  override fun getEditorTypeId(): String = TYPE_ID
+
+  override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.NONE
+
+  open fun getTextEditor(editor: Editor): TextEditor {
+    var textEditor = editor.getUserData(TEXT_EDITOR_KEY)
+    if (textEditor == null) {
+      textEditor = createWrapperForEditor(editor)
+      putTextEditor(editor, textEditor)
+    }
+    return textEditor
+  }
+
+  protected open fun createWrapperForEditor(editor: Editor): EditorWrapper = EditorWrapper(editor)
 
   @RequiresReadLock
-  protected @NotNull TextEditorState getStateImpl(@Nullable Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level) {
-    TextEditorState state = new TextEditorState();
-    CaretModel caretModel = editor.getCaretModel();
-    List<CaretState> caretsAndSelections = caretModel.getCaretsAndSelections();
-    state.CARETS = new TextEditorState.CaretState[caretsAndSelections.size()];
-    for (int i = 0; i < caretsAndSelections.size(); i++) {
-      CaretState caretState = caretsAndSelections.get(i);
-      LogicalPosition caretPosition = caretState.getCaretPosition();
-      LogicalPosition selectionStartPosition = caretState.getSelectionStart();
-      LogicalPosition selectionEndPosition = caretState.getSelectionEnd();
-
-      TextEditorState.CaretState s = new TextEditorState.CaretState();
-      s.LINE = getLine(caretPosition);
-      s.COLUMN = getColumn(caretPosition);
-      s.LEAN_FORWARD = caretPosition != null && caretPosition.leansForward;
-      s.VISUAL_COLUMN_ADJUSTMENT = caretState.getVisualColumnAdjustment();
-      s.SELECTION_START_LINE = getLine(selectionStartPosition);
-      s.SELECTION_START_COLUMN = getColumn(selectionStartPosition);
-      s.SELECTION_END_LINE = getLine(selectionEndPosition);
-      s.SELECTION_END_COLUMN = getColumn(selectionEndPosition);
-      state.CARETS[i] = s;
+  open fun getStateImpl(project: Project?, editor: Editor, level: FileEditorStateLevel): TextEditorState {
+    val state = TextEditorState()
+    val caretModel = editor.caretModel
+    val caretsAndSelections = caretModel.caretsAndSelections
+    state.CARETS = Array(caretsAndSelections.size) { i ->
+      val caretState = caretsAndSelections[i]
+      val caretPosition = caretState.caretPosition
+      val selectionStartPosition = caretState.selectionStart
+      val selectionEndPosition = caretState.selectionEnd
+      val s = TextEditorState.CaretState()
+      s.LINE = getLine(caretPosition)
+      s.COLUMN = getColumn(caretPosition)
+      s.LEAN_FORWARD = caretPosition != null && caretPosition.leansForward
+      s.VISUAL_COLUMN_ADJUSTMENT = caretState.visualColumnAdjustment
+      s.SELECTION_START_LINE = getLine(selectionStartPosition)
+      s.SELECTION_START_COLUMN = getColumn(selectionStartPosition)
+      s.SELECTION_END_LINE = getLine(selectionEndPosition)
+      s.SELECTION_END_COLUMN = getColumn(selectionEndPosition)
+      s
     }
 
     // Saving a scrolling proportion on UNDO may cause undesirable results of undo action fails to perform since
     // scrolling proportion restored slightly differs from what have been saved.
-    state.RELATIVE_CARET_POSITION = level == FileEditorStateLevel.UNDO ? Integer.MAX_VALUE : EditorUtil.calcRelativeCaretPosition(editor);
-
-    return state;
-  }
-
-  public static boolean isTextFile(@NotNull VirtualFile file) {
-    if (file.isDirectory() || !file.isValid()) {
-      return false;
-    }
-
-    final FileType ft = file.getFileType();
-    return !ft.isBinary() || BinaryFileTypeDecompilers.getInstance().forFileType(ft) != null;
-  }
-
-  private static int getLine(@Nullable LogicalPosition pos) {
-    return pos == null ? 0 : pos.line;
-  }
-
-  private static int getColumn(@Nullable LogicalPosition pos) {
-    return pos == null ? 0 : pos.column;
+    state.relativeCaretPosition = if (level == FileEditorStateLevel.UNDO) Int.MAX_VALUE else EditorUtil.calcRelativeCaretPosition(editor)
+    return state
   }
 
   @RequiresEdt
-  protected void setStateImpl(@Nullable Project project, @NotNull Editor editor, @NotNull TextEditorState state, boolean exactState) {
-    TextEditorState.CaretState[] carets = state.CARETS;
-    if (carets.length > 0) {
-      List<CaretState> states = new ArrayList<>(carets.length);
-      for (TextEditorState.CaretState caretState : carets) {
-        states.add(new CaretState(new LogicalPosition(caretState.LINE, caretState.COLUMN, caretState.LEAN_FORWARD),
-                                  caretState.VISUAL_COLUMN_ADJUSTMENT,
-                                  new LogicalPosition(caretState.SELECTION_START_LINE, caretState.SELECTION_START_COLUMN),
-                                  new LogicalPosition(caretState.SELECTION_END_LINE, caretState.SELECTION_END_COLUMN)));
+  open fun setStateImpl(project: Project?, editor: Editor, state: TextEditorState, exactState: Boolean) {
+    val carets = state.CARETS
+    if (carets.isNotEmpty()) {
+      val states = ArrayList<CaretState>(carets.size)
+      for (caretState in carets) {
+        states.add(CaretState(LogicalPosition(caretState.LINE, caretState.COLUMN, caretState.LEAN_FORWARD),
+                              caretState.VISUAL_COLUMN_ADJUSTMENT,
+                              LogicalPosition(caretState.SELECTION_START_LINE, caretState.SELECTION_START_COLUMN),
+                              LogicalPosition(caretState.SELECTION_END_LINE, caretState.SELECTION_END_COLUMN)))
       }
-      editor.getCaretModel().setCaretsAndSelections(states, false);
+      editor.caretModel.setCaretsAndSelections(states, false)
     }
-
-    int relativeCaretPosition = state.RELATIVE_CARET_POSITION;
-    AsyncEditorLoader.performWhenLoaded(editor, () -> {
+    val relativeCaretPosition = state.relativeCaretPosition
+    performWhenLoaded(editor) {
       // not safe to optimize doWhenFirstShown and execute runnable right away if `isShowing() == true`, let's check only here for now
-      if (ApplicationManager.getApplication().isUnitTestMode() || editor.getContentComponent().isShowing()) {
-        scrollToCaret(editor, exactState, relativeCaretPosition);
+      if (ApplicationManager.getApplication().isUnitTestMode || editor.contentComponent.isShowing) {
+        scrollToCaret(editor = editor, exactState = exactState, relativeCaretPosition = relativeCaretPosition)
       }
       else {
-        UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), () -> {
-          if (!editor.isDisposed()) {
-            scrollToCaret(editor, exactState, relativeCaretPosition);
+        UiNotifyConnector.doWhenFirstShown(editor.contentComponent) {
+          if (!editor.isDisposed) {
+            scrollToCaret(editor = editor, exactState = exactState, relativeCaretPosition = relativeCaretPosition)
           }
-        });
+        }
       }
-    });
+    }
   }
 
-  private static void scrollToCaret(Editor editor, boolean exactState, int relativeCaretPosition) {
-    editor.getScrollingModel().disableAnimation();
-    if (relativeCaretPosition != Integer.MAX_VALUE) {
-      EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition);
-    }
-    if (!exactState) {
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
-    editor.getScrollingModel().enableAnimation();
+  override fun getStructureViewBuilder(project: Project, file: VirtualFile): StructureViewBuilder? {
+    return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.fileType, file, project)
   }
 
-  @Override
-  public @Nullable StructureViewBuilder getStructureViewBuilder(@NotNull Project project, @NotNull VirtualFile file) {
-    return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, project);
+  protected open inner class EditorWrapper(private val editor: Editor) : UserDataHolderBase(), TextEditor {
+    init {
+      @Suppress("LeakingThis")
+      assignClientId(fileEditor = this, clientId = ClientEditorManager.getClientId(editor))
+    }
+
+    override fun getEditor(): Editor = editor
+
+    override fun getComponent(): JComponent = editor.component
+
+    override fun getPreferredFocusedComponent(): JComponent? = editor.contentComponent
+
+    override fun getName(): String = IdeBundle.message("tab.title.text")
+
+    override fun getStructureViewBuilder(): StructureViewBuilder? {
+      val file = file ?: return null
+      val project = editor.project ?: return null
+      return this@TextEditorProvider.getStructureViewBuilder(project, file)
+    }
+
+    override fun getState(level: FileEditorStateLevel): FileEditorState {
+      return getStateImpl(project = null, editor = editor, level = level)
+    }
+
+    override fun setState(state: FileEditorState) {
+      setState(state = state, exactState = false)
+    }
+
+    override fun setState(state: FileEditorState, exactState: Boolean) {
+      setStateImpl(project = null, editor = editor, state = state as TextEditorState, exactState = exactState)
+    }
+
+    override fun isModified(): Boolean = false
+
+    final override fun isValid(): Boolean = !editor.isDisposed
+
+    override fun dispose() {}
+
+    override fun addPropertyChangeListener(listener: PropertyChangeListener) {}
+
+    override fun removePropertyChangeListener(listener: PropertyChangeListener) {}
+
+    override fun canNavigateTo(navigatable: Navigatable): Boolean = false
+
+    override fun navigateTo(navigatable: Navigatable) {}
+
+    override fun getFile(): VirtualFile? {
+      return FileDocumentManager.getInstance().getFile(editor.document)
+    }
   }
+}
 
-  protected class EditorWrapper extends UserDataHolderBase implements TextEditor {
-    private final Editor myEditor;
+private fun getLine(position: LogicalPosition?): Int = position?.line ?: 0
 
-    EditorWrapper(@NotNull Editor editor) {
-      myEditor = editor;
-      ClientFileEditorManager.assignClientId(this, ClientEditorManager.getClientId(editor));
-    }
+private fun getColumn(position: LogicalPosition?): Int = position?.column ?: 0
 
-    @Override
-    public @NotNull Editor getEditor() {
-      return myEditor;
-    }
+private fun scrollToCaret(editor: Editor, exactState: Boolean, relativeCaretPosition: Int) {
+  editor.scrollingModel.disableAnimation()
+  if (relativeCaretPosition != Int.MAX_VALUE) {
+    EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition)
+  }
+  if (!exactState) {
+    editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
+  }
+  editor.scrollingModel.enableAnimation()
+}
 
-    @Override
-    public @NotNull JComponent getComponent() {
-      return myEditor.getComponent();
-    }
+private fun readCaretInfo(element: Element): TextEditorState.CaretState {
+  val caretState = TextEditorState.CaretState()
+  caretState.LINE = parseWithDefault(element, LINE_ATTR)
+  caretState.COLUMN = parseWithDefault(element, COLUMN_ATTR)
+  caretState.LEAN_FORWARD = element.getAttributeValue(LEAN_FORWARD_ATTR).toBoolean()
+  caretState.SELECTION_START_LINE = parseWithDefault(element, SELECTION_START_LINE_ATTR)
+  caretState.SELECTION_START_COLUMN = parseWithDefault(element, SELECTION_START_COLUMN_ATTR)
+  caretState.SELECTION_END_LINE = parseWithDefault(element, SELECTION_END_LINE_ATTR)
+  caretState.SELECTION_END_COLUMN = parseWithDefault(element, SELECTION_END_COLUMN_ATTR)
+  return caretState
+}
 
-    @Override
-    public JComponent getPreferredFocusedComponent() {
-      return myEditor.getContentComponent();
-    }
+private fun parseWithDefault(element: Element, attributeName: String): Int {
+  return StringUtilRt.parseInt(element.getAttributeValue(attributeName), 0)
+}
 
-    @Override
-    public @NotNull String getName() {
-      return IdeBundle.message("tab.title.text");
-    }
-
-    @Override
-    public StructureViewBuilder getStructureViewBuilder() {
-      VirtualFile file = getFile();
-      if (file == null) return null;
-
-      final Project project = myEditor.getProject();
-      if (project == null) return null;
-      return TextEditorProvider.this.getStructureViewBuilder(project, file);
-    }
-
-    @Override
-    public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
-      return getStateImpl(null, myEditor, level);
-    }
-
-    @Override
-    public void setState(@NotNull FileEditorState state) {
-      setState(state, false);
-    }
-
-    @Override
-    public void setState(@NotNull FileEditorState state, boolean exactState) {
-      setStateImpl(null, myEditor, (TextEditorState)state, exactState);
-    }
-
-    @Override
-    public boolean isModified() {
-      return false;
-    }
-
-    @Override
-    public boolean isValid() {
-      return true;
-    }
-
-    @Override
-    public void dispose() { }
-
-    @Override
-    public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
-
-    @Override
-    public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
-
-    @Override
-    public boolean canNavigateTo(final @NotNull Navigatable navigatable) {
-      return false;
-    }
-
-    @Override
-    public void navigateTo(final @NotNull Navigatable navigatable) {
-    }
-
-    @Override
-    public @Nullable VirtualFile getFile() {
-      return FileDocumentManager.getInstance().getFile(myEditor.getDocument());
-    }
+private fun writeIfNot0(element: Element, name: String, value: Int) {
+  if (value != 0) {
+    element.setAttribute(name, value.toString())
   }
 }
