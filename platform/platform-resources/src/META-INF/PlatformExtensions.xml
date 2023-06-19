@@ -636,8 +636,6 @@
                         preload="true"/>
     <applicationInitializedListener implementation="com.intellij.ide.plugins.BundledPluginsState"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.ExpiredPluginsState" preload="true"/>
-    <projectService serviceInterface="com.intellij.ide.plugins.advertiser.PluginFeatureEnabler"
-                    serviceImplementation="com.intellij.ide.plugins.advertiser.OnDemandPluginFeatureEnablerImpl"/>
 
     <requiredForSmartModeStartupActivity implementation="com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"/>
     <projectConfigurable groupId="build" provider="com.intellij.externalDependencies.impl.ExternalDependenciesConfigurableProvider"
@@ -1568,8 +1566,6 @@
               topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     <listener class="com.intellij.openapi.keymap.impl.KeymapFlagsStorageListener"
               topic="com.intellij.openapi.keymap.KeymapManagerListener"/>
-    <listener class="com.intellij.ide.plugins.advertiser.OnDemandDependencyFeatureCollector"
-              topic="com.intellij.ide.AppLifecycleListener" activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="com.intellij.ide.actions.IdeScaleSettingsListener" activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.ide.ui.UISettingsListener"/>
     <listener class="com.intellij.ide.ProjectWindowCustomizerListener"

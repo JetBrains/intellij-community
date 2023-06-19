@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
-import com.intellij.ide.plugins.advertiser.PluginFeatureEnabler;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -185,8 +184,6 @@ class MavenProjectResolverImpl implements MavenProjectResolver {
     mavenProjectCandidate.set(result, generalSettings, false, resetArtifacts, false);
     NativeMavenProjectHolder nativeMavenProject = result.nativeMavenProject;
     if (nativeMavenProject != null) {
-      PluginFeatureEnabler.getInstance(myProject).scheduleEnableSuggested();
-
       for (MavenImporter eachImporter : MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
         eachImporter.resolve(myProject, mavenProjectCandidate, nativeMavenProject, embedder);
       }

@@ -10,8 +10,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
-import org.jetbrains.annotations.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.PropertyKey
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
@@ -558,27 +560,3 @@ private fun checkCycle(descriptor: IdeaPluginDescriptorImpl, configFile: String,
     i++
   }
 }
-
-private var isOnDemandEnabled: Boolean? = null
-private const val ON_DEMAND_ENABLED_KEY: String = "ide.plugins.allow.on.demand"
-
-var isOnDemandPluginEnabled: Boolean
-  @ApiStatus.Experimental get() {
-    var result = isOnDemandEnabled
-    if (result == null) {
-      synchronized(IdeaPluginDescriptorImpl::class.java) {
-        if (isOnDemandEnabled == null) {
-          result = !AppMode.isHeadless() && EarlyAccessRegistryManager.getBoolean(ON_DEMAND_ENABLED_KEY)
-          isOnDemandEnabled = result
-        }
-      }
-    }
-
-    return result!!
-  }
-
-  @TestOnly set(value) {
-    synchronized(IdeaPluginDescriptorImpl::class.java) {
-      isOnDemandEnabled = value
-    }
-  }

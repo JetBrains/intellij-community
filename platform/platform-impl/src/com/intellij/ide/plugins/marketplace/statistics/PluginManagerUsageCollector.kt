@@ -72,7 +72,7 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
           event.log(
             project,
             getPluginInfoByDescriptor(descriptor),
-            PluginEnabledState.getState(enable, descriptor.isOnDemand),
+            PluginEnabledState.getState(enable),
           )
         }
       }
