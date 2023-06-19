@@ -19,6 +19,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.createSingleProjectAndAccountState
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext.Companion.GitLabProjectUIContext
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
@@ -49,6 +50,7 @@ internal class GitLabProjectUIContextHolder(
 
   fun switchProject() {
     cs.launch {
+      project.service<GitLabMergeRequestsPreferences>().selectedRepoAndAccount = null
       connectionManager.closeConnection()
     }
   }
