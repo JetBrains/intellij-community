@@ -117,6 +117,9 @@
 
     <applicationService serviceInterface="com.intellij.xdebugger.attach.XAttachRecentItemsMatcher"
                         serviceImplementation="com.intellij.xdebugger.impl.actions.DefaultAttachRecentItemsMatcher"/>
+
+    <registryKey defaultValue="false" description="Silently attach to process if there is only one available"
+                 key="xdebugger.silently.attach.to.process.if.only.one"/>
   </extensions>
 
   <actions>
