@@ -109,7 +109,6 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     Rectangle innerArea = SwingUtilities.calculateInnerArea(c, null);
     Graphics2D g2 = (Graphics2D)g.create(innerArea.x, innerArea.y, innerArea.width, innerArea.height);
     Rectangle paintRect = new Rectangle(0, 0, innerArea.width, innerArea.height);
-    doClip(paintRect, getLeftGap());
     int maxTextWidth = calcMaxTextWidth(combo, paintRect);
     try {
       GraphicsUtil.setupAAPainting(g2);
@@ -135,7 +134,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
         doClip(paintRect, getGapBeforeSeparator());
         g2.setColor(c.isEnabled() ? UIManager.getColor("MainToolbar.separatorColor") : UIUtil.getLabelDisabledForeground());
         g2.fillRect(paintRect.x, ((int)paintRect.getCenterY()) - SEPARATOR_HEIGHT / 2, SEPARATOR_WIDTH, SEPARATOR_HEIGHT);
-        separatorPosition = paintRect.x;
+        separatorPosition = paintRect.x + combo.getInsets().left;
         doClip(paintRect, SEPARATOR_WIDTH);
       }
 
@@ -186,7 +185,6 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
       int arc = DarculaUIUtil.COMPONENT_ARC.get();
       if (highlightBackground != null) {
         Rectangle highlightRect = c.getVisibleRect();
-        JBInsets.removeFrom(highlightRect, c.getInsets());
         g2.setColor(highlightBackground);
         g2.fillRoundRect(highlightRect.x, highlightRect.y, highlightRect.width, highlightRect.height, arc, arc);
       }
@@ -275,8 +273,6 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
   public Dimension getPreferredSize(JComponent c) {
     ToolbarComboWidget combo = (ToolbarComboWidget)c;
     Dimension res = new Dimension();
-
-    res.width += getLeftGap();
 
     List<Icon> icons = combo.getLeftIcons();
     if (!icons.isEmpty()) {
@@ -376,17 +372,15 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
 
     private void calcHoverRect(Point mousePosition) {
       Rectangle compBounds = comp.getVisibleRect();
-      Insets insets = comp.getInsets();
-      JBInsets.removeFrom(compBounds, insets);
       if (!isSeparatorShown(comp)) {
         updateHoverRect(compBounds);
         return;
       }
 
       Rectangle left = new Rectangle(compBounds.x, compBounds.y, separatorPosition - 1, compBounds.height);
-      Rectangle right = new Rectangle(separatorPosition + SEPARATOR_WIDTH + insets.left + 1, compBounds.y, (compBounds.width - separatorPosition - SEPARATOR_WIDTH - 1), compBounds.height);
+      Rectangle right = new Rectangle(separatorPosition + SEPARATOR_WIDTH + 1, compBounds.y, (compBounds.width - separatorPosition - SEPARATOR_WIDTH - 1), compBounds.height);
 
-      updateHoverRect(mousePosition.x <= separatorPosition + insets.left ? left : right);
+      updateHoverRect(mousePosition.x <= separatorPosition ? left : right);
     }
 
     private void updateHoverRect(Rectangle newRect) {

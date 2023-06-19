@@ -157,12 +157,13 @@ public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
   }
 
   private static void doFill(Graphics g, JComponent c, Color color, boolean rounded) {
-    Graphics g2 = g.create();
+    Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setColor(color);
       Rectangle bounds = c.getVisibleRect();
-      JBInsets.removeFrom(bounds, c.getInsets());
       if (rounded) {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
         int arc = DarculaUIUtil.COMPONENT_ARC.get();
         g2.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, arc, arc);
       }

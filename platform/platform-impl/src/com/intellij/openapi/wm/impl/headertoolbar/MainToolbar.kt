@@ -249,7 +249,7 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
     for (i in 0 until bounds.size) {
       val prevRect = if (i > 0) bounds[i - 1] else null
       val rect = bounds[i]
-      fitRectangle(prevRect, rect, getComponent(i))
+      fitRectangle(prevRect, rect, getComponent(i), size2Fit.height)
     }
   }
 
@@ -258,7 +258,7 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
     layoutCallBack?.invoke()
   }
 
-  private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, cmp: Component) {
+  private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, cmp: Component, toolbarHeight: Int) {
     val minSize = ActionToolbar.experimentalToolbarMinimumButtonSize()
     if (!isSeparator(cmp)) {
       currRect.width = Integer.max(currRect.width, minSize.width)
@@ -267,7 +267,7 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
     if (prevRect != null && prevRect.maxX > currRect.minX) {
       currRect.x = prevRect.maxX.toInt()
     }
-    currRect.y = 0
+    currRect.y = (toolbarHeight - currRect.height) / 2
   }
 
   override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {

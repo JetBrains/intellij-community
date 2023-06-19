@@ -1079,7 +1079,7 @@ public final class JBUI {
 
       @NotNull
       public static JBDimension defaultExperimentalToolbarButtonSize() {
-        return size(40, 40);
+        return size(30, 30);
       }
 
       public static int experimentalToolbarButtonIconSize() {
