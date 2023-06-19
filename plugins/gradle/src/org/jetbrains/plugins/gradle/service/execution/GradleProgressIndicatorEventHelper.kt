@@ -5,7 +5,9 @@ import com.intellij.build.events.impl.ProgressBuildEventImpl
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
+import org.gradle.tooling.events.FinishEvent
 import org.gradle.tooling.events.ProgressEvent
+import org.gradle.tooling.events.StartEvent
 import org.gradle.tooling.events.configuration.ProjectConfigurationFinishEvent
 import org.gradle.tooling.events.configuration.ProjectConfigurationProgressEvent
 import org.gradle.tooling.events.configuration.ProjectConfigurationStartEvent
@@ -15,11 +17,14 @@ import org.gradle.tooling.events.lifecycle.BuildPhaseStartEvent
 import org.gradle.tooling.events.task.TaskFinishEvent
 import org.gradle.tooling.events.task.TaskProgressEvent
 import org.gradle.tooling.events.task.TaskStartEvent
+import org.gradle.tooling.events.transform.TransformProgressEvent
+import org.gradle.tooling.events.work.WorkItemProgressEvent
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.execution.GradleProgressPhase.*
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
+import java.util.concurrent.atomic.AtomicLong
 
 object GradleProgressIndicatorEventHelper {
 
@@ -49,6 +54,7 @@ object GradleProgressIndicatorEventHelper {
   fun isGradleBuildProgressEvent(event: ProgressEvent): Boolean {
     return event is BuildPhaseProgressEvent ||
            event is TaskProgressEvent ||
+           event is TransformProgressEvent ||
            event is ProjectConfigurationProgressEvent
   }
 
@@ -77,7 +83,7 @@ object GradleProgressIndicatorEventHelper {
   private fun shouldCreateProgressIndicatorEvent(event: ProgressEvent, progressState: GradleProgressState): Boolean {
     return when {
       progressState.currentPhase == CONFIGURATION && event is ProjectConfigurationProgressEvent -> true
-      progressState.currentPhase == EXECUTION && event is TaskProgressEvent -> true
+      progressState.currentPhase == EXECUTION && (event is TaskProgressEvent || event is TransformProgressEvent) -> true
       else -> false
     }
   }
@@ -95,7 +101,7 @@ object GradleProgressIndicatorEventHelper {
   fun updateGradleProgressState(progressState: GradleProgressState, event: ProgressEvent): GradleProgressState {
     return when {
       progressState.currentPhase == CONFIGURATION && event is ProjectConfigurationProgressEvent -> updateBuildProgress(progressState, event)
-      progressState.currentPhase == EXECUTION && event is TaskProgressEvent -> updateBuildProgress(progressState, event)
+      progressState.currentPhase == EXECUTION && (event is TaskProgressEvent || event is TransformProgressEvent) -> updateBuildProgress(progressState, event)
       event is BuildPhaseProgressEvent -> updateBuildPhase(progressState, event)
       else -> progressState
     }
@@ -104,17 +110,18 @@ object GradleProgressIndicatorEventHelper {
   private fun updateBuildProgress(progressState: GradleProgressState, event: ProgressEvent): GradleProgressState {
     val workItemId = when (event) {
       is TaskProgressEvent -> event.descriptor.taskPath
+      is TransformProgressEvent -> event.descriptor.displayName
       is ProjectConfigurationProgressEvent -> event.descriptor.project.projectPath
       else -> return progressState
     }
     return when (event) {
-      is ProjectConfigurationStartEvent, is TaskStartEvent -> {
+      is StartEvent -> {
         progressState.copy(
           currentProgress = progressState.currentProgress + 1,
           runningWorkItems = progressState.runningWorkItemsAnd(workItemId)
         )
       }
-      is ProjectConfigurationFinishEvent, is TaskFinishEvent -> {
+      is FinishEvent -> {
         progressState.copy(runningWorkItems = progressState.runningWorkItemsWithout(workItemId))
       }
       else -> {

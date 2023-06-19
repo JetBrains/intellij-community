@@ -53,9 +53,7 @@ internal object GradleProgressIndicatorWrapper {
             var nextEvent = channel.receiveCatching().getOrNull()
             while (nextEvent != null) {
               val fraction = when {
-                nextEvent.unit == "items" && nextEvent.total > 0 -> {
-                  nextEvent.progress.toDouble() / nextEvent.total
-                }
+                nextEvent.unit == "items" && nextEvent.total > 0 -> nextEvent.progress.toDouble() / nextEvent.total
                 else -> null
               }
               rawProgressReporter?.fraction(fraction)
