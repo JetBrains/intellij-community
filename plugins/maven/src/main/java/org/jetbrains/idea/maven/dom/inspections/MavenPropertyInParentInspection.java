@@ -5,6 +5,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
@@ -22,6 +23,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
 import org.jetbrains.idea.maven.server.MavenDistribution;
+import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.util.ArrayList;
@@ -52,9 +54,7 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
 
 
       if (model != null) {
-        MavenDistribution distribution =
-          MavenServerManager.getInstance().getConnector(file.getProject(), file.getVirtualFile().getPath()).getMavenDistribution();
-        boolean maven35 = StringUtil.compareVersionNumbers(distribution.getVersion(), "3.5") >= 0;
+        boolean maven35 = isMaven35OrMore(file);
         List<ProblemDescriptor> problems = new ArrayList<>(3);
 
         MavenDomParent mavenParent = model.getRootElement().getMavenParent();
@@ -68,6 +68,18 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
     }
 
     return null;
+  }
+
+  private static boolean isMaven35OrMore(@NotNull PsiFile file) {
+    PsiDirectory directory = file.getContainingDirectory();
+    MavenDistribution distribution;
+    if (directory == null) {
+      distribution = MavenDistributionsCache.getInstance(file.getProject()).getSettingsDistribution();
+    }
+    else {
+      distribution = MavenDistributionsCache.getInstance(file.getProject()).getMavenDistribution(directory.getVirtualFile().getPath());
+    }
+    return StringUtil.compareVersionNumbers(distribution.getVersion(), "3.5") >= 0;
   }
 
   private static void validate(@NotNull InspectionManager manager, boolean isOnTheFly, boolean maven35,
