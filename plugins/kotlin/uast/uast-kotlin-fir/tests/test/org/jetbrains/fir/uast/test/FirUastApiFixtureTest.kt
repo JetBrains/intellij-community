@@ -2,7 +2,6 @@
 package org.jetbrains.fir.uast.test
 
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.uast.test.common.kotlin.UastApiFixtureTestBase
@@ -18,68 +17,64 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
-    private fun doCheck(key: String, checkCallback: (JavaCodeInsightTestFixture) -> Unit) {
-        checkCallback(myFixture)
-    }
-
     fun testAssigningArrayElementType() {
-        doCheck("AssigningArrayElementType", ::checkAssigningArrayElementType)
+        checkAssigningArrayElementType(myFixture)
     }
 
     fun testArgumentForParameter_smartcast() {
-        doCheck("ArgumentForParameter_smartcast", ::checkArgumentForParameter_smartcast)
+        checkArgumentForParameter_smartcast(myFixture)
     }
 
     fun testDivByZero() {
-        doCheck("DivByZero", ::checkDivByZero)
+        checkDivByZero(myFixture)
     }
 
     fun testDetailsOfDeprecatedHidden() {
-        doCheck("DetailsOfDeprecatedHidden", ::checkDetailsOfDeprecatedHidden)
+        checkDetailsOfDeprecatedHidden(myFixture)
     }
 
     fun testTypesOfDeprecatedHidden() {
-        doCheck("TypesOfDeprecatedHidden", ::checkTypesOfDeprecatedHidden)
+        checkTypesOfDeprecatedHidden(myFixture)
     }
 
     fun testReifiedTypeNullability() {
-        doCheck("ReifiedTypeNullability", ::checkReifiedTypeNullability)
+        checkReifiedTypeNullability(myFixture)
     }
 
     fun testImplicitReceiverType() {
-        doCheck("ImplicitReceiverType", ::checkImplicitReceiverType)
+        checkImplicitReceiverType(myFixture)
     }
 
     fun testSubstitutedReceiverType() {
-        doCheck("SubstitutedReceiverType", ::checkSubstitutedReceiverType)
+        checkSubstitutedReceiverType(myFixture)
     }
 
     fun testUnderscoreOperatorForTypeArguments() {
-        doCheck("UnderscoreOperatorForTypeArguments", ::checkUnderscoreOperatorForTypeArguments)
+        checkUnderscoreOperatorForTypeArguments(myFixture)
     }
 
     fun testCallKindOfSamConstructor() {
-        doCheck("CallKindOfSamConstructor", ::checkCallKindOfSamConstructor)
+        checkCallKindOfSamConstructor(myFixture)
     }
 
     fun testExpressionTypeFromIncorrectObject() {
-        doCheck("ExpressionTypeFromIncorrectObject", ::checkExpressionTypeFromIncorrectObject)
+        checkExpressionTypeFromIncorrectObject(myFixture)
     }
 
     fun testExpressionTypeForCallToInternalOperator() {
-        doCheck("ExpressionTypeForCallToInternalOperator", ::checkExpressionTypeForCallToInternalOperator)
+        checkExpressionTypeForCallToInternalOperator(myFixture)
     }
 
     fun testFlexibleFunctionalInterfaceType() {
-        doCheck("FlexibleFunctionalInterfaceType", ::checkFlexibleFunctionalInterfaceType)
+        checkFlexibleFunctionalInterfaceType(myFixture)
     }
 
     fun testInvokedLambdaBody() {
-        doCheck("InvokedLambdaBody", ::checkInvokedLambdaBody)
+        checkInvokedLambdaBody(myFixture)
     }
 
     fun testLambdaImplicitParameters() {
-        doCheck("LambdaImplicitParameters", ::checkLambdaImplicitParameters)
+        checkLambdaImplicitParameters(myFixture)
     }
 
 }
