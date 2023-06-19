@@ -23,6 +23,7 @@ import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
@@ -140,15 +141,25 @@ internal class GitLabReviewTabComponentFactory(
   }
 
   private fun createSelectorsComponent(cs: CoroutineScope): JComponent {
+    val preferences = project.service<GitLabMergeRequestsPreferences>()
     // TODO: move vm creation to another place
     val selectorVm = GitLabRepositoryAndAccountSelectorViewModel(
       cs, toolwindowViewModel.projectsManager, toolwindowViewModel.accountManager,
       onSelected = { mapping, account ->
         withContext(cs.coroutineContext) {
           toolwindowViewModel.connectionManager.openConnection(mapping, account)
+          preferences.selectedRepoAndAccount = mapping to account
         }
       }
     )
+
+    preferences.selectedRepoAndAccount?.let { (repo, account) ->
+      with(selectorVm) {
+        repoSelectionState.value = repo
+        accountSelectionState.value = account
+        submitSelection()
+      }
+    }
 
     val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs) {
       // TODO: separate loader
