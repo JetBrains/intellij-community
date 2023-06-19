@@ -74,35 +74,44 @@ public class ModCommandServiceImpl implements ModCommandService {
   @RequiresEdt
   @Override
   public void execute(@NotNull Project project, @NotNull ModCommand command) {
-    Set<VirtualFile> files = command.modifiedFiles();
-    if (!files.isEmpty()) {
-      if (!ReadonlyStatusHandler.ensureFilesWritable(project, files.toArray(VirtualFile.EMPTY_ARRAY))) {
-        return;
-      }
-    }
-    doExecute(project, command);
+    if (!ensureWritable(project, command)) return;
+    doExecute(project, command, true);
   }
 
-  private boolean doExecute(@NotNull Project project, @NotNull ModCommand command) {
+  private static boolean ensureWritable(@NotNull Project project, @NotNull ModCommand command) {
+    Set<VirtualFile> files = command.modifiedFiles();
+    return files.isEmpty() || ReadonlyStatusHandler.ensureFilesWritable(project, files.toArray(VirtualFile.EMPTY_ARRAY));
+  }
+
+  @Override
+  public void executeInBatch(@NotNull Project project, @NotNull ModCommand command) {
+    if (!ensureWritable(project, command)) return;
+    doExecute(project, command, false);
+  }
+
+  private boolean doExecute(@NotNull Project project, @NotNull ModCommand command, boolean onTheFly) {
     if (command instanceof ModUpdateFileText upd) {
       return executeUpdate(project, upd);
     }
     if (command instanceof ModCompositeCommand cmp) {
-      return executeComposite(project, cmp);
+      return executeComposite(project, cmp, onTheFly);
     }
     if (command instanceof ModNavigate nav) {
+      if (!onTheFly) return true;
       return executeNavigate(project, nav);
     }
     if (command instanceof ModHighlight highlight) {
+      if (!onTheFly) return true;
       return executeHighlight(project, highlight);
     }
     if (command instanceof ModNothing) {
       return true;
     }
     if (command instanceof ModChooseTarget<?> cht) {
-      return executeChoose(project, cht);
+      return executeChoose(project, cht, onTheFly);
     }
     if (command instanceof ModDisplayError error) {
+      if (!onTheFly) return true; // TODO: gather all errors and display them together?
       return executeError(project, error);
     }
     throw new IllegalArgumentException("Unknown command: " + command);
@@ -115,13 +124,14 @@ public class ModCommandServiceImpl implements ModCommandService {
     return true;
   }
 
-  private static <T extends @NotNull PsiElement> boolean executeChoose(@NotNull Project project, ModChooseTarget<@NotNull T> cht) {
+  private static <T extends @NotNull PsiElement> boolean executeChoose(@NotNull Project project, ModChooseTarget<@NotNull T> cht,
+                                                                       boolean onTheFly) {
     String name = CommandProcessor.getInstance().getCurrentCommandName();
     var elements = cht.elements();
     var nextStep = cht.nextStep();
     if (elements.isEmpty()) return false;
     T element = elements.get(0).element();
-    if (elements.size() == 1) {
+    if (elements.size() == 1 || !onTheFly) {
       executeNextStep(project, nextStep, element, name);
       return true;
     }
@@ -193,9 +203,9 @@ public class ModCommandServiceImpl implements ModCommandService {
     return FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
   }
 
-  private boolean executeComposite(@NotNull Project project, ModCompositeCommand cmp) {
+  private boolean executeComposite(@NotNull Project project, ModCompositeCommand cmp, boolean onTheFly) {
     for (ModCommand command : cmp.commands()) {
-      boolean status = doExecute(project, command);
+      boolean status = doExecute(project, command, onTheFly);
       if (!status) {
         return false;
       }
