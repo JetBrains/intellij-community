@@ -4,7 +4,9 @@ package org.jetbrains.plugins.terminal.exp.completion
 internal abstract class CommandPartNode<T>(val text: String, open val spec: T?, val parent: CommandPartNode<*>?) {
   val children: MutableList<CommandPartNode<*>> = mutableListOf()
 
-  abstract fun createChildNode(name: String): CommandPartNode<*>?
+  open fun createChildNode(name: String): CommandPartNode<*>? = null
+
+  open fun getSuggestionsOfNext(): List<BaseSuggestion> = emptyList()
 
   override fun toString(): String {
     return "${javaClass.simpleName} { text: $text, children: $children }"
@@ -29,7 +31,23 @@ internal class SubcommandNode(text: String,
     else null
   }
 
-  fun getAllAvailableOptions(): List<ShellOption> {
+  override fun getSuggestionsOfNext(): List<BaseSuggestion> {
+    val suggestions = mutableListOf<BaseSuggestion>()
+    if (children.isEmpty()) {
+      suggestions.addAll(spec.subcommands)
+    }
+    suggestions.addAll(getAllAvailableOptions())
+
+    val args = spec.args
+    val existingArgsCount = children.count { it is ArgumentNode }
+    if (args.size > existingArgsCount) {
+      // TODO: here should be also file suggestions if there are corresponding argument
+      suggestions.addAll(args.flatMap { it.suggestions })
+    }
+    return suggestions
+  }
+
+  private fun getAllAvailableOptions(): List<ShellOption> {
     val options = mutableListOf<ShellOption>()
     options.addAll(spec.options)
     var cur = parent
@@ -51,16 +69,26 @@ internal class OptionNode(text: String,
     }
     else null
   }
+
+  override fun getSuggestionsOfNext(): List<BaseSuggestion> {
+    val suggestions = mutableListOf<BaseSuggestion>()
+    val args = spec.args
+    val existingArgsCount = children.count { it is ArgumentNode }
+    if (args.size > existingArgsCount) {
+      // TODO: here should be also file suggestions if there are corresponding argument
+      suggestions.addAll(args.flatMap { it.suggestions })
+    }
+    if (parent is SubcommandNode && args.all { it.isOptional }) {
+      suggestions.addAll(parent.getSuggestionsOfNext())
+    }
+    return suggestions
+  }
 }
 
 internal class ArgumentNode(text: String, parent: CommandPartNode<*>?) : CommandPartNode<ShellArgument>(text, null, parent) {
-  override fun createChildNode(name: String): CommandPartNode<*>? {
-    return null
+  override fun getSuggestionsOfNext(): List<BaseSuggestion> {
+    return parent?.getSuggestionsOfNext() ?: emptyList()
   }
 }
 
-internal class UnknownNode(text: String, parent: CommandPartNode<*>?) : CommandPartNode<Any>(text, null, parent) {
-  override fun createChildNode(name: String): CommandPartNode<*>? {
-    return null
-  }
-}
+internal class UnknownNode(text: String, parent: CommandPartNode<*>?) : CommandPartNode<Any>(text, null, parent)

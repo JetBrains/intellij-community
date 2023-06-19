@@ -54,6 +54,7 @@ internal interface ArgumentContext {
   var default: String?
 
   fun suggestion(value: ShellSuggestion)
+  fun suggestions(vararg values: String)
   fun templates(vararg values: String)
   fun generator(value: ShellSuggestionsGenerator)
 }
@@ -173,6 +174,10 @@ private class ArgumentContextImpl(private val name: String, private val isOption
 
   override fun suggestion(value: ShellSuggestion) {
     suggestions.add(value)
+  }
+
+  override fun suggestions(vararg values: String) {
+    suggestions.add(ShellSuggestion(names = values.asList()))
   }
 
   override fun templates(vararg values: String) {

@@ -3,9 +3,18 @@ package org.jetbrains.plugins.terminal.exp.completion
 
 import kotlinx.serialization.Serializable
 
+abstract class BaseSuggestion {
+  abstract val names: List<String>
+  abstract val displayName: String?
+  abstract val insertValue: String?
+  abstract val description: String?
+  abstract val priority: Int
+  abstract val hidden: Boolean
+}
+
 @Serializable
 data class ShellSubcommand(
-  val names: List<String>,
+  override val names: List<String>,
   val requiresSubcommand: Boolean = false,
 
   val subcommands: List<ShellSubcommand> = emptyList(),
@@ -16,16 +25,16 @@ data class ShellSubcommand(
   val loadSpec: String? = null,
   val parserDirectives: ShellCommandParserDirectives = DEFAULT_PARSER_DIRECTIVES,
 
-  val displayName: String? = null,
-  val insertValue: String? = null,
-  val description: String? = null,
-  val priority: Int = 50,
-  val hidden: Boolean = false
-)
+  override val displayName: String? = null,
+  override val insertValue: String? = null,
+  override val description: String? = null,
+  override val priority: Int = 50,
+  override val hidden: Boolean = false
+) : BaseSuggestion()
 
 @Serializable
 data class ShellOption(
-  val names: List<String>,
+  override val names: List<String>,
   val args: List<ShellArgument> = emptyList(),
   val isPersistent: Boolean = false,
   val isRequired: Boolean = false,
@@ -34,12 +43,12 @@ data class ShellOption(
   val exclusiveOn: List<String> = emptyList(),
   val dependsOn: List<String> = emptyList(),
 
-  val displayName: String? = null,
-  val insertValue: String? = null,
-  val description: String? = null,
-  val priority: Int = 50,
-  val hidden: Boolean = false
-)
+  override val displayName: String? = null,
+  override val insertValue: String? = null,
+  override val description: String? = null,
+  override val priority: Int = 50,
+  override val hidden: Boolean = false
+) : BaseSuggestion()
 
 @Serializable
 data class ShellArgument(
@@ -58,15 +67,15 @@ data class ShellArgument(
 
 @Serializable
 data class ShellSuggestion(
-  val names: List<String> = emptyList(),
+  override val names: List<String> = emptyList(),
   val type: String? = null,
 
-  val displayName: String? = null,
-  val insertValue: String? = null,
-  val description: String? = null,
-  val priority: Int = 50,
-  val hidden: Boolean = false
-)
+  override val displayName: String? = null,
+  override val insertValue: String? = null,
+  override val description: String? = null,
+  override val priority: Int = 50,
+  override val hidden: Boolean = false
+) : BaseSuggestion()
 
 @Serializable
 data class ShellSuggestionsGenerator(
