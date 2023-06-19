@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 interface ExternalSystemUnlinkedProjectAsyncAware : ExternalSystemUnlinkedProjectAware {
   suspend fun linkAndLoadProjectAsync(project: Project, externalProjectPath: String)
 
+  // prefer linkAndLoadProjectAsync
   override fun linkAndLoadProject(project: Project, externalProjectPath: String) {
     runBlockingCancellable { linkAndLoadProjectAsync(project, externalProjectPath) }
   }
