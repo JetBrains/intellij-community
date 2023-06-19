@@ -48,9 +48,12 @@ open class CompletionMultiFileHandlerTest22 : KotlinFixtureCompletionBaseTestCas
     fun testNotImportedTypeAlias() = doTest()
     fun testKT12077() = doTest()
 
+    protected fun getTestFileName(): String = "${getTestName(false)}-1.kt"
+
+    protected fun getDependencyFileName(): String = "${getTestName(false)}-2.kt"
+
     open fun doTest(completionChar: Char = '\n', vararg extraFileNames: String, tailText: String? = null) {
-        val fileNameBase = getTestName(false)
-        val defaultFiles = listOf("$fileNameBase-1.kt", "$fileNameBase-2.kt")
+        val defaultFiles = listOf(getTestFileName(), getDependencyFileName())
         val filteredFiles = defaultFiles.filter { File(testDataDirectory, it).exists() }
 
         require(filteredFiles.isNotEmpty()) { "At least one of $defaultFiles should exist!" }
@@ -58,7 +61,7 @@ open class CompletionMultiFileHandlerTest22 : KotlinFixtureCompletionBaseTestCas
         myFixture.configureByFiles(*extraFileNames)
         myFixture.configureByFiles(*filteredFiles.toTypedArray())
 
-        testWithAutoCompleteSetting(File(testDataDirectory, "$fileNameBase-1.kt").readText()) {
+        testWithAutoCompleteSetting(File(testDataDirectory, getTestFileName()).readText()) {
             val items = complete(CompletionType.BASIC, 2)
 
             if (items != null) {
@@ -74,7 +77,7 @@ open class CompletionMultiFileHandlerTest22 : KotlinFixtureCompletionBaseTestCas
 
                 CompletionHandlerTestBase.selectItem(myFixture, item, completionChar)
             }
-            myFixture.checkResultByFile("$fileNameBase.kt.after")
+            myFixture.checkResultByFile("${getTestName(false)}.kt.after")
         }
     }
 
