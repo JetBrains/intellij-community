@@ -583,7 +583,6 @@ class CancellationPropagationTest {
     scheduled.timeoutWaitUp()
     assertTrue(job.isActive)
     blockingJobRef!!.cancel(null)
-    delay(100)
     assertTrue(job.isActive)
     assertFalse(cancelled)
     allowedToProceed.up()
