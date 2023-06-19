@@ -90,7 +90,7 @@ import java.util.concurrent.*;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.HighlightVisitorScope;
-import static com.intellij.codeInspection.ex.GlobalInspectionContextImpl.InspectionPerformanceCollector.*;
+import static com.intellij.codeInspection.ex.GlobalInspectionContextImpl.InspectionPerformanceCollector.logPerformance;
 import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOBAL;
 import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOBAL_SIMPLE;
 import static com.intellij.codeInspection.ex.InspectionEventsKt.reportWhenActivityFinished;
@@ -330,6 +330,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     PsiManager psiManager = PsiManager.getInstance(getProject());
     Processor<VirtualFile> processor = virtualFile -> {
       ProgressManager.checkCanceled();
+
       Boolean readActionSuccess = DumbService.getInstance(getProject()).tryRunReadActionInSmartMode(() -> {
         long start = getPathProfile() == null ? 0 : System.currentTimeMillis();
         PsiFile file = virtualFile.isValid() ? psiManager.findFile(virtualFile) : null;
@@ -341,13 +342,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           return true;
         }
         boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
-        List<GlobalInspectionToolWrapper> globalSimpleWrappers = getWrappersFromTools(globalSimpleTools, file, includeDoNotShow,
-                                                                                      wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection));
-        List<LocalInspectionToolWrapper> localToolWrappers = getWrappersFromTools(localTools, file, includeDoNotShow,
-                                                                                  wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection));
+        Wrappers wrappers = getWrappersFromTools(localTools, globalSimpleTools, file, includeDoNotShow);
+
         inspectFile(file, getEffectiveRange(searchScope, file), inspectionManager, map,
-                    globalSimpleWrappers,
-                    localToolWrappers,
+                    wrappers.globalSimpleWrappers,
+                    wrappers.localWrappers,
                     inspectInjectedPsi && scope.isAnalyzeInjectedCode());
         if (start != 0) {
           updateProfile(virtualFile, System.currentTimeMillis() - start);
@@ -365,11 +364,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       getEventPublisher().fileAnalyzed(file, getProject());
 
       boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
-      List<InspectionToolWrapper<?, ?>> externalAnnotatable = ContainerUtil.concat(
-        getWrappersFromTools(localTools, file, includeDoNotShow, wrapper -> wrapper.getTool() instanceof ExternalAnnotatorBatchInspection),
-        getWrappersFromTools(globalSimpleTools, file, includeDoNotShow,
-                             wrapper -> wrapper.getTool() instanceof ExternalAnnotatorBatchInspection));
-      externalAnnotatable.forEach(wrapper -> {
+      Wrappers wrappers = getWrappersFromTools(localTools, globalSimpleTools, file, includeDoNotShow);
+      wrappers.externalAnnotatorWrappers.forEach(wrapper -> {
         ProblemDescriptor[] descriptors = ((ExternalAnnotatorBatchInspection)wrapper.getTool()).checkFile(file, this, inspectionManager);
         InspectionToolResultExporter toolPresentation = getPresentation(wrapper);
         ReadAction.run(() -> BatchModeDescriptorsUtil
@@ -866,16 +862,41 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
   }
 
+  public Wrappers getWrappersFromTools(
+    @NotNull List<? extends Tools> localTools,
+    @NotNull List<? extends Tools> globalSimpleTools,
+    @NotNull PsiFile file,
+    boolean includeDoNotShow) {
+
+    List<LocalInspectionToolWrapper> local = getWrappersFromTools(localTools, file, includeDoNotShow);
+    List<GlobalInspectionToolWrapper> globalSimple = getWrappersFromTools(globalSimpleTools, file, includeDoNotShow);
+
+    List<LocalInspectionToolWrapper> localWrappers = new ArrayList<>();
+    List<GlobalInspectionToolWrapper> globalWrappers = new ArrayList<>();
+    List<InspectionToolWrapper<?, ?>> externalAnnotatorWrappers = new ArrayList<>();
+
+    for (LocalInspectionToolWrapper wrapper : local) {
+      if (wrapper.getTool() instanceof ExternalAnnotatorBatchInspection) externalAnnotatorWrappers.add(wrapper);
+      else localWrappers.add(wrapper);
+    }
+
+    for (GlobalInspectionToolWrapper wrapper : globalSimple) {
+      if (wrapper.getTool() instanceof ExternalAnnotatorBatchInspection) externalAnnotatorWrappers.add(wrapper);
+      else globalWrappers.add(wrapper);
+    }
+
+    return new Wrappers(localWrappers, globalWrappers, externalAnnotatorWrappers);
+  }
+
+
   public @NotNull <T extends @NotNull InspectionToolWrapper<?, ?>> List<T> getWrappersFromTools(@NotNull List<? extends Tools> localTools,
                                                                                                 @NotNull PsiFile file,
-                                                                                                boolean includeDoNotShow,
-                                                                                                @NotNull Predicate<? super T> filter) {
+                                                                                                boolean includeDoNotShow) {
     return ContainerUtil.mapNotNull(localTools, tool -> {
       InspectionToolWrapper<?, ?> enabledTool = tool.getEnabledTool(file, includeDoNotShow);
       if (enabledTool == null) return null;
       //noinspection unchecked
-      T unwrapped = (T)enabledTool;
-      return filter.test(unwrapped) ? unwrapped : null;
+      return (T)enabledTool;
     });
   }
 
@@ -1295,6 +1316,42 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         throw new RuntimeException(e);
       }
     });
+  }
+
+  public static class Wrappers {
+    @NotNull
+    private final List<LocalInspectionToolWrapper> localWrappers;
+    @NotNull
+    private final List<GlobalInspectionToolWrapper> globalSimpleWrappers;
+    @NotNull
+    private final List<InspectionToolWrapper<?, ?>> externalAnnotatorWrappers;
+    @NotNull
+    private final List<InspectionToolWrapper<?, ?>> allWrappers;
+
+    public Wrappers(@NotNull List<LocalInspectionToolWrapper> localWrappers,
+                     @NotNull List<GlobalInspectionToolWrapper> globalSimpleWrappers,
+                     @NotNull List<InspectionToolWrapper<?, ?>> externalAnnotatorWrappers) {
+      this.localWrappers = localWrappers;
+      this.globalSimpleWrappers = globalSimpleWrappers;
+      this.externalAnnotatorWrappers = externalAnnotatorWrappers;
+      this.allWrappers = ContainerUtil.concat(localWrappers, globalSimpleWrappers, externalAnnotatorWrappers);
+    }
+
+    public List<LocalInspectionToolWrapper> getLocalWrappers() {
+      return localWrappers;
+    }
+
+    public List<GlobalInspectionToolWrapper> getGlobalSimpleWrappers() {
+      return globalSimpleWrappers;
+    }
+
+    public List<InspectionToolWrapper<?, ?>> getExternalAnnotatorWrappers() {
+      return externalAnnotatorWrappers;
+    }
+
+    public List<InspectionToolWrapper<?, ?>> getAllWrappers() {
+      return allWrappers;
+    }
   }
 
   static class InspectionPerformanceCollector extends CounterUsagesCollector {
