@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionIntercepto
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import com.intellij.util.io.delete
+import com.intellij.util.io.isDirectory
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -27,21 +28,17 @@ class VfsLog(
     private set
 
   init {
-    if (!LOG_VFS_OPERATIONS_ENABLED) {
-      clear() // clear storages so that when feature will be enabled we won't try to recover anything from data that probably has gaps
-    } else {
-      version.let {
-        if (it != VERSION) {
+    version.let {
+      if (it != VERSION) {
+        if (it != null) {
+          LOG.info("VfsLog storage version differs from the implementation version: log $it vs implementation $VERSION")
+        }
+        if (!readOnly) {
           if (it != null) {
-            LOG.info("VfsLog storage version differs from the implementation version: log $it vs implementation $VERSION")
+            LOG.info("Upgrading storage, old data will be lost")
+            clearStorage(storagePath)
           }
-          if (!readOnly) {
-            if (it != null) {
-              LOG.info("Upgrading storage, old data will be lost")
-              clear()
-            }
-            version = VERSION
-          }
+          version = VERSION
         }
       }
     }
@@ -105,15 +102,6 @@ class VfsLog(
     LOG.debug("VfsLog disposed")
   }
 
-  fun clear() {
-    assert(!readOnly)
-    storagePath.forEachDirectoryEntry { child ->
-      if (child != storagePath / "version") {
-        child.delete(true)
-      }
-    }
-  }
-
   val connectionInterceptors: List<ConnectionInterceptor> = if (readOnly) {
     emptyList()
   }
@@ -150,5 +138,15 @@ class VfsLog(
       max(4, Runtime.getRuntime().availableProcessors() / 2)
     )
     // TODO: compaction & its options
+
+    fun clearStorage(storagePath: Path) {
+      if (storagePath.isDirectory()) {
+        storagePath.forEachDirectoryEntry { child ->
+          if (child != storagePath / "version") {
+            child.delete(true)
+          }
+        }
+      }
+    }
   }
 }
