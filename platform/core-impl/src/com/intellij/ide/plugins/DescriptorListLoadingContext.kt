@@ -21,7 +21,6 @@ import java.util.function.Supplier
 class DescriptorListLoadingContext(
   @JvmField val disabledPlugins: Set<PluginId> = DisabledPluginsState.getDisabledIds(),
   @JvmField val expiredPlugins: Set<PluginId> = ExpiredPluginsState.expiredPluginIds,
-  @ApiStatus.Experimental @JvmField val enabledOnDemandPlugins: Set<PluginId> = EnabledOnDemandPluginsState.enabledPluginIds,
   private val brokenPluginVersions: Map<PluginId, Set<String?>> = getBrokenPluginVersions(),
   @JvmField val productBuildNumber: () -> BuildNumber = { PluginManagerCore.getBuildNumber() },
   override val isMissingIncludeIgnored: Boolean = false,
