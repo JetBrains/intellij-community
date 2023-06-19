@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions
 
 import com.intellij.codeInspection.CommonProblemDescriptor
@@ -9,5 +9,5 @@ open class PerformFixesTask(project: Project, descriptors: List<CommonProblemDes
   AbstractPerformFixesTask(project, descriptors.toTypedArray(), quickFixClass) {
 
   override fun <D : CommonProblemDescriptor> collectFix(fix: QuickFix<D>, descriptor: D, project: Project): Unit =
-    fix.applyFix(project, descriptor)
+    fix.applyFixNonInteractively(project, descriptor)
 }
