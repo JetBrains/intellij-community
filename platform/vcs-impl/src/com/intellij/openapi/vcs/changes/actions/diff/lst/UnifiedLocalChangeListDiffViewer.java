@@ -292,7 +292,10 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     Range lineRange = toggleableLineRange.getLineRange();
     int line1 = builder.getConvertor1().convertApproximateInv(lineRange.start1);
     int line2 = builder.getConvertor2().convertApproximateInv(lineRange.end2);
-    return LocalTrackerDiffUtil.createToggleAreaThumb(getEditor(), line1, line2);
+    boolean isExcludedFromCommit = toggleableLineRange.getFragmentData().getExclusionState() instanceof RangeExclusionState.Excluded;
+    return LocalTrackerDiffUtil.createToggleAreaThumb(getEditor(), line1, line2, () -> {
+      LocalTrackerDiffUtil.toggleBlockExclusion(myTrackerActionProvider, lineRange.start1, isExcludedFromCommit);
+    });
   }
 
   private static final class MyUnifiedDiffChange extends UnifiedDiffChange {

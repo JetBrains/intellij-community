@@ -254,7 +254,10 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     Range lineRange = toggleableLineRange.getLineRange();
     int line1 = side.select(lineRange.start1, lineRange.start2);
     int line2 = side.select(lineRange.end1, lineRange.end2);
-    return LocalTrackerDiffUtil.createToggleAreaThumb(editor, line1, line2);
+    boolean isExcludedFromCommit = toggleableLineRange.getFragmentData().getExclusionState() instanceof RangeExclusionState.Excluded;
+    return LocalTrackerDiffUtil.createToggleAreaThumb(editor, line1, line2, () -> {
+      LocalTrackerDiffUtil.toggleBlockExclusion(myTrackerActionProvider, lineRange.start1, isExcludedFromCommit);
+    });
   }
 
   private static class MySimpleDiffChange extends SimpleDiffChange {
