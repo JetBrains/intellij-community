@@ -4,10 +4,7 @@ package com.intellij.openapi.options.ex;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.ExtensionsArea;
-import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.newEditor.ConfigurableMarkerProvider;
 import com.intellij.openapi.project.Project;
@@ -152,7 +149,11 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
       if (configurable != null) {
         String name = configurable.getDisplayName();
         if (!loaded) {
-          LOG.error("No displayName is specified for configurable: " + configurable.getClass().getName());
+          String message = "No display name is specified for configurable " + configurable.getClass().getName() + " in xml file;\n" +
+                           "specify it using 'displayName' or 'key' attribute to avoid necessity to load the configurable class when Settings dialog is opened";
+          PluginDescriptor pluginDescriptor = myEp.getPluginDescriptor();
+          PluginId pluginId = pluginDescriptor != null ? pluginDescriptor.getPluginId() : null;
+          LOG.error(new PluginException(message, pluginId));
         }
         return name;
       }
