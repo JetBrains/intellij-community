@@ -48,6 +48,8 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
       val auto = DiagnosticBundle.message("defender.config.auto")
       val manual = DiagnosticBundle.message("defender.config.manual")
       notification(DiagnosticBundle.message("defender.config.prompt", pathList, auto, manual), NotificationType.INFORMATION)
+        .setSuggestionType(true)
+        .setImportantSuggestion(true)
         .addAction(createSimpleExpiring(auto) { updateDefenderConfig(checker, project, paths) })
         .addAction(createSimple(manual) { showInstructions(checker, project) })
     }
