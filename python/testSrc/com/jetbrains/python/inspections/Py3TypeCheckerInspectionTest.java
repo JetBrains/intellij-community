@@ -1898,7 +1898,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    plain_string: str
                    literal_string: LiteralString
                    calc('literal string', plain_string)
-                   calc(literal_string, <warning descr="Expected type 'LiteralString' (matched generic type 'T'), got 'str' instead">plain_string</warning>)
+                   calc(literal_string, plain_string)
                    """);
   }
 
@@ -1925,6 +1925,21 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                        return "foo" if condition1() else "bar"  # OK
                    def return_literal_str2(literal_string: Literal["foo"]) -> Literal["foo"]:
                        return "foo" if condition1() else literal_string  # OK
+                   """);
+  }
+
+  // PY-61137
+  public void testLiteralStringDoesNotGetCapturedInsideGenerics() {
+    doTestByText("""
+                   import typing
+                   T = typing.TypeVar('T')
+                   class Box(typing.Generic[T]):
+                       def __init__(self, x: T) -> None:
+                           ...
+                   def same_type(b1: Box[T], b2: Box[T]):
+                       ...
+                   b = Box('foo'.upper())
+                   same_type(b, Box('FOO'))
                    """);
   }
 
