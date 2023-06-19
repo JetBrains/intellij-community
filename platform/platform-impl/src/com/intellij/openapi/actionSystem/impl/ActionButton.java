@@ -11,10 +11,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -254,13 +255,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       Point point = AbstractPopup.defaultPointUnderneathOf(component);
       point.translate(0, 10);
       popup.setRequestFocus(false);
-      Toggleable.setSelected(event.getPresentation(), true);
-      popup.addListener(new JBPopupListener() {
-        @Override
-        public void onClosed(@NotNull LightweightWindowEvent lightEvent) {
-          Toggleable.setSelected(event.getPresentation(), false);
-        }
-      });
       popup.show(new RelativePoint(component, point));
       return popup;
     }
