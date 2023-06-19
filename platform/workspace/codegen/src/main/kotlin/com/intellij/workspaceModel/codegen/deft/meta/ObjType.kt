@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.deft.meta
 
+import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.workspaceModel.codegen.deft.annotations.Cached
 import com.intellij.workspaceModel.codegen.deft.annotations.Parent
-import com.intellij.platform.workspace.storage.annotations.Child
 
 interface ObjType<T> : Obj {
   val classifier: ObjType<T>
