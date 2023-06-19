@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.repo;
 
 import com.intellij.dvcs.MultiRootBranches;
@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAny;
@@ -19,21 +18,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 public abstract class AbstractRepositoryManager<T extends Repository>
   implements RepositoryManager<T>, Disposable {
 
   private final @NotNull Project myProject;
   private final @NotNull VcsKey myVcsKey;
-  private final @NotNull Supplier<VcsRepositoryManager> myGlobalRepositoryManager;
+  private final @NotNull VcsRepositoryManager myGlobalRepositoryManager;
 
   protected AbstractRepositoryManager(@NotNull Project project,
                                       @NotNull VcsKey vcsKey,
                                       @NotNull @NonNls String repoDirName) {
-    myGlobalRepositoryManager = new SynchronizedClearableLazy<>(() -> {
-      return VcsRepositoryManager.getInstance(project);
-    });
+    myGlobalRepositoryManager = VcsRepositoryManager.getInstance(project);
     myProject = project;
     myVcsKey = vcsKey;
   }
@@ -45,61 +41,61 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   @Override
   @RequiresBackgroundThread
   public @Nullable T getRepositoryForRoot(@Nullable VirtualFile root) {
-    return validateAndGetRepository(myGlobalRepositoryManager.get().getRepositoryForRoot(root));
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForRoot(root));
   }
 
   @Override
   @CalledInAny
   public @Nullable T getRepositoryForRootQuick(@Nullable VirtualFile root) {
-    return validateAndGetRepository(myGlobalRepositoryManager.get().getRepositoryForRootQuick(root));
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForRootQuick(root));
   }
 
   @Override
   @CalledInAny
   public @Nullable T getRepositoryForRootQuick(@Nullable FilePath rootPath) {
-    return validateAndGetRepository(myGlobalRepositoryManager.get().getRepositoryForRootQuick(rootPath));
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForRootQuick(rootPath));
   }
 
   @Override
   public void addExternalRepository(@NotNull VirtualFile root, @NotNull T repository) {
-    myGlobalRepositoryManager.get().addExternalRepository(root, repository);
+    myGlobalRepositoryManager.addExternalRepository(root, repository);
   }
 
   @Override
   public void removeExternalRepository(@NotNull VirtualFile root) {
-    myGlobalRepositoryManager.get().removeExternalRepository(root);
+    myGlobalRepositoryManager.removeExternalRepository(root);
   }
 
   @Override
   public boolean isExternal(@NotNull T repository) {
-    return myGlobalRepositoryManager.get().isExternal(repository);
+    return myGlobalRepositoryManager.isExternal(repository);
   }
 
   @Override
   @RequiresBackgroundThread
   public @Nullable T getRepositoryForFile(@Nullable VirtualFile file) {
-    return validateAndGetRepository(myGlobalRepositoryManager.get().getRepositoryForFile(file));
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file));
   }
 
   @CalledInAny
   public @Nullable T getRepositoryForFileQuick(@Nullable VirtualFile file) {
-    return validateAndGetRepository(myGlobalRepositoryManager.get().getRepositoryForFileQuick(file));
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFileQuick(file));
   }
 
   @Override
   @RequiresBackgroundThread
   public @Nullable T getRepositoryForFile(@Nullable FilePath file) {
-    return validateAndGetRepository(myGlobalRepositoryManager.get().getRepositoryForFile(file, false));
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file, false));
   }
 
   @Override
   @CalledInAny
   public @Nullable T getRepositoryForFileQuick(@Nullable FilePath file) {
-    return validateAndGetRepository(myGlobalRepositoryManager.get().getRepositoryForFile(file, true));
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file, true));
   }
 
   protected @NotNull List<T> getRepositories(Class<T> type) {
-    return ContainerUtil.findAll(myGlobalRepositoryManager.get().getRepositories(), type);
+    return ContainerUtil.findAll(myGlobalRepositoryManager.getRepositories(), type);
   }
 
   @Override
