@@ -114,7 +114,7 @@ private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
     val toolbar = createRunActionToolbar {
       presentation.getClientProperty(runToolbarDataKey) ?: false
     }
-    toolbar.component.border = JBUI.Borders.emptyRight(16)
+    toolbar.component.border = JBUI.Borders.empty(0, 12, 0, 16)
     return toolbar.component
   }
 
