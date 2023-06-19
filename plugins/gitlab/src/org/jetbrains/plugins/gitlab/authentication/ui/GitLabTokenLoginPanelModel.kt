@@ -8,11 +8,13 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.components.service
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.GitLabSecurityUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.validateServerVersion
 
 class GitLabTokenLoginPanelModel(private val requiredUsername: String? = null,
                                  private val uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean)
@@ -24,6 +26,9 @@ class GitLabTokenLoginPanelModel(private val requiredUsername: String? = null,
     val user = withContext(Dispatchers.IO) {
       api.graphQL.getCurrentUser(server)
     } ?: throw IllegalArgumentException(GitLabBundle.message("account.token.invalid"))
+
+    service<GitLabServersManager>().validateServerVersion(server, api)
+
     val username = user.username
     if (requiredUsername != null) {
       require(username == requiredUsername) {
