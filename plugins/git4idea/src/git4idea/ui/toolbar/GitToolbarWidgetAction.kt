@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.toolbar
 
-import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
@@ -11,7 +10,6 @@ import com.intellij.ide.ui.customization.groupContainsAction
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -29,7 +27,6 @@ import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchPopup
 import git4idea.ui.branch.GitBranchPopupActions
 import git4idea.ui.branch.GitBranchPopupActions.BRANCH_NAME_LENGTH_DELTA
@@ -98,19 +95,17 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
 
-    val gitRepositoryManager = project?.serviceIfCreated<GitRepositoryManager>()
-    if (gitRepositoryManager == null) {
+    if (project == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
 
-    val gitVcsSettings = GitVcsSettings.getInstance(project)
-    val gitRepository = DvcsUtil.guessWidgetRepository(project, gitRepositoryManager, gitVcsSettings.recentRootPath, e.dataContext)
+    val gitRepository = GitBranchUtil.guessWidgetRepository(project, e.dataContext)
     val state = getState(project, gitRepository)
 
     e.presentation.putClientProperty(projectKey, project)
     if (gitRepository != null && gitRepository != e.presentation.getClientProperty(repositoryKey)) {
-      gitVcsSettings.setRecentRoot(gitRepository.root.path)
+      GitVcsSettings.getInstance(project).setRecentRoot(gitRepository.root.path)
     }
     e.presentation.putClientProperty(repositoryKey, gitRepository)
 
