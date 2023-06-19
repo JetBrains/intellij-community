@@ -144,7 +144,6 @@ private fun initLux() {
   System.setProperty("awt.nativeDoubleBuffering", false.toString())
   System.setProperty("swing.bufferPerWindow", true.toString())
 
-  //TODO(sviatoslav.vlasov): Pass parameters from original toolkit, like areExtraMouseButtonsEnabled
   setStaticField(Toolkit::class.java, "toolkit", IdeToolkit())
   System.setProperty("awt.toolkit", IdeToolkit::class.java.canonicalName)
 
