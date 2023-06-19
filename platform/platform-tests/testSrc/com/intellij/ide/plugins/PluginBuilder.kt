@@ -42,7 +42,6 @@ class PluginBuilder {
     private set
 
   private var implementationDetail = false
-  private var onDemand = false
   private var name: String? = null
   private var description: String? = null
   private var packagePrefix: String? = null
@@ -161,18 +160,11 @@ class PluginBuilder {
     return this
   }
 
-  fun onDemand() = also {
-    onDemand = true
-  }
-
   fun text(requireId: Boolean = true): String {
     return buildString {
       append("<idea-plugin")
       if (implementationDetail) {
         append(""" $IMPLEMENTATION_DETAIL_ATTRIBUTE="true"""")
-      }
-      if (onDemand) {
-        append(""" $ON_DEMAND_ATTRIBUTE="true"""")
       }
       packagePrefix?.let {
         append(""" $PACKAGE_ATTRIBUTE="$it"""")
