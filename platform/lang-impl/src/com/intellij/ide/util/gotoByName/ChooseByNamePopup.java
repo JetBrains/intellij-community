@@ -326,7 +326,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
-                                                                                "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
+                                                                                "(?::|@|,| |#|#L|\\?l=| on line | at line |:line |:?\\(|:?\\[)" + // separator
                                                                                 "(\\d+)?(?:\\W(\\d+)?)?" + // line + column
                                                                                 "[)\\]]?" // possible closing paren/brace
   );
