@@ -217,6 +217,7 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent>() {
     return when (value) {
       is TextNode -> value.textValue()
       is LongNode -> value.longValue()
+      is BooleanNode -> value.booleanValue()
       is ArrayNode -> value.map { if (it != null) transformData(it) else null }
       is ObjectNode -> {
         val data = HashMap<Any, Any?>()
@@ -234,7 +235,6 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent>() {
           return value.doubleValue()
         }
       }
-      is BooleanNode -> value.booleanValue()
       else -> value
     }
   }
