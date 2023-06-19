@@ -74,7 +74,12 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
       if (isExpectedAutoLink && unlinkedProjects.size == 1 && linkedProjects.isEmpty()) {
         val extension = unlinkedProjects.single()
         withContext(Dispatchers.EDT) {
-          extension.linkAndLoadProject(project, externalProjectPath)
+          if (extension is ExternalSystemUnlinkedProjectAsyncAware) {
+            extension.linkAndLoadProjectAsync(project, externalProjectPath)
+          }
+          else {
+            extension.linkAndLoadProject(project, externalProjectPath)
+          }
         }
         if (LOG.isDebugEnabled) {
           val projectId = extension.createProjectId(externalProjectPath)
