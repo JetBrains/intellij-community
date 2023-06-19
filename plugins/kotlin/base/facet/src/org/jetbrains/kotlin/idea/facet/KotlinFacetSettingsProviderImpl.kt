@@ -12,22 +12,23 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.base.util.caching.*
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 
 class KotlinFacetSettingsProviderImpl(project: Project) :
-    SynchronizedFineGrainedEntityCache<Module, KotlinFacetSettings>(project, doSelfInitialization = false),
+    SynchronizedFineGrainedEntityCache<Module, IKotlinFacetSettings>(project, doSelfInitialization = false),
     WorkspaceModelChangeListener,
     KotlinCompilerSettingsListener,
     KotlinFacetSettingsProvider {
 
     override fun getSettings(module: Module) = KotlinFacet.get(module)?.configuration?.settings
 
-    override fun getInitializedSettings(module: Module): KotlinFacetSettings = runReadAction { get(module) }
+    override fun getInitializedSettings(module: Module): IKotlinFacetSettings = runReadAction { get(module) }
 
-    override fun calculate(key: Module): KotlinFacetSettings {
+    override fun calculate(key: Module): IKotlinFacetSettings {
         val kotlinFacetSettings = getSettings(key) ?: KotlinFacetSettings()
         kotlinFacetSettings.initializeIfNeeded(key, null)
         return kotlinFacetSettings

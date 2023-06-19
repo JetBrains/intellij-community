@@ -34,7 +34,7 @@ import kotlin.reflect.KProperty1
 
 var Module.hasExternalSdkConfiguration: Boolean by NotNullableUserDataProperty(Key.create("HAS_EXTERNAL_SDK_CONFIGURATION"), false)
 
-fun KotlinFacetSettings.initializeIfNeeded(
+fun IKotlinFacetSettings.initializeIfNeeded(
     module: Module,
     rootModel: ModuleRootModel?,
     platform: TargetPlatform? = null, // if null, detect by module dependencies
