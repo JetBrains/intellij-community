@@ -968,7 +968,7 @@ public class SwitchBlockHighlightingModel {
             isInCaseNullDefaultLabel(who)) {
           PsiSwitchLabelStatementBase labelStatementBase = PsiTreeUtil.getParentOfType(who, PsiSwitchLabelStatementBase.class);
           if (labelStatementBase != null) {
-            IntentionAction action = new MakeDefaultLastCaseFix(labelStatementBase);
+            var action = new MakeDefaultLastCaseFix(labelStatementBase);
             info.registerFix(action, null, null, null, null);
           }
         }

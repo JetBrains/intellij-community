@@ -53,7 +53,7 @@ public class RegistrationProblemsInspection extends DevKitUastInspectionBase {
           if (ActionType.ACTION.myClassName.equals(componentClass.getQualifiedName()) &&
               !checkedClass.isInheritor(componentClass, true)) {
             LocalQuickFix[] fixes = sourcePsi.getLanguage().is(JavaLanguage.INSTANCE) ?
-                                    ImplementOrExtendFix.createFixes(nameIdentifier, checkedClass, componentClass, isOnTheFly) :
+                                    ImplementOrExtendFix.createFixes(checkedClass, componentClass) :
                                     LocalQuickFix.EMPTY_ARRAY;
             ProblemHolderUtilKt.registerUProblem(holder, uClass,
                                                  DevKitBundle.message("inspections.registration.problems.incompatible.message",

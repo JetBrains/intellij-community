@@ -107,7 +107,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
     return new RedundantRequiresStatementAnnotator();
   }
 
-  private static class DeleteRedundantRequiresStatementFix implements LocalQuickFix {
+  private static class DeleteRedundantRequiresStatementFix extends PsiUpdateModCommandQuickFix {
     private final String myRequiredModuleName;
     @SafeFieldForPreview
     private final Set<String> myImportedPackages;
@@ -141,8 +141,8 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!(descriptor.getPsiElement() instanceof PsiRequiresStatement statementToDelete)) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+      if (!(element instanceof PsiRequiresStatement statementToDelete)) return;
 
       addTransitiveDependencies(statementToDelete);
       statementToDelete.delete();

@@ -17,7 +17,6 @@ package com.siyeh.ipp.initialization;
 
 import com.intellij.codeInspection.EditorUpdater;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
@@ -123,6 +122,6 @@ public class SplitDeclarationAndInitializationIntention extends MCIntention {
     }
     initializer.delete();
     CodeStyleManager.getInstance(manager.getProject()).reformat(classInitializer);
-    updater.highlight(addedElement, EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    updater.highlight(addedElement);
   }
 }

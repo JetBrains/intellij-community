@@ -320,7 +320,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     return ContainerUtil.filter(methods, method -> expectedMethodSignature.equals(getMethodSignature(method)));
   }
 
-  private static class FieldTypeQuickFix implements LocalQuickFix {
+  private static class FieldTypeQuickFix extends PsiUpdateModCommandQuickFix {
     private final String myFieldTypeText;
 
     FieldTypeQuickFix(String fieldTypeText) {myFieldTypeText = fieldTypeText;}
@@ -333,8 +333,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiExpression typeExpression = factory.createExpressionFromText(myFieldTypeText + ".class", element);
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
@@ -342,7 +341,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     }
   }
 
-  private static class SwitchStaticnessQuickFix implements LocalQuickFix {
+  private static class SwitchStaticnessQuickFix extends PsiUpdateModCommandQuickFix {
     private static final Map<String, String> STATIC_TO_NON_STATIC = Map.of(
       FIND_STATIC_GETTER, FIND_GETTER,
       FIND_STATIC_SETTER, FIND_SETTER,
@@ -368,8 +367,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiIdentifier identifier = factory.createIdentifier(myReplacementName);
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
