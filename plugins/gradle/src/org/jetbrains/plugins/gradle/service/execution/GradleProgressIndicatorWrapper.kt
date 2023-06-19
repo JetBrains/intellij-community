@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -20,6 +21,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleProgressIndicatorEve
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import kotlin.math.max
 
 internal object GradleProgressIndicatorWrapper {
   fun registerGradleProgressIndicator(
@@ -47,13 +49,13 @@ internal object GradleProgressIndicatorWrapper {
 
     private fun startProgressIndicator(@Suppress("SameParameterValue") title: String) {
       cs.launch {
-        withBackgroundProgress(project, title) {
+        withBackgroundProgress(project, title, cancellable = false) {
           withRawProgressReporter {
             rawProgressReporter?.text(wrapText("Initialization..."))
             var nextEvent = channel.receiveCatching().getOrNull()
             while (nextEvent != null) {
               val fraction = when {
-                nextEvent.unit == "items" && nextEvent.total > 0 -> nextEvent.progress.toDouble() / nextEvent.total
+                nextEvent.unit == "items" && nextEvent.total > 0 -> max(nextEvent.progress.toDouble() / nextEvent.total, 1.0)
                 else -> null
               }
               rawProgressReporter?.fraction(fraction)
@@ -66,12 +68,15 @@ internal object GradleProgressIndicatorWrapper {
     }
 
     override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
-      if (event is ExternalSystemBuildEvent && event.buildEvent is ProgressBuildEvent)
+      if (event is ExternalSystemBuildEvent && event.buildEvent is ProgressBuildEvent) {
         cs.launch {
-          if (!channel.isClosedForSend) {
+          try {
             channel.send(event.buildEvent as ProgressBuildEvent)
           }
+          catch (_: CancellationException) {
+          }
         }
+      }
     }
 
     override fun onEnd(id: ExternalSystemTaskId) {

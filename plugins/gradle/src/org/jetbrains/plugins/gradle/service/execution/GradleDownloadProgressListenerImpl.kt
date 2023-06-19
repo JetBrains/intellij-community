@@ -9,11 +9,9 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildE
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemTaskProgressIndicatorUpdater.getText
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.progress.ProgressReporter
-import com.intellij.openapi.progress.TaskCancellation
-import com.intellij.openapi.progress.progressReporter
-import com.intellij.openapi.progress.withBackgroundProgress
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -71,29 +69,30 @@ internal class GradleDownloadProgressListenerImpl(
 
     fun updateProgressIndicator(buildEvent: ProgressBuildEvent) {
       cs.launch {
-        if (!channel.isClosedForSend) {
+        try {
           channel.send(buildEvent)
+        }
+        catch (_: CancellationException) {
         }
       }
     }
 
     private fun startProgressIndicator(title: String) {
       cs.launch {
-        withBackgroundProgress(project, wrapText(title), TaskCancellation.nonCancellable()) {
-          var previousFraction = 0.0
-          var previousStep: ProgressReporter? = null
-          var statusEvent = channel.receiveCatching().getOrNull()
-          while (statusEvent != null && statusEvent.fraction < 1.0) {
-            val fraction = statusEvent.fraction
-            if (fraction > previousFraction) {
-              // End previous step only when we start a new one so that we see bytes progress in details.
-              // That also means that in reality indicator will show fraction progress for 1 step behind, but that should not be noticeable.
-              previousStep?.close()
-              val text = getText(title, statusEvent.progress, statusEvent.total, statusEvent.unit) { wrapText(it) }
-              previousStep = progressReporter?.step(fraction, text)
-              previousFraction = fraction
+        withBackgroundProgress(project, wrapText(title), cancellable = false) {
+          withRawProgressReporter {
+            var previousFraction = 0.0
+            var statusEvent = channel.receiveCatching().getOrNull()
+            while (statusEvent != null && statusEvent.fraction < 1.0) {
+              val fraction = statusEvent.fraction
+              if (fraction > previousFraction) {
+                val text = getText(title, statusEvent.progress, statusEvent.total, statusEvent.unit) { wrapText(it) }
+                rawProgressReporter?.text(text)
+                rawProgressReporter?.fraction(fraction)
+                previousFraction = fraction
+              }
+              statusEvent = channel.receiveCatching().getOrNull()
             }
-            statusEvent = channel.receiveCatching().getOrNull()
           }
         }
       }
@@ -107,6 +106,6 @@ internal class GradleDownloadProgressListenerImpl(
       ExternalSystemBundle.message("progress.update.text", GradleConstants.SYSTEM_ID.readableName, text)
 
     private val ProgressBuildEvent.fraction
-      get(): Double = progress.toDouble() / total
+      get(): Double = if (total == 0L) 0.0 else progress.toDouble() / total
   }
 }
