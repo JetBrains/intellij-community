@@ -11,6 +11,7 @@ import java.awt.Component
 import java.awt.Container
 import java.awt.ItemSelectable
 import java.awt.event.*
+import java.beans.PropertyChangeListener
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.ListModel
@@ -122,5 +123,12 @@ fun Component.addComponentListener(parentDisposable: Disposable? = null, listene
   addComponentListener(listener)
   parentDisposable?.whenDisposed {
     removeComponentListener(listener)
+  }
+}
+
+fun Component.addPropertyChangeListener(propertyName: String, parentDisposable: Disposable?, listener: PropertyChangeListener) {
+  addPropertyChangeListener(propertyName, listener)
+  parentDisposable?.whenDisposed {
+    removePropertyChangeListener(listener)
   }
 }
