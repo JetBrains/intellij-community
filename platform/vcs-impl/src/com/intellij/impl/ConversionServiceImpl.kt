@@ -96,11 +96,13 @@ internal class ConversionServiceImpl : ConversionService() {
       }
     }
 
-    try {
-      context.saveConversionResult()
-    }
-    catch (e: IOException) {
-      LOG.error(e)
+    if (result != ConversionResultImpl.CONVERSION_CANCELED) {
+      try {
+        context.saveConversionResult()
+      }
+      catch (e: IOException) {
+        LOG.error(e)
+      }
     }
     return result
   }
