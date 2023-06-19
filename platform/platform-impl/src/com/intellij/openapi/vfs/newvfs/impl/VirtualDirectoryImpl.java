@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -45,8 +46,11 @@ import java.io.OutputStream;
 import java.util.*;
 import java.util.function.BiConsumer;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final Logger LOG = Logger.getInstance(VirtualDirectoryImpl.class);
+  private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(30));
 
   private static final boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
 
@@ -541,22 +545,44 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return fileById;
     }
 
+    //We come here only from PersistentFSImpl.findFileById(), on a descend phase, there we resolve fileIds to
+    // VFiles. Hence, it must be a child with childId -- because 'this' was collected as .parent during an
+    // ascend phase. If that is not the case -- either something was changed in between (e.g. children were
+    // refreshed), or there is an inconsistency in VFS (e.g. children and .parent fall out of sync):
+
+    //Actually, after this point we're already in a gray area: even if we manage to find a child by name
+    // with same id, this is already suspicious: how could we miss it while looking by id beforehand?
+    // 'By name' lookup is scanning the same myData.myChildrenIds array, as was already scanned while looking
+    // for id.
+
     PersistentFS persistence = getPersistence();
     String name = persistence.getName(id);
     VirtualFileSystemEntry fileByName = findChild(name, false, false, getFileSystem());
     if (fileByName != null && fileByName.getId() != id) {
       // a child with the same name and different ID was recreated after a refresh session -
       // it doesn't make sense to check it earlier because it is executed outside the VFS' read/write lock
-      final boolean deleted = FSRecords.isDeleted(id);
+      boolean deleted = FSRecords.isDeleted(id);
       if (!deleted) {
-        LOG.error("FSRecords(id: " + id + ", name: '" + name + "', !deleted), " +
-                  "but VDI.findChild(" + name + ")=" + fileByName + " with different id(=" + fileByName.getId() + ")" +
-                  "\n\tchildren (64 max): \n" +
-                  Arrays.stream(myData.myChildrenIds)
-                    .limit(64)
-                    .mapToObj(childId -> "\t" + childId + ": '" + persistence.getName(childId) + "'\n")
-                    .toList()
-        );
+        THROTTLED_LOG.info(() -> {
+          int parentId = FSRecords.getParent(id);
+          IntOpenHashSet childrenInPersistence = new IntOpenHashSet(FSRecords.listIds(id));
+          IntOpenHashSet childrenInMemory = new IntOpenHashSet(myData.myChildrenIds);
+          int[] childrenNotInPersistent = childrenInMemory.intStream()
+            .filter(childId -> !childrenInPersistence.contains(childId))
+            .toArray();
+          int[] childrenNotInMemory = childrenInPersistence.intStream()
+            .filter(childId -> !childrenInMemory.contains(childId))
+            .toArray();
+          return "FSRecords(id: " + id + ", parentId: " + parentId + ", name: '" + name + "', !deleted), " +
+                 "but VDI.findChild(" + name + ")=" + fileByName + " with different id(=" + fileByName.getId() + ")" +
+                 "\n\tchildrenInMemory: " + childrenInMemory.size() + ", childrenInPersistence: " + childrenInPersistence.size() + ", " +
+                 "\n\tdiff(" + childrenNotInPersistent.length + " vs " + childrenNotInMemory.length + ")" +
+                 "\n\tchildrenInMemory (up to 64): \n" +
+                 Arrays.stream(myData.myChildrenIds)
+                   .limit(64)
+                   .mapToObj(childId -> "\n\t" + childId + ": '" + persistence.getName(childId) + "'")
+                   .toList();
+        });
       }
       return null;
     }

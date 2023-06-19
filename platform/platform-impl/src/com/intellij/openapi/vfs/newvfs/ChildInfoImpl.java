@@ -139,7 +139,7 @@ public final class ChildInfoImpl implements ChildInfo {
   @Override
   public String toString() {
     return "\"" + (nameId > 0 ? getName() : "?") + "\"; nameId: " + nameId + "; id: " + id +
-           " (" + (attributes == UNKNOWN ? "unknown" : super.toString()) + ")" +
+           " (" + (attributes == UNKNOWN ? "unknown" : attributes.toString()) + ")" +
            (children == null ? "" : "\n  " + StringUtil.join(children, info -> info.toString().replaceAll("\n", "\n  "), "\n  "));
   }
 }
