@@ -47,8 +47,6 @@ class CommonLocationFeatures : ContextFeatureProvider {
     return result
   }
 
-  val whitespaces = " \t"
-
   private fun MutableMap<String, MLFeatureValue>.addTextFeatures(environment: CompletionEnvironment) {
     val lookup = environment.lookup
     val editor = lookup.topLevelEditor
@@ -78,13 +76,13 @@ class CommonLocationFeatures : ContextFeatureProvider {
     this["text_length"] = MLFeatureValue.float(textLength)
     this["offset_text_length_ratio"] = MLFeatureValue.float(if (textLength == 0) 0.0 else caretOffset.toDouble() / textLength)
     if (linePrefix.isNotBlank()) {
-      this["is_whitespace_before_caret"] = MLFeatureValue.binary(whitespaces.contains(linePrefix.last()))
+      this["is_whitespace_before_caret"] = MLFeatureValue.binary(linePrefix.last().isWhitespace())
       val trimmedPrefix = linePrefix.trim()
       this["symbols_in_line_before_caret"] = MLFeatureValue.float(trimmedPrefix.length)
       CharCategory.find(trimmedPrefix.last())?.let { this["non_space_symbol_before_caret"] = MLFeatureValue.categorical(it) }
     }
     if (lineSuffix.isNotBlank()) {
-      this["is_whitespace_after_caret"] = MLFeatureValue.binary(whitespaces.contains(lineSuffix.first()))
+      this["is_whitespace_after_caret"] = MLFeatureValue.binary(lineSuffix.first().isWhitespace())
       val trimmedSuffix = lineSuffix.trim()
       this["symbols_in_line_after_caret"] = MLFeatureValue.float(trimmedSuffix.length)
       CharCategory.find(trimmedSuffix.first())?.let { this["non_space_symbol_after_caret"] = MLFeatureValue.categorical(it) }
