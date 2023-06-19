@@ -51,7 +51,7 @@ class BuildContextImpl(
   override var bootClassPathJarNames = persistentListOf("util.jar", "util_rt.jar")
   
   override val ideMainClassName: String
-    get() = if (useModularLoader) "com.intellij.platform.runtime.loader.Loader" else productProperties.mainClassName
+    get() = if (useModularLoader) "com.intellij.platform.runtime.loader.IntellijLoader" else productProperties.mainClassName
   
   override val useModularLoader: Boolean
     get() = productProperties.supportModularLoading && options.useModularLoader

@@ -8,7 +8,8 @@ import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * The entry point for the modular loading scheme. {@link #main} method is called via reflection from {@link com.intellij.platform.runtime.loader.Loader}.  
+ * The entry point for the modular loading scheme. 
+ * {@link #main} method is called via reflection from {@link com.intellij.platform.runtime.loader.IntellijLoader}.  
  */
 @SuppressWarnings("unused")
 public final class ModularMain {

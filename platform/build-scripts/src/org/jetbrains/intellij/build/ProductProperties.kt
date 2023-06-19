@@ -166,7 +166,7 @@ abstract class ProductProperties {
   var buildCrossPlatformDistribution: Boolean = false
 
   /**
-   * Set to `true` if the product can be started using [com.intellij.platform.runtime.loader.Loader]. 
+   * Set to `true` if the product can be started using [com.intellij.platform.runtime.loader.IntellijLoader]. 
    * [BuildOptions.useModularLoader] will be used to determine whether the produced distribution will actually use this way.
    */
   @ApiStatus.Experimental

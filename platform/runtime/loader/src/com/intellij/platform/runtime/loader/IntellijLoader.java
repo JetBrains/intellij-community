@@ -18,8 +18,9 @@ import java.util.Set;
 /**
  * Initiates loading of a product based on IntelliJ platform. It loads information about the product modules from {@link RuntimeModuleRepository}
  * and {@link ProductModules}, and configures the classloader accordingly.
+ * <p>It's an experimental way, and it isn't used in production yet.</p>
  */
-public final class Loader {
+public final class IntellijLoader {
   private static final String RUNTIME_REPOSITORY_PATH_PROPERTY = "intellij.platform.runtime.repository.path";
   private static final String PLATFORM_ROOT_MODULE_PROPERTY = "intellij.platform.root.module";
 
@@ -47,9 +48,9 @@ public final class Loader {
     for (IncludedRuntimeModule item : productModules.getMainModuleGroup().getIncludedModules()) {
       classpath.addAll(item.getModuleDescriptor().getResourceRootPaths());
     }
-    PathClassLoader classLoader = new PathClassLoader(UrlClassLoader.build().files(new ArrayList<>(classpath)).parent(Loader.class.getClassLoader()));
+    PathClassLoader classLoader = new PathClassLoader(UrlClassLoader.build().files(new ArrayList<>(classpath)).parent(IntellijLoader.class.getClassLoader()));
 
-    String bootstrapClassName = System.getProperty("intellij.platform.bootstrap.class.name", "com.intellij.platform.bootstrap.ModularMain");
+    String bootstrapClassName = "com.intellij.platform.bootstrap.ModularMain";
     Class<?> bootstrapClass = Class.forName(bootstrapClassName, true, classLoader);
     MethodHandles.publicLookup()
       .findStatic(bootstrapClass, "main", MethodType.methodType(void.class, RuntimeModuleRepository.class, ProductModules.class, String[].class))
@@ -61,6 +62,6 @@ public final class Loader {
     //todo reuse code from StartupErrorReporter
     //noinspection UseOfSystemOutOrSystemErr
     System.err.println(message);
-    System.exit(3);
+    System.exit(3);//com.intellij.idea.AppExitCodes.STARTUP_EXCEPTION
   }
 }
