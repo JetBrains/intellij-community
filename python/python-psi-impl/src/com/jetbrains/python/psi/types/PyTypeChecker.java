@@ -234,6 +234,9 @@ public final class PyTypeChecker {
       return false;
     }
 
+    // Remove value-specific components from the actual type to make it safe to propagate
+    PyType safeActual = replaceLiteralStringWithStr(actual);
+
     final PyType substitution = context.mySubstitutions.typeVars.get(expected);
     PyType bound = expected.getBound();
     // Promote int in Type[TypeVar('T', int)] to Type[int] before checking that bounds match
@@ -242,26 +245,26 @@ public final class PyTypeChecker {
       bound = PyUnionType.union(PyTypeUtil.toStream(bound).map(toDefinition).toList());
     }
 
-    Optional<Boolean> match = match(bound, actual, context);
+    Optional<Boolean> match = match(bound, safeActual, context);
     if (match.isPresent() && !match.get()) {
       return false;
     }
 
     if (substitution != null) {
-      if (expected.equals(actual) || substitution.equals(expected)) {
+      if (expected.equals(safeActual) || substitution.equals(expected)) {
         return true;
       }
 
       Optional<Boolean> recursiveMatch = RecursionManager.doPreventingRecursion(
         expected, false, context.reversedSubstitutions
-                         ? () -> match(actual, substitution, context)
-                         : () -> match(substitution, actual, context)
+                         ? () -> match(safeActual, substitution, context)
+                         : () -> match(substitution, safeActual, context)
       );
       return recursiveMatch != null ? recursiveMatch.orElse(false) : false;
     }
 
-    if (actual != null) {
-      context.mySubstitutions.typeVars.put(expected, actual);
+    if (safeActual != null) {
+      context.mySubstitutions.typeVars.put(expected, safeActual);
     }
     else if (bound != null) {
       context.mySubstitutions.typeVars.put(expected, PyUnionType.createWeakType(bound));
@@ -295,7 +298,7 @@ public final class PyTypeChecker {
       else {
         if (actualUnpackedTupleType.isUnbound()) {
           PyType repeatedActualType = actualUnpackedTupleType.getElementTypes().get(0);
-          return ContainerUtil.all(expectedUnpackedTupleType.getElementTypes(), 
+          return ContainerUtil.all(expectedUnpackedTupleType.getElementTypes(),
                                    singleExpectedType -> match(singleExpectedType, repeatedActualType, context).orElse(false));
         }
         else {
@@ -315,6 +318,29 @@ public final class PyTypeChecker {
       context.mySubstitutions.typeVarTuples.put((PyTypeVarTupleType)expected, actualVariadic);
     }
     return true;
+  }
+
+  private static @Nullable PyType replaceLiteralStringWithStr(@Nullable PyType actual) {
+    // TODO replace with PyTypeVisitor API once it's ready
+    if (actual instanceof PyLiteralStringType literalStringType) {
+      return new PyClassTypeImpl(literalStringType.getPyClass(), false);
+    }
+    if (actual instanceof PyUnionType unionType) {
+      return unionType.map(PyTypeChecker::replaceLiteralStringWithStr);
+    }
+    if (actual instanceof PyNamedTupleType) {
+      return actual;
+    }
+    if (actual instanceof PyTupleType tupleType) {
+      return new PyTupleType(tupleType.getPyClass(),
+                             ContainerUtil.map(tupleType.getElementTypes(), PyTypeChecker::replaceLiteralStringWithStr),
+                             tupleType.isHomogeneous(), tupleType.isDefinition());
+    }
+    if (actual instanceof PyCollectionType generic) {
+      return new PyCollectionTypeImpl(generic.getPyClass(), generic.isDefinition(),
+                                      ContainerUtil.map(generic.getElementTypes(), PyTypeChecker::replaceLiteralStringWithStr));
+    }
+    return actual;
   }
 
   private static boolean match(@NotNull PyParamSpecType expected, @Nullable PyType actual, @NotNull MatchContext context) {
@@ -754,7 +780,7 @@ public final class PyTypeChecker {
       }
       if (!classType.isDefinition()) {
         PyCollectionType genericDefinitionType = as(provider.getGenericType(classType.getPyClass(), context), PyCollectionType.class);
-        // TODO Re-use PyTypeParameterMapping, at the moment C[*Ts] <- C leads to *Ts being mapped to *tuple[], which breaks inference later on 
+        // TODO Re-use PyTypeParameterMapping, at the moment C[*Ts] <- C leads to *Ts being mapped to *tuple[], which breaks inference later on
         if (genericDefinitionType != null) {
           List<PyType> definitionTypeParameters = genericDefinitionType.getElementTypes();
           if (!(classType instanceof PyCollectionType genericType)) {
@@ -788,7 +814,7 @@ public final class PyTypeChecker {
                   result.getParamSpecs().put((PyParamSpecType)typeParameter, as(typeArgument, PyParamSpecType.class));
                 }
               }
-            }  
+            }
           }
         }
       }
@@ -1109,8 +1135,8 @@ public final class PyTypeChecker {
           return PyTypedDictType.Companion.createFromKeysToValueTypes(typedDictType.myClass, substitutedTDFields, false);
         }
         else if (type instanceof final PyCollectionTypeImpl collection) {
-          return new PyCollectionTypeImpl(collection.getPyClass(), collection.isDefinition(), 
-                                          ContainerUtil.flatMap(collection.getElementTypes(), 
+          return new PyCollectionTypeImpl(collection.getPyClass(), collection.isDefinition(),
+                                          ContainerUtil.flatMap(collection.getElementTypes(),
                                                                 t -> substituteExpand(t, substitutions, context, substituting)));
         }
         else if (type instanceof PyTupleType) {
