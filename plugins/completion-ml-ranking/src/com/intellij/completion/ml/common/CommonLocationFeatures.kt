@@ -96,7 +96,7 @@ class CommonLocationFeatures : ContextFeatureProvider {
     val startLineNumber = position.line
     var lineNumber = startLineNumber + delta
     var text: String? = null
-    while (lineNumber >= 0 && document.getLineText(lineNumber).also { text = it }.isBlank()) lineNumber += delta
+    while (lineNumber >= 0 && lineNumber < document.lineCount && document.getLineText(lineNumber).also { text = it }.isBlank()) lineNumber += delta
     this["${name}_empty_lines_count"] = MLFeatureValue.float(abs(lineNumber - startLineNumber) - 1)
     text?.let { this["${name}_non_empty_line_length"] = MLFeatureValue.float(it.length) }
   }
