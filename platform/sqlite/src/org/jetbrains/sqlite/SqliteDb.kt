@@ -19,11 +19,11 @@ package org.jetbrains.sqlite
 
 import com.intellij.openapi.diagnostic.logger
 import java.io.IOException
-import java.util.concurrent.ConcurrentHashMap
+import java.util.*
 
 internal abstract class SqliteDb {
   // tracer for statements to avoid unfinalized statements on db close
-  private val statements = ConcurrentHashMap.newKeySet<SafeStatementPointer>()
+  private val statements: MutableSet<SafeStatementPointer> = Collections.newSetFromMap(IdentityHashMap())
 
   companion object {
     /**
@@ -132,14 +132,25 @@ internal abstract class SqliteDb {
   @Synchronized
   fun close() {
     // finalize any remaining statements before closing db
-    for (element in statements) {
+    var error: Throwable? = null
+    for (element in statements.toList()) {
       try {
-        element.internalClose(this)
+        element.close(this)
       }
       catch (e: Throwable) {
-        logger<SqliteDb>().error(e)
+        if (error == null) {
+          error = e
+        }
+        else {
+          error.addSuppressed(e)
+        }
       }
     }
+
+    if (error != null) {
+      logger<SqliteDb>().error(error)
+    }
+
     _close()
   }
 
@@ -155,19 +166,14 @@ internal abstract class SqliteDb {
 
   /**
    * Destroys a statement.
-   *
-   * @param safePtr the pointer wrapper to remove from internal structures
-   * @param ptr     the raw pointer to free
-   * @return [Result Codes](http://www.sqlite.org/c3ref/c_abort.html)
-   * @see [http://www.sqlite.org/c3ref/finalize.html](http://www.sqlite.org/c3ref/finalize.html)
    */
   @Synchronized
-  fun finalize(safePtr: SafeStatementPointer, ptr: Long): Int {
+  fun finalize(safeStatementPointer: SafeStatementPointer, pointer: Long): Int {
     try {
-      return finalize(ptr)
+      return finalize(pointer)
     }
     finally {
-      statements.remove(safePtr)
+      statements.remove(safeStatementPointer)
     }
   }
 

@@ -91,6 +91,12 @@ class ObjectBinder(paramCount: Int, batchCountHint: Int = 1) : BaseBinder(paramC
     batch[batchPosition] = v1
   }
 
+  fun bind(v1: Any?, v2: Any?) {
+    assert(paramCount == 2)
+    batch[batchPosition] = v1
+    batch[batchPosition + 1] = v2
+  }
+
   fun bind(v1: Any?, v2: Any?, v3: Any?, v4: Any?, v5: Any?) {
     assert(paramCount == 5)
     batch[batchPosition] = v1

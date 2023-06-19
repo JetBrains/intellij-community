@@ -81,8 +81,7 @@ class SqliteTest {
       assertThat(resultSet.getInt(0)).isEqualTo(2)
     }
 
-    val binder = LongBinder(1, 1)
-    connection.prepareStatement("select authorTime from log where commitId = ?", binder).use { statement ->
+    connection.statementPool("select authorTime from log where commitId = ?") { LongBinder(1, 1) }.use { statement, binder ->
       // test empty
       for (key in longArrayOf(12, 13)) {
         binder.bind(key + 12)

@@ -14,7 +14,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.sqlite.*
+import org.jetbrains.sqlite.LongBinder
+import org.jetbrains.sqlite.ObjectBinder
+import org.jetbrains.sqlite.SqliteConnection
+import org.jetbrains.sqlite.SqlitePreparedStatement
 import sun.awt.image.SunWritableRaster
 import java.awt.Point
 import java.awt.Transparency
@@ -87,35 +90,16 @@ private fun connectToSvgCache(dbFile: Path): SqliteConnection {
 @Suppress("SqlResolve")
 @ApiStatus.Internal
 class SvgCacheManager(private val connection: SqliteConnection) {
-  private val selectStatementPool: SqlStatementPool<LongBinder>
-  private val selectPrecomputedStatementPool: SqlStatementPool<LongBinder>
-  private val insertStatementPool: SqlStatementPool<ObjectBinder>
-  private val insertPrecomputedStatementPool: SqlStatementPool<ObjectBinder>
-
-  init {
-    selectStatementPool = SqlStatementPool(sql = "select data, w, h from image where key1 = ? and key2 = ? and kind = ? and theme = ?",
-                                           connection = connection) { LongBinder(4) }
-    selectPrecomputedStatementPool = SqlStatementPool(sql = "select data, w, h from precomputed_image where key = ? and theme = ?",
-                                                      connection = connection) { LongBinder(2) }
-
-    insertStatementPool = SqlStatementPool(
-      sql = "insert or replace into image (key1, key2, kind, theme, w, h, data) values(?, ?, ?, ?, ?, ?, ?) ",
-      connection = connection) { ObjectBinder(7) }
-    insertPrecomputedStatementPool = SqlStatementPool(
-      sql = "insert or replace into precomputed_image (key, theme, w, h, data) values(?, ?, ?, ?, ?) ",
-      connection = connection) { ObjectBinder(5) }
-  }
+  private val selectStatementPool = connection.statementPool(sql = "select data, w, h from image where key1 = ? and key2 = ? and kind = ? and theme = ?") { LongBinder(4) }
+  private val selectPrecomputedStatementPool = connection.statementPool(sql = "select data, w, h from precomputed_image where key = ? and theme = ?") { LongBinder(2) }
+  private val insertStatementPool = connection.statementPool(sql = "insert or replace into image (key1, key2, kind, theme, w, h, data) values(?, ?, ?, ?, ?, ?, ?) ") { ObjectBinder(7) }
+  private val insertPrecomputedStatementPool = connection.statementPool(sql = "insert or replace into precomputed_image (key, theme, w, h, data) values(?, ?, ?, ?, ?) ") { ObjectBinder(5) }
 
   internal fun isActive(): Boolean = !connection.isClosed
 
   fun close() {
-    selectStatementPool.close()
-    selectPrecomputedStatementPool.close()
-    insertStatementPool.close()
-    insertPrecomputedStatementPool.close()
-
-    logger<SvgCacheManager>().info("SVG icon cache is closed")
     connection.close()
+    logger<SvgCacheManager>().info("SVG icon cache is closed")
   }
 
   fun loadPrecomputedFromCache(precomputedCacheKey: Int, themeKey: Long, compoundKey: SvgCacheClassifier): BufferedImage? {

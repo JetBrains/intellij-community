@@ -21,6 +21,8 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
 
   private var currentBusyTimeout: Int
 
+  private val statementPoolList = mutableListOf<SqlStatementPool<*>>()
+
   init {
     file?.parent?.let { Files.createDirectories(it) }
     loadNativeDb()
@@ -46,6 +48,14 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
     }
 
     dbRef.set(db)
+  }
+
+  fun <T : Binder> statementPool(@Language("SQLite") sql: String, binderProducer: () -> T): SqlStatementPool<T> {
+    return lock.withLock {
+      val pool = SqlStatementPool(sql = sql, connection = this, binderProducer = binderProducer)
+      statementPoolList.add(pool)
+      pool
+    }
   }
 
   internal inline fun <T> useDb(task: (db: NativeDB) -> T): T {
@@ -106,7 +116,39 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
 
   override fun close() {
     lock.withLock {
-      dbRef.getAndSet(null)?.close()
+      val db = dbRef.getAndSet(null) ?: return
+
+      val pool = statementPoolList.toList()
+      statementPoolList.clear()
+
+      var error: Throwable? = null
+      for (item in pool) {
+        try {
+          item.close(db)
+        }
+        catch (e: Throwable) {
+          if (error == null) {
+            error = e
+          }
+          else {
+            error.addSuppressed(e)
+          }
+        }
+      }
+
+      try {
+        db.close()
+      }
+      catch (e: Throwable) {
+        if (error == null) {
+          error = e
+        }
+        else {
+          error.addSuppressed(e)
+        }
+      }
+
+      error?.let { throw it }
     }
   }
 
