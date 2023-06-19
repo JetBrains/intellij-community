@@ -33,37 +33,6 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
-/**
- * Due to the existence of  [updateProjectModelSilent] method that can be executed from any threads in parallel with e.g.
- * [updateProjectModel] we can face the situation with overwriting changes thus we need to sync all methods executed under WA
- * with [updateProjectModelSilent].
- *
- * Here is an example of the situation which we faced in IDEA-313151
- *
- *         Dispatch Thread                       Other Thread
- *                |                                   |
- *      call updateProjectModel                       |
- *                |                                   |
- *      making copy of storage                        |
- *                |                                   |
- *         applying changes                           |
- *                |                       call updateProjectModelSilent
- *                |                                   |
- *                |                        making copy of storage
- *                |                                   |
- *                |                           applying changes
- *                |                                   |
- *                |                         replace current storage
- *                |                                   |
- *                |                           end of method call
- *                |
- *     replace current storage
- *                |
- *        end of method call
- *
- * As a result we lost changes made by `updateProjectModelSilent` method call
- *
- */
 open class WorkspaceModelImpl(private val project: Project, private val cs: CoroutineScope) : WorkspaceModel, Disposable {
   @Volatile
   var loadedFromCache = false
@@ -229,6 +198,8 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
    *
    * This method runs without write action, so it causes different issues. We're going to deprecate this method, so it's better to avoid
    *   the use of this function.
+   *
+   * **N.B** For more information on why this and other methods were marked by Synchronized see IDEA-313151
    */
   @ApiStatus.Obsolete
   @Synchronized
