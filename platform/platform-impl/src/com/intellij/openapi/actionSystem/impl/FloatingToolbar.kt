@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiEditorUtil
@@ -51,17 +52,9 @@ open class FloatingToolbar(val editor: Editor, protected val defaultActionGroupI
     hint?.hide()
   }
 
-  val component: JComponent?
-    get() = hint?.component
-
-  fun showIfHidden(callback: Runnable? = null) {
-    if (hint != null){
-      callback?.run()
+  fun showIfHidden() {
+    if (hint != null || !canBeShownAtCurrentSelection() || (!shouldReviveAfterClose() && !showToolbar)) {
       return
-    }
-    if (!canBeShownAtCurrentSelection()) return
-    hint = LightweightHint(JPanel(BorderLayout())).apply {
-      setForceShowAsPopup(true)
     }
     createActionToolbar(editor.contentComponent) { toolbar ->
       val hint = hint ?: return@createActionToolbar
@@ -71,7 +64,9 @@ open class FloatingToolbar(val editor: Editor, protected val defaultActionGroupI
         this@FloatingToolbar.hint = null
         showToolbar = false
       }
-      callback?.run()
+    }
+    hint = LightweightHint(JPanel(BorderLayout())).apply {
+      setForceShowAsPopup(true)
     }
   }
 
@@ -130,8 +125,7 @@ open class FloatingToolbar(val editor: Editor, protected val defaultActionGroupI
     editor.document.removeDocumentListener(documentListener)
   }
 
-  fun canBeShownAtCurrentSelection(): Boolean {
-    if (!editor.selectionModel.hasSelection()) return false
+  private fun canBeShownAtCurrentSelection(): Boolean {
     val file = PsiEditorUtil.getPsiFile(editor)
     PsiDocumentManager.getInstance(file.project).commitDocument(editor.document)
     val selectionModel = editor.selectionModel
@@ -209,9 +203,11 @@ open class FloatingToolbar(val editor: Editor, protected val defaultActionGroupI
         beforeSelectionEnd && afterSelectionStart
       }
       if (hoverSelected) {
-        if (showToolbar) showIfHidden()
-      } else if (shouldReviveAfterClose()) {
-        showToolbar = true
+        showIfHidden()
+      } else {
+        if (!Registry.get("floating.codeToolbar.revive.selectionChangeOnly").asBoolean()) {
+          showToolbar = true
+        }
       }
     }
   }
