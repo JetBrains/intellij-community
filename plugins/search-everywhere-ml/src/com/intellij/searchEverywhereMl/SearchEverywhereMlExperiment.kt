@@ -37,8 +37,7 @@ class SearchEverywhereMlExperiment {
 
     SearchEverywhereTabWithMlRanking.CLASSES to Experiment(
       2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
-      3 to ExperimentType.NO_ML,
-      4 to ExperimentType.NO_ML_FEATURES
+      3 to ExperimentType.NO_ML
     ),
 
     SearchEverywhereTabWithMlRanking.ALL to Experiment(
