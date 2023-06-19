@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
 import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import java.nio.file.Paths
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -79,6 +80,9 @@ abstract class ScriptClassRootsUpdater(
      */
     private val cache: AtomicReference<ScriptClassRootsCache> = AtomicReference(ScriptClassRootsCache.EMPTY)
 
+    private val cacheNotEmptyLatch = CountDownLatch(1)
+
+
     init {
         ProjectManager.getInstance().addProjectManagerListener(project, object : ProjectManagerListener {
             override fun projectClosing(project: Project) {
@@ -93,6 +97,11 @@ abstract class ScriptClassRootsUpdater(
 
     val classpathRoots: ScriptClassRootsCache
         get() = cache.get()
+
+    fun getNotEmptyClassPathRoots(): ScriptClassRootsCache {
+        cacheNotEmptyLatch.await()
+        return cache.get()
+    }
 
     /**
      * @param synchronous Used from legacy FS cache only, don't use
@@ -315,6 +324,7 @@ abstract class ScriptClassRootsUpdater(
             val old = cache.get()
             val new = recreateRootsCache()
             if (cache.compareAndSet(old, new)) {
+                if (old == ScriptClassRootsCache.EMPTY) cacheNotEmptyLatch.countDown()
                 afterUpdate()
                 return new.diff(project, lastSeen)
             }
