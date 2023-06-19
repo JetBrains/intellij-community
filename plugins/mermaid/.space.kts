@@ -90,7 +90,7 @@ job("Mermaid / Qodana Analysis") {
   container("jetbrains/qodana-jvm") {
     env["QODANA_TOKEN"] = qodanaCloudToken
     shellScript {
-      content = "qodana"
+      content = "./gradlew :plugin:generateLexerAndParser && qodana"
     }
   }
 }
