@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.*
+import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.core.NotPropertiesService
@@ -45,7 +46,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.CallResolver
@@ -230,7 +230,7 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
         val notProperties = inspection?.fqNameList?.toSet() ?: NotPropertiesService.getNotProperties(callExpression)
         if (function.shouldNotConvertToProperty(notProperties)) return null
 
-        if (inspection?.reportNonTrivialAccessors != true && function.hasMultipleStatements()) return null
+        if (inspection?.reportNonTrivialAccessors != true && function.hasMultipleStatements(callExpression.project)) return null
 
         val resolutionScope = callExpression.getResolutionScope(bindingContext, resolutionFacade)
 
@@ -294,12 +294,16 @@ class UsePropertyAccessSyntaxIntention : SelfTargetingOffsetIndependentIntention
     private fun String.isSuitableAsPropertyAccessor(): Boolean =
         canBePropertyAccessor(this) && commonGetterLikePrefixes.none { prefix -> this.contains(prefix) }
 
-    private fun FunctionDescriptor.hasMultipleStatements(): Boolean =
-        when (val declaration = DescriptorToSourceUtils.descriptorToDeclaration(this)) {
-            is KtNamedFunction -> declaration.bodyBlockExpression?.statements.orEmpty().size > 1
-            is PsiMethod -> declaration.body?.statements.orEmpty().size > 1
-            else -> false
-        }
+    private fun FunctionDescriptor.hasMultipleStatements(project: Project): Boolean {
+        val declarations = DescriptorToSourceUtilsIde.getAllDeclarations(project, targetDescriptor = this)
+        return declarations.any { it.hasMultipleStatements() }
+    }
+
+    private fun PsiElement.hasMultipleStatements(): Boolean = when (this) {
+        is KtNamedFunction -> bodyBlockExpression?.statements.orEmpty().size > 1
+        is PsiMethod -> body?.statements.orEmpty().size > 1
+        else -> false
+    }
 
     private fun checkWillResolveToProperty(
         resolvedCall: ResolvedCall<out CallableDescriptor>,
