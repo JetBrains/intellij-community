@@ -10,7 +10,6 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -23,7 +22,6 @@ import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowIntentionActionsAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore,
-                                                                                 Toggleable,
                                                                                  LightEditCompatible,
                                                                                  DumbAware {
   public ShowIntentionActionsAction() {

@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import javax.swing.JComponent
 
-class DropdownActionGroup: DefaultActionGroup(), CustomComponentAction, Toggleable {
+class DropdownActionGroup: DefaultActionGroup(), CustomComponentAction {
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return object: ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
