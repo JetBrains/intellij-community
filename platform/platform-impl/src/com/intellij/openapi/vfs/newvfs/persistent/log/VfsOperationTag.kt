@@ -95,6 +95,6 @@ value class VfsOperationTagsMask(val mask: Long) {
       VfsOperationTagsMask(map { it.mask }.foldRight(ALL.mask, Long::and))
 
     fun List<VfsOperationTagsMask>.union(): VfsOperationTagsMask =
-      VfsOperationTagsMask(map { it.mask }.foldRight(0L, Long::or))
+      VfsOperationTagsMask(map { it.mask }.foldRight(EMPTY.mask, Long::or))
   }
 }
