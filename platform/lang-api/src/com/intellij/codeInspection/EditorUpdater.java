@@ -5,10 +5,12 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.function.BiConsumer;
 
 /**
@@ -84,4 +86,12 @@ public interface EditorUpdater {
    * @param ch character to find
    */
   void moveToPrevious(char ch);
+
+  /**
+   * Suggest to rename a given element
+   * 
+   * @param element element to rename
+   * @param suggestedNames names to suggest (user is free to type any other name as well)
+   */
+  void rename(@NotNull PsiNameIdentifierOwner element, @NotNull List<@NotNull String> suggestedNames);
 }

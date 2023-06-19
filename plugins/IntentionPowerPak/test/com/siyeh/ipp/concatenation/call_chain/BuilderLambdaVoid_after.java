@@ -3,8 +3,8 @@
 class Test {
   void test(StringBuilder sb) {
     Runnable runnable = () -> {
-        sb.append("foo");
-        sb.append("bar");<caret>
+        <caret>sb.append("foo");
+        sb.append("bar");
     };
   }
 }

@@ -278,9 +278,11 @@ public final class ModCommands {
   private static class EditorUpdaterImpl implements EditorUpdater, DocumentListener, Disposable {
     private final @NotNull FileTracker myTracker;
     private final @NotNull Map<PsiFile, FileTracker> myChangedFiles = new LinkedHashMap<>();
+    private final @NotNull VirtualFile myOrigVirtualFile;
     private int myCaretOffset;
     private @NotNull TextRange mySelection;
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
+    private @Nullable ModRenameSymbol myRenameSymbol;
     private boolean myPositionUpdated = false;
 
     private EditorUpdaterImpl(@NotNull ModCommandAction.ActionContext actionContext) {
@@ -289,6 +291,7 @@ public final class ModCommands {
       // TODO: lazily get the tracker for the current file
       myTracker = tracker(actionContext.file());
       myTracker.myPositionDocument.addDocumentListener(this, this);
+      myOrigVirtualFile = Objects.requireNonNull(myTracker.myOrigFile.getOriginalFile().getVirtualFile());
     }
     
     private @NotNull FileTracker tracker(@NotNull PsiFile file) {
@@ -375,6 +378,14 @@ public final class ModCommands {
       myCaretOffset = idx;
     }
 
+    @Override
+    public void rename(@NotNull PsiNameIdentifierOwner element, @NotNull List<@NotNull String> suggestedNames) {
+      if (myRenameSymbol != null) {
+        throw new IllegalStateException("One element is already registered for rename");
+      }
+      myRenameSymbol = new ModRenameSymbol(myOrigVirtualFile, element.getTextRange(), suggestedNames);
+    }
+
     private TextRange mapRange(@NotNull TextRange range) {
       PsiLanguageInjectionHost host = myTracker.myHostCopy;
       if (host != null) {
@@ -413,6 +424,9 @@ public final class ModCommands {
       myCaretOffset = updateOffset(event, myCaretOffset);
       mySelection = updateRange(event, mySelection);
       myHighlightInfos.replaceAll(info -> info.withRange(updateRange(event, info.range())));
+      if (myRenameSymbol != null) {
+        myRenameSymbol = myRenameSymbol.withRange(updateRange(event, myRenameSymbol.symbolRange()));
+      }
     }
 
     private static @NotNull TextRange updateRange(@NotNull DocumentEvent event, @NotNull TextRange range) {
@@ -433,12 +447,12 @@ public final class ModCommands {
     
     private @NotNull ModCommand getCommand() {
       return myChangedFiles.values().stream().map(FileTracker::getUpdateCommand).reduce(nop(), ModCommand::andThen)
-        .andThen(getNavigateCommand()).andThen(getHighlightCommand());
+        .andThen(getNavigateCommand()).andThen(getHighlightCommand()).andThen(myRenameSymbol == null ? nop() : myRenameSymbol);
     }
 
     @NotNull
     private ModCommand getNavigateCommand() {
-      if (!myPositionUpdated) return nop();
+      if (!myPositionUpdated || myRenameSymbol != null) return nop();
       int length = myTracker.myTargetFile.getTextLength();
       int start = -1, end = -1, caret = -1;
       if (mySelection.getEndOffset() <= length) {
@@ -448,18 +462,14 @@ public final class ModCommands {
       if (this.myCaretOffset <= length) {
         caret = this.myCaretOffset;
       }
-      VirtualFile origVirtualFile = myTracker.myOrigFile.getOriginalFile().getVirtualFile();
-      if (origVirtualFile == null) return nop();
       if (start == -1 && end == -1 && caret == -1) return nop();
-      return new ModNavigate(origVirtualFile, start, end, caret);
+      return new ModNavigate(myOrigVirtualFile, start, end, caret);
     }
     
     @NotNull
     private ModCommand getHighlightCommand() {
       if (myHighlightInfos.isEmpty()) return nop();
-      VirtualFile origVirtualFile = myTracker.myOrigFile.getOriginalFile().getVirtualFile();
-      if (origVirtualFile == null) return nop();
-      return new ModHighlight(origVirtualFile, myHighlightInfos);
+      return new ModHighlight(myOrigVirtualFile, myHighlightInfos);
     }
   }
 }
